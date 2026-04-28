@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OLGA VISION AGENCY — The Tycoon Update</title>
+
+  <link href='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css' rel='stylesheet' />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+
+  <script>
+    tailwind.config = { theme: { extend: {
+      colors: {
+        gold:     '#d4af37',
+        blue:     '#00f2ff',
+        deepBlack:'#080810',
+        panel:    'rgba(8, 8, 20, 0.92)',
+        accent:   '#00f2ff'
+      },
+      fontFamily: {
+        sans:    ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
+        mono:    ['Roboto Mono', 'monospace'],
+        display: ['Orbitron', 'sans-serif']
+      }
+    } } }
+  </script>
+</head>
+<body class="bg-deepBlack text-gray-300 overflow-hidden font-sans select-none" style="font-size:15px">
+
+  <div id="leaflet-map" class="fixed inset-0 z-0"></div>
+  <div class="fixed inset-0 pointer-events-none z-10 bg-gradient-to-b from-black/60 via-transparent to-black/90"></div>
+  <div id="weather-overlay" class="fixed inset-0 pointer-events-none z-[2]"></div>
+
+  <div id="live-map-overlay" class="fixed top-24 left-24 z-30 pointer-events-none hidden flex-col gap-2">
+    <div class="bg-black/50 backdrop-blur-md border border-white/10 p-3 rounded-xl w-64">
+      <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-2">Live Dispatch Log</h3>
+      <div id="map-log" class="text-[9px] text-gray-300 space-y-1 h-32 overflow-y-hidden flex flex-col justify-end">
+        </div>
+    </div>
+  </div>
+
+  <header class="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 pointer-events-none">
+    <div class="flex items-center gap-5 pointer-events-auto bg-panel backdrop-blur-xl border border-white/10 p-3 rounded-2xl shadow-2xl">
+      <div class="text-3xl">👁️</div>
+      <div>
+        <h1 class="text-gold font-display font-bold tracking-widest text-xs uppercase" style="text-shadow:0 0 8px rgba(212,175,55,0.6)">Olga Vision</h1>
+        <p class="text-[9px] text-gray-400 uppercase tracking-tighter font-mono">Tycoon Edition</p>
+      </div>
+
+      <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
+
+      <div class="flex flex-col w-24">
+        <span class="text-[8px] text-gray-500 uppercase">Liquidità</span>
+        <span id="tb-cash" class="text-green-400 font-mono font-bold text-base">€0</span>
+      </div>
+
+      <div class="flex flex-col w-20">
+        <span class="text-[8px] text-gray-500 uppercase">Reputazione</span>
+        <span id="tb-rep" class="text-gold font-mono font-bold text-sm">0.0 ★</span>
+      </div>
+
+      <div class="flex flex-col w-32 relative group">
+        <span class="text-[8px] text-gray-500 uppercase flex justify-between">
+            <span>Stanchezza CEO</span>
+            <span id="tb-energy-text">100%</span>
+        </span>
+        <div class="w-full h-1.5 bg-gray-800 rounded-full mt-1 overflow-hidden cursor-pointer" onclick="openHotelModal()">
+          <div id="tb-energy-bar" class="h-full bg-blue-500 transition-all duration-300" style="width: 100%"></div>
+        </div>
+        <div class="absolute -bottom-8 left-0 text-[9px] bg-black border border-white/20 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+            Clicca per riposare
+        </div>
+      </div>
+
+      <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
+
+      <div class="flex items-center gap-2">
+        <span id="tb-weather-icon" class="text-xl">☀️</span>
+        <div class="flex flex-col">
+          <span id="tb-weather-label" class="text-[9px] text-gray-400 uppercase tracking-tight">Sereno</span>
+          <span id="tb-surge" class="text-[9px] font-bold text-orange-400 hidden">⚡ SURGE</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-4 pointer-events-auto bg-panel backdrop-blur-xl border border-white/10 p-3 rounded-2xl">
+      <div class="text-right">
+        <span id="tb-time" class="text-white font-mono text-xl block">08:00</span>
+        <span id="tb-date" class="text-[9px] text-gray-400 uppercase">1 Gen</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- SMART SIDEBAR: Map + Fleet + Hub Hamburger -->
+  <nav class="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 pointer-events-auto">
+    <button onclick="switchTab('map')" data-tab="map" class="nav-btn active tooltip-right" data-title="Mappa Live 3D">📡</button>
+    <button onclick="switchTab('corse')" data-tab="corse" class="nav-btn tooltip-right" data-title="Dispatch Center">🚕</button>
+    <button onclick="switchTab('fleet')" data-tab="fleet" class="nav-btn tooltip-right" data-title="Garage & Flotta">🚘</button>
+    <div class="hub-divider"></div>
+    <!-- Hamburger Hub -->
+    <button onclick="window.toggleHub()" id="hub-btn" class="nav-btn hub-btn tooltip-right" data-title="Hub Centrale">
+      <span class="hub-hamburger">
+        <span></span><span></span><span></span>
+      </span>
+      <span id="hub-event-badge" class="hub-badge hidden">!</span>
+    </button>
+    <!-- Quick access: Emails + Legal (keep badges visible) -->
+    <button onclick="switchTab('emails')" data-tab="emails" class="nav-btn relative tooltip-right" data-title="Inbox CEO">
+      📩 <span id="mail-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+    </button>
+    <button onclick="switchTab('legal')" data-tab="legal" class="nav-btn relative tooltip-right" data-title="Ufficio Legale">
+      ⚖️ <span id="fine-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+    </button>
+  </nav>
+
+  <!-- SMART HUB MODAL -->
+  <div id="hub-modal" class="hub-modal hidden" onclick="if(event.target===this)window.closeHub()">
+    <div class="hub-inner" onclick="event.stopPropagation()">
+      <!-- Header -->
+      <div class="hub-header">
+        <div class="hub-header-left">
+          <div class="hub-logo" id="hub-company-logo">👁️</div>
+          <div>
+            <div class="hub-company-name" id="hub-company-name">Olga Vision Agency</div>
+            <div class="hub-tagline">Titan Empire · Command Hub</div>
+          </div>
+        </div>
+        <div class="hub-header-right">
+          <div id="hub-active-event" class="hub-event-pill hidden"></div>
+          <button onclick="window.closeHub()" class="hub-close">✕</button>
+        </div>
+      </div>
+
+      <!-- Stats Row -->
+      <div class="hub-stats-row">
+        <div class="hub-stat-chip"><span class="hub-stat-icon">💰</span><span id="hub-cash">€0</span></div>
+        <div class="hub-stat-chip"><span class="hub-stat-icon">⭐</span><span id="hub-rep">0.0★</span></div>
+        <div class="hub-stat-chip"><span class="hub-stat-icon">📅</span><span id="hub-day">Giorno 1</span></div>
+        <div class="hub-stat-chip"><span class="hub-stat-icon">🕐</span><span id="hub-time">08:00</span></div>
+      </div>
+
+      <!-- Module Grid -->
+      <div class="hub-grid">
+        <div class="hub-module" onclick="window.hubNavigate('corse')">
+          <div class="hub-mod-icon">🚕</div>
+          <div class="hub-mod-title">Dispatch</div>
+          <div class="hub-mod-desc">Corse & missioni attive</div>
+          <div class="hub-mod-badge" id="hmod-rides">0</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('staff')">
+          <div class="hub-mod-icon">👔</div>
+          <div class="hub-mod-title">Staff</div>
+          <div class="hub-mod-desc">Autisti & ufficio</div>
+          <div class="hub-mod-badge" id="hmod-staff">0</div>
+          <div id="hmod-strike" class="hub-mod-alert hidden">🪧</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('finance')">
+          <div class="hub-mod-icon">💹</div>
+          <div class="hub-mod-title">Finanza</div>
+          <div class="hub-mod-desc">Mercati & broker</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('emails')">
+          <div class="hub-mod-icon">📩</div>
+          <div class="hub-mod-title">Inbox</div>
+          <div class="hub-mod-desc">Comunicazioni CEO</div>
+          <div class="hub-mod-badge hub-mod-badge-red" id="hmod-mail">0</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('lifestyle')">
+          <div class="hub-mod-icon">🏰</div>
+          <div class="hub-mod-title">Lifestyle</div>
+          <div class="hub-mod-desc">Asset & Diamond</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('ranking')">
+          <div class="hub-mod-icon">🏆</div>
+          <div class="hub-mod-title">Classifica</div>
+          <div class="hub-mod-desc">Ranking & rivali</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('invest')">
+          <div class="hub-mod-icon">📈</div>
+          <div class="hub-mod-title">Investimenti</div>
+          <div class="hub-mod-desc">Portfolio & assets</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('regions')">
+          <div class="hub-mod-icon">🗺️</div>
+          <div class="hub-mod-title">Regioni</div>
+          <div class="hub-mod-desc">Licenze & territori</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('marketing')">
+          <div class="hub-mod-icon">📣</div>
+          <div class="hub-mod-title">Marketing</div>
+          <div class="hub-mod-desc">Brand & campagne</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('politics')">
+          <div class="hub-mod-icon">🏛️</div>
+          <div class="hub-mod-title">Politica</div>
+          <div class="hub-mod-desc">Lobbying & leggi</div>
+        </div>
+      </div>
+
+      <!-- Active Event Banner -->
+      <div id="hub-event-banner" class="hub-event-banner hidden">
+        <div class="hub-event-icon" id="hub-ev-icon">🎬</div>
+        <div class="hub-event-info">
+          <div class="hub-event-name" id="hub-ev-name">—</div>
+          <div class="hub-event-meta" id="hub-ev-meta"></div>
+        </div>
+        <div class="hub-event-mult" id="hub-ev-mult">×1.0</div>
+      </div>
+    </div>
+  </div>
+
+  <main id="main-panel" class="fixed right-6 top-24 bottom-24 w-[400px] z-40 bg-panel backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
+    <div class="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
+      <h2 id="panel-title" class="text-gold uppercase font-display font-bold tracking-widest text-sm" style="text-shadow:0 0 10px rgba(212,175,55,0.4)">Centrale Operativa</h2>
+    </div>
+    <div id="tab-container" class="flex-1 overflow-y-auto p-5 space-y-5">
+        </div>
+  </main>
+
+  <!-- Modal: Gestione Veicolo -->
+  <div id="modal-car" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex justify-center items-center pointer-events-auto">
+      <div class="bg-panel border border-white/10 p-6 rounded-2xl w-[420px] shadow-2xl max-h-[90vh] overflow-y-auto">
+          <h2 id="car-modal-title" class="text-gold font-bold uppercase mb-2">Gestione Veicolo</h2>
+          <p id="car-modal-desc" class="text-[10px] text-gray-400 mb-4">Seleziona un'azione per questo veicolo.</p>
+          <div id="car-modal-content" class="space-y-3"></div>
+          <button onclick="closeModals()" class="mt-4 w-full p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Chiudi</button>
+      </div>
+  </div>
+
+  <!-- Modal: Garage 3D -->
+  <div id="modal-garage3d" class="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md hidden flex justify-center items-center pointer-events-auto">
+      <div class="bg-panel border border-white/10 p-4 rounded-2xl shadow-2xl w-[520px]">
+          <div class="flex justify-between items-center mb-3">
+              <h2 id="garage3d-title" class="text-gold font-bold uppercase text-sm">Vista 3D Garage</h2>
+              <button onclick="closeGarage3D()" class="text-gray-400 hover:text-white text-xs border border-white/10 px-2 py-1 rounded">✕ Chiudi</button>
+          </div>
+          <div id="garage3d-canvas" class="w-full rounded-xl overflow-hidden" style="height:300px; background:#050510;"></div>
+          <div id="garage3d-info" class="mt-3 grid grid-cols-3 gap-2 text-center"></div>
+          <p class="text-[8px] text-gray-600 text-center mt-2">Trascina per ruotare · Scroll per zoom</p>
+      </div>
+  </div>
+
+  <!-- Modal: Hotel/Riposo -->
+  <div id="modal-hotel" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex justify-center items-center pointer-events-auto">
+      <div class="bg-panel border border-white/10 p-6 rounded-2xl w-[400px] shadow-2xl">
+          <h2 class="text-gold font-bold uppercase mb-4">Dove vuoi riposare?</h2>
+          <div class="space-y-3">
+              <button onclick="rest(3)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
+                  <div class="font-bold text-white">Motel 3 Stelle <span class="text-yellow-500">★★★</span></div>
+                  <div class="text-[10px] text-gray-400">Recupera 50% Energia. Costo: €80</div>
+              </button>
+              <button onclick="rest(4)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
+                  <div class="font-bold text-white">Business Hotel <span class="text-yellow-500">★★★★</span></div>
+                  <div class="text-[10px] text-gray-400">Recupera 75% Energia. Costo: €200</div>
+              </button>
+              <button onclick="rest(5)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
+                  <div class="font-bold text-white">Resort Luxury <span class="text-yellow-500">★★★★★</span></div>
+                  <div class="text-[10px] text-gray-400">Recupera 100% Energia + 0.1 Reputazione. Costo: €600</div>
+              </button>
+          </div>
+          <button onclick="closeModals()" class="mt-4 w-full p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
+      </div>
+  </div>
+
+  <!-- Modal: Leasing -->
+  <div id="modal-leasing" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex justify-center items-center pointer-events-auto">
+    <div class="bg-panel border border-white/10 p-6 rounded-2xl w-[450px] shadow-2xl">
+        <h2 class="text-gold font-bold uppercase mb-1">Contratto di Leasing</h2>
+        <p id="lease-car-name" class="text-xs text-gray-400 mb-4">Mercedes Classe E</p>
+        <div class="mb-4">
+            <label class="text-[10px] uppercase text-gray-500 mb-2 block">Durata Contratto (Mesi)</label>
+            <input type="range" id="lease-duration" min="12" max="48" step="12" value="24" class="w-full accent-gold" oninput="updateLeasePreview()">
+            <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                <span>12</span><span id="lease-duration-display" class="font-bold text-white">24 Mesi</span><span>48</span>
+            </div>
+        </div>
+        <div class="mb-4">
+            <label class="text-[10px] uppercase text-gray-500 mb-2 block">Chilometraggio Annuo Incluso</label>
+            <input type="range" id="lease-km" min="20000" max="80000" step="10000" value="30000" class="w-full accent-gold" oninput="updateLeasePreview()">
+            <div class="flex justify-between text-[10px] text-gray-400 mt-1">
+                <span>20k</span><span id="lease-km-display" class="font-bold text-white">30k km</span><span>80k</span>
+            </div>
+        </div>
+        <div class="bg-black/50 p-4 rounded-lg mb-4 border border-white/5">
+            <div class="flex justify-between text-xs mb-1"><span>Rata Base:</span><span id="lease-base-price">€0</span></div>
+            <div class="flex justify-between text-xs mb-1"><span>Maggiorazione KM/Durata:</span><span id="lease-km-price">€0</span></div>
+            <div class="w-full h-[1px] bg-white/10 my-2"></div>
+            <div class="flex justify-between font-bold"><span>Totale Mensile:</span><span id="lease-total-price" class="text-gold">€0</span></div>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="closeModals()" class="flex-1 p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
+            <button id="btn-confirm-lease" onclick="confirmLease()" class="flex-1 p-2 bg-gold hover:bg-yellow-500 text-black font-bold rounded text-xs uppercase">Firma Contratto</button>
+        </div>
+    </div>
+  </div>
+
+  <div id="save-indicator" class="fixed bottom-20 right-6 z-[60] pointer-events-none text-[10px] text-green-400/80 font-mono bg-black/60 border border-green-500/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-opacity duration-700" style="opacity:0">💾 Salvataggio completato</div>
+  <div id="notifications" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+
+  <div id="news-ticker-wrap">
+    <div id="news-ticker-track"></div>
+  </div>
+
+  <!-- Mapbox GL JS v3.6 -->
+  <script src='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js'></script>
+  <!-- Three.js r128 -->
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'></script>
+
+  <script src="data.js"></script>
+  <script src="saveSystem.js"></script>
+  <script src="engine.js"></script>
+  <script src="dispatcher.js"></script>
+  <script>
+    (function initTicker() {
+      const track = document.getElementById('news-ticker-track');
+      if (!track || typeof WORLD_NEWS === 'undefined') return;
+      const items = [...WORLD_NEWS, ...WORLD_NEWS, ...WORLD_NEWS];
+      track.innerHTML = items.map(n => `<span>${n}</span>`).join('');
+    })();
+  </script>
+</body>
+</html>

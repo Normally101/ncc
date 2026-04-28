@@ -1,0 +1,3085 @@
+'use strict';
+/* ================================================================
+   engine.js — Olga Vision Agency · Tycoon Engine v8.0 (FULL)
+   ================================================================ */
+
+let tempLeaseTier = null;
+
+let gameState = {
+    cash: 5000, reputation: 0.0, energy: 100,
+    day: 1, month: 1, hour: 8, minute: 0, paused: false,
+    fleet: [], drivers: [], staff: [], investments: [],
+    pendingRides: [], activeRides: [], emails: [],
+    unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
+    availableRecruits: [],
+    weather: 'sole', weatherHoursLeft: 6,
+    activeCampaign: null,
+    activeFines: [],
+    achievements: [],
+    loans: [],
+    newGamePlusCount: 0,
+    // Fuel depot + tire depot
+    fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85,
+    depositoGomme: 0,
+    // Seized vehicles (grey market busted)
+    seizedCars: [],
+    // Police Heat System (0-100)
+    policeHeat: 0,
+    // Bankruptcy tracker
+    consecutiveRedDays: 0,
+    // Client blacklist (POI IDs)
+    blacklistedClients: [],
+    // HQ level (0-3)
+    hqLevel: 0,
+    // Active dynamic event
+    activeDynamicEvent: null,  // { id, name, icon, endsHour, ...effects }
+    // Strike state
+    activeStrike: null,        // { endsHour }
+    // Prestige (unlocked after 5.0★)
+    prestige: 0,
+    // Price War system
+    pricewars: [],          // [{ regionId, endsDay, monopolyEndsDay, discountPct }]
+    // Shadow mission counter
+    shadowMissionsTotal: 0,
+    // ── HOLDING FINANZIARIA ──────────────────────────────────────
+    stockPrices: {},        // { OIL: 85.0, CARS: 145.0, ... }
+    stockHoldings: {},      // { OIL: { shares: 100, avgCost: 83.0 }, ... }
+    stockHistory: {},       // { OIL: [85.0, 84.2, ...], ... } — last 24 hourly prices
+    shortPositions: {},     // { TECH: { shares: 50, openPrice: 312.0 } }
+    brokerInvestments: [],  // [{ id, capital, risk, startHour, endsHour, minRet, maxRet, resolved }]
+    lifestyleAssets: [],    // array of asset IDs owned
+    creditScore: 300,       // 300-900 (like FICO)
+    totalDividendsEarned: 0,
+    totalStockProfit: 0,
+    diamondContractsCompleted: 0,
+    // ── MACRO-ECONOMIA ───────────────────────────────────────────
+    inflationRate: 0.020,   // 2.0% — varia ogni 24h di gioco
+    interestRateBase: 0.045,// tasso base BCE — segue inflazione con lag
+    // ── LOBBY & POLITICA ─────────────────────────────────────────
+    lobbyingPoints: 0,      // 0-200
+    activeLobbyLaws: [],    // [{ id, endsDay }] (laws with duration); permanent ones stored as just id
+    // ── AZIENDA ──────────────────────────────────────────────────
+    companyName: 'Olga Vision Agency',
+    companyLogo: '👁️'
+};
+
+function hasInvestment(id) { return gameState.investments.includes(id); }
+
+let _activeTab = 'map';
+function _tabIs(t) { return _activeTab === t; }
+
+// ─── RANKING ──────────────────────────────────────────────────────
+function _getRankPosition() {
+    return RIVALS.filter(r => r.rep > gameState.reputation).length + 1;
+}
+
+// ─── STAGIONALITÀ ────────────────────────────────────────────────
+function _getSeasonalMult() {
+    const m = gameState.month;
+    const season = SEASONAL_MULT.find(s => s.months.includes(m));
+    return season || { priceMult: 1.0, rideBonus: 1.0, name: '' };
+}
+
+// ─── ACHIEVEMENTS ────────────────────────────────────────────────
+function _checkAchievements() {
+    if (typeof ACHIEVEMENTS === 'undefined') return;
+    ACHIEVEMENTS.forEach(ach => {
+        if (gameState.achievements.includes(ach.id)) return;
+        if (ach.check(gameState)) {
+            gameState.achievements.push(ach.id);
+            showBigEvent(ach.icon, `Obiettivo Sbloccato: ${ach.name}`, ach.desc);
+            logToMap(`🏅 Achievement: ${ach.name}`);
+            if (typeof renderTabRanking === 'function') renderTabRanking();
+        }
+    });
+}
+
+// ─── BIG EVENT POPUP ─────────────────────────────────────────────
+function showBigEvent(icon, title, body) {
+    let el = document.getElementById('big-event-modal');
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'big-event-modal';
+        el.className = 'fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center';
+        el.addEventListener('click', () => el.remove());
+        document.body.appendChild(el);
+    }
+    el.innerHTML = `
+        <div class="bg-panel border border-gold/50 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center mx-4" onclick="event.stopPropagation()">
+            <div class="text-5xl mb-4">${icon}</div>
+            <h2 class="text-gold font-bold uppercase tracking-widest text-sm mb-3">${title}</h2>
+            <p class="text-gray-300 text-[11px] leading-relaxed mb-6">${body}</p>
+            <button onclick="document.getElementById('big-event-modal').remove()" class="btn-gold px-8 py-2">OK, Capito</button>
+        </div>`;
+    el.classList.remove('hidden');
+}
+window.showBigEvent = showBigEvent;
+
+// ─── SAVE / LOAD ──────────────────────────────────────────────────
+function _serializeRide(r) {
+    if (!r || !r.fromPoi) return null;
+    return {
+        id: r.id, fromPoi: r.fromPoi.id, toPoi: r.toPoi.id,
+        tier: r.tier, price: r.price, duration: r.duration,
+        elapsed: r.elapsed || 0, driverId: r.driverId, hasIncident: r.hasIncident
+    };
+}
+function _deserializeRide(r) {
+    if (!r) return null;
+    const from = POIS[r.fromPoi], to = POIS[r.toPoi];
+    if (!from || !to) return null;
+    return { ...r, fromPoi: from, toPoi: to };
+}
+
+function saveGame() {
+    // Delegate to slot-aware save if saveSystem is loaded
+    if (typeof window.saveCurrentSlot === 'function' && window.currentSlotIndex !== null) {
+        window.saveCurrentSlot();
+        _showSaveIndicator();
+        return;
+    }
+    // Fallback: legacy key (shouldn't happen in normal flow)
+    try {
+        const save = {
+            ...gameState,
+            pendingRides: gameState.pendingRides.map(_serializeRide).filter(Boolean),
+            activeRides:  gameState.activeRides.map(_serializeRide).filter(Boolean),
+            drivers: gameState.drivers.map(d => ({ ...d, queue: d.queue.map(_serializeRide).filter(Boolean) }))
+        };
+        localStorage.setItem('olgaVisionSave_v2', JSON.stringify(save));
+        _showSaveIndicator();
+    } catch(e) { console.error('Save failed:', e); }
+}
+
+function loadGame() {
+    try {
+        // Slot-aware: read from the selected slot key
+        let raw = null;
+        if (window.currentSlotIndex !== null) {
+            const SLOT_KEYS = ['olgaVisionSlot_1','olgaVisionSlot_2','olgaVisionSlot_3'];
+            raw = localStorage.getItem(SLOT_KEYS[window.currentSlotIndex]);
+        }
+        // Fallback to legacy key for non-slot contexts
+        if (!raw) raw = localStorage.getItem('olgaVisionSave_v2');
+        if (!raw) return false;
+        const save = JSON.parse(raw);
+
+        // Deserialize ride POI refs; put active rides back into pending (safe restart)
+        save.pendingRides = (save.pendingRides || []).map(_deserializeRide).filter(Boolean);
+        const prevActive  = (save.activeRides  || []).map(_deserializeRide).filter(Boolean);
+        prevActive.forEach(r => { r.elapsed = 0; delete r.driverId; });
+        save.pendingRides = [...save.pendingRides, ...prevActive];
+        save.activeRides  = [];
+
+        (save.drivers || []).forEach(d => {
+            d.queue = (d.queue || []).map(_deserializeRide).filter(Boolean);
+            if (d.status === 'busy') d.status = 'idle';
+            if (d.fatigue  === undefined) d.fatigue  = 0;
+            if (d.restHoursLeft === undefined) d.restHoursLeft = 0;
+        });
+        if (!save.availableRecruits) save.availableRecruits = [];
+        if (!save.activeFines) save.activeFines = [];
+        if (!save.achievements) save.achievements = [];
+        if (!save.loans) save.loans = [];
+        if (save.newGamePlusCount === undefined) save.newGamePlusCount = 0;
+        if (save.fuelTank === undefined) save.fuelTank = 0;
+        if (save.fuelTankCapacity === undefined) save.fuelTankCapacity = 10000;
+        if (save.fuelPrice === undefined) save.fuelPrice = 1.85;
+        if (!save.seizedCars) save.seizedCars = [];
+        if (save.policeHeat === undefined) save.policeHeat = 0;
+        if (save.consecutiveRedDays === undefined) save.consecutiveRedDays = 0;
+        if (!save.blacklistedClients) save.blacklistedClients = [];
+        if (save.hqLevel === undefined) save.hqLevel = 0;
+        if (save.activeDynamicEvent === undefined) save.activeDynamicEvent = null;
+        if (!save.recentEventIds) save.recentEventIds = [];
+        if (!save._hubNewEvent) save._hubNewEvent = false;
+        if (save.activeStrike === undefined) save.activeStrike = null;
+        if (save.prestige === undefined) save.prestige = 0;
+        if (save.depositoGomme === undefined) save.depositoGomme = 0;
+        if (!save.pricewars) save.pricewars = [];
+        if (save.shadowMissionsTotal === undefined) save.shadowMissionsTotal = 0;
+        // Holding finanziaria
+        if (!save.stockPrices) save.stockPrices = {};
+        if (!save.stockHoldings) save.stockHoldings = {};
+        if (!save.stockHistory) save.stockHistory = {};
+        if (!save.shortPositions) save.shortPositions = {};
+        if (!save.brokerInvestments) save.brokerInvestments = [];
+        if (!save.lifestyleAssets) save.lifestyleAssets = [];
+        if (save.creditScore === undefined) save.creditScore = 300;
+        if (save.totalDividendsEarned === undefined) save.totalDividendsEarned = 0;
+        if (save.totalStockProfit === undefined) save.totalStockProfit = 0;
+        if (save.diamondContractsCompleted === undefined) save.diamondContractsCompleted = 0;
+        // Macro-economia
+        if (save.inflationRate     === undefined) save.inflationRate     = 0.020;
+        if (save.interestRateBase  === undefined) save.interestRateBase  = 0.045;
+        // Lobby
+        if (save.lobbyingPoints    === undefined) save.lobbyingPoints    = 0;
+        if (!save.activeLobbyLaws)  save.activeLobbyLaws = [];
+        // Company identity
+        if (!save.companyName) save.companyName = 'Olga Vision Agency';
+        if (!save.companyLogo) save.companyLogo = '👁️';
+        // Driver satisfaction migration
+        (save.drivers || []).forEach(d => {
+            if (d.satisfaction === undefined) d.satisfaction = 70;
+            if (d.isOnStrike   === undefined) d.isOnStrike   = false;
+        });
+        // Clear stale manual outOfService on old saves
+        (save.fleet || []).forEach(c => { if (c.outOfService === undefined) c.outOfService = null; });
+        // Migrate drivers: add specialty if missing
+        (save.drivers || []).forEach(d => {
+            if (d.specialty === undefined) d.specialty = null;
+        });
+        // Migrate drivers: add xp/level if missing
+        (save.drivers || []).forEach(d => {
+            if (d.xp    === undefined) d.xp    = 0;
+            if (d.level === undefined) d.level = 0;
+            if (d.upgrades === undefined) d.upgrades = [];
+        });
+        // Migrate fleet: add fuel/mileage/tirePressure if missing
+        (save.fleet || []).forEach(c => {
+            if (c.fuel         === undefined) c.fuel         = 100;
+            if (c.mileage      === undefined) c.mileage      = 0;
+            if (c.tirePressure === undefined) c.tirePressure = 100;
+            if (!c.upgrades) c.upgrades = [];
+        });
+        // Migrate drivers: add morale/hiredDay if missing
+        (save.drivers || []).forEach(d => {
+            if (d.morale    === undefined) d.morale    = 100;
+            if (d.hiredDay  === undefined) d.hiredDay  = 1;
+        });
+        Object.assign(gameState, save);
+        return true;
+    } catch(e) { console.error('Load failed:', e); localStorage.removeItem('olgaVisionSave_v2'); return false; }
+}
+
+function _showSaveIndicator() {
+    const el = document.getElementById('save-indicator');
+    if (!el) return;
+    el.style.opacity = '1';
+    clearTimeout(_showSaveIndicator._t);
+    _showSaveIndicator._t = setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
+window.resetGame = function() {
+    if (!confirm('Cancellare tutti i progressi e ricominciare da capo?')) return;
+    localStorage.removeItem('olgaVisionSave_v2');
+    location.reload();
+};
+
+// ─── TRAFFICO DINAMICO ────────────────────────────────────────────
+function _getTrafficMult() {
+    const h = gameState.hour;
+    if (h >= 7  && h <  9)  return 0.70;   // Rush mattutino
+    if (h >= 17 && h < 19)  return 0.70;   // Rush serale
+    if (h >= 22 || h <  6)  return 1.25;   // Notte libera
+    return 1.00;
+}
+
+// ─── RECLUTAMENTO ─────────────────────────────────────────────────
+function _generateRecruit() {
+    const hired = new Set(gameState.drivers.map(d => d.name));
+    const avail = new Set((gameState.availableRecruits || []).map(r => r.name));
+    const pool = DRIVER_POOL.filter(p => !hired.has(p.name) && !avail.has(p.name));
+    if (pool.length === 0) return null;
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    const salaryVariance = Math.round((Math.random() - 0.5) * 4) * 50;
+    const trait = DRIVER_TRAITS[Math.floor(Math.random() * DRIVER_TRAITS.length)];
+    return { name: p.name, tier: p.tier, salary: p.salary + salaryVariance, trait };
+}
+
+function _refreshRecruits() {
+    if (!gameState.availableRecruits) gameState.availableRecruits = [];
+    while (gameState.availableRecruits.length < 3) {
+        const r = _generateRecruit();
+        if (!r) break;
+        gameState.availableRecruits.push(r);
+    }
+}
+
+function _kickstartIdleDrivers() {
+    gameState.drivers.forEach(driver => {
+        if (driver.status === 'idle' && driver.queue.length > 0) startNextRide(driver);
+    });
+}
+
+function initGame(fresh = true) {
+    if (fresh) {
+        gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1 });
+        gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [] });
+        _refreshRecruits();
+    } else {
+        _refreshRecruits();
+        setTimeout(_kickstartIdleDrivers, 500);
+        setTimeout(_applyWeatherOverlay, 800);
+        // Redraw map with saved unlocked regions
+        setTimeout(() => {
+            if (typeof drawHighways === 'function') drawHighways();
+            if (typeof drawPOIs === 'function') drawPOIs();
+        }, 400);
+    }
+
+    _initStockPrices();
+
+    setInterval(gameLoop, 600);
+    setInterval(generatePOIRide, 6000);
+    setInterval(generateEmailEvent, 40000);
+    setInterval(generateWorldNews, 60000);
+    setInterval(_maybeGenerateFine, 90000);
+    setInterval(_maybeGenerateZTLFine, 45000);
+    setInterval(_maybePoliceCheckpoint, 50000);
+    setInterval(_maybeParazziEvent, 35000);
+    setInterval(_maybeGreyMarketMission, 120000);
+    setInterval(_maybeShadowMission, 150000);
+    setInterval(_maybeGenerateDynamicEvent, 180000);
+    setInterval(_maybeDiamondContract, 240000);
+    setInterval(saveGame, 30000);
+
+    updateUI();
+}
+
+function gameLoop() {
+    if (gameState.paused) return;
+    gameState.minute += 5;
+
+    if (gameState.minute >= 60) {
+        gameState.minute = 0; gameState.hour++;
+        gameState.energy = Math.max(0, gameState.energy - 0.5);
+        _tickFatigue();
+        _tickWeather();
+        _tickEmails();
+        _tickFuelPrice();
+        _tickDynamicEvent();
+        _maybeStrike();
+        _checkPrestige();
+        autoNegotiateEmails();
+        _tickStockMarket();
+        _tickBrokerInvestments();
+        _payStockDividends();
+        _updateCreditScore();
+        if (hasInvestment('inv_app')) { generatePOIRide(); generatePOIRide(); }
+        if (hasInvestment('inv_hangar')) generatePOIRide('ultra');
+        // Stagionalità: genera corse extra nelle alte stagioni
+        const season = _getSeasonalMult();
+        if (season.rideBonus > 1.0 && Math.random() < (season.rideBonus - 1.0) * 2) generatePOIRide();
+        if (gameState.activeCampaign) {
+            const camp = MARKETING_CAMPAIGNS.find(c => c.id === gameState.activeCampaign);
+            if (camp) for (let i = 0; i < camp.extRidesPerHour; i++) generatePOIRide();
+        }
+    }
+
+    // Rival AI tick ogni 15 minuti di gioco
+    if (gameState.minute % 15 === 0) _tickRivalsActive();
+
+    autoDispatchRides();
+    _kickstartIdleDrivers(); // safety net: riavvia driver idle con coda non vuota
+
+    if (gameState.hour >= 24) {
+        gameState.hour = 0; gameState.day++;
+        if (gameState.day > 30) { gameState.day = 1; gameState.month = (gameState.month % 12) + 1; }
+        processDailyRoutines();
+    }
+
+    for (let i = gameState.activeRides.length - 1; i >= 0; i--) {
+        let ride = gameState.activeRides[i];
+        ride.elapsed += 5000;
+        if (ride.elapsed >= ride.duration) {
+            completeRide(ride);
+            gameState.activeRides.splice(i, 1);
+        }
+    }
+
+    // Il visual update è gestito nel dispatcher tramite requestAnimationFrame
+    updateUI();
+}
+
+// ─── FATIGUE SYSTEM ───
+function _sendDriverToRest(driver, hours) {
+    driver.status = 'resting';
+    driver.restHoursLeft = hours;
+    driver.queue = [];
+}
+
+function _tickFatigue() {
+    const hasHR = gameState.staff.some(s => s.id === 'hr');
+
+    // CEO energy management
+    const hasLounge = hasInvestment('inv_vip_lounge_hq');
+    // Lifestyle: attico e villa danno bonus energia CEO
+    const lifestyleEnergyBonus = (gameState.lifestyleAssets || []).reduce((s, id) => {
+        const a = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(x => x.id === id);
+        return s + (a ? (a.energyBonus || 0) : 0);
+    }, 0);
+    if (hasHR || hasLounge || lifestyleEnergyBonus > 0) {
+        const ceoOnRide = gameState.activeRides.some(r => r.driverId === 'ceo');
+        const energyGain = (hasLounge ? 2.0 : 1.0) + lifestyleEnergyBonus;
+        if (!ceoOnRide) gameState.energy = Math.min(100, gameState.energy + energyGain);
+        // Force-warn CEO at critical energy
+        if (gameState.energy < 15 && !gameState._ceoRestWarned) {
+            gameState._ceoRestWarned = true;
+            showBigEvent('😴', 'HR: Riposo CEO Necessario', `Energia CEO al ${Math.round(gameState.energy)}%! L'HR Specialist ha bloccato nuove corse. Vai in hotel per recuperare prima di riprendere i servizi.`);
+            logToMap(`😴 HR: CEO in riposo forzato — energia critica (${Math.round(gameState.energy)}%)`);
+        }
+        if (gameState.energy >= 20) gameState._ceoRestWarned = false;
+    }
+
+    gameState.drivers.forEach(driver => {
+        if (driver.id === 'ceo') return;
+        if (driver.fatigue  === undefined) driver.fatigue  = 0;
+        if (driver.morale   === undefined) driver.morale   = 100;
+        if (driver.restHoursLeft === undefined) driver.restHoursLeft = 0;
+
+        // Morale: fatica alta → erosione morale; basso stipendio → erosione lenta
+        if (driver.fatigue > 70) driver.morale = Math.max(0, driver.morale - 0.5);
+        else if (driver.fatigue < 30) driver.morale = Math.min(100, driver.morale + 0.3);
+        if ((driver.salary || 0) < 2500) driver.morale = Math.max(0, driver.morale - 0.1);
+
+        // Burnout: morale a zero → dimissioni
+        if (driver.morale <= 0 && driver.status !== 'resting') {
+            const idx = gameState.drivers.indexOf(driver);
+            if (idx > -1) gameState.drivers.splice(idx, 1);
+            logToMap(`😤 BURNOUT: ${driver.name} ha rassegnato le dimissioni!`);
+            showBigEvent('😤', `${driver.name} si è dimesso!`, 'Burnout totale. Gestisci meglio il riposo e i salari!');
+            if (_tabIs('staff') && typeof renderTabStaff === 'function') renderTabStaff();
+            return;
+        }
+
+        if (driver.status === 'resting') {
+            // Lifestyle staff bonus: yacht +30%, villa +15%, lounge +30%
+            const lifestyleStaffMult = (gameState.lifestyleAssets || []).reduce((s, id) => {
+                const a = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(x => x.id === id);
+                return s + (a ? (a.staffBonus || 0) : 0);
+            }, 0);
+            const baseFatigueRecovery = hasInvestment('inv_vip_lounge_hq') ? 26 : 20;
+            const fatigueRecovery = Math.round(baseFatigueRecovery * (1 + lifestyleStaffMult));
+            driver.fatigue = Math.max(0, driver.fatigue - fatigueRecovery);
+            driver.morale  = Math.min(100, driver.morale + 5);
+            if (driver.restHoursLeft > 0) driver.restHoursLeft--;
+            if (driver.restHoursLeft <= 0) {
+                driver.status = 'idle';
+                driver.fatigue = 0;
+                logToMap(`✅ ${driver.name} riposato: di nuovo disponibile.`);
+                if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+                if (_tabIs('staff') && typeof renderTabStaff === 'function') renderTabStaff();
+            }
+        } else if (driver.fatigue >= 85) {
+            // Con HR: riposo automatico a 85% se libero o in attesa
+            // Senza HR: riposo forzato a 100% (o avviso a 85%)
+            if (hasHR && driver.status !== 'busy') {
+                _sendDriverToRest(driver, 6);
+                logToMap(`🛌 HR: ${driver.name} in riposo forzato (fatica: ${Math.floor(driver.fatigue)}%).`);
+                if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+            } else if (hasHR && driver.status === 'busy') {
+                driver.queue = []; // svuota coda, riposo dopo la corsa corrente
+            } else if (!hasHR && driver.fatigue >= 100 && driver.status !== 'busy') {
+                // Senza HR: riposo obbligatorio a 100% quando libero
+                _sendDriverToRest(driver, 6);
+                logToMap(`🛌 FORZATO: ${driver.name} al riposo obbligatorio (100% fatica).`);
+                if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+            }
+        }
+    });
+    _tickDriverSatisfaction();
+}
+
+// ─── METEO ────────────────────────────────────────────────────────
+function _tickWeather() {
+    if (!gameState.weatherHoursLeft) gameState.weatherHoursLeft = 6;
+    gameState.weatherHoursLeft--;
+    if (gameState.weatherHoursLeft <= 0) {
+        const roll = Math.random();
+        const prev = gameState.weather;
+        // Probabilità: 60% sole, 30% pioggia, 10% neve (solo inverno)
+        const isWinter = gameState.month === 12 || gameState.month <= 2;
+        if (roll < 0.60) gameState.weather = 'sole';
+        else if (roll < 0.90 || !isWinter) gameState.weather = 'pioggia';
+        else gameState.weather = 'neve';
+        gameState.weatherHoursLeft = 4 + Math.floor(Math.random() * 5); // 4-8h
+        if (prev !== gameState.weather) {
+            const ws = WEATHER_STATES.find(w => w.id === gameState.weather);
+            logToMap(`${ws.icon} Meteo cambiato: ${ws.label}${gameState.weather !== 'sole' ? ' — tariffe +' + Math.round((ws.priceMult-1)*100) + '%' : ''}`);
+            _applyWeatherOverlay();
+        }
+    }
+}
+
+function _applyWeatherOverlay() {
+    const overlay = document.getElementById('weather-overlay');
+    if (!overlay) return;
+    overlay.className = 'fixed inset-0 pointer-events-none z-[2] transition-all duration-[2000ms]';
+    if (gameState.weather === 'pioggia') overlay.classList.add('weather-rain');
+    else if (gameState.weather === 'neve') overlay.classList.add('weather-snow');
+    const icon = document.getElementById('tb-weather-icon');
+    const label = document.getElementById('tb-weather-label');
+    const ws = WEATHER_STATES.find(w => w.id === gameState.weather);
+    if (icon) icon.innerText = ws?.icon || '☀️';
+    if (label) label.innerText = ws?.label || 'Sereno';
+}
+
+// ─── MARKETING ────────────────────────────────────────────────────
+window.activateCampaign = function(id) {
+    const camp = MARKETING_CAMPAIGNS.find(c => c.id === id);
+    if (!camp) return;
+    if (gameState.activeCampaign === id) return;
+    gameState.activeCampaign = id;
+    logToMap(`📣 Campagna attivata: ${camp.name}`);
+    if(typeof showNotification==='function') showNotification(`Campagna "${camp.name}" attivata!`, 'success');
+    if(typeof renderTabMarketing==='function') renderTabMarketing();
+};
+
+window.deactivateCampaign = function() {
+    if (!gameState.activeCampaign) return;
+    gameState.activeCampaign = null;
+    logToMap('📣 Campagna marketing disattivata.');
+    if(typeof showNotification==='function') showNotification('Campagna disattivata.', 'success');
+    if(typeof renderTabMarketing==='function') renderTabMarketing();
+};
+
+window.sendDriverToRest = function(driverId) {
+    const driver = gameState.drivers.find(d => d.id === driverId);
+    if (!driver || driver.status === 'busy' || driver.status === 'resting') return;
+    _sendDriverToRest(driver, 6);
+    logToMap(`🛌 ${driver.name} mandato in riposo manuale.`);
+    if (typeof showNotification === 'function') showNotification(`${driver.name} in riposo per 6h.`, 'success');
+    if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+    if (_tabIs('staff') && typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+// ─── LOG E WORLD NEWS ───
+function logToMap(msg) {
+    const logContainer = document.getElementById('map-log');
+    if(!logContainer) return;
+    const entry = document.createElement('div');
+    entry.className = "border-b border-white/5 pb-1 mb-1 text-[9px] text-gray-300";
+    entry.innerText = `[${String(gameState.hour).padStart(2,'0')}:${String(gameState.minute).padStart(2,'0')}] ${msg}`;
+    logContainer.prepend(entry);
+    if(logContainer.children.length > 15) logContainer.lastChild.remove();
+}
+
+function generateWorldNews() {
+    if(Math.random() > 0.5) {
+        const news = WORLD_NEWS[Math.floor(Math.random() * WORLD_NEWS.length)];
+        window._lastNewsForStocks = news; // feed to stock market sentiment
+        logToMap(`🌍 NEWS: ${news}`);
+    }
+}
+
+function _tickEmails() {
+    const gameHour = gameState.day * 24 + gameState.hour;
+    let expired = 0;
+    gameState.emails = gameState.emails.filter(e => {
+        if (e.status !== 'unread') return false; // remove resolved too
+        if (e.expiresAt && gameHour >= e.expiresAt) {
+            expired++;
+            logToMap(`⏰ Scaduta: "${e.subject}"`);
+            return false;
+        }
+        return true;
+    });
+    if (expired > 0 && typeof showNotification === 'function') {
+        showNotification(`⏰ ${expired} offerta${expired>1?'e':''} scaduta${expired>1?'e':''}!`, 'error');
+    }
+    // Hard cap: max 5 unread messages — drop oldest
+    while (gameState.emails.filter(e => e.status === 'unread').length > 5) {
+        const idx = gameState.emails.findIndex(e => e.status === 'unread');
+        if (idx > -1) gameState.emails.splice(idx, 1);
+    }
+    if (_tabIs('emails') && typeof renderTabEmails === 'function') renderTabEmails();
+    const dot = document.getElementById('mail-dot');
+    const hasUnread = gameState.emails.some(e => e.status === 'unread');
+    if (dot) dot.classList.toggle('hidden', !hasUnread);
+}
+
+// ─── DRIVER XP & LEVELS ──────────────────────────────────────────
+function _checkDriverLevel(driver) {
+    const levels = DRIVER_LEVELS;
+    for (let i = levels.length - 1; i >= 0; i--) {
+        if (driver.xp >= levels[i].xpMin) {
+            if (driver.level !== i) {
+                driver.level = i;
+                const lvl = levels[i];
+                logToMap(`⭐ ${driver.name} ha raggiunto il livello ${lvl.name}!`);
+                showBigEvent('⭐', `${driver.name} — Livello ${lvl.name}!`, `${driver.name} ha guadagnato abbastanza esperienza. Bonus permanenti: +${Math.round((lvl.tipBonus-1)*100)}% mance, −${Math.round((1-lvl.fatigueBonus)*100)}% fatica.`);
+            }
+            return;
+        }
+    }
+}
+
+window.refillTires = function(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car) return;
+    if (car.tirePressure === undefined) car.tirePressure = 0;
+    const missing = 100 - car.tirePressure;
+    if (missing <= 0) { showNotification('Pressione gomme ottimale!', 'error'); return; }
+    const cost = Math.ceil(missing * 0.8); // cheap — tire inflation
+    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost}`, 'error'); return; }
+    gameState.cash -= cost;
+    car.tirePressure = 100;
+    logToMap(`🔧 ${car.name}: pressione gomme ripristinata. (−€${cost})`);
+    updateUI();
+    if (typeof closeModals === 'function') closeModals();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+    saveGame();
+};
+
+// ─── REPUTAZIONE 2.0 ─────────────────────────────────────────────
+function _getPrestige() { return Math.max(0, +(gameState.reputation - 5.0).toFixed(2)); }
+
+function _getLoanInterestRate() {
+    const base = gameState.interestRateBase || 0.045;
+    const score = gameState.creditScore || 600;
+    // Credit score adjusts spread around BCE base rate
+    if (score >= 750) return +(base - 0.005).toFixed(3);
+    if (score >= 650) return +(base + 0.005).toFixed(3);
+    if (score >= 550) return +(base + 0.020).toFixed(3);
+    if (score >= 450) return +(base + 0.045).toFixed(3);
+    return +(base + 0.080).toFixed(3);
+}
+
+function _checkPrestige() {
+    if (gameState.reputation >= 5.0 && gameState.prestige === 0) {
+        gameState.prestige = 0.01;
+        showBigEvent('👑', 'PRESTIGIO SBLOCCATO!', 'Hai raggiunto la massima reputazione. Da ora ogni punto extra entra nel Registro del Prestigio, aumentando il valore dell\'azienda e sbloccando clienti irraggiungibili.');
+        logToMap('👑 PRESTIGIO: soglia 5★ superata. Valore aziendale in crescita.');
+    }
+    if (gameState.reputation > 5.0) {
+        gameState.prestige = +(gameState.reputation - 5.0).toFixed(2);
+        gameState.reputation = 5.0;
+    }
+}
+
+// ─── POLICE HEAT SYSTEM ──────────────────────────────────────────
+function _tickPoliceHeat() {
+    if (!gameState.policeHeat) gameState.policeHeat = 0;
+    gameState.policeHeat = Math.max(0, gameState.policeHeat - 1.5); // daily decay
+
+    const heatPct = gameState.policeHeat;
+    if (heatPct >= 80) {
+        if (Math.random() < 0.25) _maybePoliceCheckpoint(); // extra checkpoint
+        if (gameState.day % 2 === 0) logToMap(`🚨 ALLERTA: Polizia in sorveglianza attiva (Calore ${Math.floor(heatPct)}%). Evita il Grey Market!`);
+    } else if (heatPct >= 50) {
+        logToMap(`⚠️ Calore Polizia al ${Math.floor(heatPct)}%. Attenzione nelle prossime corse.`);
+    }
+}
+
+// ─── FALLIMENTO TECNICO ──────────────────────────────────────────
+function _triggerBankruptcy() {
+    const ownedCars = gameState.fleet.filter(c => !c.isLease);
+    const toSeize = ownedCars.slice(0, Math.max(1, Math.ceil(ownedCars.length / 2)));
+    toSeize.forEach(car => {
+        const idx = gameState.fleet.indexOf(car);
+        if (idx > -1) gameState.fleet.splice(idx, 1);
+        // Reassign drivers left without a car
+        gameState.drivers.forEach(d => { if (d.assignedCarId === car.id) d.assignedCarId = null; });
+    });
+    gameState.consecutiveRedDays = 0;
+    gameState.cash = Math.max(gameState.cash, 800);
+    showBigEvent('💥', 'FALLIMENTO TECNICO!', `Il tribunale ha emesso un decreto di pignoramento. ${toSeize.length} veicoli confiscati per coprire i debiti. Riorganizza le finanze immediatamente.`);
+    logToMap(`💥 PIGNORAMENTO: ${toSeize.length} auto sequestrate dal tribunale.`);
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+}
+
+// ─── SINDACATO — SCIOPERO ────────────────────────────────────────
+function _maybeStrike() {
+    if (gameState.activeStrike) {
+        const curHour = gameState.day * 24 + gameState.hour;
+        if (curHour >= gameState.activeStrike.endsHour) {
+            gameState.activeStrike = null;
+            logToMap('✅ Sciopero terminato: autisti di nuovo operativi.');
+            showNotification('✅ Sciopero finito! Autisti di ritorno.', 'success');
+        }
+        return;
+    }
+    const drivers = gameState.drivers.filter(d => d.id !== 'ceo' && d.morale !== undefined);
+    if (!drivers.length) return;
+    const avgMorale = drivers.reduce((s, d) => s + (d.morale || 100), 0) / drivers.length;
+    if (avgMorale < 25 && Math.random() < 0.18) {
+        gameState.activeStrike = { endsHour: gameState.day * 24 + gameState.hour + 4 };
+        gameState.drivers.forEach(d => {
+            if (d.id !== 'ceo' && d.status === 'idle') { d.status = 'resting'; d.restHoursLeft = 4; }
+        });
+        showBigEvent('✊', 'SCIOPERO AUTISTI!', `Morale medio al ${Math.floor(avgMorale)}%. Gli autisti hanno abbandonato i turni per 4 ore. Aumenta i salari, gestisci il riposo, evita il burnout.`);
+        logToMap('✊ SCIOPERO: corse sospese per 4 ore. Morale critico!');
+    }
+}
+
+// ─── EVENTI DINAMICI AAA ─────────────────────────────────────────
+function _maybeGenerateDynamicEvent() {
+    if (gameState.activeDynamicEvent) return; // one active at a time
+    if (!TITAN_EVENTS || Math.random() > 0.14) return;
+
+    // Anti-duplicate: build set of recently seen event ids (last 10)
+    if (!gameState.recentEventIds) gameState.recentEventIds = [];
+    const recentSet = new Set(gameState.recentEventIds);
+
+    // Anti-duplicate city check: no two events in same city simultaneously
+    const activeCity = gameState.activeDynamicEvent?.city;
+
+    const eligible = TITAN_EVENTS.filter(ev => {
+        if (recentSet.has(ev.id)) return false; // skip recently played
+        if (ev.requiresReputation && gameState.reputation < ev.requiresReputation) return false;
+        if (ev.requiresArmored && !gameState.fleet.some(c => (c.upgrades||[]).includes('blindatura'))) return false;
+        if (activeCity && ev.city && ev.city === activeCity) return false; // city conflict
+        return true;
+    });
+    if (!eligible.length) {
+        // Reset history if exhausted
+        gameState.recentEventIds = [];
+        return;
+    }
+
+    // Weighted random: legendary < epic < rare < common
+    const rarityWeight = { common:50, rare:25, epic:12, legendary:4 };
+    const pool = [];
+    eligible.forEach(ev => {
+        const w = rarityWeight[ev.rarity] || 25;
+        for (let i = 0; i < w; i++) pool.push(ev);
+    });
+    const ev = pool[Math.floor(Math.random() * pool.length)];
+
+    const endsHour = gameState.day * 24 + gameState.hour + ev.duration;
+    gameState.activeDynamicEvent = { ...ev, endsHour };
+
+    // Track recent event ids (keep last 10)
+    gameState.recentEventIds.push(ev.id);
+    if (gameState.recentEventIds.length > 10) gameState.recentEventIds.shift();
+
+    if (ev.policeHeat > 0) gameState.policeHeat = Math.min(100, gameState.policeHeat + ev.policeHeat);
+
+    // Generate burst of rides for the event
+    const rideTier = ev.rideBias === 'any' ? null : ev.rideBias;
+    for (let i = 0; i < (ev.extraRidesPerHour || 3) * 2; i++) generatePOIRide(rideTier);
+
+    // Rarity color for big event
+    const rarityColors = { common:'#9ca3af', rare:'#3b82f6', epic:'#a855f7', legendary:'#d4af37' };
+    const rarityLabel  = { common:'Comune', rare:'Raro', epic:'Epico', legendary:'🌟 LEGGENDARIO' };
+    const descFull = `[${rarityLabel[ev.rarity]||''} · ${ev.category?.toUpperCase()||''}] ${ev.duration}h di gioco · Tariffe ×${ev.priceMult}${ev.surge ? ' · SURGE +40%' : ''}`;
+    showBigEvent(ev.icon, ev.name, descFull);
+    logToMap(`${ev.icon} [${(ev.rarity||'').toUpperCase()}] ${ev.name} — ×${ev.priceMult} tariffe × ${ev.duration}h`);
+
+    // Surge notification badge on hub
+    if (ev.surge || ev.category === 'emergency' || ev.category === 'entertainment') {
+        gameState._hubNewEvent = true;
+        const badge = document.getElementById('hub-event-badge');
+        if (badge) badge.classList.remove('hidden');
+    }
+
+    // Send ticker news
+    if (typeof WORLD_NEWS !== 'undefined') WORLD_NEWS.unshift(`${ev.icon} ${ev.name} — Tariffe ×${ev.priceMult} per ${ev.duration}h`);
+    if (typeof renderTabRanking === 'function') renderTabRanking();
+}
+
+function _tickDynamicEvent() {
+    if (!gameState.activeDynamicEvent) return;
+    const curHour = gameState.day * 24 + gameState.hour;
+    if (curHour >= gameState.activeDynamicEvent.endsHour) {
+        logToMap(`${gameState.activeDynamicEvent.icon} EVENTO "${gameState.activeDynamicEvent.name}" terminato.`);
+        gameState.activeDynamicEvent = null;
+    } else {
+        // Continuous extra rides
+        const ev = gameState.activeDynamicEvent;
+        const tier = ev.rideBias === 'any' ? null : ev.rideBias;
+        if (Math.random() < 0.6) generatePOIRide(tier);
+    }
+}
+
+// ─── CLIENT BLACKLIST ─────────────────────────────────────────────
+window.toggleBlacklist = function(poiId) {
+    if (!gameState.blacklistedClients) gameState.blacklistedClients = [];
+    const idx = gameState.blacklistedClients.indexOf(poiId);
+    if (idx > -1) {
+        gameState.blacklistedClients.splice(idx, 1);
+        showNotification(`✅ ${POIS[poiId]?.name || poiId} rimosso dalla blacklist.`, 'success');
+    } else {
+        gameState.blacklistedClients.push(poiId);
+        showNotification(`🚫 ${POIS[poiId]?.name || poiId} aggiunto alla blacklist.`, 'error');
+    }
+    saveGame();
+};
+
+// ─── HQ LEVEL ────────────────────────────────────────────────────
+function _getMaxStaff() {
+    if (typeof HQ_LEVELS === 'undefined') return 2;
+    const lvl = HQ_LEVELS.find(l => l.level === (gameState.hqLevel || 0));
+    return lvl ? lvl.maxStaff : 2;
+}
+
+// ─── FUEL DEPOT SYSTEM ───────────────────────────────────────────
+function _tickFuelPrice() {
+    const change = (Math.random() - 0.48) * 0.06; // slight upward bias simulates real market
+    gameState.fuelPrice = Math.max(1.55, Math.min(2.60, +(gameState.fuelPrice + change).toFixed(2)));
+
+    const hasLogMgr = gameState.staff.some(s => s.id === 'log_mgr');
+    if (!hasLogMgr || !hasInvestment('inv_fuel_depot')) return;
+
+    // Speculative buy alert when price hits a low
+    if (gameState.fuelPrice < 1.68) {
+        const space = gameState.fuelTankCapacity - gameState.fuelTank;
+        if (space > 3000 && Math.random() < 0.5) {
+            gameState.emails.push({
+                id: gameState.nextId++, sender: 'Logistics Manager',
+                subject: `🛢️ OPPORTUNITÀ: Gasolio a €${gameState.fuelPrice.toFixed(2)}/L — Acquistare ora!`,
+                type: 'info', status: 'unread',
+                expiresAt: gameState.day * 24 + gameState.hour + 3
+            });
+            const dot = document.getElementById('mail-dot');
+            if (dot) dot.classList.remove('hidden');
+        }
+    }
+    // Low stock alert
+    if (gameState.fuelTank < gameState.fuelTankCapacity * 0.15 && gameState.fuelTank > 0) {
+        logToMap(`⚠️ Logistics: deposito carburante sotto il 15% (${Math.floor(gameState.fuelTank)}L rimasti).`);
+    }
+}
+
+// ─── RIFORNIMENTO AUTOMATICO FINE CORSA ──────────────────────────
+// Chiamata automaticamente da completeRide() — il Logistics Manager gestisce tutto.
+function refillVehicle(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car) return;
+    if (car.fuel  === undefined) car.fuel  = 100;
+    if (car.tirePressure === undefined) car.tirePressure = 100;
+
+    let outReason = null;
+
+    // — Gasolio —
+    if (car.fuel < 99) {
+        const litresNeeded = (100 - car.fuel) * 0.5; // 1% serbatoio ≈ 0.5 L
+        if ((gameState.fuelTank || 0) >= litresNeeded) {
+            gameState.fuelTank -= litresNeeded;
+            car.fuel = 100;
+            logToMap(`⛽ ${car.name}: serbatoio pieno dal deposito. (${Math.floor(gameState.fuelTank)}L rimasti)`);
+        } else if ((gameState.fuelTank || 0) > 0) {
+            // Riempi parzialmente col poco che rimane
+            const litresAvail = gameState.fuelTank;
+            car.fuel = Math.min(100, car.fuel + Math.floor(litresAvail / 0.5));
+            gameState.fuelTank = 0;
+            outReason = 'fuel';
+            logToMap(`⚠️ ${car.name}: deposito gasolio ESAURITO. Auto ferma.`);
+            showNotification(`🔴 Deposito gasolio esaurito! ${car.name} non può partire.`, 'error');
+        } else {
+            outReason = 'fuel';
+            logToMap(`⚠️ ${car.name}: nessun gasolio nel deposito. Auto ferma.`);
+            showNotification(`🔴 Deposito gasolio vuoto! ${car.name} ferma in garage.`, 'error');
+        }
+    }
+
+    // — Gomme (sostituzione se usura > 80%, cioè tirePressure < 20) —
+    if (!outReason && (car.tirePressure || 100) < 20) {
+        if ((gameState.depositoGomme || 0) >= 1) {
+            gameState.depositoGomme -= 1;
+            car.tirePressure = 100;
+            logToMap(`🔧 ${car.name}: gomme sostituite automaticamente. (${gameState.depositoGomme} treni rimasti)`);
+        } else {
+            outReason = 'tires';
+            logToMap(`⚠️ ${car.name}: nessun treno di gomme nel deposito. Auto ferma.`);
+            showNotification(`🔴 Deposito gomme vuoto! ${car.name} ferma in garage.`, 'error');
+        }
+    }
+
+    car.outOfService = outReason || null;
+}
+
+// Dopo ogni acquisto al deposito, riprova a rifornire le auto ferme
+function _retryOutOfServiceVehicles() {
+    const stoppedCars = gameState.fleet.filter(c => c.outOfService);
+    stoppedCars.forEach(car => refillVehicle(car.id));
+    if (stoppedCars.length > 0 && typeof renderTabFleet === 'function') renderTabFleet();
+}
+
+window.buyFuelForDepot = function(litres) {
+    if (!hasInvestment('inv_fuel_depot')) { showNotification('Acquista prima il Deposito Carburante!', 'error'); return; }
+    const cap = gameState.fuelTankCapacity || 10000;
+    const space = cap - (gameState.fuelTank || 0);
+    const actual = Math.min(litres, space);
+    if (actual <= 0) { showNotification('Deposito già pieno!', 'error'); return; }
+    const fuelDiscount = (gameState.activeLobbyLaws || []).includes('law_fuel_subsidy') ? 0.70 : 1.0;
+    const cost = Math.floor(actual * (gameState.fuelPrice || 1.85) * fuelDiscount);
+    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
+    gameState.cash -= cost;
+    gameState.fuelTank = (gameState.fuelTank || 0) + actual;
+    logToMap(`🛢️ Deposito: +${actual.toLocaleString()}L a €${(gameState.fuelPrice||1.85).toFixed(2)}/L. Costo −€${cost.toLocaleString()}`);
+    showNotification(`🛢️ +${actual.toLocaleString()}L nel deposito!`, 'success');
+    _retryOutOfServiceVehicles();
+    updateUI(); saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
+window.buyTiresForDepot = function(sets) {
+    if (!hasInvestment('inv_fuel_depot')) { showNotification('Attiva prima il Deposito Aziendale!', 'error'); return; }
+    const costPerSet = 800;
+    const cost = sets * costPerSet;
+    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
+    gameState.cash -= cost;
+    gameState.depositoGomme = (gameState.depositoGomme || 0) + sets;
+    logToMap(`🔧 Deposito: +${sets} treni di gomme. (Totale: ${gameState.depositoGomme})`);
+    showNotification(`🔧 +${sets} treni di gomme nel deposito!`, 'success');
+    _retryOutOfServiceVehicles();
+    updateUI(); saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
+// ─── CAR UPGRADES ────────────────────────────────────────────────
+window.buyCARUpgrade = function(carId, upgradeId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    const upg = CAR_UPGRADES.find(u => u.id === upgradeId);
+    if (!car || !upg) return;
+    if (!car.upgrades) car.upgrades = [];
+    if (car.upgrades.includes(upgradeId)) { showNotification('Upgrade già installato!', 'error'); return; }
+    if (gameState.cash < upg.price) { showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= upg.price;
+    car.upgrades.push(upgradeId);
+    showNotification(`${upg.name} installato su ${car.name}!`, 'success');
+    logToMap(`🔧 Upgrade: ${upg.name} su ${car.name}`);
+    updateUI();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+    if (typeof closeModals === 'function') closeModals();
+    saveGame();
+};
+
+// ─── SISTEMA MULTE ────────────────────────────────────────────────
+function _maybeGenerateFine() {
+    if (!gameState.activeFines) gameState.activeFines = [];
+    // Only generate fines if there are active rides or drivers on the road
+    const hasBusyDrivers = gameState.drivers.some(d => d.status === 'busy');
+    if (!hasBusyDrivers || Math.random() > 0.25) return;
+
+    // Speedy drivers generate more fines
+    const speedyDrivers = gameState.drivers.filter(d => d.status === 'busy' && d.trait?.id === 'piede_pesante');
+    const baseChance = 0.15 + (speedyDrivers.length * 0.10);
+    if (Math.random() > baseChance) return;
+
+    const templates = FINE_TEMPLATES;
+    const template = templates[Math.floor(Math.random() * templates.length)];
+    const busyDriver = gameState.drivers.filter(d => d.status === 'busy' && d.id !== 'ceo');
+    if (busyDriver.length === 0) return;
+
+    const driver = busyDriver[Math.floor(Math.random() * busyDriver.length)];
+    const fine = {
+        id: gameState.nextId++,
+        driverName: driver.name,
+        desc: template.desc,
+        amount: template.amount,
+        severity: template.severity,
+        status: 'pending',
+        expiresAt: gameState.day * 24 + gameState.hour + 24 // 24 game hours to pay/contest
+    };
+    gameState.activeFines.push(fine);
+    gameState.policeHeat = Math.min(100, (gameState.policeHeat || 0) + 5); // each fine adds heat
+
+    // Auto-contest with legal advisor
+    const hasLegal = gameState.staff.some(s => s.id === 'legal');
+    if (hasLegal && Math.random() < 0.50) {
+        if (Math.random() < 0.70) {
+            fine.status = 'contested_won';
+            logToMap(`⚖️ Avvocato: multa di €${fine.amount} annullata (${fine.desc})`);
+            showNotification(`⚖️ Avvocato: multa annullata!`, 'success');
+        } else {
+            fine.amount = Math.floor(fine.amount * 0.70);
+            fine.status = 'contested_reduced';
+            logToMap(`⚖️ Avvocato: multa ridotta a €${fine.amount} (${fine.desc})`);
+        }
+    } else {
+        const fineDot = document.getElementById('fine-dot');
+        if (fineDot) fineDot.classList.remove('hidden');
+        showBigEvent('🚔', 'Multa in Arrivo!', `${driver.name} ha ricevuto una sanzione: ${fine.desc}. Importo: €${fine.amount}. Hai 24h per pagare o contestare.`);
+        logToMap(`🚔 MULTA: ${driver.name} — ${fine.desc} (€${fine.amount})`);
+    }
+
+    if (_tabIs('legal') && typeof renderTabLegal === 'function') renderTabLegal();
+}
+
+// Genera multa ZTL se un autista attivo sta consegnando in zona ZTL senza permesso
+function _maybeGenerateZTLFine() {
+    if (!gameState.activeFines) gameState.activeFines = [];
+    if (hasInvestment('inv_ztl_centro') && hasInvestment('inv_ztl_nord')) return; // tutto coperto
+
+    gameState.activeRides.forEach(ride => {
+        const dest = ride.toPoi;
+        if (!dest) return;
+        const inCentro = ZTL_POIS.centro.includes(dest.id);
+        const inNord   = ZTL_POIS.nord.includes(dest.id);
+        if (!inCentro && !inNord) return;
+        if (inCentro && hasInvestment('inv_ztl_centro')) return;
+        if (inNord   && hasInvestment('inv_ztl_nord'))   return;
+
+        if (Math.random() > 0.05) return; // bassa probabilità per non essere punitivo
+        const fine = {
+            id: gameState.nextId++,
+            driverName: ride.driverId,
+            desc: `Accesso ZTL non autorizzato: ${dest.name}`,
+            amount: 164,
+            severity: 'medium',
+            status: 'pending',
+            expiresAt: gameState.day * 24 + gameState.hour + 24
+        };
+        gameState.activeFines.push(fine);
+        const fineDot = document.getElementById('fine-dot');
+        if (fineDot) fineDot.classList.remove('hidden');
+        logToMap(`🚫 Multa ZTL: ${dest.name} — €${fine.amount}`);
+        if (typeof showNotification === 'function') showNotification(`🚫 Multa ZTL a ${dest.name}: €${fine.amount}`, 'error');
+        if (_tabIs('legal') && typeof renderTabLegal === 'function') renderTabLegal();
+    });
+}
+
+// ─── CANTIERI (ROADWORKS) ────────────────────────────────────────
+const _activeCantieri = {}; // hwKey → { endsDay }
+
+function _maybeGenerateCantieri() {
+    if (Object.keys(_activeCantieri).length >= 3) return; // max 3 concurrent
+    const hwKeys = Object.keys(typeof HIGHWAYS !== 'undefined' ? HIGHWAYS : {});
+    const unlocked = hwKeys.filter(k => {
+        const hw = HIGHWAYS[k];
+        return hw.req.some(r => gameState.unlockedRegions.includes(r));
+    });
+    if (!unlocked.length || Math.random() > 0.15) return;
+
+    const hwKey = unlocked[Math.floor(Math.random() * unlocked.length)];
+    if (_activeCantieri[hwKey]) return;
+    const dur = 2 + Math.floor(Math.random() * 4); // 2-5 days
+    _activeCantieri[hwKey] = { endsDay: gameState.day + dur };
+
+    const hw = HIGHWAYS[hwKey];
+    const midIdx = Math.floor(hw.path.length / 2);
+    const [lat, lng] = hw.path[midIdx];
+    if (typeof drawCantiereMarker === 'function') drawCantiereMarker(hwKey, lat, lng);
+    logToMap(`🚧 Cantieri su ${hwKey.replace('-',' ↔ ')}: rallentamento per ${dur} giorni.`);
+}
+
+function _tickCantieri() {
+    for (const key in _activeCantieri) {
+        if (gameState.day >= _activeCantieri[key].endsDay) {
+            delete _activeCantieri[key];
+            if (typeof removeCantiereMarker === 'function') removeCantiereMarker(key);
+            logToMap(`✅ Cantieri terminati su ${key.replace('-',' ↔ ')}.`);
+        }
+    }
+}
+
+function _getCantieriSpeedMult(fromId, toId) {
+    // Returns <1 if any cantiere on route; requires HIGHWAYS lookup
+    const directKey = `${fromId}-${toId}`;
+    const revKey = `${toId}-${fromId}`;
+    if (_activeCantieri[directKey] || _activeCantieri[revKey]) return 0.65;
+    return 1.0;
+}
+
+// ─── POSTI DI BLOCCO (POLICE CHECKPOINTS) ───────────────────────
+function _maybePoliceCheckpoint() {
+    if (!gameState.activeRides.length) return;
+    if (Math.random() > 0.08) return; // 8% chance per check interval
+
+    const busyDrivers = gameState.drivers.filter(d => d.status === 'busy' && d.id !== 'ceo');
+    if (!busyDrivers.length) return;
+
+    const driver = busyDrivers[Math.floor(Math.random() * busyDrivers.length)];
+    const ride = gameState.activeRides.find(r => r.driverId === driver.id);
+    if (!ride) return;
+
+    const hasTraining = hasInvestment('inv_safe_driving');
+    if (hasTraining && !ride.isGreyMarket && Math.random() < 0.85) {
+        logToMap(`🚔 Posto di blocco: ${driver.name} supera senza problemi.`);
+        return;
+    }
+
+    const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
+    const hasVetri = (car?.upgrades || []).includes('vetri_oscurati');
+    const stealthMult = hasVetri ? 0.35 : 1.0; // vetri oscurati: -65% rischio
+
+    // SHADOW MISSION: rischio altissimo, checkpoint dedicato sulla mappa
+    if (ride.isShadowMission) {
+        const shadowRisk = (ride.seizureRisk / 100) * stealthMult;
+        if (Math.random() < shadowRisk) {
+            gameState.policeHeat = Math.min(100, (gameState.policeHeat || 0) + 30);
+            if (car) {
+                if (!gameState.seizedCars) gameState.seizedCars = [];
+                gameState.seizedCars.push({ carId: car.id, carName: car.name, releaseDay: gameState.day + 7 });
+                driver.assignedCarId = null; driver.status = 'idle';
+                const idx = gameState.activeRides.indexOf(ride);
+                if (idx > -1) gameState.activeRides.splice(idx, 1);
+                showBigEvent('🚨', 'SHADOW BUST!',
+                    `Checkpoint superato! ${driver.name} arrestato. ${car.name} sequestrata 7 giorni. ${hasVetri ? 'I Vetri Oscurati non bastano.' : 'Installa Vetri Oscurati per ridurre il rischio.'}`);
+                logToMap(`🚨 SHADOW BUST: ${car.name} sequestrata al checkpoint. Heat +30.`);
+            }
+            return;
+        } else {
+            logToMap(`🔴 Shadow: ${driver.name} supera il checkpoint. ${hasVetri ? '(Vetri Oscurati attivi)' : ''}`);
+            return;
+        }
+    }
+
+    // Grey market: high seizure risk — scales with policeHeat
+    const greySeizureChance = (0.30 + (gameState.policeHeat / 100) * 0.35) * stealthMult; // 30-65%, vetri -65%
+    if (ride.isGreyMarket && Math.random() < greySeizureChance) {
+        gameState.policeHeat = Math.min(100, (gameState.policeHeat || 0) + 20); // bust raises heat
+        if (car) {
+            if (!gameState.seizedCars) gameState.seizedCars = [];
+            gameState.seizedCars.push({ carId: car.id, carName: car.name, releaseDay: gameState.day + 7 });
+            driver.assignedCarId = null;
+            driver.status = 'idle';
+            const idx = gameState.activeRides.indexOf(ride);
+            if (idx > -1) gameState.activeRides.splice(idx, 1);
+            showBigEvent('🚨', 'Auto Sequestrata!', `La polizia ha fermato ${driver.name} durante una missione anonima. ${car.name} sequestrata per 7 giorni. ${hasVetri ? 'Anche i Vetri Oscurati non hanno retto.' : 'Installa Vetri Oscurati per ridurre il rischio.'}`);
+            logToMap(`🚨 SEQUESTRO: ${car.name} sequestrata dalla polizia (Grey Market). 7 giorni.`);
+        }
+        return;
+    }
+
+    const roll = Math.random();
+    if (roll < 0.6) {
+        ride.duration = Math.floor(ride.duration * 1.25);
+        logToMap(`🚔 Posto di blocco: ${driver.name} fermato 10 min. Ritardo aggiunto.`);
+        if (typeof showNotification === 'function') showNotification(`🚔 Posto di blocco: ${driver.name} in ritardo.`, 'error');
+    } else {
+        const fine = {
+            id: gameState.nextId++, driverName: driver.name,
+            desc: 'Verifica documenti NCC — irregolarità',
+            amount: 220, severity: 'minor', status: 'pending',
+            expiresAt: gameState.day * 24 + gameState.hour + 24
+        };
+        gameState.activeFines.push(fine);
+        const fineDot = document.getElementById('fine-dot');
+        if (fineDot) fineDot.classList.remove('hidden');
+        logToMap(`🚔 Multa posto di blocco: ${driver.name} — €${fine.amount}`);
+        if (typeof showNotification === 'function') showNotification(`🚔 Posto di blocco: multa €${fine.amount}!`, 'error');
+        if (_tabIs('legal') && typeof renderTabLegal === 'function') renderTabLegal();
+    }
+}
+
+// ─── PAPARAZZI ───────────────────────────────────────────────────
+function _maybeParazziEvent() {
+    const nightHour = gameState.hour >= 22 || gameState.hour < 5;
+    if (!nightHour) return;
+
+    const vipRides = gameState.activeRides.filter(r => r.tier === 'vip' || r.tier === 'ultra');
+    if (!vipRides.length || Math.random() > 0.12) return;
+
+    const ride = vipRides[Math.floor(Math.random() * vipRides.length)];
+    const driver = gameState.drivers.find(d => d.id === ride.driverId);
+
+    const roll = Math.random();
+    if (roll < 0.5) {
+        // Positive: VIP happy with discretion, big tip
+        const bonus = Math.floor(ride.price * 0.40);
+        gameState.cash += bonus;
+        gameState.reputation = Math.min(5.0, gameState.reputation + 0.05);
+        logToMap(`📸 Paparazzi! ${driver?.name} protegge il cliente VIP. Mancia extra: +€${bonus}`);
+        if (typeof showNotification === 'function') showNotification(`📸 Paparazzi evitati! +€${bonus} mancia.`, 'success');
+    } else if (roll < 0.80) {
+        // Negative: photo scandal, slight rep hit
+        gameState.reputation = Math.max(0, gameState.reputation - 0.08);
+        logToMap(`📸 PAPARAZZI: ${driver?.name} sorpreso con cliente VIP. −0.08★ Reputazione.`);
+        showBigEvent('📸', 'Scandalo Paparazzi!', `${driver?.name || 'Il tuo autista'} è stato fotografato con un cliente VIP. La discrezione è la chiave del lusso. −0.08★ reputazione.`);
+    } else {
+        // Viral moment: big rep boost
+        gameState.reputation = Math.min(5.0, gameState.reputation + 0.15);
+        logToMap(`📸 Momento virale! Olga Vision sui social. +0.15★ Reputazione.`);
+        if (typeof showNotification === 'function') showNotification(`📸 Olga Vision diventa virale! +0.15★`, 'success');
+    }
+}
+
+// ─── GREY MARKET MISSIONS ────────────────────────────────────────
+function _maybeGreyMarketMission() {
+    if (!hasInvestment('inv_grey_market')) return;
+    if (Math.random() > 0.18) return;
+    // Only one grey market offer at a time
+    if (gameState.emails.some(e => e.status === 'unread' && e.type === 'grey_market')) return;
+
+    const available = Object.values(POIS).filter(p => gameState.unlockedRegions.includes(p.region));
+    if (available.length < 2) return;
+    const from = available[Math.floor(Math.random() * available.length)];
+    let to = available[Math.floor(Math.random() * available.length)];
+    if (from.id === to.id) return;
+
+    const isLong = from.region !== to.region;
+    const basePrice = Math.floor(from.baseFlat * 3.0 * (isLong ? 2.8 : 1.2));
+    gameState.emails.push({
+        id: gameState.nextId++,
+        sender: '░░░ ANONIMO ░░░',
+        subject: `[RISERVATO] Trasporto discreto: ${from.name} → ${to.name} — €${basePrice}`,
+        type: 'grey_market', status: 'unread',
+        greyRideData: { fromId: from.id, toId: to.id, price: basePrice, isLong },
+        expiresAt: gameState.day * 24 + gameState.hour + 6
+    });
+    const dot = document.getElementById('mail-dot');
+    if (dot) dot.classList.remove('hidden');
+    logToMap(`🕵️ Proposta anonima: ${from.name} → ${to.name} — €${basePrice} (3×). Alto rischio.`);
+}
+
+window.acceptGreyMarket = function(emailId) {
+    const email = gameState.emails.find(e => e.id === emailId);
+    if (!email || email.type !== 'grey_market') return;
+    const { fromId, toId, price, isLong } = email.greyRideData;
+    const from = POIS[fromId], to = POIS[toId];
+    if (!from || !to) return;
+
+    const ride = {
+        id: gameState.nextId++, fromPoi: from, toPoi: to,
+        tier: 'vip', price, duration: isLong ? 40000 : 20000, elapsed: 0,
+        isGreyMarket: true
+    };
+    gameState.pendingRides.push(ride);
+    email.status = 'resolved';
+    logToMap(`🕵️ Corsa anonima accettata: ${from.name} → ${to.name}. Stai attento ai posti di blocco!`);
+    showNotification(`🕵️ Missione discreta: ${from.name} → ${to.name}`, 'success');
+    if (typeof renderTabEmails === 'function') renderTabEmails();
+    if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+    saveGame();
+};
+
+// ─── EMPTY LEG OPTIMIZER ─────────────────────────────────────────
+function _findEmptyLegRide(completedRide) {
+    if (!hasInvestment('inv_empty_leg')) return;
+    if (Math.random() > 0.40) return; // 40% chance per long ride
+
+    const fromPoi = completedRide.toPoi; // car is now at destination
+    const available = Object.values(POIS).filter(p => gameState.unlockedRegions.includes(p.region) && p.id !== fromPoi.id);
+    if (!available.length) return;
+    const toPoi = available[Math.floor(Math.random() * available.length)];
+    const isLong = fromPoi.region !== toPoi.region;
+    const price  = Math.floor(fromPoi.baseFlat * 1.0 * (isLong ? 2.8 : 1.0) * 0.50);
+    const emptyRide = {
+        id: gameState.nextId++, fromPoi, toPoi,
+        tier: 'standard', price,
+        duration: isLong ? 40000 : 20000, elapsed: 0,
+        isEmptyLeg: true
+    };
+    gameState.pendingRides.push(emptyRide);
+    logToMap(`🔄 Empty Leg: ${fromPoi.name} → ${toPoi.name} (50% tariffa = €${price})`);
+    if (typeof showNotification === 'function') showNotification(`🔄 Empty Leg trovato: +€${price}!`, 'success');
+    if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+}
+
+window.payFine = function(fineId) {
+    const fine = (gameState.activeFines || []).find(f => f.id === fineId);
+    if (!fine || fine.status !== 'pending') return;
+    if (gameState.cash < fine.amount) { showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= fine.amount;
+    fine.status = 'paid';
+    logToMap(`💸 Multa pagata: €${fine.amount}`);
+    showNotification(`Multa pagata: −€${fine.amount}`, 'error');
+    updateUI(); saveGame();
+    if (typeof renderTabLegal === 'function') renderTabLegal();
+};
+
+window.contestFine = function(fineId) {
+    const fine = (gameState.activeFines || []).find(f => f.id === fineId);
+    if (!fine || fine.status !== 'pending') return;
+    const hasLegal = gameState.staff.some(s => s.id === 'legal');
+    const successChance = hasLegal ? 0.70 : 0.35;
+    if (Math.random() < successChance) {
+        fine.status = 'contested_won';
+        logToMap(`⚖️ Ricorso vinto: multa di €${fine.amount} annullata!`);
+        showNotification('Ricorso vinto! Multa annullata.', 'success');
+    } else {
+        const penalty = Math.floor(fine.amount * 0.30);
+        fine.amount += penalty;
+        fine.status = 'contested_lost';
+        logToMap(`❌ Ricorso perso: multa aumentata di €${penalty}`);
+        showNotification(`Ricorso perso. Multa +€${penalty}`, 'error');
+    }
+    updateUI(); saveGame();
+    if (typeof renderTabLegal === 'function') renderTabLegal();
+};
+
+// ─── SHADOW MISSIONS ─────────────────────────────────────────────
+
+function _maybeShadowMission() {
+    if (!hasInvestment('inv_grey_market')) return; // richiede canali discreti
+    if (Math.random() > 0.12) return;
+    // Solo una shadow per volta
+    if (gameState.emails.some(e => e.status === 'unread' && e.type === 'shadow')) return;
+
+    const available = Object.values(POIS).filter(p =>
+        gameState.unlockedRegions.includes(p.region) && p.type !== 'locked'
+    );
+    if (available.length < 2) return;
+    let from = available[Math.floor(Math.random() * available.length)];
+    let to   = available.filter(p => p.region !== from.region)[Math.floor(Math.random() * available.length)];
+    if (!to) return;
+
+    const basePrice  = Math.floor(from.baseFlat * 5.0 * (2.5 + Math.random()));
+    const seizureRisk = Math.round(55 + (gameState.policeHeat / 100) * 30); // 55–85%
+
+    gameState.emails.push({
+        id: gameState.nextId++,
+        sender: '🔴 NETWORK OMBRA',
+        subject: `[SHADOW] Trasporto X5: ${from.name} → ${to.name} — €${basePrice.toLocaleString()}`,
+        type: 'shadow', status: 'unread',
+        shadowData: { fromId: from.id, toId: to.id, price: basePrice, seizureRisk },
+        expiresAt: gameState.day * 24 + gameState.hour + 4
+    });
+    const dot = document.getElementById('mail-dot');
+    if (dot) dot.classList.remove('hidden');
+    logToMap(`🔴 Rete Ombra: ${from.name} → ${to.name} — €${basePrice.toLocaleString()} (×5). Rischio sequestro ${seizureRisk}%.`);
+}
+
+window.acceptShadowMission = function(emailId) {
+    const email = gameState.emails.find(e => e.id === emailId);
+    if (!email || email.type !== 'shadow') return;
+    const { fromId, toId, price, seizureRisk } = email.shadowData;
+    const from = POIS[fromId], to = POIS[toId];
+    if (!from || !to) return;
+
+    const ride = {
+        id: gameState.nextId++, fromPoi: from, toPoi: to,
+        tier: 'ultra', price, duration: 50000, elapsed: 0,
+        isShadowMission: true, seizureRisk
+    };
+    gameState.pendingRides.push(ride);
+    email.status = 'resolved';
+    gameState.policeHeat = Math.min(100, (gameState.policeHeat || 0) + 10);
+    logToMap(`🔴 SHADOW: ${from.name} → ${to.name} — €${price.toLocaleString()}. Checkpoint sulla rotta!`);
+    showNotification(`🔴 Shadow mission accettata! Il Logistics Manager piazza un checkpoint sulla rotta.`, 'error');
+    // Spawna subito un checkpoint marker sulla mappa
+    if (typeof addCheckpointMarker === 'function') {
+        const midLat = (from.lat + to.lat) / 2 + (Math.random() - 0.5) * 0.5;
+        const midLng = (from.lng + to.lng) / 2 + (Math.random() - 0.5) * 0.5;
+        addCheckpointMarker(midLat, midLng, ride.id);
+    }
+    if (typeof renderTabEmails === 'function') renderTabEmails();
+    if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+    saveGame();
+};
+
+// ─── PRICE WAR / ATTACK TERRITORY ────────────────────────────────
+
+window.attackTerritory = function(regionId) {
+    const region = REGIONS[regionId];
+    if (!region) return;
+    if (!gameState.unlockedRegions.includes(regionId)) {
+        showNotification('Regione non ancora sbloccata!', 'error'); return;
+    }
+    if ((gameState.pricewars || []).some(pw => pw.regionId === regionId)) {
+        showNotification('Guerra prezzi già attiva in questa regione!', 'error'); return;
+    }
+
+    const warCost = Math.floor(region.price * 0.25 + 15000); // 25% del costo licenza + €15k
+    if (gameState.cash < warCost) {
+        showNotification(`Fondi insufficienti! Serve €${warCost.toLocaleString()} per la guerra dei prezzi.`, 'error'); return;
+    }
+
+    gameState.cash -= warCost;
+    const warDays = 3;
+    gameState.pricewars.push({
+        regionId,
+        endsDay: gameState.day + warDays,
+        monopolyEndsDay: null,
+        discountPct: 0.30 // prezzi -30% per strappare clienti
+    });
+
+    // Colpisci i rivali in quella regione: perdono cash e rep
+    const rivals_hit = RIVALS.filter(r => Math.random() < 0.7); // 70% dei rivali sentono la pressione
+    rivals_hit.forEach(r => {
+        _ensureRivalState(r);
+        r.cash = Math.max(1000, r.cash - (warCost * 0.3 * Math.random()));
+        r.rep  = Math.max(0.1,  r.rep  * (0.92 + Math.random() * 0.05));
+    });
+
+    showBigEvent('⚔️', `Guerra Prezzi: ${region.name}!`,
+        `−€${warCost.toLocaleString()} investiti. Tariffe -30% in ${region.name} per ${warDays} giorni. I rivali perdono clienti. Se crollano sotto 0.3★ ottieni il MONOPOLIO.`);
+    logToMap(`⚔️ Attacco territorio: ${region.name} — war cost €${warCost.toLocaleString()}. ${rivals_hit.length} rivali colpiti.`);
+    updateUI(); saveGame();
+    if (_tabIs('ranking') && typeof renderTabRanking === 'function') renderTabRanking();
+};
+
+function _tickPricewars() {
+    if (!gameState.pricewars || gameState.pricewars.length === 0) return;
+    const toRemove = [];
+    gameState.pricewars.forEach(pw => {
+        // Fine guerra: controlla monopolio
+        if (gameState.day >= pw.endsDay && !pw.monopolyEndsDay) {
+            const regionName = REGIONS[pw.regionId]?.name || pw.regionId;
+            const weakRivals = RIVALS.filter(r => r.rep < 0.3);
+            if (weakRivals.length >= 2) {
+                pw.monopolyEndsDay = gameState.day + 7;
+                showBigEvent('👑', `MONOPOLIO: ${regionName}!`,
+                    `${weakRivals.length} rivali in bancarotta! Hai il monopolio per 7 giorni — tariffe +40% in ${regionName}.`);
+                logToMap(`👑 MONOPOLIO attivo: ${regionName} per 7 giorni! +40% tariffe.`);
+            } else {
+                toRemove.push(pw.regionId);
+                logToMap(`⚔️ Guerra prezzi ${regionName} terminata. Nessun monopolio ottenuto.`);
+            }
+        }
+        // Fine monopolio
+        if (pw.monopolyEndsDay && gameState.day >= pw.monopolyEndsDay) {
+            toRemove.push(pw.regionId);
+            logToMap(`👑 Monopolio ${REGIONS[pw.regionId]?.name} scaduto.`);
+        }
+    });
+    gameState.pricewars = gameState.pricewars.filter(pw => !toRemove.includes(pw.regionId));
+}
+
+// ─── RIVALS AI ───────────────────────────────────────────────────
+
+// Stato interno rivali (driver count, fleet count, missioni simulate)
+function _ensureRivalState(r) {
+    if (r.drivers  === undefined) r.drivers  = Math.max(1, Math.round(r.rep));
+    if (r.fleet    === undefined) r.fleet    = Math.max(1, Math.round(r.rep * 0.8));
+    if (r.missions === undefined) r.missions = 0;
+    if (r.lastAction === undefined) r.lastAction = '';
+}
+
+// Chiamata ogni 15 minuti di gioco
+function _tickRivalsActive() {
+    if (!RIVALS || RIVALS.length === 0) return;
+    const hour = gameState.hour;
+
+    RIVALS.forEach(r => {
+        _ensureRivalState(r);
+
+        // Simulazione missione: ogni tick c'è una probabilità di completare una corsa
+        const missionProb = 0.35 + (r.rep / 5) * 0.4; // 35–75% per tick
+        if (Math.random() < missionProb) {
+            const baseFare = 80 + r.rep * 120;
+            const nightBonus = (hour >= 20 || hour < 6) ? 1.25 : 1.0;
+            const earned = Math.floor(baseFare * nightBonus * (0.8 + Math.random() * 0.5));
+            r.cash += earned;
+            r.missions++;
+            // Guadagno reputazione lento ma costante
+            r.rep = Math.min(5.0, r.rep + 0.003);
+        }
+
+        // Rivale forte può comprare un'auto
+        if (r.cash > 80000 && r.fleet < Math.floor(r.rep * 2) && Math.random() < 0.08) {
+            const carCost = 35000 + Math.floor(Math.random() * 60000);
+            r.cash -= carCost;
+            r.fleet++;
+            r.lastAction = `+1 auto (flotta: ${r.fleet})`;
+        }
+
+        // Rivale può assumere un driver
+        if (r.cash > 20000 && r.drivers < r.fleet + 1 && Math.random() < 0.10) {
+            const hireCost = 4000 + Math.floor(Math.random() * 4000);
+            r.cash -= hireCost;
+            r.drivers++;
+            r.lastAction = `+1 autista (totale: ${r.drivers})`;
+        }
+
+        // Rivale in difficoltà: crolla lentamente
+        if (r.cash < 5000 && Math.random() < 0.05) {
+            r.rep = Math.max(0.1, r.rep - 0.02);
+        }
+    });
+
+    // Aggiorna ranking se la tab è aperta
+    if (_tabIs('ranking') && typeof renderTabRanking === 'function') renderTabRanking();
+}
+
+// Chiamata giornaliera da processDailyRoutines
+function _tickRivalsDaily() {
+    if (!RIVALS || RIVALS.length === 0) return;
+    RIVALS.forEach(r => {
+        _ensureRivalState(r);
+        // Spese giornaliere simulate (stipendi, leasing)
+        const dailyCosts = r.drivers * 80 + r.fleet * 40;
+        r.cash = Math.max(5000, r.cash - dailyCosts);
+    });
+    _maybeRivalSabotage();
+}
+
+// Poaching e fake client
+function _maybeRivalSabotage() {
+    const rank = _getRankPosition();
+    const myDrivers = gameState.drivers.filter(d => d.id !== 'ceo');
+
+    // POACHING — rivale con alto budget tenta di rubarti il miglior driver
+    if (myDrivers.length > 0 && Math.random() < 0.08) {
+        const richRival = RIVALS.filter(r => r.cash > 150000 && r.rep > gameState.reputation * 0.8)
+                               .sort((a,b) => b.cash - a.cash)[0];
+        if (richRival) {
+            const target = [...myDrivers].sort((a,b) => (b.xp||0) - (a.xp||0))[0];
+            const poachOffer = Math.floor((target.salary || 2500) * 2.2);
+            gameState.emails.push({
+                id: gameState.nextId++,
+                sender: richRival.name,
+                subject: `💼 Offerta per ${target.name}: €${poachOffer}/mese`,
+                type: 'poaching',
+                status: 'unread',
+                driverId: target.id,
+                driverName: target.name,
+                rivalName: richRival.name,
+                counterOffer: poachOffer,
+                expiresAt: gameState.day * 24 + gameState.hour + 8,
+            });
+            const dot = document.getElementById('mail-dot');
+            if (dot) dot.classList.remove('hidden');
+            showNotification(`💼 ${richRival.name} vuole rubarti ${target.name}! Controlla l'inbox.`, 'error');
+        }
+    }
+
+    // FAKE CLIENT — un rivale invia un cliente truffaldino che danneggia l'auto
+    if (rank >= (RIVALS.length + 1) && Math.random() < 0.10) {
+        const aggressorRival = RIVALS[Math.floor(Math.random() * RIVALS.length)];
+        const victims = gameState.fleet.filter(c => !c.outOfService && c.condition > 30);
+        if (victims.length > 0) {
+            const car = victims[Math.floor(Math.random() * victims.length)];
+            const damage = 15 + Math.floor(Math.random() * 20);
+            car.condition = Math.max(5, car.condition - damage);
+            showBigEvent('🕵️', 'Sabotaggio Rivale!',
+                `${aggressorRival.name} ha inviato un cliente-truffa. La tua ${car.name} ha subito danni (−${damage}% condizione). Risali il ranking per diventare immune.`);
+            logToMap(`🕵️ ${aggressorRival.name}: fake client — ${car.name} danneggiata −${damage}%.`);
+        }
+    }
+}
+
+// Gestione risposta email di poaching
+window.respondPoaching = function(emailId, accept) {
+    const email = gameState.emails.find(e => e.id === emailId);
+    if (!email || email.type !== 'poaching') return;
+    email.status = 'resolved';
+    if (accept) {
+        // Pareggia l'offerta — costo mensile extra
+        const driver = gameState.drivers.find(d => d.id === email.driverId);
+        if (driver) {
+            driver.salary = email.counterOffer;
+            showNotification(`✅ Offerta pareggiata! ${email.driverName} rimane con te a €${email.counterOffer}/mese.`, 'success');
+            logToMap(`💼 Counter-offer accettata: ${email.driverName} riconfermato a €${email.counterOffer}/mese.`);
+        }
+    } else {
+        // Il driver parte
+        const idx = gameState.drivers.findIndex(d => d.id === email.driverId);
+        if (idx > -1) {
+            gameState.drivers.splice(idx, 1);
+            showBigEvent('💔', `${email.driverName} se ne va`, `${email.rivalName} ha vinto con €${email.counterOffer}/mese.`);
+            logToMap(`💼 ${email.driverName} ha accettato l'offerta di ${email.rivalName}.`);
+        }
+    }
+    updateUI(); saveGame();
+    if (typeof renderTabEmails === 'function') renderTabEmails();
+};
+
+function processDailyRoutines() {
+    let income = 0; let expenses = 0;
+
+    gameState.investments.forEach(invId => {
+        const item = INVESTMENTS.find(i => i.id === invId);
+        if (item && item.passive) income += item.passive;
+    });
+    // Lifestyle asset passive income
+    (gameState.lifestyleAssets || []).forEach(assetId => {
+        const asset = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(a => a.id === assetId);
+        if (asset && asset.passive) income += asset.passive;
+    });
+
+    gameState.staff.forEach(s => expenses += (s.salary / 30));
+    gameState.drivers.forEach(d => { if(d.salary) expenses += (d.salary / 30); });
+
+    let hasMechanic = gameState.staff.some(s => s.id === 'mech');
+
+    for (let i = gameState.fleet.length - 1; i >= 0; i--) {
+        let car = gameState.fleet[i];
+        if (car.isLease) {
+            expenses += car.dailyCost;
+            car.leaseElapsedDays++;
+            if (car.leaseElapsedDays >= (car.leaseDuration * 30)) {
+                logToMap(`🔴 Il Leasing per ${car.name} è scaduto.`);
+                let driver = gameState.drivers.find(d => d.assignedCarId === car.id);
+                if (driver) driver.assignedCarId = null;
+                gameState.fleet.splice(i, 1);
+                continue;
+            }
+        }
+        if (hasMechanic && car.condition < 100) car.condition = Math.min(100, car.condition + 15);
+        if (hasInvestment('inv_carwash') && car.condition < 100) car.condition = Math.min(100, car.condition + 5);
+    }
+
+    if (hasInvestment('inv_garage_hq')) expenses *= 0.90;
+
+    let baseTax = gameState.staff.some(s => s.id === 'admin') ? 0.24 : 0.42;
+    if ((gameState.activeLobbyLaws || []).includes('law_tax_cut')) baseTax = Math.min(baseTax, 0.28);
+    if (hasInvestment('inv_tower')) baseTax *= 0.5;
+    let profitTaxes = income > 0 ? (income * baseTax) : 0;
+    let luxuryTax = Math.floor(Math.pow(gameState.fleet.length, 1.5) * 50);
+    if (hasInvestment('inv_tower')) luxuryTax = Math.floor(luxuryTax * 0.5);
+
+    expenses += luxuryTax + profitTaxes;
+    if (gameState.activeCampaign) {
+        const camp = MARKETING_CAMPAIGNS.find(c => c.id === gameState.activeCampaign);
+        if (camp) expenses += camp.dailyCost;
+    }
+    gameState.cash += (income - expenses);
+
+    // Bankruptcy risk: track consecutive days in red
+    if (gameState.cash < 0) {
+        gameState.consecutiveRedDays = (gameState.consecutiveRedDays || 0) + 1;
+        showNotification(`⚠️ Cassa negativa! Giorno ${gameState.consecutiveRedDays}/3 prima del pignoramento.`, 'error');
+        logToMap(`🔴 Cassa negativa: €${Math.floor(gameState.cash).toLocaleString()} (${gameState.consecutiveRedDays}/3 giorni)`);
+        if (gameState.consecutiveRedDays >= 3) _triggerBankruptcy();
+    } else {
+        gameState.consecutiveRedDays = 0;
+    }
+
+    // Police heat daily decay
+    _tickPoliceHeat();
+
+    // HQ level auto-sync with investments
+    if (hasInvestment('inv_hq_campus')) gameState.hqLevel = 3;
+    else if (hasInvestment('inv_hq_office')) gameState.hqLevel = 1;
+    else gameState.hqLevel = 0;
+
+    // Corporate retainer rides
+    if (hasInvestment('inv_corporate_retainer')) {
+        for (let i = 0; i < 3; i++) generatePOIRide('business');
+    }
+
+    if ((gameState.activeLobbyLaws || []).includes('law_airport_monopoly')) for (let i = 0; i < 3; i++) generatePOIRide('vip');
+    if (hasInvestment('inv_hotel_partner')) for (let i = 0; i < 3; i++) generatePOIRide('vip');
+    if (hasInvestment('inv_hotel_exclusive')) {
+        for (let i = 0; i < 5; i++) generatePOIRide('vip');
+        income += 500;
+    }
+    if (hasInvestment('inv_armored') && Math.random() > 0.5) {
+        const ar = generatePOIRide('vip');
+        if (ar) { ar.price *= 3; logToMap('🛡️ Cliente blindato: tariffa triplicata!'); }
+    }
+    if (gameState.cannesBoostDays > 0) {
+        gameState.cannesBoostDays--;
+        if (gameState.cannesBoostDays === 0) logToMap('🎬 Boost Festival di Cannes terminato.');
+    }
+
+    _tickRivalsDaily();
+    _tickPricewars();
+
+    // Scadenza multe: auto-pagamento se non gestite
+    if (gameState.activeFines) {
+        const gameHour = gameState.day * 24 + gameState.hour;
+        gameState.activeFines.forEach(f => {
+            if (f.status === 'pending' && f.expiresAt && gameHour >= f.expiresAt) {
+                // Auto-pay expired fine + 30% penalty
+                const penalty = Math.floor(f.amount * 1.30);
+                gameState.cash -= penalty;
+                f.status = 'expired_paid';
+                logToMap(`⚠️ Multa scaduta auto-pagata: −€${penalty}`);
+                if(typeof showNotification==='function') showNotification(`Multa scaduta! −€${penalty}`, 'error');
+            }
+        });
+        // Clean resolved fines older than 3 days
+        gameState.activeFines = gameState.activeFines.filter(f => f.status === 'pending' || f.status === 'contested_reduced');
+        const fineDot = document.getElementById('fine-dot');
+        const hasPending = (gameState.activeFines || []).some(f => f.status === 'pending');
+        if (fineDot) fineDot.classList.toggle('hidden', !hasPending);
+    }
+
+    // Sabotaggio rivali (ogni 7 giorni se investimento attivo)
+    if (hasInvestment('inv_sabotaggio') && gameState.day % 7 === 0) {
+        RIVALS.forEach(r => { r.rep = Math.max(0.1, r.rep * 0.90); });
+        logToMap('🕵️ Campagna PR: reputazione rivali ridotta del 10%!');
+    }
+
+    // Ranking: se ultimo in classifica, rivale ruba autista top
+    const rank = _getRankPosition();
+    const totalPlayers = RIVALS.length + 1;
+    if (rank >= totalPlayers && gameState.day % 3 === 0) {
+        const stealable = gameState.drivers.filter(d => d.id !== 'ceo' && (d.salary || 0) >= 3000 && d.status !== 'busy');
+        if (stealable.length > 0 && Math.random() < 0.30) {
+            const stolen = stealable[Math.floor(Math.random() * stealable.length)];
+            const rival  = RIVALS[Math.floor(Math.random() * RIVALS.length)];
+            gameState.drivers.splice(gameState.drivers.indexOf(stolen), 1);
+            logToMap(`💼 ${rival.name} ha rubato ${stolen.name} con una proposta irrinunciabile!`);
+            showBigEvent('💼', 'Autista Perso!', `${rival.name} ha offerto a ${stolen.name} uno stipendio più alto. Senza un buon Ranking, non puoi competere per i migliori talenti. Risali la classifica!`);
+        }
+    }
+
+    // Ranking Top 3: notifica bonus attivi
+    if (rank <= 3 && !gameState._top3NotifiedDay) {
+        gameState._top3NotifiedDay = gameState.day;
+        showBigEvent('🏆', 'Top 3 del Ranking!', 'Stai dominando il mercato! Bonus attivi: corse Ultra-Luxury accessibili, premi assicurativi −15%, POI esclusivi sbloccati.');
+    }
+    if (rank > 3) gameState._top3NotifiedDay = null;
+
+    // Cantieri: tick giornaliero
+    _tickCantieri();
+    _maybeGenerateCantieri();
+
+    // Fuel depot: upgrade capacity when investment is active
+    if (hasInvestment('inv_fuel_depot') && gameState.fuelTankCapacity < 50000) {
+        gameState.fuelTankCapacity = 50000;
+    }
+
+    // Seized cars: release after 7 days
+    if (gameState.seizedCars && gameState.seizedCars.length > 0) {
+        gameState.seizedCars = gameState.seizedCars.filter(sc => {
+            if (gameState.day >= sc.releaseDay) {
+                // Re-add car to fleet with damaged condition
+                const found = gameState.fleet.find(c => c.id === sc.carId);
+                if (!found) {
+                    gameState.fleet.push({ id: sc.carId, name: sc.carName + ' (Recuperata)', tier: 'business', condition: 40, isLease: false, fuel: 50, mileage: 0, tirePressure: 80, upgrades: [] });
+                }
+                logToMap(`🔓 ${sc.carName} rilasciata dal sequestro (condizioni al 40%).`);
+                showBigEvent('🔓', 'Auto Rilasciata!', `${sc.carName} è stata restituita dalla polizia dopo il sequestro. Condizione: 40%. Falla riparare prima di rimetterla in servizio.`);
+                return false;
+            }
+            return true;
+        });
+    }
+
+    // Pension fund: after day 60, passive income
+    if (hasInvestment('inv_pension_fund') && gameState.day >= 60) {
+        const pensionIncome = 1200;
+        income += pensionIncome;
+        if (gameState.day === 60) logToMap('🏦 Fondo Pensione attivo: +€1.200/g di rendita!');
+    }
+
+    // Loyalty bonuses: check drivers for 30/60/90-day milestones
+    gameState.drivers.forEach(d => {
+        if (d.id === 'ceo') return;
+        if (d.hiredDay === undefined) d.hiredDay = 1;
+        const tenure = gameState.day - d.hiredDay;
+        if (tenure > 0 && tenure % 30 === 0 && tenure <= 90) {
+            const bonusAmt = tenure === 30 ? 500 : tenure === 60 ? 1000 : 2000;
+            const repBonus = tenure === 90 ? 0.1 : 0;
+            gameState.cash += bonusAmt;
+            gameState.reputation = Math.min(5.0, gameState.reputation + repBonus);
+            d.morale = Math.min(100, (d.morale || 100) + 15);
+            logToMap(`🎖️ ${d.name}: ${tenure} giorni di servizio! Bonus fedeltà +€${bonusAmt}${repBonus > 0 ? ' +0.1★' : ''}`);
+            showBigEvent('🎖️', `${d.name}: ${tenure} Giorni!`, `Fedeltà premiata con un bonus di €${bonusAmt}. Morale autista +15.`);
+        }
+    });
+
+    // Filantropia: +0.5 rep settimanale
+    if (hasInvestment('inv_philanthropy') && gameState.day % 7 === 0) {
+        gameState.reputation = Math.min(5.0, gameState.reputation + 0.5);
+        logToMap('💝 Fondazione: +0.5★ Reputazione settimanale.');
+    }
+
+    // Rimborso prestiti mensili
+    if (gameState.loans && gameState.loans.length > 0 && gameState.day % 30 === 0) {
+        let totalRepayment = 0;
+        gameState.loans = gameState.loans.filter(loan => {
+            const rate = loan.rate || 0.08;
+            const monthlyPayment = Math.ceil(loan.amount * rate);
+            totalRepayment += monthlyPayment;
+            loan.remaining -= monthlyPayment;
+            loan.amount = Math.max(0, loan.amount - monthlyPayment);
+            if (loan.amount <= 0) {
+                logToMap(`✅ Prestito di €${loan.original} estinto!`);
+                return false;
+            }
+            return true;
+        });
+        if (totalRepayment > 0) {
+            gameState.cash -= totalRepayment;
+            logToMap(`🏦 Rata prestito mensile: −€${totalRepayment}`);
+            if (typeof showNotification === 'function') showNotification(`🏦 Rata prestito: −€${totalRepayment}`, 'error');
+        }
+    }
+
+    // Evento sciopero casuale (ogni ~15 giorni, 20% chance)
+    if (gameState.day % 15 === 0 && Math.random() < 0.20) {
+        const strikeDuration = 2 + Math.floor(Math.random() * 3);
+        gameState.emails.push({
+            id: gameState.nextId++, sender: 'Sindacato Autisti',
+            subject: `⚠️ SCIOPERO: Picco di Domanda per ${strikeDuration} giorni`,
+            type: 'b2b', offer: 0, status: 'unread',
+            expiresAt: gameState.day * 24 + gameState.hour + 48
+        });
+        for (let i = 0; i < 5; i++) generatePOIRide('business');
+        logToMap(`🚌 SCIOPERO MEZZI: domanda NCC in impennata!`);
+        showBigEvent('🚌', 'Sciopero Mezzi Pubblici!', `I trasporti pubblici sono fermi per ${strikeDuration} giorni. La domanda di NCC è esplosa. Approfitta del surge pricing!`);
+    }
+
+    // Achievement check giornaliero
+    _checkAchievements();
+
+    _tickMacroEconomy();
+
+    logToMap(`📊 Chiusura Giornaliera: Entrate +€${income} | Uscite -€${Math.floor(expenses)} (Inc. Tasse: €${luxuryTax})`);
+    if(typeof renderTabRanking === 'function') renderTabRanking();
+}
+
+// ─── GENERAZIONE CORSE ───
+function generatePOIRide(tierOverride = null) {
+    if (gameState.pendingRides.length > 20) return null;
+    const rank = _getRankPosition();
+    const availablePOIs = Object.values(POIS).filter(p => {
+        if (!gameState.unlockedRegions.includes(p.region)) return false;
+        if (p.exclusiveRank && rank > p.exclusiveRank) return false; // exclusive to top N
+        return true;
+    });
+    if (availablePOIs.length < 2) return null;
+
+    // Airport bribe: increase chance of airport origin/dest rides
+    let fromPool = availablePOIs;
+    const airportIds = ['roma_fco', 'nap_capo', 'mil_mxp', 'mil_lin'];
+    if (hasInvestment('inv_airport_bribe') && Math.random() < 0.30) {
+        const airportPOIs = availablePOIs.filter(p => airportIds.includes(p.id));
+        if (airportPOIs.length > 0) fromPool = airportPOIs;
+    }
+    const from = fromPool[Math.floor(Math.random() * fromPool.length)];
+    // Filter blacklisted destinations
+    const blacklist = gameState.blacklistedClients || [];
+    const toPool = availablePOIs.filter(p => !blacklist.includes(p.id));
+    // Airport-forced events
+    const airportForce = gameState.activeDynamicEvent?.forceAirport;
+    const airportIds2 = ['roma_fco','nap_capo','mil_mxp','mil_lin','ven_mp','olbia'];
+    const finalToPool = airportForce
+        ? toPool.filter(p => airportIds2.includes(p.id)).concat(toPool).slice(0, 10)
+        : toPool;
+    let to = (finalToPool.length ? finalToPool : toPool)[Math.floor(Math.random() * (finalToPool.length || toPool.length))];
+    if (!to || from.id === to.id) return null;
+
+    let tier;
+    if (tierOverride) {
+        tier = tierOverride;
+    } else {
+        const roll = Math.random();
+        const threshold = (hasInvestment('inv_terminal_fco') && from.region === 'lazio') ? 0.45 : 0.7;
+        tier = roll > threshold ? from.minTier : 'standard';
+    }
+    // Prezzi reali NCC: baseFlat × moltiplicatori multipli
+    const isLongDistance = from.region !== to.region;
+    const distMult    = isLongDistance ? 2.8 : 1.0;
+    const cannesMult  = gameState.cannesBoostDays > 0 ? 2.0 : 1.0;
+    const tierMult    = RIDE_PRICING[tier] || 1.0;
+    const nightMult   = (gameState.hour >= 22 || gameState.hour < 7) ? 1.20 : 1.0;
+    const weatherMult = (WEATHER_STATES.find(w => w.id === gameState.weather) || {priceMult:1}).priceMult;
+    // Surge pricing: domanda alta = tariffe più alte
+    const pending = gameState.pendingRides.length;
+    const surgeMult = pending >= 15 ? 1.35 : pending >= 8 ? 1.15 : 1.0;
+    const seasonMult  = _getSeasonalMult().priceMult;
+    const livreMult   = hasInvestment('inv_livrea') ? 1.08 : 1.0;
+    const carbonMult2 = hasInvestment('inv_carbon_neutral') && tier === 'business' && Math.random() < 0.3 ? 1.15 : 1.0;
+    const activeEv    = gameState.activeDynamicEvent;
+    const eventMult   = activeEv ? (activeEv.priceMult || 1.0) : 1.0;
+    // Surge pricing: +40% extra for emergency/entertainment events with surge flag
+    const surgeCatMult = (activeEv?.surge && (activeEv?.category === 'emergency' || activeEv?.category === 'entertainment')) ? 1.40 : 1.0;
+    const secEscort   = hasInvestment('inv_security_escort') && (tier === 'ultra' || tier === 'vip') ? 1.80 : 1.0;
+    // Price-war: -30% durante la guerra, +40% durante il monopolio
+    const activePW    = (gameState.pricewars || []).find(pw => pw.regionId === from.region || pw.regionId === to.region);
+    const pricewarMult = activePW
+        ? (activePW.monopolyEndsDay ? 1.40 : 0.70)
+        : 1.0;
+    // Lifestyle: yacht → +20% su corse Ultra costiere
+    const yachtMult = (gameState.lifestyleAssets || []).includes('yacht_lusso') && tier === 'ultra' ? 1.20 : 1.0;
+    const finalPrice  = Math.floor(from.baseFlat * tierMult * distMult * cannesMult * nightMult * weatherMult * surgeMult * seasonMult * livreMult * carbonMult2 * eventMult * surgeCatMult * secEscort * pricewarMult * yachtMult);
+
+    const ride = { id: gameState.nextId++, fromPoi: from, toPoi: to, tier: tier, price: finalPrice, duration: from.region !== to.region ? 40000 : 20000, elapsed: 0 };
+    gameState.pendingRides.push(ride);
+
+    if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
+    return ride;
+}
+
+const TIER_COMPATIBILITY = {
+    'ultra': ['ultra'], 'vip': ['vip', 'ultra'], 'business': ['business', 'vip', 'ultra'], 'standard': ['standard', 'business', 'vip', 'ultra']
+};
+
+function assignRideToDriver(rideId, driverId) {
+    const rideIdx = gameState.pendingRides.findIndex(r => r.id == rideId);
+    const driver = gameState.drivers.find(d => d.id == driverId);
+
+    if (rideIdx > -1 && driver) {
+        if (driver.queue.length >= 10) return;
+        if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
+        const ride = gameState.pendingRides.splice(rideIdx, 1)[0];
+        driver.queue.push(ride);
+
+        if (driver.status === 'idle') startNextRide(driver);
+        if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
+    }
+}
+
+function assignAllRides() {
+    if (gameState.pendingRides.length === 0) return;
+    let assigned = 0;
+    for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
+        const ride = gameState.pendingRides[i];
+        const validDrivers = gameState.drivers.filter(d => {
+            const car = gameState.fleet.find(c => c.id === d.assignedCarId);
+            return car && TIER_COMPATIBILITY[ride.tier].includes(car.tier) && d.queue.length < 10 && d.status !== 'resting';
+        }).sort((a, b) => a.queue.length - b.queue.length);
+
+        if (validDrivers.length > 0) { assignRideToDriver(ride.id, validDrivers[0].id); assigned++; }
+    }
+}
+
+function autoDispatchRides() {
+    if (gameState.staff.length === 0 || gameState.pendingRides.length === 0) return;
+    let canHandleVIP = gameState.staff.some(s => s.id === 'sr_disp');
+
+    for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
+        const ride = gameState.pendingRides[i];
+        if (!canHandleVIP && (ride.tier === 'vip' || ride.tier === 'ultra')) continue;
+
+        const validDrivers = gameState.drivers.filter(d => {
+            const car = gameState.fleet.find(c => c.id === d.assignedCarId);
+            return car && TIER_COMPATIBILITY[ride.tier].includes(car.tier) && d.queue.length < 10 && d.status !== 'resting';
+        }).sort((a, b) => a.queue.length - b.queue.length);
+
+        if (validDrivers.length > 0) assignRideToDriver(ride.id, validDrivers[0].id);
+    }
+}
+
+function startNextRide(driver) {
+    if (driver.status === 'resting') return;
+
+    if (driver.queue.length === 0) {
+        driver.status = 'idle';
+        if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
+        return;
+    }
+
+    const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
+    if (!car || car.condition <= 10) { driver.status = 'idle'; return; }
+    // OutOfService check: auto ferma per deposito vuoto — il Logistics Manager la riprenderà appena si rifornisce il deposito
+    if (car.outOfService) {
+        driver.status = 'idle';
+        return;
+    }
+    if (car.fuel === undefined) car.fuel = 100;
+
+    if (driver.id === 'ceo') {
+        const hasHR = gameState.staff.some(s => s.id === 'hr');
+        const energyThreshold = hasHR ? 15 : 10;
+        if (gameState.energy < energyThreshold) { driver.status = 'idle'; return; }
+        gameState.energy -= 10;
+    }
+
+    const ride = driver.queue.shift();
+    ride.driverId = driver.id;
+    driver.status = 'busy';
+
+    // Condizione auto
+    let condLoss = ride.tier === 'ultra' ? 1 : 2;
+    if (hasInvestment('inv_driver_school')) condLoss = Math.max(0.5, condLoss * 0.5);
+    if (driver.trait?.condMult) condLoss *= driver.trait.condMult;
+    car.condition -= condLoss;
+
+    // Durata: traffico + meteo + tratto autista + Telepass
+    const trafficMult  = _getTrafficMult();
+    const weatherSpeed = (WEATHER_STATES.find(w => w.id === gameState.weather) || {speedMult:1}).speedMult;
+    // Specialty bonus: speed
+    let specialtySpeedBonus = 1.0;
+    if (driver.specialty === 'airport_pro' && (ride.fromPoi.type === 'hub' || ['roma_fco','nap_capo','mil_mxp','mil_lin','ven_mp','olbia'].includes(ride.fromPoi.id))) specialtySpeedBonus = 1.15;
+    if (driver.specialty === 'city_roma'   && (ride.fromPoi.region === 'lazio'     || ride.toPoi.region === 'lazio'))     specialtySpeedBonus = 1.20;
+    if (driver.specialty === 'city_milano' && (ride.fromPoi.region === 'lombardia' || ride.toPoi.region === 'lombardia')) specialtySpeedBonus = 1.20;
+    if (driver.specialty === 'city_napoli' && (ride.fromPoi.region === 'campania'  || ride.toPoi.region === 'campania'))  specialtySpeedBonus = 1.20;
+    if (driver.specialty === 'alpine'      && gameState.weather === 'neve') specialtySpeedBonus = 1.25;
+    // Dynamic event speed multiplier
+    const eventSpeedMult = gameState.activeDynamicEvent?.speedMult || 1.0;
+    // Centralina ECU Sport: +28% velocità
+    const centralinaMult = (car.upgrades || []).includes('centralina') ? 1.28 : 1.0;
+    let speedMult = (driver.trait?.speedMult || 1.0) * trafficMult * weatherSpeed * specialtySpeedBonus * eventSpeedMult * centralinaMult;
+    ride.duration = Math.max(5000, Math.floor(ride.duration / speedMult));
+    // Telepass Premium: -10% su trasferimenti interregionali
+    if (hasInvestment('inv_telepass') && ride.fromPoi.region !== ride.toPoi.region) {
+        ride.duration = Math.floor(ride.duration * 0.90);
+    }
+    // Cantieri: +35% duration if roadworks on this route
+    const cantieriMult = _getCantieriSpeedMult(ride.fromPoi.id, ride.toPoi.id);
+    if (cantieriMult < 1.0) {
+        ride.duration = Math.floor(ride.duration / cantieriMult);
+        logToMap(`🚧 ${driver.name} passa per cantieri: corsa rallentata.`);
+    }
+
+    // Incidente: base 1%, ridotto da auto nuova / meccanico / tratto / Dashcam / Ranking Top 3 / safe driving
+    let accidentProb = 0.010;
+    if (car.condition > 80) accidentProb *= 0.50;
+    if ((car.tirePressure || 100) < 30) accidentProb *= 1.80; // flat-ish tires are dangerous
+    if (gameState.staff.some(s => s.id === 'mech')) accidentProb *= 0.30;
+    if (driver.trait?.accidentMult) accidentProb *= driver.trait.accidentMult;
+    if (hasInvestment('inv_dashcam')) accidentProb *= 0.50;
+    if (hasInvestment('inv_safe_driving')) accidentProb *= 0.50;
+    if (_getRankPosition() <= 3) accidentProb *= 0.85;
+    if (Math.random() < accidentProb) ride.hasIncident = true;
+
+    // Tire pressure decay
+    if (car.tirePressure === undefined) car.tirePressure = 100;
+    car.tirePressure = Math.max(0, car.tirePressure - (3 + Math.random() * 4));
+    if (car.tirePressure < 20 && Math.random() < 0.15) {
+        logToMap(`🔴 ${car.name}: gomme critiche! Rischio guasto aumentato.`);
+        if (typeof showNotification === 'function') showNotification(`⚠️ ${car.name}: pressione gomme critica!`, 'error');
+    }
+
+    // Fuel consumption: intercity uses more fuel; low tire pressure wastes more fuel
+    const fuelCost = { standard:12, business:16, vip:20, ultra:25, group:18 };
+    const baseFuel = fuelCost[ride.tier] || 14;
+    const tireFuelMult = car.tirePressure < 50 ? 1.25 : car.tirePressure < 70 ? 1.10 : 1.0;
+    // Serbatoio Maggiorato: -55% consumo
+    const serbatoioMult = (car.upgrades || []).includes('serbatoio_ext') ? 0.45 : 1.0;
+    car.fuel = Math.max(0, car.fuel - (ride.fromPoi.region !== ride.toPoi.region ? baseFuel * 1.5 : baseFuel) * tireFuelMult * serbatoioMult);
+
+    // Mileage tracking
+    if (car.mileage === undefined) car.mileage = 0;
+    const kmGain = ride.fromPoi.region !== ride.toPoi.region ? 250 : 60;
+    car.mileage += kmGain;
+    if (car.mileage > 0 && car.mileage % 5000 < kmGain) {
+        logToMap(`🔧 ${car.name} ha superato i ${Math.floor(car.mileage/1000)}k km: manutenzione consigliata!`);
+        if (typeof showNotification === 'function') showNotification(`🔧 ${car.name}: tagliando necessario a ${Math.floor(car.mileage/1000)}k km!`, 'error');
+    }
+
+    gameState.activeRides.push(ride);
+    const trafficLabel = trafficMult < 1 ? ' 🚦' : trafficMult > 1 ? ' 🌙' : '';
+    logToMap(`🚖 ${driver.name} partito per ${ride.toPoi.name}${trafficLabel}`);
+
+    if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
+}
+
+function completeRide(ride) {
+    const hasHR = gameState.staff.some(s => s.id === 'hr');
+    const driver = gameState.drivers.find(d => d.id === ride.driverId);
+
+    // Fatigue gain (non-CEO drivers only)
+    if (driver && driver.id !== 'ceo') {
+        if (driver.fatigue === undefined) driver.fatigue = 0;
+        const fatigueCost = { ultra: 20, vip: 15, business: 10, standard: 8 };
+        const prevFatigue = driver.fatigue;
+        const levelFatigueMult = (DRIVER_LEVELS[driver.level || 0] || DRIVER_LEVELS[0]).fatigueBonus;
+        const fatigueMult = (driver.trait?.fatigueMult || 1.0) * levelFatigueMult;
+        driver.fatigue = Math.min(100, driver.fatigue + (fatigueCost[ride.tier] || 8) * fatigueMult);
+
+        // Avviso primo superamento 70% senza HR
+        if (!hasHR && prevFatigue < 70 && driver.fatigue >= 70) {
+            if(typeof showNotification==='function') showNotification(`⚠️ ${driver.name} stanco (${Math.floor(driver.fatigue)}%). Considera il riposo.`, 'error');
+        }
+
+        // Con HR: riposo automatico a 85%
+        // Senza HR: riposo forzato a 100% (prevenzione incidenti gravi)
+        if (hasHR && driver.fatigue >= 85) {
+            _sendDriverToRest(driver, 6);
+            logToMap(`🛌 HR: ${driver.name} in riposo (fatica: ${Math.floor(driver.fatigue)}%).`);
+        } else if (!hasHR && driver.fatigue >= 100) {
+            driver.fatigue = 100;
+            // Rischio incidente per stanchezza estrema
+            const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
+            if (car && Math.random() < 0.15) {
+                car.condition = Math.max(0, car.condition - 25);
+                logToMap(`💥 INCIDENTE: ${driver.name} esausto! Auto danneggiata (-25 cond.).`);
+                if(typeof showNotification==='function') showNotification(`💥 ${driver.name} ha avuto un incidente per stanchezza!`, 'error');
+            }
+            _sendDriverToRest(driver, 6);
+            logToMap(`🛌 FORZATO: ${driver.name} al riposo (fatica 100%).`);
+            if(typeof showNotification==='function') showNotification(`🛌 ${driver.name} va in riposo obbligatorio.`, 'error');
+        }
+    }
+
+    // Incidente: auto danneggiata, incasso ridotto
+    if (ride.hasIncident) {
+        const car = gameState.fleet.find(c => c.id === driver?.assignedCarId);
+        if (hasInvestment('inv_kasko')) {
+            logToMap(`🛡️ Kasko: incidente coperto per ${driver?.name}, auto riparata automaticamente.`);
+            if(typeof showNotification==='function') showNotification(`🛡️ Kasko: incidente coperto!`, 'success');
+        } else {
+            if (car) car.condition = Math.max(0, car.condition - 20);
+            logToMap(`💥 Guasto en-route: ${driver?.name}! Auto danneggiata (-20 cond.).`);
+            if(typeof showNotification==='function') showNotification(`💥 Guasto! Auto di ${driver?.name} danneggiata.`, 'error');
+        }
+        ride.price = Math.floor(ride.price * 0.5); // Cliente risarcito del ritardo
+    }
+
+    // Incident map marker
+    if (ride.hasIncident && typeof addIncidentMarker === 'function') {
+        addIncidentMarker(ride.toPoi.lat, ride.toPoi.lng, driver?.name || '?');
+    }
+
+    // Mance: HR +15%, tratto Gentleman, livello XP, upgrade auto, specialty, dynamic event
+    const hrTipMult     = hasHR ? 1.15 : 1.0;
+    const traitTipMult  = driver?.trait?.tipMult || 1.0;
+    const levelData     = driver ? (DRIVER_LEVELS[driver.level] || DRIVER_LEVELS[0]) : DRIVER_LEVELS[0];
+    const levelTipMult  = driver ? levelData.tipBonus : 1.0;
+    // Specialty tip bonus
+    let specTipMult = 1.0;
+    if (driver?.specialty === 'night_owl' && (gameState.hour >= 22 || gameState.hour < 6)) specTipMult = 1.30;
+    if (driver?.specialty === 'vip_escort' && (ride.tier === 'vip' || ride.tier === 'ultra')) specTipMult = 1.10;
+    if (driver?.specialty === 'city_roma'   && ride.toPoi.region === 'lazio')     specTipMult = Math.max(specTipMult, 1.20);
+    if (driver?.specialty === 'city_milano' && ride.toPoi.region === 'lombardia') specTipMult = Math.max(specTipMult, 1.20);
+    if (driver?.specialty === 'city_napoli' && ride.toPoi.region === 'campania')  specTipMult = Math.max(specTipMult, 1.20);
+    // Dynamic event tip
+    const eventTipMult = gameState.activeDynamicEvent?.tipMult || 1.0;
+    // Car upgrade price multiplier
+    const car2 = gameState.fleet.find(c => c.id === driver?.assignedCarId);
+    const upgradeMult = (car2?.upgrades || []).reduce((acc, uid) => {
+        const u = CAR_UPGRADES.find(x => x.id === uid);
+        return u ? acc * u.priceMult : acc;
+    }, 1.0);
+
+    const earned = Math.floor(ride.price * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult);
+    gameState.cash += earned;
+    gameState.reputation = Math.min(5.0 + gameState.prestige, gameState.reputation + 0.02);
+
+    // XP gain for non-CEO drivers
+    if (driver && driver.id !== 'ceo') {
+        const xpGain = { standard:10, business:20, vip:35, ultra:60, group:15 };
+        if (driver.xp === undefined) driver.xp = 0;
+        driver.xp += (xpGain[ride.tier] || 10);
+        _checkDriverLevel(driver);
+    }
+
+    const extras = [hasHR ? '+HR' : null, traitTipMult > 1 ? `+${Math.round((traitTipMult-1)*100)}%` : null, levelTipMult > 1 ? `Lv${driver?.level}` : null, ride.isEmptyLeg ? 'EmptyLeg' : null, ride.isGreyMarket ? '🕵️' : null].filter(Boolean).join(' ');
+    logToMap(`💰 Incasso: €${earned} da ${ride.toPoi.name}${extras ? ` (${extras})` : ''}`);
+    saveGame();
+
+    // Empty leg: if a long-distance ride just completed, look for a return passenger
+    if (ride.fromPoi.region !== ride.toPoi.region && !ride.isEmptyLeg && driver) {
+        _findEmptyLegRide(ride);
+    }
+
+    const bar = document.getElementById(`prog-${ride.driverId}`);
+    if (bar) bar.style.width = '0%';
+
+    // Rifornimento automatico: il Logistics Manager gestisce gasolio e gomme
+    if (car2) refillVehicle(car2.id);
+
+    if (driver) startNextRide(driver);
+}
+
+// ─── EVENTI E EMAIL ───
+function generateEmailEvent() {
+    const currentEvent = CEO_EVENTS.find(e => e.month === gameState.month);
+    const gameHour = gameState.day * 24 + gameState.hour;
+    const expiresAt = gameHour + 12; // expires in 12 game hours
+
+    if (currentEvent && Math.random() > 0.5) {
+        gameState.emails.push({ id: gameState.nextId++, sender: "Networking Board", subject: `[INVITO] ${currentEvent.name}`, type: 'ceo_event', status: 'unread', eventData: currentEvent, expiresAt });
+    } else {
+        gameState.emails.push({ id: gameState.nextId++, sender: "Concierge Lusso", subject: "Appalto B2B: Delega 3 Giorni", offer: Math.floor(Math.random() * 8000) + 3500, type: 'b2b', status: 'unread', expiresAt });
+    }
+
+    // Enforce max 5 before notifying
+    while (gameState.emails.filter(e => e.status === 'unread').length > 5) {
+        const idx = gameState.emails.findIndex(e => e.status === 'unread');
+        if (idx > -1) gameState.emails.splice(idx, 1);
+    }
+
+    const dot = document.getElementById('mail-dot'); if(dot) dot.classList.remove('hidden');
+    if (_tabIs('emails') && typeof renderTabEmails==='function') renderTabEmails();
+}
+
+function autoNegotiateEmails() {
+    let unreadEmails = gameState.emails.filter(e => e.status === 'unread');
+    let hasEventMgr = gameState.staff.some(s => s.id === 'evt_mgr');
+
+    unreadEmails.forEach(email => {
+        if (email.type === 'b2b' && hasEventMgr) {
+            let counterOffer = Math.floor(email.offer * 1.15);
+            logToMap(`L'Event Manager ha chiuso un Appalto B2B a €${counterOffer}`);
+            gameState.cash += counterOffer;
+            gameState.reputation += 0.05;
+            email.status = 'resolved';
+
+            let numRides = Math.floor(Math.random() * 3) + 3;
+            for(let i=0; i<numRides; i++) generatePOIRide(Math.random()>0.5?'business':'vip');
+        }
+    });
+    if (_tabIs('emails') && typeof renderTabEmails==='function') renderTabEmails();
+    updateUI();
+}
+
+function negotiateEmail(emailId, action, choiceIdx = null) {
+    const email = gameState.emails.find(e => e.id === emailId);
+    if (!email) return;
+
+    if (email.type === 'grey_market') {
+        window.acceptGreyMarket(emailId);
+        return;
+    }
+
+    if (email.type === 'ceo_event' && choiceIdx !== null) {
+        const choice = email.eventData.choices[choiceIdx];
+        if (gameState.cash >= Math.max(0, choice.cost)) {
+            gameState.cash -= choice.cost;
+            gameState.reputation += choice.repBonus;
+            logToMap(`Evento: Hai scelto "${choice.text}".`);
+        } else { return; } // Fondi insufficienti
+    } else if (email.type === 'b2b') {
+        let successChance = 100 - (((action / email.offer) - 1) * 100) + (gameState.reputation * 15);
+        if (Math.random() * 100 <= successChance) {
+            logToMap(`✅ Appalto B2B chiuso: €${action}`);
+            gameState.cash += action; gameState.reputation += 0.05;
+            let numRides = Math.floor(Math.random() * 3) + 3;
+            for(let i=0; i<numRides; i++) generatePOIRide(Math.random()>0.5?'business':'vip');
+        } else {
+            logToMap(`❌ Trattativa fallita.`); gameState.reputation -= 0.02;
+        }
+    }
+
+    email.status = 'resolved';
+    if(typeof renderTabEmails==='function') renderTabEmails(); updateUI();
+}
+
+// ─── GESTIONE AVANZATA AUTO (RIPARA, VENDI, ASSEGNA) ───
+function payToRepairCar(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if(!car) return;
+    if(car.condition === 100) return;
+
+    // Kasko: riparazioni incidentali gratuite
+    if (hasInvestment('inv_kasko')) {
+        car.condition = 100;
+        logToMap(`🛡️ Kasko: ${car.name} riparata gratuitamente.`);
+        if(typeof closeModals === 'function') closeModals();
+        if(typeof renderTabFleet === 'function') renderTabFleet();
+        updateUI();
+        return;
+    }
+
+    let cost = (100 - car.condition) * 25;
+    if (gameState.staff.some(s => s.id === 'mech')) cost = cost * 0.5;
+    if (hasInvestment('inv_mobile_workshop')) cost = Math.floor(cost * 0.8);
+
+    if(gameState.cash >= cost) {
+        gameState.cash -= cost;
+        car.condition = 100;
+        if(typeof closeModals === 'function') closeModals();
+        if(typeof renderTabFleet === 'function') renderTabFleet();
+        updateUI();
+    }
+}
+
+function sellCar(carId) {
+    const idx = gameState.fleet.findIndex(c => c.id === carId);
+    if(idx === -1) return;
+    const car = gameState.fleet[idx];
+
+    if(car.isLease) return;
+
+    let baseValue = car.tier === 'ultra' ? 180000 : (car.tier === 'vip' ? 70000 : 35000);
+    let sellPrice = Math.floor(baseValue * (car.condition / 100) * 0.7);
+
+    gameState.cash += sellPrice;
+    let driver = gameState.drivers.find(d => d.assignedCarId === car.id);
+    if (driver) driver.assignedCarId = null;
+
+    gameState.fleet.splice(idx, 1);
+    if(typeof closeModals === 'function') closeModals();
+    if(typeof renderTabFleet === 'function') renderTabFleet();
+    updateUI();
+}
+
+function assignCarToDriver(carId, driverId) {
+    const driver = gameState.drivers.find(d => d.id === driverId);
+    if(driver) {
+        driver.assignedCarId = carId;
+        if(typeof closeModals === 'function') closeModals();
+        if(typeof renderTabFleet === 'function') renderTabFleet();
+    }
+}
+
+// ─── LEASING & HOTEL & ACQUISTI ───
+function updateLeasePreview() {
+    if(typeof tempLeaseTier === 'undefined' || !tempLeaseTier) return;
+    const km = document.getElementById('lease-km').value;
+    const months = document.getElementById('lease-duration').value;
+    document.getElementById('lease-km-display').innerText = `${km/1000}k km`;
+    document.getElementById('lease-duration-display').innerText = `${months} Mesi`;
+
+    const template = LEASING_TEMPLATES[tempLeaseTier];
+    const base = template.baseRate;
+    const extraKm = ((km - 20000) / 1000) * (template.kmRate * 1000) / 12;
+    const discountDuration = months > 12 ? (months * 5) : 0;
+    const total = base + extraKm - discountDuration;
+
+    document.getElementById('lease-base-price').innerText = `€${base}`;
+    document.getElementById('lease-km-price').innerText = `+€${Math.floor(extraKm - discountDuration)}`;
+    document.getElementById('lease-total-price').innerText = `€${Math.floor(total)}`;
+}
+
+function confirmLease() {
+    const km = document.getElementById('lease-km').value;
+    const months = parseInt(document.getElementById('lease-duration').value);
+    const template = LEASING_TEMPLATES[tempLeaseTier];
+
+    const extraKm = ((km - 20000) / 1000) * (template.kmRate * 1000) / 12;
+    const discountDuration = months > 12 ? (months * 5) : 0;
+    const monthly = template.baseRate + extraKm - discountDuration;
+    const daily = monthly / 30;
+
+    gameState.fleet.push({
+        id: 'c_' + Date.now(), name: template.name + ' (Leasing)', tier: template.tier,
+        condition: 100, isLease: true, dailyCost: daily, leaseDuration: months, leaseElapsedDays: 0,
+        fuel: 100, mileage: 0, tirePressure: 100, upgrades: []
+    });
+    if(typeof closeModals === 'function') closeModals();
+    if(typeof renderTabFleet === 'function') renderTabFleet();
+}
+
+function rest(stars) {
+    let cost = stars === 3 ? 80 : (stars === 4 ? 200 : 600);
+    let energyGain = stars === 3 ? 50 : (stars === 4 ? 75 : 100);
+    let repGain = stars === 5 ? 0.1 : 0;
+
+    if(gameState.cash >= cost) {
+        gameState.cash -= cost; gameState.energy = Math.min(100, gameState.energy + energyGain); gameState.reputation += repGain;
+        if(typeof closeModals === 'function') closeModals(); updateUI();
+    }
+}
+
+function buyRegion(regionId) {
+    const region = REGIONS[regionId];
+    if (gameState.cash >= region.price && gameState.reputation >= region.repReq) {
+        gameState.cash -= region.price; gameState.unlockedRegions.push(regionId);
+        updateUI(); if(typeof renderTabRegions==='function') renderTabRegions();
+        if (typeof drawHighways === 'function') drawHighways();
+        if (typeof drawPOIs === 'function') drawPOIs();
+        saveGame();
+    }
+}
+
+function buyInvestment(invId) {
+    const item = INVESTMENTS.find(i => i.id === invId);
+    if (!item || gameState.investments.includes(invId)) return;
+    if (gameState.cash < item.price) { if(typeof showNotification==='function') showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= item.price;
+    gameState.investments.push(invId);
+    if (item.rep) gameState.reputation = Math.min(5.0, gameState.reputation + item.rep);
+    if (invId === 'inv_acquire') applyAcquisition();
+    if (invId === 'inv_sponsorship') applySponsorship();
+    if (invId === 'inv_national_license') applyNationalLicense();
+    if(typeof showNotification==='function') showNotification(`${item.name} acquisito!`, 'success');
+    updateUI();
+    if(typeof renderTabInvestments==='function') renderTabInvestments();
+    saveGame();
+}
+
+function applyAcquisition() {
+    if (RIVALS.length === 0) return;
+    const weakest = [...RIVALS].sort((a,b) => a.rep - b.rep)[0];
+    RIVALS.splice(RIVALS.findIndex(r => r.id === weakest.id), 1);
+    const tiers = ['standard','standard','business','business','vip'];
+    for (let i = 0; i < 5; i++) {
+        gameState.fleet.push({ id:'c_acq_'+Date.now()+i, name:`Auto (ex-${weakest.name})`, tier:tiers[i], condition:Math.floor(50+Math.random()*40), isLease:false });
+    }
+    logToMap(`🏢 Acquisita ${weakest.name}! +5 veicoli in flotta.`);
+}
+
+function applySponsorship() {
+    gameState.reputation = 5.0;
+    gameState.cannesBoostDays = 7;
+    logToMap('🎬 Festival di Cannes! Rep 5★ & prezzi doppi per 7 giorni!');
+}
+
+function applyNationalLicense() {
+    Object.keys(REGIONS).forEach(regionId => {
+        if (!gameState.unlockedRegions.includes(regionId)) {
+            gameState.unlockedRegions.push(regionId);
+        }
+    });
+    logToMap('🇮🇹 Licenza Nazionale: tutte le regioni d\'Italia sbloccate!');
+    showBigEvent('🇮🇹', 'Italia Tua!', 'Hai acquistato la Licenza Nazionale NCC. Tutte le 19 regioni italiane sono ora operative. Sei il padrone assoluto del mercato NCC.');
+    if (typeof drawHighways === 'function') drawHighways();
+    if (typeof drawPOIs === 'function') drawPOIs();
+    if (typeof renderTabRegions === 'function') renderTabRegions();
+}
+
+// ─── PROTOTIPI ESCLUSIVI ──────────────────────────────────────────
+window.buyPrototypeCar = function(protoId) {
+    if (typeof PROTOTYPE_CARS === 'undefined') return;
+    const proto = PROTOTYPE_CARS.find(p => p.id === protoId);
+    if (!proto) return;
+    if (gameState.fleet.some(f => f.protoId === protoId)) { showNotification('Hai già questo prototipo!', 'error'); return; }
+    if (gameState.reputation < proto.reqRep) { showNotification(`Reputazione insufficiente! Serve ${proto.reqRep}★`, 'error'); return; }
+    if (gameState.cash < proto.price) { showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= proto.price;
+    gameState.fleet.push({ id: 'c_proto_' + Date.now(), name: proto.name, tier: proto.tier, condition: 100, isLease: false, fuel: 100, mileage: 0, upgrades: [], protoId: proto.id });
+    showBigEvent('🔬', `${proto.name} Acquisita!`, proto.desc);
+    logToMap(`🔬 Prototipo: ${proto.name} aggiunta alla flotta!`);
+    updateUI();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+    saveGame();
+};
+
+// ─── SISTEMA PRESTITI ─────────────────────────────────────────────
+window.takeLoan = function(amount) {
+    if (!gameState.loans) gameState.loans = [];
+    const creditTier = _getCreditTier(gameState.creditScore || 300);
+    const activeLoanTotal = gameState.loans.reduce((s, l) => s + l.amount, 0);
+    if (activeLoanTotal >= creditTier.loanLimit) {
+        if (typeof showNotification === 'function') showNotification(`Limite massimo di credito raggiunto (€${creditTier.loanLimit.toLocaleString()})!`, 'error');
+        return;
+    }
+    if (amount > creditTier.loanLimit) {
+        if (typeof showNotification === 'function') showNotification(`Credit Score troppo basso per questo importo. Score attuale: ${gameState.creditScore} (${creditTier.label})`, 'error');
+        return;
+    }
+    const rate = creditTier.rate;
+    gameState.cash += amount;
+    gameState.loans.push({ id: gameState.nextId++, original: amount, amount: amount, remaining: amount, rate });
+    logToMap(`🏦 Prestito €${amount.toLocaleString()} — tasso ${(rate*100).toFixed(1)}%/mese (Score: ${gameState.creditScore} ${creditTier.label})`);
+    if (typeof showNotification === 'function') showNotification(`💰 Prestito €${amount.toLocaleString()} approvato!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ─── NEW GAME+ ────────────────────────────────────────────────────
+window.newGamePlus = function() {
+    if (!confirm('Iniziare una nuova partita portando il tuo lascito? Perderai tutto tranne una parte di reputazione e un bonus iniziale.')) return;
+    const ngpCount = (gameState.newGamePlusCount || 0) + 1;
+    const legacyRep = Math.min(2.0, gameState.reputation * 0.3);
+    const legacyCash = 5000 + (ngpCount * 10000);
+    localStorage.removeItem('olgaVisionSave_v2');
+    gameState = {
+        cash: legacyCash, reputation: legacyRep, energy: 100,
+        day: 1, month: 1, hour: 8, minute: 0, paused: false,
+        fleet: [], drivers: [], staff: [], investments: [],
+        pendingRides: [], activeRides: [], emails: [],
+        unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
+        availableRecruits: [],
+        weather: 'sole', weatherHoursLeft: 6,
+        activeCampaign: null,
+        activeFines: [],
+        achievements: [],
+        loans: [],
+        newGamePlusCount: ngpCount,
+        fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85,
+        depositoGomme: 0,
+        seizedCars: [],
+        policeHeat: 0,
+        consecutiveRedDays: 0,
+        blacklistedClients: [],
+        hqLevel: 0,
+        activeDynamicEvent: null,
+        activeStrike: null,
+        prestige: 0,
+        stockPrices: {}, stockHoldings: {}, brokerInvestments: [],
+        lifestyleAssets: [], creditScore: 300,
+        totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
+        pricewars: [], shadowMissionsTotal: 0
+    };
+    gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1 });
+    gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [] });
+    _refreshRecruits();
+    showBigEvent('♾️', `New Game+ ${ngpCount}`, `Riparto con €${legacyCash.toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. La tua leggenda continua.`);
+    logToMap(`♾️ New Game+ ${ngpCount} iniziato!`);
+    updateUI();
+    saveGame();
+};
+
+// ══════════════════════════════════════════════════════════════
+// HOLDING FINANZIARIA — MOTORE AZIONARIO E BROKER
+// ══════════════════════════════════════════════════════════════
+
+function _hasWealthManager() {
+    return gameState.staff.some(s => s.id === 'ewm');
+}
+window._hasWealthManager = _hasWealthManager;
+
+// Inizializza i prezzi azionari se assenti
+function _initStockPrices() {
+    if (typeof STOCK_TICKERS === 'undefined') return;
+    STOCK_TICKERS.forEach(t => {
+        if (gameState.stockPrices[t.id] === undefined) {
+            // Small random variance at start
+            gameState.stockPrices[t.id] = +(t.basePrice * (0.95 + Math.random() * 0.10)).toFixed(2);
+        }
+        if (!gameState.stockHoldings[t.id]) {
+            gameState.stockHoldings[t.id] = { shares: 0, avgCost: 0 };
+        }
+    });
+}
+
+// Fluttuazione prezzi ogni game-hour
+function _tickStockMarket() {
+    if (typeof STOCK_TICKERS === 'undefined') return;
+    const lastNews = window._lastNewsForStocks || '';
+    STOCK_TICKERS.forEach(t => {
+        const prev = gameState.stockPrices[t.id] || t.basePrice;
+        // Base random walk
+        let pct = (Math.random() - 0.48) * t.volatility;
+        // News sentiment boost: se l'ultima news contiene una keyword del ticker
+        const matched = t.newsKeywords.some(k => lastNews.toLowerCase().includes(k));
+        if (matched) pct += (Math.random() > 0.4 ? 1 : -1) * t.volatility * 0.6;
+        // Wall Street ufficio: +15% sui rendimenti azionari
+        const wsBonus = (gameState.lifestyleAssets || []).includes('ufficio_wall_street') ? 0.15 : 0;
+        if (pct > 0) pct *= (1 + wsBonus);
+        // Floor: no crash below 20% of base
+        const newPrice = Math.max(t.basePrice * 0.20, +(prev * (1 + pct)).toFixed(2));
+        gameState.stockPrices[t.id] = newPrice;
+    });
+    _tickStockHistory();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+}
+
+// Dividendi ogni game-hour
+function _payStockDividends() {
+    if (typeof STOCK_TICKERS === 'undefined' || !_hasWealthManager()) return;
+    let totalDiv = 0;
+    STOCK_TICKERS.forEach(t => {
+        const holding = gameState.stockHoldings[t.id];
+        if (!holding || holding.shares <= 0 || t.dividendPct <= 0) return;
+        const price = gameState.stockPrices[t.id] || t.basePrice;
+        const div = Math.floor(holding.shares * price * t.dividendPct / 24); // hourly rate from annual
+        if (div > 0) {
+            totalDiv += div;
+            gameState.totalDividendsEarned = (gameState.totalDividendsEarned || 0) + div;
+        }
+    });
+    if (totalDiv > 0) {
+        gameState.cash += totalDiv;
+        if (Math.random() < 0.1) logToMap(`💰 Dividendi azionari: +€${totalDiv}`);
+    }
+}
+
+// Tick investimenti broker ogni game-hour
+function _tickBrokerInvestments() {
+    if (!gameState.brokerInvestments || !_hasWealthManager()) return;
+    const currentHour = gameState.day * 24 + gameState.hour;
+    gameState.brokerInvestments.forEach(inv => {
+        if (inv.resolved) return;
+        if (currentHour < inv.endsHour) return;
+        // Calcola rendimento effettivo (distribuzione skewed verso positivo per Conservativo)
+        const rand = Math.random();
+        let actualReturnPct;
+        if (inv.risk === 'low') {
+            actualReturnPct = inv.minReturn + rand * (inv.maxReturn - inv.minReturn);
+            // Conservative: bias toward positive
+            if (actualReturnPct < 0) actualReturnPct *= 0.3;
+        } else if (inv.risk === 'medium') {
+            actualReturnPct = inv.minReturn + rand * (inv.maxReturn - inv.minReturn);
+        } else {
+            // High risk: bimodal — either boom or bust
+            actualReturnPct = Math.random() < 0.45
+                ? inv.minReturn * (0.5 + Math.random() * 0.5)
+                : inv.maxReturn * (0.3 + Math.random() * 0.7);
+        }
+        // Wall Street ufficio: +15% sui rendimenti positivi
+        if (actualReturnPct > 0 && (gameState.lifestyleAssets || []).includes('ufficio_wall_street')) {
+            actualReturnPct *= 1.15;
+        }
+        const gain = Math.round(inv.capital * actualReturnPct);
+        const payout = inv.capital + gain;
+        inv.resolved = true;
+        inv.actualGain = gain;
+        gameState.cash += payout;
+        const isProfit = gain >= 0;
+        const label = isProfit ? `+€${gain.toLocaleString()}` : `−€${Math.abs(gain).toLocaleString()}`;
+        const icon = isProfit ? '📈' : '📉';
+        logToMap(`${icon} Broker: investimento ${inv.riskName} chiuso — ${label} (capitale: €${inv.capital.toLocaleString()})`);
+        showBigEvent(icon,
+            isProfit ? `Investimento Profittevole!` : `Investimento in Perdita`,
+            `Il tuo portafoglio "${inv.riskName}" da €${inv.capital.toLocaleString()} ha chiuso con ${label}.\n${isProfit ? 'Il Wealth Manager ha fatto un ottimo lavoro.' : 'Il mercato è stato impietoso. Rivedi la strategia di rischio.'}`
+        );
+        // Notifica nel tab Finance
+        gameState.emails.push({
+            id: gameState.nextId++,
+            sender: 'Elite Wealth Manager',
+            subject: `${icon} Broker Report: ${label}`,
+            type: 'broker_result',
+            brokerGain: gain, brokerCapital: inv.capital, brokerRisk: inv.riskName,
+            status: 'unread',
+            expiresAt: (gameState.day * 24 + gameState.hour) + 48
+        });
+        if (typeof renderTabEmails === 'function') renderTabEmails();
+        updateUI();
+    });
+    // Remove old resolved investments (keep last 5)
+    const resolved = gameState.brokerInvestments.filter(i => i.resolved);
+    if (resolved.length > 5) gameState.brokerInvestments = gameState.brokerInvestments.filter(i => !i.resolved || resolved.indexOf(i) >= resolved.length - 5);
+}
+
+// Credit score dinamico basato su reputazione, prestiti, assets
+function _updateCreditScore() {
+    let score = 300;
+    score += Math.min(300, gameState.reputation * 60);  // max 300 from rep (5★ = 300)
+    score += Math.min(150, Math.floor(gameState.cash / 10000)); // max 150 from cash
+    const activeLoans = (gameState.loans || []).filter(l => l.amount > 0);
+    score -= activeLoans.length * 30; // -30 per active loan
+    if (activeLoans.some(l => l.amount > l.original * 0.8)) score -= 50; // high utilization
+    score += (gameState.lifestyleAssets || []).length * 20; // assets as collateral
+    score += (gameState.achievements || []).length * 5;
+    score = Math.max(300, Math.min(900, Math.round(score)));
+    gameState.creditScore = score;
+}
+
+function _getCreditTier(score) {
+    if (score >= 800) return { label:'PLATINUM', color:'#d4af37', loanLimit:5000000,  rate:0.03 };
+    if (score >= 700) return { label:'GOLD',     color:'#fbbf24', loanLimit:2000000,  rate:0.045 };
+    if (score >= 600) return { label:'SILVER',   color:'#9ca3af', loanLimit:1000000,  rate:0.06 };
+    if (score >= 500) return { label:'BRONZE',   color:'#b45309', loanLimit:500000,   rate:0.08 };
+    return                    { label:'BASIC',   color:'#6b7280', loanLimit:100000,   rate:0.12 };
+}
+window._getCreditTier = _getCreditTier;
+
+// ── AZIONI: COMPRA / VENDI ───────────────────────────────────────
+window.buyStocks = function(tickerId, shares) {
+    if (!_hasWealthManager()) { showNotification('Assumi un Elite Wealth Manager prima!', 'error'); return; }
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const totalCost = Math.round(price * shares);
+    if (totalCost <= 0) { showNotification('Quantità non valida.', 'error'); return; }
+    if (gameState.cash < totalCost) { showNotification(`Fondi insufficienti! Servono €${totalCost.toLocaleString()}`, 'error'); return; }
+    gameState.cash -= totalCost;
+    const holding = gameState.stockHoldings[tickerId];
+    const prevTotal = holding.shares * holding.avgCost;
+    holding.avgCost = +((prevTotal + totalCost) / (holding.shares + shares)).toFixed(2);
+    holding.shares += shares;
+    logToMap(`📊 Comprato ${shares} quote ${ticker.name} @ €${price.toFixed(2)} — Totale: €${totalCost.toLocaleString()}`);
+    showNotification(`${shares}x ${ticker.name} acquistate!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+window.sellStocks = function(tickerId, shares) {
+    if (!_hasWealthManager()) return;
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    const holding = gameState.stockHoldings[tickerId];
+    if (!holding || holding.shares < shares) { showNotification('Quote insufficienti!', 'error'); return; }
+    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const proceeds = Math.round(price * shares);
+    const costBasis = Math.round(holding.avgCost * shares);
+    const profit = proceeds - costBasis;
+    gameState.cash += proceeds;
+    holding.shares -= shares;
+    if (holding.shares === 0) holding.avgCost = 0;
+    gameState.totalStockProfit = (gameState.totalStockProfit || 0) + profit;
+    const pl = profit >= 0 ? `+€${profit.toLocaleString()}` : `−€${Math.abs(profit).toLocaleString()}`;
+    logToMap(`📊 Venduto ${shares} quote ${ticker.name} @ €${price.toFixed(2)} — P&L: ${pl}`);
+    showNotification(`${shares}x ${ticker.name} vendute — ${pl}`, profit >= 0 ? 'success' : 'error');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ── BROKER: PIAZZA INVESTIMENTO ──────────────────────────────────
+window.placeBrokerInvestment = function(capital, riskId, durationHours) {
+    if (!_hasWealthManager()) { showNotification('Assumi un Elite Wealth Manager prima!', 'error'); return; }
+    if (gameState.brokerInvestments.filter(i => !i.resolved).length >= 3) {
+        showNotification('Massimo 3 investimenti broker simultanei!', 'error'); return;
+    }
+    const profile = (typeof BROKER_RISK_PROFILES !== 'undefined' ? BROKER_RISK_PROFILES : []).find(p => p.id === riskId);
+    if (!profile) return;
+    capital = Math.round(Number(capital));
+    if (capital < 1000) { showNotification('Capitale minimo: €1.000', 'error'); return; }
+    if (gameState.cash < capital) { showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= capital;
+    const currentHour = gameState.day * 24 + gameState.hour;
+    gameState.brokerInvestments.push({
+        id: gameState.nextId++,
+        capital, risk: riskId, riskName: profile.name,
+        startHour: currentHour, endsHour: currentHour + durationHours,
+        minReturn: profile.minReturn, maxReturn: profile.maxReturn,
+        resolved: false, actualGain: null
+    });
+    const dLabel = durationHours < 24 ? `${durationHours}h` : `${durationHours / 24}gg`;
+    logToMap(`💼 Broker: €${capital.toLocaleString()} → ${profile.name} × ${dLabel}`);
+    showNotification(`Investimento piazzato: €${capital.toLocaleString()} (${profile.name})`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ── LIFESTYLE ASSETS ─────────────────────────────────────────────
+window.buyLifestyleAsset = function(assetId) {
+    const asset = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(a => a.id === assetId);
+    if (!asset) return;
+    if ((gameState.lifestyleAssets || []).includes(assetId)) { showNotification('Asset già posseduto!', 'error'); return; }
+    if (gameState.cash < asset.price) { showNotification(`Fondi insufficienti! Servono €${asset.price.toLocaleString()}`, 'error'); return; }
+    if (!gameState.lifestyleAssets) gameState.lifestyleAssets = [];
+    gameState.cash -= asset.price;
+    gameState.lifestyleAssets.push(assetId);
+    // Apply immediate reputation bonus
+    if (asset.repBonus) gameState.reputation = Math.min(10.0, gameState.reputation + asset.repBonus);
+    // Log
+    logToMap(`🏰 Acquisito: ${asset.name} (${asset.location}) — €${asset.price.toLocaleString()}`);
+    showBigEvent(asset.icon, `Acquisito: ${asset.name}!`,
+        `${asset.desc}\n\n${asset.repBonus > 0 ? `+${asset.repBonus}★ Reputazione immediata. ` : ''}${asset.passive > 0 ? `+€${asset.passive.toLocaleString()}/g entrate passive. ` : ''}${asset.intlUnlock ? 'Tratte internazionali sbloccate!' : ''}`
+    );
+    // International routes unlock
+    if (asset.intlUnlock && typeof FUTURE_POIS !== 'undefined') {
+        ['svizzera', 'costa_azzurra'].forEach(r => {
+            if (!gameState.unlockedRegions.includes(r)) gameState.unlockedRegions.push(r);
+        });
+        if (typeof drawHighways === 'function') drawHighways();
+        if (typeof drawPOIs === 'function') drawPOIs();
+        logToMap('✈️ Tratte internazionali sbloccate: Ginevra, Montecarlo, Nizza, Cannes!');
+    }
+    updateUI(); saveGame();
+    if (typeof renderTabLifestyle === 'function' && _tabIs('lifestyle')) renderTabLifestyle();
+};
+
+// ── VENDITA AZIENDA (Enhanced New Game+) ─────────────────────────
+window.sellCompanyNGP = function() {
+    if (!_hasWealthManager()) { showNotification('Ti serve un Elite Wealth Manager per trovare acquirenti!', 'error'); return; }
+    const creditTier = _getCreditTier(gameState.creditScore);
+    const assetValue = (gameState.lifestyleAssets || []).reduce((s, id) => {
+        const a = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(x => x.id === id);
+        return s + (a ? a.price * 0.4 : 0);
+    }, 0);
+    const fleetValue = gameState.fleet.reduce((s, c) => s + (c.isLease ? 0 : (c.condition / 100) * 50000), 0);
+    const repMult   = Math.max(1, gameState.reputation * 0.8);
+    const salePrice = Math.round((gameState.cash * 0.3 + assetValue + fleetValue) * repMult);
+    const msg = `Un fondo d'investimento privato vuole acquisire Olga Vision Agency per €${salePrice.toLocaleString()}.\n\nIncasso la cifra, vendi tutto, e ricominci da zero con un vantaggio enorme. Continuare?`;
+    if (!confirm(msg)) return;
+    const ngpCount = (gameState.newGamePlusCount || 0) + 1;
+    const legacyRep = Math.min(3.0, gameState.reputation * 0.4);
+    const legacyCash = 5000 + salePrice * 0.8;
+    localStorage.removeItem('olgaVisionSave_v2');
+    gameState = {
+        cash: legacyCash, reputation: legacyRep, energy: 100,
+        day: 1, month: 1, hour: 8, minute: 0, paused: false,
+        fleet: [], drivers: [], staff: [], investments: [],
+        pendingRides: [], activeRides: [], emails: [],
+        unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
+        availableRecruits: [], weather: 'sole', weatherHoursLeft: 6,
+        activeCampaign: null, activeFines: [], achievements: [], loans: [],
+        newGamePlusCount: ngpCount, fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85,
+        depositoGomme: 0, seizedCars: [], policeHeat: 0, consecutiveRedDays: 0,
+        blacklistedClients: [], hqLevel: 0, activeDynamicEvent: null, activeStrike: null, prestige: 0,
+        stockPrices: {}, stockHoldings: {}, brokerInvestments: [], lifestyleAssets: [],
+        creditScore: 400 + ngpCount * 50,
+        totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
+        pricewars: [], shadowMissionsTotal: 0,
+        stockHistory: {}, shortPositions: {}, shortMarginHeld: 0,
+        inflationRate: 0.020, interestRateBase: 0.045,
+        lobbyingPoints: 0, activeLobbyLaws: [],
+        companyName: gameState.companyName || 'Olga Vision Agency',
+        companyLogo: gameState.companyLogo || '👁️'
+    };
+    gameState.drivers.push({ id:'ceo', name:'Tu (CEO)', status:'idle', assignedCarId:'c_loaner', queue:[], fatigue:0, restHoursLeft:0, xp:0, level:0, morale:100, upgrades:[], hiredDay:1 });
+    gameState.fleet.push({ id:'c_loaner', name:'Berlina Base', tier:'standard', condition:100, isLease:true, dailyCost:40, leaseDuration:12, leaseElapsedDays:0, fuel:100, mileage:0, tirePressure:100, upgrades:[] });
+    _initStockPrices();
+    _refreshRecruits();
+    showBigEvent('🏦', `Exit Strategy — New Game+ ${ngpCount}`,
+        `Il fondo ha acquisito Olga Vision per €${salePrice.toLocaleString()}.\n\nRicominci con €${Math.floor(legacyCash).toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. Credit Score iniziale: ${gameState.creditScore}.\n\nCostruisci un nuovo impero.`);
+    logToMap(`♾️ Exit Strategy completata — NGP ${ngpCount} iniziato!`);
+    updateUI(); saveGame();
+};
+
+// ── DIAMOND CONTRACTS ────────────────────────────────────────────
+function _maybeDiamondContract() {
+    if (typeof DIAMOND_CONTRACTS === 'undefined') return;
+    if (!_hasWealthManager()) return;
+    if (gameState.reputation < 4.5) return;
+    if (gameState.emails.filter(e => e.type === 'diamond' && e.status === 'unread').length > 0) return;
+    const eligible = DIAMOND_CONTRACTS.filter(c => {
+        if (gameState.reputation < c.reqRep) return false;
+        if (!(gameState.lifestyleAssets || []).includes(c.reqAsset)) return false;
+        return true;
+    });
+    if (eligible.length === 0) return;
+    if (Math.random() > 0.35) return;
+    const contract = eligible[Math.floor(Math.random() * eligible.length)];
+    const price = Math.round(contract.basePrice * (1 + Math.random() * 0.3));
+    gameState.emails.push({
+        id: gameState.nextId++,
+        sender: contract.sender,
+        subject: contract.subject,
+        type: 'diamond',
+        offer: price,
+        status: 'unread',
+        expiresAt: (gameState.day * 24 + gameState.hour) + 36
+    });
+    const dot = document.getElementById('mail-dot');
+    if (dot) dot.classList.remove('hidden');
+    logToMap(`🔶 DIAMOND CONTRACT ricevuto da ${contract.sender}!`);
+    showNotification('🔶 Nuovo Diamond Contract in Inbox!', 'success');
+    if (typeof renderTabEmails === 'function') renderTabEmails();
+}
+
+window.acceptDiamondContract = function(emailId) {
+    const email = gameState.emails.find(e => e.id === emailId);
+    if (!email) return;
+    // Find best available driver+car
+    const driver = gameState.drivers.find(d => d.status === 'idle' && d.id !== 'ceo' && d.level >= 2);
+    if (!driver) { showNotification('Serve un autista Expert/Elite disponibile per contratti Diamond!', 'error'); return; }
+    const car = gameState.fleet.find(c => (c.tier === 'ultra' || c.tier === 'vip') && !gameState.activeRides.some(r => r.assignedCarId === c.id));
+    if (!car) { showNotification('Serve un veicolo VIP/Ultra disponibile!', 'error'); return; }
+    email.status = 'resolved';
+    const price = email.offer || 30000;
+    gameState.cash += price;
+    gameState.reputation = Math.min(10, gameState.reputation + 0.2);
+    gameState.diamondContractsCompleted = (gameState.diamondContractsCompleted || 0) + 1;
+    logToMap(`🔶 Diamond Contract completato! +€${price.toLocaleString()} +0.2★`);
+    showBigEvent('🔶', 'Diamond Contract Completato!', `€${price.toLocaleString()} incassati. +0.2★ Reputazione. Totale Diamond: ${gameState.diamondContractsCompleted}.`);
+    updateUI(); saveGame();
+    if (typeof renderTabEmails === 'function') renderTabEmails();
+};
+
+// ── MACRO-ECONOMIA ───────────────────────────────────────────────
+function _tickMacroEconomy() {
+    // Inflation: random walk ±0.001, bounded [0.005, 0.08]
+    const inflDelta = (Math.random() - 0.50) * 0.001;
+    gameState.inflationRate = Math.max(0.005, Math.min(0.08, +(gameState.inflationRate + inflDelta).toFixed(4)));
+
+    // BCE rate: mean-reverts toward 0.04, small shock every 7 days
+    const rateDelta = (Math.random() - 0.50) * 0.0005;
+    const revert = (0.04 - gameState.interestRateBase) * 0.02;
+    gameState.interestRateBase = Math.max(0.005, Math.min(0.12, +(gameState.interestRateBase + rateDelta + revert).toFixed(4)));
+
+    // Big shock every 30 days
+    if (gameState.day % 30 === 0) {
+        const shock = (Math.random() - 0.50) * 0.008;
+        gameState.inflationRate    = Math.max(0.005, Math.min(0.08, +(gameState.inflationRate + shock).toFixed(4)));
+        gameState.interestRateBase = Math.max(0.005, Math.min(0.12, +(gameState.interestRateBase + shock * 0.5).toFixed(4)));
+        if (Math.abs(shock) > 0.003) {
+            const dir = shock > 0 ? 'aumento' : 'riduzione';
+            logToMap(`📊 BCE: ${dir} tassi → ${(gameState.interestRateBase*100).toFixed(2)}% | Inflazione: ${(gameState.inflationRate*100).toFixed(1)}%`);
+        }
+    }
+
+    // Update credit score daily
+    _updateCreditScore();
+
+    // Update Finance UI if visible
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+    if (typeof renderTabPolitics === 'function' && _tabIs('politics')) renderTabPolitics();
+}
+
+// ── DRIVER SATISFACTION ──────────────────────────────────────────
+function _tickDriverSatisfaction() {
+    const hasHR = gameState.staff.some(s => s.id === 'hr');
+    gameState.drivers.forEach(d => {
+        if (d.id === 'ceo') return;
+        if (d.satisfaction === undefined) d.satisfaction = 70;
+        if (d.isOnStrike   === undefined) d.isOnStrike   = false;
+
+        // Satisfaction decays based on salary, fatigue, morale
+        let decay = 0.3;
+        if ((d.salary || 0) < 2000) decay += 0.4;
+        if ((d.fatigue || 0) > 70) decay += 0.3;
+        if ((d.morale || 100) < 40) decay += 0.4;
+        if (hasHR) decay *= 0.5;
+
+        d.satisfaction = Math.max(0, Math.min(100, d.satisfaction - decay));
+
+        // Strike trigger
+        if (d.satisfaction < 30 && !d.isOnStrike) {
+            d.isOnStrike = true;
+            d.status = 'striking';
+            logToMap(`🪧 SCIOPERO: ${d.name} ha incrociato le braccia! (soddisfazione: ${Math.round(d.satisfaction)}%)`);
+            showBigEvent('🪧', `${d.name} in Sciopero!`, `La soddisfazione è crollata al ${Math.round(d.satisfaction)}%. Paga un bonus o rischi di perdere l'autista definitivamente.`);
+            if (typeof renderTabStaff === 'function') renderTabStaff();
+        }
+        // If already striking, keep them out
+        if (d.isOnStrike && d.status !== 'striking') d.status = 'striking';
+    });
+}
+
+// ── STOCK HISTORY (sparkline) ────────────────────────────────────
+function _tickStockHistory() {
+    if (typeof STOCK_TICKERS === 'undefined') return;
+    if (!gameState.stockHistory) gameState.stockHistory = {};
+    STOCK_TICKERS.forEach(t => {
+        if (!gameState.stockHistory[t.id]) gameState.stockHistory[t.id] = [];
+        const price = gameState.stockPrices[t.id] || t.basePrice;
+        gameState.stockHistory[t.id].push(+price.toFixed(2));
+        if (gameState.stockHistory[t.id].length > 24) gameState.stockHistory[t.id].shift();
+    });
+}
+
+// ── SHORT SELLING ────────────────────────────────────────────────
+window.shortSell = function(tickerId, shares) {
+    if (!_hasWealthManager()) { showNotification('Serve un Elite Wealth Manager per vendite allo scoperto!', 'error'); return; }
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    shares = Math.round(Number(shares));
+    if (shares <= 0) { showNotification('Quantità non valida.', 'error'); return; }
+    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const margin = Math.round(price * shares * 0.20); // 20% margin requirement
+    if (gameState.cash < margin) { showNotification(`Margine richiesto: €${margin.toLocaleString()} (20% del valore)`, 'error'); return; }
+    if (!gameState.shortPositions) gameState.shortPositions = {};
+    const existing = gameState.shortPositions[tickerId];
+    if (existing) {
+        existing.shares += shares;
+        existing.openPrice = +((existing.openPrice * (existing.shares - shares) + price * shares) / existing.shares).toFixed(2);
+    } else {
+        gameState.shortPositions[tickerId] = { shares, openPrice: +price.toFixed(2) };
+    }
+    gameState.cash -= margin;
+    gameState.shortMarginHeld = (gameState.shortMarginHeld || 0) + margin;
+    logToMap(`📉 Short: ${shares} quote ${ticker.name} @ €${price.toFixed(2)} — margine bloccato €${margin.toLocaleString()}`);
+    showNotification(`Short ${shares}x ${ticker.name} aperto!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+window.coverShort = function(tickerId, shares) {
+    if (!_hasWealthManager()) return;
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    const pos = (gameState.shortPositions || {})[tickerId];
+    if (!pos || pos.shares <= 0) { showNotification('Nessuna posizione short su questo titolo!', 'error'); return; }
+    shares = Math.min(Math.round(Number(shares)), pos.shares);
+    if (shares <= 0) return;
+    const currentPrice = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const priceDiff = pos.openPrice - currentPrice; // positive = profit (price fell)
+    const profit = Math.round(priceDiff * shares);
+    const marginReturn = Math.round(pos.openPrice * shares * 0.20);
+    gameState.cash += marginReturn + profit;
+    gameState.shortMarginHeld = Math.max(0, (gameState.shortMarginHeld || 0) - marginReturn);
+    pos.shares -= shares;
+    if (pos.shares <= 0) delete gameState.shortPositions[tickerId];
+    gameState.totalStockProfit = (gameState.totalStockProfit || 0) + profit;
+    const pl = profit >= 0 ? `+€${profit.toLocaleString()}` : `−€${Math.abs(profit).toLocaleString()}`;
+    logToMap(`📉 Short chiuso: ${shares}x ${ticker.name} @ €${currentPrice.toFixed(2)} — P&L: ${pl}`);
+    showNotification(`Short chiuso — ${pl}`, profit >= 0 ? 'success' : 'error');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ── DRIVER BONUS / STRIKE RESOLUTION ────────────────────────────
+window.payDriverBonus = function(driverId, amount) {
+    amount = Math.round(Number(amount));
+    if (amount <= 0 || gameState.cash < amount) { showNotification('Fondi insufficienti per il bonus!', 'error'); return; }
+    const d = gameState.drivers.find(x => x.id === driverId);
+    if (!d) return;
+    gameState.cash -= amount;
+    d.satisfaction = Math.min(100, (d.satisfaction || 0) + Math.min(40, amount / 100));
+    d.morale = Math.min(100, (d.morale || 100) + 15);
+    logToMap(`💸 Bonus €${amount.toLocaleString()} pagato a ${d.name} — soddisfazione +${Math.min(40, Math.round(amount/100))}`);
+    showNotification(`Bonus pagato a ${d.name}!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+window.resolveStrike = function(driverId) {
+    const d = gameState.drivers.find(x => x.id === driverId);
+    if (!d || !d.isOnStrike) return;
+    const settlementCost = Math.round((d.salary || 2500) * 0.5);
+    if (gameState.cash < settlementCost) { showNotification(`Accordo sindacale: €${settlementCost.toLocaleString()} necessari.`, 'error'); return; }
+    gameState.cash -= settlementCost;
+    d.isOnStrike = false;
+    d.status = 'idle';
+    d.satisfaction = 60;
+    d.morale = Math.min(100, (d.morale || 50) + 20);
+    logToMap(`🤝 Accordo sindacale: ${d.name} rientra al lavoro (costo: €${settlementCost.toLocaleString()})`);
+    showBigEvent('🤝', `${d.name}: Sciopero Risolto`, `Pagato accordo sindacale di €${settlementCost.toLocaleString()}. L'autista è tornato operativo.`);
+    updateUI(); saveGame();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+// ── LOBBYING ────────────────────────────────────────────────────
+window.donateToLobby = function(amount) {
+    amount = Math.round(Number(amount));
+    if (amount < 1000) { showNotification('Donazione minima: €1.000', 'error'); return; }
+    if (gameState.cash < amount) { showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= amount;
+    const points = Math.floor(amount / 1000);
+    gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) + points;
+    logToMap(`🏛️ Lobbying: €${amount.toLocaleString()} donati — +${points} punti lobbying`);
+    showNotification(`+${points} Punti Lobbying acquisiti!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPolitics === 'function' && _tabIs('politics')) renderTabPolitics();
+};
+
+window.passLobbyLaw = function(lawId) {
+    if (typeof LOBBY_LAWS === 'undefined') return;
+    const law = LOBBY_LAWS.find(l => l.id === lawId);
+    if (!law) return;
+    if ((gameState.activeLobbyLaws || []).includes(lawId)) { showNotification('Legge già approvata!', 'error'); return; }
+    if ((gameState.lobbyingPoints || 0) < law.pointsCost) { showNotification(`Servono ${law.pointsCost} punti lobbying!`, 'error'); return; }
+    if (gameState.cash < (law.cashCost || 0)) { showNotification(`Servono €${(law.cashCost||0).toLocaleString()} in cassa!`, 'error'); return; }
+    gameState.lobbyingPoints -= law.pointsCost;
+    if (law.cashCost) gameState.cash -= law.cashCost;
+    if (!gameState.activeLobbyLaws) gameState.activeLobbyLaws = [];
+    gameState.activeLobbyLaws.push(lawId);
+    // Apply law effects
+    if (law.taxReduction) {
+        // Handled in processDailyRoutines via activeLobbyLaws check
+    }
+    logToMap(`⚖️ Legge approvata: ${law.name} — Costo: ${law.pointsCost}pt + €${(law.cashCost||0).toLocaleString()}`);
+    showBigEvent('⚖️', `Legge Approvata: ${law.name}`, law.desc);
+    updateUI(); saveGame();
+    if (typeof renderTabPolitics === 'function' && _tabIs('politics')) renderTabPolitics();
+};
+
+// ─────────────────────────────────────────────────────────────────
+function updateUI() {
+    const elCash = document.getElementById('tb-cash'); if(elCash) elCash.innerText = `€${Math.floor(gameState.cash).toLocaleString()}`;
+    const elRep = document.getElementById('tb-rep'); if(elRep) elRep.innerText = `${gameState.reputation.toFixed(1)} ★`;
+    const elEBar = document.getElementById('tb-energy-bar'); if (elEBar) elEBar.style.width = `${Math.max(0, gameState.energy)}%`;
+    const elEText = document.getElementById('tb-energy-text'); if(elEText) elEText.innerText = `${Math.round(gameState.energy)}%`;
+    const elTime = document.getElementById('tb-time'); if(elTime) elTime.innerText = `${String(gameState.hour).padStart(2, '0')}:${String(gameState.minute).padStart(2, '0')}`;
+    const MONTHS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    const elDate = document.getElementById('tb-date'); if(elDate) elDate.innerText = `${gameState.day} ${MONTHS[gameState.month-1]}`;
+    // Meteo
+    const ws = WEATHER_STATES.find(w => w.id === gameState.weather);
+    const elWIcon  = document.getElementById('tb-weather-icon');  if(elWIcon)  elWIcon.innerText  = ws?.icon  || '☀️';
+    const elWLabel = document.getElementById('tb-weather-label'); if(elWLabel) elWLabel.innerText = ws?.label || 'Sereno';
+    // Surge indicator
+    const elSurge = document.getElementById('tb-surge');
+    if (elSurge) {
+        const p = gameState.pendingRides.length;
+        elSurge.innerText = p >= 15 ? '🔥 +35%' : p >= 8 ? '⚡ +15%' : '';
+        elSurge.className = `text-[9px] font-bold ${p >= 15 ? 'text-red-400' : 'text-yellow-400'}`;
+    }
+    // CEO exhaustion visual distortion
+    document.body.classList.toggle('ceo-exhausted', gameState.energy < 15);
+
+    // Ticker: avviso deposito esaurito
+    const outCars = gameState.fleet.filter(c => c.outOfService);
+    let depotWarn = document.getElementById('ticker-depot-warning');
+    if (outCars.length > 0) {
+        if (!depotWarn) {
+            depotWarn = document.createElement('span');
+            depotWarn.id = 'ticker-depot-warning';
+            depotWarn.style.cssText = 'color:#ff4060;font-weight:700;animation:none;';
+            document.getElementById('news-ticker-track')?.prepend(depotWarn);
+        }
+        depotWarn.textContent = `ATTENZIONE: Deposito esaurito! ${outCars.length} macchine ferme in garage`;
+    } else if (depotWarn) {
+        depotWarn.remove();
+    }
+    // Refresh hub if open
+    const hubModal = document.getElementById('hub-modal');
+    if (hubModal && !hubModal.classList.contains('hidden') && typeof _updateHubStats === 'function') {
+        _updateHubStats();
+    }
+}
+
+function openHotelModal() {
+    const m = document.getElementById('modal-hotel');
+    m.classList.remove('hidden'); m.classList.add('flex');
+}
+
+function openLeasingModal(tier) {
+    if (!LEASING_TEMPLATES[tier]) return;
+    tempLeaseTier = tier;
+    document.getElementById('lease-car-name').innerText = LEASING_TEMPLATES[tier].name;
+    const m = document.getElementById('modal-leasing');
+    m.classList.remove('hidden'); m.classList.add('flex');
+    updateLeasePreview();
+}
+
+window.hireDriver = function hireDriver(name, salary) {
+    const cost = salary * 2;
+    if (gameState.cash < cost) { if(typeof showNotification==='function') showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= cost;
+    // Find trait from recruits
+    const recruit = (gameState.availableRecruits || []).find(r => r.name === name);
+    gameState.drivers.push({ id: 'd_' + Date.now(), name, salary, status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, trait: recruit?.trait || null, upgrades: [], hiredDay: gameState.day });
+    // Rimuovi dalla lista reclute e genera un sostituto
+    const idx = gameState.availableRecruits.findIndex(r => r.name === name);
+    if (idx > -1) gameState.availableRecruits.splice(idx, 1);
+    _refreshRecruits();
+    if(typeof showNotification==='function') showNotification(`${name} assunto!`, 'success');
+    updateUI(); saveGame();
+    if(typeof renderTabStaff==='function') renderTabStaff();
+}
+
+window.assignSpecialty = function(driverId, specialtyId) {
+    const driver = gameState.drivers.find(d => d.id === driverId);
+    if (!driver) return;
+    const spec = (typeof DRIVER_SPECIALTIES !== 'undefined' ? DRIVER_SPECIALTIES : []).find(s => s.id === specialtyId);
+    if (!spec) return;
+    driver.specialty = specialtyId;
+    showNotification(`${driver.name}: specializzazione ${spec.name} assegnata!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+window.fireDriver = function fireDriver(driverId) {
+    const idx = gameState.drivers.findIndex(d => d.id === driverId);
+    if (idx === -1) return;
+    const driver = gameState.drivers[idx];
+    gameState.drivers.splice(idx, 1);
+    if(typeof showNotification==='function') showNotification(`${driver.name} licenziato.`, 'error');
+    if(typeof renderTabStaff==='function') renderTabStaff();
+}
+
+window._startGameWithSlot = function(slotIndex, fresh) {
+    window.currentSlotIndex = slotIndex;
+    if (window._pendingCompanyName) {
+        gameState.companyName = window._pendingCompanyName;
+        gameState.companyLogo = window._pendingCompanyLogo || '👁️';
+        delete window._pendingCompanyName;
+        delete window._pendingCompanyLogo;
+    }
+    if (!fresh) {
+        const loaded = loadGame();
+        initGame(!loaded);
+    } else {
+        initGame(true);
+    }
+};

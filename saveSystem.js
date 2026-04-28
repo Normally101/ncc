@@ -1,0 +1,256 @@
+'use strict';
+/* ================================================================
+   saveSystem.js — Olga Vision · Multi-Profile Save System v1.0
+   ================================================================ */
+
+const SLOT_KEYS   = ['olgaVisionSlot_1', 'olgaVisionSlot_2', 'olgaVisionSlot_3'];
+const LEGACY_KEY  = 'olgaVisionSave_v2';
+
+const SLOT_LOGOS  = ['👁️','🦅','🏛️','💎','🐺','🔱','⚡','🌙','🔥','🦁','🐉','🌊'];
+const MONTHS_SS   = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+
+window.currentSlotIndex = null;
+window._selectedLogoSS  = SLOT_LOGOS[0];
+
+// ── SLOT METADATA (light read — no full deserialize) ─────────────
+function _getSlotMeta(index) {
+    const raw = localStorage.getItem(SLOT_KEYS[index]);
+    if (!raw) return null;
+    try {
+        const d = JSON.parse(raw);
+        return {
+            index,
+            companyName: d.companyName || 'Olga Vision Agency',
+            companyLogo: d.companyLogo || '👁️',
+            cash:        d.cash        || 0,
+            reputation:  d.reputation  || 0,
+            fleetSize:   (d.fleet || []).length,
+            driverCount: (d.drivers || []).filter(x => x.id !== 'ceo').length,
+            day:         d.day   || 1,
+            month:       d.month || 1,
+            ngp:         d.newGamePlusCount || 0,
+            prestige:    d.prestige || 0,
+        };
+    } catch(e) { return null; }
+}
+
+// ── CROSS-SLOT RIVALS (other slots become competitors) ────────────
+window.getSharedSlotRivals = function() {
+    const rivals = [];
+    SLOT_KEYS.forEach((key, i) => {
+        if (i === window.currentSlotIndex) return;
+        const raw = localStorage.getItem(key);
+        if (!raw) return;
+        try {
+            const d = JSON.parse(raw);
+            rivals.push({
+                id:          `slot_${i}`,
+                name:        (d.companyName || 'Olga Vision') + ` ⊞`,
+                rep:         d.reputation || 0,
+                cash:        d.cash || 0,
+                fleet:       (d.fleet || []).length,
+                drivers:     (d.drivers || []).filter(x => x.id !== 'ceo').length,
+                missions:    null,
+                isSlotRival: true,
+                slotIndex:   i,
+                logo:        d.companyLogo || '👁️',
+            });
+        } catch(e) {}
+    });
+    return rivals;
+};
+
+// ── SAVE TO CURRENT SLOT ─────────────────────────────────────────
+window.saveCurrentSlot = function() {
+    if (window.currentSlotIndex === null) return;
+    const key = SLOT_KEYS[window.currentSlotIndex];
+    try {
+        const save = {
+            ...gameState,
+            pendingRides: (gameState.pendingRides || []).map(r => {
+                if (!r || !r.fromPoi) return null;
+                return { id:r.id, fromPoi:r.fromPoi.id, toPoi:r.toPoi.id, tier:r.tier, price:r.price, duration:r.duration, elapsed:r.elapsed||0, driverId:r.driverId, hasIncident:r.hasIncident };
+            }).filter(Boolean),
+            activeRides: (gameState.activeRides || []).map(r => {
+                if (!r || !r.fromPoi) return null;
+                return { id:r.id, fromPoi:r.fromPoi.id, toPoi:r.toPoi.id, tier:r.tier, price:r.price, duration:r.duration, elapsed:r.elapsed||0, driverId:r.driverId };
+            }).filter(Boolean),
+            drivers: (gameState.drivers || []).map(d => ({
+                ...d,
+                queue: (d.queue || []).map(r => {
+                    if (!r || !r.fromPoi) return null;
+                    return { id:r.id, fromPoi:r.fromPoi.id, toPoi:r.toPoi.id, tier:r.tier, price:r.price, duration:r.duration, elapsed:r.elapsed||0 };
+                }).filter(Boolean)
+            }))
+        };
+        localStorage.setItem(key, JSON.stringify(save));
+    } catch(e) { console.error('[SaveSystem] Save failed:', e); }
+};
+
+// ── DELETE SLOT ──────────────────────────────────────────────────
+window.deleteSlot = function(index) {
+    if (!confirm(`Eliminare il salvataggio nello Slot ${index + 1}? Questa azione è irreversibile.`)) return;
+    localStorage.removeItem(SLOT_KEYS[index]);
+    window.showSlotSelector();
+};
+
+// ── COMPANY SETUP SCREEN ─────────────────────────────────────────
+function _showCompanySetup(slotIndex) {
+    const overlay = document.getElementById('ss-overlay');
+    if (!overlay) return;
+    window._selectedLogoSS = SLOT_LOGOS[0];
+
+    const logoGrid = SLOT_LOGOS.map((l, i) =>
+        `<button class="logo-opt-btn ${i === 0 ? 'active' : ''}"
+            onclick="window._selectedLogoSS='${l}'; document.querySelectorAll('.logo-opt-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active')">
+            ${l}
+        </button>`
+    ).join('');
+
+    overlay.innerHTML = `
+    <div class="ss-bg">
+        <div class="ss-setup-card">
+            <div class="ss-setup-title">Fondazione Impero</div>
+            <div class="ss-setup-sub">Slot ${slotIndex + 1} · Nuova Partita</div>
+
+            <div class="ss-field">
+                <label class="ss-label">Nome Azienda</label>
+                <input id="ss-company-name" type="text" maxlength="28"
+                    value="Olga Vision Agency" class="ss-input" spellcheck="false">
+            </div>
+
+            <div class="ss-field">
+                <label class="ss-label">Logo Aziendale</label>
+                <div class="ss-logo-grid">${logoGrid}</div>
+            </div>
+
+            <div class="ss-btn-row">
+                <button onclick="window.showSlotSelector()" class="ss-btn-secondary">← Indietro</button>
+                <button onclick="_confirmNewGame(${slotIndex})" class="ss-btn-primary">Fonda Azienda →</button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function _confirmNewGame(slotIndex) {
+    const nameEl = document.getElementById('ss-company-name');
+    const name   = (nameEl?.value?.trim()) || 'Olga Vision Agency';
+    const logo   = window._selectedLogoSS || '👁️';
+
+    localStorage.removeItem(SLOT_KEYS[slotIndex]);
+    window.currentSlotIndex        = slotIndex;
+    window._pendingCompanyName     = name;
+    window._pendingCompanyLogo     = logo;
+
+    const overlay = document.getElementById('ss-overlay');
+    if (overlay) overlay.remove();
+    if (typeof window._startGameWithSlot === 'function') window._startGameWithSlot(slotIndex, true);
+}
+window._confirmNewGame = _confirmNewGame;
+
+// ── MAIN SLOT SELECTOR ───────────────────────────────────────────
+window.showSlotSelector = function() {
+    const existing = document.getElementById('ss-overlay');
+    if (existing) existing.remove();
+
+    function _cashLabel(c) {
+        if (c >= 1e9) return `€${(c/1e9).toFixed(2)}B`;
+        if (c >= 1e6) return `€${(c/1e6).toFixed(2)}M`;
+        if (c >= 1e3) return `€${Math.floor(c/1e3)}k`;
+        return `€${Math.floor(c)}`;
+    }
+
+    const slotCards = [0,1,2].map(i => {
+        const meta = _getSlotMeta(i);
+        if (!meta) {
+            return `
+            <div class="ss-slot ss-slot-empty" onclick="window.startNewGameSlot(${i})" title="Slot ${i+1}: Nuovo Impero">
+                <div class="ss-empty-plus">+</div>
+                <div class="ss-empty-label">Slot ${i + 1}</div>
+                <div class="ss-empty-sub">Nuovo Impero</div>
+            </div>`;
+        }
+        const monthStr = MONTHS_SS[(meta.month||1)-1] || 'Gen';
+        const ngpBadge = meta.ngp > 0 ? `<span class="ss-ngp-badge">♾️ NGP×${meta.ngp}</span>` : '';
+        return `
+        <div class="ss-slot ss-slot-occupied" onclick="window.loadExistingSlot(${i})" title="Entra in ${meta.companyName}">
+            <div class="ss-slot-logo">${meta.companyLogo}</div>
+            <div class="ss-slot-name">${meta.companyName}</div>
+            ${ngpBadge}
+            <div class="ss-slot-stats">
+                <div class="ss-stat"><span class="ss-stat-lbl">Liquidità</span><span class="ss-stat-val" style="color:#22c55e">${_cashLabel(meta.cash)}</span></div>
+                <div class="ss-stat"><span class="ss-stat-lbl">Reputazione</span><span class="ss-stat-val" style="color:#d4af37">${meta.reputation.toFixed(1)}★</span></div>
+                <div class="ss-stat"><span class="ss-stat-lbl">Flotta</span><span class="ss-stat-val" style="color:#00f2ff">${meta.fleetSize} auto</span></div>
+                <div class="ss-stat"><span class="ss-stat-lbl">Autisti</span><span class="ss-stat-val" style="color:#a78bfa">${meta.driverCount}</span></div>
+                <div class="ss-stat"><span class="ss-stat-lbl">Giorno</span><span class="ss-stat-val" style="color:#9ca3af">${meta.day} ${monthStr}</span></div>
+            </div>
+            <div class="ss-slot-actions" onclick="event.stopPropagation()">
+                <button onclick="window.loadExistingSlot(${i})" class="ss-btn-primary ss-btn-sm">Entra ↗</button>
+                <button onclick="window.deleteSlot(${i})" class="ss-btn-danger ss-btn-sm">🗑</button>
+            </div>
+        </div>`;
+    }).join('');
+
+    // Current macro indicator
+    const inflPct   = typeof gameState !== 'undefined' && gameState.inflationRate
+        ? (gameState.inflationRate * 100).toFixed(1)
+        : '2.0';
+    const ratePct   = typeof gameState !== 'undefined' && gameState.interestRateBase
+        ? (gameState.interestRateBase * 100).toFixed(1)
+        : '4.5';
+
+    const overlay = document.createElement('div');
+    overlay.id    = 'ss-overlay';
+    overlay.innerHTML = `
+    <div class="ss-bg">
+        <div class="ss-inner">
+            <div class="ss-header">
+                <div class="ss-main-logo">👁️</div>
+                <h1 class="ss-title">OLGA VISION</h1>
+                <p class="ss-subtitle">Scegli il tuo Impero</p>
+                <div class="ss-edition">Tycoon Edition · Multi-Profile · Patch 9.0</div>
+            </div>
+
+            <div class="ss-grid">${slotCards}</div>
+
+            <div class="ss-macro-bar">
+                <span class="ss-macro-item">📈 Inflazione: <b>${inflPct}%</b></span>
+                <span class="ss-macro-sep">·</span>
+                <span class="ss-macro-item">🏦 Tasso BCE: <b>${ratePct}%</b></span>
+                <span class="ss-macro-sep">·</span>
+                <span class="ss-macro-item">🌍 Mercati globali aperti</span>
+            </div>
+        </div>
+    </div>`;
+    document.body.appendChild(overlay);
+
+    // Legacy save migration (one-time offer)
+    const legacy = localStorage.getItem(LEGACY_KEY);
+    const hasAnySlot = SLOT_KEYS.some(k => localStorage.getItem(k));
+    if (legacy && !hasAnySlot) {
+        setTimeout(() => {
+            if (confirm('Trovato un salvataggio precedente (v2). Vuoi importarlo nello Slot 1?')) {
+                localStorage.setItem(SLOT_KEYS[0], legacy);
+                localStorage.removeItem(LEGACY_KEY);
+                window.showSlotSelector();
+            }
+        }, 600);
+    }
+};
+
+window.startNewGameSlot = function(slotIndex) {
+    const overlay = document.getElementById('ss-overlay');
+    if (overlay) _showCompanySetup(slotIndex);
+};
+
+window.loadExistingSlot = function(slotIndex) {
+    window.currentSlotIndex = slotIndex;
+    const overlay = document.getElementById('ss-overlay');
+    if (overlay) overlay.remove();
+    if (typeof window._startGameWithSlot === 'function') window._startGameWithSlot(slotIndex, false);
+};
+
+// ── BOOTSTRAP ────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+    window.showSlotSelector();
+});
