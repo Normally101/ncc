@@ -1,0 +1,733 @@
+{
+  "cash": 20976.77777777777,
+  "reputation": 4.59,
+  "energy": 10,
+  "day": 11,
+  "month": 1,
+  "hour": 8,
+  "minute": 50,
+  "paused": false,
+  "fleet": [
+    {
+      "id": "c_loaner",
+      "name": "Berlina Base",
+      "tier": "standard",
+      "condition": 100,
+      "isLease": true,
+      "dailyCost": 40,
+      "leaseDuration": 12,
+      "leaseElapsedDays": 10,
+      "fuel": 80,
+      "mileage": 60,
+      "tirePressure": 93.02105868242938,
+      "upgrades": [
+        "wifi",
+        "profumatore"
+      ],
+      "outOfService": "fuel"
+    },
+    {
+      "id": "c_1777404211053",
+      "name": "Mercedes E-Class (Leasing)",
+      "tier": "business",
+      "condition": 100,
+      "isLease": true,
+      "dailyCost": 34.05555555555556,
+      "leaseDuration": 24,
+      "leaseElapsedDays": 10,
+      "fuel": 80,
+      "mileage": 60,
+      "tirePressure": 93.1768882640315,
+      "upgrades": [],
+      "outOfService": "fuel"
+    }
+  ],
+  "drivers": [
+    {
+      "id": "ceo",
+      "name": "Tu (CEO)",
+      "status": "idle",
+      "assignedCarId": "c_1777404211053",
+      "queue": [
+        {
+          "id": 4,
+          "fromPoi": "roma_hassler",
+          "toPoi": "roma_fco",
+          "tier": "vip",
+          "price": 540,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 5,
+          "fromPoi": "roma",
+          "toPoi": "civitavecchia",
+          "tier": "standard",
+          "price": 101,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 7,
+          "fromPoi": "roma_hassler",
+          "toPoi": "roma",
+          "tier": "standard",
+          "price": 216,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 6,
+          "fromPoi": "roma",
+          "toPoi": "roma_hassler",
+          "tier": "standard",
+          "price": 101,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 32,
+          "fromPoi": "civitavecchia",
+          "toPoi": "roma_fco",
+          "tier": "standard",
+          "price": 426,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 27,
+          "fromPoi": "roma",
+          "toPoi": "civitavecchia",
+          "tier": "standard",
+          "price": 164,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 26,
+          "fromPoi": "civitavecchia",
+          "toPoi": "roma_fco",
+          "tier": "standard",
+          "price": 511,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 25,
+          "fromPoi": "roma_fco",
+          "toPoi": "roma",
+          "tier": "standard",
+          "price": 196,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 24,
+          "fromPoi": "roma_fco",
+          "toPoi": "civitavecchia",
+          "tier": "standard",
+          "price": 196,
+          "duration": 20000,
+          "elapsed": 0
+        },
+        {
+          "id": 23,
+          "fromPoi": "roma_hassler",
+          "toPoi": "roma",
+          "tier": "standard",
+          "price": 349,
+          "duration": 20000,
+          "elapsed": 0
+        }
+      ],
+      "fatigue": 0,
+      "restHoursLeft": 0,
+      "xp": 0,
+      "level": 0,
+      "morale": 100,
+      "upgrades": [],
+      "hiredDay": 1,
+      "satisfaction": 70,
+      "isOnStrike": false,
+      "specialty": null
+    }
+  ],
+  "staff": [
+    {
+      "id": "mech",
+      "name": "Capo Officina",
+      "salary": 2600,
+      "skill": "repair",
+      "desc": "+15% condizione flotta ogni notte. Riparazioni manuali −50% costo."
+    },
+    {
+      "id": "jr_disp",
+      "name": "Junior Dispatcher",
+      "salary": 1400,
+      "skill": "standard",
+      "desc": "Auto-smista corse Standard ogni tick. Senza di lui tutto è manuale."
+    }
+  ],
+  "investments": [],
+  "pendingRides": [
+    {
+      "id": 1,
+      "fromPoi": "roma_fco",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 121,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 8,
+      "fromPoi": "civitavecchia",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 315,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 10,
+      "fromPoi": "roma_fco",
+      "toPoi": "civitavecchia",
+      "tier": "standard",
+      "price": 139,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 11,
+      "fromPoi": "civitavecchia",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 363,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 12,
+      "fromPoi": "roma",
+      "toPoi": "civitavecchia",
+      "tier": "standard",
+      "price": 116,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 13,
+      "fromPoi": "roma",
+      "toPoi": "roma_hassler",
+      "tier": "standard",
+      "price": 116,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 14,
+      "fromPoi": "civitavecchia",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 363,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 15,
+      "fromPoi": "roma_fco",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 139,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 16,
+      "fromPoi": "roma_fco",
+      "toPoi": "roma_hassler",
+      "tier": "standard",
+      "price": 139,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 17,
+      "fromPoi": "roma_hassler",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 248,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 18,
+      "fromPoi": "roma_hassler",
+      "toPoi": "civitavecchia",
+      "tier": "standard",
+      "price": 248,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 20,
+      "fromPoi": "roma_fco",
+      "toPoi": "roma_hassler",
+      "tier": "standard",
+      "price": 139,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 21,
+      "fromPoi": "civitavecchia",
+      "toPoi": "roma_fco",
+      "tier": "standard",
+      "price": 426,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 22,
+      "fromPoi": "roma_fco",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 164,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 30,
+      "fromPoi": "roma_hassler",
+      "toPoi": "roma",
+      "tier": "vip",
+      "price": 729,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 35,
+      "fromPoi": "roma_hassler",
+      "toPoi": "civitavecchia",
+      "tier": "standard",
+      "price": 349,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 36,
+      "fromPoi": "roma_fco",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 196,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 38,
+      "fromPoi": "roma_hassler",
+      "toPoi": "roma",
+      "tier": "standard",
+      "price": 349,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 39,
+      "fromPoi": "civitavecchia",
+      "toPoi": "roma_fco",
+      "tier": "standard",
+      "price": 511,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 40,
+      "fromPoi": "roma_fco",
+      "toPoi": "civitavecchia",
+      "tier": "standard",
+      "price": 196,
+      "duration": 20000,
+      "elapsed": 0
+    },
+    {
+      "id": 41,
+      "fromPoi": "roma_fco",
+      "toPoi": "civitavecchia",
+      "tier": "standard",
+      "price": 196,
+      "duration": 20000,
+      "elapsed": 0
+    }
+  ],
+  "activeRides": [],
+  "emails": [
+    {
+      "id": 81,
+      "sender": "Networking Board",
+      "subject": "[INVITO] World Economic Forum - Davos",
+      "type": "ceo_event",
+      "status": "unread",
+      "eventData": {
+        "id": "davos",
+        "month": 1,
+        "name": "World Economic Forum - Davos",
+        "desc": "Un meeting globale. Come ti avvicini alle opportunità di networking?",
+        "choices": [
+          {
+            "text": "Networking Aggressivo (€8.000)",
+            "cost": 8000,
+            "repBonus": 1.5
+          },
+          {
+            "text": "Presenza Base (€2.000)",
+            "cost": 2000,
+            "repBonus": 0.4
+          }
+        ]
+      },
+      "expiresAt": 273
+    },
+    {
+      "id": 82,
+      "sender": "Networking Board",
+      "subject": "[INVITO] World Economic Forum - Davos",
+      "type": "ceo_event",
+      "status": "unread",
+      "eventData": {
+        "id": "davos",
+        "month": 1,
+        "name": "World Economic Forum - Davos",
+        "desc": "Un meeting globale. Come ti avvicini alle opportunità di networking?",
+        "choices": [
+          {
+            "text": "Networking Aggressivo (€8.000)",
+            "cost": 8000,
+            "repBonus": 1.5
+          },
+          {
+            "text": "Presenza Base (€2.000)",
+            "cost": 2000,
+            "repBonus": 0.4
+          }
+        ]
+      },
+      "expiresAt": 273
+    },
+    {
+      "id": 83,
+      "sender": "Networking Board",
+      "subject": "[INVITO] World Economic Forum - Davos",
+      "type": "ceo_event",
+      "status": "unread",
+      "eventData": {
+        "id": "davos",
+        "month": 1,
+        "name": "World Economic Forum - Davos",
+        "desc": "Un meeting globale. Come ti avvicini alle opportunità di networking?",
+        "choices": [
+          {
+            "text": "Networking Aggressivo (€8.000)",
+            "cost": 8000,
+            "repBonus": 1.5
+          },
+          {
+            "text": "Presenza Base (€2.000)",
+            "cost": 2000,
+            "repBonus": 0.4
+          }
+        ]
+      },
+      "expiresAt": 273
+    },
+    {
+      "id": 84,
+      "sender": "Concierge Lusso",
+      "subject": "Appalto B2B: Delega 3 Giorni",
+      "offer": 11238,
+      "type": "b2b",
+      "status": "unread",
+      "expiresAt": 275
+    },
+    {
+      "id": 85,
+      "sender": "Networking Board",
+      "subject": "[INVITO] World Economic Forum - Davos",
+      "type": "ceo_event",
+      "status": "unread",
+      "eventData": {
+        "id": "davos",
+        "month": 1,
+        "name": "World Economic Forum - Davos",
+        "desc": "Un meeting globale. Come ti avvicini alle opportunità di networking?",
+        "choices": [
+          {
+            "text": "Networking Aggressivo (€8.000)",
+            "cost": 8000,
+            "repBonus": 1.5
+          },
+          {
+            "text": "Presenza Base (€2.000)",
+            "cost": 2000,
+            "repBonus": 0.4
+          }
+        ]
+      },
+      "expiresAt": 280
+    }
+  ],
+  "unlockedRegions": [
+    "lazio"
+  ],
+  "nextId": 86,
+  "cannesBoostDays": 0,
+  "availableRecruits": [
+    {
+      "name": "Sofia Esposito",
+      "tier": "business",
+      "salary": 2500,
+      "trait": {
+        "id": "gentleman",
+        "name": "🎩 Gentleman",
+        "desc": "+20% mance",
+        "speedMult": 1,
+        "tipMult": 1.2,
+        "fatigueMult": 1,
+        "accidentMult": 0.8,
+        "condMult": 1
+      }
+    },
+    {
+      "name": "Stefano Fontana",
+      "tier": "ultra",
+      "salary": 5500,
+      "trait": {
+        "id": "prudente",
+        "name": "🛡 Prudente",
+        "desc": "-50% rischio guasti",
+        "speedMult": 0.92,
+        "tipMult": 1,
+        "fatigueMult": 0.95,
+        "accidentMult": 0.5,
+        "condMult": 0.8
+      }
+    },
+    {
+      "name": "Martina Ricci",
+      "tier": "vip",
+      "salary": 3550,
+      "trait": {
+        "id": "piede_pesante",
+        "name": "🏎 Piede Pesante",
+        "desc": "+15% velocità",
+        "speedMult": 1.15,
+        "tipMult": 1,
+        "fatigueMult": 1.1,
+        "accidentMult": 1.5,
+        "condMult": 1.1
+      }
+    }
+  ],
+  "weather": "pioggia",
+  "weatherHoursLeft": 1,
+  "activeCampaign": null,
+  "activeFines": [],
+  "achievements": [],
+  "loans": [],
+  "newGamePlusCount": 0,
+  "fuelTank": 0,
+  "fuelTankCapacity": 10000,
+  "fuelPrice": 2.07,
+  "depositoGomme": 0,
+  "seizedCars": [],
+  "policeHeat": 0.5,
+  "consecutiveRedDays": 0,
+  "blacklistedClients": [],
+  "hqLevel": 0,
+  "activeDynamicEvent": null,
+  "activeStrike": null,
+  "prestige": 0,
+  "pricewars": [],
+  "shadowMissionsTotal": 0,
+  "stockPrices": {
+    "OIL": 80.96,
+    "CARS": 179.79,
+    "TECH": 225.9,
+    "LUX": 535.8,
+    "BIO": 43.79
+  },
+  "stockHoldings": {
+    "OIL": {
+      "shares": 0,
+      "avgCost": 0
+    },
+    "CARS": {
+      "shares": 0,
+      "avgCost": 0
+    },
+    "TECH": {
+      "shares": 0,
+      "avgCost": 0
+    },
+    "LUX": {
+      "shares": 0,
+      "avgCost": 0
+    },
+    "BIO": {
+      "shares": 0,
+      "avgCost": 0
+    }
+  },
+  "stockHistory": {
+    "OIL": [
+      86,
+      84.72,
+      86.78,
+      89.1,
+      90.68,
+      90.13,
+      90.37,
+      90.66,
+      87.68,
+      87.75,
+      86.49,
+      86.16,
+      84.94,
+      87.9,
+      85.47,
+      85,
+      82.73,
+      84.43,
+      83.99,
+      84.11,
+      82.16,
+      82.86,
+      81.9,
+      80.96
+    ],
+    "CARS": [
+      187.03,
+      181.5,
+      183.34,
+      174.76,
+      178.52,
+      184.34,
+      184.78,
+      184.96,
+      182.97,
+      186.53,
+      182.06,
+      178.63,
+      181.3,
+      184.48,
+      181.64,
+      180.67,
+      183.64,
+      184.9,
+      181.28,
+      181.9,
+      183.87,
+      193.33,
+      187.24,
+      179.79
+    ],
+    "TECH": [
+      236.04,
+      236.5,
+      232.65,
+      228.41,
+      236.72,
+      234.22,
+      232.62,
+      232.47,
+      223.46,
+      218.03,
+      229.33,
+      227.21,
+      216.22,
+      215.4,
+      223.35,
+      219.24,
+      229.13,
+      236.3,
+      225.03,
+      230.5,
+      220.18,
+      232.1,
+      223.01,
+      225.9
+    ],
+    "LUX": [
+      511.4,
+      527.85,
+      510.5,
+      492.21,
+      511.08,
+      526.4,
+      538.22,
+      554.65,
+      547.8,
+      570.35,
+      568.21,
+      556.68,
+      554.4,
+      559.5,
+      572.45,
+      574.06,
+      560.04,
+      563.65,
+      551.38,
+      561.05,
+      557.97,
+      559.75,
+      556.97,
+      535.8
+    ],
+    "BIO": [
+      58.11,
+      59.75,
+      58.18,
+      55.32,
+      58.3,
+      62.25,
+      57.7,
+      59.22,
+      56.65,
+      53,
+      52.27,
+      51.15,
+      47.49,
+      44.72,
+      41.96,
+      39.49,
+      40.76,
+      44.19,
+      42.98,
+      45.82,
+      44.37,
+      45.34,
+      45.74,
+      43.79
+    ]
+  },
+  "shortPositions": {},
+  "brokerInvestments": [],
+  "lifestyleAssets": [],
+  "creditScore": 577,
+  "totalDividendsEarned": 0,
+  "totalStockProfit": 0,
+  "diamondContractsCompleted": 0,
+  "inflationRate": 0.02,
+  "interestRateBase": 0.045,
+  "lobbyingPoints": 0,
+  "activeLobbyLaws": [],
+  "companyName": "Macha NCC",
+  "companyLogo": "⚡",
+  "_top3NotifiedDay": 4,
+  "_hubNewEvent": false,
+  "recentEventIds": [
+    "moto_trial_alpi",
+    "hockey_final"
+  ],
+  "_saveTimestamp": 1777436334940
+}
