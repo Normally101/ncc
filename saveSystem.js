@@ -83,7 +83,12 @@ window.saveCurrentSlot = function() {
                 }).filter(Boolean)
             }))
         };
+        save._saveTimestamp = Date.now();
         localStorage.setItem(key, JSON.stringify(save));
+        // Auto-sync to file if folder is connected
+        if (window.syncManager?.dirHandle) {
+            window.syncManager.writeSlot(window.currentSlotIndex, save);
+        }
     } catch(e) { console.error('[SaveSystem] Save failed:', e); }
 };
 
@@ -212,6 +217,18 @@ window.showSlotSelector = function() {
             </div>
 
             <div class="ss-grid">${slotCards}</div>
+
+            <div class="ss-sync-bar">
+                <div class="ss-sync-left">
+                    <button id="sync-folder-btn" class="ss-btn-secondary ss-sync-btn"
+                        onclick="window.syncManager?.selectFolder()">📁 Collega Cartella</button>
+                    <button class="ss-btn-secondary ss-sync-btn"
+                        onclick="window.syncManager?.importAll()" title="Importa save da file (post git pull)">📥 Importa</button>
+                    <button class="ss-btn-secondary ss-sync-btn"
+                        onclick="window.syncManager?.exportAll()" title="Esporta save su file (pre git push)">📤 Esporta</button>
+                </div>
+                <div id="sync-folder-info" class="ss-sync-info">Collega la cartella del gioco per abilitare il sync Git.</div>
+            </div>
 
             <div class="ss-macro-bar">
                 <span class="ss-macro-item">📈 Inflazione: <b>${inflPct}%</b></span>
