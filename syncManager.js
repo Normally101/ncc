@@ -9,6 +9,30 @@ const _SYNC_DB    = 'olgaVisionSync';
 const _SYNC_STORE = 'dirHandle';
 const _SLOT_FILES = ['slot_1.json', 'slot_2.json', 'slot_3.json'];
 
+// ── Simple FNV-like hash for save integrity ───────────────────────
+function _simpleHash(str) {
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) {
+        h ^= str.charCodeAt(i);
+        h = (h * 16777619) >>> 0;
+    }
+    return h.toString(16);
+}
+
+function _addChecksum(data) {
+    const copy = { ...data, _checksum: undefined };
+    const hash = _simpleHash(JSON.stringify(copy));
+    return { ...data, _checksum: hash };
+}
+
+function _verifyChecksum(data) {
+    if (!data._checksum) return true; // legacy save — skip
+    const stored = data._checksum;
+    const copy = { ...data, _checksum: undefined };
+    const expected = _simpleHash(JSON.stringify(copy));
+    return stored === expected;
+}
+
 // ── IndexedDB: persist directory handle across page reloads ───────
 function _openSyncDB() {
     return new Promise((res, rej) => {
@@ -96,7 +120,7 @@ window.syncManager = {
             if (!fileName) return;
             const fh = await this.dirHandle.getFileHandle(fileName, { create: true });
             const writable = await fh.createWritable();
-            await writable.write(JSON.stringify(saveData, null, 2));
+            await writable.write(JSON.stringify(_addChecksum(saveData), null, 2));
             await writable.close();
         } catch (e) {
             console.warn('[SyncManager] writeSlot failed:', e);
@@ -110,7 +134,12 @@ window.syncManager = {
             const fh   = await this.dirHandle.getFileHandle(_SLOT_FILES[index]);
             const file = await fh.getFile();
             const text = await file.text();
-            return JSON.parse(text);
+            const parsed = JSON.parse(text);
+            if (!_verifyChecksum(parsed)) {
+                console.warn(`[SyncManager] Checksum mismatch in ${_SLOT_FILES[index]} — file may be corrupted`);
+                this._notify(`⚠️ Slot ${index + 1}: checksum non valido. File potrebbe essere corrotto.`, 'error');
+            }
+            return parsed;
         } catch (e) {
             return null; // file doesn't exist yet
         }

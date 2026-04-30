@@ -6,11 +6,22 @@
 const SLOT_KEYS   = ['olgaVisionSlot_1', 'olgaVisionSlot_2', 'olgaVisionSlot_3'];
 const LEGACY_KEY  = 'olgaVisionSave_v2';
 
-const SLOT_LOGOS  = ['👁️','🦅','🏛️','💎','🐺','🔱','⚡','🌙','🔥','🦁','🐉','🌊'];
-const MONTHS_SS   = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const SLOT_LOGOS   = ['👁️','🦅','🏛️','💎','🐺','🔱','⚡','🌙','🔥','🦁','🐉','🌊'];
+const MONTHS_SS    = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+const BRAND_COLORS = [
+    { name:'Oro',        value:'#d4af37' },
+    { name:'Blu Reale',  value:'#00f2ff' },
+    { name:'Porpora',    value:'#a855f7' },
+    { name:'Scarlatto',  value:'#ef4444' },
+    { name:'Smeraldo',   value:'#22c55e' },
+    { name:'Bronzo',     value:'#cd7f32' },
+    { name:'Platino',    value:'#e5e4e2' },
+    { name:'Rosa Gold',  value:'#f4a460' },
+];
 
-window.currentSlotIndex = null;
-window._selectedLogoSS  = SLOT_LOGOS[0];
+window.currentSlotIndex   = null;
+window._selectedLogoSS    = SLOT_LOGOS[0];
+window._selectedColorSS   = BRAND_COLORS[0].value;
 
 // ── SLOT METADATA (light read — no full deserialize) ─────────────
 function _getSlotMeta(index) {
@@ -103,12 +114,21 @@ window.deleteSlot = function(index) {
 function _showCompanySetup(slotIndex) {
     const overlay = document.getElementById('ss-overlay');
     if (!overlay) return;
-    window._selectedLogoSS = SLOT_LOGOS[0];
+    window._selectedLogoSS  = SLOT_LOGOS[0];
+    window._selectedColorSS = BRAND_COLORS[0].value;
 
     const logoGrid = SLOT_LOGOS.map((l, i) =>
         `<button class="logo-opt-btn ${i === 0 ? 'active' : ''}"
             onclick="window._selectedLogoSS='${l}'; document.querySelectorAll('.logo-opt-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active')">
             ${l}
+        </button>`
+    ).join('');
+
+    const colorGrid = BRAND_COLORS.map((c, i) =>
+        `<button class="brand-color-btn ${i === 0 ? 'active' : ''}"
+            style="background:${c.value}"
+            title="${c.name}"
+            onclick="window._selectedColorSS='${c.value}'; document.querySelectorAll('.brand-color-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active'); document.getElementById('ss-color-preview').style.color='${c.value}'">
         </button>`
     ).join('');
 
@@ -129,6 +149,11 @@ function _showCompanySetup(slotIndex) {
                 <div class="ss-logo-grid">${logoGrid}</div>
             </div>
 
+            <div class="ss-field">
+                <label class="ss-label">Colore Brand <span id="ss-color-preview" style="color:${BRAND_COLORS[0].value};font-weight:bold">●</span></label>
+                <div class="ss-color-grid">${colorGrid}</div>
+            </div>
+
             <div class="ss-btn-row">
                 <button onclick="window.showSlotSelector()" class="ss-btn-secondary">← Indietro</button>
                 <button onclick="_confirmNewGame(${slotIndex})" class="ss-btn-primary">Fonda Azienda →</button>
@@ -146,6 +171,7 @@ function _confirmNewGame(slotIndex) {
     window.currentSlotIndex        = slotIndex;
     window._pendingCompanyName     = name;
     window._pendingCompanyLogo     = logo;
+    window._pendingCompanyColor    = window._selectedColorSS || '#d4af37';
 
     const overlay = document.getElementById('ss-overlay');
     if (overlay) overlay.remove();

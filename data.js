@@ -65,6 +65,8 @@ const POIS = {
     // ─── NORD ────────────────────────────────────────────────────
     bologna:      { id:'bologna',      region:'emilia',     lat:44.4949, lng:11.3426, name:'Bologna',            type:'hub',    baseFlat:90,  minTier:'business' },
     genova:       { id:'genova',       region:'liguria',    lat:44.4056, lng:8.9463,  name:'Genova',             type:'hub',    baseFlat:90,  minTier:'business' },
+    portofino:    { id:'portofino',    region:'liguria',    lat:44.3032, lng:9.2092,  name:'Portofino',          type:'luxury', baseFlat:280, minTier:'vip'      },
+    splendido:    { id:'splendido',    region:'liguria',    lat:44.3018, lng:9.2108,  name:'Belmond Splendido 5★',type:'luxury',baseFlat:420, minTier:'ultra', exclusiveRank:4 },
     torino:       { id:'torino',       region:'piemonte',   lat:45.0703, lng:7.6869,  name:'Torino',             type:'hub',    baseFlat:90,  minTier:'business' },
     milano:       { id:'milano',       region:'lombardia',  lat:45.4654, lng:9.1859,  name:'Milano',             type:'hub',    baseFlat:90,  minTier:'business' },
     mil_mxp:      { id:'mil_mxp',      region:'lombardia',  lat:45.6300, lng:8.7255,  name:'Malpensa MXP',       type:'hub',    baseFlat:210, minTier:'business' },
@@ -81,15 +83,16 @@ const POIS = {
 
 // ─── MERCATO AUTO ───────────────────────────────────────────────
 const NEW_CARS = [
-    { id:'nc_eclass', name:'Mercedes E-Class (2024)', tier:'business', price:72000, condition:100 },
-    { id:'nc_sclass', name:'Mercedes S-Class (2024)', tier:'vip', price:145000, condition:100 },
-    { id:'nc_vclass', name:'Mercedes V-Class (2024)', tier:'group', price:92000, condition:100 },
-    { id:'nc_ghost', name:'Rolls-Royce Ghost', tier:'ultra', price:360000, condition:100 }
+    { id:'nc_eclass',   name:'Mercedes E-Class (2024)',   tier:'business', price:72000,  condition:100, vehicleClass:'mercedes_e'       },
+    { id:'nc_sclass',   name:'Mercedes S-Class (2024)',   tier:'vip',      price:145000, condition:100, vehicleClass:'mercedes_s'       },
+    { id:'nc_vclass',   name:'Mercedes V-Class (2024)',   tier:'group',    price:92000,  condition:100, vehicleClass:'mercedes_v'       },
+    { id:'nc_sprinter', name:'Mercedes Sprinter (2024)',  tier:'business', price:85000,  condition:100, vehicleClass:'mercedes_sprinter' },
+    { id:'nc_ghost',    name:'Rolls-Royce Ghost',         tier:'ultra',    price:360000, condition:100, vehicleClass:'mercedes_e'       }
 ];
 
 const USED_CARS = [
-    { id:'uc_e2019', name:'Audi A6 (2019)', tier:'business', price:28000, condition:58 },
-    { id:'uc_s2017', name:'Mercedes S-Class (2017)', tier:'vip', price:42000, condition:45 }
+    { id:'uc_e2019', name:'Audi A6 (2019)',          tier:'business', price:28000, condition:58, vehicleClass:'mercedes_e' },
+    { id:'uc_s2017', name:'Mercedes S-Class (2017)', tier:'vip',      price:42000, condition:45, vehicleClass:'mercedes_s' }
 ];
 
 const LEASING_TEMPLATES = {
@@ -101,11 +104,15 @@ const LEASING_TEMPLATES = {
 
 // Tratti personalità autisti (assegnati random al reclutamento)
 const DRIVER_TRAITS = [
-    { id:'piede_pesante', name:'🏎 Piede Pesante',  desc:'+15% velocità',        speedMult:1.15, tipMult:1.00, fatigueMult:1.10, accidentMult:1.50, condMult:1.10 },
-    { id:'gentleman',     name:'🎩 Gentleman',       desc:'+20% mance',           speedMult:1.00, tipMult:1.20, fatigueMult:1.00, accidentMult:0.80, condMult:1.00 },
-    { id:'stakanovista',  name:'💪 Stakanovista',    desc:'-20% fatica',          speedMult:1.05, tipMult:1.00, fatigueMult:0.80, accidentMult:1.00, condMult:1.00 },
-    { id:'prudente',      name:'🛡 Prudente',         desc:'-50% rischio guasti', speedMult:0.92, tipMult:1.00, fatigueMult:0.95, accidentMult:0.50, condMult:0.80 },
-    { id:'esperto',       name:'⭐ Esperto',          desc:'-25% usura auto',     speedMult:1.05, tipMult:1.05, fatigueMult:0.90, accidentMult:0.70, condMult:0.75 },
+    { id:'piede_pesante', name:'🏎 Piede Pesante',  desc:'+15% velocità',          color:'#f59e0b', badge:'pregi',  speedMult:1.15, tipMult:1.00, fatigueMult:1.10, accidentMult:1.50, condMult:1.10 },
+    { id:'gentleman',     name:'🎩 Gentleman',       desc:'+20% mance',             color:'#22c55e', badge:'pregi',  speedMult:1.00, tipMult:1.20, fatigueMult:1.00, accidentMult:0.80, condMult:1.00 },
+    { id:'stakanovista',  name:'💪 Stakanovista',    desc:'-20% fatica',            color:'#22c55e', badge:'pregi',  speedMult:1.05, tipMult:1.00, fatigueMult:0.80, accidentMult:1.00, condMult:1.00 },
+    { id:'prudente',      name:'🛡 Prudente',         desc:'-50% rischio guasti',   color:'#22c55e', badge:'pregi',  speedMult:0.92, tipMult:1.00, fatigueMult:0.95, accidentMult:0.50, condMult:0.80 },
+    { id:'esperto',       name:'⭐ Esperto',          desc:'-25% usura auto',       color:'#22c55e', badge:'pregi',  speedMult:1.05, tipMult:1.05, fatigueMult:0.90, accidentMult:0.70, condMult:0.75 },
+    { id:'spericolato',   name:'🎲 Spericolato',     desc:'-10% durata, +20% usura', color:'#ef4444', badge:'difetti', speedMult:1.10, tipMult:1.00, fatigueMult:1.00, accidentMult:1.20, condMult:1.20 },
+    { id:'charmante',     name:'✨ Charmante',        desc:'+15% mance VIP/Ultra',  color:'#a78bfa', badge:'pregi',  speedMult:1.00, tipMult:1.00, fatigueMult:1.00, accidentMult:1.00, condMult:1.00, vipTipMult:1.15 },
+    { id:'lamentoso',     name:'😩 Lamentoso',       desc:'+10% fatica',           color:'#ef4444', badge:'difetti', speedMult:1.00, tipMult:1.00, fatigueMult:1.10, accidentMult:1.00, condMult:1.00 },
+    { id:'meticoloso',    name:'🔬 Meticoloso',      desc:'-50% usura, +10% durata', color:'#22c55e', badge:'pregi',  speedMult:0.90, tipMult:1.00, fatigueMult:1.00, accidentMult:0.60, condMult:0.50 },
 ];
 
 // Pool di 24 autisti per reclutamento infinito (gameState.availableRecruits pescato da qui)
@@ -138,15 +145,17 @@ const DRIVER_POOL = [
 
 // ─── STAFF AZIENDALE ────────────────────────────────────────────
 const STAFF_ROLES = {
-    dispatcher_jr: { id:'jr_disp', name:'Junior Dispatcher',    salary:1400, skill:'standard', desc:'Auto-smista corse Standard ogni tick. Senza di lui tutto è manuale.' },
-    dispatcher_sr: { id:'sr_disp', name:'Senior Dispatcher',    salary:3800, skill:'vip',      desc:'Auto-smista corse VIP & Ultra. Negozia appalti B2B a +15%.' },
-    mechanic:      { id:'mech',    name:'Capo Officina',        salary:2600, skill:'repair',   desc:'+15% condizione flotta ogni notte. Riparazioni manuali −50% costo.' },
-    admin:         { id:'admin',   name:'Responsabile Amm.ne',  salary:3000, skill:'tax',      desc:'Tassazione ridotta dal 42% al 24%. Elimina la tassa sul lusso.' },
-    event_mgr:     { id:'evt_mgr', name:'Event Manager',        salary:3200, skill:'events',   desc:'Chiude appalti B2B in automatico. Genera 3–6 corse Business/VIP extra.' },
-    hr_specialist: { id:'hr',      name:'HR Specialist',         salary:2800, skill:'welfare',   desc:'Gestisce i turni in automatico: riposo forzato a 85% fatica. +15% mance. CEO recupera energia a riposo.' },
-    legal_advisor: { id:'legal',  name:'Avvocato Aziendale',    salary:4200, skill:'legal',     desc:'Contesta automaticamente il 50% delle multe con 70% successo. Riduce sanzioni del 30%.' },
-    logistics_mgr: { id:'log_mgr',name:'Logistics Manager',     salary:3500, skill:'logistics', desc:'Gestisce il deposito carburante: avvisa ai minimi di prezzo per speculare, e quando le scorte scendono sotto il 15%.' },
-    wealth_mgr:    { id:'ewm',    name:'Elite Wealth Manager',  salary:8500, skill:'finance',   desc:'Sblocca il tab Finance: Broker personale, mercato azionario $WALL-ST, leva finanziaria avanzata. Accede a rendimenti tra il 4% e il 50% con rischio calibrabile. Necessario per Diamond Contracts e vendita azienda a fondi.' }
+    dispatcher_jr:   { id:'jr_disp',  name:'Junior Dispatcher',    salary:1400, skill:'standard',   desc:'Auto-smista corse Standard ogni tick. Senza di lui tutto è manuale.' },
+    dispatcher_sr:   { id:'sr_disp',  name:'Senior Dispatcher',    salary:3800, skill:'vip',        desc:'Auto-smista corse VIP & Ultra. Negozia appalti B2B a +15%.' },
+    mechanic:        { id:'mech',     name:'Capo Officina',        salary:2600, skill:'repair',     desc:'+15% condizione flotta ogni notte. Riparazioni manuali −50% costo.' },
+    admin:           { id:'admin',    name:'Responsabile Amm.ne',  salary:3000, skill:'tax',        desc:'Tassazione ridotta dal 42% al 24%. Elimina la tassa sul lusso.' },
+    event_mgr:       { id:'evt_mgr',  name:'Event Manager',        salary:3200, skill:'events',     desc:'Chiude appalti B2B in automatico. Genera 3–6 corse Business/VIP extra.' },
+    hr_specialist:   { id:'hr',       name:'HR Specialist',        salary:2800, skill:'welfare',    desc:'Gestisce i turni in automatico: riposo forzato a 85% fatica. +15% mance. CEO recupera energia a riposo.' },
+    legal_advisor:   { id:'legal',    name:'Avvocato Aziendale',   salary:4200, skill:'legal',      desc:'Contesta automaticamente il 50% delle multe con 70% successo. Riduce sanzioni del 30%.' },
+    logistics_mgr:   { id:'log_mgr',  name:'Logistics Manager',    salary:3500, skill:'logistics',  desc:'Gestisce il deposito carburante: avvisa ai minimi di prezzo per speculare, e quando le scorte scendono sotto il 15%.' },
+    wealth_mgr:      { id:'ewm',      name:'Elite Wealth Manager', salary:8500, skill:'finance',    desc:'Sblocca il tab Finance: Broker personale, mercato azionario $WALL-ST, leva finanziaria avanzata. Accede a rendimenti tra il 4% e il 50% con rischio calibrabile. Necessario per Diamond Contracts e vendita azienda a fondi.' },
+    airport_asst_fco:{ id:'apt_fco',  name:'Airport Assistant — FCO',  salary:2200, skill:'meetgreet', city:'roma',   airport:'FCO', desc:'Sblocca missioni passive Meet & Greet a Roma Fiumicino. Entrate senza consumo carburante. Tariffa base €395–€2.929/gruppo.' },
+    airport_asst_nap:{ id:'apt_nap',  name:'Airport Assistant — NAP',  salary:2000, skill:'meetgreet', city:'napoli', airport:'NAP', desc:'Sblocca missioni passive Meet & Greet a Napoli Capodichino. Entrate senza consumo carburante.' },
 };
 
 // ─── LIVELLI AUTISTI (XP SYSTEM) ───────────────────────────────
@@ -187,7 +196,7 @@ const INVESTMENTS = [
     { id:'inv_loan_facility',    tier:2, name:'Linea di Credito Bancaria',    price:5000,     passive:0,     rep:0.0, desc:'Sblocca prestiti fino a €500.000 con interessi 8% mensili. Attenzione al debito.' },
     { id:'inv_safe_driving',     tier:2, name:'Programma Guida Sicura',        price:28000,    passive:0,     rep:0.1, desc:'Riduce del 50% la probabilità di incidenti. Driver addestrati a posti di blocco.' },
     { id:'inv_airport_bribe',    tier:2, name:'Accordo VIP Aeroporti FCO/MXP', price:42000,    passive:0,     rep:0.2, desc:'+30% generazione corse da/per aeroporti FCO e MXP. Corsie preferenziali.' },
-    { id:'inv_fuel_depot',       tier:2, name:'Deposito Carburante Aziendale', price:35000,    passive:0,     rep:0.0, desc:'Cisterna aziendale da 50.000L. Le auto si riforniscono gratis dal deposito se hai il Logistics Manager. Acquista gasolio al prezzo di mercato.' },
+    { id:'inv_fuel_depot',       tier:2, name:'Deposito Carburante Aziendale', price:350000,   passive:0,     rep:0.0, buildTime:3,  dailyUpkeep:500,  desc:'Cisterna aziendale da 50.000L. Le auto si riforniscono gratis dal deposito se hai il Logistics Manager. Acquista gasolio al prezzo di mercato.' },
     { id:'inv_grey_market',      tier:2, name:'Canali Discreti (Grey Market)', price:55000,    passive:0,     rep:0.0, desc:'Missioni anonime a 3× tariffa. Alto rischio: un posto di blocco può sequestrare il veicolo per 7 giorni.' },
     { id:'inv_empty_leg',        tier:2, name:'Empty Leg Optimizer',           price:28000,    passive:0,     rep:0.1, desc:'Corse di ritorno automatiche al 50% tariffa. Elimina i viaggi a vuoto dopo i trasferimenti lunghi.' },
 
@@ -197,12 +206,12 @@ const INVESTMENTS = [
     { id:'inv_carbon_neutral',      tier:3, name:'Certificazione Carbon Neutral', price:65000,    passive:0,     rep:0.3, desc:'Sblocca contratti Corporate Green. +15% tariffa su clienti aziende eco-sensitive.' },
     { id:'inv_hotel_exclusive',     tier:3, name:'Esclusiva Hotel de Russie Roma',price:120000,   passive:500,   rep:0.5, desc:'Accordo esclusivo: +€500/g + 5 corse VIP garantite ogni giorno dal principale hotel partner.' },
     { id:'inv_corporate_retainer',  tier:3, name:'Corporate Retainer (3 Aziende)',price:150000,  passive:2000,  rep:0.4, desc:'+€2.000/g da contratti fissi con Fortune 500. +3 corse Business/g garantite anche senza richieste.' },
-    { id:'inv_hq_office',           tier:2, name:'Ufficio Executive (HQ Lv2)',    price:60000,    passive:0,     rep:0.1, desc:'Amplia la sede: fino a 4 dipendenti contemporanei. Sblocca slot HR e Logistics.' },
-    { id:'inv_hq_campus',           tier:3, name:'Campus Olga Vision (HQ Lv3)',   price:180000,   passive:0,     rep:0.3, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
+    { id:'inv_hq_office',           tier:2, name:'Ufficio Executive (HQ Lv2)',    price:600000,   passive:0,     rep:0.1, buildTime:5,  dailyUpkeep:800,  desc:'Amplia la sede: fino a 4 dipendenti contemporanei. Sblocca slot HR e Logistics.' },
+    { id:'inv_hq_campus',           tier:3, name:'Campus Olga Vision (HQ Lv3)',   price:1800000,  passive:0,     rep:0.3, buildTime:10, dailyUpkeep:2000, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
     { id:'inv_security_escort',     tier:3, name:'Security Escort Team',          price:95000,    passive:0,     rep:0.4, desc:'Auto di scorta per clienti HVT (High Value Target). +80% tariffa su missioni diplomatiche. -50% rischio incidenti.' },
     { id:'inv_philanthropy',     tier:3, name:'Fondazione Olga Vision Onlus', price:95000,    passive:0,     rep:0.0, desc:'+0.5★ Reputazione ogni settimana. Migliora l\'immagine pubblica del brand.' },
     { id:'inv_sabotaggio',       tier:3, name:'Agenzia PR Negativa',          price:120000,   passive:0,     rep:0.0, desc:'Diffonde recensioni negative sui competitor. −10% reputazione rivali ogni settimana.' },
-    { id:'inv_hangar',           tier:3, name:'Hangar Jet Privati',           price:350000,   passive:0,     rep:1.0, desc:'Sblocca corse ULTRA. +1 corsa Ultra ogni ora.' },
+    { id:'inv_hangar',           tier:3, name:'Hangar Jet Privati',           price:3500000,  passive:0,     rep:1.0, buildTime:14, dailyUpkeep:5000, desc:'Sblocca corse ULTRA. +1 corsa Ultra ogni ora.' },
     { id:'inv_armored',          tier:3, name:'Chauffeur Blindato',           price:200000,   passive:0,     rep:0.5, desc:'Clienti ad alto rischio: pagano 3× il tariffario.' },
     { id:'inv_yacht',            tier:3, name:'Yacht Charter (Smeralda/Capri)',price:180000,  passive:2500,  rep:1.0, desc:'+€2.500/g & corse stagionali ultra-remunerate.' },
     { id:'inv_helipad',          tier:3, name:'Piazzola Elicottero Centro',   price:450000,   passive:0,     rep:1.5, desc:'+1.5★ Reputazione immediata. Percorrenze più rapide.' },
@@ -210,7 +219,7 @@ const INVESTMENTS = [
     // ─── TIER 4: DOMINIO DEL MERCATO ─────────────────────────────
     { id:'inv_national_license', tier:4, name:'Licenza Nazionale NCC',        price:1000000,  passive:0,     rep:1.5, desc:'Sblocca TUTTE le regioni d\'Italia in un colpo solo. Simbolo di dominio assoluto.' },
     { id:'inv_real_estate',      tier:4, name:'Fondo Immobiliare Lusso',      price:1200000,  passive:15000, rep:0.5, desc:'€15.000/g di rendita passiva garantita.' },
-    { id:'inv_tower',            tier:4, name:'Olga Vision Tower (Milano)',   price:2500000,  passive:0,     rep:2.0, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
+    { id:'inv_tower',            tier:4, name:'Olga Vision Tower (Milano)',   price:25000000, passive:0,     rep:2.0, buildTime:30, dailyUpkeep:15000, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
     { id:'inv_acquire',          tier:4, name:'Acquisizione Competitor Minore',price:500000,  passive:0,     rep:1.0, desc:'Acquisisci il rivale più debole: +5 veicoli e quota.' },
     { id:'inv_sponsorship',      tier:4, name:'Sponsor Festival di Cannes',   price:300000,   passive:0,     rep:2.0, desc:'Rep a 5.0★ istantanea. Prezzi 2× per 7 giorni.' },
 ];
@@ -352,15 +361,15 @@ const ACHIEVEMENTS = [
     { id:'ach_allregions', icon:'🗺️', name:'Italia Unita',        desc:'Sblocca tutte e 20 le regioni',               check: gs => gs.unlockedRegions.length >= Object.keys(REGIONS).length },
     { id:'ach_elite',      icon:'🌟', name:'Campione Elite',       desc:'Porta un autista al livello Elite',           check: gs => gs.drivers.some(d=>(d.level||0)>=3) },
     { id:'ach_10inv',      icon:'📈', name:'Portfolio Completo',   desc:'Acquista 10 o più investimenti',              check: gs => gs.investments.length >= 10 },
-    { id:'ach_nofines',    icon:'✅', name:'Record Impeccabile',   desc:'Nessuna multa per 30 giorni',                 check: (gs,extra) => (extra.daysSinceLastFine||0) >= 30 },
+    { id:'ach_nofines',    icon:'✅', name:'Record Impeccabile',   desc:'Nessuna multa per 30 giorni',                 check: (gs,extra) => ((extra||{}).daysSinceLastFine||0) >= 30 },
     { id:'ach_10m',        icon:'🤑', name:'Decina di Milioni',    desc:'Raggiungi €10.000.000 di liquidità',         check: gs => gs.cash >= 10000000 },
 ];
 
 // ─── AUTO PROTOTIPO (sbloccabili al raggiungimento di 5★) ─────────
 const PROTOTYPE_CARS = [
-    { id:'proto_tesla',    name:'Tesla Model S Plaid',   tier:'ultra',    price:220000, condition:100, reqRep:4.5, desc:'Elettrica. Velocità +25%, zero emissioni, silenzio totale.' },
-    { id:'proto_rolls',    name:'Rolls-Royce Spectre',   tier:'ultra',    price:450000, condition:100, reqRep:5.0, desc:'Ultra-luxury. Tariffa base ×5. Solo per clienti Presidential.' },
-    { id:'proto_van_vip',  name:'Mercedes V-Classe EQV', tier:'group',    price:180000, condition:100, reqRep:4.0, desc:'Elettrico luxury group. 7 posti, zero emissioni.' },
+    { id:'proto_tesla',    name:'Tesla Model S Plaid',   tier:'ultra',    price:220000, condition:100, reqRep:4.5, desc:'Elettrica. Velocità +25%, zero emissioni, silenzio totale.',  vehicleClass:'mercedes_e' },
+    { id:'proto_rolls',    name:'Rolls-Royce Spectre',   tier:'ultra',    price:450000, condition:100, reqRep:5.0, desc:'Ultra-luxury. Tariffa base ×5. Solo per clienti Presidential.', vehicleClass:'mercedes_e' },
+    { id:'proto_van_vip',  name:'Mercedes V-Classe EQV', tier:'group',    price:180000, condition:100, reqRep:4.0, desc:'Elettrico luxury group. 7 posti, zero emissioni.',              vehicleClass:'mercedes_v' },
 ];
 
 // ─── SPECIALIZZAZIONI DRIVER ─────────────────────────────────────
@@ -372,6 +381,94 @@ const DRIVER_SPECIALTIES = [
     { id:'airport_pro',  name:'✈ Pro Aeroporti',     desc:'+15% velocità su corse aeroportuali.',             region:null        },
     { id:'vip_escort',   name:'⭐ VIP Escort',       desc:'+10% mance e −30% rischio incidenti su VIP/Ultra.',region:null        },
     { id:'alpine',       name:'🏔 Specialista Alpi', desc:'+25% velocità su Cortina e zone montane (neve).',  region:'veneto'    },
+    { id:'boat_captain', name:'⛵ Capitano Acqueo',  desc:'Specializzato in Water Taxi veneziani. +20% velocità e −10% costo operativo su Venezia.', region:'veneto' },
+];
+
+// ─── CLASSI VEICOLI UFFICIALI W-3 CONTRACT ───────────────────────
+const FLEET_VEHICLE_CLASSES = [
+    {
+        id:           'mercedes_e',
+        name:         'Mercedes E-Class Sedan',
+        shortName:    'Sedan E',
+        tier:         'business',
+        capacity:     2,
+        extraHrNet:   105.00,
+        extraHrSell:  131.25,
+        waitHalfHr:   52.50,
+        waitFullHr:   105.00,
+        fuelPerKm:    0.09,
+        purchasePrice:65000,
+        dailyLeaseCost: 85,
+        desc:         'Berlina Premium per 1-2 passeggeri. Veicolo standard del contratto W-3.',
+        icon:         '🚗',
+    },
+    {
+        id:           'mercedes_v',
+        name:         'Mercedes V-Class Minivan',
+        shortName:    'Minivan V',
+        tier:         'vip',
+        capacity:     7,
+        extraHrNet:   125.00,
+        extraHrSell:  156.25,
+        waitHalfHr:   62.50,
+        waitFullHr:   125.00,
+        fuelPerKm:    0.13,
+        purchasePrice:95000,
+        dailyLeaseCost:120,
+        desc:         'MPV per 3-7 passeggeri. Ideale per famiglie e gruppi.',
+        icon:         '🚐',
+    },
+    {
+        id:           'mercedes_sprinter',
+        name:         'Mercedes Sprinter',
+        shortName:    'Sprinter',
+        tier:         'vip',
+        capacity:     8,
+        extraHrNet:   150.00,
+        extraHrSell:  187.50,
+        waitHalfHr:   75.00,
+        waitFullHr:   150.00,
+        fuelPerKm:    0.18,
+        purchasePrice:120000,
+        dailyLeaseCost:150,
+        desc:         'Minibus per 8 passeggeri. Transfer di gruppo e aeroporti.',
+        icon:         '🚌',
+    },
+    {
+        id:           'mercedes_s',
+        name:         'Mercedes S-Class Presidential',
+        shortName:    'Presidential',
+        tier:         'ultra',
+        capacity:     3,
+        extraHrNet:   195.00,
+        extraHrSell:  243.75,
+        waitHalfHr:   97.50,
+        waitFullHr:   195.00,
+        fuelPerKm:    0.14,
+        purchasePrice:220000,
+        dailyLeaseCost:185,
+        desc:         'Berlina presidenziale per VIP, diplomatici e clienti premium. Sblocca 154 tratte Presidential del contratto Classic Vacations.',
+        icon:         '👑',
+        requiresRep:  3.5,
+    },
+    {
+        id:           'water_taxi',
+        name:         'Water Taxi',
+        shortName:    'Water Taxi',
+        tier:         'ultra',
+        capacity:     8,
+        extraHrNet:   221.00,
+        extraHrSell:  276.25,
+        waitHalfHr:   110.50,
+        waitFullHr:   221.00,
+        fuelPerKm:    0.0,
+        purchasePrice:180000,
+        dailyLeaseCost:0,
+        desc:         'Esclusivo per Venezia. Obbligatorio per hotel su isola (Danieli, Gritti, Cipriani). Zero consumo carburante su terra.',
+        icon:         '⛵',
+        veniceOnly:   true,
+        requiresRegion: 'veneto',
+    },
 ];
 
 // ─── EVENTI DINAMICI AAA ─────────────────────────────────────────
@@ -652,3 +749,67 @@ const LOBBY_LAWS = [
         effect: 'data_shield',
     },
 ];
+
+// ─── VENTURE CAPITAL / M&A ────────────────────────────────────────
+const VENTURE_AGENCIES = [
+    {
+        id: 'vc_startup',
+        name: 'RideUp Italia',
+        desc: 'Startup di ride-hailing focalizzata su Milano e Torino. Alto rischio, alta crescita.',
+        icon: '🚀',
+        minRep: 2.0,
+        minCash: 50000,
+        valuation: 500000,
+        dailyIncome: 400,
+        maxStake: 49,
+        riskLevel: 'high',
+    },
+    {
+        id: 'vc_regional',
+        name: 'Sud Transfer Group',
+        desc: 'Rete NCC affermata in Campania e Sicilia. Flussi stabili da turismo e aeroporti.',
+        icon: '🌍',
+        minRep: 3.0,
+        minCash: 150000,
+        valuation: 1500000,
+        dailyIncome: 1200,
+        maxStake: 35,
+        riskLevel: 'medium',
+    },
+    {
+        id: 'vc_luxury',
+        name: 'Azzurro Prestige Srl',
+        desc: 'Agenzia premium con contratti esclusivi per yacht e ville di lusso in Costa Smeralda.',
+        icon: '💎',
+        minRep: 4.0,
+        minCash: 500000,
+        valuation: 5000000,
+        dailyIncome: 4500,
+        maxStake: 20,
+        riskLevel: 'low',
+    },
+];
+
+// ─── DB REGION → GAME POI HUB MAPPING ───────────────────────────────────────
+// Used by generateContractRide() to pick fromPoi/toPoi for serialization compat.
+// Keys are routesDB region strings; values are POIS keys.
+const DB_REGION_TO_POI_KEY = {
+    'Rome':         'roma',
+    'Civitavecchia':'civitavecchia',
+    'Amalfi Coast': 'napoli',
+    'Florence':     'firenze',
+    'Venice':       'venezia',
+    'Milan':        'milano',
+    'Lake Como':    'como',
+    'Portofino':    'portofino',
+    'Genoa':        'genova',
+    'Bologna':      'bologna',
+    'Umbria':       'perugia',
+    'Puglia':       'bari',
+    'Sardinia':     'cagliari',
+    'Sicily':       'palermo',
+    'South Tyrol':  'trento',
+    'Turin':        'torino',
+    'Calabria':     'catanzaro',
+    'Basilicata':   'potenza',
+};

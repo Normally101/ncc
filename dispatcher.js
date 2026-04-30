@@ -45,6 +45,11 @@ const HIGHWAYS = {
     'milano-genova':     { req:['lombardia','liguria'],      path:[[45.47,9.19],[45.18,9.16],[44.90,8.87],[44.41,8.95]] },
     // ─── A26 (Torino–Genova) ─────────────────────────────────────────────
     'torino-genova':     { req:['piemonte','liguria'],       path:[[45.07,7.69],[44.90,8.21],[44.92,8.61],[44.41,8.95]] },
+    // ─── SS1 AURELIA / RIVIERA (Genova–Portofino–La Spezia) ──────────────
+    'genova-portofino':  { req:['liguria'],                  path:[[44.41,8.95],[44.37,9.07],[44.33,9.17],[44.30,9.21]] },
+    'portofino-splendido':{ req:['liguria'],                 path:[[44.30,9.21],[44.30,9.21]] },
+    'genova-rapallo':    { req:['liguria'],                  path:[[44.41,8.95],[44.36,9.10],[44.35,9.23]] },
+    'rapallo-portofino': { req:['liguria'],                  path:[[44.35,9.23],[44.33,9.17],[44.30,9.21]] },
     // ─── A5 (Torino–Aosta) ───────────────────────────────────────────────
     'torino-aosta':      { req:['piemonte','valle_aosta'],   path:[[45.07,7.69],[45.47,7.88],[45.75,7.62],[45.74,7.32]] },
     // ─── A11/A12 (Firenze–Genova) ────────────────────────────────────────
@@ -114,8 +119,28 @@ const MAPBOX_TOKEN = 'pk.eyJ1IjoiZm9yZWlzYmFieSIsImEiOiJjbW9ocG14djEwN29tMnFzOTM
 let _mapReady = false;
 let _cantiereMarkers = {};
 
+// ─── REAL ROAD GEOMETRY ──────────────────────────────────────────
+const _roadGeomCache = {};
+window._fetchRoadGeom = async function(fromLngLat, toLngLat) {
+    const key = `${fromLngLat[0].toFixed(4)},${fromLngLat[1].toFixed(4)}->${toLngLat[0].toFixed(4)},${toLngLat[1].toFixed(4)}`;
+    if (_roadGeomCache[key]) return _roadGeomCache[key];
+    try {
+        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${fromLngLat[0]},${fromLngLat[1]};${toLngLat[0]},${toLngLat[1]}?geometries=geojson&overview=full&access_token=${MAPBOX_TOKEN}`;
+        const resp = await fetch(url);
+        const json = await resp.json();
+        const coords = json.routes?.[0]?.geometry?.coordinates;
+        if (coords && coords.length >= 2) { _roadGeomCache[key] = coords; return coords; }
+    } catch(e) { /* silent — fallback to HIGHWAYS BFS */ }
+    return null;
+};
+
 function initMap() {
     if (map) return;
+    if (typeof mapboxgl === 'undefined') {
+        document.getElementById('leaflet-map').style.cssText = 'display:flex;align-items:center;justify-content:center;background:#0a0a10;color:#ef4444;font:bold 13px monospace;z-index:0;position:fixed;inset:0;';
+        document.getElementById('leaflet-map').textContent = '⚠ Mapbox GL non caricato — verifica connessione internet';
+        return;
+    }
     mapboxgl.accessToken = MAPBOX_TOKEN;
     map = new mapboxgl.Map({
         container: 'leaflet-map',
@@ -179,14 +204,128 @@ function initMap() {
             }
         });
 
+        // ─── LOD: Region centroid labels (zoom < 7) ───────────────
+        map.addSource('region-centroids', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'region-labels',
+            type: 'symbol',
+            source: 'region-centroids',
+            maxzoom: 7,
+            layout: {
+                'text-field': ['get', 'name'],
+                'text-font': ['DIN Offc Pro Bold', 'Arial Unicode MS Bold'],
+                'text-size': 14,
+                'text-anchor': 'center',
+            },
+            paint: {
+                'text-color': '#e5e0d5',
+                'text-halo-color': '#000',
+                'text-halo-width': 1.5,
+                'text-opacity': 0.9
+            }
+        });
+
+        // ─── LOD: Contract destination dots + labels ───────────────
+        map.addSource('contract-destinations', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'contract-dest-dots',
+            type: 'circle',
+            source: 'contract-destinations',
+            minzoom: 9.5,
+            paint: {
+                'circle-radius': 4,
+                'circle-color': '#f59e0b',
+                'circle-opacity': 0.75,
+                'circle-stroke-width': 1,
+                'circle-stroke-color': '#fff'
+            }
+        });
+        map.addLayer({
+            id: 'contract-dest-labels',
+            type: 'symbol',
+            source: 'contract-destinations',
+            minzoom: 11.5,
+            layout: {
+                'text-field': ['get', 'name'],
+                'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Regular'],
+                'text-size': 10,
+                'text-offset': [0, 1.2],
+                'text-anchor': 'top',
+            },
+            paint: {
+                'text-color': '#f59e0b',
+                'text-halo-color': '#000',
+                'text-halo-width': 1
+            }
+        });
+
+        // ─── Active ride route lines (amber, dashed) ───────────────
+        map.addSource('active-routes', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'active-routes-glow',
+            type: 'line',
+            source: 'active-routes',
+            paint: { 'line-color': '#f59e0b', 'line-width': 7, 'line-opacity': 0.10, 'line-blur': 5 }
+        });
+        map.addLayer({
+            id: 'active-routes-core',
+            type: 'line',
+            source: 'active-routes',
+            paint: { 'line-color': '#f59e0b', 'line-width': 1.5, 'line-opacity': 0.80, 'line-dasharray': [3, 5] }
+        });
+
+        map.on('zoom', _updatePOIVisibility);
+
         _mapReady = true;
         drawHighways();
         drawPOIs();
+        // HQ marker
+        setTimeout(() => { if (typeof window._updateHQMarker === 'function') window._updateHQMarker(); }, 500);
+        // Founding overlay if no regions unlocked
+        setTimeout(() => { if (typeof window._checkFoundingOverlay === 'function') window._checkFoundingOverlay(); }, 800);
         // Secondo render ritardato: assicura che highway e POI siano visibili
-        // anche se il tile-load è lento o lo stato del gioco si carica dopo
         setTimeout(() => { drawHighways(); drawPOIs(); }, 800);
         setTimeout(() => { drawHighways(); drawPOIs(); }, 2500);
+        // Ensure panel shows map tab once map is ready
+        if (typeof window.switchTab === 'function') window.switchTab('map');
     });
+}
+
+function _updateRegionLabels() {
+    if (!map || !_mapReady || typeof REGION_CENTROIDS === 'undefined') return;
+    const features = (gameState.unlockedRegions || []).map(rid => {
+        const centroid = REGION_CENTROIDS[rid];
+        if (!centroid) return null;
+        const label = rid.charAt(0).toUpperCase() + rid.slice(1).replace(/_/g, ' ');
+        return { type: 'Feature', properties: { name: label }, geometry: { type: 'Point', coordinates: centroid } };
+    }).filter(Boolean);
+    const src = map.getSource('region-centroids');
+    if (src) src.setData({ type: 'FeatureCollection', features });
+}
+
+function _updateContractDestinations() {
+    if (!map || !_mapReady || typeof buildContractDestinationsGeoJSON === 'undefined') return;
+    const gj = buildContractDestinationsGeoJSON(gameState.unlockedRegions || []);
+    const src = map.getSource('contract-destinations');
+    if (src) src.setData(gj);
+}
+
+function _updateActiveRouteLines() {
+    if (!map || !_mapReady) return;
+    const features = (gameState.activeRides || [])
+        .filter(r => r.roadGeom && r.roadGeom.length >= 2)
+        .map(r => ({ type: 'Feature', properties: { rideId: r.id }, geometry: { type: 'LineString', coordinates: r.roadGeom } }));
+    const src = map.getSource('active-routes');
+    if (src) src.setData({ type: 'FeatureCollection', features });
 }
 
 function drawHighways() {
@@ -234,6 +373,27 @@ function drawPOIs() {
             el.addEventListener('mouseleave', () => popup.remove());
         }
         _poiMarkers[key] = marker;
+    }
+    _updateRegionLabels();
+    _updateContractDestinations();
+    _updatePOIVisibility();
+}
+
+function _updatePOIVisibility() {
+    if (!map) return;
+    const z = map.getZoom();
+    for (const key in _poiMarkers) {
+        const p = POIS[key];
+        const el = _poiMarkers[key]?.getElement();
+        if (!p || !el) continue;
+        if (z < 7) {
+            el.style.display = 'none';
+        } else if (z < 9.5) {
+            // Only major hubs visible (airports, main city hubs)
+            el.style.display = (p.type === 'hub') ? '' : 'none';
+        } else {
+            el.style.display = '';
+        }
     }
 }
 
@@ -340,234 +500,202 @@ function visualLoop() {
             delete _vehicleMarkers[id];
         }
     }
+
+    // Update active route lines every 60 frames
+    if (!visualLoop._frame) visualLoop._frame = 0;
+    if (++visualLoop._frame % 60 === 0) _updateActiveRouteLines();
 }
 visualLoop();
 
-// ─── THREE.JS GARAGE 3D ──────────────────────────────────────────
-let _g3d = null; // garage 3D state
-
+// ─── GARAGE SVG — ISPEZIONE VEICOLO ─────────────────────────────
 window.openGarage3D = function(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
-    if (!car || typeof THREE === 'undefined') {
-        if (typeof showNotification === 'function') showNotification('Three.js non disponibile', 'error');
-        return;
-    }
-    document.getElementById('garage3d-title').innerText = `🚗 ${car.name}`;
-    document.getElementById('modal-garage3d').classList.remove('hidden');
-    document.getElementById('modal-garage3d').classList.add('flex');
+    if (!car) return;
 
-    // Stats panel
-    const fuelPct = Math.floor(car.fuel || 100);
-    const tirePct = Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100);
-    const upgCount = (car.upgrades || []).length;
-    document.getElementById('garage3d-info').innerHTML = `
-        <div class="hud-card text-center !py-1.5"><div class="text-[8px] text-gray-500">Carburante</div><div class="font-bold text-blue" style="font-size:11px">${fuelPct}%</div></div>
-        <div class="hud-card text-center !py-1.5"><div class="text-[8px] text-gray-500">Gomme</div><div class="font-bold ${tirePct<40?'text-red-400':tirePct<70?'text-yellow-400':'text-green-400'}" style="font-size:11px">${tirePct}%</div></div>
-        <div class="hud-card text-center !py-1.5"><div class="text-[8px] text-gray-500">Upgrade</div><div class="font-bold text-gold" style="font-size:11px">${upgCount}</div></div>`;
+    const modal = document.getElementById('modal-garage3d');
 
-    _initThreeJSScene(car);
+    const vClass   = car.vehicleClass || 'mercedes_e';
+    const upgrades = car.upgrades || [];
+    const svgArt   = _generateVehicleSVG(vClass, upgrades);
+
+    const template = (typeof FLEET_VEHICLE_CLASSES !== 'undefined' ? FLEET_VEHICLE_CLASSES : []).find(x => x.id === vClass) || {};
+    const seats   = template.capacity || (vClass === 'mercedes_v' ? 7 : vClass === 'mercedes_sprinter' ? 8 : 3);
+    const luggage = vClass === 'mercedes_v' ? 7 : vClass === 'mercedes_sprinter' ? 12 : 3;
+
+    modal.innerHTML = `
+        <div class="bg-panel border border-white/10 rounded-2xl w-[95%] max-w-5xl min-h-[500px] overflow-hidden relative shadow-2xl flex flex-col md:flex-row transform transition-all" style="max-height:90vh">
+            <div class="w-full md:w-3/5 bg-black/80 relative flex items-center justify-center p-8 overflow-hidden" style="min-height:320px">
+                <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black/90 pointer-events-none"></div>
+                <div class="absolute bottom-0 w-full h-32 bg-gradient-to-t from-blue-500/10 to-transparent"></div>
+                <div class="relative z-10 w-full drop-shadow-[0_20px_30px_rgba(0,0,0,1)] transition-transform duration-700 hover:scale-105">
+                    ${svgArt}
+                </div>
+                ${upgrades.includes('upg_vip') ? '<div class="absolute bottom-16 left-1/2 -translate-x-1/2 w-1/2 h-4 bg-gold/30 blur-2xl rounded-[100%]"></div>' : ''}
+            </div>
+            <div class="w-full md:w-2/5 p-8 bg-panel border-l border-white/10 flex flex-col justify-between overflow-y-auto">
+                <div>
+                    <div class="flex justify-between items-start mb-2">
+                        <h2 class="text-2xl font-bold text-white uppercase tracking-wider leading-tight">${car.name}</h2>
+                        <span class="bg-white/10 text-white px-2 py-1 rounded text-xs font-mono border border-white/20 ml-2 flex-shrink-0">${car.tier.toUpperCase()}</span>
+                    </div>
+                    <p class="text-gold text-sm mb-6 font-mono">${vClass.replace(/_/g, ' ').toUpperCase()}</p>
+                    <div class="space-y-5">
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">🔧 CONDIZIONE</span><span class="text-white">${Math.floor(car.condition)}%</span></div>
+                            <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
+                                <div class="h-full transition-all duration-1000 ease-out ${car.condition > 50 ? 'bg-green-500' : 'bg-red-500'}" style="width:0%" id="anim-cond"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">⛽ CARBURANTE</span><span class="text-white">${Math.floor(car.fuel || 100)}%</span></div>
+                            <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
+                                <div class="h-full bg-blue-500 transition-all duration-1000 ease-out" style="width:0%" id="anim-fuel"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">🛞 PRESSIONE GOMME</span><span class="text-white">${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%</span></div>
+                            <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
+                                <div class="h-full bg-yellow-500 transition-all duration-1000 ease-out" style="width:0%" id="anim-tire"></div>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 mt-4">
+                            <div class="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center gap-3 hover:border-white/20 transition-colors">
+                                <span class="text-2xl">💺</span>
+                                <div><p class="text-[9px] text-gray-500 font-bold">POSTI</p><p class="text-base font-bold text-white">${seats}</p></div>
+                            </div>
+                            <div class="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center gap-3 hover:border-white/20 transition-colors">
+                                <span class="text-2xl">🧳</span>
+                                <div><p class="text-[9px] text-gray-500 font-bold">BAGAGLI</p><p class="text-base font-bold text-white">${luggage}</p></div>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <p class="text-[9px] text-gray-500 font-bold mb-2 uppercase tracking-widest">Upgrade Installati</p>
+                            <div class="flex flex-wrap gap-1.5">
+                                ${upgrades.length > 0
+                                    ? upgrades.map(u => `<span class="bg-blue-900/40 text-blue-300 border border-blue-500/30 text-[9px] px-2 py-0.5 rounded">${u.replace('upg_','').toUpperCase()}</span>`).join('')
+                                    : '<span class="text-gray-600 text-xs italic">Nessun upgrade</span>'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button onclick="closeGarage3D()" class="mt-6 w-full py-3 text-sm font-bold uppercase tracking-widest rounded-xl bg-red-900/30 border border-red-500/40 text-red-300 hover:bg-red-900/50 transition-colors">✕ Chiudi Ispezione</button>
+            </div>
+        </div>`;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    modal.style.cssText = 'position:fixed;inset:0;z-index:110;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+
+    setTimeout(() => {
+        const condEl = document.getElementById('anim-cond');
+        const fuelEl = document.getElementById('anim-fuel');
+        const tireEl = document.getElementById('anim-tire');
+        if (condEl) condEl.style.width = `${Math.floor(car.condition)}%`;
+        if (fuelEl) fuelEl.style.width = `${Math.floor(car.fuel || 100)}%`;
+        if (tireEl) tireEl.style.width = `${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%`;
+    }, 50);
 };
 
 window.closeGarage3D = function() {
     const modal = document.getElementById('modal-garage3d');
-    modal.classList.add('hidden');
-    modal.classList.remove('flex');
-    // Stop animation
-    if (_g3d) { _g3d.running = false; _g3d = null; }
-    const container = document.getElementById('garage3d-canvas');
-    if (container) container.innerHTML = '';
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        modal.style.cssText = '';
+        modal.innerHTML = '';
+    }
 };
 
-function _initThreeJSScene(car) {
-    const container = document.getElementById('garage3d-canvas');
-    if (!container) return;
-    container.innerHTML = '';
+function _generateVehicleSVG(vClass, upgrades) {
+    const isTinted = upgrades.includes('upg_tint') || upgrades.includes('tint');
+    const isArmor  = upgrades.includes('upg_armor') || upgrades.includes('blindatura');
+    const hasLivrea = upgrades.includes('upg_vip') || upgrades.includes('livrea') || upgrades.includes('neon');
 
-    // Scene setup
-    const W = container.offsetWidth, H = 300;
-    const scene    = new THREE.Scene();
-    scene.background = new THREE.Color(0x050510);
-    scene.fog = new THREE.Fog(0x050510, 20, 60);
+    const paint1     = isArmor ? '#1a1a1c' : '#232733';
+    const paint2     = isArmor ? '#0d0d0e' : '#080a0f';
+    const glassColor = isTinted ? '#030303' : '#1e2436';
+    const rimColor   = isArmor ? '#333' : '#778090';
+    const neonColor  = hasLivrea ? '#00f2ff' : 'none';
 
-    const camera = new THREE.PerspectiveCamera(42, W / H, 0.1, 100);
-    camera.position.set(4, 2.5, 5);
-    camera.lookAt(0, 0.4, 0);
+    const wheelY = 250;
+    const drawWheel = (cx) => `
+        <circle cx="${cx}" cy="${wheelY}" r="45" fill="#040404"/>
+        <circle cx="${cx}" cy="${wheelY}" r="36" fill="#111"/>
+        <circle cx="${cx}" cy="${wheelY}" r="26" fill="none" stroke="${rimColor}" stroke-width="4"/>
+        <circle cx="${cx}" cy="${wheelY}" r="10" fill="#444"/>
+        <path d="M${cx},${wheelY-26} L${cx},${wheelY+26} M${cx-26},${wheelY} L${cx+26},${wheelY} M${cx-18},${wheelY-18} L${cx+18},${wheelY+18} M${cx-18},${wheelY+18} L${cx+18},${wheelY-18}" stroke="${rimColor}" stroke-width="3"/>
+        ${hasLivrea ? `<circle cx="${cx}" cy="${wheelY}" r="46" fill="none" stroke="#00f2ff" stroke-width="1.5" opacity="0.5"/>` : ''}`;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    renderer.setSize(W, H);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    container.appendChild(renderer.domElement);
+    let bodyPath, windowsPath, details;
 
-    // Lighting
-    const ambient = new THREE.AmbientLight(0x202040, 3);
-    scene.add(ambient);
-
-    const frontLight = new THREE.DirectionalLight(0x00f2ff, 4);
-    frontLight.position.set(5, 6, 6);
-    frontLight.castShadow = true;
-    frontLight.shadow.mapSize.set(512, 512);
-    scene.add(frontLight);
-
-    const backLight = new THREE.DirectionalLight(0xd4af37, 2);
-    backLight.position.set(-4, 3, -4);
-    scene.add(backLight);
-
-    const rimLight = new THREE.PointLight(0x00f2ff, 2, 12);
-    rimLight.position.set(-3, 1, 3);
-    scene.add(rimLight);
-
-    // Floor grid
-    const grid = new THREE.GridHelper(20, 40, 0x001a2a, 0x001a2a);
-    grid.position.y = -0.3;
-    scene.add(grid);
-
-    // Car group
-    const carGroup = new THREE.Group();
-
-    // Tier-based color
-    const tierColors = { standard: 0x1a3a6a, business: 0x0d2d4a, vip: 0x2a0045, ultra: 0x0a0a1a, group: 0x1a4a2a };
-    const baseColor  = tierColors[car.tier] || 0x1a3a6a;
-
-    // Check upgrades
-    const hasLivrea    = (car.upgrades || []).includes('livrea') || (car.upgrades || []).includes('cerchi');
-    const hasBlindatura = (car.upgrades || []).includes('blindatura');
-    const paintColor   = hasLivrea ? 0x001a4a : baseColor;
-
-    const bodyMat = new THREE.MeshPhongMaterial({
-        color: paintColor,
-        shininess: hasBlindatura ? 30 : 120,
-        specular: hasLivrea ? 0x00f2ff : 0x3399aa,
-        reflectivity: 1
-    });
-
-    // Body
-    const bodyGeo = new THREE.BoxGeometry(2.6, 0.55, 1.1);
-    const body = new THREE.Mesh(bodyGeo, bodyMat);
-    body.position.y = 0.38;
-    body.castShadow = true;
-    carGroup.add(body);
-
-    // Roof / cabin
-    const roofGeo = new THREE.BoxGeometry(1.5, 0.45, 0.9);
-    const roof = new THREE.Mesh(roofGeo, bodyMat);
-    roof.position.set(-0.15, 0.84, 0);
-    roof.castShadow = true;
-    carGroup.add(roof);
-
-    // Windshield (dark glass)
-    const glassMat = new THREE.MeshPhongMaterial({ color: 0x001a22, transparent: true, opacity: 0.7, shininess: 200 });
-    const windshieldGeo = new THREE.BoxGeometry(0.04, 0.38, 0.82);
-    const windshield = new THREE.Mesh(windshieldGeo, glassMat);
-    windshield.position.set(0.61, 0.78, 0);
-    carGroup.add(windshield);
-
-    const rearGlassGeo = new THREE.BoxGeometry(0.04, 0.38, 0.82);
-    const rearGlass = new THREE.Mesh(rearGlassGeo, glassMat);
-    rearGlass.position.set(-0.91, 0.78, 0);
-    carGroup.add(rearGlass);
-
-    // Wheels (4 cylinders)
-    const wheelGeo = new THREE.CylinderGeometry(0.26, 0.26, 0.18, 20);
-    const wheelMat = new THREE.MeshPhongMaterial({ color: 0x111111, shininess: 40 });
-    const rimMat   = new THREE.MeshPhongMaterial({ color: (car.upgrades||[]).includes('cerchi') ? 0xd4af37 : 0x444466, shininess: 200 });
-    const rimGeo   = new THREE.CylinderGeometry(0.14, 0.14, 0.2, 10);
-
-    const wheelPositions = [
-        [0.85, 0.10, 0.60], [-0.85, 0.10, 0.60],
-        [0.85, 0.10, -0.60], [-0.85, 0.10, -0.60]
-    ];
-    wheelPositions.forEach(pos => {
-        const wheel = new THREE.Mesh(wheelGeo, wheelMat);
-        wheel.rotation.z = Math.PI / 2;
-        wheel.position.set(...pos);
-        wheel.castShadow = true;
-        carGroup.add(wheel);
-        const rim = new THREE.Mesh(rimGeo, rimMat);
-        rim.rotation.z = Math.PI / 2;
-        rim.position.set(pos[0] + (pos[2] > 0 ? 0.02 : -0.02), pos[1], pos[2]);
-        carGroup.add(rim);
-    });
-
-    // Headlights
-    const lightGeo = new THREE.BoxGeometry(0.06, 0.10, 0.22);
-    const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
-    [-0.3, 0.3].forEach(z => {
-        const light = new THREE.Mesh(lightGeo, lightMat);
-        light.position.set(1.32, 0.40, z);
-        carGroup.add(light);
-    });
-
-    // Neon underglow if livrea upgrade
-    if (hasLivrea) {
-        const underglowGeo = new THREE.BoxGeometry(2.4, 0.04, 0.9);
-        const underglowMat = new THREE.MeshBasicMaterial({ color: 0x00f2ff });
-        const underglow = new THREE.Mesh(underglowGeo, underglowMat);
-        underglow.position.set(0, -0.01, 0);
-        carGroup.add(underglow);
-        const pointLight = new THREE.PointLight(0x00f2ff, 3, 3);
-        pointLight.position.set(0, -0.15, 0);
-        carGroup.add(pointLight);
+    if (vClass === 'mercedes_v') {
+        bodyPath    = "M110,140 C110,100 130,90 150,90 L520,90 C560,90 640,140 680,160 L710,230 C715,250 700,250 680,250 L110,250 Z";
+        windowsPath = "M150,150 L170,100 L500,100 L620,150 Z";
+        details = `${drawWheel(220)} ${drawWheel(580)}
+            <path d="M680,160 L710,175 L700,195 L670,180 Z" fill="#eef" filter="url(#glow)"/>
+            <path d="M110,140 L100,150 L100,190 L110,190 Z" fill="#f00" filter="url(#glow)"/>
+            <line x1="360" y1="100" x2="360" y2="240" stroke="#111" stroke-width="2"/>
+            ${hasLivrea ? '<line x1="110" y1="248" x2="680" y2="248" stroke="#00f2ff" stroke-width="2" opacity="0.7"/>' : ''}`;
+    } else if (vClass === 'mercedes_sprinter') {
+        bodyPath    = "M90,250 L90,50 C90,30 110,20 130,20 L520,20 C550,20 620,130 670,160 L710,240 C715,250 700,250 680,250 Z";
+        windowsPath = "M520,60 L600,150 L530,150 Z";
+        details = `${drawWheel(220)} ${drawWheel(580)}
+            <rect x="130" y="50" width="370" height="180" rx="5" fill="#15171e" stroke="#111" stroke-width="2"/>
+            <path d="M670,160 L710,180 L700,200 L660,180 Z" fill="#eef" filter="url(#glow)"/>
+            <path d="M90,100 L80,110 L80,200 L90,200 Z" fill="#f00" filter="url(#glow)"/>
+            ${hasLivrea ? '<rect x="91" y="248" width="589" height="2" fill="#00f2ff" opacity="0.7"/>' : ''}`;
+    } else if (vClass === 'mercedes_s') {
+        bodyPath    = "M70,180 L180,175 L330,120 L530,120 L680,175 L780,190 C790,200 790,240 760,250 L70,250 C50,250 50,190 70,180 Z";
+        windowsPath = "M195,175 L335,125 L520,125 L650,175 Z";
+        details = `${drawWheel(210)} ${drawWheel(630)}
+            <path d="M70,240 L780,240" stroke="#444" stroke-width="2"/>
+            <path d="M760,190 L780,195 L775,205 L755,200 Z" fill="#fff" filter="url(#glow)"/>
+            <path d="M70,185 L60,195 L60,205 L70,205 Z" fill="#f00" filter="url(#glow)"/>
+            <rect x="340" y="118" width="170" height="3" rx="1.5" fill="#d4af37" opacity="0.8"/>
+            ${hasLivrea ? '<path d="M70,249 L780,249" stroke="#00f2ff" stroke-width="2" opacity="0.7"/>' : ''}`;
+    } else if (vClass === 'water_taxi') {
+        bodyPath    = "M100,220 C100,250 150,280 200,280 L600,280 C680,280 720,240 750,200 L100,200 Z";
+        windowsPath = "M250,200 L300,120 L550,120 L600,200 Z";
+        details = `
+            <path d="M250,200 L300,120 L550,120 L600,200 Z" fill="#4a2e15" stroke="#2b1a0a" stroke-width="3"/>
+            <path d="M280,190 L320,130 L530,130 L570,190 Z" fill="url(#glass)"/>
+            <path d="M80,270 Q425,250 780,270" stroke="#00f2ff" stroke-width="2" stroke-dasharray="12 6" opacity="0.4"/>
+            <path d="M730,200 L745,205 L740,215 L725,210 Z" fill="#fff" filter="url(#glow)"/>
+            <path d="M110,205 L100,210 L100,220 L110,215 Z" fill="#f00" filter="url(#glow)"/>
+            <ellipse cx="155" cy="170" rx="25" ry="35" fill="none" stroke="#5a3a1a" stroke-width="3"/>
+            <line x1="155" y1="135" x2="155" y2="100" stroke="#5a3a1a" stroke-width="3"/>`;
+    } else {
+        // Default: mercedes_e sedan
+        bodyPath    = "M90,180 L180,175 L310,120 L490,120 L630,175 L740,190 C750,200 750,240 720,250 L90,250 C70,250 70,190 90,180 Z";
+        windowsPath = "M195,175 L315,125 L480,125 L610,175 Z";
+        details = `${drawWheel(210)} ${drawWheel(600)}
+            <rect x="420" y="125" width="15" height="50" fill="#111"/>
+            <path d="M720,190 L740,195 L735,205 L715,200 Z" fill="#eef" filter="url(#glow)"/>
+            <path d="M90,185 L80,195 L80,205 L90,205 Z" fill="#f00" filter="url(#glow)"/>
+            ${hasLivrea ? '<path d="M90,249 L720,249" stroke="#00f2ff" stroke-width="2" opacity="0.7"/>' : ''}`;
     }
 
-    // Armor plates if blindatura
-    if (hasBlindatura) {
-        const armorGeo = new THREE.BoxGeometry(2.65, 0.08, 1.15);
-        const armorMat = new THREE.MeshPhongMaterial({ color: 0x1a1a2a, shininess: 5 });
-        const armor = new THREE.Mesh(armorGeo, armorMat);
-        armor.position.y = 0.62;
-        carGroup.add(armor);
-    }
-
-    carGroup.position.y = 0.22;
-    scene.add(carGroup);
-
-    // Mouse drag rotation
-    let isDragging = false, prevMouse = { x: 0, y: 0 };
-    let rotY = 0.3, rotX = 0.08;
-    let zoomDist = 5;
-
-    renderer.domElement.addEventListener('mousedown', e => { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; });
-    window.addEventListener('mouseup', () => { isDragging = false; });
-    renderer.domElement.addEventListener('mousemove', e => {
-        if (!isDragging) return;
-        rotY += (e.clientX - prevMouse.x) * 0.012;
-        rotX  = Math.max(-0.3, Math.min(0.7, rotX + (e.clientY - prevMouse.y) * 0.008));
-        prevMouse = { x: e.clientX, y: e.clientY };
-    });
-    renderer.domElement.addEventListener('wheel', e => {
-        zoomDist = Math.max(2.5, Math.min(10, zoomDist + e.deltaY * 0.006));
-        e.preventDefault();
-    }, { passive: false });
-
-    // Touch support
-    let lastTouch = null;
-    renderer.domElement.addEventListener('touchstart', e => { lastTouch = e.touches[0]; });
-    renderer.domElement.addEventListener('touchmove', e => {
-        if (!lastTouch) return;
-        rotY += (e.touches[0].clientX - lastTouch.clientX) * 0.012;
-        lastTouch = e.touches[0];
-        e.preventDefault();
-    }, { passive: false });
-
-    // Animate
-    const state = { running: true };
-    _g3d = state;
-
-    function animate() {
-        if (!state.running) return;
-        requestAnimationFrame(animate);
-        if (!isDragging) rotY += 0.005;
-        carGroup.rotation.y = rotY;
-        carGroup.rotation.x = rotX;
-        camera.position.x = Math.sin(rotY * 0.5) * zoomDist * 0.3 + 4;
-        camera.position.z = zoomDist;
-        camera.lookAt(0, 0.5, 0);
-        rimLight.position.x = Math.sin(Date.now() * 0.001) * 3;
-        renderer.render(scene, camera);
-    }
-    animate();
+    return `<svg viewBox="0 0 850 320" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bodyPaint" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${paint1}"/><stop offset="100%" stop-color="${paint2}"/>
+        </linearGradient>
+        <linearGradient id="glass" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="${glassColor}" stop-opacity="0.9"/><stop offset="100%" stop-color="#050505" stop-opacity="0.95"/>
+        </linearGradient>
+        <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+          <feGaussianBlur stdDeviation="5" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+        <filter id="shadow">
+          <feGaussianBlur stdDeviation="18" result="blur"/>
+        </filter>
+      </defs>
+      <ellipse cx="425" cy="278" rx="350" ry="14" fill="#000" filter="url(#shadow)" opacity="0.85"/>
+      <path d="${bodyPath}" fill="url(#bodyPaint)" stroke="${isArmor ? '#2a2a30' : '#1a1c28'}" stroke-width="1.5"/>
+      ${vClass !== 'water_taxi' ? `<path d="${windowsPath}" fill="url(#glass)"/>` : ''}
+      ${details}
+    </svg>`;
 }
 
 // ─── HIGHWAY GRAPH ROUTER ────────────────────────────────────────────────────
@@ -675,7 +803,19 @@ function _buildRideWaypoints(fromPoi, toPoi) {
 function calculateInterpolatedPosition(ride, currentElapsed) {
     const progress = Math.min(1, currentElapsed / ride.duration);
 
-    // Cache computed waypoints for this ride instance
+    // Real road routing: interpolate along Mapbox Directions geometry [lng,lat]
+    if (ride.roadGeom && ride.roadGeom.length >= 2) {
+        const rg = ride.roadGeom;
+        const totalSeg = rg.length - 1;
+        const segF = progress * totalSeg;
+        const idx = Math.min(Math.floor(segF), totalSeg - 1);
+        const t = segF - idx;
+        const lng = rg[idx][0] + (rg[idx + 1][0] - rg[idx][0]) * t;
+        const lat = rg[idx][1] + (rg[idx + 1][1] - rg[idx][1]) * t;
+        return [lat, lng]; // return [lat, lng] to match existing convention
+    }
+
+    // Fallback: HIGHWAYS BFS waypoints
     if (!ride._waypoints) ride._waypoints = _buildRideWaypoints(ride.fromPoi, ride.toPoi);
     const wpts = ride._waypoints;
 
@@ -702,30 +842,36 @@ window.switchTab = function(tab) {
     const container = document.getElementById('tab-container');
     const title = document.getElementById('panel-title');
     const mapLog = document.getElementById('live-map-overlay');
+    if (!container || !title) return;
 
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
     if(activeBtn) activeBtn.classList.add('active');
-    
-    if(tab === 'map') { 
-        mapLog.classList.remove('hidden'); mapLog.classList.add('flex'); 
-    } else { 
-        mapLog.classList.add('hidden'); mapLog.classList.remove('flex'); 
+
+    if(mapLog) {
+        if(tab === 'map') {
+            mapLog.classList.remove('hidden'); mapLog.classList.add('flex');
+        } else {
+            mapLog.classList.add('hidden'); mapLog.classList.remove('flex');
+        }
     }
 
+    const _safeRender = (fn) => { try { fn(); } catch(e) { console.error('[switchTab]', e); container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}</div>`; } };
     switch(tab) {
-        case 'corse': title.innerText = "Dispatch Center"; renderTabCorse(); break;
-        case 'ranking': title.innerText = "Global Ranking"; renderTabRanking(); break;
-        case 'staff': title.innerText = "Risorse Umane"; renderTabStaff(); break;
-        case 'fleet': title.innerText = "Gestione Flotta"; renderTabFleet(); break;
-        case 'emails': title.innerText = "Inbox CEO"; renderTabEmails(); break;
-        case 'regions': title.innerText = "Licenze Regioni"; renderTabRegions(); break;
-        case 'invest': title.innerText = "Patrimonio & Asset"; renderTabInvestments(); break;
-        case 'marketing': title.innerText = "Marketing & Brand"; renderTabMarketing(); break;
-        case 'legal':    title.innerText = "Ufficio Legale"; renderTabLegal(); break;
-        case 'finance':  title.innerText = "$WALL-ST · Finance"; renderTabFinance(); break;
-        case 'lifestyle': title.innerText = "Lifestyle & Empire"; renderTabLifestyle(); break;
-        case 'politics': title.innerText = "Politica & Lobbying"; renderTabPolitics(); break;
+        case 'corse': title.innerText = "Dispatch Center"; _safeRender(renderTabCorse); break;
+        case 'ranking': title.innerText = "Global Ranking"; _safeRender(renderTabRanking); break;
+        case 'staff': title.innerText = "Risorse Umane"; _safeRender(renderTabStaff); break;
+        case 'fleet': title.innerText = "Gestione Flotta"; _safeRender(renderTabFleet); break;
+        case 'emails': title.innerText = "Inbox CEO"; _safeRender(renderTabEmails); break;
+        case 'regions': title.innerText = "Licenze Regioni"; _safeRender(renderTabRegions); break;
+        case 'invest': title.innerText = "Patrimonio & Asset"; _safeRender(renderTabInvestments); break;
+        case 'marketing': title.innerText = "Marketing & Brand"; _safeRender(renderTabMarketing); break;
+        case 'legal':    title.innerText = "Ufficio Legale"; _safeRender(renderTabLegal); break;
+        case 'finance':  title.innerText = "$WALL-ST · Finance"; _safeRender(renderTabFinance); break;
+        case 'lifestyle': title.innerText = "Lifestyle & Empire"; _safeRender(renderTabLifestyle); break;
+        case 'politics': title.innerText = "Politica & Lobbying"; _safeRender(renderTabPolitics); break;
+        case 'career':   title.innerText = "Missioni & Carriera"; _safeRender(renderTabCareer); break;
+        case 'store':    title.innerText = "💎 Titan Store"; _safeRender(renderTabPremiumStore); break;
         case 'map': title.innerText = "Radar Live"; {
             const heat = gameState.policeHeat || 0;
             const heatColor = heat >= 80 ? '#ff4060' : heat >= 50 ? '#f59e0b' : '#22c55e';
@@ -736,7 +882,7 @@ window.switchTab = function(tab) {
                         <span class="text-xl">${ev.icon}</span>
                         <div class="flex-1 min-w-0">
                             <div class="text-[10px] font-bold text-gold">${ev.name}</div>
-                            <div class="text-[9px] text-gray-400">×${ev.priceMult.toFixed(1)} prezzi · ${Math.max(0, ev.endsHour - (gameState.day*24+gameState.hour))}h rimaste</div>
+                            <div class="text-[9px] text-gray-400">×${(ev.priceMult||1).toFixed(1)} prezzi · ${Math.max(0, (ev.endsHour||0) - (gameState.day*24+gameState.hour))}h rimaste</div>
                         </div>
                     </div>
                    </div>`
@@ -783,7 +929,32 @@ function renderTabCorse() {
     }
 
     gameState.pendingRides.forEach(ride => {
-        html += `
+        if (ride.isContract) {
+            const typeIcon = { Airport:'✈️', 'City-to-City':'🚗', Rail:'🚂', Port:'⚓', Boat:'⛵', Transfer:'🚐' }[ride.routeType] || '🚗';
+            const vcNames  = { mercedes_e:'E-Class', mercedes_v:'V-Class', mercedes_sprinter:'Sprinter', mercedes_s:'S-Class 👑', water_taxi:'Water Taxi ⛵' };
+            const margin   = (ride.price || 0) - (ride.netCost || 0);
+            const fromName = ride.originName || ride.fromPoi?.name || '?';
+            const toName   = ride.destinationName || ride.toPoi?.name || '?';
+            html += `
+        <div class="hud-card ride-card cursor-grab active:cursor-grabbing !border-amber-500/30 bg-amber-950/10" draggable="true" data-id="${ride.id}">
+            <div class="flex justify-between items-start gap-2">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1 mb-0.5">
+                        <span class="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold tracking-wider">🏢 CV</span>
+                        <span class="text-[9px] text-gray-500">${typeIcon}</span>
+                        ${ride.vehicleRequired ? `<span class="text-[8px] bg-white/5 text-gray-400 px-1 rounded">${vcNames[ride.vehicleRequired] || ride.vehicleRequired}</span>` : ''}
+                    </div>
+                    <div class="text-xs font-bold text-white truncate">${fromName} ➔ ${toName}</div>
+                    <div class="text-[8px] text-gray-500 uppercase mt-0.5">${ride.tier}</div>
+                </div>
+                <div class="text-right shrink-0">
+                    <div class="text-green-400 font-mono font-bold text-[11px]">€${ride.price.toLocaleString()}</div>
+                    <div class="text-[8px] ${margin >= 0 ? 'text-emerald-500' : 'text-red-400'} font-mono">netto +€${margin.toLocaleString()}</div>
+                </div>
+            </div>
+        </div>`;
+        } else {
+            html += `
         <div class="hud-card ride-card cursor-grab active:cursor-grabbing" draggable="true" data-id="${ride.id}">
             <div class="flex justify-between items-start">
                 <div>
@@ -793,6 +964,7 @@ function renderTabCorse() {
                 <div class="text-green-400 font-mono font-bold">€${ride.price}</div>
             </div>
         </div>`;
+        }
     });
     
     html += `</div>
@@ -819,7 +991,7 @@ function renderTabCorse() {
             <div class="flex justify-between items-center">
                 <div>
                     <div class="text-xs font-bold text-white">${driver.name}${restBtn}</div>
-                    ${driver.trait ? `<div class="text-[8px] text-purple-400 font-semibold mt-0.5">${driver.trait.name} — ${driver.trait.desc}</div>` : ''}
+                    ${driver.trait ? `<div class="mt-0.5">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(driver) : ''} <span class="text-[8px] text-gray-500">${driver.trait.desc}</span></div>` : ''}
                     <div class="text-[9px] text-gray-500">${car ? `${car.name}${car.isLease ? ' (Leasing)' : ''}` : 'Nessun veicolo assegnato'}</div>
                 </div>
                 <div class="text-right">
@@ -1014,7 +1186,10 @@ function renderTabFleet() {
                 <div class="text-[10px] text-blue font-bold uppercase tracking-widest">🛢️ Deposito Aziendale</div>
                 <div class="text-[10px] font-bold" style="color:${pColor}">€${price}/L</div>
             </div>
-            ${outCount > 0 ? `<div class="text-[9px] text-red-400 font-bold mb-2 flex items-center gap-1">🔴 ${outCount} auto ferme — rifornisci il deposito!</div>` : ''}
+            ${outCount > 0 ? `<div class="text-[9px] text-red-400 font-bold mb-2 flex items-center justify-between gap-1">
+                <span>🔴 ${outCount} auto ferme — deposito esaurito</span>
+                <button onclick="window.emergencyRefuel()" class="btn-gold !bg-red-900/40 !text-red-300 !text-[7px] !py-0.5 !px-2 animate-pulse">🚨 Rifornimento Emergenza (3×)</button>
+            </div>` : ''}
             <div class="text-[8px] text-gray-500 uppercase mb-1">Gasolio</div>
             <div class="flex items-center gap-2 mb-2">
                 <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${pct}%; background:${tankColor}"></div></div>
@@ -1029,11 +1204,31 @@ function renderTabFleet() {
                 <div class="text-[8px] text-gray-500 uppercase">Treni di Gomme</div>
                 <span class="text-[10px] font-bold font-mono" style="color:${gommeColor}">${gomme} set</span>
             </div>
-            <div class="grid grid-cols-3 gap-1">
+            <div class="grid grid-cols-3 gap-1 mb-3">
                 <button onclick="buyTiresForDepot(1)"  class="btn-blue !text-[8px] !py-1">+1 set<br><span class="text-[7px] opacity-60">€800</span></button>
                 <button onclick="buyTiresForDepot(5)"  class="btn-blue !text-[8px] !py-1">+5 set<br><span class="text-[7px] opacity-60">€3.500</span></button>
                 <button onclick="buyTiresForDepot(10)" class="btn-gold !text-[8px] !py-1">+10 set<br><span class="text-[7px] opacity-60">€6.000</span></button>
             </div>
+            ${(() => {
+                const lvl = gameState.fuelTankLevel || 1;
+                const DEPOT_LVL_LIST = [
+                    { level:1, name:'Cisterna Base', priceDiscount:0.00 },
+                    { level:2, name:'Cisterna Doppia', priceDiscount:0.02 },
+                    { level:3, name:'Deposito Professionale', priceDiscount:0.05 },
+                    { level:4, name:'Mega-Depot', priceDiscount:0.08 },
+                    { level:5, name:'Hub Logistico', priceDiscount:0.12 },
+                ];
+                const cur  = DEPOT_LVL_LIST.find(d => d.level === lvl) || DEPOT_LVL_LIST[0];
+                const next = DEPOT_LVL_LIST.find(d => d.level === lvl + 1);
+                const upgCost = next ? Math.round(5000 * Math.pow(lvl, 1.8)) : 0;
+                return `<div class="flex justify-between items-center border-t border-white/5 pt-2 mt-1">
+                    <div class="text-[8px] text-gray-500">🏗️ ${cur.name} <span class="text-blue">Lv.${lvl}</span></div>
+                    ${next
+                        ? `<button onclick="upgradeFuelDepot()" class="btn-gold !text-[7px] !py-0.5 !px-1.5">Upgrade → ${next.name}<br><span class="opacity-60">€${upgCost.toLocaleString()}</span></button>`
+                        : `<span class="text-[8px] text-green-400 font-bold">MAX</span>`
+                    }
+                </div>`;
+            })()}
         </div>`;
     }
 
@@ -1098,11 +1293,15 @@ function renderTabFleet() {
 
     html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Concessionario (Nuovo & Leasing)</h3><div class="space-y-2">`;
     NEW_CARS.forEach(c => {
+        const vcLabel = { mercedes_e:'Sedan', mercedes_v:'Minivan', mercedes_sprinter:'Sprinter', mercedes_s:'Presidential', water_taxi:'Acqueo', mercedes_e:'Berlina' }[c.vehicleClass] || c.vehicleClass || '';
         html += `
         <div class="hud-card flex justify-between items-center">
-            <div><div class="text-xs font-bold text-white">${c.name}</div><div class="text-[9px] text-gray-500">Tier: ${c.tier.toUpperCase()}</div></div>
+            <div>
+                <div class="text-xs font-bold text-white">${c.name}</div>
+                <div class="text-[9px] text-gray-500 uppercase">${c.tier} · <span class="text-blue-400">${vcLabel}</span></div>
+            </div>
             <div class="flex gap-2">
-                <button onclick="buyCar('${c.id}','new')" class="btn-gold !text-[8px]">€${c.price.toLocaleString()}</button>
+                <button onclick="openCarConfigurator('${c.id}','new')" class="btn-gold !text-[8px]">🔧 Configura</button>
                 <button onclick="openLeasingModal('${c.tier}')" class="btn-gold !bg-blue-600 !text-white !text-[8px]">Lease</button>
             </div>
         </div>`;
@@ -1113,7 +1312,7 @@ function renderTabFleet() {
         html += `
         <div class="hud-card flex justify-between items-center">
             <div><div class="text-xs font-bold text-white">${c.name}</div><div class="text-[9px] text-red-400">Salute: ${c.condition}%</div></div>
-            <button onclick="buyCar('${c.id}','used')" class="btn-gold !bg-gray-800">€${c.price.toLocaleString()}</button>
+            <button onclick="openCarConfigurator('${c.id}','used')" class="btn-gold !bg-gray-800 !text-[8px]">🔧 Configura</button>
         </div>`;
     });
 
@@ -1191,14 +1390,21 @@ function renderTabStaff() {
             : fatigue >= 85
                 ? `<span class="text-red-400 text-[9px] font-bold">⚠ ESAUSTO${!hasHR ? ' — Mandalo a riposo!' : ''}</span>`
                 : '';
+        const avatarHtml = d.avatarBase64
+            ? `<img src="${d.avatarBase64}" class="driver-avatar" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Clicca per cambiare foto">`
+            : `<div class="driver-avatar-placeholder" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Aggiungi foto">👤</div>`;
         html += `
         <div class="hud-card">
+            <input type="file" id="avatar-upload-${d.id}" accept="image/*" style="display:none" onchange="window.setDriverAvatar('${d.id}', this)">
             <div class="flex justify-between items-center">
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold text-white">${d.name} <span class="lvl-badge ${levelData.badge} ml-1">${levelData.name}</span>${d.isOnStrike ? '<span class="ml-2 text-[8px] bg-red-900/60 text-red-400 px-1 rounded font-bold">🪧 SCIOPERO</span>' : ''}</div>
-                    ${d.trait ? `<div class="text-[8px] text-purple-400 mt-0.5">${d.trait.name} — ${d.trait.desc}</div>` : ''}
-                    <div class="text-[9px] text-gray-500">€${d.salary}/mese · XP: ${d.xp||0}</div>
-                    ${statusLabel ? `<div class="mt-0.5">${statusLabel}</div>` : ''}
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    ${avatarHtml}
+                    <div class="flex-1 min-w-0">
+                        <div class="text-xs font-bold text-white">${d.name} <span class="lvl-badge ${levelData.badge} ml-1">${levelData.name}</span>${d.isOnStrike ? '<span class="ml-2 text-[8px] bg-red-900/60 text-red-400 px-1 rounded font-bold">🪧 SCIOPERO</span>' : ''}</div>
+                        ${d.trait ? `<div class="text-[8px] text-purple-400 mt-0.5">${d.trait.name} — ${d.trait.desc}</div>` : ''}
+                        <div class="text-[9px] text-gray-500">€${d.salary}/mese · XP: ${d.xp||0}</div>
+                        ${statusLabel ? `<div class="mt-0.5">${statusLabel}</div>` : ''}
+                    </div>
                 </div>
                 <div class="flex gap-2 items-center shrink-0">
                     ${d.isOnStrike
@@ -1254,6 +1460,22 @@ function renderTabStaff() {
             })()}
         </div>`;
     });
+    // Meet & Greet status section
+    const _mgStaff = (gameState.staff || []).filter(s => s.skill === 'meetgreet');
+    if (_mgStaff.length > 0) {
+        const _mgIncome = gameState._lastMgIncome || 0;
+        html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🤝 Meet &amp; Greet Aeroportuale</h3><div class="space-y-2 mb-6">`;
+        _mgStaff.forEach(asst => {
+            html += `<div class="hud-card flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-white">${asst.name}</div>
+                    <div class="text-[9px] text-gray-400">Aeroporto: ${asst.airport || '—'} · Missioni passive: attive · Carburante: €0</div>
+                    <div class="text-[9px] text-green-400 mt-0.5">Entrate ultima sessione: +€${(_mgIncome / _mgStaff.length).toFixed(0)}/g</div>
+                </div>
+                <span class="text-green-500 text-[9px] font-bold">✓ ON DUTY</span>
+            </div>`;
+        });
+    }
     const tierIcon = { standard:'🟢', business:'🔵', vip:'🟣', ultra:'⚫' };
     html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">Mercato Reclutamento</h3>
     <p class="text-[9px] text-gray-600 mb-3 italic">I candidati si aggiornano dopo ogni assunzione.</p>
@@ -1263,8 +1485,8 @@ function renderTabStaff() {
         <div class="hud-card flex justify-between items-center">
             <div>
                 <div class="text-xs font-bold text-white">${p.name} <span class="text-[9px] ml-1">${tierIcon[p.tier] || ''} ${p.tier.toUpperCase()}</span></div>
-                ${p.trait ? `<div class="text-[8px] text-purple-400">${p.trait.name} — ${p.trait.desc}</div>` : ''}
-                <div class="text-[9px] text-gray-500">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
+                ${p.trait ? `<div class="mt-0.5">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span class="text-[8px] text-gray-500">${p.trait.desc}</span></div>` : ''}
+                <div class="text-[9px] text-gray-500 mt-0.5">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
             </div>
             <button onclick="hireDriver('${p.name}', ${p.salary})" class="btn-gold !py-1">Assumi</button>
         </div>`;
@@ -1339,7 +1561,10 @@ function renderTabEmails() {
             const plColor = e.brokerGain >= 0 ? '#22c55e' : '#ef4444';
             html += `<div class="text-[10px] mb-2">Capitale investito: <b>€${(e.brokerCapital||0).toLocaleString()}</b> · Profilo: ${e.brokerRisk||''}</div>
             <div class="text-sm font-bold mb-3" style="color:${plColor}">${pl}</div>
-            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue w-full !text-[9px]">OK, Incassato</button>`;
+            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; if(typeof spawnMoneyParticles==='function'){const r=this.getBoundingClientRect();spawnMoneyParticles(r.left+r.width/2,r.top,${e.brokerGain||0});} renderTabEmails();" class="btn-blue w-full !text-[9px]">OK, Incassato</button>`;
+        } else if (e.type === 'driver_msg') {
+            html += `<div class="text-[10px] text-gray-300 mb-3 leading-relaxed">${e.body || e.subject}</div>
+            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue w-full !text-[9px]">Ho capito</button>`;
         } else if (e.type === 'info') {
             html += `<div class="text-[10px] text-gray-300 mb-3">${e.subject}</div>
             <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue w-full !text-[9px]">OK, Capito</button>`;
@@ -1437,22 +1662,92 @@ window.hireOfficeStaff = function(id) {
     }
 };
 
-window.buyCar = function(carId, type) {
+window.openCarConfigurator = function(carId, type) {
     const carT = (type === 'new' ? NEW_CARS : USED_CARS).find(c => c.id === carId);
-    if(gameState.cash >= carT.price) {
-        gameState.cash -= carT.price;
-        gameState.fleet.push({ id: 'c_'+Date.now(), name: carT.name, tier: carT.tier, condition: carT.condition, isLease: false, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [] });
-        updateUI(); renderTabFleet(); showNotification("Veicolo acquistato!", "success");
-        if(typeof saveGame==='function') saveGame();
-    } else showNotification("Fondi insufficienti!", "error");
+    if (!carT) return;
+    const old = document.getElementById('modal-configurator');
+    if (old) old.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'modal-configurator';
+    modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999]';
+    document.body.appendChild(modal);
+
+    const sel = new Set();
+
+    function render() {
+        const upTotal = [...sel].reduce((s, uid) => { const u = CAR_UPGRADES.find(x => x.id === uid); return s + (u ? u.price : 0); }, 0);
+        const total = carT.price + upTotal;
+        const ok = gameState.cash >= total;
+        modal.innerHTML = `
+<div class="bg-[#0a0a0f] border border-white/10 rounded-xl w-[480px] max-h-[85vh] overflow-y-auto p-6 shadow-2xl">
+  <div class="flex justify-between items-start mb-5">
+    <div>
+      <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-0.5">Configuratore</div>
+      <div class="text-base font-bold text-white">${carT.name}</div>
+      <div class="text-[9px] text-gray-500 uppercase mt-0.5">${carT.tier} · ${(carT.vehicleClass || '').replace('_',' ')}</div>
+    </div>
+    <button onclick="document.getElementById('modal-configurator').remove()" class="text-gray-600 hover:text-white text-lg leading-none mt-1">✕</button>
+  </div>
+  <div class="hud-card flex justify-between items-center mb-4">
+    <span class="text-[9px] text-gray-500 uppercase">Prezzo base</span>
+    <span class="font-mono font-bold text-white">€${carT.price.toLocaleString()}</span>
+  </div>
+  <div class="text-[9px] text-gold uppercase tracking-widest mb-2">Optional</div>
+  <div class="space-y-1.5 mb-5">
+    ${CAR_UPGRADES.map(u => {
+        const on = sel.has(u.id);
+        return `<div class="hud-card flex items-start gap-3 cursor-pointer select-none transition-colors ${on ? '!border-gold/50 bg-gold/5' : 'hover:border-white/20'}" onclick="__cfgToggle('${u.id}')">
+          <div class="mt-0.5 w-4 h-4 rounded border ${on ? 'bg-gold border-gold' : 'border-white/20 bg-black/40'} flex items-center justify-center shrink-0 text-[9px] font-bold text-black">${on ? '✓' : ''}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-[11px] font-bold text-white">${u.name}</div>
+            <div class="text-[8px] text-gray-500 mt-0.5 leading-snug">${u.desc}</div>
+          </div>
+          <div class="text-[10px] font-mono ${on ? 'text-gold' : 'text-gray-400'} shrink-0 mt-0.5">+€${u.price.toLocaleString()}</div>
+        </div>`;
+    }).join('')}
+  </div>
+  <div class="border-t border-white/10 pt-4 space-y-3">
+    <div class="flex justify-between items-center">
+      <span class="text-[10px] text-gray-400 uppercase">Totale</span>
+      <span class="text-xl font-mono font-bold ${ok ? 'text-green-400' : 'text-red-400'}">€${total.toLocaleString()}</span>
+    </div>
+    ${!ok ? `<div class="text-[9px] text-red-400">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
+    <div class="flex gap-2">
+      <button onclick="document.getElementById('modal-configurator').remove()" class="flex-1 py-2 text-[9px] border border-white/10 rounded-lg text-gray-400 hover:text-white transition">Annulla</button>
+      <button onclick="__cfgConfirm('${carId}','${type}')" ${!ok ? 'disabled' : ''} class="flex-1 py-2 text-[9px] font-bold rounded-lg transition ${ok ? 'btn-gold' : 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500 border border-white/10'}">🚗 Conferma & Acquista</button>
+    </div>
+  </div>
+</div>`;
+    }
+
+    window.__cfgSel = sel;
+    window.__cfgToggle = function(uid) { sel.has(uid) ? sel.delete(uid) : sel.add(uid); render(); };
+    window.__cfgConfirm = function(cId, cType) {
+        const car = (cType === 'new' ? NEW_CARS : USED_CARS).find(c => c.id === cId);
+        if (!car) return;
+        const ups = [...sel];
+        const upTotal = ups.reduce((s, uid) => { const u = CAR_UPGRADES.find(x => x.id === uid); return s + (u ? u.price : 0); }, 0);
+        const total = car.price + upTotal;
+        if (gameState.cash < total) { showNotification('Fondi insufficienti!', 'error'); return; }
+        gameState.cash -= total;
+        gameState.fleet.push({ id:'c_'+Date.now(), name:car.name, tier:car.tier, condition:car.condition, isLease:false, fuel:100, mileage:0, tirePressure:100, upgrades:ups, vehicleClass:car.vehicleClass||'mercedes_e' });
+        document.getElementById('modal-configurator')?.remove();
+        updateUI(); renderTabFleet();
+        showBigEvent('🚗', `${car.name} Configurata!`, ups.length > 0 ? `${ups.length} optional installati · pronta al servizio.` : 'Veicolo standard pronto per la flotta.');
+        if (typeof saveGame === 'function') saveGame();
+    };
+    render();
 };
+
+window.buyCar = function(carId, type) { window.openCarConfigurator(carId, type); };
 
 window.leaseCar = function(carId) {
     const c = NEW_CARS.find(x => x.id === carId);
     let upFront = c.price * 0.1;
     if(gameState.cash >= upFront) {
         gameState.cash -= upFront;
-        gameState.fleet.push({ id: 'l_'+Date.now(), name: c.name, tier: c.tier, condition: 100, isLease: true, dailyCost: Math.floor(c.price/300) });
+        gameState.fleet.push({ id: 'l_'+Date.now(), name: c.name, tier: c.tier, condition: 100, isLease: true, dailyCost: Math.floor(c.price/300), vehicleClass: c.vehicleClass || 'mercedes_e' });
         updateUI(); renderTabFleet(); showNotification("Contratto Leasing approvato!", "success");
     }
 };
@@ -1517,17 +1812,28 @@ function renderTabInvestments() {
             html += `<div class="text-[9px] text-gray-500 uppercase tracking-widest mt-4 mb-2 border-b border-white/5 pb-1">${tierLabels[i.tier]}</div><div class="space-y-2">`;
             currentTier = i.tier;
         }
+        const underConstruction = (gameState.constructions || []).find(c => c.invId === i.id);
+        const daysLeft = underConstruction ? Math.max(0, underConstruction.completesDay - gameState.day) : 0;
+        const tcCost   = underConstruction ? Math.ceil(daysLeft * 2) : 0;
         html += `
         <div class="hud-card flex justify-between items-start gap-2">
             <div class="flex-1 min-w-0">
                 <div class="text-xs font-bold text-white truncate">${i.name}</div>
                 <div class="text-[9px] text-gray-500 mt-0.5">${i.desc}</div>
                 ${i.passive ? `<div class="text-[9px] text-green-400 font-mono mt-0.5">+€${i.passive.toLocaleString()}/g</div>` : ''}
+                ${i.dailyUpkeep ? `<div class="text-[9px] text-red-400 font-mono mt-0.5">−€${i.dailyUpkeep.toLocaleString()}/g manutenzione</div>` : ''}
+                ${i.buildTime ? `<div class="text-[8px] text-yellow-500/60 mt-0.5">🏗️ ${i.buildTime} giorni costruzione</div>` : ''}
             </div>
-            <div class="flex-shrink-0">
+            <div class="flex-shrink-0 flex flex-col items-end gap-1">
                 ${owned
-                    ? `<span class="text-green-500 text-[9px] font-bold uppercase">✓ Attivo</span>`
-                    : `<button onclick="buyInvestment('${i.id}')" class="btn-gold !text-[8px] !py-1 !px-2">€${i.price.toLocaleString()}</button>`}
+                    ? `<span class="text-green-500 text-[9px] font-bold uppercase">✓ Attivo</span>
+                       <button onclick="window.sellInvestment('${i.id}')" class="text-[7px] text-red-400/60 hover:text-red-400 border border-red-900/30 rounded px-1 py-0.5">Vendi 40%</button>`
+                    : underConstruction
+                        ? `<div class="text-center">
+                             <div class="text-[9px] text-yellow-400 font-bold">🏗️ ${daysLeft}g</div>
+                             <button onclick="window.speedUpConstruction('${i.id}')" class="text-[7px] bg-yellow-600/20 border border-yellow-500/40 text-yellow-300 rounded px-1.5 py-0.5 mt-0.5 hover:bg-yellow-600/40">⚡ ${tcCost} TC</button>
+                           </div>`
+                        : `<button onclick="buyInvestment('${i.id}')" class="btn-gold !text-[8px] !py-1 !px-2">€${i.price.toLocaleString()}</button>`}
             </div>
         </div>`;
     });
@@ -1568,7 +1874,48 @@ function renderTabInvestments() {
         html += `</div>`;
     }
 
-    container.innerHTML = html + `</div>`;
+    // Venture Capital / M&A section
+    const vcAgencies = typeof VENTURE_AGENCIES !== 'undefined' ? VENTURE_AGENCIES : [];
+    const myStakes = gameState.ventureCapital || [];
+    if (vcAgencies.length > 0) {
+        html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-6">💼 Venture Capital & M&A</h3><div class="space-y-3">`;
+        vcAgencies.forEach(agency => {
+            const stake = myStakes.find(s => s.agencyId === agency.id);
+            const ownedPct  = stake ? stake.stakePercent : 0;
+            const dailyReturn = stake ? Math.floor(agency.dailyIncome * ownedPct / 100) : 0;
+            const locked = gameState.reputation < agency.minRep || gameState.cash < agency.minCash;
+            const riskColor = agency.riskLevel === 'high' ? '#ef4444' : agency.riskLevel === 'medium' ? '#f59e0b' : '#22c55e';
+            const costFor5  = Math.floor(agency.valuation * 5 / 100);
+            const costFor10 = Math.floor(agency.valuation * 10 / 100);
+            html += `
+            <div class="hud-card ${locked ? 'opacity-50' : ''}">
+                <div class="flex justify-between items-start mb-2">
+                    <div class="flex-1">
+                        <div class="text-xs font-bold text-white">${agency.icon} ${agency.name}</div>
+                        <div class="text-[9px] text-gray-400 mt-0.5">${agency.desc}</div>
+                        <div class="flex gap-3 mt-1 text-[8px]">
+                            <span class="text-gray-500">Val: <span class="text-white font-mono">€${(agency.valuation/1e6).toFixed(1)}M</span></span>
+                            <span class="text-gray-500">+€${agency.dailyIncome.toLocaleString()}/g (100%)</span>
+                            <span style="color:${riskColor}">Rischio: ${agency.riskLevel.toUpperCase()}</span>
+                        </div>
+                        ${locked ? `<div class="text-[8px] text-red-400 mt-1">🔒 Min. ${agency.minRep}★ Rep · €${agency.minCash.toLocaleString()}</div>` : ''}
+                    </div>
+                    ${stake ? `<div class="text-right ml-2">
+                        <div class="text-[10px] font-bold text-green-400">${ownedPct}%</div>
+                        <div class="text-[8px] text-green-300 font-mono">+€${dailyReturn}/g</div>
+                    </div>` : ''}
+                </div>
+                ${!locked ? `<div class="flex gap-1 flex-wrap">
+                    <button onclick="window.acquireVentureStake('${agency.id}', 5)" class="btn-blue !text-[7px] !py-0.5">+5%<br><span class="opacity-60">€${costFor5.toLocaleString()}</span></button>
+                    <button onclick="window.acquireVentureStake('${agency.id}', 10)" class="btn-gold !text-[7px] !py-0.5">+10%<br><span class="opacity-60">€${costFor10.toLocaleString()}</span></button>
+                    ${stake ? `<button onclick="window.divestVentureStake('${agency.id}')" class="btn-gold !bg-red-900/30 !text-red-300 !text-[7px] !py-0.5">Vendi (75%)</button>` : ''}
+                </div>` : ''}
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    container.innerHTML = html + '</div>';
 }
 
 function renderTabMarketing() {
@@ -1729,8 +2076,9 @@ function setupDragAndDrop() {
     document.addEventListener('drop', (e) => { e.preventDefault(); const dCard = e.target.closest('.driver-card'); if (dCard && draggedRideId) { dCard.classList.remove('bg-white/10'); assignRideToDriver(draggedRideId, dCard.getAttribute('data-id')); renderTabCorse(); } });
 }
 
-window.showNotification = function(msg, type) {
+window.showNotification = window._realShowNotification = function(msg, type) {
     const c = document.getElementById('notifications');
+    if (!c) return;
     const n = document.createElement('div');
     n.className = `notif${type === 'error' ? ' error-notif' : ''}`;
     n.innerText = msg;
@@ -2178,6 +2526,191 @@ function renderTabPolitics() {
 }
 window.renderTabPolitics = renderTabPolitics;
 
+function renderTabCareer() {
+    const container = document.getElementById('tab-container');
+    if (typeof window.QUEST_DB === 'undefined') {
+        container.innerHTML = `<div class="text-center text-gray-500 mt-10 text-[10px]">Sistema missioni non caricato.</div>`;
+        return;
+    }
+    const gs = gameState;
+    const completed  = gs.completedQuests  || [];
+    const claimable  = gs.claimableQuests  || [];
+
+    const chLabels = { 1:'📦 Capitolo I — Il Padroncino', 2:'🏢 Capitolo II — L\'Agenzia', 3:'💎 Capitolo III — Il Lusso', 4:'🏛️ Capitolo IV — L\'Impero' };
+
+    let html = `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Missioni & Carriera</h3>`;
+
+    let currentCh = 0;
+    window.QUEST_DB.forEach(q => {
+        if (q.ch !== currentCh) {
+            if (currentCh > 0) html += `</div>`;
+            html += `<div class="text-[9px] text-gray-500 uppercase tracking-widest mt-4 mb-2 border-b border-white/5 pb-1">${chLabels[q.ch] || 'Capitolo '+q.ch}</div><div class="space-y-2">`;
+            currentCh = q.ch;
+        }
+
+        const isDone     = completed.includes(q.id);
+        const isClaim    = claimable.includes(q.id);
+        const prereqsMet = (q.prereqs || []).every(p => completed.includes(p));
+        const isLocked   = !isDone && !isClaim && !prereqsMet;
+
+        let prog = { cur: 0, tgt: 1 };
+        if (!isDone && !isLocked && typeof q.check === 'function') {
+            try { prog = q.check(gs); } catch(e) {}
+        }
+        if (isDone) prog = { cur: prog.tgt || 1, tgt: prog.tgt || 1 };
+
+        const pct = Math.min(100, Math.round(((prog.cur || 0) / Math.max(1, prog.tgt || 1)) * 100));
+
+        const rewardStr = [
+            q.rewards.cash ? `€${q.rewards.cash.toLocaleString()}` : null,
+            q.rewards.tc   ? `${q.rewards.tc} TC` : null,
+            q.rewards.rep  ? `+${q.rewards.rep}★` : null
+        ].filter(Boolean).join(' · ');
+
+        html += `<div class="hud-card ${isDone ? 'opacity-50' : ''} ${isLocked ? 'opacity-30' : ''}">
+            <div class="flex items-start gap-2">
+                <span class="text-lg flex-shrink-0">${isLocked ? '🔒' : isDone ? '✅' : q.icon}</span>
+                <div class="flex-1 min-w-0">
+                    <div class="flex justify-between items-center">
+                        <div class="text-[10px] font-bold text-white">${q.title}</div>
+                        ${isClaim ? `<button onclick="window.claimQuestReward('${q.id}')" class="btn-gold !text-[7px] !py-0.5 !px-2 ml-1 flex-shrink-0 animate-pulse">🎁 Ritira</button>` : ''}
+                    </div>
+                    <div class="text-[9px] text-gray-400 mt-0.5">${q.desc}</div>
+                    ${!isDone && !isLocked ? `
+                    <div class="flex items-center gap-2 mt-1.5">
+                        <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
+                            <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${pct>=100?'#22c55e':'#d4af37'}"></div>
+                        </div>
+                        <div class="text-[8px] text-gray-500 font-mono whitespace-nowrap">${prog.cur}/${prog.tgt}</div>
+                    </div>` : ''}
+                    <div class="text-[8px] text-yellow-400/70 mt-1">🏅 ${rewardStr}${q.rewards.desc ? ' · '+q.rewards.desc : ''}</div>
+                </div>
+            </div>
+        </div>`;
+    });
+    if (currentCh > 0) html += `</div>`;
+    container.innerHTML = html;
+}
+window.renderTabCareer = renderTabCareer;
+
+function renderTabPremiumStore() {
+    const container = document.getElementById('tab-container');
+    const tc = gameState.titanCoins || 0;
+
+    const packages = [
+        { tc: 50,   price: '€0.99',  label: 'Starter Pack',   icon: '💎', popular: false },
+        { tc: 200,  price: '€2.99',  label: 'Business Pack',  icon: '💎💎', popular: false },
+        { tc: 500,  price: '€5.99',  label: 'Executive Pack', icon: '💎💎💎', popular: true },
+        { tc: 1200, price: '€9.99',  label: 'VIP Pack',       icon: '👑', popular: false },
+        { tc: 3000, price: '€19.99', label: 'Tycoon Pack',    icon: '🏰', popular: false },
+    ];
+
+    const items = [
+        { id: 'skip_day',   label: 'Salta 1 Giorno',           cost: 5,  icon: '⏩', desc: 'Avanza il tempo di un giorno di gioco istantaneamente.' },
+        { id: 'rep_boost',  label: '+0.5★ Reputazione',        cost: 15, icon: '⭐', desc: 'Boost immediato alla reputazione aziendale.' },
+        { id: 'cash_10k',   label: '+€10.000 Cassa',           cost: 20, icon: '💶', desc: 'Iniezione di liquidità immediata.' },
+        { id: 'energy_full',label: 'Energia CEO 100%',         cost: 3,  icon: '⚡', desc: 'Ricarica l\'energia del CEO immediatamente.' },
+        { id: 'repair_all', label: 'Ripara Tutta la Flotta',   cost: 10, icon: '🔧', desc: 'Porta tutte le auto al 100% di condizione.' },
+        { id: 'unlock_ride',label: 'Sblocca Corsa Speciale',   cost: 8,  icon: '🎫', desc: 'Genera una corsa ultra garantita nell\'istante.' },
+    ];
+
+    let pkgHtml = packages.map(p => `
+        <div class="hud-card text-center relative ${p.popular ? 'border border-gold/60' : ''}">
+            ${p.popular ? `<div class="absolute -top-2 left-1/2 -translate-x-1/2 bg-gold text-black text-[7px] font-bold px-2 py-0.5 rounded-full">POPOLARE</div>` : ''}
+            <div class="text-2xl mb-1">${p.icon}</div>
+            <div class="text-sm font-bold text-white">${p.tc} TC</div>
+            <div class="text-[9px] text-gray-400 mb-2">${p.label}</div>
+            <div class="text-[10px] text-gold font-bold mb-2">${p.price}</div>
+            <button onclick="window._tcSimPurchase(${p.tc})" class="btn-gold !text-[8px] w-full">Acquista (Sim)</button>
+        </div>`).join('');
+
+    let itemHtml = items.map(it => `
+        <div class="hud-card flex justify-between items-center gap-2">
+            <div class="flex items-center gap-2 flex-1 min-w-0">
+                <span class="text-xl flex-shrink-0">${it.icon}</span>
+                <div class="min-w-0">
+                    <div class="text-[10px] font-bold text-white">${it.label}</div>
+                    <div class="text-[9px] text-gray-500">${it.desc}</div>
+                </div>
+            </div>
+            <button onclick="window._tcSpend('${it.id}', ${it.cost})" class="btn-gold !text-[8px] !py-1 flex-shrink-0">${it.cost} TC</button>
+        </div>`).join('');
+
+    container.innerHTML = `
+        <div class="flex items-center justify-between mb-3">
+            <h3 class="text-[10px] text-gold uppercase tracking-widest">💎 Titan Store</h3>
+            <div class="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-2 py-1">
+                <span class="text-yellow-400 text-xs">💎</span>
+                <span class="text-sm font-bold font-mono text-yellow-300">${tc} TC</span>
+            </div>
+        </div>
+        <div class="text-[9px] text-gray-500 mb-4">I pacchetti sono simulati (demo). I Titan Coins si guadagnano anche completando missioni e trasferimenti Presidential.</div>
+
+        <h3 class="text-[9px] text-gray-400 uppercase tracking-widest border-b border-white/5 pb-1 mb-3">Pacchetti Titan Coins</h3>
+        <div class="grid grid-cols-2 gap-2 mb-5">${pkgHtml}</div>
+
+        <h3 class="text-[9px] text-gray-400 uppercase tracking-widest border-b border-white/5 pb-1 mb-3">Power-Up con TC</h3>
+        <div class="space-y-2">${itemHtml}</div>`;
+}
+window.renderTabPremiumStore = renderTabPremiumStore;
+
+window._tcSimPurchase = function(amount) {
+    gameState.titanCoins = (gameState.titanCoins || 0) + amount;
+    if (typeof showNotification === 'function') showNotification(`💎 +${amount} Titan Coins! (Acquisto simulato)`, 'success');
+    renderTabPremiumStore();
+    updateUI();
+    saveGame();
+};
+
+window._tcSpend = function(itemId, cost) {
+    if ((gameState.titanCoins || 0) < cost) {
+        if (typeof showNotification === 'function') showNotification(`Titan Coins insufficienti! Servono ${cost} TC.`, 'error');
+        return;
+    }
+    gameState.titanCoins -= cost;
+    switch(itemId) {
+        case 'skip_day':
+            gameState.day++;
+            if (typeof processDailyRoutines === 'function') processDailyRoutines();
+            logToMap('⏩ Giorno saltato con Titan Coins!');
+            break;
+        case 'rep_boost':
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.5);
+            logToMap('⭐ Boost reputazione +0.5★ (TC)!');
+            break;
+        case 'cash_10k':
+            gameState.cash += 10000;
+            logToMap('💶 +€10.000 dalla riserva Titan Coins!');
+            break;
+        case 'energy_full':
+            gameState.energy = 100;
+            logToMap('⚡ Energia CEO ricaricata (TC)!');
+            break;
+        case 'repair_all':
+            (gameState.fleet || []).forEach(c => { c.condition = 100; c.fuel = 100; c.tirePressure = 100; });
+            logToMap('🔧 Tutta la flotta riparata (TC)!');
+            break;
+        case 'unlock_ride':
+            if (typeof generatePOIRide === 'function') {
+                const r = generatePOIRide('ultra');
+                if (r) logToMap('🎫 Corsa Ultra generata con Titan Coins!');
+            }
+            break;
+    }
+    if (typeof showNotification === 'function') showNotification(`💎 −${cost} TC · ${itemId} attivato!`, 'success');
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+    renderTabPremiumStore();
+    updateUI();
+    saveGame();
+};
+
+// Re-render whatever tab is currently active (used by lang.js setLang)
+window.renderCurrentTab = function() {
+    if (typeof _activeTab !== 'undefined' && _activeTab) {
+        window.switchTab(_activeTab);
+    }
+};
+
 // ── SMART HUB ────────────────────────────────────────────────────
 window.toggleHub = function() {
     const modal = document.getElementById('hub-modal');
@@ -2266,3 +2799,167 @@ function _updateHubStats() {
 window._updateHubStats = _updateHubStats;
 
 window.addEventListener('DOMContentLoaded', () => { initMap(); setupDragAndDrop(); });
+
+// ─── MONEY PARTICLES ────────────────────────────────────────────
+window.spawnMoneyParticles = function(x, y, amount) {
+    const count = Math.min(20, Math.max(8, Math.floor(amount / 500)));
+    const labels = amount >= 10000 ? ['💰', `+€${Math.floor(amount/1000)}k`] : ['€', `+€${amount}`];
+    for (let i = 0; i < count; i++) {
+        const el = document.createElement('div');
+        el.className = 'money-particle';
+        el.textContent = labels[Math.floor(Math.random() * labels.length)];
+        const spread = 60;
+        el.style.left = `${x + (Math.random() - 0.5) * spread}px`;
+        el.style.top  = `${y + (Math.random() - 0.5) * 20}px`;
+        el.style.animationDelay = `${Math.random() * 0.3}s`;
+        el.style.animationDuration = `${0.8 + Math.random() * 0.6}s`;
+        document.body.appendChild(el);
+        el.addEventListener('animationend', () => el.remove());
+    }
+};
+
+// ─── DAY/NIGHT CYCLE ────────────────────────────────────────────
+let _lastNightState = null;
+function _updateDayNight() {
+    const h = gameState.hour;
+    const isNight = h >= 19 || h < 7;
+    if (isNight === _lastNightState) return;
+    _lastNightState = isNight;
+    const overlay = document.getElementById('night-overlay');
+    if (overlay) overlay.style.background = isNight ? 'rgba(0,0,20,0.18)' : 'rgba(0,0,20,0)';
+    // Sky atmosphere sun angle
+    if (map && _mapReady && map.getLayer('sky')) {
+        const sunAngle = isNight ? [0.0, 110.0] : [0.0, 90.0];
+        try { map.setPaintProperty('sky', 'sky-atmosphere-sun', sunAngle); } catch(e) {}
+    }
+}
+window._updateDayNight = _updateDayNight;
+
+// ─── HQ MARKER ──────────────────────────────────────────────────
+let _hqMarker = null;
+const _HQ_MARKER_STYLES = [
+    { icon:'🛖', label:'Garage',   style:'border:2px solid #555;background:rgba(20,20,30,0.9);' },
+    { icon:'🏢', label:'Ufficio',  style:'border:2px solid #00f2ff;background:rgba(0,20,40,0.9);box-shadow:0 0 10px #00f2ff88;' },
+    { icon:'🏛️', label:'Campus',   style:'border:2px solid #22c55e;background:rgba(0,30,10,0.9);animation:hqPulse 2s infinite;' },
+    { icon:'🏙️', label:'Tower',    style:'border:2px solid #d4af37;background:rgba(20,15,0,0.95);animation:hqGlow 2s infinite;' },
+];
+
+window._updateHQMarker = function() {
+    if (!map || !_mapReady) return;
+    const hq = gameState.hq;
+    if (!hq || hq.lng === null) return;
+
+    if (_hqMarker) _hqMarker.remove();
+
+    const lvl = Math.min(3, Math.max(0, hq.level || 0));
+    const cfg = _HQ_MARKER_STYLES[lvl];
+    const el = document.createElement('div');
+    el.style.cssText = `${cfg.style}border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;`;
+    el.title = `${cfg.label} — ${hq.name || 'HQ'}`;
+    el.textContent = cfg.icon;
+    el.onclick = () => window.flyToHQ();
+
+    _hqMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
+        .setLngLat([hq.lng, hq.lat])
+        .addTo(map);
+};
+
+window.flyToHQ = function() {
+    const hq = gameState.hq;
+    if (!map || !hq || hq.lng === null) return;
+    map.flyTo({ center: [hq.lng, hq.lat], zoom: 14, pitch: 60, bearing: -20, duration: 2500, essential: true });
+};
+
+// ─── COMPANY FOUNDING OVERLAY ────────────────────────────────────
+let _foundingMode = false;
+window._checkFoundingOverlay = function() {
+    if ((gameState.unlockedRegions || []).length > 0) return; // already founded
+    let ov = document.getElementById('founding-overlay');
+    if (ov) return; // already shown
+    ov = document.createElement('div');
+    ov.id = 'founding-overlay';
+    ov.style.cssText = 'position:fixed;inset:0;z-index:300;background:rgba(0,0,10,0.92);backdrop-filter:blur(12px);display:flex;flex-direction:column;align-items:center;justify-content:center;';
+    ov.innerHTML = `
+        <div style="text-align:center;max-width:520px;padding:32px;">
+            <div style="font-size:4rem;margin-bottom:16px;">🏢</div>
+            <h1 style="font-size:2rem;font-weight:900;color:#d4af37;text-transform:uppercase;letter-spacing:4px;margin-bottom:12px;">SCEGLI LA TUA SEDE</h1>
+            <p style="color:#9ca3af;font-size:0.9rem;line-height:1.7;margin-bottom:32px;">Ogni grande impero inizia con un indirizzo. Clicca su qualsiasi punto della mappa italiana per fondare la tua Agenzia NCC. La regione sarà tua, gratuitamente.</p>
+            <button onclick="window._startFoundingMode()" style="padding:16px 40px;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.6);border-radius:12px;color:#d4af37;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:2px;text-transform:uppercase;">📍 Scegli sulla Mappa</button>
+        </div>`;
+    document.body.appendChild(ov);
+};
+
+window._startFoundingMode = function() {
+    _foundingMode = true;
+    const ov = document.getElementById('founding-overlay');
+    if (ov) ov.innerHTML = `
+        <div style="text-align:center;max-width:480px;padding:24px;">
+            <div style="font-size:2.5rem;margin-bottom:12px;">📍</div>
+            <h2 style="font-size:1.3rem;font-weight:900;color:#d4af37;letter-spacing:3px;text-transform:uppercase;">Clicca sulla Mappa</h2>
+            <p style="color:#6b7280;margin-top:8px;font-size:0.85rem;">Scegli la posizione della tua sede centrale</p>
+            <button onclick="window._cancelFoundingMode()" style="margin-top:20px;padding:8px 24px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;color:#ef4444;font-size:0.8rem;cursor:pointer;">✕ Annulla</button>
+        </div>`;
+
+    map.once('click', (e) => {
+        if (!_foundingMode) return;
+        _foundingMode = false;
+        const lng = e.lngLat.lng, lat = e.lngLat.lat;
+        const name = prompt('Dai un nome alla tua sede (es: Via Nazionale 12, Roma):', 'Sede Principale') || 'Sede Principale';
+        const ov2 = document.getElementById('founding-overlay');
+        if (ov2) ov2.remove();
+        window.foundCompany(lng, lat, name);
+        map.flyTo({ center: [lng, lat], zoom: 12, pitch: 55, bearing: -15, duration: 2000, essential: true });
+    });
+};
+
+window._cancelFoundingMode = function() {
+    _foundingMode = false;
+    const ov = document.getElementById('founding-overlay');
+    if (ov) ov.remove();
+    window._checkFoundingOverlay();
+};
+
+// ─── TRAFFIC COLOR ON ROUTE LINES ───────────────────────────────
+function _updateActiveRouteLinesColored() {
+    if (!map || !_mapReady) return;
+    const normalFeatures  = [];
+    const trafficFeatures = [];
+    (gameState.activeRides || []).forEach(r => {
+        if (!r.roadGeom || r.roadGeom.length < 2) return;
+        const feat = { type: 'Feature', properties: { rideId: r.id }, geometry: { type: 'LineString', coordinates: r.roadGeom } };
+        if (r.inTraffic) trafficFeatures.push(feat);
+        else normalFeatures.push(feat);
+    });
+    const allFeatures = [...normalFeatures, ...trafficFeatures];
+    const src = map.getSource('active-routes');
+    if (src) src.setData({ type: 'FeatureCollection', features: allFeatures });
+
+    // Update glow/core colors for traffic rides
+    try {
+        const hasTraffic = trafficFeatures.length > 0;
+        if (hasTraffic && map.getLayer('active-routes-glow')) {
+            map.setPaintProperty('active-routes-glow', 'line-color', '#ff4060');
+            map.setPaintProperty('active-routes-core', 'line-color', '#ff6080');
+            setTimeout(() => {
+                if (!map.getSource('active-routes')) return;
+                if (trafficFeatures.length === 0) {
+                    try { map.setPaintProperty('active-routes-glow', 'line-color', '#f59e0b'); } catch(e) {}
+                    try { map.setPaintProperty('active-routes-core', 'line-color', '#fbbf24'); } catch(e) {}
+                }
+            }, 3000);
+        }
+    } catch(e) {}
+}
+
+// Hook into the visual loop — replace the old call
+const _origVisualLoopUpdateRoutes = window._updateActiveRouteLines;
+window._updateActiveRouteLines = _updateActiveRouteLinesColored;
+
+// ─── TRAIT BADGE HELPER ──────────────────────────────────────────
+window._traitBadgeHTML = function(driver) {
+    const trait = driver.trait;
+    if (!trait) return '';
+    const bgColor = trait.badge === 'pregi' ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)';
+    const border  = trait.badge === 'pregi' ? 'rgba(34,197,94,0.5)' : 'rgba(239,68,68,0.5)';
+    return `<span style="background:${bgColor};border:1px solid ${border};color:${trait.color || '#fff'};font-size:8px;padding:1px 5px;border-radius:4px;display:inline-block;margin-top:2px;">${trait.name}</span>`;
+};

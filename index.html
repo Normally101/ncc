@@ -11,6 +11,32 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <style>
+    @keyframes moneyFly {
+      0%   { transform: translateY(0) scale(1); opacity: 1; }
+      80%  { opacity: 1; }
+      100% { transform: translateY(-120px) scale(0.6); opacity: 0; }
+    }
+    .money-particle {
+      position: fixed; pointer-events: none; z-index: 9999;
+      font-size: 14px; font-weight: 900; color: #22c55e;
+      text-shadow: 0 0 8px rgba(34,197,94,0.8);
+      animation: moneyFly 1.2s ease-out forwards;
+      user-select: none;
+    }
+    @keyframes hqPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.7); }
+      50%       { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
+    }
+    @keyframes hqGlow {
+      0%, 100% { box-shadow: 0 -20px 40px rgba(212,175,55,0.6), 0 0 20px rgba(212,175,55,0.4); }
+      50%       { box-shadow: 0 -30px 60px rgba(212,175,55,0.9), 0 0 30px rgba(212,175,55,0.7); }
+    }
+    #night-overlay {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+      background: rgba(0,0,20,0); transition: background 2s ease;
+    }
+  </style>
 
   <script>
     tailwind.config = { theme: { extend: {
@@ -32,8 +58,9 @@
 <body class="bg-deepBlack text-gray-300 overflow-hidden font-sans select-none" style="font-size:15px">
 
   <div id="leaflet-map" class="fixed inset-0 z-0"></div>
-  <div class="fixed inset-0 pointer-events-none z-10 bg-gradient-to-b from-black/60 via-transparent to-black/90"></div>
+  <div class="fixed inset-0 pointer-events-none z-10 bg-gradient-to-b from-black/25 via-transparent to-black/30"></div>
   <div id="weather-overlay" class="fixed inset-0 pointer-events-none z-[2]"></div>
+  <div id="night-overlay"></div>
 
   <div id="live-map-overlay" class="fixed top-24 left-24 z-30 pointer-events-none hidden flex-col gap-2">
     <div class="bg-black/50 backdrop-blur-md border border-white/10 p-3 rounded-xl w-64">
@@ -52,6 +79,8 @@
       </div>
 
       <div class="h-8 w-[1px] bg-white/10 mx-1"></div>
+
+      <button onclick="window.flyToHQ()" title="Focus HQ" class="text-lg opacity-60 hover:opacity-100 hover:text-gold transition-all" style="background:none;border:none;cursor:pointer;padding:0 4px;">🎯</button>
 
       <div class="flex flex-col w-24">
         <span class="text-[8px] text-gray-500 uppercase">Liquidità</span>
@@ -87,7 +116,13 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-4 pointer-events-auto bg-panel backdrop-blur-xl border border-white/10 p-3 rounded-2xl">
+    <div class="flex items-center gap-3 pointer-events-auto bg-panel backdrop-blur-xl border border-white/10 p-3 rounded-2xl">
+      <!-- Titan Coins balance -->
+      <div class="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-2 py-1 cursor-pointer" onclick="switchTab('store')" title="Titan Store">
+        <span class="text-yellow-400 text-xs">💎</span>
+        <span id="tb-tc" class="text-yellow-300 font-mono font-bold text-sm">50</span>
+      </div>
+      <div class="h-6 w-[1px] bg-white/10"></div>
       <div class="text-right">
         <span id="tb-time" class="text-white font-mono text-xl block">08:00</span>
         <span id="tb-date" class="text-[9px] text-gray-400 uppercase">1 Gen</span>
@@ -115,6 +150,10 @@
     <button onclick="switchTab('legal')" data-tab="legal" class="nav-btn relative tooltip-right" data-title="Ufficio Legale">
       ⚖️ <span id="fine-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></span>
     </button>
+    <button onclick="switchTab('career')" data-tab="career" class="nav-btn relative tooltip-right" data-title="Missioni & Carriera">
+      🎯 <span id="career-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden"></span>
+    </button>
+    <button onclick="switchTab('store')" data-tab="store" class="nav-btn tooltip-right" data-title="Titan Store">💎</button>
   </nav>
 
   <!-- SMART HUB MODAL -->
@@ -199,6 +238,17 @@
           <div class="hub-mod-title">Politica</div>
           <div class="hub-mod-desc">Lobbying & leggi</div>
         </div>
+        <div class="hub-module" onclick="window.hubNavigate('career')">
+          <div class="hub-mod-icon">🎯</div>
+          <div class="hub-mod-title">Missioni</div>
+          <div class="hub-mod-desc">Quest & carriera</div>
+          <div class="hub-mod-badge hub-mod-badge-red" id="hmod-career">0</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('store')">
+          <div class="hub-mod-icon">💎</div>
+          <div class="hub-mod-title">Titan Store</div>
+          <div class="hub-mod-desc">TC & power-up</div>
+        </div>
       </div>
 
       <!-- Active Event Banner -->
@@ -231,18 +281,8 @@
       </div>
   </div>
 
-  <!-- Modal: Garage 3D -->
-  <div id="modal-garage3d" class="fixed inset-0 z-[110] bg-black/90 backdrop-blur-md hidden flex justify-center items-center pointer-events-auto">
-      <div class="bg-panel border border-white/10 p-4 rounded-2xl shadow-2xl w-[520px]">
-          <div class="flex justify-between items-center mb-3">
-              <h2 id="garage3d-title" class="text-gold font-bold uppercase text-sm">Vista 3D Garage</h2>
-              <button onclick="closeGarage3D()" class="text-gray-400 hover:text-white text-xs border border-white/10 px-2 py-1 rounded">✕ Chiudi</button>
-          </div>
-          <div id="garage3d-canvas" class="w-full rounded-xl overflow-hidden" style="height:300px; background:#050510;"></div>
-          <div id="garage3d-info" class="mt-3 grid grid-cols-3 gap-2 text-center"></div>
-          <p class="text-[8px] text-gray-600 text-center mt-2">Trascina per ruotare · Scroll per zoom</p>
-      </div>
-  </div>
+  <!-- Modal: Ispezione Veicolo SVG (contenuto iniettato da openGarage3D) -->
+  <div id="modal-garage3d" class="hidden pointer-events-auto"></div>
 
   <!-- Modal: Hotel/Riposo -->
   <div id="modal-hotel" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex justify-center items-center pointer-events-auto">
@@ -308,13 +348,18 @@
   <!-- Mapbox GL JS v3.6 -->
   <script src='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js'></script>
   <!-- Three.js r128 -->
-  <script src='https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'></script>
 
+
+  <script src="geoCoords.js"></script>
+  <script src="routesDB.js"></script>
   <script src="data.js"></script>
+  <script src="lang.js"></script>
   <script src="syncManager.js"></script>
   <script src="saveSystem.js"></script>
+  <script src="quests.js"></script>
   <script src="engine.js"></script>
   <script src="dispatcher.js"></script>
+  <script src="tutorial.js"></script>
   <script>
     (function initTicker() {
       const track = document.getElementById('news-ticker-track');
@@ -322,6 +367,23 @@
       const items = [...WORLD_NEWS, ...WORLD_NEWS, ...WORLD_NEWS];
       track.innerHTML = items.map(n => `<span>${n}</span>`).join('');
     })();
+    // Show any JS errors as a visible banner (debugging aid)
+    window.onerror = function(msg, src, line, col, err) {
+      let banner = document.getElementById('_err_banner');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = '_err_banner';
+        banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff0040;color:#fff;font:bold 11px monospace;padding:6px 12px;word-break:break-all;pointer-events:auto;cursor:pointer;';
+        banner.title = 'Clicca per copiare';
+        banner.onclick = () => { navigator.clipboard?.writeText(banner.textContent); banner.style.background='#005500'; };
+        document.body.appendChild(banner);
+      }
+      const file = (src || '').split('/').pop();
+      banner.textContent = `JS ERROR ${file} L${line}: ${msg}`;
+      return false;
+    };
+    // Initialize panel to map tab (before save slot is chosen)
+    if (typeof window.switchTab === 'function') window.switchTab('map');
   </script>
 </body>
 </html>

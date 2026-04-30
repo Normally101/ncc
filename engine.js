@@ -3,6 +3,12 @@
    engine.js — Olga Vision Agency · Tycoon Engine v8.0 (FULL)
    ================================================================ */
 
+// Stub: dispatcher.js overwrites this with the real notification UI.
+// Having this here ensures engine.js code never throws "showNotification is not defined".
+function showNotification(msg, type) {
+    if (typeof window._realShowNotification === 'function') window._realShowNotification(msg, type);
+}
+
 let tempLeaseTier = null;
 
 let gameState = {
@@ -19,7 +25,7 @@ let gameState = {
     loans: [],
     newGamePlusCount: 0,
     // Fuel depot + tire depot
-    fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85,
+    fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85, fuelTankLevel: 1,
     depositoGomme: 0,
     // Seized vehicles (grey market busted)
     seizedCars: [],
@@ -60,10 +66,31 @@ let gameState = {
     activeLobbyLaws: [],    // [{ id, endsDay }] (laws with duration); permanent ones stored as just id
     // ── AZIENDA ──────────────────────────────────────────────────
     companyName: 'Olga Vision Agency',
-    companyLogo: '👁️'
+    companyLogo: '👁️',
+    companyColor: '#d4af37',
+    ventureCapital: [],
+    annualProfitTracker: 0,
+    // ── CONTRATTO CLASSIC VACATIONS ──────────────────────────────
+    cvWeeklyTarget:    8,
+    cvWeeklyCompleted: 0,
+    cvWeeklyStreak:    0,
+    totalContractMargin: 0,
+    // ── HQ ────────────────────────────────────────────────────────
+    hq: { lng: null, lat: null, name: 'Garage Periferico', level: 0, region: null },
+    // ── SISTEMA QUEST & TITAN COINS ──────────────────────────────
+    titanCoins:      50,
+    questStats:      { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
+    constructions:   [],   // [{ invId, startDay, buildDays, completesDay }]
+    claimableQuests: [],
+    completedQuests: [],
 };
 
 function hasInvestment(id) { return gameState.investments.includes(id); }
+
+function _applyBrandColor() {
+    const color = gameState.companyColor || '#d4af37';
+    document.documentElement.style.setProperty('--gold', color);
+}
 
 let _activeTab = 'map';
 function _tabIs(t) { return _activeTab === t; }
@@ -118,11 +145,23 @@ window.showBigEvent = showBigEvent;
 // ─── SAVE / LOAD ──────────────────────────────────────────────────
 function _serializeRide(r) {
     if (!r || !r.fromPoi) return null;
-    return {
+    const base = {
         id: r.id, fromPoi: r.fromPoi.id, toPoi: r.toPoi.id,
         tier: r.tier, price: r.price, duration: r.duration,
         elapsed: r.elapsed || 0, driverId: r.driverId, hasIncident: r.hasIncident
     };
+    if (r.isContract) {
+        base.isContract     = true;
+        base.routeId        = r.routeId;
+        base.routeType      = r.routeType;
+        base.originName     = r.originName;
+        base.destinationName= r.destinationName;
+        base.vehicleRequired= r.vehicleRequired;
+        base.originCoords   = r.originCoords;
+        base.destCoords     = r.destCoords;
+        base.netCost        = r.netCost;
+    }
+    return base;
 }
 function _deserializeRide(r) {
     if (!r) return null;
@@ -185,6 +224,7 @@ function loadGame() {
         if (save.fuelTank === undefined) save.fuelTank = 0;
         if (save.fuelTankCapacity === undefined) save.fuelTankCapacity = 10000;
         if (save.fuelPrice === undefined) save.fuelPrice = 1.85;
+        if (save.fuelTankLevel === undefined) save.fuelTankLevel = 1;
         if (!save.seizedCars) save.seizedCars = [];
         if (save.policeHeat === undefined) save.policeHeat = 0;
         if (save.consecutiveRedDays === undefined) save.consecutiveRedDays = 0;
@@ -216,8 +256,24 @@ function loadGame() {
         if (save.lobbyingPoints    === undefined) save.lobbyingPoints    = 0;
         if (!save.activeLobbyLaws)  save.activeLobbyLaws = [];
         // Company identity
-        if (!save.companyName) save.companyName = 'Olga Vision Agency';
-        if (!save.companyLogo) save.companyLogo = '👁️';
+        if (!save.companyName)       save.companyName       = 'Olga Vision Agency';
+        if (!save.companyLogo)       save.companyLogo       = '👁️';
+        if (!save.companyColor)      save.companyColor      = '#d4af37';
+        if (!save.ventureCapital)    save.ventureCapital    = [];
+        if (save.annualProfitTracker === undefined) save.annualProfitTracker = 0;
+        if (save.cvWeeklyTarget    === undefined) save.cvWeeklyTarget    = 8;
+        if (save.cvWeeklyCompleted === undefined) save.cvWeeklyCompleted = 0;
+        if (save.cvWeeklyStreak    === undefined) save.cvWeeklyStreak    = 0;
+        if (save.totalContractMargin === undefined) save.totalContractMargin = 0;
+        // HQ
+        if (!save.hq) save.hq = { lng: null, lat: null, name: 'Garage Periferico', level: 0, region: null };
+        if (save.hq.region === undefined) save.hq.region = null;
+        // Quest & Titan Coins
+        if (save.titanCoins      === undefined) save.titanCoins      = 50;
+        if (!save.questStats)    save.questStats    = { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 };
+        if (!save.constructions)   save.constructions   = [];
+        if (!save.claimableQuests) save.claimableQuests = [];
+        if (!save.completedQuests) save.completedQuests = [];
         // Driver satisfaction migration
         (save.drivers || []).forEach(d => {
             if (d.satisfaction === undefined) d.satisfaction = 70;
@@ -241,13 +297,30 @@ function loadGame() {
             if (c.mileage      === undefined) c.mileage      = 0;
             if (c.tirePressure === undefined) c.tirePressure = 100;
             if (!c.upgrades) c.upgrades = [];
+            if (!c.vehicleClass) {
+                const n = (c.name || '').toLowerCase();
+                if (n.includes('sprinter'))
+                    c.vehicleClass = 'mercedes_sprinter';
+                else if (n.includes('v-class') || n.includes('v class') || n.includes('v-classe') || n.includes('minivan') || n.includes('eqv') || n.includes('viano'))
+                    c.vehicleClass = 'mercedes_v';
+                else if (n.includes('water taxi') || n.includes('acqueo') || n.includes('vaporetto'))
+                    c.vehicleClass = 'water_taxi';
+                else if (n.includes('s-class') || n.includes('s class') || n.includes('classe s') || n.includes('presidential') || n.includes('spectre'))
+                    c.vehicleClass = 'mercedes_s';
+                else
+                    c.vehicleClass = 'mercedes_e';
+            }
         });
         // Migrate drivers: add morale/hiredDay if missing
         (save.drivers || []).forEach(d => {
             if (d.morale    === undefined) d.morale    = 100;
             if (d.hiredDay  === undefined) d.hiredDay  = 1;
         });
+        save.paused = false; // never restore a paused state — VIP modals don't persist
         Object.assign(gameState, save);
+        // Remove any stale VIP event modal left from previous session
+        const staleModal = document.getElementById('vip-event-modal');
+        if (staleModal) staleModal.remove();
         return true;
     } catch(e) { console.error('Load failed:', e); localStorage.removeItem('olgaVisionSave_v2'); return false; }
 }
@@ -305,7 +378,7 @@ function _kickstartIdleDrivers() {
 function initGame(fresh = true) {
     if (fresh) {
         gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1 });
-        gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [] });
+        gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [], vehicleClass: 'mercedes_e' });
         _refreshRecruits();
     } else {
         _refreshRecruits();
@@ -319,9 +392,11 @@ function initGame(fresh = true) {
     }
 
     _initStockPrices();
+    _applyBrandColor();
 
     setInterval(gameLoop, 600);
     setInterval(generatePOIRide, 6000);
+    setInterval(generateContractRide, 9000);  // 40% mix: 1 contract every 9s vs POI every 6s
     setInterval(generateEmailEvent, 40000);
     setInterval(generateWorldNews, 60000);
     setInterval(_maybeGenerateFine, 90000);
@@ -381,13 +456,38 @@ function gameLoop() {
 
     for (let i = gameState.activeRides.length - 1; i >= 0; i--) {
         let ride = gameState.activeRides[i];
-        ride.elapsed += 5000;
+
+        // Traffic system: 5% chance to enter heavy traffic (once per ride)
+        if (!ride._trafficChecked && Math.random() < 0.05) {
+            ride._trafficChecked = true;
+            ride.inTraffic = true;
+            ride._trafficClearsAt = ride.elapsed + Math.floor(ride.duration * 0.4); // traffic for 40% of remaining
+            if (typeof showNotification === 'function') showNotification(`🚦 Traffico intenso verso ${ride.toPoi?.name || '?'}! Rallentamento previsto.`, 'error');
+            logToMap(`🚦 Traffico: ${ride.toPoi?.name || ''} — velocità dimezzata.`);
+        }
+        // Clear traffic after its window
+        if (ride.inTraffic && ride.elapsed >= (ride._trafficClearsAt || 0)) {
+            ride.inTraffic = false;
+            logToMap(`✅ Traffico risolto: ${ride.toPoi?.name || ''} — corsa ripresa.`);
+        }
+
+        // VIP/Ultra mid-ride event (10% chance, once per ride, only when not paused)
+        if (!ride._vipEventChecked && (ride.tier === 'vip' || ride.tier === 'ultra') && Math.random() < 0.10 && !gameState.paused) {
+            ride._vipEventChecked = true;
+            if (ride.elapsed > ride.duration * 0.15) { // only after 15% of ride
+                _triggerVIPMidRideEvent(ride);
+            }
+        }
+
+        ride.elapsed += ride.inTraffic ? 2500 : 5000;
         if (ride.elapsed >= ride.duration) {
             completeRide(ride);
             gameState.activeRides.splice(i, 1);
         }
     }
 
+    // Day/night cycle update
+    if (typeof _updateDayNight === 'function') _updateDayNight();
     // Il visual update è gestito nel dispatcher tramite requestAnimationFrame
     updateUI();
 }
@@ -662,6 +762,57 @@ function _tickPoliceHeat() {
     }
 }
 
+// ─── VIP MID-RIDE EVENTS ─────────────────────────────────────────
+const VIP_EVENTS = [
+    { icon:'🌹', title:'Richiesta VIP Improvvisa', body:'Il cliente vuole che l\'autista devii per comprare 100 rose rosse prima dell\'hotel.', costA:500, repA:0.2, repB:-0.3, labelA:'Accontentalo (−€500, +0.2★)', labelB:'Rifiuta (+0, −0.3★)' },
+    { icon:'🍾', title:'Sosta Champagne', body:'Il passeggero insiste per fermarsi all\'Enoteca di lusso sul percorso. La sosta ritarderà la corsa di 30 minuti.', costA:300, repA:0.15, repB:-0.2, labelA:'Concedi la sosta (−€300, +0.15★)', labelB:'Prosegui dritto (−0.2★)' },
+    { icon:'📸', title:'Paparazzi in Agguato', body:'Un fotografo ha riconosciuto il passeggero. Vuole che l\'autista acceleri e cambi rotta.', costA:0, repA:0.25, repB:-0.1, labelA:'Rotta alternativa (+0.25★)', labelB:'Ignora (−0.1★)' },
+    { icon:'📞', title:'Chiamata Riservata', body:'Il passeggero chiede discrezione assoluta — nessuna registrazione GPS per questo tratto.', costA:0, repA:0.1, repB:-0.15, labelA:'Rispetta la privacy (+0.1★)', labelB:'Rifiuta (−0.15★)' },
+    { icon:'🐕', title:'Cane di Razza a Bordo', body:'Il VIP vuole portare il suo Cavalier King Charles sull\'auto. Ha previsto questo dal contratto.', costA:200, repA:0.1, repB:-0.25, labelA:'Ok, pulizia extra (−€200, +0.1★)', labelB:'No animali (−0.25★)' },
+];
+
+function _triggerVIPMidRideEvent(ride) {
+    const ev = VIP_EVENTS[Math.floor(Math.random() * VIP_EVENTS.length)];
+    gameState.paused = true;
+    const driver = gameState.drivers.find(d => d.id === ride.driverId);
+    const dname = driver ? driver.name : 'l\'autista';
+
+    const modal = document.createElement('div');
+    modal.id = 'vip-event-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;';
+    modal.innerHTML = `
+        <div style="background:rgba(8,8,20,0.97);border:1px solid rgba(212,175,55,0.4);border-radius:20px;padding:36px;max-width:480px;width:90%;box-shadow:0 0 60px rgba(212,175,55,0.15);text-align:center;">
+            <div style="font-size:3rem;margin-bottom:12px;">${ev.icon}</div>
+            <div style="font-size:10px;color:#d4af37;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;">EVENTO MID-CORSA · ${ride.toPoi?.name || ''}</div>
+            <h2 style="font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:12px;">${ev.title}</h2>
+            <p style="font-size:0.85rem;color:#9ca3af;line-height:1.6;margin-bottom:28px;">${ev.body}<br><span style="color:#6b7280;font-size:0.75rem;">— ${dname} attende le tue istruzioni.</span></p>
+            <div style="display:flex;gap:12px;">
+                <button id="vip-ev-a" style="flex:1;padding:14px;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.5);border-radius:12px;color:#d4af37;font-size:0.75rem;font-weight:700;cursor:pointer;">${ev.labelA}</button>
+                <button id="vip-ev-b" style="flex:1;padding:14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#ef4444;font-size:0.75rem;font-weight:700;cursor:pointer;">${ev.labelB}</button>
+            </div>
+        </div>`;
+    document.body.appendChild(modal);
+
+    const resolve = (choice) => {
+        gameState.paused = false;
+        modal.remove();
+        if (choice === 'A') {
+            if (ev.costA) gameState.cash -= ev.costA;
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + ev.repA);
+            logToMap(`${ev.icon} Evento VIP: scelta A → +${ev.repA}★${ev.costA ? ` −€${ev.costA}` : ''}`);
+            if (typeof showNotification === 'function') showNotification(`${ev.icon} Richiesta accontentata! +${ev.repA}★`, 'success');
+        } else {
+            gameState.reputation = Math.max(0, gameState.reputation + ev.repB);
+            logToMap(`${ev.icon} Evento VIP: rifiutato → ${ev.repB}★`);
+            if (typeof showNotification === 'function') showNotification(`${ev.icon} Richiesta rifiutata. ${ev.repB}★`, 'error');
+        }
+        updateUI();
+        saveGame();
+    };
+    document.getElementById('vip-ev-a').onclick = () => resolve('A');
+    document.getElementById('vip-ev-b').onclick = () => resolve('B');
+}
+
 // ─── FALLIMENTO TECNICO ──────────────────────────────────────────
 function _triggerBankruptcy() {
     const ownedCars = gameState.fleet.filter(c => !c.isLease);
@@ -893,7 +1044,10 @@ window.buyFuelForDepot = function(litres) {
     const space = cap - (gameState.fuelTank || 0);
     const actual = Math.min(litres, space);
     if (actual <= 0) { showNotification('Deposito già pieno!', 'error'); return; }
-    const fuelDiscount = (gameState.activeLobbyLaws || []).includes('law_fuel_subsidy') ? 0.70 : 1.0;
+    const lobbyDiscount  = (gameState.activeLobbyLaws || []).includes('law_fuel_subsidy') ? 0.70 : 1.0;
+    const depotLvlData   = _DEPOT_LEVELS.find(d => d.level === (gameState.fuelTankLevel || 1)) || _DEPOT_LEVELS[0];
+    const depotDiscount  = 1.0 - (depotLvlData.priceDiscount || 0);
+    const fuelDiscount   = lobbyDiscount * depotDiscount;
     const cost = Math.floor(actual * (gameState.fuelPrice || 1.85) * fuelDiscount);
     if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
     gameState.cash -= cost;
@@ -901,6 +1055,57 @@ window.buyFuelForDepot = function(litres) {
     logToMap(`🛢️ Deposito: +${actual.toLocaleString()}L a €${(gameState.fuelPrice||1.85).toFixed(2)}/L. Costo −€${cost.toLocaleString()}`);
     showNotification(`🛢️ +${actual.toLocaleString()}L nel deposito!`, 'success');
     _retryOutOfServiceVehicles();
+    updateUI(); saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
+const _DEPOT_LEVELS = [
+    { level: 1, capacity: 10000,  priceDiscount: 0.00, name: 'Cisterna Base' },
+    { level: 2, capacity: 20000,  priceDiscount: 0.02, name: 'Cisterna Doppia' },
+    { level: 3, capacity: 35000,  priceDiscount: 0.05, name: 'Deposito Professionale' },
+    { level: 4, capacity: 50000,  priceDiscount: 0.08, name: 'Mega-Depot' },
+    { level: 5, capacity: 80000,  priceDiscount: 0.12, name: 'Hub Logistico' },
+];
+
+window.getDepotLevelData = function() {
+    const lvl = gameState.fuelTankLevel || 1;
+    return _DEPOT_LEVELS.find(d => d.level === lvl) || _DEPOT_LEVELS[0];
+};
+
+window.emergencyRefuel = function() {
+    const stoppedCars = gameState.fleet.filter(c => c.outOfService === 'fuel');
+    if (stoppedCars.length === 0) { showNotification('Nessuna auto ferma per carburante.', 'info'); return; }
+    const litresNeeded = stoppedCars.length * 80;
+    const emergencyPrice = (gameState.fuelPrice || 1.85) * 3;
+    const cost = Math.ceil(litresNeeded * emergencyPrice);
+    if (gameState.cash < cost) {
+        showNotification(`Fondi insufficienti per il rifornimento di emergenza! Servono €${cost.toLocaleString()}`, 'error');
+        return;
+    }
+    gameState.cash -= cost;
+    stoppedCars.forEach(car => {
+        car.fuel = 100;
+        car.outOfService = null;
+    });
+    logToMap(`🚨 Rifornimento emergenza: ${stoppedCars.length} auto rifornite al triplo prezzo. Costo: −€${cost.toLocaleString()}`);
+    showNotification(`🚨 ${stoppedCars.length} auto rifornite! −€${cost.toLocaleString()} (3× tariffa emergenza)`, 'error');
+    _retryOutOfServiceVehicles();
+    updateUI(); saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
+window.upgradeFuelDepot = function() {
+    if (!hasInvestment('inv_fuel_depot')) { showNotification('Acquista prima il Deposito Carburante!', 'error'); return; }
+    const lvl  = gameState.fuelTankLevel || 1;
+    const next = _DEPOT_LEVELS.find(d => d.level === lvl + 1);
+    if (!next) { showNotification('Deposito già al livello massimo!', 'info'); return; }
+    const cost = Math.round(5000 * Math.pow(lvl, 1.8));
+    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
+    gameState.cash -= cost;
+    gameState.fuelTankLevel = next.level;
+    gameState.fuelTankCapacity = next.capacity;
+    logToMap(`🏗️ Mega-Depot potenziato: ${next.name} (${(next.capacity/1000).toFixed(0)}kL, −${(next.priceDiscount*100).toFixed(0)}% carburante)`);
+    showBigEvent('🏗️', 'Deposito Potenziato!', `${next.name} attivo. Capacità: ${next.capacity.toLocaleString()}L. Sconto carburante: −${(next.priceDiscount*100).toFixed(0)}%.`);
     updateUI(); saveGame();
     if (typeof renderTabFleet === 'function') renderTabFleet();
 };
@@ -1614,9 +1819,11 @@ function processDailyRoutines() {
     _tickPoliceHeat();
 
     // HQ level auto-sync with investments
-    if (hasInvestment('inv_hq_campus')) gameState.hqLevel = 3;
-    else if (hasInvestment('inv_hq_office')) gameState.hqLevel = 1;
-    else gameState.hqLevel = 0;
+    if (hasInvestment('inv_tower'))     { gameState.hqLevel = 3; if (gameState.hq) gameState.hq.level = 3; }
+    else if (hasInvestment('inv_hq_campus')) { gameState.hqLevel = 2; if (gameState.hq) gameState.hq.level = 2; }
+    else if (hasInvestment('inv_hq_office')) { gameState.hqLevel = 1; if (gameState.hq) gameState.hq.level = 1; }
+    else { gameState.hqLevel = 0; if (gameState.hq) gameState.hq.level = 0; }
+    if (typeof _updateHQMarker === 'function') _updateHQMarker();
 
     // Corporate retainer rides
     if (hasInvestment('inv_corporate_retainer')) {
@@ -1692,10 +1899,41 @@ function processDailyRoutines() {
     _tickCantieri();
     _maybeGenerateCantieri();
 
-    // Fuel depot: upgrade capacity when investment is active
-    if (hasInvestment('inv_fuel_depot') && gameState.fuelTankCapacity < 50000) {
-        gameState.fuelTankCapacity = 50000;
+    // Investment constructions: tick time-gated builds
+    if (gameState.constructions && gameState.constructions.length > 0) {
+        const completed = [];
+        gameState.constructions = gameState.constructions.filter(c => {
+            if (gameState.day >= c.completesDay) {
+                completed.push(c);
+                return false;
+            }
+            return true;
+        });
+        completed.forEach(c => {
+            if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId);
+            const inv = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : []).find(i => i.id === c.invId);
+            const name = inv ? inv.name : c.invId;
+            logToMap(`🏗️ Costruzione completata: ${name} è ora operativo!`);
+            showBigEvent('🏗️', 'Costruzione Completata!', `${name} è ora attivo e genera reddito passivo.`);
+            if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+        });
     }
+
+    // Daily upkeep for investments
+    if (gameState.investments && gameState.investments.length > 0) {
+        let upkeepTotal = 0;
+        gameState.investments.forEach(invId => {
+            const inv = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : []).find(i => i.id === invId);
+            if (inv && inv.dailyUpkeep) upkeepTotal += inv.dailyUpkeep;
+        });
+        if (upkeepTotal > 0) {
+            gameState.cash -= upkeepTotal;
+            if (gameState.day % 7 === 0) logToMap(`🔧 Manutenzione investimenti: −€${upkeepTotal.toLocaleString()}/g`);
+        }
+    }
+
+    // Quest check at day rollover
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
 
     // Seized cars: release after 7 days
     if (gameState.seizedCars && gameState.seizedCars.length > 0) {
@@ -1736,6 +1974,104 @@ function processDailyRoutines() {
             showBigEvent('🎖️', `${d.name}: ${tenure} Giorni!`, `Fedeltà premiata con un bonus di €${bonusAmt}. Morale autista +15.`);
         }
     });
+
+    // ── NARRATIVA INBOX CEO (messaggi degli autisti) ──────────────
+    gameState.drivers.forEach(d => {
+        if (d.id === 'ceo') return;
+        const trait = d.trait || {};
+        const fatigue = d.fatigue || 0;
+        const gameHour = gameState.day * 24 + gameState.hour;
+        const expiresAt = gameHour + 48;
+
+        // Autista esausto (< 30% energia rimasta = fatigue > 70)
+        if (fatigue > 70 && !d._warnedExhausted) {
+            d._warnedExhausted = true;
+            gameState.emails.push({
+                id: gameState.nextId++, sender: d.name,
+                subject: `[${d.name}] Capo, sono distrutto`,
+                body: `Capo, sono completamente a pezzi. Se non mi fai riposare giuro che mi licenzio. La macchina è la mia vita, ma così non reggo.`,
+                type: 'driver_msg', status: 'unread', driverId: d.id, expiresAt
+            });
+            const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
+        }
+        if (fatigue <= 50) d._warnedExhausted = false; // reset when recovered
+
+        // Autista in sciopero (fatigue 100%): blocca assegnazioni per 24h
+        if (fatigue >= 100 && !d._onStrike) {
+            d._onStrike = true;
+            d._strikeEndsDay = gameState.day + 1;
+            d.status = 'resting';
+            d.restHoursLeft = 24;
+            gameState.emails.push({
+                id: gameState.nextId++, sender: d.name,
+                subject: `[SCIOPERO] ${d.name} si ferma`,
+                body: `Non ce la faccio più. Mi fermo per 24 ore. Niente corse, niente discussioni. Quando sarò riposato torno al lavoro.`,
+                type: 'driver_msg', status: 'unread', driverId: d.id, expiresAt
+            });
+            showBigEvent('🪧', `${d.name} in Sciopero!`, `Il driver è esausto al 100%. Si ferma per 24h. Monitora l'energia degli autisti per evitarlo.`);
+            const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
+        }
+        if (d._onStrike && gameState.day >= (d._strikeEndsDay || 0)) {
+            d._onStrike = false;
+        }
+    });
+
+    // Venture Capital: daily income from stakes
+    if (gameState.ventureCapital && gameState.ventureCapital.length > 0) {
+        let vcIncome = 0;
+        gameState.ventureCapital.forEach(stake => {
+            const agency = (typeof VENTURE_AGENCIES !== 'undefined' ? VENTURE_AGENCIES : []).find(a => a.id === stake.agencyId);
+            if (!agency) return;
+            const daily = Math.floor(agency.dailyIncome * (stake.stakePercent / 100));
+            vcIncome += daily;
+        });
+        if (vcIncome > 0) {
+            gameState.cash += vcIncome;
+            gameState.annualProfitTracker = (gameState.annualProfitTracker || 0) + vcIncome;
+            if (gameState.day % 30 === 0) logToMap(`💼 Venture Capital: +€${vcIncome.toLocaleString()}/g da ${gameState.ventureCapital.length} partecipazioni.`);
+        }
+    }
+
+    // Meet & Greet passive income from Airport Assistants (zero fuel consumption)
+    const _mgAssistants = (gameState.staff || []).filter(s => s.skill === 'meetgreet');
+    if (_mgAssistants.length > 0 && typeof MEET_GREET_RATES !== 'undefined' && MEET_GREET_RATES.length > 0) {
+        let mgIncome = 0;
+        _mgAssistants.forEach(asst => {
+            const airport = asst.airport || 'FCO';
+            const rates   = MEET_GREET_RATES.filter(r => r.airport === airport);
+            if (!rates.length) return;
+            const jobCount = 3 + Math.floor(Math.random() * 4); // 3–6 daily jobs
+            for (let i = 0; i < jobCount; i++) {
+                mgIncome += Math.floor(rates[Math.floor(Math.random() * rates.length)].sellingPrice);
+            }
+        });
+        if (mgIncome > 0) {
+            gameState.cash += mgIncome;
+            gameState.annualProfitTracker = (gameState.annualProfitTracker || 0) + mgIncome;
+            gameState._lastMgIncome = mgIncome;
+            if (gameState.day % 7 === 0) logToMap(`🤝 Meet & Greet: +€${mgIncome.toLocaleString()} da assistenti aeroportuali (carburante: 0).`);
+        }
+    }
+
+    // Annual profit tracker: accumulate net profit daily
+    const dailyNetProfit = income - expenses;
+    if (dailyNetProfit > 0) {
+        gameState.annualProfitTracker = (gameState.annualProfitTracker || 0) + dailyNetProfit;
+    }
+
+    // Annual tax cycle (ogni 365 giorni)
+    if (gameState.day > 0 && gameState.day % 365 === 0) {
+        const hasAdmin = gameState.staff.some(s => s.id === 'admin');
+        const taxRate  = hasAdmin ? 0.24 : 0.25;
+        const taxable  = gameState.annualProfitTracker || 0;
+        const taxDue   = Math.max(0, Math.floor(taxable * taxRate));
+        if (taxDue > 0) {
+            gameState.cash -= taxDue;
+            logToMap(`📋 Dichiarazione fiscale annuale: profitti €${taxable.toLocaleString()} × ${(taxRate*100).toFixed(0)}% = −€${taxDue.toLocaleString()}`);
+            showBigEvent('📋', 'Dichiarazione Fiscale Annuale', `Profitti annui: €${taxable.toLocaleString()}\nAliquota: ${(taxRate*100).toFixed(0)}%\nImposta versata: −€${taxDue.toLocaleString()}\n${hasAdmin ? '(Riduzione al 24% grazie all\'Amministratore)' : 'Assumi un Amministratore per ridurre al 24%.'}`);
+        }
+        gameState.annualProfitTracker = 0;
+    }
 
     // Filantropia: +0.5 rep settimanale
     if (hasInvestment('inv_philanthropy') && gameState.day % 7 === 0) {
@@ -1779,6 +2115,27 @@ function processDailyRoutines() {
         showBigEvent('🚌', 'Sciopero Mezzi Pubblici!', `I trasporti pubblici sono fermi per ${strikeDuration} giorni. La domanda di NCC è esplosa. Approfitta del surge pricing!`);
     }
 
+    // Classic Vacations weekly quota (ogni 7 giorni)
+    if (gameState.day % 7 === 0) {
+        const completed = gameState.cvWeeklyCompleted || 0;
+        const target    = gameState.cvWeeklyTarget    || 8;
+        if (completed >= target) {
+            gameState.cvWeeklyStreak = (gameState.cvWeeklyStreak || 0) + 1;
+            const streak = gameState.cvWeeklyStreak;
+            const bonus  = streak >= 3 ? 10000 : streak === 2 ? 5000 : 2000;
+            const repGain = streak >= 3 ? 0.2 : 0.1;
+            gameState.cash += bonus;
+            gameState.reputation = Math.min(5.0, gameState.reputation + repGain);
+            logToMap(`🤝 Classic Vacations: quota settim. raggiunta (${completed}/${target})! Streak ${streak}× → +€${bonus.toLocaleString()} +${repGain}★`);
+            showBigEvent('🤝', 'Quota CV Completata!', `${completed} tratte su ${target} consegnate.\nBonus: +€${bonus.toLocaleString()} · +${repGain}★ rep\nStreak: ${streak} settimane consecutive.`);
+        } else if (completed > 0) {
+            gameState.cvWeeklyStreak = 0;
+            logToMap(`⚠️ Classic Vacations: quota non raggiunta (${completed}/${target}). Streak azzerata.`);
+            showNotification(`⚠️ Quota CV mancata: ${completed}/${target}. Streak persa.`, 'error');
+        }
+        gameState.cvWeeklyCompleted = 0; // reset for next week
+    }
+
     // Achievement check giornaliero
     _checkAchievements();
 
@@ -1818,6 +2175,12 @@ function generatePOIRide(tierOverride = null) {
         : toPool;
     let to = (finalToPool.length ? finalToPool : toPool)[Math.floor(Math.random() * (finalToPool.length || toPool.length))];
     if (!to || from.id === to.id) return null;
+
+    // Venezia island rides require a Water Taxi; silently skip if none available
+    if (to.id === 'venezia') {
+        const hasWaterTaxi = gameState.fleet.some(c => c.vehicleClass === 'water_taxi' && c.outOfService !== 'fuel');
+        if (!hasWaterTaxi) return null;
+    }
 
     let tier;
     if (tierOverride) {
@@ -1861,6 +2224,86 @@ function generatePOIRide(tierOverride = null) {
     return ride;
 }
 
+// ─── CONTRACT RIDE GENERATOR (italianRoutesDB) ───────────────────────────────
+const _VEHICLE_CLASS_MAP = {
+    'Mercedes E-Class Sedan':         'mercedes_e',
+    'Mercedes V-Class Minivan':       'mercedes_v',
+    'Mercedes S-Class Presidential':  'mercedes_s',
+    'Mercedes Sprinter':              'mercedes_sprinter',
+    'Water Taxi':                     'water_taxi',
+};
+const _CONTRACT_TIER = {
+    mercedes_s:          'ultra',
+    water_taxi:          'ultra',
+    mercedes_v:          'vip',
+    mercedes_sprinter:   'business',
+    mercedes_e:          'business',
+};
+
+function generateContractRide() {
+    if (typeof italianRoutesDB === 'undefined' || typeof REGION_TO_DB === 'undefined') return null;
+    if (gameState.pendingRides.length > 22) return null;
+
+    // Build list of available DB regions from unlocked game regions
+    const availDBRegions = new Set();
+    (gameState.unlockedRegions || []).forEach(gr => {
+        (REGION_TO_DB[gr] || []).forEach(dbr => availDBRegions.add(dbr));
+    });
+    if (availDBRegions.size === 0) return null;
+
+    // Filter routes: unlocked region + required vehicle available
+    const candidates = italianRoutesDB.filter(r => {
+        if (!availDBRegions.has(r.region)) return false;
+        const vc = _VEHICLE_CLASS_MAP[r.vehicle] || 'mercedes_e';
+        // Skip routes requiring vehicles the player doesn't own
+        if (vc === 'mercedes_s'        && !gameState.fleet.some(c => c.vehicleClass === 'mercedes_s'        && !c.outOfService)) return false;
+        if (vc === 'mercedes_sprinter' && !gameState.fleet.some(c => c.vehicleClass === 'mercedes_sprinter' && !c.outOfService)) return false;
+        if (r.requiresWaterTaxi        && !gameState.fleet.some(c => c.vehicleClass === 'water_taxi'        && !c.outOfService)) return false;
+        return true;
+    });
+    if (candidates.length === 0) return null;
+
+    const route = candidates[Math.floor(Math.random() * candidates.length)];
+    const vehicleRequired = _VEHICLE_CLASS_MAP[route.vehicle] || 'mercedes_e';
+    const tier = _CONTRACT_TIER[vehicleRequired] || 'business';
+
+    // Hub POI for map display and serialization
+    const poiKey = (typeof DB_REGION_TO_POI_KEY !== 'undefined' ? DB_REGION_TO_POI_KEY : {})[route.region] || 'roma';
+    const hubPOI = POIS[poiKey] || POIS['roma'];
+
+    // Real coordinates via geoCoords lookup
+    const originCoords = (typeof resolveCoords === 'function') ? resolveCoords(route.origin)      : null;
+    const destCoords   = (typeof resolveCoords === 'function') ? resolveCoords(route.destination) : null;
+
+    // Duration: City-to-City = 2× normal; Boat/Airport = standard
+    const isLongHaul = route.type === 'City-to-City';
+    const duration = isLongHaul ? 48000 : 24000;
+
+    const ride = {
+        id:              gameState.nextId++,
+        isContract:      true,
+        routeId:         route.id,
+        routeType:       route.type,
+        originName:      route.origin,
+        destinationName: route.destination,
+        vehicleRequired,
+        fromPoi:         hubPOI,
+        toPoi:           hubPOI,
+        originCoords,
+        destCoords,
+        tier,
+        price:           Math.floor(route.sellingPrice),
+        netCost:         Math.floor(route.netCost),
+        duration,
+        elapsed:         0,
+        region:          route.region,
+    };
+
+    gameState.pendingRides.push(ride);
+    if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+    return ride;
+}
+
 const TIER_COMPATIBILITY = {
     'ultra': ['ultra'], 'vip': ['vip', 'ultra'], 'business': ['business', 'vip', 'ultra'], 'standard': ['standard', 'business', 'vip', 'ultra']
 };
@@ -1872,41 +2315,62 @@ function assignRideToDriver(rideId, driverId) {
     if (rideIdx > -1 && driver) {
         if (driver.queue.length >= 10) return;
         if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
-        const ride = gameState.pendingRides.splice(rideIdx, 1)[0];
+
+        const ride = gameState.pendingRides[rideIdx];
+
+        // Contract rides: hard vehicle class check
+        if (ride.vehicleRequired) {
+            const assignedCar = gameState.fleet.find(c => c.id === driver.assignedCarId);
+            if (!assignedCar || assignedCar.vehicleClass !== ride.vehicleRequired) {
+                const vcNames = { mercedes_e:'Mercedes E-Class Sedan', mercedes_v:'Mercedes V-Class Minivan',
+                    mercedes_sprinter:'Mercedes Sprinter', mercedes_s:'Mercedes S-Class Presidential', water_taxi:'Water Taxi' };
+                if (typeof showNotification === 'function')
+                    showNotification(`❌ Veicolo errato! Questa tratta richiede: ${vcNames[ride.vehicleRequired] || ride.vehicleRequired}`, 'error');
+                return;
+            }
+        }
+
+        gameState.pendingRides.splice(rideIdx, 1);
         driver.queue.push(ride);
+
+        // Fetch real road geometry for smooth map animation (async, non-blocking)
+        if (typeof window._fetchRoadGeom === 'function') {
+            const from = ride.originCoords || (ride.fromPoi ? [ride.fromPoi.lng, ride.fromPoi.lat] : null);
+            const to   = ride.destCoords   || (ride.toPoi   ? [ride.toPoi.lng,   ride.toPoi.lat]   : null);
+            if (from && to) window._fetchRoadGeom(from, to).then(geom => { if (geom) ride.roadGeom = geom; });
+        }
 
         if (driver.status === 'idle') startNextRide(driver);
         if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
     }
 }
 
+function _driverCanTakeRide(driver, ride) {
+    const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
+    if (!car) return false;
+    if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
+    if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
+    if (driver.queue.length >= 10) return false;
+    if (driver.status === 'resting') return false;
+    return true;
+}
+
 function assignAllRides() {
     if (gameState.pendingRides.length === 0) return;
-    let assigned = 0;
     for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
         const ride = gameState.pendingRides[i];
-        const validDrivers = gameState.drivers.filter(d => {
-            const car = gameState.fleet.find(c => c.id === d.assignedCarId);
-            return car && TIER_COMPATIBILITY[ride.tier].includes(car.tier) && d.queue.length < 10 && d.status !== 'resting';
-        }).sort((a, b) => a.queue.length - b.queue.length);
-
-        if (validDrivers.length > 0) { assignRideToDriver(ride.id, validDrivers[0].id); assigned++; }
+        const validDrivers = gameState.drivers.filter(d => _driverCanTakeRide(d, ride)).sort((a, b) => a.queue.length - b.queue.length);
+        if (validDrivers.length > 0) assignRideToDriver(ride.id, validDrivers[0].id);
     }
 }
 
 function autoDispatchRides() {
     if (gameState.staff.length === 0 || gameState.pendingRides.length === 0) return;
-    let canHandleVIP = gameState.staff.some(s => s.id === 'sr_disp');
-
+    const canHandleVIP = gameState.staff.some(s => s.id === 'sr_disp');
     for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
         const ride = gameState.pendingRides[i];
         if (!canHandleVIP && (ride.tier === 'vip' || ride.tier === 'ultra')) continue;
-
-        const validDrivers = gameState.drivers.filter(d => {
-            const car = gameState.fleet.find(c => c.id === d.assignedCarId);
-            return car && TIER_COMPATIBILITY[ride.tier].includes(car.tier) && d.queue.length < 10 && d.status !== 'resting';
-        }).sort((a, b) => a.queue.length - b.queue.length);
-
+        const validDrivers = gameState.drivers.filter(d => _driverCanTakeRide(d, ride)).sort((a, b) => a.queue.length - b.queue.length);
         if (validDrivers.length > 0) assignRideToDriver(ride.id, validDrivers[0].id);
     }
 }
@@ -2075,7 +2539,8 @@ function completeRide(ride) {
 
     // Mance: HR +15%, tratto Gentleman, livello XP, upgrade auto, specialty, dynamic event
     const hrTipMult     = hasHR ? 1.15 : 1.0;
-    const traitTipMult  = driver?.trait?.tipMult || 1.0;
+    const isVipOrUltra  = ride.tier === 'vip' || ride.tier === 'ultra';
+    const traitTipMult  = (driver?.trait?.tipMult || 1.0) * (isVipOrUltra ? (driver?.trait?.vipTipMult || 1.0) : 1.0);
     const levelData     = driver ? (DRIVER_LEVELS[driver.level] || DRIVER_LEVELS[0]) : DRIVER_LEVELS[0];
     const levelTipMult  = driver ? levelData.tipBonus : 1.0;
     // Specialty tip bonus
@@ -2094,7 +2559,24 @@ function completeRide(ride) {
         return u ? acc * u.priceMult : acc;
     }, 1.0);
 
-    const earned = Math.floor(ride.price * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult);
+    // ── Extra Hours / Delay penalty (15% chance per ride) ────────────
+    let delayBonus = 0;
+    let delayHours = 0;
+    let isDelayed  = false;
+    if (!ride.hasIncident && Math.random() < 0.15) {
+        isDelayed   = true;
+        delayHours  = 1; // 1 extra hour billed
+        const car3  = gameState.fleet.find(c => c.id === driver?.assignedCarId);
+        const vClass = car3?.vehicleClass || 'mercedes_e';
+        const extraRates = { mercedes_e:105, mercedes_v:125, mercedes_sprinter:150, water_taxi:221 };
+        const extraRate = extraRates[vClass] || extraRates.mercedes_e;
+        delayBonus  = Math.floor(extraRate * 1.25); // selling price version
+        if (ride.duration !== undefined) ride.duration += 60; // car blocked 1 more hour
+        logToMap(`⏱️ Ritardo cliente: +1h fatturata a ${driver?.name || 'autista'} (corsa ${ride.toPoi?.name || ''}). Bonus +€${delayBonus}`);
+        showNotification(`⏱️ Ritardo cliente! +€${delayBonus} extra fatturati.`, 'success');
+    }
+
+    const earned = Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult);
     gameState.cash += earned;
     gameState.reputation = Math.min(5.0 + gameState.prestige, gameState.reputation + 0.02);
 
@@ -2106,8 +2588,53 @@ function completeRide(ride) {
         _checkDriverLevel(driver);
     }
 
-    const extras = [hasHR ? '+HR' : null, traitTipMult > 1 ? `+${Math.round((traitTipMult-1)*100)}%` : null, levelTipMult > 1 ? `Lv${driver?.level}` : null, ride.isEmptyLeg ? 'EmptyLeg' : null, ride.isGreyMarket ? '🕵️' : null].filter(Boolean).join(' ');
+    const extras = [hasHR ? '+HR' : null, traitTipMult > 1 ? `+${Math.round((traitTipMult-1)*100)}%` : null, levelTipMult > 1 ? `Lv${driver?.level}` : null, ride.isEmptyLeg ? 'EmptyLeg' : null, ride.isGreyMarket ? '🕵️' : null, isDelayed ? '⏱️+1h' : null].filter(Boolean).join(' ');
     logToMap(`💰 Incasso: €${earned} da ${ride.toPoi.name}${extras ? ` (${extras})` : ''}`);
+
+    // Classic Vacations contract tracking
+    if (ride.isContract) {
+        gameState.cvWeeklyCompleted = (gameState.cvWeeklyCompleted || 0) + 1;
+        const margin = Math.max(0, (ride.price || 0) - (ride.netCost || 0));
+        gameState.totalContractMargin = (gameState.totalContractMargin || 0) + margin;
+    }
+
+    // Quest stat tracking
+    if (!gameState.questStats) gameState.questStats = { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 };
+    const qs = gameState.questStats;
+    qs.totalRides++;
+    if (ride.tier === 'ultra') qs.ultraRides++;
+    if (ride.tier === 'vip' || ride.tier === 'ultra') qs.vipRides++;
+    if (ride.fromPoi?.id === 'roma_fco' || ride.toPoi?.id === 'roma_fco') qs.fcoRides++;
+    if (ride.toPoi?.type === 'port' || ride.fromPoi?.type === 'port') qs.portRides++;
+    if (ride.isContract) qs.contractRides++;
+    if ((ride.toPoi?.id === 'porto_cervo' || ride.toPoi?.name?.toLowerCase().includes('porto cervo')) && ride.tier === 'ultra') qs.portoCervoRides++;
+
+    // Charmante trait: +15% mance VIP/Ultra (already via vipTipMult), 10% chance of big tip email
+    if (driver?.trait?.id === 'charmante' && (ride.tier === 'vip' || ride.tier === 'ultra') && Math.random() < 0.10) {
+        const bonus = 250 + Math.floor(Math.random() * 250);
+        gameState.cash += bonus;
+        const gameHour = gameState.day * 24 + gameState.hour;
+        gameState.emails.push({
+            id: gameState.nextId++, sender: driver.name,
+            subject: `[${driver.name}] Il cliente era estasiato!`,
+            body: `Capo, il cliente era in estasi per il servizio. Mi ha lasciato una mancia extra di €${bonus * 2}. Come promesso, ti giro la metà: +€${bonus} in cassa.`,
+            type: 'driver_msg', status: 'unread', expiresAt: gameHour + 48
+        });
+        logToMap(`✨ Charmante: ${driver.name} → mancia extra +€${bonus}!`);
+        const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
+    }
+
+    // F2P Titan Coins drop: 5% chance on Presidential ultra ride
+    if (ride.tier === 'ultra' && ride.vehicleRequired === 'mercedes_s' && Math.random() < 0.05) {
+        const drop = 1 + Math.floor(Math.random() * 3);
+        gameState.titanCoins = (gameState.titanCoins || 0) + drop;
+        logToMap(`💎 Titan Coins: +${drop} TC da transfer Presidential!`);
+        if (typeof showNotification === 'function') showNotification(`💎 +${drop} Titan Coins guadagnati!`, 'success');
+    }
+
+    // Check quest progress after every completed ride
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+
     saveGame();
 
     // Empty leg: if a long-distance ride just completed, look for a return passenger
@@ -2285,10 +2812,12 @@ function confirmLease() {
     const monthly = template.baseRate + extraKm - discountDuration;
     const daily = monthly / 30;
 
+    const _leaseTierToClass = { ultra: 'mercedes_e', vip: 'mercedes_s', group: 'mercedes_v', business: 'mercedes_e', standard: 'mercedes_e' };
     gameState.fleet.push({
         id: 'c_' + Date.now(), name: template.name + ' (Leasing)', tier: template.tier,
         condition: 100, isLease: true, dailyCost: daily, leaseDuration: months, leaseElapsedDays: 0,
-        fuel: 100, mileage: 0, tirePressure: 100, upgrades: []
+        fuel: 100, mileage: 0, tirePressure: 100, upgrades: [],
+        vehicleClass: _leaseTierToClass[template.tier] || 'mercedes_e'
     });
     if(typeof closeModals === 'function') closeModals();
     if(typeof renderTabFleet === 'function') renderTabFleet();
@@ -2305,6 +2834,33 @@ function rest(stars) {
     }
 }
 
+window.foundCompany = function(lng, lat, customName) {
+    // Find nearest POI region
+    let nearestRegion = 'lazio';
+    let minDist = Infinity;
+    for (const key in (typeof POIS !== 'undefined' ? POIS : {})) {
+        const p = POIS[key];
+        const d = Math.hypot(p.lng - lng, p.lat - lat);
+        if (d < minDist) { minDist = d; nearestRegion = p.region || 'lazio'; }
+    }
+    if (nearestRegion && !gameState.unlockedRegions.includes(nearestRegion)) {
+        gameState.unlockedRegions.push(nearestRegion);
+    }
+    gameState.hq.lng    = lng;
+    gameState.hq.lat    = lat;
+    gameState.hq.region = nearestRegion;
+    gameState.hq.name   = customName || 'Sede Principale';
+    gameState.hq.level  = 0;
+    for (let i = 0; i < 3; i++) if (typeof generatePOIRide === 'function') generatePOIRide('standard');
+    if (typeof showBigEvent === 'function') showBigEvent('🏢', 'Agenzia Fondata!', `La tua sede è ora operativa in ${nearestRegion}. Regione sbloccata gratuitamente. Le prime corse ti attendono!`);
+    if (typeof _updateHQMarker === 'function') _updateHQMarker();
+    if (typeof drawHighways === 'function') drawHighways();
+    if (typeof drawPOIs === 'function') drawPOIs();
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+    saveGame();
+};
+
 function buyRegion(regionId) {
     const region = REGIONS[regionId];
     if (gameState.cash >= region.price && gameState.reputation >= region.repReq) {
@@ -2312,6 +2868,7 @@ function buyRegion(regionId) {
         updateUI(); if(typeof renderTabRegions==='function') renderTabRegions();
         if (typeof drawHighways === 'function') drawHighways();
         if (typeof drawPOIs === 'function') drawPOIs();
+        if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
         saveGame();
     }
 }
@@ -2319,18 +2876,71 @@ function buyRegion(regionId) {
 function buyInvestment(invId) {
     const item = INVESTMENTS.find(i => i.id === invId);
     if (!item || gameState.investments.includes(invId)) return;
+    // Check if already under construction
+    if ((gameState.constructions || []).some(c => c.invId === invId)) {
+        if (typeof showNotification === 'function') showNotification('Costruzione già in corso!', 'error');
+        return;
+    }
     if (gameState.cash < item.price) { if(typeof showNotification==='function') showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= item.price;
-    gameState.investments.push(invId);
-    if (item.rep) gameState.reputation = Math.min(5.0, gameState.reputation + item.rep);
-    if (invId === 'inv_acquire') applyAcquisition();
-    if (invId === 'inv_sponsorship') applySponsorship();
-    if (invId === 'inv_national_license') applyNationalLicense();
-    if(typeof showNotification==='function') showNotification(`${item.name} acquisito!`, 'success');
+
+    if (item.buildTime) {
+        // Time-gated: enter construction queue instead of activating immediately
+        if (!gameState.constructions) gameState.constructions = [];
+        gameState.constructions.push({ invId, startDay: gameState.day, buildDays: item.buildTime, completesDay: gameState.day + item.buildTime });
+        if (typeof showNotification === 'function') showNotification(`🏗️ ${item.name}: costruzione avviata (${item.buildTime} giorni)!`, 'success');
+    } else {
+        gameState.investments.push(invId);
+        if (item.rep) gameState.reputation = Math.min(5.0, gameState.reputation + item.rep);
+        if (invId === 'inv_acquire') applyAcquisition();
+        if (invId === 'inv_sponsorship') applySponsorship();
+        if (invId === 'inv_national_license') applyNationalLicense();
+        if (typeof showNotification === 'function') showNotification(`${item.name} acquisito!`, 'success');
+        if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+    }
     updateUI();
     if(typeof renderTabInvestments==='function') renderTabInvestments();
     saveGame();
 }
+
+window.speedUpConstruction = function(invId) {
+    const c = (gameState.constructions || []).find(x => x.invId === invId);
+    if (!c) return;
+    const daysLeft = Math.max(0, c.completesDay - gameState.day);
+    const tcCost   = Math.ceil(daysLeft * 2); // 2 TC per day remaining
+    if ((gameState.titanCoins || 0) < tcCost) {
+        if (typeof showNotification === 'function') showNotification(`Titan Coins insufficienti! Servono ${tcCost} TC.`, 'error');
+        return;
+    }
+    gameState.titanCoins -= tcCost;
+    // Complete immediately
+    gameState.constructions = gameState.constructions.filter(x => x.invId !== invId);
+    if (!gameState.investments.includes(invId)) gameState.investments.push(invId);
+    const inv = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : []).find(i => i.id === invId);
+    const name = inv ? inv.name : invId;
+    logToMap(`⚡ Costruzione accelerata: ${name} completato istantaneamente! (−${tcCost} TC)`);
+    showBigEvent('⚡', 'Completato!', `${name} è ora operativo grazie ai tuoi Titan Coins!`);
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+    updateUI();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    saveGame();
+};
+
+window.sellInvestment = function(invId) {
+    const item = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : []).find(i => i.id === invId);
+    if (!item) return;
+    const idx = gameState.investments.indexOf(invId);
+    if (idx === -1) return;
+    const refund = Math.floor(item.price * 0.40);
+    if (!confirm(`Vendere ${item.name} per €${refund.toLocaleString()} (40% del valore)? Non si può annullare.`)) return;
+    gameState.investments.splice(idx, 1);
+    gameState.cash += refund;
+    logToMap(`🏷️ Investimento venduto: ${item.name} → +€${refund.toLocaleString()}`);
+    if (typeof showNotification === 'function') showNotification(`${item.name} venduto per €${refund.toLocaleString()}`, 'success');
+    updateUI();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    saveGame();
+};
 
 function applyAcquisition() {
     if (RIVALS.length === 0) return;
@@ -2371,7 +2981,7 @@ window.buyPrototypeCar = function(protoId) {
     if (gameState.reputation < proto.reqRep) { showNotification(`Reputazione insufficiente! Serve ${proto.reqRep}★`, 'error'); return; }
     if (gameState.cash < proto.price) { showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= proto.price;
-    gameState.fleet.push({ id: 'c_proto_' + Date.now(), name: proto.name, tier: proto.tier, condition: 100, isLease: false, fuel: 100, mileage: 0, upgrades: [], protoId: proto.id });
+    gameState.fleet.push({ id: 'c_proto_' + Date.now(), name: proto.name, tier: proto.tier, condition: 100, isLease: false, fuel: 100, mileage: 0, upgrades: [], protoId: proto.id, vehicleClass: proto.vehicleClass || 'mercedes_e' });
     showBigEvent('🔬', `${proto.name} Acquisita!`, proto.desc);
     logToMap(`🔬 Prototipo: ${proto.name} aggiunta alla flotta!`);
     updateUI();
@@ -2422,7 +3032,7 @@ window.newGamePlus = function() {
         achievements: [],
         loans: [],
         newGamePlusCount: ngpCount,
-        fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85,
+        fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85, fuelTankLevel: 1,
         depositoGomme: 0,
         seizedCars: [],
         policeHeat: 0,
@@ -2435,11 +3045,16 @@ window.newGamePlus = function() {
         stockPrices: {}, stockHoldings: {}, brokerInvestments: [],
         lifestyleAssets: [], creditScore: 300,
         totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
-        pricewars: [], shadowMissionsTotal: 0
+        pricewars: [], shadowMissionsTotal: 0,
+        ventureCapital: [], annualProfitTracker: 0,
+        companyName: gameState.companyName || 'Olga Vision Agency',
+        companyLogo: gameState.companyLogo || '👁️',
+        companyColor: gameState.companyColor || '#d4af37',
     };
     gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1 });
-    gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [] });
+    gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [], vehicleClass: 'mercedes_e' });
     _refreshRecruits();
+    _applyBrandColor();
     showBigEvent('♾️', `New Game+ ${ngpCount}`, `Riparto con €${legacyCash.toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. La tua leggenda continua.`);
     logToMap(`♾️ New Game+ ${ngpCount} iniziato!`);
     updateUI();
@@ -2724,12 +3339,15 @@ window.sellCompanyNGP = function() {
         inflationRate: 0.020, interestRateBase: 0.045,
         lobbyingPoints: 0, activeLobbyLaws: [],
         companyName: gameState.companyName || 'Olga Vision Agency',
-        companyLogo: gameState.companyLogo || '👁️'
+        companyLogo: gameState.companyLogo || '👁️',
+        companyColor: gameState.companyColor || '#d4af37',
+        fuelTankLevel: 1, ventureCapital: [], annualProfitTracker: 0,
     };
     gameState.drivers.push({ id:'ceo', name:'Tu (CEO)', status:'idle', assignedCarId:'c_loaner', queue:[], fatigue:0, restHoursLeft:0, xp:0, level:0, morale:100, upgrades:[], hiredDay:1 });
-    gameState.fleet.push({ id:'c_loaner', name:'Berlina Base', tier:'standard', condition:100, isLease:true, dailyCost:40, leaseDuration:12, leaseElapsedDays:0, fuel:100, mileage:0, tirePressure:100, upgrades:[] });
+    gameState.fleet.push({ id:'c_loaner', name:'Berlina Base', tier:'standard', condition:100, isLease:true, dailyCost:40, leaseDuration:12, leaseElapsedDays:0, fuel:100, mileage:0, tirePressure:100, upgrades:[], vehicleClass:'mercedes_e' });
     _initStockPrices();
     _refreshRecruits();
+    _applyBrandColor();
     showBigEvent('🏦', `Exit Strategy — New Game+ ${ngpCount}`,
         `Il fondo ha acquisito Olga Vision per €${salePrice.toLocaleString()}.\n\nRicominci con €${Math.floor(legacyCash).toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. Credit Score iniziale: ${gameState.creditScore}.\n\nCostruisci un nuovo impero.`);
     logToMap(`♾️ Exit Strategy completata — NGP ${ngpCount} iniziato!`);
@@ -2974,6 +3592,52 @@ window.passLobbyLaw = function(lawId) {
     if (typeof renderTabPolitics === 'function' && _tabIs('politics')) renderTabPolitics();
 };
 
+// ─── VENTURE CAPITAL ─────────────────────────────────────────────
+window.acquireVentureStake = function(agencyId, stakePercent) {
+    if (typeof VENTURE_AGENCIES === 'undefined') return;
+    const agency = VENTURE_AGENCIES.find(a => a.id === agencyId);
+    if (!agency) return;
+    if (gameState.reputation < agency.minRep) {
+        showNotification(`Reputazione insufficiente! Servono ${agency.minRep}★`, 'error'); return;
+    }
+    stakePercent = Math.min(agency.maxStake, Math.max(1, Math.round(Number(stakePercent))));
+    const cost = Math.floor(agency.valuation * stakePercent / 100);
+    if (gameState.cash < cost) {
+        showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return;
+    }
+    const existing = (gameState.ventureCapital || []).find(s => s.agencyId === agencyId);
+    if (existing) {
+        const newStake = existing.stakePercent + stakePercent;
+        if (newStake > agency.maxStake) {
+            showNotification(`Quota massima acquisibile: ${agency.maxStake}%`, 'error'); return;
+        }
+        existing.stakePercent = newStake;
+    } else {
+        if (!gameState.ventureCapital) gameState.ventureCapital = [];
+        gameState.ventureCapital.push({ agencyId, stakePercent });
+    }
+    gameState.cash -= cost;
+    const dailyReturn = Math.floor(agency.dailyIncome * stakePercent / 100);
+    logToMap(`💼 M&A: Acquisita quota ${stakePercent}% di ${agency.name} per €${cost.toLocaleString()}. Rendita: +€${dailyReturn}/g`);
+    showBigEvent('💼', `Acquisita: ${agency.name}`, `Quota: ${stakePercent}%\nInvestimento: €${cost.toLocaleString()}\nRendita giornaliera: +€${dailyReturn}\nRischio: ${agency.riskLevel.toUpperCase()}`);
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function' && _tabIs('investments')) renderTabInvestments();
+};
+
+window.divestVentureStake = function(agencyId) {
+    const idx = (gameState.ventureCapital || []).findIndex(s => s.agencyId === agencyId);
+    if (idx === -1) return;
+    const agency = (typeof VENTURE_AGENCIES !== 'undefined' ? VENTURE_AGENCIES : []).find(a => a.id === agencyId);
+    const stake  = gameState.ventureCapital[idx];
+    const refund = Math.floor((agency ? agency.valuation : 100000) * stake.stakePercent / 100 * 0.75);
+    gameState.ventureCapital.splice(idx, 1);
+    gameState.cash += refund;
+    logToMap(`💼 Disinvestito ${agency?.name || agencyId}: +€${refund.toLocaleString()} (75% valutazione)`);
+    showNotification(`📤 Quota ceduta: +€${refund.toLocaleString()}`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function' && _tabIs('investments')) renderTabInvestments();
+};
+
 // ─────────────────────────────────────────────────────────────────
 function updateUI() {
     const elCash = document.getElementById('tb-cash'); if(elCash) elCash.innerText = `€${Math.floor(gameState.cash).toLocaleString()}`;
@@ -3011,6 +3675,21 @@ function updateUI() {
     } else if (depotWarn) {
         depotWarn.remove();
     }
+    // Titan Coins balance chip
+    const elTC = document.getElementById('tb-tc');
+    if (elTC) elTC.innerText = (gameState.titanCoins || 0);
+
+    // Career dot (claimable quests)
+    const careerDot = document.getElementById('career-dot');
+    if (careerDot) careerDot.classList.toggle('hidden', !((gameState.claimableQuests || []).length > 0));
+    // Hub career badge
+    const hmodCareer = document.getElementById('hmod-career');
+    if (hmodCareer) {
+        const n = (gameState.claimableQuests || []).length;
+        hmodCareer.textContent = n;
+        hmodCareer.classList.toggle('hidden', n === 0);
+    }
+
     // Refresh hub if open
     const hubModal = document.getElementById('hub-modal');
     if (hubModal && !hubModal.classList.contains('hidden') && typeof _updateHubStats === 'function') {
@@ -3048,6 +3727,20 @@ window.hireDriver = function hireDriver(name, salary) {
     if(typeof renderTabStaff==='function') renderTabStaff();
 }
 
+window.setDriverAvatar = function(driverId, input) {
+    const driver = gameState.drivers.find(d => d.id === driverId);
+    if (!driver || !input.files || !input.files[0]) return;
+    const file = input.files[0];
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        driver.avatarBase64 = e.target.result;
+        saveGame();
+        if (typeof renderTabStaff === 'function') renderTabStaff();
+    };
+    reader.readAsDataURL(file);
+};
+
 window.assignSpecialty = function(driverId, specialtyId) {
     const driver = gameState.drivers.find(d => d.id === driverId);
     if (!driver) return;
@@ -3071,10 +3764,12 @@ window.fireDriver = function fireDriver(driverId) {
 window._startGameWithSlot = function(slotIndex, fresh) {
     window.currentSlotIndex = slotIndex;
     if (window._pendingCompanyName) {
-        gameState.companyName = window._pendingCompanyName;
-        gameState.companyLogo = window._pendingCompanyLogo || '👁️';
+        gameState.companyName  = window._pendingCompanyName;
+        gameState.companyLogo  = window._pendingCompanyLogo  || '👁️';
+        gameState.companyColor = window._pendingCompanyColor || '#d4af37';
         delete window._pendingCompanyName;
         delete window._pendingCompanyLogo;
+        delete window._pendingCompanyColor;
     }
     if (!fresh) {
         const loaded = loadGame();
@@ -3082,4 +3777,14 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     } else {
         initGame(true);
     }
+    // Tutorial: launch on very first new game
+    if (fresh && typeof window._maybeLaunchTutorial === 'function') {
+        window._maybeLaunchTutorial();
+    }
+    // Lang toggle button in header
+    if (typeof window._injectLangToggle === 'function') {
+        setTimeout(window._injectLangToggle, 200);
+    }
+    // Show map tab
+    if (typeof window.switchTab === 'function') window.switchTab('map');
 };

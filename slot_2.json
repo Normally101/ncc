@@ -1,11 +1,11 @@
 {
-  "cash": 20976.77777777777,
+  "cash": 20628.38888888888,
   "reputation": 4.59,
-  "energy": 10,
-  "day": 11,
+  "energy": 1.5,
+  "day": 12,
   "month": 1,
-  "hour": 8,
-  "minute": 50,
+  "hour": 1,
+  "minute": 30,
   "paused": false,
   "fleet": [
     {
@@ -16,7 +16,7 @@
       "isLease": true,
       "dailyCost": 40,
       "leaseDuration": 12,
-      "leaseElapsedDays": 10,
+      "leaseElapsedDays": 11,
       "fuel": 80,
       "mileage": 60,
       "tirePressure": 93.02105868242938,
@@ -24,7 +24,8 @@
         "wifi",
         "profumatore"
       ],
-      "outOfService": "fuel"
+      "outOfService": "fuel",
+      "vehicleClass": "mercedes_e"
     },
     {
       "id": "c_1777404211053",
@@ -34,12 +35,13 @@
       "isLease": true,
       "dailyCost": 34.05555555555556,
       "leaseDuration": 24,
-      "leaseElapsedDays": 10,
+      "leaseElapsedDays": 11,
       "fuel": 80,
       "mileage": 60,
       "tirePressure": 93.1768882640315,
       "upgrades": [],
-      "outOfService": "fuel"
+      "outOfService": "fuel",
+      "vehicleClass": "mercedes_e"
     }
   ],
   "drivers": [
@@ -47,7 +49,7 @@
       "id": "ceo",
       "name": "Tu (CEO)",
       "status": "idle",
-      "assignedCarId": "c_1777404211053",
+      "assignedCarId": "c_loaner",
       "queue": [
         {
           "id": 4,
@@ -358,99 +360,48 @@
       "price": 196,
       "duration": 20000,
       "elapsed": 0
+    },
+    {
+      "id": 86,
+      "fromPoi": "roma",
+      "toPoi": "roma",
+      "tier": "vip",
+      "price": 1566,
+      "duration": 24000,
+      "elapsed": 0
+    },
+    {
+      "id": 87,
+      "fromPoi": "roma",
+      "toPoi": "roma",
+      "tier": "business",
+      "price": 1276,
+      "duration": 48000,
+      "elapsed": 0
     }
   ],
   "activeRides": [],
   "emails": [
     {
-      "id": 81,
-      "sender": "Networking Board",
-      "subject": "[INVITO] World Economic Forum - Davos",
-      "type": "ceo_event",
-      "status": "unread",
-      "eventData": {
-        "id": "davos",
-        "month": 1,
-        "name": "World Economic Forum - Davos",
-        "desc": "Un meeting globale. Come ti avvicini alle opportunità di networking?",
-        "choices": [
-          {
-            "text": "Networking Aggressivo (€8.000)",
-            "cost": 8000,
-            "repBonus": 1.5
-          },
-          {
-            "text": "Presenza Base (€2.000)",
-            "cost": 2000,
-            "repBonus": 0.4
-          }
-        ]
-      },
-      "expiresAt": 273
-    },
-    {
-      "id": 82,
-      "sender": "Networking Board",
-      "subject": "[INVITO] World Economic Forum - Davos",
-      "type": "ceo_event",
-      "status": "unread",
-      "eventData": {
-        "id": "davos",
-        "month": 1,
-        "name": "World Economic Forum - Davos",
-        "desc": "Un meeting globale. Come ti avvicini alle opportunità di networking?",
-        "choices": [
-          {
-            "text": "Networking Aggressivo (€8.000)",
-            "cost": 8000,
-            "repBonus": 1.5
-          },
-          {
-            "text": "Presenza Base (€2.000)",
-            "cost": 2000,
-            "repBonus": 0.4
-          }
-        ]
-      },
-      "expiresAt": 273
-    },
-    {
-      "id": 83,
-      "sender": "Networking Board",
-      "subject": "[INVITO] World Economic Forum - Davos",
-      "type": "ceo_event",
-      "status": "unread",
-      "eventData": {
-        "id": "davos",
-        "month": 1,
-        "name": "World Economic Forum - Davos",
-        "desc": "Un meeting globale. Come ti avvicini alle opportunità di networking?",
-        "choices": [
-          {
-            "text": "Networking Aggressivo (€8.000)",
-            "cost": 8000,
-            "repBonus": 1.5
-          },
-          {
-            "text": "Presenza Base (€2.000)",
-            "cost": 2000,
-            "repBonus": 0.4
-          }
-        ]
-      },
-      "expiresAt": 273
-    },
-    {
-      "id": 84,
+      "id": 88,
       "sender": "Concierge Lusso",
       "subject": "Appalto B2B: Delega 3 Giorni",
-      "offer": 11238,
+      "offer": 9389,
       "type": "b2b",
       "status": "unread",
-      "expiresAt": 275
+      "expiresAt": 290
     },
     {
-      "id": 85,
+      "id": 89,
+      "sender": "Concierge Lusso",
+      "subject": "Appalto B2B: Delega 3 Giorni",
+      "offer": 8104,
+      "type": "b2b",
+      "status": "unread",
+      "expiresAt": 295
+    },
+    {
+      "id": 90,
       "sender": "Networking Board",
       "subject": "[INVITO] World Economic Forum - Davos",
       "type": "ceo_event",
@@ -473,13 +424,13 @@
           }
         ]
       },
-      "expiresAt": 280
+      "expiresAt": 301
     }
   ],
   "unlockedRegions": [
     "lazio"
   ],
-  "nextId": 86,
+  "nextId": 91,
   "cannesBoostDays": 0,
   "availableRecruits": [
     {
@@ -528,8 +479,8 @@
       }
     }
   ],
-  "weather": "pioggia",
-  "weatherHoursLeft": 1,
+  "weather": "sole",
+  "weatherHoursLeft": 3,
   "activeCampaign": null,
   "activeFines": [],
   "achievements": [],
@@ -538,9 +489,10 @@
   "fuelTank": 0,
   "fuelTankCapacity": 10000,
   "fuelPrice": 2.07,
+  "fuelTankLevel": 1,
   "depositoGomme": 0,
   "seizedCars": [],
-  "policeHeat": 0.5,
+  "policeHeat": 0,
   "consecutiveRedDays": 0,
   "blacklistedClients": [],
   "hqLevel": 0,
@@ -550,11 +502,11 @@
   "pricewars": [],
   "shadowMissionsTotal": 0,
   "stockPrices": {
-    "OIL": 80.96,
-    "CARS": 179.79,
-    "TECH": 225.9,
-    "LUX": 535.8,
-    "BIO": 43.79
+    "OIL": 84.54,
+    "CARS": 183.75,
+    "TECH": 224.58,
+    "LUX": 560.27,
+    "BIO": 62.34
   },
   "stockHoldings": {
     "OIL": {
@@ -580,134 +532,134 @@
   },
   "stockHistory": {
     "OIL": [
-      86,
-      84.72,
-      86.78,
-      89.1,
-      90.68,
-      90.13,
-      90.37,
-      90.66,
-      87.68,
-      87.75,
-      86.49,
-      86.16,
-      84.94,
-      87.9,
-      85.47,
-      85,
-      82.73,
       84.43,
       83.99,
       84.11,
       82.16,
       82.86,
       81.9,
-      80.96
+      80.96,
+      80.82,
+      78.26,
+      78.85,
+      78.65,
+      79.85,
+      80.17,
+      81.47,
+      83.66,
+      82.39,
+      82.24,
+      83.55,
+      84.32,
+      87.11,
+      88.58,
+      86.02,
+      83.69,
+      84.54
     ],
     "CARS": [
-      187.03,
-      181.5,
-      183.34,
-      174.76,
-      178.52,
-      184.34,
-      184.78,
-      184.96,
-      182.97,
-      186.53,
-      182.06,
-      178.63,
-      181.3,
-      184.48,
-      181.64,
-      180.67,
-      183.64,
       184.9,
       181.28,
       181.9,
       183.87,
       193.33,
       187.24,
-      179.79
+      179.79,
+      176.85,
+      175.07,
+      178.53,
+      177.23,
+      173.85,
+      174.11,
+      177.7,
+      179.85,
+      180.84,
+      177.81,
+      175.1,
+      178.91,
+      176.42,
+      180.89,
+      181.28,
+      181.49,
+      183.75
     ],
     "TECH": [
-      236.04,
-      236.5,
-      232.65,
-      228.41,
-      236.72,
-      234.22,
-      232.62,
-      232.47,
-      223.46,
-      218.03,
-      229.33,
-      227.21,
-      216.22,
-      215.4,
-      223.35,
-      219.24,
-      229.13,
       236.3,
       225.03,
       230.5,
       220.18,
       232.1,
       223.01,
-      225.9
+      225.9,
+      215.87,
+      213.01,
+      216.02,
+      218.34,
+      223.96,
+      235.12,
+      246.83,
+      245.72,
+      252.91,
+      248.43,
+      256.85,
+      243.87,
+      231.3,
+      225.12,
+      228.2,
+      232.51,
+      224.58
     ],
     "LUX": [
-      511.4,
-      527.85,
-      510.5,
-      492.21,
-      511.08,
-      526.4,
-      538.22,
-      554.65,
-      547.8,
-      570.35,
-      568.21,
-      556.68,
-      554.4,
-      559.5,
-      572.45,
-      574.06,
-      560.04,
       563.65,
       551.38,
       561.05,
       557.97,
       559.75,
       556.97,
-      535.8
+      535.8,
+      517.09,
+      535.62,
+      552.76,
+      544.1,
+      542.64,
+      541.33,
+      563.73,
+      559,
+      543.09,
+      545.23,
+      526.17,
+      540.68,
+      559.51,
+      564.15,
+      554.68,
+      562.51,
+      560.27
     ],
     "BIO": [
-      58.11,
-      59.75,
-      58.18,
-      55.32,
-      58.3,
-      62.25,
-      57.7,
-      59.22,
-      56.65,
-      53,
-      52.27,
-      51.15,
-      47.49,
-      44.72,
-      41.96,
-      39.49,
-      40.76,
       44.19,
       42.98,
       45.82,
       44.37,
       45.34,
       45.74,
-      43.79
+      43.79,
+      40.34,
+      43.32,
+      44.21,
+      45.8,
+      49.71,
+      49.62,
+      50.83,
+      49.9,
+      48.13,
+      48.91,
+      47.36,
+      49.97,
+      52.1,
+      53.57,
+      55.72,
+      59.33,
+      62.34
     ]
   },
   "shortPositions": {},
@@ -723,11 +675,19 @@
   "activeLobbyLaws": [],
   "companyName": "Macha NCC",
   "companyLogo": "⚡",
+  "companyColor": "#d4af37",
+  "ventureCapital": [],
+  "annualProfitTracker": 0,
+  "cvWeeklyTarget": 8,
+  "cvWeeklyCompleted": 0,
+  "cvWeeklyStreak": 0,
+  "totalContractMargin": 0,
   "_top3NotifiedDay": 4,
   "_hubNewEvent": false,
   "recentEventIds": [
     "moto_trial_alpi",
     "hockey_final"
   ],
-  "_saveTimestamp": 1777436334940
+  "_saveTimestamp": 1777482759145,
+  "_checksum": "1d4e34f0"
 }
