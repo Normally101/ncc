@@ -1245,8 +1245,9 @@ function renderTabFleet() {
         const tirePct = car.tirePressure !== undefined ? Math.floor(car.tirePressure) : 100;
         const tireColor = tirePct < 30 ? '#ff4060' : tirePct < 60 ? '#f59e0b' : '#22c55e';
         const outReason = car.outOfService;
-        const outLabel = outReason === 'fuel'  ? '🔴 FERMA — Deposito Gasolio esaurito'
-                       : outReason === 'tires' ? '🔴 FERMA — Deposito Gomme esaurito'
+        const outLabel = outReason === 'fuel'   ? '🔴 FERMA — Deposito Gasolio esaurito'
+                       : outReason === 'tires'  ? '🔴 FERMA — Deposito Gomme esaurito'
+                       : outReason === 'engine' ? '🔴 MOTORE FUSO — Riparazione urgente'
                        : null;
         const hasCentralina   = (car.upgrades||[]).includes('centralina');
         const hasSerbatoio    = (car.upgrades||[]).includes('serbatoio_ext');
@@ -1277,6 +1278,29 @@ function renderTabFleet() {
                 <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${tirePct}%; background:${tireColor}"></div></div>
                 <span class="text-[8px] font-mono ml-1" style="color:${tireColor}">${tirePct}%</span>
             </div>
+            ${(() => {
+                const eh = car.engineHealth !== undefined ? car.engineHealth : 100;
+                const ehColor = eh <= 0 ? '#ff4060' : eh < 30 ? '#ef4444' : eh < 60 ? '#f59e0b' : '#22c55e';
+                const ehWarn  = eh < 30 && eh > 0 ? '<span class="text-[8px] text-red-400 ml-1 font-bold">⚠ −2× Consumo</span>' : '';
+                const repairCost = Math.max(800, (100 - eh) * 180);
+                return `<div class="flex items-center gap-1 mt-1">
+                    <span class="text-[8px] text-gray-600 w-8 shrink-0">⚙️</span>
+                    <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${eh}%; background:${ehColor}"></div></div>
+                    <span class="text-[8px] font-mono ml-1" style="color:${ehColor}">${eh}%</span>
+                    ${ehWarn}
+                </div>
+                <div class="flex gap-1 mt-1.5">
+                    <button onclick="window.buyBlackMarketFuel('${car.id}')"
+                        class="flex-1 text-[8px] py-0.5 px-1 rounded border border-yellow-700/50 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900/40 transition-colors"
+                        title="Gasolio Agricolo: 40% sconto, 10% rischio motore">
+                        🖤 Gasolio Agric. (−40%)<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85)*0.60)}</span>
+                    </button>
+                    ${eh < 100 ? `<button onclick="window.repairEngine('${car.id}')"
+                        class="flex-1 text-[8px] py-0.5 px-1 rounded border border-orange-600/50 bg-orange-950/30 text-orange-300 hover:bg-orange-900/40 transition-colors">
+                        🔧 Ripara Motore<br><span class="text-[7px] opacity-60">€${repairCost.toLocaleString()}</span>
+                    </button>` : ''}
+                </div>`;
+            })()}
         </div>`;
     });
 

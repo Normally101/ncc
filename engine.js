@@ -25,7 +25,7 @@ let gameState = {
     loans: [],
     newGamePlusCount: 0,
     // Fuel depot + tire depot
-    fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85, fuelTankLevel: 1,
+    fuelTank: 1000, fuelTankCapacity: 10000, fuelPrice: 1.85, fuelTankLevel: 1,
     depositoGomme: 0,
     // Seized vehicles (grey market busted)
     seizedCars: [],
@@ -296,6 +296,7 @@ function loadGame() {
         (save.fleet || []).forEach(c => {
             if (c.fuel         === undefined) c.fuel         = 100;
             if (c.mileage      === undefined) c.mileage      = 0;
+            if (c.engineHealth === undefined) c.engineHealth = 100;
             if (c.tirePressure === undefined) c.tirePressure = 100;
             if (!c.upgrades) c.upgrades = [];
             if (!c.vehicleClass) {
@@ -379,7 +380,7 @@ function _kickstartIdleDrivers() {
 function initGame(fresh = true) {
     if (fresh) {
         gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1 });
-        gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [], vehicleClass: 'mercedes_e' });
+        gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'mercedes_e' });
         _refreshRecruits();
     } else {
         _refreshRecruits();
@@ -993,6 +994,9 @@ function refillVehicle(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
     if (car.fuel  === undefined) car.fuel  = 100;
+    if (car.engineHealth === undefined) car.engineHealth = 100;
+    // Engine seized: can't operate
+    if (car.engineHealth <= 0) { car.outOfService = 'engine'; return; }
     if (car.tirePressure === undefined) car.tirePressure = 100;
 
     let outReason = null;
@@ -1041,6 +1045,52 @@ function _retryOutOfServiceVehicles() {
     stoppedCars.forEach(car => refillVehicle(car.id));
     if (stoppedCars.length > 0 && typeof renderTabFleet === 'function') renderTabFleet();
 }
+
+// ─── BLACK MARKET FUEL (Gasolio Agricolo) ─────────────────────────
+window.buyBlackMarketFuel = function(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car) return;
+    if (car.engineHealth <= 0) { showNotification('⚙️ Motore fuso! Ripara prima il motore.', 'error'); return; }
+    const fuelNeeded = 100 - (car.fuel || 0); // % points needed
+    if (fuelNeeded < 1) { showNotification('Il serbatoio è già pieno!', 'error'); return; }
+    const litres    = fuelNeeded * 0.5;                          // 1% ≈ 0.5 L
+    const price     = (gameState.fuelPrice || 1.85) * 0.60;     // 40% discount
+    const cost      = Math.floor(litres * price);
+    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost}`, 'error'); return; }
+    gameState.cash -= cost;
+    car.fuel = 100;
+    logToMap(`⛽🖤 ${car.name}: rifornito con gasolio agricolo. −€${cost}`);
+    showNotification(`⛽ Gasolio agricolo: +${Math.floor(fuelNeeded)}% · −€${cost}`, 'success');
+    // 10% chance of engine damage
+    if (Math.random() < 0.10) {
+        car.engineHealth = Math.max(0, (car.engineHealth || 100) - 20);
+        logToMap(`⚙️ RISCHIO MOTORE: ${car.name} danneggiato (${car.engineHealth}%)!`);
+        showNotification(`⚠️ Gasolio agricolo ha danneggiato il motore di ${car.name}! Salute motore: ${car.engineHealth}%`, 'error');
+        if (car.engineHealth <= 0) {
+            car.outOfService = 'engine';
+            showNotification(`🔴 MOTORE FUSO: ${car.name} necessita riparazione urgente!`, 'error');
+        }
+    }
+    saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
+// ─── RIPARAZIONE MOTORE ───────────────────────────────────────────
+window.repairEngine = function(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car) return;
+    if ((car.engineHealth || 100) >= 100) { showNotification('Il motore è già in perfette condizioni.', 'error'); return; }
+    const damage     = 100 - (car.engineHealth || 100);
+    const repairCost = Math.max(800, damage * 180); // €180 per punto danno, min €800
+    if (gameState.cash < repairCost) { showNotification(`Fondi insufficienti! Ripara motore: €${repairCost.toLocaleString()}`, 'error'); return; }
+    gameState.cash -= repairCost;
+    car.engineHealth = 100;
+    if (car.outOfService === 'engine') car.outOfService = null;
+    logToMap(`🔧 ${car.name}: motore riparato. −€${repairCost.toLocaleString()}`);
+    showNotification(`✅ Motore di ${car.name} riparato! −€${repairCost.toLocaleString()}`, 'success');
+    saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
 
 window.buyFuelForDepot = function(litres) {
     if (!hasInvestment('inv_fuel_depot')) { showNotification('Acquista prima il Deposito Carburante!', 'error'); return; }
@@ -2495,6 +2545,17 @@ function startNextRide(driver) {
     // Serbatoio Maggiorato: -55% consumo
     const serbatoioMult = (car.upgrades || []).includes('serbatoio_ext') ? 0.45 : 1.0;
     car.fuel = Math.max(0, car.fuel - (ride.fromPoi.region !== ride.toPoi.region ? baseFuel * 1.5 : baseFuel) * tireFuelMult * serbatoioMult);
+
+    // Engine health penalty: <30% → double fuel consumption on next ride
+    if ((car.engineHealth || 100) === 0) {
+        // Car should already be stopped; safety guard
+        car.outOfService = 'engine';
+        return;
+    }
+    const _ehMult = (car.engineHealth || 100) < 30 ? 2.0 : 1.0;
+    if (_ehMult > 1) {
+        car.fuel = Math.max(0, car.fuel - (baseFuel * (_ehMult - 1) * serbatoioMult));
+    }
 
     // Mileage tracking
     if (car.mileage === undefined) car.mileage = 0;
