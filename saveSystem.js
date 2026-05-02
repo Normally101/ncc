@@ -106,20 +106,65 @@ window.saveCurrentSlot = function() {
     } catch(e) { console.error('[SaveSystem] Save failed:', e); }
 };
 
-// ── CLOUD SAVE ────────────────────────────────────────────────────
+// ── CLOUD SAVE (debounced: max 1 write/slot every 45s) ───────────
+/*
+   Required Supabase SQL (run once in SQL Editor):
+   ─────────────────────────────────────────────────────────────────
+   CREATE TABLE IF NOT EXISTS public.game_saves (
+       id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id     uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+       slot_index  integer NOT NULL CHECK (slot_index IN (0, 1, 2)),
+       game_state  jsonb NOT NULL DEFAULT '{}',
+       updated_at  timestamptz NOT NULL DEFAULT now(),
+       UNIQUE (user_id, slot_index)
+   );
+   ALTER TABLE public.game_saves ENABLE ROW LEVEL SECURITY;
+   CREATE POLICY "Users manage own saves" ON public.game_saves
+       FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+   ─────────────────────────────────────────────────────────────────
+*/
+const _CLOUD_MIN_INTERVAL_MS = 45_000;
+const _lastCloudSaveTs = {};
+
+function _updateCloudDot(state) {
+    const dot = document.getElementById('cloud-sync-dot');
+    if (!dot) return;
+    dot.textContent = '☁';
+    if (state === 'ok')  { dot.style.color = '#22c55e'; dot.title = '☁ Cloud sync OK'; }
+    if (state === 'err') { dot.style.color = '#ef4444'; dot.title = '☁ Sync fallito (offline?)'; }
+    if (state === 'busy'){ dot.style.color = '#f59e0b'; dot.title = '☁ Salvataggio cloud...'; }
+    clearTimeout(dot._dim);
+    dot._dim = setTimeout(() => { dot.style.opacity = '0.35'; }, 4000);
+    dot.style.opacity = '1';
+}
+
 async function _cloudSaveSlot(slotIndex, saveData) {
     if (!window.currentUser || !window.supabaseClient) return;
+    const now = Date.now();
+    if (_lastCloudSaveTs[slotIndex] && (now - _lastCloudSaveTs[slotIndex]) < _CLOUD_MIN_INTERVAL_MS) return;
+    _lastCloudSaveTs[slotIndex] = now;
+    _updateCloudDot('busy');
     try {
-        await window.supabaseClient.from('game_saves').upsert({
+        const { error } = await window.supabaseClient.from('game_saves').upsert({
             user_id:    window.currentUser.id,
             slot_index: slotIndex,
             game_state: saveData,
             updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id,slot_index' });
+        if (error) { console.warn('[SaveSystem] Cloud upsert error:', error); _updateCloudDot('err'); }
+        else _updateCloudDot('ok');
     } catch(e) {
         console.warn('[SaveSystem] Cloud save failed (offline?):', e);
+        _updateCloudDot('err');
     }
 }
+
+// Force an immediate cloud write (bypasses debounce) — used after major actions
+window.forceCloudSave = function() {
+    if (window.currentSlotIndex === null) return;
+    _lastCloudSaveTs[window.currentSlotIndex] = 0; // reset debounce
+    if (typeof window.saveCurrentSlot === 'function') window.saveCurrentSlot();
+};
 
 // ── DELETE SLOT ──────────────────────────────────────────────────
 window.deleteSlot = function(index) {
@@ -272,14 +317,27 @@ window.showSlotSelector = function() {
 
             <div class="ss-sync-bar">
                 <div class="ss-sync-left">
+                    <button class="ss-btn-secondary ss-sync-btn ss-cloud-btn"
+                        onclick="window.forceSyncFromCloud && window.forceSyncFromCloud()"
+                        title="Scarica i salvataggi più recenti dal cloud Supabase">
+                        ☁ Ricarica da Cloud
+                    </button>
+                    <button class="ss-btn-secondary ss-sync-btn ss-cloud-btn"
+                        onclick="window.forceCloudSave && window.forceCloudSave(); this.textContent='✓ Salvato!'; setTimeout(()=>this.textContent='☁ Salva ora',2000)"
+                        title="Forza un salvataggio immediato sul cloud">
+                        ☁ Salva ora
+                    </button>
+                    <span class="ss-sync-sep">·</span>
                     <button id="sync-folder-btn" class="ss-btn-secondary ss-sync-btn"
-                        onclick="window.syncManager?.selectFolder()">📁 Collega Cartella</button>
+                        onclick="window.syncManager?.selectFolder()">📁 Git Sync</button>
                     <button class="ss-btn-secondary ss-sync-btn"
-                        onclick="window.syncManager?.importAll()" title="Importa save da file (post git pull)">📥 Importa</button>
+                        onclick="window.syncManager?.importAll()" title="Importa save da file (post git pull)">📥</button>
                     <button class="ss-btn-secondary ss-sync-btn"
-                        onclick="window.syncManager?.exportAll()" title="Esporta save su file (pre git push)">📤 Esporta</button>
+                        onclick="window.syncManager?.exportAll()" title="Esporta save su file (pre git push)">📤</button>
                 </div>
-                <div id="sync-folder-info" class="ss-sync-info">Collega la cartella del gioco per abilitare il sync Git.</div>
+                <div id="sync-folder-info" class="ss-sync-info">
+                    ${window.currentUser ? `☁ Account: ${window.currentUser.email}` : 'Collega la cartella per Git sync.'}
+                </div>
             </div>
 
             <div class="ss-macro-bar">

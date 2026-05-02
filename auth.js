@@ -33,8 +33,9 @@ async function _syncSlotsFromCloud(userId) {
             .select('slot_index, game_state, updated_at')
             .eq('user_id', userId);
         if (error || !data) return;
+        let imported = 0;
         data.forEach(row => {
-            const key      = `olgaVisionSlot_${row.slot_index + 1}`;
+            const key      = `chauffeurEmpireSlot_${row.slot_index + 1}`; // was olgaVisionSlot_ (bug)
             const cloudTs  = new Date(row.updated_at).getTime();
             const localRaw = localStorage.getItem(key);
             if (localRaw) {
@@ -44,11 +45,23 @@ async function _syncSlotsFromCloud(userId) {
                 } catch(e) {}
             }
             localStorage.setItem(key, JSON.stringify(row.game_state));
+            imported++;
         });
+        console.log(`[Auth] Cloud sync: ${imported} slot aggiornati da cloud, ${data.length - imported} già aggiornati.`);
     } catch(e) {
         console.warn('[Auth] Cloud sync failed (offline?):', e);
     }
 }
+
+// ── FORCE PULL FROM CLOUD (callable from slot selector) ──────────
+window.forceSyncFromCloud = async function() {
+    if (!window.currentUser) return;
+    const dot = document.getElementById('cloud-sync-dot');
+    if (dot) { dot.textContent = '☁'; dot.style.color = '#f59e0b'; dot.title = 'Sincronizzazione in corso...'; }
+    await _syncSlotsFromCloud(window.currentUser.id);
+    if (dot) { dot.textContent = '☁'; dot.style.color = '#22c55e'; dot.title = 'Cloud sync OK'; }
+    if (typeof window.showSlotSelector === 'function') window.showSlotSelector();
+};
 
 // ── ON SUCCESSFUL AUTH ────────────────────────────────────────────
 async function _onAuthSuccess(user) {
