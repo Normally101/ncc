@@ -991,3 +991,57 @@ details[open] .finance-section-title { color: #00f2ff; }
     color: #4b5563;
     margin-top: 4px;
 }
+
+/* ── LOGOUT BUTTON ────────────────────────────────────────────── */
+#logout-btn {
+    position: fixed; top: 12px; right: 14px; z-index: 500;
+    background: rgba(8,8,20,0.85);
+    border: 1px solid rgba(239,68,68,0.3);
+    color: #f87171; font-size: 11px; font-weight: 600;
+    padding: 5px 10px; border-radius: 8px; cursor: pointer;
+    backdrop-filter: blur(8px);
+    transition: background 0.2s, border-color 0.2s;
+}
+#logout-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.6); }
+
+/* ── FLOTTA IN VIAGGIO PANEL ──────────────────────────────────── */
+#flotta-panel {
+    position: fixed; bottom: 72px; right: 14px; z-index: 400;
+    background: rgba(8,8,20,0.92);
+    border: 1px solid rgba(212,175,55,0.2);
+    border-radius: 12px; padding: 10px 12px;
+    min-width: 240px; max-width: 300px;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    font-family: 'Roboto Mono', monospace;
+}
+.flotta-header {
+    font-size: 10px; font-weight: 700; color: #d4af37;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    display: flex; align-items: center; gap: 6px;
+    margin-bottom: 8px; padding-bottom: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.flotta-count {
+    background: rgba(212,175,55,0.15); color: #d4af37;
+    border-radius: 10px; padding: 1px 6px; font-size: 10px;
+}
+.flotta-row {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 10px; padding: 4px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.flotta-row:last-child { border-bottom: none; }
+.flotta-tier { font-size: 8px; flex-shrink: 0; }
+.flotta-driver { color: #e5e7eb; font-weight: 600; flex-shrink: 0; max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.flotta-route { color: #6b7280; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; }
+.flotta-earn { color: #22c55e; font-size: 9px; flex-shrink: 0; }
+.flotta-timer { color: #00f2ff; font-size: 11px; font-weight: 700; flex-shrink: 0; min-width: 40px; text-align: right; }
+.flotta-timer-soon { color: #f59e0b; animation: pulse 1s infinite; }
+
+/* ── SLOT SELECTOR LOGOUT ROW ─────────────────────────────────── */
+.ss-logout-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-top: 12px; justify-content: center;
+}
+.ss-user-label { font-size: 10px; color: #6b7280; }

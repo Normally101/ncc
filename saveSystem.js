@@ -289,6 +289,10 @@ window.showSlotSelector = function() {
                 <span class="ss-macro-sep">·</span>
                 <span class="ss-macro-item">🌍 Mercati globali aperti</span>
             </div>
+            <div class="ss-logout-row">
+                <button onclick="window.authLogout()" class="ss-btn-danger ss-btn-sm">⏻ Logout</button>
+                ${window.currentUser ? `<span class="ss-user-label">${window.currentUser.email}</span>` : ''}
+            </div>
         </div>
     </div>`;
     document.body.appendChild(overlay);

@@ -15,7 +15,7 @@ let gameState = {
     cash: 5000, reputation: 0.0, energy: 100,
     day: 1, month: 1, hour: 8, minute: 0, paused: false,
     fleet: [], drivers: [], staff: [], investments: [],
-    pendingRides: [], activeRides: [], emails: [],
+    pendingRides: [], activeRides: [], activeTrips: [], emails: [],
     unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
     availableRecruits: [],
     weather: 'sole', weatherHoursLeft: 6,
@@ -274,6 +274,7 @@ function loadGame() {
         if (!save.constructions)   save.constructions   = [];
         if (!save.claimableQuests) save.claimableQuests = [];
         if (!save.completedQuests) save.completedQuests = [];
+        if (!save.activeTrips)     save.activeTrips     = [];
         // Driver satisfaction migration
         (save.drivers || []).forEach(d => {
             if (d.satisfaction === undefined) d.satisfaction = 70;
@@ -384,6 +385,7 @@ function initGame(fresh = true) {
         _refreshRecruits();
         setTimeout(_kickstartIdleDrivers, 500);
         setTimeout(_applyWeatherOverlay, 800);
+        setTimeout(checkActiveTrips, 200); // resolve any trips that completed while offline
         // Redraw map with saved unlocked regions
         setTimeout(() => {
             if (typeof drawHighways === 'function') drawHighways();
@@ -408,6 +410,8 @@ function initGame(fresh = true) {
     setInterval(_maybeGenerateDynamicEvent, 180000);
     setInterval(_maybeDiamondContract, 240000);
     setInterval(saveGame, 30000);
+    setInterval(checkActiveTrips, 5000);
+    setInterval(_renderFlottaPanel, 1000);
 
     updateUI();
 }
@@ -481,7 +485,7 @@ function gameLoop() {
 
         ride.elapsed += ride.inTraffic ? 2500 : 5000;
         if (ride.elapsed >= ride.duration) {
-            completeRide(ride);
+            completeRide(ride, true); // cash deferred to checkActiveTrips
             gameState.activeRides.splice(i, 1);
         }
     }
@@ -2502,13 +2506,30 @@ function startNextRide(driver) {
     }
 
     gameState.activeRides.push(ride);
+
+    // Real-time trip entry: 2 min city, 10 min intercity (accelerated for testing)
+    const _isIntercity = ride.fromPoi.region !== ride.toPoi.region;
+    const _realMs      = _isIntercity ? 10 * 60 * 1000 : 2 * 60 * 1000;
+    gameState.activeTrips.push({
+        id:         ride.id,
+        driverId:   driver.id,
+        carId:      car.id,
+        driverName: driver.name,
+        fromName:   ride.fromPoi.name,
+        toName:     ride.toPoi.name,
+        tier:       ride.tier,
+        startTime:  Date.now(),
+        endTime:    Date.now() + _realMs,
+        earnings:   null, // filled by completeRide when visual simulation ends
+    });
+
     const trafficLabel = trafficMult < 1 ? ' 🚦' : trafficMult > 1 ? ' 🌙' : '';
     logToMap(`🚖 ${driver.name} partito per ${ride.toPoi.name}${trafficLabel}`);
 
     if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
 }
 
-function completeRide(ride) {
+function completeRide(ride, _deferPay = false) {
     const hasHR = gameState.staff.some(s => s.id === 'hr');
     const driver = gameState.drivers.find(d => d.id === ride.driverId);
 
@@ -2605,7 +2626,14 @@ function completeRide(ride) {
     }
 
     const earned = Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult);
-    gameState.cash += earned;
+
+    if (_deferPay) {
+        // Store earnings in the matching activeTrip; cash added when real-time timer fires
+        const _trip = (gameState.activeTrips || []).find(t => t.id === ride.id);
+        if (_trip) _trip.earnings = earned;
+    } else {
+        gameState.cash += earned;
+    }
     gameState.reputation = Math.min(5.0 + gameState.prestige, gameState.reputation + 0.02);
 
     // XP gain for non-CEO drivers
@@ -2676,7 +2704,9 @@ function completeRide(ride) {
     // Rifornimento automatico: il Logistics Manager gestisce gasolio e gomme
     if (car2) refillVehicle(car2.id);
 
-    if (driver) startNextRide(driver);
+    // If pay is deferred, driver stays busy until checkActiveTrips() fires at endTime.
+    // If paying immediately (legacy/manual calls), free the driver now.
+    if (!_deferPay && driver) startNextRide(driver);
 }
 
 // ─── EVENTI E EMAIL ───
@@ -3667,6 +3697,68 @@ window.divestVentureStake = function(agencyId) {
 };
 
 // ─────────────────────────────────────────────────────────────────
+// ─── REAL-TIME TRIP COMPLETION ────────────────────────────────────
+function checkActiveTrips() {
+    const trips = gameState.activeTrips || [];
+    if (!trips.length) return;
+    const now = Date.now();
+    let completed = 0;
+    for (let i = trips.length - 1; i >= 0; i--) {
+        const trip = trips[i];
+        if (now < trip.endTime) continue;
+        // Pay earnings
+        if (trip.earnings != null) {
+            gameState.cash += trip.earnings;
+            const fmt = trip.earnings >= 1000
+                ? `€${(trip.earnings / 1000).toFixed(1)}k`
+                : `€${trip.earnings}`;
+            showNotification(`✅ ${trip.driverName} → ${trip.toName}: +${fmt} incassati`, 'success');
+            logToMap(`💰 Viaggio completato: +€${trip.earnings} — ${trip.toName}`);
+        }
+        // Free driver
+        const driver = gameState.drivers.find(d => d.id === trip.driverId);
+        if (driver && driver.status === 'busy') {
+            driver.status = 'idle';
+            startNextRide(driver);
+        }
+        trips.splice(i, 1);
+        completed++;
+    }
+    if (completed > 0) {
+        updateUI();
+        _renderFlottaPanel();
+        saveGame();
+    }
+}
+
+// ─── FLOTTA IN VIAGGIO PANEL ──────────────────────────────────────
+function _renderFlottaPanel() {
+    const panel = document.getElementById('flotta-panel');
+    if (!panel) return;
+    const trips = (gameState.activeTrips || []);
+    if (!trips.length) { panel.classList.add('hidden'); return; }
+    panel.classList.remove('hidden');
+    const now = Date.now();
+    const tierColor = { ultra:'#d4af37', vip:'#a78bfa', business:'#00f2ff', group:'#34d399', standard:'#9ca3af' };
+    panel.innerHTML =
+        `<div class="flotta-header">🚗 Flotta in Viaggio <span class="flotta-count">${trips.length}</span></div>` +
+        trips.map(t => {
+            const ms  = Math.max(0, t.endTime - now);
+            const min = Math.floor(ms / 60000);
+            const sec = Math.floor((ms % 60000) / 1000);
+            const timer = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+            const col = tierColor[t.tier] || '#9ca3af';
+            const earningsLabel = t.earnings != null ? `<span class="flotta-earn">€${t.earnings.toLocaleString()}</span>` : '';
+            return `<div class="flotta-row">
+                <span class="flotta-tier" style="color:${col}">●</span>
+                <span class="flotta-driver">${t.driverName}</span>
+                <span class="flotta-route">${t.toName}</span>
+                ${earningsLabel}
+                <span class="flotta-timer ${ms < 30000 ? 'flotta-timer-soon' : ''}">${timer}</span>
+            </div>`;
+        }).join('');
+}
+
 function updateUI() {
     const elCash = document.getElementById('tb-cash'); if(elCash) elCash.innerText = `€${Math.floor(gameState.cash).toLocaleString()}`;
     const elRep = document.getElementById('tb-rep'); if(elRep) elRep.innerText = `${gameState.reputation.toFixed(1)} ★`;
@@ -3723,6 +3815,8 @@ function updateUI() {
     if (hubModal && !hubModal.classList.contains('hidden') && typeof _updateHubStats === 'function') {
         _updateHubStats();
     }
+
+    _renderFlottaPanel();
 }
 
 function openHotelModal() {
