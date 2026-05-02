@@ -2305,7 +2305,10 @@ function generateContractRide() {
 }
 
 const TIER_COMPATIBILITY = {
-    'ultra': ['ultra'], 'vip': ['vip', 'ultra'], 'business': ['business', 'vip', 'ultra'], 'standard': ['standard', 'business', 'vip', 'ultra']
+    'ultra':    ['ultra'],
+    'vip':      ['vip', 'ultra', 'group'],
+    'business': ['business', 'vip', 'ultra', 'group'],
+    'standard': ['standard', 'business', 'vip', 'ultra', 'group']
 };
 
 function assignRideToDriver(rideId, driverId) {
@@ -2357,10 +2360,35 @@ function _driverCanTakeRide(driver, ride) {
 
 function assignAllRides() {
     if (gameState.pendingRides.length === 0) return;
-    for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
-        const ride = gameState.pendingRides[i];
-        const validDrivers = gameState.drivers.filter(d => _driverCanTakeRide(d, ride)).sort((a, b) => a.queue.length - b.queue.length);
-        if (validDrivers.length > 0) assignRideToDriver(ride.id, validDrivers[0].id);
+
+    // Priorità: prima i contratti con veicolo richiesto, poi le corse generiche
+    const toAssign = [...gameState.pendingRides].sort((a, b) => (b.vehicleRequired ? 1 : 0) - (a.vehicleRequired ? 1 : 0));
+
+    let assigned = 0;
+    let skipped  = 0;
+
+    for (const ride of toAssign) {
+        // Skip se già rimossa da un'assegnazione precedente in questo ciclo
+        if (!gameState.pendingRides.some(r => r.id === ride.id)) continue;
+
+        const validDrivers = gameState.drivers
+            .filter(d => _driverCanTakeRide(d, ride))
+            .sort((a, b) => a.queue.length - b.queue.length);
+
+        if (validDrivers.length > 0) {
+            // Assegna al driver con la coda più corta; in caso di parità, ruota tra i driver
+            assignRideToDriver(ride.id, validDrivers[0].id);
+            assigned++;
+        } else {
+            skipped++;
+        }
+    }
+
+    if (assigned > 0 && typeof showNotification === 'function') {
+        const skipNote = skipped > 0 ? ` (${skipped} senza autista compatibile)` : '';
+        showNotification(`⚡ ${assigned} cors${assigned === 1 ? 'a smistata' : 'e smistate'}!${skipNote}`, 'success');
+    } else if (assigned === 0 && typeof showNotification === 'function') {
+        showNotification('⚠ Nessun autista disponibile per le corse in attesa.', 'error');
     }
 }
 
