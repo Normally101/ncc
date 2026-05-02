@@ -13,8 +13,9 @@ document.head.appendChild(styleFix);
 
 let map = null; 
 let _poiMarkers = {}; 
-let _vehicleMarkers = {}; 
+let _vehicleMarkers = {};
 let _routeLines = {};
+let _rideGeomCache = {}; // survives ride removal from activeRides so activeTrips can position marker at dest
 
 const HIGHWAYS = {
     // ─── LAZIO INTERNO ───────────────────────────────────────────────────
@@ -283,6 +284,24 @@ function initMap() {
             paint: { 'line-color': '#f59e0b', 'line-width': 1.5, 'line-opacity': 0.80, 'line-dasharray': [3, 5] }
         });
 
+        // ─── Vehicle trail lines (traveled portion of route) ───────
+        map.addSource('vehicle-trails', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'vehicle-trails-glow',
+            type: 'line',
+            source: 'vehicle-trails',
+            paint: { 'line-color': ['get', 'color'], 'line-width': 8, 'line-opacity': 0.18, 'line-blur': 6 }
+        });
+        map.addLayer({
+            id: 'vehicle-trails-core',
+            type: 'line',
+            source: 'vehicle-trails',
+            paint: { 'line-color': ['get', 'color'], 'line-width': 2.5, 'line-opacity': 0.90 }
+        });
+
         map.on('zoom', _updatePOIVisibility);
 
         _mapReady = true;
@@ -442,12 +461,32 @@ window.removeCheckpointMarker = function(rideId) {
     if (_checkpointMarkers[rideId]) { _checkpointMarkers[rideId].remove(); delete _checkpointMarkers[rideId]; }
 };
 
-// ─── VISUAL LOOP (Mapbox vehicle markers) ────────────────────────
+// ─── TIER COLOR MAP for trails ────────────────────────────────────
+const _TRAIL_COLOR = { ultra:'#d4af37', vip:'#a78bfa', business:'#00f2ff', group:'#34d399', standard:'#9ca3af' };
+
+// Extract the traveled portion of a roadGeom up to `progress` (0-1)
+function _trailGeom(roadGeom, progress) {
+    if (!roadGeom || roadGeom.length < 2) return null;
+    const p = Math.min(1, Math.max(0, progress));
+    const totalSeg = roadGeom.length - 1;
+    const segF = p * totalSeg;
+    const idx = Math.min(Math.floor(segF), totalSeg - 1);
+    const t = segF - idx;
+    const tip = [
+        roadGeom[idx][0] + (roadGeom[idx + 1][0] - roadGeom[idx][0]) * t,
+        roadGeom[idx][1] + (roadGeom[idx + 1][1] - roadGeom[idx][1]) * t
+    ];
+    return [...roadGeom.slice(0, idx + 1), tip];
+}
+
+// ─── VISUAL LOOP (Mapbox vehicle markers + trail scia) ────────────
 function visualLoop() {
     requestAnimationFrame(visualLoop);
     if (!map || !_mapReady || !gameState || gameState.paused) return;
     const now = Date.now();
+    const trailFeatures = [];
 
+    // ── Phase 1: animate rides still in visual simulation ──────────
     gameState.activeRides.forEach(ride => {
         if (!ride.lastVisualUpdate) ride.lastVisualUpdate = now;
         const delta = now - ride.lastVisualUpdate;
@@ -464,6 +503,17 @@ function visualLoop() {
         const pos = calculateInterpolatedPosition(ride, ride.visualElapsed);
         if (!pos) return;
 
+        // Cache geometry so activeTrips can use it after ride leaves activeRides
+        _rideGeomCache[ride.id] = {
+            roadGeom:  ride.roadGeom || null,
+            fromPoi:   ride.fromPoi,
+            toPoi:     ride.toPoi,
+            tier:      ride.tier,
+            lastPos:   pos,
+            lastAngle: ride._lastAngle || 0,
+            progress:  Math.min(1, ride.visualElapsed / ride.duration),
+        };
+
         // Heading calculation
         let angle = ride._lastAngle || 0;
         if (ride._lastPos) {
@@ -475,6 +525,7 @@ function visualLoop() {
             }
         }
         ride._lastPos = pos;
+        _rideGeomCache[ride.id].lastAngle = angle;
 
         if (!_vehicleMarkers[ride.id]) {
             const wrap = document.createElement('div');
@@ -484,24 +535,84 @@ function visualLoop() {
             arrow.style.transform = `rotate(${angle}deg)`;
             wrap.appendChild(arrow);
             _vehicleMarkers[ride.id] = new mapboxgl.Marker({ element: wrap })
-                .setLngLat([pos[1], pos[0]])   // [lng, lat]
+                .setLngLat([pos[1], pos[0]])
                 .addTo(map);
         } else {
             _vehicleMarkers[ride.id].setLngLat([pos[1], pos[0]]);
-            const arrow = _vehicleMarkers[ride.id].getElement()?.querySelector('.car-arrow');
+            const el = _vehicleMarkers[ride.id].getElement();
+            el?.classList.remove('waiting');
+            const arrow = el?.querySelector('.car-arrow');
             if (arrow) arrow.style.transform = `rotate(${angle}deg)`;
+        }
+
+        // Trail: traveled portion of the road geometry
+        const geom = _trailGeom(ride.roadGeom, _rideGeomCache[ride.id].progress);
+        if (geom && geom.length >= 2) {
+            trailFeatures.push({
+                type: 'Feature',
+                properties: { color: _TRAIL_COLOR[ride.tier] || '#9ca3af' },
+                geometry: { type: 'LineString', coordinates: geom }
+            });
         }
     });
 
-    // Cleanup markers for finished rides
+    // ── Phase 2: keep markers for activeTrips past visual completion ─
+    const activeRideIds = new Set(gameState.activeRides.map(r => r.id));
+    (gameState.activeTrips || []).forEach(trip => {
+        if (activeRideIds.has(trip.id)) return; // still handled by Phase 1
+        const cached = _rideGeomCache[trip.id];
+        if (!cached) return;
+
+        // Position at destination (progress = 1)
+        let pos = cached.lastPos;
+        if (cached.roadGeom && cached.roadGeom.length >= 2) {
+            const dest = cached.roadGeom[cached.roadGeom.length - 1];
+            pos = [dest[1], dest[0]]; // [lat, lng]
+        } else if (cached.toPoi) {
+            pos = [cached.toPoi.lat, cached.toPoi.lng];
+        }
+        if (!pos) return;
+
+        if (!_vehicleMarkers[trip.id]) {
+            const wrap = document.createElement('div');
+            wrap.className = 'car-marker-wrap waiting';
+            const arrow = document.createElement('div');
+            arrow.className = 'car-arrow';
+            arrow.style.transform = `rotate(${cached.lastAngle || 0}deg)`;
+            wrap.appendChild(arrow);
+            _vehicleMarkers[trip.id] = new mapboxgl.Marker({ element: wrap })
+                .setLngLat([pos[1], pos[0]])
+                .addTo(map);
+        } else {
+            const el = _vehicleMarkers[trip.id].getElement();
+            el?.classList.add('waiting');
+        }
+
+        // Full trail (100%) while waiting for payout
+        if (cached.roadGeom && cached.roadGeom.length >= 2) {
+            trailFeatures.push({
+                type: 'Feature',
+                properties: { color: _TRAIL_COLOR[trip.tier] || '#9ca3af' },
+                geometry: { type: 'LineString', coordinates: cached.roadGeom }
+            });
+        }
+    });
+
+    // ── Cleanup: remove markers only when ride is gone from both ────
+    const activeTripIds = new Set((gameState.activeTrips || []).map(t => t.id));
     for (const id in _vehicleMarkers) {
-        if (!gameState.activeRides.find(r => r.id == id)) {
+        if (!activeRideIds.has(+id) && !activeTripIds.has(+id)) {
             _vehicleMarkers[id].remove();
             delete _vehicleMarkers[id];
+            delete _rideGeomCache[id];
         }
     }
 
-    // Update active route lines every 60 frames
+    // ── Update trail source ─────────────────────────────────────────
+    const trailSrc = map.getSource('vehicle-trails');
+    if (trailSrc) trailSrc.setData({ type: 'FeatureCollection', features: trailFeatures });
+
+    // ── Update active route lines every 60 frames ───────────────────
     if (!visualLoop._frame) visualLoop._frame = 0;
     if (++visualLoop._frame % 60 === 0) _updateActiveRouteLines();
 }
