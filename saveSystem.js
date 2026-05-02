@@ -95,18 +95,44 @@ window.saveCurrentSlot = function() {
             }))
         };
         save._saveTimestamp = Date.now();
+        // LocalStorage (fast, offline-safe)
         localStorage.setItem(key, JSON.stringify(save));
         // Auto-sync to file if folder is connected
         if (window.syncManager?.dirHandle) {
             window.syncManager.writeSlot(window.currentSlotIndex, save);
         }
+        // Cloud save (fire-and-forget — don't block the game tick)
+        _cloudSaveSlot(window.currentSlotIndex, save);
     } catch(e) { console.error('[SaveSystem] Save failed:', e); }
 };
+
+// ── CLOUD SAVE ────────────────────────────────────────────────────
+async function _cloudSaveSlot(slotIndex, saveData) {
+    if (!window.currentUser || !window.supabaseClient) return;
+    try {
+        await window.supabaseClient.from('game_saves').upsert({
+            user_id:    window.currentUser.id,
+            slot_index: slotIndex,
+            game_state: saveData,
+            updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id,slot_index' });
+    } catch(e) {
+        console.warn('[SaveSystem] Cloud save failed (offline?):', e);
+    }
+}
 
 // ── DELETE SLOT ──────────────────────────────────────────────────
 window.deleteSlot = function(index) {
     if (!confirm(`Eliminare il salvataggio nello Slot ${index + 1}? Questa azione è irreversibile.`)) return;
     localStorage.removeItem(SLOT_KEYS[index]);
+    // Cloud delete
+    if (window.currentUser && window.supabaseClient) {
+        window.supabaseClient.from('game_saves')
+            .delete()
+            .eq('user_id', window.currentUser.id)
+            .eq('slot_index', index)
+            .then(({ error }) => { if (error) console.warn('[SaveSystem] Cloud delete failed:', error); });
+    }
     window.showSlotSelector();
 };
 
@@ -293,7 +319,4 @@ window.loadExistingSlot = function(slotIndex) {
     if (typeof window._startGameWithSlot === 'function') window._startGameWithSlot(slotIndex, false);
 };
 
-// ── BOOTSTRAP ────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-    window.showSlotSelector();
-});
+// Bootstrap is handled by auth.js (showSlotSelector called after auth check)

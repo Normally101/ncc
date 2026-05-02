@@ -954,3 +954,40 @@ details[open] .finance-section-title { color: #00f2ff; }
     color: #d4af37; flex-shrink: 0;
 }
 
+
+/* ── AUTH OVERLAY ─────────────────────────────────────────────── */
+#auth-overlay {
+    position: fixed; inset: 0; z-index: 10000;
+    background: #080810;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Montserrat', 'Inter', sans-serif;
+}
+.auth-card {
+    background: rgba(12,12,28,0.98);
+    border: 1px solid rgba(212,175,55,0.25);
+    border-radius: 20px;
+    padding: 40px 36px 32px;
+    width: min(420px, 94vw);
+    text-align: center;
+    box-shadow: 0 0 60px rgba(212,175,55,0.08), 0 30px 80px rgba(0,0,0,0.7);
+}
+.auth-form {
+    display: flex; flex-direction: column; gap: 12px;
+    margin-top: 8px;
+}
+.auth-error {
+    display: none;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.35);
+    border-radius: 8px;
+    color: #fca5a5;
+    font-size: 12px;
+    padding: 8px 12px;
+    text-align: left;
+    line-height: 1.5;
+}
+.auth-hint {
+    font-size: 11px;
+    color: #4b5563;
+    margin-top: 4px;
+}
