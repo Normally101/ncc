@@ -1054,3 +1054,118 @@ details[open] .finance-section-title { color: #00f2ff; }
     margin-top: 12px; justify-content: center;
 }
 .ss-user-label { font-size: 10px; color: #6b7280; }
+
+/* ================================================================
+   MOBILE RESPONSIVE (≤ 640px)
+   ================================================================ */
+@media (max-width: 640px) {
+
+    /* ── Header: compact single-row strip ────────────────────── */
+    header.fixed {
+        padding: 0.35rem 0.6rem !important;
+        gap: 0.4rem !important;
+        flex-wrap: nowrap !important;
+    }
+    /* Left pill: show only logo + cash */
+    header .pointer-events-auto.bg-panel {
+        padding: 0.4rem 0.6rem !important;
+        gap: 0.5rem !important;
+        border-radius: 0.85rem !important;
+        flex-wrap: nowrap !important;
+        overflow: hidden !important;
+    }
+    /* Hide verbose stats from header on mobile; access them via Hub */
+    header .flex-col.w-20,           /* Reputazione */
+    header .flex-col.w-32,           /* Stanchezza CEO */
+    header .h-8.w-\[1px\].mx-1,     /* dividers */
+    header .flex.items-center.gap-2  /* Weather */
+    { display: none !important; }
+
+    header .flex-col.w-24 { width: auto !important; }
+    header #tb-cash { font-size: 0.85rem !important; }
+    /* Logo text */
+    header h1 { font-size: 0.6rem !important; }
+    header .text-3xl { font-size: 1.2rem !important; }
+    header p.text-\[9px\] { display: none !important; }
+    /* Right pill: time only */
+    header .flex.items-center.gap-3.pointer-events-auto.bg-panel { padding: 0.35rem 0.6rem !important; gap: 0.4rem !important; border-radius: 0.85rem !important; }
+    header #tb-tc { font-size: 0.75rem !important; }
+    header #tb-time { font-size: 1rem !important; }
+
+    /* ── Left sidebar → bottom nav bar ──────────────────────── */
+    nav.fixed {
+        left: 0 !important; right: 0 !important;
+        bottom: 0 !important; top: auto !important;
+        transform: none !important;
+        flex-direction: row !important;
+        justify-content: space-around !important;
+        align-items: center !important;
+        padding: 0.3rem 0.25rem env(safe-area-inset-bottom, 0px) !important;
+        background: rgba(6,6,18,0.97) !important;
+        border-top: 1px solid rgba(0,242,255,0.15) !important;
+        border-left: none !important; border-right: none !important;
+        border-radius: 0 !important;
+        gap: 0.25rem !important;
+        box-shadow: 0 -4px 24px rgba(0,0,0,0.7) !important;
+        width: 100% !important;
+    }
+    nav.fixed .nav-btn {
+        width: 44px !important; height: 44px !important;
+        border-radius: 10px !important;
+        font-size: 1.15rem !important;
+    }
+    nav.fixed .nav-btn:hover { transform: none !important; }
+    nav.fixed .hub-divider { display: none !important; }
+    /* Disable desktop tooltips on mobile */
+    nav.fixed .nav-btn[data-title]:hover::after { display: none !important; }
+
+    /* ── Main panel → bottom drawer ─────────────────────────── */
+    #main-panel {
+        right: 0 !important; left: 0 !important;
+        bottom: 62px !important;  /* above bottom nav */
+        top: auto !important;
+        width: 100% !important;
+        max-height: 58vh !important;
+        border-radius: 1.25rem 1.25rem 0 0 !important;
+        border-bottom: none !important;
+    }
+    #main-panel.hidden-mobile { display: none !important; }
+
+    /* ── Flotta panel: above bottom nav ──────────────────────── */
+    #flotta-panel {
+        bottom: 68px !important; right: 0.5rem !important;
+        left: 0.5rem !important; max-width: none !important;
+    }
+
+    /* ── Logout button: smaller, repositioned ────────────────── */
+    #logout-btn {
+        top: 6px !important; right: 6px !important;
+        font-size: 9px !important;
+        padding: 4px 7px !important;
+    }
+
+    /* ── Live map overlay: hidden on mobile ──────────────────── */
+    #live-map-overlay { display: none !important; }
+
+    /* ── Touch-friendly interactive elements ─────────────────── */
+    .btn-blue, .btn-gold, button.btn-blue, button.btn-gold {
+        min-height: 40px !important;
+    }
+    /* Inertia scrolling */
+    .overflow-y-auto, #tab-container {
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+    }
+
+    /* ── Hub modal: full-screen on mobile ────────────────────── */
+    .hub-inner {
+        max-width: 100% !important;
+        max-height: 90vh !important;
+        border-radius: 1.25rem 1.25rem 0 0 !important;
+    }
+    .hub-modal { align-items: flex-end !important; }
+    .hub-grid { grid-template-columns: repeat(3, 1fr) !important; }
+
+    /* ── Auth overlay form: readable on small screens ─────────── */
+    .auth-card { padding: 1.5rem 1rem !important; max-width: 95vw !important; }
+}
