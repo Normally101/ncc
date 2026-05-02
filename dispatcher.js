@@ -1245,7 +1245,8 @@ function renderTabFleet() {
         const tirePct = car.tirePressure !== undefined ? Math.floor(car.tirePressure) : 100;
         const tireColor = tirePct < 30 ? '#ff4060' : tirePct < 60 ? '#f59e0b' : '#22c55e';
         const outReason = car.outOfService;
-        const outLabel = outReason === 'fuel'   ? '🔴 FERMA — Deposito Gasolio esaurito'
+        const outLabel = (outReason === 'fuel' && fuelPct > 5) ? null
+                       : outReason === 'fuel'   ? '🔴 FERMA — Serbatoio esaurito (usa Gestisci → Rifornisci)'
                        : outReason === 'tires'  ? '🔴 FERMA — Deposito Gomme esaurito'
                        : outReason === 'engine' ? '🔴 MOTORE FUSO — Riparazione urgente'
                        : null;
@@ -1290,10 +1291,15 @@ function renderTabFleet() {
                     ${ehWarn}
                 </div>
                 <div class="flex gap-1 mt-1.5">
+                    <button onclick="window.buyStandardFuel('${car.id}')"
+                        class="flex-1 text-[8px] py-0.5 px-1 rounded border border-cyan-700/50 bg-cyan-950/30 text-cyan-300 hover:bg-cyan-900/40 transition-colors"
+                        title="Distributore pubblico: prezzo pieno, nessun rischio">
+                        ⛽ Rifornisci<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85))}</span>
+                    </button>
                     <button onclick="window.buyBlackMarketFuel('${car.id}')"
                         class="flex-1 text-[8px] py-0.5 px-1 rounded border border-yellow-700/50 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900/40 transition-colors"
                         title="Gasolio Agricolo: 40% sconto, 10% rischio motore">
-                        🖤 Gasolio Agric. (−40%)<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85)*0.60)}</span>
+                        🖤 Agric. (−40%)<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85)*0.60)}</span>
                     </button>
                     ${eh < 100 ? `<button onclick="window.repairEngine('${car.id}')"
                         class="flex-1 text-[8px] py-0.5 px-1 rounded border border-orange-600/50 bg-orange-950/30 text-orange-300 hover:bg-orange-900/40 transition-colors">
@@ -1620,9 +1626,9 @@ window.openCarModal = function(carId) {
     const outReason = car.outOfService;
 
     let html = `<div class="space-y-3">
-    ${outReason ? `<div class="p-2 border border-red-500/40 bg-red-950/20 rounded-lg text-[9px] text-red-300 font-bold">
-        🔴 Auto ferma: deposito ${outReason === 'fuel' ? 'gasolio' : 'gomme'} esaurito.<br>
-        <span class="text-gray-400 font-normal">Rifornisci il deposito nella schermata Flotta — il Logistics Manager riprenderà l'auto automaticamente.</span>
+    ${(outReason && !(outReason === 'fuel' && fuelPct > 5)) ? `<div class="p-2 border border-red-500/40 bg-red-950/20 rounded-lg text-[9px] text-red-300 font-bold">
+        🔴 Auto ferma: ${outReason === 'fuel' ? 'serbatoio esaurito — rifornisci qui sotto' : outReason === 'engine' ? 'motore fuso — riparazione urgente' : 'deposito gomme esaurito'}.<br>
+        <span class="text-gray-400 font-normal">${outReason === 'fuel' ? 'Usa "Rifornisci" o "Gasolio Agric." qui sotto per sbloccarla.' : outReason === 'engine' ? 'Usa il pulsante Ripara Motore qui sotto.' : 'Rifornisci il deposito gomme nella schermata Flotta.'}</span>
     </div>` : ''}
     <div>
         <div class="flex justify-between text-[9px] text-gray-500 mb-1"><span>⛽ Carburante</span><span style="color:${fuelColor}">${fuelPct}%</span></div>

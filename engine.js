@@ -1001,7 +1001,7 @@ function refillVehicle(carId) {
 
     let outReason = null;
 
-    // — Gasolio —
+    // — Gasolio — (deposito aziendale è opzionale; l'auto si ferma solo se il suo serbatoio è sotto il 5%)
     if (car.fuel < 99) {
         const litresNeeded = (100 - car.fuel) * 0.5; // 1% serbatoio ≈ 0.5 L
         if ((gameState.fuelTank || 0) >= litresNeeded) {
@@ -1009,17 +1009,22 @@ function refillVehicle(carId) {
             car.fuel = 100;
             logToMap(`⛽ ${car.name}: serbatoio pieno dal deposito. (${Math.floor(gameState.fuelTank)}L rimasti)`);
         } else if ((gameState.fuelTank || 0) > 0) {
-            // Riempi parzialmente col poco che rimane
             const litresAvail = gameState.fuelTank;
             car.fuel = Math.min(100, car.fuel + Math.floor(litresAvail / 0.5));
             gameState.fuelTank = 0;
-            outReason = 'fuel';
-            logToMap(`⚠️ ${car.name}: deposito gasolio ESAURITO. Auto ferma.`);
-            showNotification(`🔴 Deposito gasolio esaurito! ${car.name} non può partire.`, 'error');
+            // Ferma l'auto solo se il carburante nel veicolo è critico (<5%)
+            if (car.fuel < 5) {
+                outReason = 'fuel';
+                logToMap(`⚠️ ${car.name}: serbatoio quasi vuoto (${Math.floor(car.fuel)}%). Rifornire.`);
+                showNotification(`🔴 ${car.name} quasi a secco! Rifornire al distributore.`, 'error');
+            }
         } else {
-            outReason = 'fuel';
-            logToMap(`⚠️ ${car.name}: nessun gasolio nel deposito. Auto ferma.`);
-            showNotification(`🔴 Deposito gasolio vuoto! ${car.name} ferma in garage.`, 'error');
+            // Deposito aziendale vuoto — l'auto ferma SOLO se il suo serbatoio non basta
+            if (car.fuel < 5) {
+                outReason = 'fuel';
+                logToMap(`⚠️ ${car.name}: serbatoio esaurito. Rifornire al distributore.`);
+                showNotification(`🔴 ${car.name} a secco! Usa il distributore nel pannello Flotta.`, 'error');
+            }
         }
     }
 
@@ -1059,6 +1064,7 @@ window.buyBlackMarketFuel = function(carId) {
     if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost}`, 'error'); return; }
     gameState.cash -= cost;
     car.fuel = 100;
+    if (car.outOfService === 'fuel') car.outOfService = null;
     logToMap(`⛽🖤 ${car.name}: rifornito con gasolio agricolo. −€${cost}`);
     showNotification(`⛽ Gasolio agricolo: +${Math.floor(fuelNeeded)}% · −€${cost}`, 'success');
     // 10% chance of engine damage
@@ -1071,6 +1077,26 @@ window.buyBlackMarketFuel = function(carId) {
             showNotification(`🔴 MOTORE FUSO: ${car.name} necessita riparazione urgente!`, 'error');
         }
     }
+    saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
+// ─── STANDARD FUEL (distributore pubblico, prezzo pieno) ──────────
+window.buyStandardFuel = function(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car) return;
+    if (car.engineHealth <= 0) { showNotification('⚙️ Motore fuso! Ripara prima il motore.', 'error'); return; }
+    const fuelNeeded = 100 - (car.fuel || 0);
+    if (fuelNeeded < 1) { showNotification('Il serbatoio è già pieno!', 'error'); return; }
+    const litres = fuelNeeded * 0.5;
+    const price  = gameState.fuelPrice || 1.85;
+    const cost   = Math.floor(litres * price);
+    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost}`, 'error'); return; }
+    gameState.cash -= cost;
+    car.fuel = 100;
+    if (car.outOfService === 'fuel') car.outOfService = null;
+    logToMap(`⛽ ${car.name}: rifornito al distributore. −€${cost}`);
+    showNotification(`⛽ Rifornimento standard: +${Math.floor(fuelNeeded)}% · −€${cost}`, 'success');
     saveGame();
     if (typeof renderTabFleet === 'function') renderTabFleet();
 };
@@ -2468,7 +2494,8 @@ function startNextRide(driver) {
 
     const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
     if (!car || car.condition <= 10) { driver.status = 'idle'; return; }
-    // OutOfService check: auto ferma per deposito vuoto — il Logistics Manager la riprenderà appena si rifornisce il deposito
+    // Auto-heal stale fuel flag if the car's own tank is sufficient
+    if (car.outOfService === 'fuel' && (car.fuel || 0) > 5) car.outOfService = null;
     if (car.outOfService) {
         driver.status = 'idle';
         return;
