@@ -1,9 +1,29 @@
 'use strict';
 /* ================================================================
-   auth.js — Olga Vision · Supabase Auth + Cloud Slot Sync
+   auth.js — Chauffeur Empire · Supabase Auth + Cloud Slot Sync
+   Redirect URL: https://www.chauffeurempire.com
    ================================================================ */
 
 window.currentUser = null;
+
+// ── ONE-TIME LEGACY KEY MIGRATION (olgaVision → chauffeurEmpire) ──
+(function _migrateLegacyKeys() {
+    const keyMap = {
+        'olgaVisionSlot_1':       'chauffeurEmpireSlot_1',
+        'olgaVisionSlot_2':       'chauffeurEmpireSlot_2',
+        'olgaVisionSlot_3':       'chauffeurEmpireSlot_3',
+        'olgaVisionSave_v2':      'chauffeurEmpireSave_v2',
+        'olgaVisionLang':         'chauffeurEmpireLang',
+        'olgaVisionTutorialDone': 'chauffeurEmpireTutorialDone',
+    };
+    Object.entries(keyMap).forEach(([old, neu]) => {
+        const val = localStorage.getItem(old);
+        if (val && !localStorage.getItem(neu)) {
+            localStorage.setItem(neu, val);
+            localStorage.removeItem(old);
+        }
+    });
+})();
 
 // ── CLOUD SYNC: pull all slots for this user into localStorage ────
 async function _syncSlotsFromCloud(userId) {
@@ -54,7 +74,7 @@ function _showAuthOverlay() {
     overlay.innerHTML = `
     <div class="auth-card">
         <div class="ss-main-logo" style="font-size:48px">👁️</div>
-        <h1 class="ss-title" style="font-size:clamp(22px,4vw,32px);margin:10px 0 2px">OLGA VISION</h1>
+        <h1 class="ss-title" style="font-size:clamp(22px,4vw,32px);margin:10px 0 2px">CHAUFFEUR EMPIRE</h1>
         <p class="ss-subtitle" style="margin-bottom:24px">Accedi al tuo Impero</p>
 
         <div class="auth-form">
@@ -144,7 +164,7 @@ window.authLogout = async function() {
     await window.supabaseClient.auth.signOut();
     window.currentUser = null;
     // Clear localStorage slots so next user starts fresh on this device
-    ['olgaVisionSlot_1','olgaVisionSlot_2','olgaVisionSlot_3'].forEach(k => localStorage.removeItem(k));
+    ['chauffeurEmpireSlot_1','chauffeurEmpireSlot_2','chauffeurEmpireSlot_3'].forEach(k => localStorage.removeItem(k));
     location.reload();
 };
 

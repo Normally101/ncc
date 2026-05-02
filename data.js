@@ -1,6 +1,6 @@
 'use strict';
 /* ================================================================
-   data.js — Olga Vision Agency · Tycoon Update v8.0
+   data.js — Chauffeur Empire · Tycoon Update v8.0
    ================================================================ */
 
 // ─── REGIONI E POI ───────────────────────────────────────────────
@@ -181,14 +181,14 @@ const INVESTMENTS = [
     { id:'inv_garage_hq',        tier:1, name:'Garage HQ Roma',              price:45000,    passive:0,     rep:0.2, desc:'Riduce del 10% tutti i costi fissi giornalieri.' },
     { id:'inv_carwash',          tier:1, name:'Autolavaggio Automatico',      price:18000,    passive:150,   rep:0.1, desc:'+€150/g. Mantiene le auto al +5% condizione costante.' },
     { id:'inv_mobile_workshop',  tier:1, name:'Officina Mobile',              price:22000,    passive:0,     rep:0.0, desc:'Riparazioni 20% più economiche e immediate.' },
-    { id:'inv_livrea',           tier:1, name:'Livrea Aziendale Olga Vision', price:14000,    passive:0,     rep:0.2, desc:'+8% tariffa su ogni corsa. +10% Reputazione. Brand recognition.' },
+    { id:'inv_livrea',           tier:1, name:'Livrea Chauffeur Empire', price:14000,    passive:0,     rep:0.2, desc:'+8% tariffa su ogni corsa. +10% Reputazione. Brand recognition.' },
     { id:'inv_ztl_centro',       tier:1, name:'Permesso ZTL Centro Italia',   price:9000,     passive:0,     rep:0.0, desc:'Evita le multe ZTL a Roma, Firenze e Perugia.' },
     { id:'inv_ztl_nord',         tier:1, name:'Permesso ZTL Nord Italia',     price:13000,    passive:0,     rep:0.0, desc:'Evita le multe ZTL a Milano, Torino e Bologna.' },
 
     // ─── TIER 2: ESPANSIONE BUSINESS ─────────────────────────────
     { id:'inv_terminal_fco',     tier:2, name:'Terminal Privato Fiumicino',   price:80000,    passive:0,     rep:0.3, desc:'+25% probabilità corse Business nel Lazio.' },
     { id:'inv_driver_school',    tier:2, name:'Scuola Guida Sicura',          price:35000,    passive:0,     rep:0.2, desc:'Usura veicoli dimezzata durante ogni corsa.' },
-    { id:'inv_app',              tier:2, name:'App Olga Vision Premium',      price:55000,    passive:0,     rep:0.5, desc:'Genera 2 corse extra ogni ora automaticamente.' },
+    { id:'inv_app',              tier:2, name:'App Chauffeur Empire Premium',      price:55000,    passive:0,     rep:0.5, desc:'Genera 2 corse extra ogni ora automaticamente.' },
     { id:'inv_hotel_partner',    tier:2, name:'Accordo Hotel 5★ Partner',     price:70000,    passive:0,     rep:0.8, desc:'Genera 3 corse VIP garantite ogni giorno.' },
     { id:'inv_dashcam',          tier:2, name:'Sistema Dashcam AI',           price:25000,    passive:0,     rep:0.1, desc:'Riduce del 50% il rischio incidenti su tutta la flotta. Premi assicurativi -15% in Top 3.' },
     { id:'inv_telepass',         tier:2, name:'Telepass Premium Fleet',       price:15000,    passive:0,     rep:0.0, desc:'-10% durata su tutti i trasferimenti autostradali interregionali.' },
@@ -207,9 +207,9 @@ const INVESTMENTS = [
     { id:'inv_hotel_exclusive',     tier:3, name:'Esclusiva Hotel de Russie Roma',price:120000,   passive:500,   rep:0.5, desc:'Accordo esclusivo: +€500/g + 5 corse VIP garantite ogni giorno dal principale hotel partner.' },
     { id:'inv_corporate_retainer',  tier:3, name:'Corporate Retainer (3 Aziende)',price:150000,  passive:2000,  rep:0.4, desc:'+€2.000/g da contratti fissi con Fortune 500. +3 corse Business/g garantite anche senza richieste.' },
     { id:'inv_hq_office',           tier:2, name:'Ufficio Executive (HQ Lv2)',    price:600000,   passive:0,     rep:0.1, buildTime:5,  dailyUpkeep:800,  desc:'Amplia la sede: fino a 4 dipendenti contemporanei. Sblocca slot HR e Logistics.' },
-    { id:'inv_hq_campus',           tier:3, name:'Campus Olga Vision (HQ Lv3)',   price:1800000,  passive:0,     rep:0.3, buildTime:10, dailyUpkeep:2000, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
+    { id:'inv_hq_campus',           tier:3, name:'Campus Chauffeur Empire (HQ Lv3)',   price:1800000,  passive:0,     rep:0.3, buildTime:10, dailyUpkeep:2000, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
     { id:'inv_security_escort',     tier:3, name:'Security Escort Team',          price:95000,    passive:0,     rep:0.4, desc:'Auto di scorta per clienti HVT (High Value Target). +80% tariffa su missioni diplomatiche. -50% rischio incidenti.' },
-    { id:'inv_philanthropy',     tier:3, name:'Fondazione Olga Vision Onlus', price:95000,    passive:0,     rep:0.0, desc:'+0.5★ Reputazione ogni settimana. Migliora l\'immagine pubblica del brand.' },
+    { id:'inv_philanthropy',     tier:3, name:'Fondazione Chauffeur Empire Onlus', price:95000,    passive:0,     rep:0.0, desc:'+0.5★ Reputazione ogni settimana. Migliora l\'immagine pubblica del brand.' },
     { id:'inv_sabotaggio',       tier:3, name:'Agenzia PR Negativa',          price:120000,   passive:0,     rep:0.0, desc:'Diffonde recensioni negative sui competitor. −10% reputazione rivali ogni settimana.' },
     { id:'inv_hangar',           tier:3, name:'Hangar Jet Privati',           price:3500000,  passive:0,     rep:1.0, buildTime:14, dailyUpkeep:5000, desc:'Sblocca corse ULTRA. +1 corsa Ultra ogni ora.' },
     { id:'inv_armored',          tier:3, name:'Chauffeur Blindato',           price:200000,   passive:0,     rep:0.5, desc:'Clienti ad alto rischio: pagano 3× il tariffario.' },
@@ -219,7 +219,7 @@ const INVESTMENTS = [
     // ─── TIER 4: DOMINIO DEL MERCATO ─────────────────────────────
     { id:'inv_national_license', tier:4, name:'Licenza Nazionale NCC',        price:1000000,  passive:0,     rep:1.5, desc:'Sblocca TUTTE le regioni d\'Italia in un colpo solo. Simbolo di dominio assoluto.' },
     { id:'inv_real_estate',      tier:4, name:'Fondo Immobiliare Lusso',      price:1200000,  passive:15000, rep:0.5, desc:'€15.000/g di rendita passiva garantita.' },
-    { id:'inv_tower',            tier:4, name:'Olga Vision Tower (Milano)',   price:25000000, passive:0,     rep:2.0, buildTime:30, dailyUpkeep:15000, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
+    { id:'inv_tower',            tier:4, name:'Chauffeur Empire Tower (Milano)',   price:25000000, passive:0,     rep:2.0, buildTime:30, dailyUpkeep:15000, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
     { id:'inv_acquire',          tier:4, name:'Acquisizione Competitor Minore',price:500000,  passive:0,     rep:1.0, desc:'Acquisisci il rivale più debole: +5 veicoli e quota.' },
     { id:'inv_sponsorship',      tier:4, name:'Sponsor Festival di Cannes',   price:300000,   passive:0,     rep:2.0, desc:'Rep a 5.0★ istantanea. Prezzi 2× per 7 giorni.' },
 ];
@@ -621,7 +621,7 @@ const HQ_LEVELS = [
     { level:0, name:'Garage Condiviso',   maxStaff:2, desc:'Inizio umile. Solo 2 dipendenti simultanei.' },
     { level:1, name:'Ufficio Operativo',  maxStaff:4, desc:'Spazio per 4 dipendenti. Sala riunioni base.' },
     { level:2, name:'HQ Executive',       maxStaff:6, desc:'6 dipendenti. Area lounge inclusa.' },
-    { level:3, name:'Campus Olga Vision', maxStaff:99,desc:'Staff illimitato. Struttura flagship.' },
+    { level:3, name:'Campus Chauffeur Empire', maxStaff:99,desc:'Staff illimitato. Struttura flagship.' },
 ];
 
 // ─── POI FUTURI (LOCKED — ESPANSIONE GLOBALE) ────────────────────

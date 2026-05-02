@@ -1,6 +1,9 @@
 'use strict';
 /* ================================================================
-   supabase-config.js — Olga Vision · Supabase Client Init
+   supabase-config.js — Chauffeur Empire · Supabase Client Init
+   Site: https://www.chauffeurempire.com
+   Auth redirect URL (set in Supabase dashboard → Auth → URL Configuration):
+     https://www.chauffeurempire.com
    ================================================================ */
 
 const _SUPABASE_URL = 'https://twstjbykstaioaahfqbe.supabase.co';
@@ -8,4 +11,6 @@ const _SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 
 // window.supabase is the library namespace injected by the CDN.
 // We store the initialized client under a different name to avoid conflict.
-window.supabaseClient = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY);
+window.supabaseClient = window.supabase.createClient(_SUPABASE_URL, _SUPABASE_KEY, {
+    auth: { redirectTo: 'https://www.chauffeurempire.com' },
+});

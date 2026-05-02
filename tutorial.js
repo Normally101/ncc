@@ -1,9 +1,9 @@
 'use strict';
 /* ================================================================
-   tutorial.js — Olga Vision · Tutorial Interattivo Spotlight v1.0
+   tutorial.js — Chauffeur Empire · Tutorial Interattivo Spotlight v1.0
    ================================================================ */
 
-const _TUT_KEY = 'olgaVisionTutorialDone';
+const _TUT_KEY = 'chauffeurEmpireTutorialDone';
 
 const _TUT_STEPS = [
     {
@@ -56,7 +56,7 @@ const _TUT_STEPS = [
     },
     {
         target: null,
-        title: '🎉 Benvenuto in Olga Vision!',
+        title: '🎉 Benvenuto in Chauffeur Empire!',
         body: 'Ora sai tutto. Buona fortuna, CEO. Il mercato NCC italiano ti aspetta. Espandi in tutte le 20 regioni e raggiungi 5★ per dominare il settore!',
         position: 'center',
     },

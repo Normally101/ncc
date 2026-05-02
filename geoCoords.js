@@ -1,6 +1,6 @@
 'use strict';
 /* ================================================================
-   geoCoords.js — Olga Vision · Geographic Coordinate Database
+   geoCoords.js — Chauffeur Empire · Geographic Coordinate Database
    All coordinates: [lng, lat] (Mapbox/GeoJSON standard)
    ================================================================ */
 

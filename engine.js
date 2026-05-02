@@ -1,6 +1,6 @@
 'use strict';
 /* ================================================================
-   engine.js — Olga Vision Agency · Tycoon Engine v8.0 (FULL)
+   engine.js — Chauffeur Empire · Tycoon Engine v8.0
    ================================================================ */
 
 // Stub: dispatcher.js overwrites this with the real notification UI.
@@ -65,7 +65,7 @@ let gameState = {
     lobbyingPoints: 0,      // 0-200
     activeLobbyLaws: [],    // [{ id, endsDay }] (laws with duration); permanent ones stored as just id
     // ── AZIENDA ──────────────────────────────────────────────────
-    companyName: 'Olga Vision Agency',
+    companyName: 'Chauffeur Empire',
     companyLogo: '👁️',
     companyColor: '#d4af37',
     ventureCapital: [],
@@ -185,7 +185,7 @@ function saveGame() {
             activeRides:  gameState.activeRides.map(_serializeRide).filter(Boolean),
             drivers: gameState.drivers.map(d => ({ ...d, queue: d.queue.map(_serializeRide).filter(Boolean) }))
         };
-        localStorage.setItem('olgaVisionSave_v2', JSON.stringify(save));
+        localStorage.setItem('chauffeurEmpireSave_v2', JSON.stringify(save));
         _showSaveIndicator();
     } catch(e) { console.error('Save failed:', e); }
 }
@@ -195,11 +195,11 @@ function loadGame() {
         // Slot-aware: read from the selected slot key
         let raw = null;
         if (window.currentSlotIndex !== null) {
-            const SLOT_KEYS = ['olgaVisionSlot_1','olgaVisionSlot_2','olgaVisionSlot_3'];
+            const SLOT_KEYS = ['chauffeurEmpireSlot_1','chauffeurEmpireSlot_2','chauffeurEmpireSlot_3'];
             raw = localStorage.getItem(SLOT_KEYS[window.currentSlotIndex]);
         }
         // Fallback to legacy key for non-slot contexts
-        if (!raw) raw = localStorage.getItem('olgaVisionSave_v2');
+        if (!raw) raw = localStorage.getItem('chauffeurEmpireSave_v2');
         if (!raw) return false;
         const save = JSON.parse(raw);
 
@@ -256,7 +256,7 @@ function loadGame() {
         if (save.lobbyingPoints    === undefined) save.lobbyingPoints    = 0;
         if (!save.activeLobbyLaws)  save.activeLobbyLaws = [];
         // Company identity
-        if (!save.companyName)       save.companyName       = 'Olga Vision Agency';
+        if (!save.companyName)       save.companyName       = 'Chauffeur Empire';
         if (!save.companyLogo)       save.companyLogo       = '👁️';
         if (!save.companyColor)      save.companyColor      = '#d4af37';
         if (!save.ventureCapital)    save.ventureCapital    = [];
@@ -323,7 +323,7 @@ function loadGame() {
         const staleModal = document.getElementById('vip-event-modal');
         if (staleModal) staleModal.remove();
         return true;
-    } catch(e) { console.error('Load failed:', e); localStorage.removeItem('olgaVisionSave_v2'); return false; }
+    } catch(e) { console.error('Load failed:', e); localStorage.removeItem('chauffeurEmpireSave_v2'); return false; }
 }
 
 function _showSaveIndicator() {
@@ -336,7 +336,7 @@ function _showSaveIndicator() {
 
 window.resetGame = function() {
     if (!confirm('Cancellare tutti i progressi e ricominciare da capo?')) return;
-    localStorage.removeItem('olgaVisionSave_v2');
+    localStorage.removeItem('chauffeurEmpireSave_v2');
     location.reload();
 };
 
@@ -1382,8 +1382,8 @@ function _maybeParazziEvent() {
     } else {
         // Viral moment: big rep boost
         gameState.reputation = Math.min(5.0, gameState.reputation + 0.15);
-        logToMap(`📸 Momento virale! Olga Vision sui social. +0.15★ Reputazione.`);
-        if (typeof showNotification === 'function') showNotification(`📸 Olga Vision diventa virale! +0.15★`, 'success');
+        logToMap(`📸 Momento virale! Chauffeur Empire sui social. +0.15★ Reputazione.`);
+        if (typeof showNotification === 'function') showNotification(`📸 Chauffeur Empire diventa virale! +0.15★`, 'success');
     }
 }
 
@@ -3076,7 +3076,7 @@ window.newGamePlus = function() {
     const ngpCount = (gameState.newGamePlusCount || 0) + 1;
     const legacyRep = Math.min(2.0, gameState.reputation * 0.3);
     const legacyCash = 5000 + (ngpCount * 10000);
-    localStorage.removeItem('olgaVisionSave_v2');
+    localStorage.removeItem('chauffeurEmpireSave_v2');
     gameState = {
         cash: legacyCash, reputation: legacyRep, energy: 100,
         day: 1, month: 1, hour: 8, minute: 0, paused: false,
@@ -3105,7 +3105,7 @@ window.newGamePlus = function() {
         totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
         pricewars: [], shadowMissionsTotal: 0,
         ventureCapital: [], annualProfitTracker: 0,
-        companyName: gameState.companyName || 'Olga Vision Agency',
+        companyName: gameState.companyName || 'Chauffeur Empire',
         companyLogo: gameState.companyLogo || '👁️',
         companyColor: gameState.companyColor || '#d4af37',
     };
@@ -3372,12 +3372,12 @@ window.sellCompanyNGP = function() {
     const fleetValue = gameState.fleet.reduce((s, c) => s + (c.isLease ? 0 : (c.condition / 100) * 50000), 0);
     const repMult   = Math.max(1, gameState.reputation * 0.8);
     const salePrice = Math.round((gameState.cash * 0.3 + assetValue + fleetValue) * repMult);
-    const msg = `Un fondo d'investimento privato vuole acquisire Olga Vision Agency per €${salePrice.toLocaleString()}.\n\nIncasso la cifra, vendi tutto, e ricominci da zero con un vantaggio enorme. Continuare?`;
+    const msg = `Un fondo d'investimento privato vuole acquisire Chauffeur Empire per €${salePrice.toLocaleString()}.\n\nIncasso la cifra, vendi tutto, e ricominci da zero con un vantaggio enorme. Continuare?`;
     if (!confirm(msg)) return;
     const ngpCount = (gameState.newGamePlusCount || 0) + 1;
     const legacyRep = Math.min(3.0, gameState.reputation * 0.4);
     const legacyCash = 5000 + salePrice * 0.8;
-    localStorage.removeItem('olgaVisionSave_v2');
+    localStorage.removeItem('chauffeurEmpireSave_v2');
     gameState = {
         cash: legacyCash, reputation: legacyRep, energy: 100,
         day: 1, month: 1, hour: 8, minute: 0, paused: false,
@@ -3396,7 +3396,7 @@ window.sellCompanyNGP = function() {
         stockHistory: {}, shortPositions: {}, shortMarginHeld: 0,
         inflationRate: 0.020, interestRateBase: 0.045,
         lobbyingPoints: 0, activeLobbyLaws: [],
-        companyName: gameState.companyName || 'Olga Vision Agency',
+        companyName: gameState.companyName || 'Chauffeur Empire',
         companyLogo: gameState.companyLogo || '👁️',
         companyColor: gameState.companyColor || '#d4af37',
         fuelTankLevel: 1, ventureCapital: [], annualProfitTracker: 0,
@@ -3407,7 +3407,7 @@ window.sellCompanyNGP = function() {
     _refreshRecruits();
     _applyBrandColor();
     showBigEvent('🏦', `Exit Strategy — New Game+ ${ngpCount}`,
-        `Il fondo ha acquisito Olga Vision per €${salePrice.toLocaleString()}.\n\nRicominci con €${Math.floor(legacyCash).toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. Credit Score iniziale: ${gameState.creditScore}.\n\nCostruisci un nuovo impero.`);
+        `Il fondo ha acquisito Chauffeur Empire per €${salePrice.toLocaleString()}.\n\nRicominci con €${Math.floor(legacyCash).toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. Credit Score iniziale: ${gameState.creditScore}.\n\nCostruisci un nuovo impero.`);
     logToMap(`♾️ Exit Strategy completata — NGP ${ngpCount} iniziato!`);
     updateUI(); saveGame();
 };

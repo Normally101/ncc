@@ -1,10 +1,10 @@
 'use strict';
 /* ================================================================
-   saveSystem.js — Olga Vision · Multi-Profile Save System v1.0
+   saveSystem.js — Chauffeur Empire · Multi-Profile Save System v1.0
    ================================================================ */
 
-const SLOT_KEYS   = ['olgaVisionSlot_1', 'olgaVisionSlot_2', 'olgaVisionSlot_3'];
-const LEGACY_KEY  = 'olgaVisionSave_v2';
+const SLOT_KEYS   = ['chauffeurEmpireSlot_1', 'chauffeurEmpireSlot_2', 'chauffeurEmpireSlot_3'];
+const LEGACY_KEY  = 'chauffeurEmpireSave_v2';
 
 const SLOT_LOGOS   = ['👁️','🦅','🏛️','💎','🐺','🔱','⚡','🌙','🔥','🦁','🐉','🌊'];
 const MONTHS_SS    = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
@@ -31,7 +31,7 @@ function _getSlotMeta(index) {
         const d = JSON.parse(raw);
         return {
             index,
-            companyName: d.companyName || 'Olga Vision Agency',
+            companyName: d.companyName || 'Chauffeur Empire',
             companyLogo: d.companyLogo || '👁️',
             cash:        d.cash        || 0,
             reputation:  d.reputation  || 0,
@@ -56,7 +56,7 @@ window.getSharedSlotRivals = function() {
             const d = JSON.parse(raw);
             rivals.push({
                 id:          `slot_${i}`,
-                name:        (d.companyName || 'Olga Vision') + ` ⊞`,
+                name:        (d.companyName || 'Chauffeur Empire') + ` ⊞`,
                 rep:         d.reputation || 0,
                 cash:        d.cash || 0,
                 fleet:       (d.fleet || []).length,
@@ -167,7 +167,7 @@ function _showCompanySetup(slotIndex) {
             <div class="ss-field">
                 <label class="ss-label">Nome Azienda</label>
                 <input id="ss-company-name" type="text" maxlength="28"
-                    value="Olga Vision Agency" class="ss-input" spellcheck="false">
+                    value="Chauffeur Empire" class="ss-input" spellcheck="false">
             </div>
 
             <div class="ss-field">
@@ -190,7 +190,7 @@ function _showCompanySetup(slotIndex) {
 
 function _confirmNewGame(slotIndex) {
     const nameEl = document.getElementById('ss-company-name');
-    const name   = (nameEl?.value?.trim()) || 'Olga Vision Agency';
+    const name   = (nameEl?.value?.trim()) || 'Chauffeur Empire';
     const logo   = window._selectedLogoSS || '👁️';
 
     localStorage.removeItem(SLOT_KEYS[slotIndex]);
@@ -263,9 +263,9 @@ window.showSlotSelector = function() {
         <div class="ss-inner">
             <div class="ss-header">
                 <div class="ss-main-logo">👁️</div>
-                <h1 class="ss-title">OLGA VISION</h1>
+                <h1 class="ss-title">CHAUFFEUR EMPIRE</h1>
                 <p class="ss-subtitle">Scegli il tuo Impero</p>
-                <div class="ss-edition">Tycoon Edition · Multi-Profile · Patch 9.0</div>
+                <div class="ss-edition">Global Tycoon · Multi-Profile · v1.0</div>
             </div>
 
             <div class="ss-grid">${slotCards}</div>

@@ -1,11 +1,11 @@
 'use strict';
 /* ================================================================
-   syncManager.js — Olga Vision · Cross-Device Save Sync v1.0
+   syncManager.js — Chauffeur Empire · Cross-Device Save Sync v1.0
    Uses File System Access API to write slot_N.json files to the
    game folder so they can be committed to Git and pulled on any device.
    ================================================================ */
 
-const _SYNC_DB    = 'olgaVisionSync';
+const _SYNC_DB    = 'chauffeurEmpireSync';
 const _SYNC_STORE = 'dirHandle';
 const _SLOT_FILES = ['slot_1.json', 'slot_2.json', 'slot_3.json'];
 
@@ -155,7 +155,7 @@ window.syncManager = {
         for (let i = 0; i < 3; i++) {
             const fileData = await this.readSlot(i);
             if (!fileData) continue;
-            const lsKey  = `olgaVisionSlot_${i + 1}`;
+            const lsKey  = `chauffeurEmpireSlot_${i + 1}`;
             const lsRaw  = localStorage.getItem(lsKey);
             if (lsRaw) {
                 // Pick whichever is newer by _saveTimestamp
@@ -183,7 +183,7 @@ window.syncManager = {
             await this.selectFolder();
             if (!this.dirHandle) return;
         }
-        const SLOT_KEYS = ['olgaVisionSlot_1', 'olgaVisionSlot_2', 'olgaVisionSlot_3'];
+        const SLOT_KEYS = ['chauffeurEmpireSlot_1', 'chauffeurEmpireSlot_2', 'chauffeurEmpireSlot_3'];
         let exported = 0;
         for (let i = 0; i < 3; i++) {
             const raw = localStorage.getItem(SLOT_KEYS[i]);

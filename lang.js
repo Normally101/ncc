@@ -1,10 +1,10 @@
 'use strict';
 /* ================================================================
-   lang.js — Olga Vision · Localizzazione IT/EN v1.0
+   lang.js — Chauffeur Empire · Localizzazione IT/EN v1.0
    Default: Italiano. Toggle via window.setLang('en') / setLang('it')
    ================================================================ */
 
-const _LANG_KEY = 'olgaVisionLang';
+const _LANG_KEY = 'chauffeurEmpireLang';
 
 const i18n = {
     it: {

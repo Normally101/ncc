@@ -1,6 +1,6 @@
 'use strict';
 /* ================================================================
-   dispatcher.js — Olga Vision Agency · RECOVERY PARTE 1
+   dispatcher.js — Chauffeur Empire · RECOVERY PARTE 1
    ================================================================ */
 
 const styleFix = document.createElement('style');
@@ -1023,7 +1023,7 @@ function renderTabRanking() {
         if (r.fleet    === undefined) r.fleet    = Math.max(1, Math.round(r.rep * 0.8));
         if (r.missions === undefined) r.missions = 0;
     });
-    const myName = (gameState.companyName || 'Olga Vision') + ' (Tu)';
+    const myName = (gameState.companyName || 'Chauffeur Empire') + ' (Tu)';
     const myAgency = { name: myName, rep: gameState.reputation, cash: gameState.cash, me: true,
         drivers: gameState.drivers.filter(d => d.id !== 'ceo').length, fleet: gameState.fleet.length, missions: null };
     const slotRivals = typeof window.getSharedSlotRivals === 'function' ? window.getSharedSlotRivals() : [];
@@ -2761,7 +2761,7 @@ function _updateHubStats() {
     if (dayEl)  dayEl.innerText  = `${gameState.day||1} ${MONTHS[(gameState.month||1)-1]}`;
     if (timeEl) timeEl.innerText = `${String(gameState.hour||8).padStart(2,'0')}:${String(gameState.minute||0).padStart(2,'0')}`;
     if (logoEl) logoEl.innerText = gameState.companyLogo || '👁️';
-    if (nameEl) nameEl.innerText = gameState.companyName || 'Olga Vision Agency';
+    if (nameEl) nameEl.innerText = gameState.companyName || 'Chauffeur Empire';
 
     // Module badges
     const ridesEl   = document.getElementById('hmod-rides');
