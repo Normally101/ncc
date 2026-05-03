@@ -1014,8 +1014,9 @@ details[open] .finance-section-title { color: #00f2ff; }
 #logout-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.6); }
 
 /* ── FLOTTA IN VIAGGIO PANEL ──────────────────────────────────── */
+/* Positioned bottom-left, clear of the right panel and sidebar nav */
 #flotta-panel {
-    position: fixed; bottom: 72px; right: 14px; z-index: 400;
+    position: fixed; bottom: 24px; left: 70px; z-index: 400;
     background: rgba(8,8,20,0.92);
     border: 1px solid rgba(212,175,55,0.2);
     border-radius: 12px; padding: 10px 12px;
@@ -1024,6 +1025,44 @@ details[open] .finance-section-title { color: #00f2ff; }
     box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     font-family: 'Roboto Mono', monospace;
 }
+
+/* ── COLLAPSIBLE RIGHT PANEL ──────────────────────────────────── */
+#main-panel {
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+#main-panel.panel-collapsed {
+    /* Slides the panel completely off the right edge of the viewport */
+    transform: translateX(calc(100% + 1.5rem)) !important;
+}
+/* Peek tab — visible only when panel is collapsed */
+#panel-peek-tab {
+    position: fixed; right: 0; top: 50%;
+    transform: translateY(-50%) translateX(64px);
+    z-index: 45; cursor: pointer; pointer-events: none; opacity: 0;
+    background: rgba(8,8,20,0.95); backdrop-filter: blur(12px);
+    border: 1px solid rgba(212,175,55,0.35); border-right: none;
+    border-radius: 14px 0 0 14px; padding: 16px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px;
+    transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s;
+    box-shadow: -4px 0 20px rgba(0,0,0,0.4);
+}
+#panel-peek-tab.visible {
+    transform: translateY(-50%) translateX(0);
+    opacity: 1; pointer-events: auto;
+}
+#panel-peek-tab .peek-icon { font-size: 20px; line-height: 1; }
+#panel-peek-tab .peek-arrow {
+    font-size: 11px; color: #d4af37; opacity: 0.7; writing-mode: vertical-rl;
+    letter-spacing: 0.1em; user-select: none;
+}
+/* Collapse button inside panel header */
+#panel-collapse-btn {
+    background: none; border: none; cursor: pointer; padding: 4px 6px;
+    color: #6b7280; font-size: 13px; border-radius: 6px;
+    transition: color 0.15s, background 0.15s;
+    line-height: 1;
+}
+#panel-collapse-btn:hover { color: #d4af37; background: rgba(212,175,55,0.1); }
 .flotta-header {
     font-size: 10px; font-weight: 700; color: #d4af37;
     text-transform: uppercase; letter-spacing: 0.08em;
@@ -1156,11 +1195,14 @@ details[open] .finance-section-title { color: #00f2ff; }
     }
     #main-panel.hidden-mobile { display: none !important; }
 
-    /* ── Flotta panel: above bottom nav ──────────────────────── */
+    /* ── Flotta panel: bottom-center above bottom nav ──────── */
     #flotta-panel {
-        bottom: 68px !important; right: 0.5rem !important;
-        left: 0.5rem !important; max-width: none !important;
+        bottom: 68px !important;
+        left: 0.5rem !important; right: 0.5rem !important;
+        max-width: none !important;
     }
+    /* Panel peek tab hidden on mobile (drawer handles it) */
+    #panel-peek-tab { display: none !important; }
 
     /* ── Logout button: smaller, repositioned ────────────────── */
     #logout-btn {

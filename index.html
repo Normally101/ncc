@@ -279,13 +279,20 @@
     </div>
   </div>
 
-  <main id="main-panel" class="fixed right-6 top-24 bottom-24 w-[400px] z-40 bg-panel backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300">
+  <main id="main-panel" class="fixed right-6 top-24 bottom-24 w-[400px] z-40 bg-panel backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden">
     <div class="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
       <h2 id="panel-title" class="text-gold uppercase font-display font-bold tracking-widest text-sm" style="text-shadow:0 0 10px rgba(212,175,55,0.4)">Centrale Operativa</h2>
+      <button id="panel-collapse-btn" onclick="window.togglePanel()" title="Riduci pannello">◀</button>
     </div>
     <div id="tab-container" class="flex-1 overflow-y-auto p-5 space-y-5">
         </div>
   </main>
+
+  <!-- Peek tab: visible only when right panel is collapsed -->
+  <div id="panel-peek-tab" onclick="window.togglePanel()" title="Apri pannello">
+    <span class="peek-icon" id="peek-tab-icon">🚕</span>
+    <span class="peek-arrow">▶</span>
+  </div>
 
   <!-- Modal: Gestione Veicolo -->
   <div id="modal-car" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex justify-center items-center pointer-events-auto">

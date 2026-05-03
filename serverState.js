@@ -294,6 +294,88 @@ const ServerState = (() => {
 
 
     // ==========================================================================
+    // ALL REMAINING RPCs (Phase 4 — full eradication of client-state mutations)
+    // Pattern: call RPC → if error show notification + return null, else return data.
+    // The UI must NOT update after success: trust Realtime to fire and sync.
+    // ==========================================================================
+
+    async function _rpc(name, params) {
+        _assertReady();
+        const { data, error } = await _supabase.rpc(name, params);
+        if (error) { _handleRpcError(name, error); return null; }
+        return data;
+    }
+
+    // ── Staff ─────────────────────────────────────────────────────────────────
+    async function hireDriver(name, salary, tier = 'STANDARD') {
+        return _rpc('rpc_hire_driver', { v_name: name, v_salary: salary, v_tier: tier });
+    }
+    async function fireDriver(driverId) {
+        return _rpc('rpc_fire_driver', { v_driver_id: driverId });
+    }
+
+    // ── Investments ───────────────────────────────────────────────────────────
+    async function buyInvestment(invId, price) {
+        return _rpc('rpc_buy_investment', { v_inv_id: invId, v_price: Math.round(price) });
+    }
+
+    // ── Vehicle upgrades ──────────────────────────────────────────────────────
+    async function buyVehicleUpgrade(vehicleId, upgradeId, price) {
+        return _rpc('rpc_buy_vehicle_upgrade', {
+            v_vehicle_id: vehicleId, v_upgrade_id: upgradeId, v_price: Math.round(price),
+        });
+    }
+    async function toggleTelepass(vehicleId, cost = 0) {
+        return _rpc('rpc_toggle_telepass', { v_vehicle_id: vehicleId, v_cost: Math.round(cost) });
+    }
+
+    // ── Maintenance ───────────────────────────────────────────────────────────
+    async function refuelVehicle(vehicleId, fuelAmount, cost) {
+        return _rpc('rpc_refuel_vehicle', {
+            v_vehicle_id: vehicleId, v_fuel_amount: Math.round(fuelAmount), v_cost: Math.round(cost),
+        });
+    }
+    async function repairVehicle(vehicleId, cost) {
+        return _rpc('rpc_repair_vehicle', { v_vehicle_id: vehicleId, v_cost: Math.round(cost) });
+    }
+
+    // ── Marketing ─────────────────────────────────────────────────────────────
+    async function startCampaign(campaignId, dailyCost) {
+        return _rpc('rpc_start_marketing_campaign', { v_campaign_id: campaignId, v_daily_cost: dailyCost });
+    }
+    async function stopCampaign() {
+        return _rpc('rpc_stop_marketing_campaign', {});
+    }
+
+    // ── Finance ───────────────────────────────────────────────────────────────
+    async function takeLoan(principal, interestRate, dailyPayment) {
+        return _rpc('rpc_take_loan', {
+            v_principal: Math.round(principal),
+            v_interest_rate: interestRate,
+            v_daily_payment: Math.round(dailyPayment),
+        });
+    }
+    async function repayLoan(loanId, amount) {
+        return _rpc('rpc_repay_loan', { v_loan_id: loanId, v_amount: Math.round(amount) });
+    }
+
+    // ── Regions ───────────────────────────────────────────────────────────────
+    async function unlockRegion(regionId, price) {
+        return _rpc('rpc_unlock_region', { v_region_id: regionId, v_price: Math.round(price) });
+    }
+
+    // ── CEO Rest ──────────────────────────────────────────────────────────────
+    async function restCeo(hotelStars, cost) {
+        return _rpc('rpc_rest_ceo', { v_hotel_stars: hotelStars, v_cost: Math.round(cost) });
+    }
+
+    // ── Daily costs (call once per game-day tick) ──────────────────────────────
+    async function collectDailyCosts() {
+        return _rpc('rpc_collect_daily_costs', {});
+    }
+
+
+    // ==========================================================================
     // PUBLIC GETTERS
     // ==========================================================================
     function getState()    { return { company: _company, vehicles: _vehicles, drivers: _drivers, trips: _trips }; }
@@ -334,6 +416,20 @@ const ServerState = (() => {
         buyVehicle,
         startTrip,
         claimReward,
+        hireDriver,
+        fireDriver,
+        buyInvestment,
+        buyVehicleUpgrade,
+        toggleTelepass,
+        refuelVehicle,
+        repairVehicle,
+        startCampaign,
+        stopCampaign,
+        takeLoan,
+        repayLoan,
+        unlockRegion,
+        restCeo,
+        collectDailyCosts,
         getState,
         getCompany,
         getVehicles,
@@ -350,20 +446,31 @@ const ServerState = (() => {
 
 window.ServerState = ServerState;
 
-/* ─── MIGRATION STATUS ────────────────────────────────────────────────────────
-   Actions currently going through server RPCs:
-     ✅ Company init  (rpc_init_company)
-     ✅ Buy vehicle   (rpc_buy_vehicle)     — replaces local fleet.push + cash deduction
-     ✅ Start trip    (rpc_start_trip)      — validates and records on server
-     ✅ Claim reward  (rpc_claim_trip_reward) — authoritative cash credit
+/* ─── MIGRATION STATUS (Phase 4 complete) ────────────────────────────────────
+   All RPCs implemented (SQL in 01_mmo_migration.sql + 02_mmo_rpcs_extension.sql):
+     ✅ rpc_init_company          — company creation
+     ✅ rpc_buy_vehicle           — fleet purchase (SELECT FOR UPDATE anti-race)
+     ✅ rpc_start_trip            — trip validation + creation
+     ✅ rpc_claim_trip_reward     — server-gated cash credit + position update
+     ✅ rpc_hire_driver           — staff hire (deducts salary×2)
+     ✅ rpc_fire_driver           — fire driver (blocks if DRIVING)
+     ✅ rpc_buy_investment        — investment purchase (UNIQUE guard)
+     ✅ rpc_buy_vehicle_upgrade   — per-car upgrade (array_append, IDLE check)
+     ✅ rpc_toggle_telepass       — telepass on/off (cost only on enable)
+     ✅ rpc_refuel_vehicle        — fuel refill
+     ✅ rpc_repair_vehicle        — full condition + tire reset
+     ✅ rpc_start_marketing_campaign — UPSERT active campaign
+     ✅ rpc_stop_marketing_campaign  — remove active campaign
+     ✅ rpc_take_loan             — add principal to cash, max 3 concurrent loans
+     ✅ rpc_repay_loan            — partial/full repayment
+     ✅ rpc_unlock_region         — region license purchase
+     ✅ rpc_rest_ceo              — hotel rest cost deduction
+     ✅ rpc_collect_daily_costs   — daily campaign + loan deductions
 
-   Actions still using local gameState mutation (pending additional RPCs):
-     ⏳ Hire driver, fire driver
-     ⏳ Buy investment (inv_*)
-     ⏳ Upgrade vehicle (CAR_UPGRADES)
-     ⏳ Marketing campaigns
-     ⏳ Take / repay loan
-     ⏳ Unlock region
-     ⏳ Purchase fuel / tires / repairs
-   These will each require a new SECURITY DEFINER RPC + gameState bridge update.
+   Pending work — engine.js / dispatcher.js wiring:
+   Each button that currently does `gameState.cash -= X` must be rewritten to:
+     1. await ServerState.<method>(params)
+     2. if null → error already shown, return
+     3. if success → do nothing (Realtime fires → _bridgeToGameState → updateUI)
+   This is a per-button refactor across ~80 action sites in engine.js + dispatcher.js.
    ─────────────────────────────────────────────────────────────────────────── */

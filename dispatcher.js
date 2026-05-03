@@ -948,6 +948,24 @@ function calculateInterpolatedPosition(ride, currentElapsed) {
    dispatcher.js — RECOVERY PARTE 2: UI & DISPATCH CENTER
    ================================================================ */
 
+// ─── TAB ICON MAP (used by peek tab) ─────────────────────────────
+const _TAB_ICONS = {
+    corse:'🚕', fleet:'🚘', staff:'👔', ranking:'🏆', emails:'📩',
+    regions:'🗺️', invest:'📈', marketing:'📣', legal:'⚖️', finance:'💹',
+    lifestyle:'🏰', politics:'🏛️', career:'🎯', store:'💎', map:'📡',
+};
+
+// ─── COLLAPSIBLE RIGHT PANEL ──────────────────────────────────────
+window.togglePanel = function() {
+    const panel   = document.getElementById('main-panel');
+    const peek    = document.getElementById('panel-peek-tab');
+    const btn     = document.getElementById('panel-collapse-btn');
+    if (!panel) return;
+    const collapsed = panel.classList.toggle('panel-collapsed');
+    if (peek)  peek.classList.toggle('visible', collapsed);
+    if (btn)   btn.textContent = collapsed ? '▶' : '◀';
+};
+
 window.switchTab = function(tab) {
     _activeTab = tab;
     const container = document.getElementById('tab-container');
@@ -958,6 +976,20 @@ window.switchTab = function(tab) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
     if(activeBtn) activeBtn.classList.add('active');
+
+    // Update peek tab icon to reflect current section
+    const peekIcon = document.getElementById('peek-tab-icon');
+    if (peekIcon) peekIcon.textContent = _TAB_ICONS[tab] || '📋';
+
+    // Auto-expand panel when a tab is selected via nav
+    const panel = document.getElementById('main-panel');
+    const peek  = document.getElementById('panel-peek-tab');
+    if (panel && panel.classList.contains('panel-collapsed')) {
+        panel.classList.remove('panel-collapsed');
+        if (peek)  peek.classList.remove('visible');
+        const btn = document.getElementById('panel-collapse-btn');
+        if (btn) btn.textContent = '◀';
+    }
 
     if(mapLog) {
         if(tab === 'map') {
