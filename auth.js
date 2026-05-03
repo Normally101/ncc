@@ -45,6 +45,7 @@ async function _syncSlotsFromCloud(userId) {
                 } catch(e) {}
             }
             localStorage.setItem(key, JSON.stringify(row.game_state));
+            localStorage.setItem(`_cloudSyncTs_${row.slot_index}`, new Date(row.updated_at).getTime().toString());
             imported++;
         });
         console.log(`[Auth] Cloud sync: ${imported} slot aggiornati da cloud, ${data.length - imported} già aggiornati.`);

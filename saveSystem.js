@@ -31,18 +31,31 @@ function _getSlotMeta(index) {
         const d = JSON.parse(raw);
         return {
             index,
-            companyName: d.companyName || 'Chauffeur Empire',
-            companyLogo: d.companyLogo || '👁️',
-            cash:        d.cash        || 0,
-            reputation:  d.reputation  || 0,
-            fleetSize:   (d.fleet || []).length,
-            driverCount: (d.drivers || []).filter(x => x.id !== 'ceo').length,
-            day:         d.day   || 1,
-            month:       d.month || 1,
-            ngp:         d.newGamePlusCount || 0,
-            prestige:    d.prestige || 0,
+            companyName:   d.companyName || 'Chauffeur Empire',
+            companyLogo:   d.companyLogo || '👁️',
+            cash:          d.cash        || 0,
+            reputation:    d.reputation  || 0,
+            fleetSize:     (d.fleet || []).length,
+            driverCount:   (d.drivers || []).filter(x => x.id !== 'ceo').length,
+            day:           d.day   || 1,
+            month:         d.month || 1,
+            ngp:           d.newGamePlusCount || 0,
+            prestige:      d.prestige || 0,
+            saveTimestamp: d._saveTimestamp || 0,
+            cloudSyncTs:   parseInt(localStorage.getItem(`_cloudSyncTs_${index}`) || '0', 10),
         };
     } catch(e) { return null; }
+}
+
+function _fmtTs(ms) {
+    if (!ms) return null;
+    const d = new Date(ms);
+    const today = new Date();
+    const sameDay = d.toDateString() === today.toDateString();
+    const time = d.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+    if (sameDay) return time;
+    const day = d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+    return `${day} ${time}`;
 }
 
 // ── CROSS-SLOT RIVALS (other slots become competitors) ────────────
@@ -130,11 +143,12 @@ function _updateCloudDot(state) {
     const dot = document.getElementById('cloud-sync-dot');
     if (!dot) return;
     dot.textContent = '☁';
-    if (state === 'ok')  { dot.style.color = '#22c55e'; dot.title = '☁ Cloud sync OK'; }
-    if (state === 'err') { dot.style.color = '#ef4444'; dot.title = '☁ Sync fallito (offline?)'; }
-    if (state === 'busy'){ dot.style.color = '#f59e0b'; dot.title = '☁ Salvataggio cloud...'; }
+    dot.classList.remove('syncing');
+    if (state === 'ok')  { dot.style.color = '#22c55e'; dot.title = '☁ Cloud sync OK — clicca per forzare'; }
+    if (state === 'err') { dot.style.color = '#ef4444'; dot.title = '☁ Sync fallito — controlla la connessione'; }
+    if (state === 'busy'){ dot.style.color = '#f59e0b'; dot.title = '☁ Sincronizzazione in corso...'; dot.classList.add('syncing'); }
     clearTimeout(dot._dim);
-    dot._dim = setTimeout(() => { dot.style.opacity = '0.35'; }, 4000);
+    dot._dim = setTimeout(() => { if (!dot.classList.contains('syncing')) dot.style.opacity = '0.35'; }, 4000);
     dot.style.opacity = '1';
 }
 
@@ -152,7 +166,10 @@ async function _cloudSaveSlot(slotIndex, saveData) {
             updated_at: new Date().toISOString(),
         }, { onConflict: 'user_id,slot_index' });
         if (error) { console.warn('[SaveSystem] Cloud upsert error:', error); _updateCloudDot('err'); }
-        else _updateCloudDot('ok');
+        else {
+            localStorage.setItem(`_cloudSyncTs_${slotIndex}`, Date.now().toString());
+            _updateCloudDot('ok');
+        }
     } catch(e) {
         console.warn('[SaveSystem] Cloud save failed (offline?):', e);
         _updateCloudDot('err');
@@ -165,6 +182,13 @@ window.forceCloudSave = function() {
     _lastCloudSaveTs[window.currentSlotIndex] = 0; // reset debounce
     if (typeof window.saveCurrentSlot === 'function') window.saveCurrentSlot();
 };
+
+// On browser close: force one last cloud write so mobile picks it up immediately
+window.addEventListener('beforeunload', () => {
+    if (window.currentSlotIndex === null || !window.currentUser) return;
+    _lastCloudSaveTs[window.currentSlotIndex] = 0; // bypass debounce
+    window.saveCurrentSlot(); // localStorage write is synchronous; cloud fires async
+});
 
 // ── DELETE SLOT ──────────────────────────────────────────────────
 window.deleteSlot = function(index) {
@@ -272,8 +296,16 @@ window.showSlotSelector = function() {
                 <div class="ss-empty-sub">Nuovo Impero</div>
             </div>`;
         }
-        const monthStr = MONTHS_SS[(meta.month||1)-1] || 'Gen';
-        const ngpBadge = meta.ngp > 0 ? `<span class="ss-ngp-badge">♾️ NGP×${meta.ngp}</span>` : '';
+        const monthStr    = MONTHS_SS[(meta.month||1)-1] || 'Gen';
+        const ngpBadge    = meta.ngp > 0 ? `<span class="ss-ngp-badge">♾️ NGP×${meta.ngp}</span>` : '';
+        const cloudTsStr  = _fmtTs(meta.cloudSyncTs);
+        const saveTsStr   = _fmtTs(meta.saveTimestamp);
+        const syncLabel   = cloudTsStr
+            ? `<div class="ss-stat ss-stat-cloud"><span class="ss-stat-lbl">☁ Cloud</span><span class="ss-stat-val ss-cloud-ok">${cloudTsStr}</span></div>`
+            : `<div class="ss-stat ss-stat-cloud"><span class="ss-stat-lbl">☁ Cloud</span><span class="ss-stat-val" style="color:#6b7280">—</span></div>`;
+        const saveLabel   = saveTsStr
+            ? `<div class="ss-stat"><span class="ss-stat-lbl">💾 Locale</span><span class="ss-stat-val" style="color:#6b7280">${saveTsStr}</span></div>`
+            : '';
         return `
         <div class="ss-slot ss-slot-occupied" onclick="window.loadExistingSlot(${i})" title="Entra in ${meta.companyName}">
             <div class="ss-slot-logo">${meta.companyLogo}</div>
@@ -285,6 +317,8 @@ window.showSlotSelector = function() {
                 <div class="ss-stat"><span class="ss-stat-lbl">Flotta</span><span class="ss-stat-val" style="color:#00f2ff">${meta.fleetSize} auto</span></div>
                 <div class="ss-stat"><span class="ss-stat-lbl">Autisti</span><span class="ss-stat-val" style="color:#a78bfa">${meta.driverCount}</span></div>
                 <div class="ss-stat"><span class="ss-stat-lbl">Giorno</span><span class="ss-stat-val" style="color:#9ca3af">${meta.day} ${monthStr}</span></div>
+                ${syncLabel}
+                ${saveLabel}
             </div>
             <div class="ss-slot-actions" onclick="event.stopPropagation()">
                 <button onclick="window.loadExistingSlot(${i})" class="ss-btn-primary ss-btn-sm">Entra ↗</button>

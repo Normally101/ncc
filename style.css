@@ -1062,6 +1062,15 @@ details[open] .finance-section-title { color: #00f2ff; }
     user-select: none;
 }
 #cloud-sync-dot:hover { opacity: 1 !important; }
+#cloud-sync-dot.syncing { animation: cloud-blink 0.9s ease-in-out infinite; }
+@keyframes cloud-blink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.2; }
+}
+
+/* ── SLOT SELECTOR: cloud sync timestamp ─────────────────────── */
+.ss-stat-cloud { border-top: 1px solid rgba(0,242,255,0.08); margin-top: 3px; padding-top: 3px; }
+.ss-cloud-ok   { color: #22c55e !important; }
 
 /* ── SLOT SELECTOR: cloud sync buttons ───────────────────────── */
 .ss-cloud-btn {
