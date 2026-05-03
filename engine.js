@@ -116,7 +116,14 @@ function _checkAchievements() {
             gameState.achievements.push(ach.id);
             showBigEvent(ach.icon, `Obiettivo Sbloccato: ${ach.name}`, ach.desc);
             logToMap(`🏅 Achievement: ${ach.name}`);
-            if (typeof renderTabRanking === 'function') renderTabRanking();
+            // Flash badge on 🏆 nav button — do NOT switch tab
+            const rankBtn = document.querySelector('[data-tab="ranking"]');
+            if (rankBtn && !rankBtn.classList.contains('active')) {
+                rankBtn.style.animation = 'none';
+                rankBtn.style.filter = 'drop-shadow(0 0 8px #d4af37)';
+                rankBtn.setAttribute('data-badge', '🏅');
+                setTimeout(() => { rankBtn.style.filter = ''; rankBtn.removeAttribute('data-badge'); }, 8000);
+            }
         }
     });
 }
@@ -4000,4 +4007,8 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     }
     // Show map tab
     if (typeof window.switchTab === 'function') window.switchTab('map');
+    // Push leaderboard as soon as the game is live (fresh or loaded save)
+    setTimeout(() => {
+        if (typeof window.forceLeaderboardUpdate === 'function') window.forceLeaderboardUpdate();
+    }, 1500);
 };

@@ -134,6 +134,25 @@ window.saveCurrentSlot = function() {
    ALTER TABLE public.game_saves ENABLE ROW LEVEL SECURITY;
    CREATE POLICY "Users manage own saves" ON public.game_saves
        FOR ALL USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
+
+   -- Tabella leaderboard (colonne esatte come da Supabase dashboard)
+   CREATE TABLE IF NOT EXISTS public.leaderboard (
+       user_id       uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+       company_name  text NOT NULL DEFAULT 'Chauffeur Empire',
+       owner_name    text NOT NULL DEFAULT '',
+       liquid_assets bigint NOT NULL DEFAULT 0,
+       reputation    numeric(10,2) NOT NULL DEFAULT 0,
+       fleet_count   int4 NOT NULL DEFAULT 0,
+       last_active   timestamptz NOT NULL DEFAULT now()
+   );
+   ALTER TABLE public.leaderboard ENABLE ROW LEVEL SECURITY;
+   -- Esegui in SQL Editor per fixare le RLS policy:
+   DROP POLICY IF EXISTS "Anyone can read leaderboard" ON public.leaderboard;
+   DROP POLICY IF EXISTS "Users update own leaderboard row" ON public.leaderboard;
+   CREATE POLICY "Public leaderboard read" ON public.leaderboard
+       FOR SELECT TO anon, authenticated USING (true);
+   CREATE POLICY "Users manage own leaderboard row" ON public.leaderboard
+       FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
    ─────────────────────────────────────────────────────────────────
 */
 const _CLOUD_MIN_INTERVAL_MS = 45_000;
@@ -169,12 +188,53 @@ async function _cloudSaveSlot(slotIndex, saveData) {
         else {
             localStorage.setItem(`_cloudSyncTs_${slotIndex}`, Date.now().toString());
             _updateCloudDot('ok');
+            _upsertLeaderboard(saveData);
         }
     } catch(e) {
         console.warn('[SaveSystem] Cloud save failed (offline?):', e);
         _updateCloudDot('err');
     }
 }
+
+// ── LEADERBOARD UPSERT (shared by auto-save, login push, forceUpdate) ─
+async function _upsertLeaderboard(saveData) {
+    if (!window.currentUser || !window.supabaseClient) return;
+    const userId = window.currentUser.id;
+    // Column names must match the Supabase table exactly
+    const payload = {
+        user_id:      userId,
+        company_name: saveData.companyName || 'Chauffeur Empire',
+        owner_name:   window.currentUser.email || '',
+        liquid_assets: Math.floor(saveData.cash || 0),
+        reputation:   saveData.reputation || 0,
+        fleet_count:  (saveData.fleet || []).length,
+        last_active:  new Date().toISOString(),
+    };
+    console.log('MULTIPLAYER: Tentativo invio dati per utente:', userId, payload);
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('leaderboard')
+            .upsert(payload, { onConflict: 'user_id' })
+            .select();
+        if (error) {
+            console.error('ERRORE MULTIPLAYER:', error.message, '| codice:', error.code, '| dettagli:', error.details, error);
+        } else {
+            console.log('MULTIPLAYER: Dati inviati con successo! —', payload.company_name, '€' + payload.liquid_assets.toLocaleString('it-IT'), '| risposta DB:', data);
+        }
+    } catch(e) {
+        console.error('ERRORE MULTIPLAYER (eccezione di rete):', e.message, e);
+    }
+}
+
+// ── PUBLIC API ───────────────────────────────────────────────────
+window.pushLeaderboardNow = function(saveData) {
+    _upsertLeaderboard(saveData || (typeof gameState !== 'undefined' ? gameState : {}));
+};
+
+window.forceLeaderboardUpdate = function() {
+    const data = typeof gameState !== 'undefined' ? gameState : {};
+    _upsertLeaderboard(data);
+};
 
 // Force an immediate cloud write (bypasses debounce) — used after major actions
 window.forceCloudSave = function() {

@@ -1,4 +1,4 @@
-'use strict';
+﻿'use strict';
 /* ================================================================
    dispatcher.js — Chauffeur Empire · RECOVERY PARTE 1
    ================================================================ */
@@ -1126,85 +1126,135 @@ function renderTabCorse() {
     container.innerHTML = html + `</div>`;
 }
 
-function renderTabRanking() {
+async function renderTabRanking() {
     const container = document.getElementById('tab-container');
-    // Assicura che ogni rivale abbia lo stato simulato
-    RIVALS.forEach(r => {
-        if (r.drivers  === undefined) r.drivers  = Math.max(1, Math.round(r.rep));
-        if (r.fleet    === undefined) r.fleet    = Math.max(1, Math.round(r.rep * 0.8));
-        if (r.missions === undefined) r.missions = 0;
-    });
-    const myName = (gameState.companyName || 'Chauffeur Empire') + ' (Tu)';
-    const myAgency = { name: myName, rep: gameState.reputation, cash: gameState.cash, me: true,
-        drivers: gameState.drivers.filter(d => d.id !== 'ceo').length, fleet: gameState.fleet.length, missions: null };
-    const slotRivals = typeof window.getSharedSlotRivals === 'function' ? window.getSharedSlotRivals() : [];
-    const all = [...RIVALS, ...slotRivals, myAgency].sort((a,b) => b.rep - a.rep);
-    const myRank = all.findIndex(a => a.me) + 1;
-    const total  = all.length;
+    if (!container) return; // DOM not ready yet
 
-    const rankIcon  = myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : myRank === total ? '🔴' : '⬜';
-    const rankColor = myRank <= 3 ? 'text-gold' : myRank === total ? 'text-red-400' : 'text-gray-300';
+    // Show loading skeleton while fetching
+    container.innerHTML = `
+    <div class="flex items-center gap-2 mb-4">
+        <div class="text-2xl">&#x1F3C6;</div>
+        <div>
+            <div class="text-[9px] text-gray-500 uppercase">Classifica Globale</div>
+            <div class="font-bold text-lg text-gold">Caricamento...</div>
+        </div>
+    </div>
+    <div class="space-y-2">${Array(5).fill('<div class="hud-card animate-pulse h-12"></div>').join('')}</div>`;
 
-    // Build perks / warnings for current rank
+    // Fetch leaderboard from Supabase — columns match table exactly
+    let rows = [];
+    let fetchError = null;
+    if (window.supabaseClient) {
+        try {
+            console.log('MULTIPLAYER: Caricamento classifica globale...');
+            const { data, error } = await window.supabaseClient
+                .from('leaderboard')
+                .select('user_id,company_name,owner_name,liquid_assets,reputation,fleet_count,last_active')
+                .order('liquid_assets', { ascending: false })
+                .limit(50);
+            if (error) {
+                fetchError = error.message || JSON.stringify(error);
+                console.error('ERRORE MULTIPLAYER fetch classifica:', error);
+            } else {
+                rows = data || [];
+                console.log('MULTIPLAYER: Classifica caricata —', rows.length, 'aziende:', rows);
+            }
+        } catch(e) {
+            fetchError = e.message || 'Errore di rete';
+            console.error('ERRORE MULTIPLAYER fetch eccezione:', e);
+        }
+    } else {
+        fetchError = 'Supabase non disponibile';
+    }
+
+    const myId   = window.currentUser?.id;
+    const now    = Date.now();
+    const ONLINE_MS = 5 * 60 * 1000;
+
+    // Inject own row if not in top 50 (using exact table column names)
+    const myInList = rows.some(r => r.user_id === myId);
+    if (!myInList && myId) {
+        rows.push({
+            user_id:      myId,
+            company_name: gameState.companyName || 'Chauffeur Empire',
+            owner_name:   window.currentUser?.email || '',
+            liquid_assets: Math.floor(gameState.cash || 0),
+            reputation:   gameState.reputation || 0,
+            fleet_count:  (gameState.fleet || []).length,
+            last_active:  new Date().toISOString(),
+            _injected:    true,
+        });
+        rows.sort((a, b) => b.liquid_assets - a.liquid_assets);
+    }
+
+    const myRank  = rows.findIndex(r => r.user_id === myId) + 1;
+    const total   = rows.length;
+    const rankIcon  = myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : `#${myRank}`;
+    const rankColor = myRank > 0 && myRank <= 3 ? 'text-gold' : 'text-gray-300';
+
     let statusHtml = '';
-    if (myRank <= 3) {
+    if (myRank > 0 && myRank <= 3) {
         statusHtml = `
         <div class="hud-card !border-gold/40 bg-gold/5 mb-4">
-            <div class="text-[9px] text-gold font-bold uppercase tracking-widest mb-2">✨ Bonus Top ${myRank}</div>
+            <div class="text-[9px] text-gold font-bold uppercase tracking-widest mb-1">&#x2728; Bonus Top ${myRank}</div>
             <ul class="text-[9px] text-gray-300 space-y-1">
-                <li>🚗 Corse Ultra-Luxury accessibili</li>
-                <li>🛡 Premi assicurativi −15% su tutta la flotta</li>
-                <li>📍 POI esclusivi visibili (Porto Cervo, Armani Hotel)</li>
+                <li>&#x1F697; Corse Ultra-Luxury accessibili</li>
+                <li>&#x1F6E1; Premi assicurativi &minus;15% su tutta la flotta</li>
+                <li>&#x1F4CD; POI esclusivi visibili (Porto Cervo, Armani Hotel)</li>
             </ul>
         </div>`;
-    } else if (myRank === total) {
-        statusHtml = `
-        <div class="hud-card !border-red-500/40 bg-red-950/20 mb-4">
-            <div class="text-[9px] text-red-400 font-bold uppercase tracking-widest mb-2">⚠ Ultimo in Classifica</div>
-            <ul class="text-[9px] text-gray-400 space-y-1">
-                <li>💼 I rivali possono rubarti gli autisti migliori</li>
-                <li>🔒 POI esclusivi non accessibili</li>
-                <li>📉 Risali per sbloccare i bonus</li>
-            </ul>
-        </div>`;
-    } else {
+    } else if (myRank > 0) {
         statusHtml = `
         <div class="hud-card mb-4">
-            <div class="text-[9px] text-gray-400 uppercase tracking-widest">Posizione #${myRank} / ${total}</div>
+            <div class="text-[9px] text-gray-400 uppercase tracking-widest">Posizione #${myRank} / ${total} aziende globali</div>
             <div class="text-[9px] text-gray-500 mt-1">Scala al Top 3 per sbloccare i bonus Elite.</div>
         </div>`;
     }
 
     let html = `
-    <div class="flex items-center gap-3 mb-4">
-        <div class="text-3xl">${rankIcon}</div>
-        <div>
-            <div class="text-[9px] text-gray-500 uppercase">La tua posizione</div>
-            <div class="font-bold text-lg ${rankColor}">#${myRank} di ${total}</div>
+    <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+            <div class="text-3xl">${myRank > 0 ? rankIcon : '🏆'}</div>
+            <div>
+                <div class="text-[9px] text-gray-500 uppercase">La tua posizione</div>
+                <div class="font-bold text-lg ${rankColor}">${myRank > 0 ? `#${myRank} di ${total}` : '&mdash;'}</div>
+            </div>
         </div>
+        <button onclick="renderTabRanking()" style="font-size:11px;color:#00f2ff;background:none;border:1px solid #00f2ff33;cursor:pointer;padding:4px 8px;border-radius:6px">&#x21BB; Aggiorna</button>
     </div>
+    ${fetchError ? `<div class="hud-card !border-red-500/40 bg-red-950/10 mb-3 text-[9px] text-red-400">&#x26A0; ${fetchError}</div>` : ''}
     ${statusHtml}
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Campionato Agenzie VIP</h3>
+    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">&#x1F3C6; Top 50 Aziende Globali</h3>
     <div class="space-y-2">`;
 
-    all.forEach((a, i) => {
-        const pos = i + 1;
+    if (rows.length === 0) {
+        html += `<div class="text-[9px] text-gray-500 text-center py-6">Nessun dato disponibile.<br>Gioca per comparire in classifica!</div>`;
+    }
+
+    rows.forEach((r, i) => {
+        const pos     = i + 1;
         const posIcon = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `#${pos}`;
-        const repDelta = (i > 0 && !a.me) ? ` <span style="color:#555;font-size:9px">(−${(all[i-1].rep - a.rep).toFixed(1)}★)</span>` : '';
-        const fleetLine = `🚗 ${a.fleet}  👤 ${a.drivers}${a.missions !== null ? `  ✅ ${a.missions}` : ''}`;
-        const threatLabel = (!a.me && a.rep > gameState.reputation && a.cash > gameState.cash * 2)
-            ? '<span style="color:#ff4060;font-size:8px;font-weight:700"> ⚠ MINACCIA</span>' : '';
+        const isMe    = r.user_id === myId;
+        const tsMs    = r.last_active ? new Date(r.last_active).getTime() : 0;
+        const online  = tsMs && (now - tsMs) < ONLINE_MS;
+        const onlineDot = online
+            ? `<span style="display:inline-block;width:6px;height:6px;background:#22c55e;border-radius:50%;margin-left:4px;vertical-align:middle;box-shadow:0 0 4px #22c55e"></span>`
+            : '';
         html += `
-        <div class="hud-card ${a.me ? '!border-gold/50 bg-gold/5' : ''} flex justify-between items-center py-2">
+        <div class="hud-card ${isMe ? '!border-gold/50 bg-gold/5' : ''} flex justify-between items-center py-2">
             <div class="flex items-center gap-3">
-                <div style="font-size:18px;width:28px;text-align:center">${posIcon}</div>
+                <div style="font-size:18px;width:28px;text-align:center;flex-shrink:0">${posIcon}</div>
                 <div>
-                    <div style="font-size:12px;font-weight:700;color:${a.me ? '#d4af37' : a.isSlotRival ? '#a78bfa' : '#e8eaf0'}">${a.isSlotRival ? (a.logo || '⊞') + ' ' : ''}${a.name}${threatLabel}</div>
-                    <div style="font-size:10px;color:#6b7280">€${Math.floor(a.cash).toLocaleString()}${repDelta}</div>
-                    <div style="font-size:9px;color:#4b5563">${fleetLine}</div>
+                    <div style="font-size:11px;font-weight:700;color:${isMe ? '#d4af37' : '#e8eaf0'}">
+                        ${r.company_name || 'Chauffeur Empire'}${isMe ? ' <span style="color:#d4af37;font-size:9px">(Tu)</span>' : ''}${onlineDot}
+                    </div>
+                    <div style="font-size:9px;color:#6b7280">&euro;${Math.floor(r.liquid_assets || 0).toLocaleString('it-IT')} &middot; &#x2605;${Number(r.reputation || 0).toFixed(1)}</div>
+                    <div style="font-size:8px;color:#4b5563">&#x1F697; ${r.fleet_count || 0} auto &middot; ${r.owner_name || ''}</div>
                 </div>
             </div>
-            <div style="font-family:'Roboto Mono',monospace;font-weight:700;color:#d4af37;font-size:15px">${a.rep.toFixed(1)} ★</div>
+            <div style="font-family:'Roboto Mono',monospace;font-weight:700;color:#00f2ff;font-size:13px;white-space:nowrap">
+                &euro;${(Math.floor(r.liquid_assets || 0) / 1000).toFixed(0)}k
+            </div>
         </div>`;
     });
 
@@ -1769,7 +1819,16 @@ window.openCarModal = function(carId) {
 
     gameState.drivers.forEach(d => {
         const isSet = d.assignedCarId === car.id;
-        html += `<button onclick="assignCarToDriver('${car.id}','${d.id}')" class="text-left p-1.5 border border-white/10 rounded text-[9px] ${isSet?'border-gold text-gold bg-gold/5':'text-white hover:border-white/20'}">${d.name} ${isSet?'(Assegnato)':''}</button>`;
+        const lvl = d.level || 0;
+        const driverTier = lvl >= 6 ? 'ULTRA' : lvl >= 4 ? 'VIP' : lvl >= 2 ? 'BUSINESS' : 'STANDARD';
+        const tierColor  = lvl >= 6 ? '#a855f7' : lvl >= 4 ? '#00f2ff' : lvl >= 2 ? '#f59e0b' : '#6b7280';
+        const specLabel  = d.specialty && d.specialty !== 'none' ? ` · ${d.specialty.replace(/_/g,' ')}` : '';
+        html += `<button onclick="assignCarToDriver('${car.id}','${d.id}')" class="text-left p-1.5 border border-white/10 rounded text-[9px] w-full ${isSet?'border-gold text-gold bg-gold/5':'text-white hover:border-white/20'}">
+            <span class="font-bold">${d.name}</span>
+            <span style="font-size:8px;font-weight:700;color:${tierColor};margin-left:4px">[${driverTier}]</span>
+            <span style="font-size:8px;color:#4b5563">${specLabel}</span>
+            ${isSet ? '<span style="font-size:8px;color:#d4af37;margin-left:4px">✓ Assegnato</span>' : ''}
+        </button>`;
     });
     html += `</div>
     <button onclick="openGarage3D('${car.id}')" class="w-full btn-blue !text-[9px]">🚗 Vista 3D Garage</button>`;

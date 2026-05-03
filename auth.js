@@ -73,6 +73,13 @@ async function _loadSaveAndStart(userId) {
     const localRaw = localStorage.getItem('chauffeurEmpireSlot_1');
     if (localRaw) {
         window._startGameWithSlot(0, false);
+        // Push leaderboard immediately on login — don't wait for the 45s auto-save
+        try {
+            const localSave = JSON.parse(localRaw);
+            if (typeof window.pushLeaderboardNow === 'function') {
+                window.pushLeaderboardNow(localSave);
+            }
+        } catch(e) {}
     } else {
         // Nuovo utente — mostra setup azienda
         if (typeof window.showNewGameSetup === 'function') {

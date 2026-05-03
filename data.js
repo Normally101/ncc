@@ -194,7 +194,7 @@ const INVESTMENTS = [
     { id:'inv_telepass',         tier:2, name:'Telepass Premium Fleet',       price:15000,    passive:0,     rep:0.0, desc:'-10% durata su tutti i trasferimenti autostradali interregionali.' },
     { id:'inv_kasko',            tier:2, name:'Polizza Kasko Full Fleet',     price:48000,    passive:0,     rep:0.0, desc:'Copertura totale: le riparazioni incidentali non costano nulla. Si rinnova ogni anno.' },
     { id:'inv_loan_facility',    tier:2, name:'Linea di Credito Bancaria',    price:5000,     passive:0,     rep:0.0, desc:'Sblocca prestiti fino a €500.000 con interessi 8% mensili. Attenzione al debito.' },
-    { id:'inv_safe_driving',     tier:2, name:'Programma Guida Sicura',        price:28000,    passive:0,     rep:0.1, desc:'Riduce del 50% la probabilità di incidenti. Driver addestrati a posti di blocco.' },
+    { id:'inv_safe_driving',     tier:2, name:'Programma Guida Difensiva',      price:28000,    passive:0,     rep:0.1, desc:'Driver formati a gestire posti di blocco e meteo avverso. −30% durata fermi amministrativi.' },
     { id:'inv_airport_bribe',    tier:2, name:'Accordo VIP Aeroporti FCO/MXP', price:42000,    passive:0,     rep:0.2, desc:'+30% generazione corse da/per aeroporti FCO e MXP. Corsie preferenziali.' },
     { id:'inv_fuel_depot',       tier:2, name:'Deposito Carburante Aziendale', price:350000,   passive:0,     rep:0.0, buildTime:3,  dailyUpkeep:500,  desc:'Cisterna aziendale da 50.000L. Le auto si riforniscono gratis dal deposito se hai il Logistics Manager. Acquista gasolio al prezzo di mercato.' },
     { id:'inv_grey_market',      tier:2, name:'Canali Discreti (Grey Market)', price:55000,    passive:0,     rep:0.0, desc:'Missioni anonime a 3× tariffa. Alto rischio: un posto di blocco può sequestrare il veicolo per 7 giorni.' },
@@ -217,7 +217,7 @@ const INVESTMENTS = [
     { id:'inv_helipad',          tier:3, name:'Piazzola Elicottero Centro',   price:450000,   passive:0,     rep:1.5, desc:'+1.5★ Reputazione immediata. Percorrenze più rapide.' },
 
     // ─── TIER 4: DOMINIO DEL MERCATO ─────────────────────────────
-    { id:'inv_national_license', tier:4, name:'Licenza Nazionale NCC',        price:1000000,  passive:0,     rep:1.5, desc:'Sblocca TUTTE le regioni d\'Italia in un colpo solo. Simbolo di dominio assoluto.' },
+    { id:'inv_national_license', tier:4, name:'Licenza Nazionale NCC',        price:220000,   passive:0,     rep:1.5, desc:'Sblocca TUTTE le regioni d\'Italia in un colpo solo. Risparmio enorme vs sblocco singolo. Simbolo di dominio assoluto.' },
     { id:'inv_real_estate',      tier:4, name:'Fondo Immobiliare Lusso',      price:1200000,  passive:15000, rep:0.5, desc:'€15.000/g di rendita passiva garantita.' },
     { id:'inv_tower',            tier:4, name:'Chauffeur Empire Tower (Milano)',   price:25000000, passive:0,     rep:2.0, buildTime:30, dailyUpkeep:15000, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
     { id:'inv_acquire',          tier:4, name:'Acquisizione Competitor Minore',price:500000,  passive:0,     rep:1.0, desc:'Acquisisci il rivale più debole: +5 veicoli e quota.' },
