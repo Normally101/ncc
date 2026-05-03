@@ -1195,7 +1195,7 @@ async function renderTabRanking() {
             console.log('MULTIPLAYER: Caricamento classifica globale...');
             const { data, error } = await window.supabaseClient
                 .from('leaderboard')
-                .select('user_id,company_name,owner_name,liquid_assets,reputation,fleet_count,last_active')
+                .select('user_id,company_name,liquid_assets,reputation,fleet_count,last_active')
                 .order('liquid_assets', { ascending: false })
                 .limit(50);
             if (error) {
@@ -1226,7 +1226,6 @@ async function renderTabRanking() {
         rows.push({
             user_id:      myId,
             company_name: gameState.companyName || 'Chauffeur Empire',
-            owner_name:   window.currentUser?.email || '',
             liquid_assets: Math.floor(gameState.cash || 0),
             reputation:   gameState.reputation || 0,
             fleet_count:  (gameState.fleet || []).length,
@@ -1298,7 +1297,7 @@ async function renderTabRanking() {
                         ${r.company_name || 'Chauffeur Empire'}${isMe ? ' <span style="color:#d4af37;font-size:9px">(Tu)</span>' : ''}${onlineDot}
                     </div>
                     <div style="font-size:9px;color:#6b7280">&euro;${Math.floor(r.liquid_assets || 0).toLocaleString('it-IT')} &middot; &#x2605;${Number(r.reputation || 0).toFixed(1)}</div>
-                    <div style="font-size:8px;color:#4b5563">&#x1F697; ${r.fleet_count || 0} auto &middot; ${r.owner_name || ''}</div>
+                    <div style="font-size:8px;color:#4b5563">&#x1F697; ${r.fleet_count || 0} auto</div>
                 </div>
             </div>
             <div style="font-family:'Roboto Mono',monospace;font-weight:700;color:#00f2ff;font-size:13px;white-space:nowrap">
@@ -1369,7 +1368,11 @@ async function renderTabRanking() {
         </div>`;
     }
 
+    // Preserve dropdown selection across innerHTML replacement
+    const _savedRegion = document.getElementById('attack-region-select')?.value;
     container.innerHTML = html;
+    const _regionSel = document.getElementById('attack-region-select');
+    if (_regionSel && _savedRegion) _regionSel.value = _savedRegion;
 }/* ================================================================
    dispatcher.js — RECOVERY PARTE 3: MERCATI, STAFF & EMAIL
    ================================================================ */

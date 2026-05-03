@@ -145,8 +145,85 @@ async function _mmoBootSequence(userId) {
             '€' + (window.ServerState.getCompany()?.cash || '?'));
     }
 
+    // ── Phase 6: Process offline gains ────────────────────────────
+    if (serverReady) {
+        try {
+            const { data: gains, error: gainsErr } = await window.supabaseClient
+                .rpc('rpc_process_offline_gains');
+            if (!gainsErr && gains?.ok && gains.hours_processed > 0.05 && gains.earned_cash > 0) {
+                console.log('[Auth] Phase 6 ✅ Guadagni offline:', gains);
+                window.ServerState.bridgeToGameState();
+                _showOfflineGainsModal(gains);
+            } else {
+                console.log('[Auth] Phase 6 → Nessun guadagno offline significativo.');
+            }
+        } catch(e) {
+            console.warn('[Auth] Phase 6 ⚠ rpc_process_offline_gains fallita:', e.message);
+        }
+    }
+
+    // ── Heartbeat: aggiorna last_active_at ogni 60 secondi ────────
+    _startHeartbeat();
+
     console.log('[Auth] ✅ Boot MMO completato.');
     console.groupEnd();
+}
+
+function _showOfflineGainsModal(gains) {
+    const existing = document.getElementById('offline-gains-modal');
+    if (existing) existing.remove();
+
+    const h    = gains.hours_processed;
+    const cash = gains.earned_cash;
+    const hLabel = h >= 1 ? `${Math.floor(h)}h ${Math.round((h % 1) * 60)}m` : `${Math.round(h * 60)} minuti`;
+    const energyLine = gains.energy_restored > 0
+        ? `<p style="color:#60a5fa;font-size:11px;margin:4px 0 0">🛌 Auto-Rest: +${gains.energy_restored}% energia CEO recuperata</p>`
+        : '';
+
+    const modal = document.createElement('div');
+    modal.id = 'offline-gains-modal';
+    modal.style.cssText = `
+        position:fixed;top:0;left:0;right:0;bottom:0;z-index:9999;
+        display:flex;align-items:center;justify-content:center;
+        background:rgba(0,0,0,0.75);backdrop-filter:blur(6px)`;
+    modal.innerHTML = `
+    <div style="
+        background:rgba(8,8,20,0.97);border:1px solid rgba(212,175,55,0.5);
+        border-radius:20px;padding:32px 36px;max-width:380px;width:90%;
+        box-shadow:0 0 60px rgba(212,175,55,0.15);text-align:center;
+        font-family:'Roboto Mono',monospace">
+        <div style="font-size:40px;margin-bottom:12px">💼</div>
+        <h2 style="color:#d4af37;font-family:'Orbitron',sans-serif;font-size:15px;margin:0 0 6px;text-transform:uppercase;letter-spacing:0.1em">Mentre eri via…</h2>
+        <p style="color:#9ca3af;font-size:10px;margin:0 0 18px;text-transform:uppercase;letter-spacing:0.08em">I tuoi autisti hanno lavorato</p>
+        <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.2);border-radius:12px;padding:16px;margin-bottom:18px">
+            <div style="color:#6b7280;font-size:9px;text-transform:uppercase;margin-bottom:4px">Durata offline</div>
+            <div style="color:#e5e7eb;font-size:18px;font-weight:700">${hLabel}</div>
+        </div>
+        <div style="background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.25);border-radius:12px;padding:16px;margin-bottom:18px">
+            <div style="color:#6b7280;font-size:9px;text-transform:uppercase;margin-bottom:4px">Guadagnato</div>
+            <div style="color:#22c55e;font-size:26px;font-weight:700;font-family:'Orbitron',sans-serif">+€${cash.toLocaleString('it-IT')}</div>
+            ${energyLine}
+        </div>
+        <button onclick="document.getElementById('offline-gains-modal').remove()"
+            style="background:linear-gradient(135deg,#d4af37,#b8962e);color:#000;border:none;
+            border-radius:10px;padding:10px 28px;font-weight:700;font-size:12px;
+            cursor:pointer;width:100%;font-family:'Orbitron',sans-serif;letter-spacing:0.05em">
+            Ottimo! Continua →
+        </button>
+    </div>`;
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+}
+
+let _heartbeatTimer = null;
+function _startHeartbeat() {
+    if (_heartbeatTimer) clearInterval(_heartbeatTimer);
+    _heartbeatTimer = setInterval(async () => {
+        if (!window.currentUser || !window.supabaseClient) return;
+        try {
+            await window.supabaseClient.rpc('rpc_ping');
+        } catch(e) { /* silent — offline */ }
+    }, 60000);
 }
 
 

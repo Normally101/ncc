@@ -374,6 +374,14 @@ const ServerState = (() => {
         return _rpc('rpc_collect_daily_costs', {});
     }
 
+    // ── Idle / Premium ────────────────────────────────────────────────────────
+    async function upgradeOfflineLimit(costInCoins) {
+        return _rpc('rpc_upgrade_offline_limit', { p_cost_in_coins: costInCoins });
+    }
+    async function buyAutoRest(costInCoins) {
+        return _rpc('rpc_buy_auto_rest', { p_cost_in_coins: costInCoins });
+    }
+
 
     // ==========================================================================
     // PUBLIC GETTERS
@@ -430,6 +438,8 @@ const ServerState = (() => {
         unlockRegion,
         restCeo,
         collectDailyCosts,
+        upgradeOfflineLimit,
+        buyAutoRest,
         getState,
         getCompany,
         getVehicles,
