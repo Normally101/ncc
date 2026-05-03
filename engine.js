@@ -177,23 +177,10 @@ function _deserializeRide(r) {
 }
 
 function saveGame() {
-    // Delegate to slot-aware save if saveSystem is loaded
     if (typeof window.saveCurrentSlot === 'function' && window.currentSlotIndex !== null) {
         window.saveCurrentSlot();
         _showSaveIndicator();
-        return;
     }
-    // Fallback: legacy key (shouldn't happen in normal flow)
-    try {
-        const save = {
-            ...gameState,
-            pendingRides: gameState.pendingRides.map(_serializeRide).filter(Boolean),
-            activeRides:  gameState.activeRides.map(_serializeRide).filter(Boolean),
-            drivers: gameState.drivers.map(d => ({ ...d, queue: d.queue.map(_serializeRide).filter(Boolean) }))
-        };
-        localStorage.setItem('chauffeurEmpireSave_v2', JSON.stringify(save));
-        _showSaveIndicator();
-    } catch(e) { console.error('Save failed:', e); }
 }
 
 function loadGame() {
@@ -428,9 +415,7 @@ function initGame(fresh = true) {
     setInterval(_maybeShadowMission, 150000);
     setInterval(_maybeGenerateDynamicEvent, 180000);
     setInterval(_maybeDiamondContract, 240000);
-    setInterval(saveGame, 30000);
     setInterval(checkActiveTrips, 5000);
-    setInterval(_renderFlottaPanel, 1000);
 
     updateUI();
 }
@@ -3893,37 +3878,8 @@ function checkActiveTrips() {
     }
     if (completed > 0) {
         updateUI();
-        _renderFlottaPanel();
         saveGame();
     }
-}
-
-// ─── FLOTTA IN VIAGGIO PANEL ──────────────────────────────────────
-function _renderFlottaPanel() {
-    const panel = document.getElementById('flotta-panel');
-    if (!panel) return;
-    const trips = (gameState.activeTrips || []);
-    if (!trips.length) { panel.classList.add('hidden'); return; }
-    panel.classList.remove('hidden');
-    const now = Date.now();
-    const tierColor = { ultra:'#d4af37', vip:'#a78bfa', business:'#00f2ff', group:'#34d399', standard:'#9ca3af' };
-    panel.innerHTML =
-        `<div class="flotta-header">🚗 Flotta in Viaggio <span class="flotta-count">${trips.length}</span></div>` +
-        trips.map(t => {
-            const ms  = Math.max(0, t.endTime - now);
-            const min = Math.floor(ms / 60000);
-            const sec = Math.floor((ms % 60000) / 1000);
-            const timer = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
-            const col = tierColor[t.tier] || '#9ca3af';
-            const earningsLabel = t.earnings != null ? `<span class="flotta-earn">€${t.earnings.toLocaleString()}</span>` : '';
-            return `<div class="flotta-row">
-                <span class="flotta-tier" style="color:${col}">●</span>
-                <span class="flotta-driver">${t.driverName}</span>
-                <span class="flotta-route">${t.toName}</span>
-                ${earningsLabel}
-                <span class="flotta-timer ${ms < 30000 ? 'flotta-timer-soon' : ''}">${timer}</span>
-            </div>`;
-        }).join('');
 }
 
 function updateUI() {
@@ -3982,8 +3938,6 @@ function updateUI() {
     if (hubModal && !hubModal.classList.contains('hidden') && typeof _updateHubStats === 'function') {
         _updateHubStats();
     }
-
-    _renderFlottaPanel();
 }
 
 function openHotelModal() {

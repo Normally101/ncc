@@ -486,21 +486,32 @@ function visualLoop() {
     const now = Date.now();
     const trailFeatures = [];
 
-    // ── Phase 1: animate rides still in visual simulation ──────────
+    // ── Phase 1: animate rides using real server timestamps ───────
     gameState.activeRides.forEach(ride => {
-        if (!ride.lastVisualUpdate) ride.lastVisualUpdate = now;
-        const delta = now - ride.lastVisualUpdate;
-        ride.lastVisualUpdate = now;
-        if (!ride.visualElapsed) ride.visualElapsed = ride.elapsed;
-        ride.visualElapsed += delta * (5000 / 600);
-        if (Math.abs(ride.visualElapsed - ride.elapsed) > 5000) ride.visualElapsed = ride.elapsed;
+        // Resolve progress from server trip timestamps when available
+        const serverTrip = (gameState.activeTrips || []).find(t => t.id === ride.id);
+        let progress;
+        if (serverTrip?.start_time && serverTrip?.end_time) {
+            const startMs = new Date(serverTrip.start_time).getTime();
+            const endMs   = new Date(serverTrip.end_time).getTime();
+            const span    = endMs - startMs;
+            progress = span > 0 ? Math.min(1, Math.max(0, (now - startMs) / span)) : 1;
+        } else {
+            // No server trip yet — fallback to local elapsed (no speed multiplier)
+            if (!ride.lastVisualUpdate) ride.lastVisualUpdate = now;
+            const delta = now - ride.lastVisualUpdate;
+            ride.lastVisualUpdate = now;
+            if (ride.visualElapsed == null) ride.visualElapsed = ride.elapsed;
+            ride.visualElapsed = Math.min(ride.duration, ride.visualElapsed + delta);
+            progress = ride.visualElapsed / ride.duration;
+        }
 
         // Progress bar update (UI element)
         const bar = document.getElementById(`prog-${ride.driverId}`);
-        if (bar) bar.style.width = `${Math.min(100, (ride.visualElapsed / ride.duration) * 100)}%`;
+        if (bar) bar.style.width = `${Math.min(100, progress * 100)}%`;
 
         // Position interpolation (returns [lat, lng] Leaflet-style)
-        const pos = calculateInterpolatedPosition(ride, ride.visualElapsed);
+        const pos = calculateInterpolatedPosition(ride, progress * ride.duration);
         if (!pos) return;
 
         // Cache geometry so activeTrips can use it after ride leaves activeRides
@@ -511,7 +522,7 @@ function visualLoop() {
             tier:      ride.tier,
             lastPos:   pos,
             lastAngle: ride._lastAngle || 0,
-            progress:  Math.min(1, ride.visualElapsed / ride.duration),
+            progress,
         };
 
         // Heading calculation

@@ -108,13 +108,7 @@ window.saveCurrentSlot = function() {
             }))
         };
         save._saveTimestamp = Date.now();
-        // LocalStorage (fast, offline-safe)
-        localStorage.setItem(key, JSON.stringify(save));
-        // Auto-sync to file if folder is connected
-        if (window.syncManager?.dirHandle) {
-            window.syncManager.writeSlot(window.currentSlotIndex, save);
-        }
-        // Cloud save (fire-and-forget — don't block the game tick)
+        // Cloud is the single source of truth — no localStorage write
         _cloudSaveSlot(window.currentSlotIndex, save);
     } catch(e) { console.error('[SaveSystem] Save failed:', e); }
 };
