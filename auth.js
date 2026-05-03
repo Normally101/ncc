@@ -121,6 +121,26 @@ async function _onAuthSuccess(user) {
             `<div class="ss-main-logo">👁️</div>
              <p style="color:#22c55e;font-family:'Orbitron',sans-serif;font-size:13px;margin-top:12px">Caricamento Impero...</p>`;
     }
+
+    // ── Server-Authoritative init ──────────────────────────────────
+    // Initialise ServerState before loading the local save so that
+    // authoritative cash / company data is available immediately.
+    if (window.ServerState) {
+        try {
+            const state = await window.ServerState.init(window.supabaseClient);
+
+            // New user: no company row yet → create one after new-game setup
+            if (!state.company) {
+                console.log('[Auth] Nuova azienda — in attesa del setup nome.');
+                // The game setup flow calls window.ServerState.initCompany(name)
+                // after the user enters their company name.
+            }
+        } catch(e) {
+            console.warn('[Auth] ServerState init fallito (tabelle MMO assenti?):', e.message);
+            // Non-fatal: fall through to legacy JSON save loading.
+        }
+    }
+
     await _loadSaveAndStart(user.id);
     if (overlay) overlay.remove();
 }
