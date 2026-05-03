@@ -580,9 +580,17 @@ function _tickFatigue() {
             if (driver.restHoursLeft <= 0) {
                 driver.status = 'idle';
                 driver.fatigue = 0;
-                logToMap(`✅ ${driver.name} riposato: di nuovo disponibile.`);
+                if (driver._returning) {
+                    const rc = gameState.fleet.find(c => c.id === driver.assignedCarId);
+                    if (rc) rc.currentPoiId = 'roma';
+                    delete driver._returning;
+                    logToMap(`🏠 ${driver.name} è tornato all'Hub.`);
+                } else {
+                    logToMap(`✅ ${driver.name} riposato: di nuovo disponibile.`);
+                }
                 if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
                 if (_tabIs('staff') && typeof renderTabStaff === 'function') renderTabStaff();
+                if (_tabIs('fleet') && typeof renderTabFleet === 'function') renderTabFleet();
             }
         } else if (driver.fatigue >= 85) {
             // Con HR: riposo automatico a 85% se libero o in attesa
@@ -1068,6 +1076,52 @@ function _retryOutOfServiceVehicles() {
     stoppedCars.forEach(car => refillVehicle(car.id));
     if (stoppedCars.length > 0 && typeof renderTabFleet === 'function') renderTabFleet();
 }
+
+// ─── RITORNO ALL'HUB ─────────────────────────────────────────────
+window.returnToHub = function(carId) {
+    const car    = gameState.fleet.find(c => c.id === carId);
+    const driver = gameState.drivers.find(d => d.assignedCarId === carId && d.id !== 'ceo');
+    if (!car || !driver) return;
+    if (driver.status !== 'idle') {
+        if (typeof showNotification === 'function') showNotification('Autista non disponibile.', 'error');
+        return;
+    }
+    if (car.currentPoiId === 'roma' || !car.currentPoiId) {
+        if (typeof showNotification === 'function') showNotification('Veicolo già all\'Hub.', 'info');
+        return;
+    }
+    const fromPoi = POIS[car.currentPoiId];
+    const hubPoi  = POIS['roma'];
+    if (!fromPoi || !hubPoi) return;
+
+    // Haversine distance (km)
+    const R = 6371;
+    const dLat = (hubPoi.lat - fromPoi.lat) * Math.PI / 180;
+    const dLng = (hubPoi.lng - fromPoi.lng) * Math.PI / 180;
+    const a = Math.sin(dLat/2)**2 + Math.cos(fromPoi.lat*Math.PI/180) * Math.cos(hubPoi.lat*Math.PI/180) * Math.sin(dLng/2)**2;
+    const distKm = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    const avgSpeedKmh = 90;
+    const travelHours = Math.max(1, Math.ceil(distKm / avgSpeedKmh));
+    const fuelCost    = Math.round(distKm * 0.18); // ~€0.18/km
+    const hasTelepass = hasInvestment('inv_telepass') || (car.upgrades||[]).includes('telepass_car');
+    const tollCost    = hasTelepass ? 0 : Math.round(distKm * 0.08); // ~€0.08/km tolls
+    const totalCost   = fuelCost + tollCost;
+
+    if (gameState.cash < totalCost) {
+        if (typeof showNotification === 'function') showNotification(`Fondi insufficienti per il rientro (€${totalCost}).`, 'error');
+        return;
+    }
+
+    gameState.cash -= totalCost;
+    driver.status        = 'resting';
+    driver.restHoursLeft = travelHours;
+    driver._returning    = true;
+    if (typeof logToMap === 'function') logToMap(`🏠 ${driver.name} in rientro da ${fromPoi.name} (${Math.round(distKm)} km, ${travelHours}h). Costo: €${totalCost}.`);
+    if (typeof showNotification === 'function') showNotification(`🏠 ${driver.name} in rientro all'Hub — ${travelHours}h, €${totalCost} (carb.+pedaggi).`, 'info');
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+    if (typeof updateUI === 'function') updateUI();
+};
 
 // ─── BLACK MARKET FUEL (Gasolio Agricolo) ─────────────────────────
 window.buyBlackMarketFuel = function(carId) {
@@ -2557,6 +2611,10 @@ function startNextRide(driver) {
     if (hasInvestment('inv_telepass') && ride.fromPoi.region !== ride.toPoi.region) {
         ride.duration = Math.floor(ride.duration * 0.90);
     }
+    // Telepass Auto (per-car upgrade): -15% durata su tutte le corse
+    if ((car.upgrades || []).includes('telepass_car')) {
+        ride.duration = Math.floor(ride.duration * 0.85);
+    }
     // Cantieri: +35% duration if roadworks on this route
     const cantieriMult = _getCantieriSpeedMult(ride.fromPoi.id, ride.toPoi.id);
     if (cantieriMult < 1.0) {
@@ -2809,6 +2867,9 @@ function completeRide(ride, _deferPay = false) {
 
     // Rifornimento automatico: il Logistics Manager gestisce gasolio e gomme
     if (car2) refillVehicle(car2.id);
+
+    // Posizione persistente: l'auto resta nell'ultima destinazione
+    if (car2 && ride.toPoi?.id) car2.currentPoiId = ride.toPoi.id;
 
     // If pay is deferred, driver stays busy until checkActiveTrips() fires at endTime.
     // If paying immediately (legacy/manual calls), free the driver now.

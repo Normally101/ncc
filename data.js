@@ -199,15 +199,15 @@ const INVESTMENTS = [
     { id:'inv_fuel_depot',       tier:2, name:'Deposito Carburante Aziendale', price:350000,   passive:0,     rep:0.0, buildTime:3,  dailyUpkeep:500,  desc:'Cisterna aziendale da 50.000L. Le auto si riforniscono gratis dal deposito se hai il Logistics Manager. Acquista gasolio al prezzo di mercato.' },
     { id:'inv_grey_market',      tier:2, name:'Canali Discreti (Grey Market)', price:55000,    passive:0,     rep:0.0, desc:'Missioni anonime a 3× tariffa. Alto rischio: un posto di blocco può sequestrare il veicolo per 7 giorni.' },
     { id:'inv_empty_leg',        tier:2, name:'Empty Leg Optimizer',           price:28000,    passive:0,     rep:0.1, desc:'Corse di ritorno automatiche al 50% tariffa. Elimina i viaggi a vuoto dopo i trasferimenti lunghi.' },
+    { id:'inv_hq_office',        tier:2, name:'Ufficio Executive (HQ Lv2)',    price:600000,   passive:0,     rep:0.1, buildTime:5,  dailyUpkeep:800,  desc:'Amplia la sede: fino a 4 dipendenti contemporanei. Sblocca slot HR e Logistics.' },
 
     // ─── TIER 3: LUSSO ESTREMO ───────────────────────────────────
     { id:'inv_pension_fund',     tier:3, name:'Fondo Pensione Dipendenti',    price:75000,    passive:0,     rep:0.3, desc:'Dopo 60 giorni di gioco: +€1.200/g rendita pensionistica. Migliora morale.' },
-    { id:'inv_vip_lounge_hq',       tier:3, name:'VIP Lounge HQ',                price:85000,    passive:0,     rep:0.2, desc:'Sala relax interna: i driver recuperano stanchezza 30% più veloce. CEO recupera +2% energia/h quando non è in corsa.' },
-    { id:'inv_carbon_neutral',      tier:3, name:'Certificazione Carbon Neutral', price:65000,    passive:0,     rep:0.3, desc:'Sblocca contratti Corporate Green. +15% tariffa su clienti aziende eco-sensitive.' },
-    { id:'inv_hotel_exclusive',     tier:3, name:'Esclusiva Hotel de Russie Roma',price:120000,   passive:500,   rep:0.5, desc:'Accordo esclusivo: +€500/g + 5 corse VIP garantite ogni giorno dal principale hotel partner.' },
-    { id:'inv_corporate_retainer',  tier:3, name:'Corporate Retainer (3 Aziende)',price:150000,  passive:2000,  rep:0.4, desc:'+€2.000/g da contratti fissi con Fortune 500. +3 corse Business/g garantite anche senza richieste.' },
-    { id:'inv_hq_office',           tier:2, name:'Ufficio Executive (HQ Lv2)',    price:600000,   passive:0,     rep:0.1, buildTime:5,  dailyUpkeep:800,  desc:'Amplia la sede: fino a 4 dipendenti contemporanei. Sblocca slot HR e Logistics.' },
-    { id:'inv_hq_campus',           tier:3, name:'Campus Chauffeur Empire (HQ Lv3)',   price:1800000,  passive:0,     rep:0.3, buildTime:10, dailyUpkeep:2000, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
+    { id:'inv_vip_lounge_hq',    tier:3, name:'VIP Lounge HQ',                price:85000,    passive:0,     rep:0.2, desc:'Sala relax interna: i driver recuperano stanchezza 30% più veloce. CEO recupera +2% energia/h quando non è in corsa.' },
+    { id:'inv_carbon_neutral',   tier:3, name:'Certificazione Carbon Neutral', price:65000,    passive:0,     rep:0.3, desc:'Sblocca contratti Corporate Green. +15% tariffa su clienti aziende eco-sensitive.' },
+    { id:'inv_hotel_exclusive',  tier:3, name:'Esclusiva Hotel de Russie Roma',price:120000,   passive:500,   rep:0.5, desc:'Accordo esclusivo: +€500/g + 5 corse VIP garantite ogni giorno dal principale hotel partner.' },
+    { id:'inv_corporate_retainer',tier:3, name:'Corporate Retainer (3 Aziende)',price:150000,  passive:2000,  rep:0.4, desc:'+€2.000/g da contratti fissi con Fortune 500. +3 corse Business/g garantite anche senza richieste.' },
+    { id:'inv_hq_campus',        tier:3, name:'Campus Chauffeur Empire (HQ Lv3)',   price:1800000,  passive:0,     rep:0.3, buildTime:10, dailyUpkeep:2000, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
     { id:'inv_security_escort',     tier:3, name:'Security Escort Team',          price:95000,    passive:0,     rep:0.4, desc:'Auto di scorta per clienti HVT (High Value Target). +80% tariffa su missioni diplomatiche. -50% rischio incidenti.' },
     { id:'inv_philanthropy',     tier:3, name:'Fondazione Chauffeur Empire Onlus', price:95000,    passive:0,     rep:0.0, desc:'+0.5★ Reputazione ogni settimana. Migliora l\'immagine pubblica del brand.' },
     { id:'inv_sabotaggio',       tier:3, name:'Agenzia PR Negativa',          price:120000,   passive:0,     rep:0.0, desc:'Diffonde recensioni negative sui competitor. −10% reputazione rivali ogni settimana.' },
@@ -217,7 +217,7 @@ const INVESTMENTS = [
     { id:'inv_helipad',          tier:3, name:'Piazzola Elicottero Centro',   price:450000,   passive:0,     rep:1.5, desc:'+1.5★ Reputazione immediata. Percorrenze più rapide.' },
 
     // ─── TIER 4: DOMINIO DEL MERCATO ─────────────────────────────
-    { id:'inv_national_license', tier:4, name:'Licenza Nazionale NCC',        price:220000,   passive:0,     rep:1.5, desc:'Sblocca TUTTE le regioni d\'Italia in un colpo solo. Risparmio enorme vs sblocco singolo. Simbolo di dominio assoluto.' },
+    { id:'inv_national_license', tier:4, name:'Licenza Nazionale NCC',        price:150000,   passive:0,     rep:1.5, desc:'Sblocca TUTTE le regioni d\'Italia in un colpo solo. Risparmio enorme vs sblocco singolo. Simbolo di dominio assoluto.' },
     { id:'inv_real_estate',      tier:4, name:'Fondo Immobiliare Lusso',      price:1200000,  passive:15000, rep:0.5, desc:'€15.000/g di rendita passiva garantita.' },
     { id:'inv_tower',            tier:4, name:'Chauffeur Empire Tower (Milano)',   price:25000000, passive:0,     rep:2.0, buildTime:30, dailyUpkeep:15000, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
     { id:'inv_acquire',          tier:4, name:'Acquisizione Competitor Minore',price:500000,  passive:0,     rep:1.0, desc:'Acquisisci il rivale più debole: +5 veicoli e quota.' },
@@ -334,6 +334,8 @@ const CAR_UPGRADES = [
       desc:'-55% consumo carburante per corsa. 2× autonomia reale. Più corse prima del refill.' },
     { id:'vetri_oscurati', name:'🕶 Vetri Oscurati Pro',   price:6500,  priceMult:1.00, stealthMult:0.35,
       desc:'-65% rischio sequestro su missioni Shadow e Grey Market. Invisibile ai posti di blocco.' },
+    { id:'telepass_car',  name:'🛣 Telepass Auto',        price:3500,  priceMult:1.00, telepassMult:0.85,
+      desc:'-15% durata su tutte le corse. Abbonamento incluso.' },
 ];
 
 // ─── CAMPAGNE MARKETING ──────────────────────────────────────────

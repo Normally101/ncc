@@ -1420,11 +1420,31 @@ function renderTabFleet() {
         const hasCentralina   = (car.upgrades||[]).includes('centralina');
         const hasSerbatoio    = (car.upgrades||[]).includes('serbatoio_ext');
         const hasVetriC       = (car.upgrades||[]).includes('vetri_oscurati');
+        const hasTelepassCar  = (car.upgrades||[]).includes('telepass_car');
         const tuningBadges    = [
-            hasCentralina ? '<span style="background:rgba(0,242,255,0.12);color:#00f2ff;border:1px solid rgba(0,242,255,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🔧+28%</span>' : '',
-            hasSerbatoio  ? '<span style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.3);font-size:8px;padding:1px 5px;border-radius:6px">⛽−55%</span>' : '',
-            hasVetriC     ? '<span style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🕶−65%</span>' : '',
+            hasCentralina  ? '<span style="background:rgba(0,242,255,0.12);color:#00f2ff;border:1px solid rgba(0,242,255,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🔧+28%</span>' : '',
+            hasSerbatoio   ? '<span style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.3);font-size:8px;padding:1px 5px;border-radius:6px">⛽−55%</span>' : '',
+            hasVetriC      ? '<span style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🕶−65%</span>' : '',
+            hasTelepassCar ? '<span style="background:rgba(212,175,55,0.12);color:#d4af37;border:1px solid rgba(212,175,55,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🛣−15%</span>' : '',
         ].filter(Boolean).join(' ');
+        // Position tracking
+        const assignedDriver = gameState.drivers.find(d => d.assignedCarId === car.id && d.id !== 'ceo');
+        const poiName = car.currentPoiId && typeof POIS !== 'undefined' && POIS[car.currentPoiId] ? POIS[car.currentPoiId].name : null;
+        const isAtHub = !car.currentPoiId || car.currentPoiId === 'roma';
+        const isReturning = assignedDriver && assignedDriver._returning;
+        // Return-to-hub cost estimate
+        let returnCostStr = '';
+        if (!isAtHub && !isReturning && car.currentPoiId && typeof POIS !== 'undefined' && POIS[car.currentPoiId]) {
+            const fp = POIS[car.currentPoiId], hp = POIS['roma'];
+            if (fp && hp) {
+                const R2 = 6371, dL = (hp.lat-fp.lat)*Math.PI/180, dG = (hp.lng-fp.lng)*Math.PI/180;
+                const aa = Math.sin(dL/2)**2 + Math.cos(fp.lat*Math.PI/180)*Math.cos(hp.lat*Math.PI/180)*Math.sin(dG/2)**2;
+                const d2 = R2*2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
+                const fc = Math.round(d2*0.18), tc = (hasTelepassCar || (typeof hasInvestment==='function' && hasInvestment('inv_telepass'))) ? 0 : Math.round(d2*0.08);
+                const hrs = Math.max(1, Math.ceil(d2/90));
+                returnCostStr = `€${(fc+tc).toLocaleString()} · ${hrs}h`;
+            }
+        }
         html += `
         <div class="hud-card ${outReason ? '!border-red-500/50 bg-red-950/10' : ''}">
             <div class="flex justify-between items-center">
@@ -1432,6 +1452,9 @@ function renderTabFleet() {
                     <div class="text-xs font-bold text-white truncate">${car.name} ${car.isLease ? '<span class="text-[8px] text-blue border border-blue/40 px-1 ml-1 rounded uppercase">Leasing</span>' : ''}</div>
                     <div class="text-[9px] text-gray-500">Salute: ${Math.floor(car.condition)}% · ${car.tier.toUpperCase()} · ${Math.floor((car.mileage||0)/1000)}k km${upgradePills ? ' · ' + upgradePills : ''}${(car.mileage||0) > 0 && (car.mileage||0) % 5000 < 300 ? ' <span class="text-orange-400">⚠ Tagliando</span>' : ''}</div>
                     ${tuningBadges ? `<div class="mt-0.5 flex gap-1 flex-wrap">${tuningBadges}</div>` : ''}
+                    ${isReturning ? `<div class="text-[9px] text-cyan-400 mt-0.5">🏠 In rientro all'Hub…</div>`
+                      : poiName && !isAtHub ? `<div class="text-[9px] text-yellow-400 mt-0.5">📍 ${poiName}</div>`
+                      : `<div class="text-[9px] text-green-400/60 mt-0.5">🏠 Hub Roma</div>`}
                     ${outLabel ? `<div class="text-[9px] text-red-400 font-bold mt-0.5">${outLabel}</div>` : ''}
                 </div>
                 <button onclick="openCarModal('${car.id}')" class="btn-blue !py-1 !px-2 ml-2">Gestisci</button>
@@ -1472,7 +1495,13 @@ function renderTabFleet() {
                         class="flex-1 text-[8px] py-0.5 px-1 rounded border border-orange-600/50 bg-orange-950/30 text-orange-300 hover:bg-orange-900/40 transition-colors">
                         🔧 Ripara Motore<br><span class="text-[7px] opacity-60">€${repairCost.toLocaleString()}</span>
                     </button>` : ''}
-                </div>`;
+                </div>
+                ${!isAtHub && !isReturning && assignedDriver && assignedDriver.status === 'idle'
+                    ? `<button onclick="window.returnToHub('${car.id}')"
+                        class="w-full mt-1.5 text-[8px] py-1 px-2 rounded border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
+                        🏠 Ritorna all'Hub &nbsp;<span class="opacity-60">${returnCostStr}</span>
+                    </button>`
+                    : ''}`;
             })()}
         </div>`;
     });
