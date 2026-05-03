@@ -1128,9 +1128,12 @@ function renderTabCorse() {
 
 async function renderTabRanking() {
     const container = document.getElementById('tab-container');
-    if (!container) return; // DOM not ready yet
+    if (!container) return;
 
-    // Show loading skeleton while fetching
+    // Remember which render is current — prevents stale async write on tab switch
+    const renderToken = Symbol();
+    renderTabRanking._token = renderToken;
+
     container.innerHTML = `
     <div class="flex items-center gap-2 mb-4">
         <div class="text-2xl">&#x1F3C6;</div>
@@ -1166,6 +1169,9 @@ async function renderTabRanking() {
     } else {
         fetchError = 'Supabase non disponibile';
     }
+
+    // User switched tab while fetching — don't overwrite their current tab
+    if (renderTabRanking._token !== renderToken) return;
 
     const myId   = window.currentUser?.id;
     const now    = Date.now();

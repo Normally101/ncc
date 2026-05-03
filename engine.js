@@ -116,13 +116,12 @@ function _checkAchievements() {
             gameState.achievements.push(ach.id);
             showBigEvent(ach.icon, `Obiettivo Sbloccato: ${ach.name}`, ach.desc);
             logToMap(`🏅 Achievement: ${ach.name}`);
-            // Flash badge on 🏆 nav button — do NOT switch tab
+            // Flash 🏆 nav button — do NOT switch tab
             const rankBtn = document.querySelector('[data-tab="ranking"]');
             if (rankBtn && !rankBtn.classList.contains('active')) {
-                rankBtn.style.animation = 'none';
-                rankBtn.style.filter = 'drop-shadow(0 0 8px #d4af37)';
-                rankBtn.setAttribute('data-badge', '🏅');
-                setTimeout(() => { rankBtn.style.filter = ''; rankBtn.removeAttribute('data-badge'); }, 8000);
+                rankBtn.style.filter = 'drop-shadow(0 0 10px #d4af37)';
+                rankBtn.style.outline = '2px solid #d4af37';
+                setTimeout(() => { rankBtn.style.filter = ''; rankBtn.style.outline = ''; }, 9000);
             }
         }
     });
@@ -406,6 +405,15 @@ function initGame(fresh = true) {
 
     _initStockPrices();
     _applyBrandColor();
+
+    // Sync hqLevel from investments before UI renders — don't wait for first gameLoop tick
+    if (typeof hasInvestment === 'function') {
+        if (hasInvestment('inv_tower') || hasInvestment('inv_hq_campus')) {
+            gameState.hqLevel = 3; if (gameState.hq) gameState.hq.level = 3;
+        } else if (hasInvestment('inv_hq_office')) {
+            gameState.hqLevel = 2; if (gameState.hq) gameState.hq.level = 2;
+        }
+    }
 
     setInterval(gameLoop, 600);
     setInterval(generatePOIRide, 6000);
@@ -1910,8 +1918,8 @@ function processDailyRoutines() {
 
     // HQ level auto-sync with investments
     if (hasInvestment('inv_tower'))     { gameState.hqLevel = 3; if (gameState.hq) gameState.hq.level = 3; }
-    else if (hasInvestment('inv_hq_campus')) { gameState.hqLevel = 2; if (gameState.hq) gameState.hq.level = 2; }
-    else if (hasInvestment('inv_hq_office')) { gameState.hqLevel = 1; if (gameState.hq) gameState.hq.level = 1; }
+    else if (hasInvestment('inv_hq_campus')) { gameState.hqLevel = 3; if (gameState.hq) gameState.hq.level = 3; }
+    else if (hasInvestment('inv_hq_office')) { gameState.hqLevel = 2; if (gameState.hq) gameState.hq.level = 2; }
     else { gameState.hqLevel = 0; if (gameState.hq) gameState.hq.level = 0; }
     if (typeof _updateHQMarker === 'function') _updateHQMarker();
 
