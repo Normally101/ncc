@@ -335,11 +335,14 @@ function _showSaveIndicator() {
     _showSaveIndicator._t = setTimeout(() => { el.style.opacity = '0'; }, 2500);
 }
 
-window.resetGame = function() {
-    if (!confirm('Cancellare tutti i progressi e ricominciare da capo?')) return;
-    localStorage.removeItem('chauffeurEmpireSave_v2');
-    location.reload();
-};
+// resetGame is defined in saveSystem.js (cloud-aware); this stub handles early calls
+if (!window.resetGame) {
+    window.resetGame = function() {
+        if (!confirm('Reimposta il tuo Impero? Tutti i progressi verranno eliminati.')) return;
+        localStorage.removeItem('chauffeurEmpireSlot_1');
+        location.reload();
+    };
+}
 
 // ─── TRAFFICO DINAMICO ────────────────────────────────────────────
 function _getTrafficMult() {

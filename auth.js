@@ -25,43 +25,84 @@ window.currentUser = null;
     });
 })();
 
-// ── CLOUD SYNC: pull all slots for this user into localStorage ────
-async function _syncSlotsFromCloud(userId) {
+// ── LOAD SINGLE CLOUD SAVE → START GAME OR SETUP ─────────────────
+async function _loadSaveAndStart(userId) {
     try {
         const { data, error } = await window.supabaseClient
             .from('game_saves')
-            .select('slot_index, game_state, updated_at')
-            .eq('user_id', userId);
-        if (error || !data) return;
-        let imported = 0;
-        data.forEach(row => {
-            const key      = `chauffeurEmpireSlot_${row.slot_index + 1}`; // was olgaVisionSlot_ (bug)
-            const cloudTs  = new Date(row.updated_at).getTime();
-            const localRaw = localStorage.getItem(key);
+            .select('game_state, updated_at')
+            .eq('user_id', userId)
+            .eq('slot_index', 0)
+            .maybeSingle();
+
+        if (error) {
+            // Surface the real Supabase error so the user can fix it
+            const msg = error.message || JSON.stringify(error);
+            console.error('[Auth] Cloud load error:', error);
+            if (msg.includes('does not exist') || error.code === '42P01') {
+                console.error('[Auth] ⚠ La tabella game_saves non esiste su Supabase. Esegui il CREATE TABLE nell\'SQL Editor.');
+            }
+            if (typeof showNotification === 'function') {
+                showNotification(`☁ Errore cloud: ${msg.slice(0, 80)}`, 'error');
+            }
+        }
+
+        if (data?.game_state) {
+            const cloudTs  = new Date(data.updated_at).getTime();
+            const localRaw = localStorage.getItem('chauffeurEmpireSlot_1');
+            let useCloud = true;
             if (localRaw) {
                 try {
                     const local = JSON.parse(localRaw);
-                    if ((local._saveTimestamp || 0) >= cloudTs) return; // local is newer
+                    if ((local._saveTimestamp || 0) >= cloudTs) useCloud = false;
                 } catch(e) {}
             }
-            localStorage.setItem(key, JSON.stringify(row.game_state));
-            localStorage.setItem(`_cloudSyncTs_${row.slot_index}`, new Date(row.updated_at).getTime().toString());
-            imported++;
-        });
-        console.log(`[Auth] Cloud sync: ${imported} slot aggiornati da cloud, ${data.length - imported} già aggiornati.`);
+            if (useCloud) {
+                localStorage.setItem('chauffeurEmpireSlot_1', JSON.stringify(data.game_state));
+                localStorage.setItem('_cloudSyncTs_0', cloudTs.toString());
+                console.log('[Auth] Save caricato dal cloud.');
+            } else {
+                console.log('[Auth] Save locale più recente del cloud — usato locale.');
+            }
+        }
     } catch(e) {
-        console.warn('[Auth] Cloud sync failed (offline?):', e);
+        console.warn('[Auth] Fetch cloud fallito (offline?):', e);
+    }
+
+    window.currentSlotIndex = 0;
+    const localRaw = localStorage.getItem('chauffeurEmpireSlot_1');
+    if (localRaw) {
+        window._startGameWithSlot(0, false);
+    } else {
+        // Nuovo utente — mostra setup azienda
+        if (typeof window.showNewGameSetup === 'function') {
+            window.showNewGameSetup();
+        }
     }
 }
 
-// ── FORCE PULL FROM CLOUD (callable from slot selector) ──────────
+// ── FORCE PULL (bottone ☁ nell'header) ────────────────────────────
 window.forceSyncFromCloud = async function() {
     if (!window.currentUser) return;
-    const dot = document.getElementById('cloud-sync-dot');
-    if (dot) { dot.textContent = '☁'; dot.style.color = '#f59e0b'; dot.title = 'Sincronizzazione in corso...'; }
-    await _syncSlotsFromCloud(window.currentUser.id);
-    if (dot) { dot.textContent = '☁'; dot.style.color = '#22c55e'; dot.title = 'Cloud sync OK'; }
-    if (typeof window.showSlotSelector === 'function') window.showSlotSelector();
+    if (typeof _updateCloudDot === 'function') _updateCloudDot('busy');
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('game_saves')
+            .select('game_state, updated_at')
+            .eq('user_id', window.currentUser.id)
+            .eq('slot_index', 0)
+            .maybeSingle();
+        if (error) { console.error('[Auth] forceSyncFromCloud error:', error); if (typeof _updateCloudDot === 'function') _updateCloudDot('err'); return; }
+        if (data?.game_state) {
+            localStorage.setItem('chauffeurEmpireSlot_1', JSON.stringify(data.game_state));
+            localStorage.setItem('_cloudSyncTs_0', new Date(data.updated_at).getTime().toString());
+            if (typeof _updateCloudDot === 'function') _updateCloudDot('ok');
+            if (typeof showNotification === 'function') showNotification('☁ Save aggiornato dal cloud!', 'success');
+        }
+    } catch(e) {
+        console.error('[Auth] forceSyncFromCloud exception:', e);
+        if (typeof _updateCloudDot === 'function') _updateCloudDot('err');
+    }
 };
 
 // ── ON SUCCESSFUL AUTH ────────────────────────────────────────────
@@ -71,11 +112,10 @@ async function _onAuthSuccess(user) {
     if (overlay) {
         overlay.querySelector('.auth-card').innerHTML =
             `<div class="ss-main-logo">👁️</div>
-             <p style="color:#22c55e;font-family:'Orbitron',sans-serif;font-size:13px;margin-top:12px">Sincronizzazione cloud...</p>`;
+             <p style="color:#22c55e;font-family:'Orbitron',sans-serif;font-size:13px;margin-top:12px">Caricamento Impero...</p>`;
     }
-    await _syncSlotsFromCloud(user.id);
+    await _loadSaveAndStart(user.id);
     if (overlay) overlay.remove();
-    if (typeof window.showSlotSelector === 'function') window.showSlotSelector();
 }
 
 // ── AUTH OVERLAY UI ───────────────────────────────────────────────

@@ -19,7 +19,7 @@ const BRAND_COLORS = [
     { name:'Rosa Gold',  value:'#f4a460' },
 ];
 
-window.currentSlotIndex   = null;
+window.currentSlotIndex   = 0;   // single save per account — always slot 0
 window._selectedLogoSS    = SLOT_LOGOS[0];
 window._selectedColorSS   = BRAND_COLORS[0].value;
 
@@ -231,7 +231,7 @@ function _showCompanySetup(slotIndex) {
     <div class="ss-bg">
         <div class="ss-setup-card">
             <div class="ss-setup-title">Fondazione Impero</div>
-            <div class="ss-setup-sub">Slot ${slotIndex + 1} · Nuova Partita</div>
+            <div class="ss-setup-sub">Nuovo Account · Prima Partita</div>
 
             <div class="ss-field">
                 <label class="ss-label">Nome Azienda</label>
@@ -250,8 +250,8 @@ function _showCompanySetup(slotIndex) {
             </div>
 
             <div class="ss-btn-row">
-                <button onclick="window.showSlotSelector()" class="ss-btn-secondary">← Indietro</button>
-                <button onclick="_confirmNewGame(${slotIndex})" class="ss-btn-primary">Fonda Azienda →</button>
+                <button onclick="window.authLogout()" class="ss-btn-secondary">← Logout</button>
+                <button onclick="_confirmNewGame(0)" class="ss-btn-primary">Fonda Azienda →</button>
             </div>
         </div>
     </div>`;
@@ -274,145 +274,37 @@ function _confirmNewGame(slotIndex) {
 }
 window._confirmNewGame = _confirmNewGame;
 
-// ── MAIN SLOT SELECTOR ───────────────────────────────────────────
-window.showSlotSelector = function() {
+// ── NEW GAME SETUP (single save per account) ─────────────────────
+window.showNewGameSetup = function() {
     const existing = document.getElementById('ss-overlay');
     if (existing) existing.remove();
-
-    function _cashLabel(c) {
-        if (c >= 1e9) return `€${(c/1e9).toFixed(2)}B`;
-        if (c >= 1e6) return `€${(c/1e6).toFixed(2)}M`;
-        if (c >= 1e3) return `€${Math.floor(c/1e3)}k`;
-        return `€${Math.floor(c)}`;
-    }
-
-    const slotCards = [0,1,2].map(i => {
-        const meta = _getSlotMeta(i);
-        if (!meta) {
-            return `
-            <div class="ss-slot ss-slot-empty" onclick="window.startNewGameSlot(${i})" title="Slot ${i+1}: Nuovo Impero">
-                <div class="ss-empty-plus">+</div>
-                <div class="ss-empty-label">Slot ${i + 1}</div>
-                <div class="ss-empty-sub">Nuovo Impero</div>
-            </div>`;
-        }
-        const monthStr    = MONTHS_SS[(meta.month||1)-1] || 'Gen';
-        const ngpBadge    = meta.ngp > 0 ? `<span class="ss-ngp-badge">♾️ NGP×${meta.ngp}</span>` : '';
-        const cloudTsStr  = _fmtTs(meta.cloudSyncTs);
-        const saveTsStr   = _fmtTs(meta.saveTimestamp);
-        const syncLabel   = cloudTsStr
-            ? `<div class="ss-stat ss-stat-cloud"><span class="ss-stat-lbl">☁ Cloud</span><span class="ss-stat-val ss-cloud-ok">${cloudTsStr}</span></div>`
-            : `<div class="ss-stat ss-stat-cloud"><span class="ss-stat-lbl">☁ Cloud</span><span class="ss-stat-val" style="color:#6b7280">—</span></div>`;
-        const saveLabel   = saveTsStr
-            ? `<div class="ss-stat"><span class="ss-stat-lbl">💾 Locale</span><span class="ss-stat-val" style="color:#6b7280">${saveTsStr}</span></div>`
-            : '';
-        return `
-        <div class="ss-slot ss-slot-occupied" onclick="window.loadExistingSlot(${i})" title="Entra in ${meta.companyName}">
-            <div class="ss-slot-logo">${meta.companyLogo}</div>
-            <div class="ss-slot-name">${meta.companyName}</div>
-            ${ngpBadge}
-            <div class="ss-slot-stats">
-                <div class="ss-stat"><span class="ss-stat-lbl">Liquidità</span><span class="ss-stat-val" style="color:#22c55e">${_cashLabel(meta.cash)}</span></div>
-                <div class="ss-stat"><span class="ss-stat-lbl">Reputazione</span><span class="ss-stat-val" style="color:#d4af37">${meta.reputation.toFixed(1)}★</span></div>
-                <div class="ss-stat"><span class="ss-stat-lbl">Flotta</span><span class="ss-stat-val" style="color:#00f2ff">${meta.fleetSize} auto</span></div>
-                <div class="ss-stat"><span class="ss-stat-lbl">Autisti</span><span class="ss-stat-val" style="color:#a78bfa">${meta.driverCount}</span></div>
-                <div class="ss-stat"><span class="ss-stat-lbl">Giorno</span><span class="ss-stat-val" style="color:#9ca3af">${meta.day} ${monthStr}</span></div>
-                ${syncLabel}
-                ${saveLabel}
-            </div>
-            <div class="ss-slot-actions" onclick="event.stopPropagation()">
-                <button onclick="window.loadExistingSlot(${i})" class="ss-btn-primary ss-btn-sm">Entra ↗</button>
-                <button onclick="window.deleteSlot(${i})" class="ss-btn-danger ss-btn-sm">🗑</button>
-            </div>
-        </div>`;
-    }).join('');
-
-    // Current macro indicator
-    const inflPct   = typeof gameState !== 'undefined' && gameState.inflationRate
-        ? (gameState.inflationRate * 100).toFixed(1)
-        : '2.0';
-    const ratePct   = typeof gameState !== 'undefined' && gameState.interestRateBase
-        ? (gameState.interestRateBase * 100).toFixed(1)
-        : '4.5';
-
     const overlay = document.createElement('div');
-    overlay.id    = 'ss-overlay';
-    overlay.innerHTML = `
-    <div class="ss-bg">
-        <div class="ss-inner">
-            <div class="ss-header">
-                <div class="ss-main-logo">👁️</div>
-                <h1 class="ss-title">CHAUFFEUR EMPIRE</h1>
-                <p class="ss-subtitle">Scegli il tuo Impero</p>
-                <div class="ss-edition">Global Tycoon · Multi-Profile · v1.0</div>
-            </div>
-
-            <div class="ss-grid">${slotCards}</div>
-
-            <div class="ss-sync-bar">
-                <div class="ss-sync-left">
-                    <button class="ss-btn-secondary ss-sync-btn ss-cloud-btn"
-                        onclick="window.forceSyncFromCloud && window.forceSyncFromCloud()"
-                        title="Scarica i salvataggi più recenti dal cloud Supabase">
-                        ☁ Ricarica da Cloud
-                    </button>
-                    <button class="ss-btn-secondary ss-sync-btn ss-cloud-btn"
-                        onclick="window.forceCloudSave && window.forceCloudSave(); this.textContent='✓ Salvato!'; setTimeout(()=>this.textContent='☁ Salva ora',2000)"
-                        title="Forza un salvataggio immediato sul cloud">
-                        ☁ Salva ora
-                    </button>
-                    <span class="ss-sync-sep">·</span>
-                    <button id="sync-folder-btn" class="ss-btn-secondary ss-sync-btn"
-                        onclick="window.syncManager?.selectFolder()">📁 Git Sync</button>
-                    <button class="ss-btn-secondary ss-sync-btn"
-                        onclick="window.syncManager?.importAll()" title="Importa save da file (post git pull)">📥</button>
-                    <button class="ss-btn-secondary ss-sync-btn"
-                        onclick="window.syncManager?.exportAll()" title="Esporta save su file (pre git push)">📤</button>
-                </div>
-                <div id="sync-folder-info" class="ss-sync-info">
-                    ${window.currentUser ? `☁ Account: ${window.currentUser.email}` : 'Collega la cartella per Git sync.'}
-                </div>
-            </div>
-
-            <div class="ss-macro-bar">
-                <span class="ss-macro-item">📈 Inflazione: <b>${inflPct}%</b></span>
-                <span class="ss-macro-sep">·</span>
-                <span class="ss-macro-item">🏦 Tasso BCE: <b>${ratePct}%</b></span>
-                <span class="ss-macro-sep">·</span>
-                <span class="ss-macro-item">🌍 Mercati globali aperti</span>
-            </div>
-            <div class="ss-logout-row">
-                <button onclick="window.authLogout()" class="ss-btn-danger ss-btn-sm">⏻ Logout</button>
-                ${window.currentUser ? `<span class="ss-user-label">${window.currentUser.email}</span>` : ''}
-            </div>
-        </div>
-    </div>`;
+    overlay.id = 'ss-overlay';
+    overlay.innerHTML = '<div class="ss-bg"></div>';
     document.body.appendChild(overlay);
+    _showCompanySetup(0); // always slot 0
+};
 
-    // Legacy save migration (one-time offer)
-    const legacy = localStorage.getItem(LEGACY_KEY);
-    const hasAnySlot = SLOT_KEYS.some(k => localStorage.getItem(k));
-    if (legacy && !hasAnySlot) {
-        setTimeout(() => {
-            if (confirm('Trovato un salvataggio precedente (v2). Vuoi importarlo nello Slot 1?')) {
-                localStorage.setItem(SLOT_KEYS[0], legacy);
-                localStorage.removeItem(LEGACY_KEY);
-                window.showSlotSelector();
-            }
-        }, 600);
+// ── RESET GAME (accessible from Hub) ─────────────────────────────
+window.resetGame = function() {
+    if (!confirm('Reimposta il tuo Impero? Tutti i progressi verranno eliminati definitivamente.\n\nQuesta azione è irreversibile.')) return;
+    // Clear local cache
+    localStorage.removeItem('chauffeurEmpireSlot_1');
+    localStorage.removeItem('_cloudSyncTs_0');
+    // Delete from cloud then reload
+    if (window.currentUser && window.supabaseClient) {
+        window.supabaseClient.from('game_saves')
+            .delete()
+            .eq('user_id', window.currentUser.id)
+            .eq('slot_index', 0)
+            .then(() => location.reload());
+    } else {
+        location.reload();
     }
 };
 
-window.startNewGameSlot = function(slotIndex) {
-    const overlay = document.getElementById('ss-overlay');
-    if (overlay) _showCompanySetup(slotIndex);
-};
-
-window.loadExistingSlot = function(slotIndex) {
-    window.currentSlotIndex = slotIndex;
-    const overlay = document.getElementById('ss-overlay');
-    if (overlay) overlay.remove();
-    if (typeof window._startGameWithSlot === 'function') window._startGameWithSlot(slotIndex, false);
-};
-
-// Bootstrap is handled by auth.js (showSlotSelector called after auth check)
+// ── COMPAT STUBS (kept for any lingering references) ──────────────
+window.showSlotSelector  = window.showNewGameSetup; // redirect
+window.startNewGameSlot  = () => window.showNewGameSetup();
+window.loadExistingSlot  = () => window._startGameWithSlot(0, false);
+window.deleteSlot        = () => window.resetGame();
