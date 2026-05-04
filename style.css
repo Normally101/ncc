@@ -244,6 +244,11 @@ body {
 }
 .btn-gold:hover { background: #eed575; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(212,175,55,0.2); }
 
+/* ── Driver Store ────────────────────────────────────────── */
+.store-item-title       { font-size: 1.2rem !important; font-weight: 700; color: #ffffff; line-height: 1.2; }
+.store-item-description { font-size: 0.95rem !important; color: #e2e8f0; line-height: 1.4; margin-top: 2px; }
+.store-buy-button       { padding: 12px 20px !important; font-weight: 700 !important; font-size: 0.9rem !important; white-space: nowrap; }
+
 /* ── Weather Overlay ─────────────────────────────────── */
 #weather-overlay { transition: opacity 2s ease, background 2s ease; opacity: 0; }
 #weather-overlay.weather-rain  { opacity: 1; background: linear-gradient(180deg, rgba(0,80,200,0.09), rgba(0,40,180,0.16)); animation: rainPulse 4s ease-in-out infinite; }

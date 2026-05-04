@@ -2101,7 +2101,7 @@ function renderTabInvestments() {
         }
         const underConstruction = (gameState.constructions || []).find(c => c.invId === i.id);
         const daysLeft = underConstruction ? Math.max(0, underConstruction.completesDay - gameState.day) : 0;
-        const tcCost   = underConstruction ? Math.ceil(daysLeft * 2) : 0;
+        const dcCost   = underConstruction ? Math.ceil(daysLeft * 2) : 0;
         html += `
         <div class="hud-card flex justify-between items-start gap-2">
             <div class="flex-1 min-w-0">
@@ -2118,7 +2118,7 @@ function renderTabInvestments() {
                     : underConstruction
                         ? `<div class="text-center">
                              <div class="text-[9px] text-yellow-400 font-bold">🏗️ ${daysLeft}g</div>
-                             <button onclick="window.speedUpConstruction('${i.id}')" class="text-[7px] bg-yellow-600/20 border border-yellow-500/40 text-yellow-300 rounded px-1.5 py-0.5 mt-0.5 hover:bg-yellow-600/40">⚡ ${tcCost} TC</button>
+                             <button onclick="window.speedUpConstruction('${i.id}')" class="text-[7px] bg-yellow-600/20 border border-yellow-500/40 text-yellow-300 rounded px-1.5 py-0.5 mt-0.5 hover:bg-yellow-600/40">⚡ ${dcCost} DC</button>
                            </div>`
                         : `<button onclick="buyInvestment('${i.id}')" class="btn-gold !text-[8px] !py-1 !px-2">€${i.price.toLocaleString()}</button>`}
             </div>
@@ -2850,7 +2850,7 @@ function renderTabCareer() {
 
         const rewardStr = [
             q.rewards.cash ? `€${q.rewards.cash.toLocaleString()}` : null,
-            q.rewards.tc   ? `${q.rewards.tc} TC` : null,
+            q.rewards.tc   ? `${q.rewards.tc} DC` : null,
             q.rewards.rep  ? `+${q.rewards.rep}★` : null
         ].filter(Boolean).join(' · ');
 
@@ -2936,15 +2936,14 @@ function renderTabPremiumStore() {
             <div class="flex items-start gap-3 flex-1 min-w-0">
                 <span class="text-2xl flex-shrink-0 mt-0.5">${it.icon}</span>
                 <div class="min-w-0">
-                    <div style="font-size:1.1rem;font-weight:700;color:#fff;">${it.label}</div>
-                    <div style="font-size:0.95rem;color:#e2e8f0;" class="mt-0.5 leading-snug">${it.desc}</div>
+                    <div class="store-item-title">${it.label}</div>
+                    <div class="store-item-description">${it.desc}</div>
                 </div>
             </div>
             <button
                 onclick="${it.disabled ? '' : `window._dcSpend('${it.id}', ${it.cost})`}"
                 ${it.disabled ? 'disabled' : ''}
-                class="btn-gold flex-shrink-0 ${it.disabled ? 'opacity-40 cursor-not-allowed' : ''}"
-                style="font-size:0.9rem;padding:8px 18px;white-space:nowrap;">
+                class="btn-gold store-buy-button flex-shrink-0 ${it.disabled ? 'opacity-40 cursor-not-allowed' : ''}">
                 ${it.disabled ? it.disabledLabel : `${it.cost} DC`}
             </button>
         </div>`).join('');
@@ -2954,13 +2953,12 @@ function renderTabPremiumStore() {
             <div class="flex items-start gap-3 flex-1 min-w-0">
                 <span class="text-2xl flex-shrink-0 mt-0.5">${it.icon}</span>
                 <div class="min-w-0">
-                    <div style="font-size:1.1rem;font-weight:700;color:#fff;">${it.label}</div>
-                    <div style="font-size:0.95rem;color:#e2e8f0;" class="mt-0.5 leading-snug">${it.desc}</div>
+                    <div class="store-item-title">${it.label}</div>
+                    <div class="store-item-description">${it.desc}</div>
                 </div>
             </div>
             <button onclick="window._dcSpend('${it.id}', ${it.cost})"
-                class="btn-gold flex-shrink-0"
-                style="font-size:0.9rem;padding:8px 18px;white-space:nowrap;">${it.cost} DC</button>
+                class="btn-gold store-buy-button flex-shrink-0">${it.cost} DC</button>
         </div>`).join('');
 
     container.innerHTML = `
