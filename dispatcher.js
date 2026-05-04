@@ -963,7 +963,7 @@ function calculateInterpolatedPosition(ride, currentElapsed) {
 const _TAB_ICONS = {
     corse:'🚕', fleet:'🚘', staff:'👔', ranking:'🏆', emails:'📩',
     regions:'🗺️', invest:'📈', marketing:'📣', legal:'⚖️', finance:'💹',
-    lifestyle:'🏰', politics:'🏛️', career:'🎯', store:'💎', map:'📡',
+    lifestyle:'🏰', politics:'🏛️', career:'🎯', store:'🪙', map:'📡',
 };
 
 // ─── COLLAPSIBLE RIGHT PANEL ──────────────────────────────────────
@@ -2982,11 +2982,25 @@ function renderTabPremiumStore() {
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
-window._dcSimPurchase = function(amount) {
+window._dcSimPurchase = async function(amount) {
+    // Optimistic local credit
     gameState.driverCoins = (gameState.driverCoins || 0) + amount;
-    if (typeof showNotification === 'function') showNotification(`🪙 +${amount} Driver Coins! (Acquisto simulato)`, 'success');
     renderTabPremiumStore();
     updateUI();
+
+    // Persist to DB so RPCs can debit the authoritative column
+    try {
+        const result = await window.ServerState?.addDriverCoins(amount);
+        if (result?.ok && result.driver_coins != null) {
+            gameState.driverCoins = result.driver_coins;
+            renderTabPremiumStore();
+            updateUI();
+        }
+    } catch (e) {
+        console.warn('[_dcSimPurchase] RPC error — balance is local only:', e);
+    }
+
+    if (typeof showNotification === 'function') showNotification(`🪙 +${amount} Driver Coins! (Acquisto simulato)`, 'success');
     saveGame();
 };
 

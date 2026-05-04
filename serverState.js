@@ -165,7 +165,8 @@ const ServerState = (() => {
 
         // Authoritative financial fields — always trust the server
         gameState.cash         = _company.cash;
-        gameState.driverCoins  = _company.driver_coins ?? gameState.driverCoins ?? 0;
+        // driver_coins is authoritative; use local value only if DB has null/undefined
+        gameState.driverCoins  = (_company.driver_coins != null) ? _company.driver_coins : (gameState.driverCoins ?? 0);
         gameState.reputation   = parseFloat(_company.reputation) || gameState.reputation;
         gameState.companyName  = _company.company_name || gameState.companyName;
     }
@@ -390,6 +391,9 @@ const ServerState = (() => {
     async function buyVipContact(costInCoins) {
         return _rpc('rpc_buy_vip_contact', { p_cost_in_coins: costInCoins });
     }
+    async function addDriverCoins(amount) {
+        return _rpc('rpc_add_driver_coins', { p_amount: amount });
+    }
 
 
     // ==========================================================================
@@ -452,6 +456,7 @@ const ServerState = (() => {
         buyEnergyRefill,
         buyFleetRepair,
         buyVipContact,
+        addDriverCoins,
         getState,
         getCompany,
         getVehicles,
