@@ -77,8 +77,8 @@ let gameState = {
     totalContractMargin: 0,
     // ── HQ ────────────────────────────────────────────────────────
     hq: { lng: null, lat: null, name: 'Garage Periferico', level: 0, region: null },
-    // ── SISTEMA QUEST & TITAN COINS ──────────────────────────────
-    titanCoins:      50,
+    // ── SISTEMA QUEST & DRIVER COINS ─────────────────────────────
+    driverCoins:     50,
     questStats:      { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
     constructions:   [],   // [{ invId, startDay, buildDays, completesDay }]
     claimableQuests: [],
@@ -261,8 +261,9 @@ function loadGame() {
         // HQ
         if (!save.hq) save.hq = { lng: null, lat: null, name: 'Garage Periferico', level: 0, region: null };
         if (save.hq.region === undefined) save.hq.region = null;
-        // Quest & Titan Coins
-        if (save.titanCoins      === undefined) save.titanCoins      = 50;
+        // Quest & Driver Coins
+        if (save.driverCoins     === undefined) save.driverCoins     = save.titanCoins ?? 50;
+        delete save.titanCoins;
         if (!save.questStats)    save.questStats    = { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 };
         if (!save.constructions)   save.constructions   = [];
         if (!save.claimableQuests) save.claimableQuests = [];
@@ -2865,12 +2866,12 @@ function completeRide(ride, _deferPay = false) {
         const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
     }
 
-    // F2P Titan Coins drop: 5% chance on Presidential ultra ride
+    // F2P Driver Coins drop: 5% chance on Presidential ultra ride
     if (ride.tier === 'ultra' && ride.vehicleRequired === 'mercedes_s' && Math.random() < 0.05) {
         const drop = 1 + Math.floor(Math.random() * 3);
-        gameState.titanCoins = (gameState.titanCoins || 0) + drop;
-        logToMap(`💎 Titan Coins: +${drop} TC da transfer Presidential!`);
-        if (typeof showNotification === 'function') showNotification(`💎 +${drop} Titan Coins guadagnati!`, 'success');
+        gameState.driverCoins = (gameState.driverCoins || 0) + drop;
+        logToMap(`🪙 Driver Coins: +${drop} DC da transfer Presidential!`);
+        if (typeof showNotification === 'function') showNotification(`🪙 +${drop} Driver Coins guadagnati!`, 'success');
     }
 
     // Check quest progress after every completed ride
@@ -3156,19 +3157,19 @@ window.speedUpConstruction = function(invId) {
     const c = (gameState.constructions || []).find(x => x.invId === invId);
     if (!c) return;
     const daysLeft = Math.max(0, c.completesDay - gameState.day);
-    const tcCost   = Math.ceil(daysLeft * 2); // 2 TC per day remaining
-    if ((gameState.titanCoins || 0) < tcCost) {
-        if (typeof showNotification === 'function') showNotification(`Titan Coins insufficienti! Servono ${tcCost} TC.`, 'error');
+    const dcCost   = Math.ceil(daysLeft * 2); // 2 DC per day remaining
+    if ((gameState.driverCoins || 0) < dcCost) {
+        if (typeof showNotification === 'function') showNotification(`Driver Coins insufficienti! Servono ${dcCost} DC.`, 'error');
         return;
     }
-    gameState.titanCoins -= tcCost;
+    gameState.driverCoins -= dcCost;
     // Complete immediately
     gameState.constructions = gameState.constructions.filter(x => x.invId !== invId);
     if (!gameState.investments.includes(invId)) gameState.investments.push(invId);
     const inv = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : []).find(i => i.id === invId);
     const name = inv ? inv.name : invId;
-    logToMap(`⚡ Costruzione accelerata: ${name} completato istantaneamente! (−${tcCost} TC)`);
-    showBigEvent('⚡', 'Completato!', `${name} è ora operativo grazie ai tuoi Titan Coins!`);
+    logToMap(`⚡ Costruzione accelerata: ${name} completato istantaneamente! (−${dcCost} DC)`);
+    showBigEvent('⚡', 'Completato!', `${name} è ora operativo grazie ai tuoi Driver Coins!`);
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
     updateUI();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -3957,9 +3958,9 @@ function updateUI() {
     } else if (depotWarn) {
         depotWarn.remove();
     }
-    // Titan Coins balance chip
+    // Driver Coins balance chip
     const elTC = document.getElementById('tb-tc');
-    if (elTC) elTC.innerText = (gameState.titanCoins || 0);
+    if (elTC) elTC.innerText = (gameState.driverCoins || 0);
 
     // Career dot (claimable quests)
     const careerDot = document.getElementById('career-dot');

@@ -165,7 +165,7 @@ const ServerState = (() => {
 
         // Authoritative financial fields — always trust the server
         gameState.cash         = _company.cash;
-        gameState.titanCoins   = _company.titan_coins ?? gameState.titanCoins ?? 0;
+        gameState.driverCoins  = _company.driver_coins ?? gameState.driverCoins ?? 0;
         gameState.reputation   = parseFloat(_company.reputation) || gameState.reputation;
         gameState.companyName  = _company.company_name || gameState.companyName;
     }
@@ -381,6 +381,15 @@ const ServerState = (() => {
     async function buyAutoRest(costInCoins) {
         return _rpc('rpc_buy_auto_rest', { p_cost_in_coins: costInCoins });
     }
+    async function buyEnergyRefill(costInCoins) {
+        return _rpc('rpc_buy_energy_refill', { p_cost_in_coins: costInCoins });
+    }
+    async function buyFleetRepair(costInCoins) {
+        return _rpc('rpc_buy_fleet_repair', { p_cost_in_coins: costInCoins });
+    }
+    async function buyVipContact(costInCoins) {
+        return _rpc('rpc_buy_vip_contact', { p_cost_in_coins: costInCoins });
+    }
 
 
     // ==========================================================================
@@ -440,6 +449,9 @@ const ServerState = (() => {
         collectDailyCosts,
         upgradeOfflineLimit,
         buyAutoRest,
+        buyEnergyRefill,
+        buyFleetRepair,
+        buyVipContact,
         getState,
         getCompany,
         getVehicles,

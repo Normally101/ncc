@@ -1025,7 +1025,7 @@ window.switchTab = function(tab) {
         case 'lifestyle': title.innerText = "Lifestyle & Empire"; _safeRender(renderTabLifestyle); break;
         case 'politics': title.innerText = "Politica & Lobbying"; _safeRender(renderTabPolitics); break;
         case 'career':   title.innerText = "Missioni & Carriera"; _safeRender(renderTabCareer); break;
-        case 'store':    title.innerText = "💎 Titan Store"; _safeRender(renderTabPremiumStore); break;
+        case 'store':    title.innerText = "🪙 Driver Store"; _safeRender(renderTabPremiumStore); break;
         case 'map': title.innerText = "Radar Live"; {
             const heat = gameState.policeHeat || 0;
             const heatColor = heat >= 80 ? '#ff4060' : heat >= 50 ? '#f59e0b' : '#22c55e';
@@ -2882,109 +2882,182 @@ window.renderTabCareer = renderTabCareer;
 
 function renderTabPremiumStore() {
     const container = document.getElementById('tab-container');
-    const tc = gameState.titanCoins || 0;
+    const dc = gameState.driverCoins || 0;
+    const offLimit = gameState.offlineLimit || 2;
+    const autoRest = gameState.autoRestEnabled || false;
 
     const packages = [
-        { tc: 50,   price: '€0.99',  label: 'Starter Pack',   icon: '💎', popular: false },
-        { tc: 200,  price: '€2.99',  label: 'Business Pack',  icon: '💎💎', popular: false },
-        { tc: 500,  price: '€5.99',  label: 'Executive Pack', icon: '💎💎💎', popular: true },
-        { tc: 1200, price: '€9.99',  label: 'VIP Pack',       icon: '👑', popular: false },
-        { tc: 3000, price: '€19.99', label: 'Tycoon Pack',    icon: '🏰', popular: false },
+        { dc: 50,   price: '€0.99',  label: 'Starter Pack',   icon: '🪙', popular: false },
+        { dc: 200,  price: '€2.99',  label: 'Business Pack',  icon: '🪙🪙', popular: false },
+        { dc: 500,  price: '€5.99',  label: 'Executive Pack', icon: '🪙🪙🪙', popular: true },
+        { dc: 1200, price: '€9.99',  label: 'VIP Pack',       icon: '👑', popular: false },
+        { dc: 3000, price: '€19.99', label: 'Tycoon Pack',    icon: '🏰', popular: false },
     ];
 
-    const items = [
-        { id: 'skip_day',   label: 'Salta 1 Giorno',           cost: 5,  icon: '⏩', desc: 'Avanza il tempo di un giorno di gioco istantaneamente.' },
-        { id: 'rep_boost',  label: '+0.5★ Reputazione',        cost: 15, icon: '⭐', desc: 'Boost immediato alla reputazione aziendale.' },
-        { id: 'cash_10k',   label: '+€10.000 Cassa',           cost: 20, icon: '💶', desc: 'Iniezione di liquidità immediata.' },
-        { id: 'energy_full',label: 'Energia CEO 100%',         cost: 3,  icon: '⚡', desc: 'Ricarica l\'energia del CEO immediatamente.' },
-        { id: 'repair_all', label: 'Ripara Tutta la Flotta',   cost: 10, icon: '🔧', desc: 'Porta tutte le auto al 100% di condizione.' },
-        { id: 'unlock_ride',label: 'Sblocca Corsa Speciale',   cost: 8,  icon: '🎫', desc: 'Genera una corsa ultra garantita nell\'istante.' },
+    const mgmtItems = [
+        {
+            id: 'offline_limit',
+            label: 'Espandi Limite Offline',
+            cost: 20,
+            icon: '🕐',
+            desc: `Aumenta il limite di progressione offline di +2h (attuale: ${offLimit}h, max 12h).`,
+            disabled: offLimit >= 12,
+            disabledLabel: 'Limite massimo raggiunto'
+        },
+        {
+            id: 'auto_rest',
+            label: 'Auto-Rest CEO',
+            cost: 30,
+            icon: '🛌',
+            desc: 'Recupero automatico dell\'energia CEO durante l\'offline (deducendo costo hotel).',
+            disabled: autoRest,
+            disabledLabel: 'Già attivo'
+        },
     ];
 
-    let pkgHtml = packages.map(p => `
+    const rapidItems = [
+        { id: 'energy_full', label: 'Ricarica Energia CEO',   cost: 5,  icon: '⚡', desc: 'Porta l\'energia del CEO al 100% immediatamente.' },
+        { id: 'repair_all',  label: 'Ripara Tutta la Flotta', cost: 15, icon: '🔧', desc: 'Porta ogni veicolo della flotta al 100% di condizione e carburante.' },
+        { id: 'unlock_ride', label: 'Contatto VIP',           cost: 25, icon: '🎫', desc: 'Attiva un contatto d\'élite: genera una corsa ultra garantita sul radar.' },
+    ];
+
+    const _pkgHtml = packages.map(p => `
         <div class="hud-card text-center relative ${p.popular ? 'border border-gold/60' : ''}">
-            ${p.popular ? `<div class="absolute -top-2 left-1/2 -translate-x-1/2 bg-gold text-black text-[7px] font-bold px-2 py-0.5 rounded-full">POPOLARE</div>` : ''}
+            ${p.popular ? `<div class="absolute -top-2 left-1/2 -translate-x-1/2 bg-gold text-black text-[9px] font-bold px-2 py-0.5 rounded-full">POPOLARE</div>` : ''}
             <div class="text-2xl mb-1">${p.icon}</div>
-            <div class="text-sm font-bold text-white">${p.tc} TC</div>
-            <div class="text-[9px] text-gray-400 mb-2">${p.label}</div>
-            <div class="text-[10px] text-gold font-bold mb-2">${p.price}</div>
-            <button onclick="window._tcSimPurchase(${p.tc})" class="btn-gold !text-[8px] w-full">Acquista (Sim)</button>
+            <div style="font-size:1rem;font-weight:700;color:#fff;">${p.dc} DC</div>
+            <div style="font-size:0.8rem;color:#9ca3af;" class="mb-2">${p.label}</div>
+            <div style="font-size:0.85rem;font-weight:700;" class="text-gold mb-2">${p.price}</div>
+            <button onclick="window._dcSimPurchase(${p.dc})" class="btn-gold w-full" style="font-size:0.85rem;padding:6px 0;">Acquista (Sim)</button>
         </div>`).join('');
 
-    let itemHtml = items.map(it => `
-        <div class="hud-card flex justify-between items-center gap-2">
-            <div class="flex items-center gap-2 flex-1 min-w-0">
-                <span class="text-xl flex-shrink-0">${it.icon}</span>
+    const _mgmtHtml = mgmtItems.map(it => `
+        <div class="hud-card flex justify-between items-start gap-3">
+            <div class="flex items-start gap-3 flex-1 min-w-0">
+                <span class="text-2xl flex-shrink-0 mt-0.5">${it.icon}</span>
                 <div class="min-w-0">
-                    <div class="text-[10px] font-bold text-white">${it.label}</div>
-                    <div class="text-[9px] text-gray-500">${it.desc}</div>
+                    <div style="font-size:1.1rem;font-weight:700;color:#fff;">${it.label}</div>
+                    <div style="font-size:0.95rem;color:#e2e8f0;" class="mt-0.5 leading-snug">${it.desc}</div>
                 </div>
             </div>
-            <button onclick="window._tcSpend('${it.id}', ${it.cost})" class="btn-gold !text-[8px] !py-1 flex-shrink-0">${it.cost} TC</button>
+            <button
+                onclick="${it.disabled ? '' : `window._dcSpend('${it.id}', ${it.cost})`}"
+                ${it.disabled ? 'disabled' : ''}
+                class="btn-gold flex-shrink-0 ${it.disabled ? 'opacity-40 cursor-not-allowed' : ''}"
+                style="font-size:0.9rem;padding:8px 18px;white-space:nowrap;">
+                ${it.disabled ? it.disabledLabel : `${it.cost} DC`}
+            </button>
+        </div>`).join('');
+
+    const _rapidHtml = rapidItems.map(it => `
+        <div class="hud-card flex justify-between items-start gap-3">
+            <div class="flex items-start gap-3 flex-1 min-w-0">
+                <span class="text-2xl flex-shrink-0 mt-0.5">${it.icon}</span>
+                <div class="min-w-0">
+                    <div style="font-size:1.1rem;font-weight:700;color:#fff;">${it.label}</div>
+                    <div style="font-size:0.95rem;color:#e2e8f0;" class="mt-0.5 leading-snug">${it.desc}</div>
+                </div>
+            </div>
+            <button onclick="window._dcSpend('${it.id}', ${it.cost})"
+                class="btn-gold flex-shrink-0"
+                style="font-size:0.9rem;padding:8px 18px;white-space:nowrap;">${it.cost} DC</button>
         </div>`).join('');
 
     container.innerHTML = `
         <div class="flex items-center justify-between mb-3">
-            <h3 class="text-[10px] text-gold uppercase tracking-widest">💎 Titan Store</h3>
+            <h3 class="text-gold uppercase tracking-widest" style="font-size:1rem;font-weight:700;">🪙 Driver Store</h3>
             <div class="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-2 py-1">
-                <span class="text-yellow-400 text-xs">💎</span>
-                <span class="text-sm font-bold font-mono text-yellow-300">${tc} TC</span>
+                <span class="text-yellow-400">🪙</span>
+                <span class="font-bold font-mono text-yellow-300" style="font-size:1rem;">${dc} DC</span>
             </div>
         </div>
-        <div class="text-[9px] text-gray-500 mb-4">I pacchetti sono simulati (demo). I Titan Coins si guadagnano anche completando missioni e trasferimenti Presidential.</div>
+        <div style="font-size:0.85rem;color:#9ca3af;" class="mb-4">I pacchetti sono simulati (demo). I Driver Coins si guadagnano completando missioni e trasferimenti Presidential.</div>
 
-        <h3 class="text-[9px] text-gray-400 uppercase tracking-widest border-b border-white/5 pb-1 mb-3">Pacchetti Titan Coins</h3>
-        <div class="grid grid-cols-2 gap-2 mb-5">${pkgHtml}</div>
+        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">Pacchetti Driver Coins</div>
+        <div class="grid grid-cols-2 gap-2 mb-6">${_pkgHtml}</div>
 
-        <h3 class="text-[9px] text-gray-400 uppercase tracking-widest border-b border-white/5 pb-1 mb-3">Power-Up con TC</h3>
-        <div class="space-y-2">${itemHtml}</div>`;
+        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">Automazione & Gestione</div>
+        <div class="space-y-3 mb-6">${_mgmtHtml}</div>
+
+        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">Interventi Rapidi</div>
+        <div class="space-y-3">${_rapidHtml}</div>`;
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
-window._tcSimPurchase = function(amount) {
-    gameState.titanCoins = (gameState.titanCoins || 0) + amount;
-    if (typeof showNotification === 'function') showNotification(`💎 +${amount} Titan Coins! (Acquisto simulato)`, 'success');
+window._dcSimPurchase = function(amount) {
+    gameState.driverCoins = (gameState.driverCoins || 0) + amount;
+    if (typeof showNotification === 'function') showNotification(`🪙 +${amount} Driver Coins! (Acquisto simulato)`, 'success');
     renderTabPremiumStore();
     updateUI();
     saveGame();
 };
 
-window._tcSpend = function(itemId, cost) {
-    if ((gameState.titanCoins || 0) < cost) {
-        if (typeof showNotification === 'function') showNotification(`Titan Coins insufficienti! Servono ${cost} TC.`, 'error');
+window._dcSpend = async function(itemId, cost) {
+    if ((gameState.driverCoins || 0) < cost) {
+        if (typeof showNotification === 'function') showNotification(`Driver Coins insufficienti! Servono ${cost} DC.`, 'error');
         return;
     }
-    gameState.titanCoins -= cost;
-    switch(itemId) {
-        case 'skip_day':
-            gameState.day++;
-            if (typeof processDailyRoutines === 'function') processDailyRoutines();
-            logToMap('⏩ Giorno saltato con Titan Coins!');
-            break;
-        case 'rep_boost':
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.5);
-            logToMap('⭐ Boost reputazione +0.5★ (TC)!');
-            break;
-        case 'cash_10k':
-            gameState.cash += 10000;
-            logToMap('💶 +€10.000 dalla riserva Titan Coins!');
-            break;
-        case 'energy_full':
-            gameState.energy = 100;
-            logToMap('⚡ Energia CEO ricaricata (TC)!');
-            break;
-        case 'repair_all':
-            (gameState.fleet || []).forEach(c => { c.condition = 100; c.fuel = 100; c.tirePressure = 100; });
-            logToMap('🔧 Tutta la flotta riparata (TC)!');
-            break;
-        case 'unlock_ride':
-            if (typeof generatePOIRide === 'function') {
-                const r = generatePOIRide('ultra');
-                if (r) logToMap('🎫 Corsa Ultra generata con Titan Coins!');
-            }
-            break;
+
+    // Optimistic local debit — server RPC is the authority
+    gameState.driverCoins -= cost;
+    updateUI();
+
+    try {
+        let result;
+        switch (itemId) {
+            case 'energy_full':
+                result = await window.ServerState?.buyEnergyRefill(cost);
+                if (result?.ok) {
+                    gameState.energy = 100;
+                    logToMap('⚡ Energia CEO ricaricata (DC)!');
+                }
+                break;
+            case 'repair_all':
+                result = await window.ServerState?.buyFleetRepair(cost);
+                if (result?.ok) {
+                    (gameState.fleet || []).forEach(c => { c.condition = 100; c.fuel = 100; c.tirePressure = 100; });
+                    logToMap('🔧 Tutta la flotta riparata (DC)!');
+                }
+                break;
+            case 'unlock_ride':
+                result = await window.ServerState?.buyVipContact(cost);
+                if (result?.ok && typeof generatePOIRide === 'function') {
+                    const r = generatePOIRide('ultra');
+                    if (r) logToMap('🎫 Contatto VIP: corsa ultra generata (DC)!');
+                }
+                break;
+            case 'offline_limit':
+                result = await window.ServerState?.upgradeOfflineLimit(cost);
+                if (result?.ok) {
+                    gameState.offlineLimit = result.offline_limit_hours;
+                    logToMap(`🕐 Limite offline espanso a ${result.offline_limit_hours}h (DC)!`);
+                }
+                break;
+            case 'auto_rest':
+                result = await window.ServerState?.buyAutoRest(cost);
+                if (result?.ok) {
+                    gameState.autoRestEnabled = true;
+                    logToMap('🛌 Auto-Rest CEO attivato (DC)!');
+                }
+                break;
+        }
+
+        if (result && !result.ok) {
+            // RPC rejected — roll back local debit
+            gameState.driverCoins += cost;
+            if (typeof showNotification === 'function') showNotification(`⚠ ${result.error || 'Operazione fallita'}`, 'error');
+        } else if (result?.ok) {
+            // Sync authoritative coin count from server response
+            if (result.driver_coins !== undefined) gameState.driverCoins = result.driver_coins;
+            if (typeof showNotification === 'function') showNotification(`🪙 −${cost} DC · attivato!`, 'success');
+        }
+    } catch (e) {
+        // Network error — roll back
+        gameState.driverCoins += cost;
+        console.error('[_dcSpend] RPC error:', e);
+        if (typeof showNotification === 'function') showNotification('⚠ Errore di rete — operazione annullata', 'error');
     }
-    if (typeof showNotification === 'function') showNotification(`💎 −${cost} TC · ${itemId} attivato!`, 'success');
+
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
     renderTabPremiumStore();
     updateUI();
