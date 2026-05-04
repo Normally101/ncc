@@ -299,6 +299,8 @@ body {
 @keyframes bluePulse      { 0%,100% { box-shadow: 0 0 8px rgba(0,242,255,0.3); } 50% { box-shadow: 0 0 18px rgba(0,242,255,0.6); } }
 @keyframes exhaustedPulse { 0%,100% { filter: saturate(0.6) brightness(0.9); } 50% { filter: saturate(0.3) brightness(0.75) blur(0.4px); } }
 @keyframes incidentPulse  { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.4); opacity: 0.7; } }
+@keyframes vip-toast-in  { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes vip-toast-out { from { transform: translateX(0); opacity: 1; } to { transform: translateX(120%); opacity: 0; } }
 
 /* ── CEO Exhaustion (energy < 15%) ───────────────────────── */
 body.ceo-exhausted #main-panel,

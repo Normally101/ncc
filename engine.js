@@ -311,11 +311,10 @@ function loadGame() {
             if (d.morale    === undefined) d.morale    = 100;
             if (d.hiredDay  === undefined) d.hiredDay  = 1;
         });
-        save.paused = false; // never restore a paused state — VIP modals don't persist
+        save.paused = false; // never restore a paused state
         Object.assign(gameState, save);
-        // Remove any stale VIP event modal left from previous session
-        const staleModal = document.getElementById('vip-event-modal');
-        if (staleModal) staleModal.remove();
+        // Dismiss any stale VIP toast left from previous session
+        document.getElementById('vip-event-toast')?.remove();
         return true;
     } catch(e) { console.error('Load failed:', e); localStorage.removeItem('chauffeurEmpireSave_v2'); return false; }
 }
@@ -789,44 +788,85 @@ const VIP_EVENTS = [
 
 function _triggerVIPMidRideEvent(ride) {
     const ev = VIP_EVENTS[Math.floor(Math.random() * VIP_EVENTS.length)];
-    gameState.paused = true;
     const driver = gameState.drivers.find(d => d.id === ride.driverId);
     const dname = driver ? driver.name : 'l\'autista';
+    const AUTO_MS = 30000;
 
-    const modal = document.createElement('div');
-    modal.id = 'vip-event-modal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.88);backdrop-filter:blur(10px);display:flex;align-items:center;justify-content:center;';
-    modal.innerHTML = `
-        <div style="background:rgba(8,8,20,0.97);border:1px solid rgba(212,175,55,0.4);border-radius:20px;padding:36px;max-width:480px;width:90%;box-shadow:0 0 60px rgba(212,175,55,0.15);text-align:center;">
-            <div style="font-size:3rem;margin-bottom:12px;">${ev.icon}</div>
-            <div style="font-size:10px;color:#d4af37;text-transform:uppercase;letter-spacing:3px;margin-bottom:8px;">EVENTO MID-CORSA · ${ride.toPoi?.name || ''}</div>
-            <h2 style="font-size:1.3rem;font-weight:900;color:#fff;margin-bottom:12px;">${ev.title}</h2>
-            <p style="font-size:0.85rem;color:#9ca3af;line-height:1.6;margin-bottom:28px;">${ev.body}<br><span style="color:#6b7280;font-size:0.75rem;">— ${dname} attende le tue istruzioni.</span></p>
-            <div style="display:flex;gap:12px;">
-                <button id="vip-ev-a" style="flex:1;padding:14px;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.5);border-radius:12px;color:#d4af37;font-size:0.75rem;font-weight:700;cursor:pointer;">${ev.labelA}</button>
-                <button id="vip-ev-b" style="flex:1;padding:14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:12px;color:#ef4444;font-size:0.75rem;font-weight:700;cursor:pointer;">${ev.labelB}</button>
+    // One VIP toast at a time — dismiss any previous one silently
+    const prev = document.getElementById('vip-event-toast');
+    if (prev) prev.remove();
+
+    const toast = document.createElement('div');
+    toast.id = 'vip-event-toast';
+    toast.style.cssText = [
+        'position:fixed;bottom:24px;right:24px;z-index:500;width:300px',
+        'background:rgba(8,8,20,0.97);border:1px solid rgba(212,175,55,0.45)',
+        'border-radius:16px;padding:16px 18px',
+        'box-shadow:0 8px 32px rgba(0,0,0,0.6)',
+        "font-family:'Roboto Mono',monospace",
+        'animation:vip-toast-in 0.28s cubic-bezier(0.34,1.56,0.64,1)',
+    ].join(';');
+
+    toast.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+            <span style="font-size:22px;line-height:1">${ev.icon}</span>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:7px;color:#d4af37;text-transform:uppercase;letter-spacing:2px;margin-bottom:2px">Mid-Corsa · ${ride.toPoi?.name || ''}</div>
+                <div style="font-size:11px;font-weight:700;color:#fff;line-height:1.2">${ev.title}</div>
             </div>
+            <span id="vip-toast-sec" style="font-size:10px;color:#6b7280;flex-shrink:0">30</span>
+        </div>
+        <p style="font-size:9px;color:#9ca3af;line-height:1.5;margin:0 0 10px">${ev.body}
+            <span style="display:block;margin-top:4px;color:#6b7280;font-size:8px">${dname} attende istruzioni.</span>
+        </p>
+        <div style="height:2px;background:rgba(255,255,255,0.08);border-radius:2px;margin-bottom:10px;overflow:hidden">
+            <div id="vip-toast-bar" style="height:100%;background:#d4af37;width:100%"></div>
+        </div>
+        <div style="display:flex;gap:8px">
+            <button id="vip-toast-a" style="flex:1;padding:8px 4px;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.4);border-radius:8px;color:#d4af37;font-size:8px;font-weight:700;cursor:pointer;line-height:1.3">${ev.labelA}</button>
+            <button id="vip-toast-b" style="flex:1;padding:8px 4px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:8px;color:#ef4444;font-size:8px;font-weight:700;cursor:pointer;line-height:1.3">${ev.labelB}</button>
         </div>`;
-    document.body.appendChild(modal);
+    document.body.appendChild(toast);
 
+    // Shrink countdown bar smoothly
+    const bar = document.getElementById('vip-toast-bar');
+    if (bar) {
+        bar.style.transition = `width ${AUTO_MS}ms linear`;
+        requestAnimationFrame(() => { bar.style.width = '0%'; });
+    }
+
+    let _done = false;
     const resolve = (choice) => {
-        gameState.paused = false;
-        modal.remove();
+        if (_done) return;
+        _done = true;
+        clearInterval(_ticker);
+        toast.style.animation = 'vip-toast-out 0.2s ease-in forwards';
+        setTimeout(() => toast.remove(), 200);
+
         if (choice === 'A') {
             if (ev.costA) gameState.cash -= ev.costA;
             gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + ev.repA);
-            logToMap(`${ev.icon} Evento VIP: scelta A → +${ev.repA}★${ev.costA ? ` −€${ev.costA}` : ''}`);
+            logToMap(`${ev.icon} Evento VIP: accontentato → +${ev.repA}★${ev.costA ? ` −€${ev.costA}` : ''}`);
             if (typeof showNotification === 'function') showNotification(`${ev.icon} Richiesta accontentata! +${ev.repA}★`, 'success');
         } else {
             gameState.reputation = Math.max(0, gameState.reputation + ev.repB);
             logToMap(`${ev.icon} Evento VIP: rifiutato → ${ev.repB}★`);
-            if (typeof showNotification === 'function') showNotification(`${ev.icon} Richiesta rifiutata. ${ev.repB}★`, 'error');
+            if (choice !== 'AUTO' && typeof showNotification === 'function')
+                showNotification(`${ev.icon} Richiesta rifiutata. ${ev.repB}★`, 'error');
         }
-        updateUI();
-        saveGame();
+        updateUI(); saveGame();
     };
-    document.getElementById('vip-ev-a').onclick = () => resolve('A');
-    document.getElementById('vip-ev-b').onclick = () => resolve('B');
+
+    document.getElementById('vip-toast-a').onclick = () => resolve('A');
+    document.getElementById('vip-toast-b').onclick = () => resolve('B');
+
+    let secsLeft = Math.round(AUTO_MS / 1000);
+    const _ticker = setInterval(() => {
+        secsLeft--;
+        const el = document.getElementById('vip-toast-sec');
+        if (el) el.textContent = secsLeft;
+        if (secsLeft <= 0) resolve('AUTO');
+    }, 1000);
 }
 
 // ─── FALLIMENTO TECNICO ──────────────────────────────────────────
@@ -933,7 +973,6 @@ function _maybeGenerateDynamicEvent() {
 
     // Send ticker news
     if (typeof WORLD_NEWS !== 'undefined') WORLD_NEWS.unshift(`${ev.icon} ${ev.name} — Tariffe ×${ev.priceMult} per ${ev.duration}h`);
-    if (_tabIs('ranking') && typeof renderTabRanking === 'function') renderTabRanking();
 }
 
 function _tickDynamicEvent() {
@@ -1722,7 +1761,6 @@ window.attackTerritory = function(regionId) {
         `−€${warCost.toLocaleString()} investiti. Tariffe -30% in ${region.name} per ${warDays} giorni. I rivali perdono clienti. Se crollano sotto 0.3★ ottieni il MONOPOLIO.`);
     logToMap(`⚔️ Attacco territorio: ${region.name} — war cost €${warCost.toLocaleString()}. ${rivals_hit.length} rivali colpiti.`);
     updateUI(); saveGame();
-    if (_tabIs('ranking') && typeof renderTabRanking === 'function') renderTabRanking();
 };
 
 function _tickPricewars() {
@@ -1804,8 +1842,7 @@ function _tickRivalsActive() {
         }
     });
 
-    // Aggiorna ranking se la tab è aperta
-    if (_tabIs('ranking') && typeof renderTabRanking === 'function') renderTabRanking();
+    // Ranking non auto-refresh — utente usa il pulsante "Aggiorna"
 }
 
 // Chiamata giornaliera da processDailyRoutines
