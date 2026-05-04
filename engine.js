@@ -933,7 +933,7 @@ function _maybeGenerateDynamicEvent() {
 
     // Send ticker news
     if (typeof WORLD_NEWS !== 'undefined') WORLD_NEWS.unshift(`${ev.icon} ${ev.name} — Tariffe ×${ev.priceMult} per ${ev.duration}h`);
-    if (typeof renderTabRanking === 'function') renderTabRanking();
+    if (_tabIs('ranking') && typeof renderTabRanking === 'function') renderTabRanking();
 }
 
 function _tickDynamicEvent() {
@@ -2279,7 +2279,6 @@ function processDailyRoutines() {
     _tickMacroEconomy();
 
     logToMap(`📊 Chiusura Giornaliera: Entrate +€${income} | Uscite -€${Math.floor(expenses)} (Inc. Tasse: €${luxuryTax})`);
-    if(typeof renderTabRanking === 'function') renderTabRanking();
 }
 
 // ─── GENERAZIONE CORSE ───
@@ -3075,6 +3074,7 @@ function buyRegion(regionId) {
     const region = REGIONS[regionId];
     if (gameState.cash >= region.price && gameState.reputation >= region.repReq) {
         gameState.cash -= region.price; gameState.unlockedRegions.push(regionId);
+        if (window.ServerState?.isReady()) window.ServerState.unlockRegion(regionId, region.price).catch(() => {});
         updateUI(); if(typeof renderTabRegions==='function') renderTabRegions();
         if (typeof drawHighways === 'function') drawHighways();
         if (typeof drawPOIs === 'function') drawPOIs();
@@ -3093,6 +3093,8 @@ function buyInvestment(invId) {
     }
     if (gameState.cash < item.price) { if(typeof showNotification==='function') showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= item.price;
+    // Server-authoritative debit — fires in parallel, does not block UI
+    if (window.ServerState?.isReady()) window.ServerState.buyInvestment(invId, item.price).catch(() => {});
 
     if (item.buildTime) {
         // Time-gated: enter construction queue instead of activating immediately

@@ -1071,6 +1071,12 @@ window.switchTab = function(tab) {
 
 function renderTabCorse() {
     const container = document.getElementById('tab-container');
+    // Dirty-check: skip full DOM replacement if nothing relevant changed
+    const _sig = (gameState.pendingRides.map(r => r.id).join(',')) + '|' +
+                 (gameState.drivers.map(d => d.id + ':' + d.status + ':' + (d.queue?.length || 0) + ':' + (d.restHoursLeft | 0)).join(','));
+    if (renderTabCorse._sig === _sig && container.children.length > 0) return;
+    renderTabCorse._sig = _sig;
+
     let html = `
         <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
             <h3 class="text-[10px] text-gold uppercase tracking-widest">Richieste Pendenti</h3>

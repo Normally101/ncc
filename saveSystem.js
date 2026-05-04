@@ -149,7 +149,7 @@ window.saveCurrentSlot = function() {
        FOR ALL TO authenticated USING (user_id = auth.uid()) WITH CHECK (user_id = auth.uid());
    ─────────────────────────────────────────────────────────────────
 */
-const _CLOUD_MIN_INTERVAL_MS = 45_000;
+const _CLOUD_MIN_INTERVAL_MS = 4_000;
 const _lastCloudSaveTs = {};
 
 function _updateCloudDot(state) {
