@@ -303,10 +303,22 @@ function _showAuthOverlay() {
                 <h1 class="lp-headline">DOMINA LE STRADE.<br>COSTRUISCI IL TUO IMPERO.</h1>
                 <p class="lp-tagline">Il simulatore gestionale MMO dove ogni corsa, ogni autista e ogni investimento determinano il tuo potere. Fonda la tua compagnia di Chauffeur e scala la vetta globale.</p>
                 <div class="lp-badges">
-                    <div class="lp-badge">🏆 Classifica <span>live</span></div>
-                    <div class="lp-badge">🚗 <span>20+</span> Veicoli di lusso</div>
-                    <div class="lp-badge">⚡ Economia <span>dinamica</span></div>
-                    <div class="lp-badge">💾 Salvataggio <span>cloud</span></div>
+                    <div class="lp-badge">
+                        <svg class="lp-icon-xs" viewBox="0 0 24 24"><path d="M6 9H3V3h18v6h-3m0 0a6 6 0 0 1-12 0M9 21h6m-3-6v6m-3 0h6"/></svg>
+                        Classifica <span>live</span>
+                    </div>
+                    <div class="lp-badge">
+                        <svg class="lp-icon-xs" viewBox="0 0 24 24"><path d="M5 17H3v-3l2.5-6h13L21 14v3h-2m-4 0H9m-2 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0m8 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0"/></svg>
+                        <span>20+</span> Veicoli di lusso
+                    </div>
+                    <div class="lp-badge">
+                        <svg class="lp-icon-xs" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                        Economia <span>dinamica</span>
+                    </div>
+                    <div class="lp-badge">
+                        <svg class="lp-icon-xs" viewBox="0 0 24 24"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+                        Salvataggio <span>cloud</span>
+                    </div>
                 </div>
             </div>
 
@@ -334,17 +346,26 @@ function _showAuthOverlay() {
         <!-- ══ STATS BAR ══════════════════════════════════════════ -->
         <section class="lp-stats">
             <div class="lp-stat">
-                <div class="lp-stat-icon">🌍</div>
+                <svg class="lp-icon-stat" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="2" y1="12" x2="22" y2="12"/>
+                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+                </svg>
                 <div class="lp-stat-val" id="lp-stat-players">0</div>
                 <div class="lp-stat-label">Giocatori Attivi</div>
             </div>
             <div class="lp-stat">
-                <div class="lp-stat-icon">🚕</div>
+                <svg class="lp-icon-stat" viewBox="0 0 24 24">
+                    <path d="M5 17H3v-3l2.5-6h13L21 14v3h-2m-4 0H9m-2 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0m8 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0"/>
+                </svg>
                 <div class="lp-stat-val" id="lp-stat-rides">0</div>
                 <div class="lp-stat-label">Corse Completate</div>
             </div>
             <div class="lp-stat">
-                <div class="lp-stat-icon">💼</div>
+                <svg class="lp-icon-stat" viewBox="0 0 24 24">
+                    <rect x="2" y="7" width="20" height="14" rx="2"/>
+                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
+                </svg>
                 <div class="lp-stat-val">€1.2 Mld</div>
                 <div class="lp-stat-label">Fatturato Globale</div>
             </div>
@@ -353,17 +374,32 @@ function _showAuthOverlay() {
         <!-- ══ FEATURES ═══════════════════════════════════════════ -->
         <section class="lp-features">
             <div class="lp-feat-card">
-                <span class="lp-feat-icon">🚗</span>
+                <div class="lp-feat-icon-wrap">
+                    <svg class="lp-icon-lg" viewBox="0 0 24 24">
+                        <path d="M5 17H3v-3l2.5-6h13L21 14v3h-2m-4 0H9m-2 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0m8 0a1.5 1.5 0 1 0 3 0 1.5 1.5 0 0 0-3 0"/>
+                    </svg>
+                </div>
                 <div class="lp-feat-title">Costruisci la tua Flotta</div>
                 <div class="lp-feat-desc">Acquista veicoli di lusso, dalle berline premium alle Mercedes S-Class presidenziali. Ogni auto apre contratti esclusivi e nuovi mercati ad alto margine.</div>
             </div>
             <div class="lp-feat-card">
-                <span class="lp-feat-icon">🤝</span>
+                <div class="lp-feat-icon-wrap">
+                    <svg class="lp-icon-lg" viewBox="0 0 24 24">
+                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                        <circle cx="9" cy="7" r="4"/>
+                        <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+                    </svg>
+                </div>
                 <div class="lp-feat-title">Gestisci lo Staff</div>
                 <div class="lp-feat-desc">Assumi autisti con skill uniche — Velocità, Carisma, Efficienza. Ottimizza i turni, monitora la fatica e incassa commissioni anche mentre sei offline.</div>
             </div>
             <div class="lp-feat-card">
-                <span class="lp-feat-icon">⚔️</span>
+                <div class="lp-feat-icon-wrap">
+                    <svg class="lp-icon-lg" viewBox="0 0 24 24">
+                        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/>
+                        <polyline points="17 6 23 6 23 12"/>
+                    </svg>
+                </div>
                 <div class="lp-feat-title">Schiaccia la Concorrenza</div>
                 <div class="lp-feat-desc">Scala la classifica globale, conquista le regioni con licenze esclusive e lancia guerre di prezzo contro i tuoi rivali. Solo uno comanda le strade.</div>
             </div>

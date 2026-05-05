@@ -979,28 +979,32 @@ details[open] .finance-section-title { color: #00f2ff; }
     position: fixed; inset: 0; z-index: 10000;
     overflow-y: auto;
     font-family: 'Montserrat', 'Inter', sans-serif;
-    background: #010108;
+    /* Foto metropoli notturna con overlay scuro pesante */
+    background-image:
+        linear-gradient(rgba(10,14,23,0.88) 0%, rgba(10,14,23,0.97) 100%),
+        url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000&auto=format&fit=crop');
+    background-size: cover;
+    background-position: center top;
+    background-attachment: fixed;
 }
 
-/* Ambient city-lights background */
+/* Vignetta dorata angolare — city lights effect */
 #auth-overlay::before {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background:
-        radial-gradient(ellipse 55% 45% at 10% 90%, rgba(212,175,55,0.13) 0%, transparent 60%),
-        radial-gradient(ellipse 45% 35% at 90% 10%, rgba(0,242,255,0.09) 0%, transparent 60%),
-        radial-gradient(ellipse 70% 70% at 50% 50%, rgba(0,0,40,0.6)    0%, transparent 80%),
-        linear-gradient(180deg, #010108 0%, #020218 60%, #010108 100%);
+        radial-gradient(ellipse 50% 40% at 8% 92%, rgba(212,175,55,0.10) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 30% at 92% 8%,  rgba(212,175,55,0.07) 0%, transparent 55%);
 }
 
-/* Subtle grid overlay */
+/* Griglia cyber sottile */
 #auth-overlay::after {
     content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
     background-image:
-        linear-gradient(rgba(0,242,255,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,242,255,0.025) 1px, transparent 1px);
-    background-size: 64px 64px;
-    -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 80%);
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, black 0%, transparent 80%);
+        linear-gradient(rgba(212,175,55,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,175,55,0.018) 1px, transparent 1px);
+    background-size: 72px 72px;
+    -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 35%, black 0%, transparent 80%);
+    mask-image: radial-gradient(ellipse 75% 55% at 50% 35%, black 0%, transparent 80%);
 }
 
 /* ── Page wrapper ── */
@@ -1114,12 +1118,17 @@ details[open] .finance-section-title { color: #00f2ff; }
 .lp-btn-secondary {
     display: block; width: 100%; padding: 11px 20px;
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
-    color: #6b7280; font-family: 'Orbitron', sans-serif;
+    border: 1px solid rgba(212,175,55,0.5); border-radius: 10px;
+    color: rgba(212,175,55,0.75); font-family: 'Orbitron', sans-serif;
     font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-    cursor: pointer; transition: border-color .2s, color .2s;
+    cursor: pointer; transition: border-color .25s, color .25s, box-shadow .25s, background .25s;
 }
-.lp-btn-secondary:hover:not(:disabled) { border-color: rgba(255,255,255,0.28); color: #d1d5db; }
+.lp-btn-secondary:hover:not(:disabled) {
+    border-color: rgba(212,175,55,0.85);
+    color: #d4af37;
+    background: rgba(212,175,55,0.06);
+    box-shadow: 0 0 14px rgba(212,175,55,0.15);
+}
 .lp-btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
 
 /* shared form utils (used by landing page form AND sync overlay) */
@@ -1179,22 +1188,41 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 
 .lp-feat-card {
-    background: rgba(6,6,22,0.7);
+    background: rgba(6,6,22,0.72);
     border: 1px solid rgba(255,255,255,0.07);
+    border-top: 2px solid var(--gold);
     border-radius: 20px; padding: 28px 22px;
     position: relative; overflow: hidden;
-    transition: border-color .3s ease, transform .3s ease;
+    transition: border-color .3s ease, transform .3s ease, box-shadow .3s ease;
     cursor: default;
 }
 .lp-feat-card::before {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% -10%, rgba(212,175,55,0.07), transparent 65%);
+    background: radial-gradient(circle at 50% -10%, rgba(212,175,55,0.09), transparent 65%);
     opacity: 0; transition: opacity .35s;
 }
-.lp-feat-card:hover { border-color: rgba(212,175,55,0.28); transform: translateY(-5px); }
+.lp-feat-card:hover {
+    border-color: rgba(212,175,55,0.6);
+    border-top-color: var(--gold);
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(212,175,55,0.15), 0 2px 8px rgba(0,0,0,0.4);
+}
 .lp-feat-card:hover::before { opacity: 1; }
 
-.lp-feat-icon { font-size: 34px; display: block; margin-bottom: 14px; }
+/* SVG icon wrapper inside feature cards */
+.lp-feat-icon-wrap {
+    width: 52px; height: 52px;
+    background: rgba(212,175,55,0.07);
+    border: 1px solid rgba(212,175,55,0.18);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 18px;
+    transition: background .3s, border-color .3s;
+}
+.lp-feat-card:hover .lp-feat-icon-wrap {
+    background: rgba(212,175,55,0.12);
+    border-color: rgba(212,175,55,0.35);
+}
 
 .lp-feat-title {
     font-family: 'Orbitron', sans-serif;
@@ -1203,6 +1231,24 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 
 .lp-feat-desc { font-size: 13px; color: #6b7280; line-height: 1.7; }
+
+/* ── SVG Icon Classes ── */
+.lp-icon-xs {
+    width: 13px; height: 13px; flex-shrink: 0;
+    fill: none; stroke: var(--gold);
+    stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
+}
+.lp-icon-stat {
+    width: 28px; height: 28px; margin-bottom: 10px;
+    fill: none; stroke: var(--gold);
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    opacity: .85;
+}
+.lp-icon-lg {
+    width: 24px; height: 24px;
+    fill: none; stroke: var(--gold);
+    stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
+}
 
 /* ── FOOTER ── */
 .lp-footer {
