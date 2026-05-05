@@ -68,6 +68,9 @@ let gameState = {
     companyName: 'Olga Vision Agency',
     companyLogo: '👁️',
     companyColor: '#d4af37',
+    // Daily login streak
+    loginStreak: 0,
+    lastDailyClaim: null,
     ventureCapital: [],
     annualProfitTracker: 0,
     // ── CONTRATTO CLASSIC VACATIONS ──────────────────────────────
@@ -357,7 +360,12 @@ function _generateRecruit() {
     const p = pool[Math.floor(Math.random() * pool.length)];
     const salaryVariance = Math.round((Math.random() - 0.5) * 4) * 50;
     const trait = DRIVER_TRAITS[Math.floor(Math.random() * DRIVER_TRAITS.length)];
-    return { name: p.name, tier: p.tier, salary: p.salary + salaryVariance, trait };
+    return {
+        name: p.name, tier: p.tier, salary: p.salary + salaryVariance, trait,
+        skill_efficiency: 20 + Math.floor(Math.random() * 61),
+        skill_charisma:   20 + Math.floor(Math.random() * 61),
+        skill_speed:      20 + Math.floor(Math.random() * 61),
+    };
 }
 
 function _refreshRecruits() {
@@ -377,7 +385,7 @@ function _kickstartIdleDrivers() {
 
 function initGame(fresh = true) {
     if (fresh) {
-        gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1 });
+        gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50 });
         gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [], vehicleClass: 'mercedes_e' });
         _refreshRecruits();
     } else {
@@ -2452,7 +2460,9 @@ function startNextRide(driver) {
     const eventSpeedMult = gameState.activeDynamicEvent?.speedMult || 1.0;
     // Centralina ECU Sport: +28% velocità
     const centralinaMult = (car.upgrades || []).includes('centralina') ? 1.28 : 1.0;
-    let speedMult = (driver.trait?.speedMult || 1.0) * trafficMult * weatherSpeed * specialtySpeedBonus * eventSpeedMult * centralinaMult;
+    // Skill Velocità (1-100): da -20% a +20% rispetto a 50 di base
+    const skillSpeedMult = 1.0 + ((driver.skill_speed || 50) - 50) / 250;
+    let speedMult = (driver.trait?.speedMult || 1.0) * trafficMult * weatherSpeed * specialtySpeedBonus * eventSpeedMult * centralinaMult * skillSpeedMult;
     ride.duration = Math.max(5000, Math.floor(ride.duration / speedMult));
     // Telepass Premium: -10% su trasferimenti interregionali
     if (hasInvestment('inv_telepass') && ride.fromPoi.region !== ride.toPoi.region) {
@@ -2518,7 +2528,9 @@ function completeRide(ride) {
         const fatigueCost = { ultra: 20, vip: 15, business: 10, standard: 8 };
         const prevFatigue = driver.fatigue;
         const levelFatigueMult = (DRIVER_LEVELS[driver.level || 0] || DRIVER_LEVELS[0]).fatigueBonus;
-        const fatigueMult = (driver.trait?.fatigueMult || 1.0) * levelFatigueMult;
+        // Skill Efficienza (1-100): a 100 riduce fatica del 40%, a 1 la aumenta del 20%
+        const skillEffMult = 1.0 - ((driver.skill_efficiency || 50) - 50) / 100 * 0.6;
+        const fatigueMult = (driver.trait?.fatigueMult || 1.0) * levelFatigueMult * skillEffMult;
         driver.fatigue = Math.min(100, driver.fatigue + (fatigueCost[ride.tier] || 8) * fatigueMult);
 
         // Avviso primo superamento 70% senza HR
@@ -2604,9 +2616,19 @@ function completeRide(ride) {
         showNotification(`⏱️ Ritardo cliente! +€${delayBonus} extra fatturati.`, 'success');
     }
 
-    const earned = Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult);
+    // Skill Carisma (1-100): a 100 +25% guadagni, a 1 -12.5%
+    const skillCharismaMult = 1.0 + ((driver?.skill_charisma || 50) - 50) / 200;
+    const earned = Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult);
+    const prevCash = gameState.cash;
     gameState.cash += earned;
     gameState.reputation = Math.min(5.0 + gameState.prestige, gameState.reputation + 0.02);
+
+    // Milestone €1.000.000 (una volta sola)
+    if (prevCash < 1_000_000 && gameState.cash >= 1_000_000 && !gameState._milestoneM1) {
+        gameState._milestoneM1 = true;
+        _broadcastNews(`${gameState.companyName} ha raggiunto €1.000.000 di liquidità! 💰`, 'milestone');
+        showNotification('🎉 MILESTONE: €1.000.000 in cassa!', 'success');
+    }
 
     // XP gain for non-CEO drivers
     if (driver && driver.id !== 'ceo') {
@@ -3745,7 +3767,7 @@ window.hireDriver = function hireDriver(name, salary) {
     gameState.cash -= cost;
     // Find trait from recruits
     const recruit = (gameState.availableRecruits || []).find(r => r.name === name);
-    gameState.drivers.push({ id: 'd_' + Date.now(), name, salary, status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, trait: recruit?.trait || null, upgrades: [], hiredDay: gameState.day });
+    gameState.drivers.push({ id: 'd_' + Date.now(), name, salary, status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, trait: recruit?.trait || null, upgrades: [], hiredDay: gameState.day, skill_efficiency: recruit?.skill_efficiency ?? 50, skill_charisma: recruit?.skill_charisma ?? 50, skill_speed: recruit?.skill_speed ?? 50 });
     // Rimuovi dalla lista reclute e genera un sostituto
     const idx = gameState.availableRecruits.findIndex(r => r.name === name);
     if (idx > -1) gameState.availableRecruits.splice(idx, 1);
@@ -3789,6 +3811,84 @@ window.fireDriver = function fireDriver(driverId) {
     if(typeof renderTabStaff==='function') renderTabStaff();
 }
 
+// ─── DAILY REWARD ─────────────────────────────────────────────────
+async function _checkDailyReward() {
+    if (!window.supabaseClient || !window.currentUser) return;
+    try {
+        const { data, error } = await window.supabaseClient.rpc('rpc_claim_daily_reward', {
+            p_user_id:      window.currentUser.id,
+            p_company_name: gameState.companyName,
+        });
+        if (error || !data || !data.success) return;
+        _showDailyRewardModal(data.streak, data.reward);
+    } catch(e) {
+        console.warn('[Daily] claim failed:', e);
+    }
+}
+
+function _showDailyRewardModal(streak, reward) {
+    const existing = document.getElementById('daily-reward-modal');
+    if (existing) existing.remove();
+
+    const days = [1,2,3,4,5,6,7].map(d => {
+        const isToday = d === streak;
+        const isDone  = d < streak;
+        const label   = d === 7 ? '💎 10 TC' : `€${(500 * d).toLocaleString('it-IT')}`;
+        return `<div class="dr-day ${isToday ? 'dr-day-today' : isDone ? 'dr-day-done' : ''}">
+            <div class="dr-day-num">Gg ${d}</div>
+            <div class="dr-day-reward">${label}</div>
+        </div>`;
+    }).join('');
+
+    const rewardText = reward.titanCoins > 0
+        ? `💎 ${reward.titanCoins} TC Bonus`
+        : `+€${reward.cash.toLocaleString('it-IT')}`;
+
+    const modal = document.createElement('div');
+    modal.id = 'daily-reward-modal';
+    modal.innerHTML = `
+    <div class="dr-inner">
+        <div class="dr-title">🎁 Bonus Giornaliero</div>
+        <div class="dr-streak">🔥 ${streak} giorn${streak === 1 ? 'o' : 'i'} consecutivi</div>
+        <div class="dr-days-grid">${days}</div>
+        <div class="dr-highlight">${rewardText}</div>
+        <button class="btn-gold" style="width:100%;margin-top:16px"
+            onclick="window._claimDailyUI(${reward.cash},${reward.titanCoins})">
+            ✅ Ritira Premio
+        </button>
+    </div>`;
+    document.body.appendChild(modal);
+}
+
+window._claimDailyUI = function(cash, titanCoins) {
+    if (cash > 0) {
+        gameState.cash += cash;
+        if (typeof showNotification === 'function')
+            showNotification(`💰 +€${cash.toLocaleString('it-IT')} bonus giornaliero!`, 'success');
+    }
+    if (titanCoins > 0) {
+        gameState.titanCoins = (gameState.titanCoins || 0) + titanCoins;
+        if (typeof showNotification === 'function')
+            showNotification(`💎 +${titanCoins} TC bonus settimanale!`, 'success');
+    }
+    updateUI();
+    saveGame();
+    const modal = document.getElementById('daily-reward-modal');
+    if (modal) modal.remove();
+};
+
+// ─── BROADCAST NEWS ───────────────────────────────────────────────
+async function _broadcastNews(message, type) {
+    if (!window.supabaseClient || !window.currentUser) return;
+    try {
+        await window.supabaseClient.rpc('rpc_broadcast_news', {
+            p_company_name: gameState.companyName,
+            p_message:      message,
+            p_type:         type || 'info',
+        });
+    } catch(e) { /* silenzioso */ }
+}
+
 window._startGameWithSlot = function(slotIndex, fresh) {
     window.currentSlotIndex = slotIndex;
     if (window._pendingCompanyName) {
@@ -3815,4 +3915,6 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     }
     // Show map tab
     if (typeof window.switchTab === 'function') window.switchTab('map');
+    // Daily reward (async, non-blocking)
+    setTimeout(_checkDailyReward, 1500);
 };

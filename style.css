@@ -991,3 +991,101 @@ details[open] .finance-section-title { color: #00f2ff; }
     color: #4b5563;
     margin-top: 4px;
 }
+
+/* ── Daily Reward Modal ──────────────────────────────────────── */
+#daily-reward-modal {
+    position: fixed; inset: 0; z-index: 10000;
+    background: rgba(0,0,0,0.82); backdrop-filter: blur(8px);
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeIn .25s ease;
+}
+.dr-inner {
+    background: rgba(8,8,20,0.97);
+    border: 1px solid rgba(212,175,55,0.35);
+    border-radius: 20px;
+    padding: 28px 28px 24px;
+    width: min(420px, 95vw);
+    box-shadow: 0 0 60px rgba(212,175,55,0.15);
+    text-align: center;
+}
+.dr-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 20px; font-weight: 900;
+    color: var(--gold);
+    letter-spacing: .08em;
+    text-shadow: 0 0 12px rgba(212,175,55,0.6);
+    margin-bottom: 6px;
+}
+.dr-streak {
+    font-size: 12px; color: #f59e0b;
+    margin-bottom: 18px; font-weight: 600;
+}
+.dr-days-grid {
+    display: grid; grid-template-columns: repeat(7, 1fr);
+    gap: 6px; margin-bottom: 18px;
+}
+.dr-day {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 6px 2px;
+}
+.dr-day-done {
+    background: rgba(34,197,94,0.08);
+    border-color: rgba(34,197,94,0.25);
+    opacity: .65;
+}
+.dr-day-today {
+    background: rgba(212,175,55,0.12);
+    border-color: rgba(212,175,55,0.5);
+    box-shadow: 0 0 10px rgba(212,175,55,0.2);
+}
+.dr-day-num {
+    font-size: 8px; color: #6b7280;
+    text-transform: uppercase; letter-spacing: .04em;
+    margin-bottom: 4px;
+}
+.dr-day-today .dr-day-num { color: var(--gold); font-weight: 700; }
+.dr-day-reward {
+    font-size: 9px; font-weight: 700;
+    color: #d1d5db; line-height: 1.2;
+}
+.dr-day-today .dr-day-reward { color: var(--gold); }
+.dr-day-done .dr-day-reward  { color: #22c55e; }
+.dr-highlight {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 22px; font-weight: 900;
+    color: var(--gold);
+    text-shadow: 0 0 16px rgba(212,175,55,0.5);
+    padding: 10px 0;
+}
+
+/* ── Driver Skill Bars ───────────────────────────────────────── */
+.driver-skills-row {
+    display: flex; flex-direction: column; gap: 3px;
+}
+.driver-skill-chip {
+    display: flex; align-items: center; gap: 4px;
+}
+.driver-skill-label {
+    font-size: 8px; color: #6b7280;
+    text-transform: uppercase; width: 36px; flex-shrink: 0;
+    letter-spacing: .03em;
+}
+.driver-skill-bar-bg {
+    flex: 1; height: 3px;
+    background: rgba(255,255,255,0.07);
+    border-radius: 2px; overflow: hidden;
+}
+.driver-skill-bar-fill {
+    height: 100%; border-radius: 2px;
+    transition: width .3s ease;
+}
+.driver-skill-val {
+    font-size: 8px; font-family: 'Roboto Mono', monospace;
+    width: 22px; text-align: right; font-weight: 700;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: scale(.96); }
+    to   { opacity: 1; transform: scale(1); }
+}
