@@ -44,7 +44,7 @@ async function _onAuthSuccess(user) {
     if (typeof window.showSlotSelector === 'function') window.showSlotSelector();
 }
 
-// ── AUTH OVERLAY UI ───────────────────────────────────────────────
+// ── AUTH OVERLAY UI (Landing Page MMO) ───────────────────────────
 function _showAuthOverlay() {
     const existing = document.getElementById('auth-overlay');
     if (existing) existing.remove();
@@ -52,27 +52,113 @@ function _showAuthOverlay() {
     const overlay = document.createElement('div');
     overlay.id = 'auth-overlay';
     overlay.innerHTML = `
-    <div class="auth-card">
-        <div class="ss-main-logo" style="font-size:48px">👁️</div>
-        <h1 class="ss-title" style="font-size:clamp(22px,4vw,32px);margin:10px 0 2px">OLGA VISION</h1>
-        <p class="ss-subtitle" style="margin-bottom:24px">Accedi al tuo Impero</p>
+    <div class="lp-page">
 
-        <div class="auth-form">
-            <input id="auth-email"    type="email"    placeholder="Email"    class="ss-input" autocomplete="email">
-            <input id="auth-password" type="password" placeholder="Password (min 6 caratteri)" class="ss-input" autocomplete="current-password">
-            <div id="auth-error" class="auth-error"></div>
-            <div class="ss-btn-row" style="margin-top:4px">
-                <button id="auth-login-btn"  class="ss-btn-primary"   onclick="window._authLogin()">Accedi →</button>
-                <button id="auth-signup-btn" class="ss-btn-secondary" onclick="window._authSignup()">Registrati</button>
+        <!-- ══ HERO ══════════════════════════════════════════════ -->
+        <section class="lp-hero">
+
+            <!-- Sinistra: Copywriting -->
+            <div class="lp-copy">
+                <div class="lp-monogram">OV</div>
+                <h1 class="lp-headline">DOMINA LE STRADE.<br>COSTRUISCI IL TUO IMPERO.</h1>
+                <p class="lp-tagline">Il simulatore gestionale MMO dove ogni corsa, ogni autista e ogni investimento determinano il tuo potere. Fonda la tua compagnia di Chauffeur e scala la vetta globale.</p>
+                <div class="lp-badges">
+                    <div class="lp-badge">🏆 Classifica <span>live</span></div>
+                    <div class="lp-badge">🚗 <span>20+</span> Veicoli di lusso</div>
+                    <div class="lp-badge">⚡ Economia <span>dinamica</span></div>
+                    <div class="lp-badge">💾 Salvataggio <span>cloud</span></div>
+                </div>
             </div>
-            <p class="auth-hint">Nuovo account? Premi Registrati con email e password.</p>
-        </div>
+
+            <!-- Destra: Login glassmorphism -->
+            <div class="lp-form-col">
+                <div class="lp-glass-card">
+                    <div class="lp-card-eyebrow">Olga Vision Agency</div>
+                    <div class="lp-card-title">Accedi al tuo Impero</div>
+                    <div class="auth-form">
+                        <input id="auth-email"    type="email"    placeholder="Email"
+                               class="ss-input" autocomplete="email">
+                        <input id="auth-password" type="password" placeholder="Password (min 6 caratteri)"
+                               class="ss-input" autocomplete="current-password">
+                        <div id="auth-error" class="auth-error"></div>
+                        <button id="auth-login-btn"  class="lp-btn-primary"
+                                onclick="window._authLogin()">Accedi →</button>
+                        <button id="auth-signup-btn" class="lp-btn-secondary"
+                                onclick="window._authSignup()">Crea Account Gratis</button>
+                        <p class="auth-hint">Nuovo? Premi "Crea Account" per registrarti con email e password.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ STATS BAR ══════════════════════════════════════════ -->
+        <section class="lp-stats">
+            <div class="lp-stat">
+                <div class="lp-stat-icon">🌍</div>
+                <div class="lp-stat-val" id="lp-stat-players">0</div>
+                <div class="lp-stat-label">Giocatori Attivi</div>
+            </div>
+            <div class="lp-stat">
+                <div class="lp-stat-icon">🚕</div>
+                <div class="lp-stat-val" id="lp-stat-rides">0</div>
+                <div class="lp-stat-label">Corse Completate</div>
+            </div>
+            <div class="lp-stat">
+                <div class="lp-stat-icon">💼</div>
+                <div class="lp-stat-val">€1.2 Mld</div>
+                <div class="lp-stat-label">Fatturato Globale</div>
+            </div>
+        </section>
+
+        <!-- ══ FEATURES ═══════════════════════════════════════════ -->
+        <section class="lp-features">
+            <div class="lp-feat-card">
+                <span class="lp-feat-icon">🚗</span>
+                <div class="lp-feat-title">Costruisci la tua Flotta</div>
+                <div class="lp-feat-desc">Acquista veicoli di lusso, dalle berline premium alle Mercedes S-Class presidenziali. Ogni auto apre contratti esclusivi e nuovi mercati ad alto margine.</div>
+            </div>
+            <div class="lp-feat-card">
+                <span class="lp-feat-icon">🤝</span>
+                <div class="lp-feat-title">Gestisci lo Staff</div>
+                <div class="lp-feat-desc">Assumi autisti con skill uniche — Velocità, Carisma, Efficienza. Ottimizza i turni, monitora la fatica e incassa commissioni anche mentre sei offline.</div>
+            </div>
+            <div class="lp-feat-card">
+                <span class="lp-feat-icon">⚔️</span>
+                <div class="lp-feat-title">Schiaccia la Concorrenza</div>
+                <div class="lp-feat-desc">Scala la classifica globale, conquista le regioni con licenze esclusive e lancia guerre di prezzo contro i tuoi rivali. Solo uno comanda le strade.</div>
+            </div>
+        </section>
+
+        <footer class="lp-footer">
+            © Olga Vision Agency · Tycoon Edition &nbsp;·&nbsp; Solo per uso privato
+        </footer>
     </div>`;
     document.body.appendChild(overlay);
 
     // Submit on Enter
     overlay.addEventListener('keydown', e => {
         if (e.key === 'Enter') window._authLogin();
+    });
+
+    // Countup animation for live stats
+    _animateLpCounters();
+}
+
+function _animateLpCounters() {
+    [
+        { id: 'lp-stat-players', end: 1402  },
+        { id: 'lp-stat-rides',   end: 45930 },
+    ].forEach(({ id, end }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        let v = 0;
+        const step = Math.ceil(end / 55);
+        const tick = () => {
+            v = Math.min(v + step, end);
+            el.textContent = v.toLocaleString('it-IT');
+            if (v < end) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
     });
 }
 
