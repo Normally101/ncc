@@ -1736,6 +1736,20 @@ function renderTabStaff() {
                     ${curSpec ? `<span class="text-[8px] text-blue-400 ml-1">${curSpec.name.split(' ')[0]}</span>` : ''}
                 </div>`;
             })()}
+            <div class="driver-skills-row mt-2">
+                ${[
+                    ['⚡ Vel.', d.skill_speed      ?? 50, '#00f2ff'],
+                    ['🔧 Eff.', d.skill_efficiency ?? 50, '#22c55e'],
+                    ['✨ Car.', d.skill_charisma   ?? 50, '#a855f7'],
+                ].map(([label, val, color]) => `
+                <div class="driver-skill-chip">
+                    <span class="driver-skill-label">${label}</span>
+                    <div class="driver-skill-bar-bg">
+                        <div class="driver-skill-bar-fill" style="width:${val}%;background:${color}"></div>
+                    </div>
+                    <span class="driver-skill-val" style="color:${color}">${val}</span>
+                </div>`).join('')}
+            </div>
         </div>`;
     });
     // Meet & Greet status section
@@ -2023,6 +2037,11 @@ window.openCarConfigurator = function(carId, type) {
         updateUI(); renderTabFleet();
         showBigEvent('🚗', `${car.name} Configurata!`, ups.length > 0 ? `${ups.length} optional installati · pronta al servizio.` : 'Veicolo standard pronto per la flotta.');
         if (typeof saveGame === 'function') saveGame();
+        // News: acquisto auto di lusso (ultra/vip con prezzo > €80k)
+        if ((car.tier === 'ultra' || car.tier === 'vip') && car.price >= 80000) {
+            if (typeof _broadcastNews === 'function')
+                _broadcastNews(`${gameState.companyName} ha aggiunto alla flotta una ${car.name} 🚗`, 'milestone');
+        }
     };
     render();
 };
@@ -3170,7 +3189,38 @@ function _updateHubStats() {
 }
 window._updateHubStats = _updateHubStats;
 
-window.addEventListener('DOMContentLoaded', () => { initMap(); setupDragAndDrop(); });
+// ─── GLOBAL NEWS FEED (Supabase Realtime) ────────────────────────
+function _appendNewsTicker(message) {
+    const track = document.getElementById('news-ticker-track');
+    if (!track) return;
+    const span = document.createElement('span');
+    span.textContent = '🌐 ' + message;
+    track.appendChild(span);
+    // Rimuovi le notizie più vecchie se si accumulano troppo
+    const spans = track.querySelectorAll('span');
+    if (spans.length > 80) spans[0].remove();
+}
+
+async function _initGlobalNewsFeed() {
+    if (!window.supabaseClient) return;
+    // Carica le ultime 10 notizie già esistenti
+    try {
+        const { data } = await window.supabaseClient
+            .from('global_news')
+            .select('message')
+            .order('created_at', { ascending: false })
+            .limit(10);
+        if (data) [...data].reverse().forEach(row => _appendNewsTicker(row.message));
+    } catch(e) { /* offline, silenzioso */ }
+    // Sottoscrizione Realtime: aggiunge live le nuove notizie
+    window.supabaseClient.channel('global_news_feed')
+        .on('postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'global_news' },
+            payload => _appendNewsTicker(payload.new.message))
+        .subscribe();
+}
+
+window.addEventListener('DOMContentLoaded', () => { initMap(); setupDragAndDrop(); _initGlobalNewsFeed(); });
 
 // ─── MONEY PARTICLES ────────────────────────────────────────────
 window.spawnMoneyParticles = function(x, y, amount) {
