@@ -1806,3 +1806,72 @@ details[open] .finance-section-title { color: #00f2ff; }
     /* ── Auth overlay form: readable on small screens ─────────── */
     .auth-card { padding: 1.5rem 1rem !important; max-width: 95vw !important; }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   OFFICINA / WORKSHOP — Repair button in fleet cards
+   ═══════════════════════════════════════════════════════════════ */
+.workshop-repair-btn {
+    font-size: 7px;
+    font-family: 'Orbitron', monospace;
+    padding: 1px 5px;
+    border-radius: 5px;
+    border: 1px solid rgba(245,158,11,0.4);
+    background: rgba(245,158,11,0.08);
+    color: #f59e0b;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+.workshop-repair-btn:hover {
+    background: rgba(245,158,11,0.20);
+    color: #fcd34d;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   PRICING STRATEGY PANEL — Marketing tab
+   ═══════════════════════════════════════════════════════════════ */
+.pricing-strategy-panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.pricing-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 10px 6px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.15s;
+}
+.pricing-btn:hover {
+    border-color: rgba(212,175,55,0.35);
+    background: rgba(212,175,55,0.06);
+    transform: translateY(-1px);
+}
+.pricing-btn-active {
+    border-color: rgba(212,175,55,0.6) !important;
+    background: rgba(212,175,55,0.12) !important;
+    box-shadow: 0 0 12px rgba(212,175,55,0.15);
+}
+.pricing-btn-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+.pricing-btn-label {
+    font-family: 'Orbitron', monospace;
+    font-size: 8px;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+.pricing-btn-sub {
+    font-size: 7px;
+    color: rgba(255,255,255,0.4);
+    text-align: center;
+    line-height: 1.3;
+}

@@ -1497,21 +1497,32 @@ function renderTabFleet() {
                 returnCostStr = `€${(fc+tc).toLocaleString()} · ${hrs}h`;
             }
         }
+        const condPct   = Math.max(0, Math.floor(car.condition || 0));
+        const condColor = condPct <= 10 ? '#ff4060' : condPct < 30 ? '#ef4444' : condPct < 60 ? '#f59e0b' : '#22c55e';
+        const condWarn  = condPct <= 10 ? '🔴 FERMA — Officina urgente!' : condPct < 30 ? '⚠ Salute critica — incasso −15%' : '';
+        const repairCostCond = Math.max(500, (100 - condPct) * 85);
         html += `
-        <div class="hud-card ${outReason ? '!border-red-500/50 bg-red-950/10' : ''}">
+        <div class="hud-card ${outReason ? '!border-red-500/50 bg-red-950/10' : condPct <= 10 ? '!border-orange-500/50 bg-orange-950/10' : ''}">
             <div class="flex justify-between items-center">
                 <div class="flex-1 min-w-0">
                     <div class="text-xs font-bold text-white truncate">${car.name} ${car.isLease ? '<span class="text-[8px] text-blue border border-blue/40 px-1 ml-1 rounded uppercase">Leasing</span>' : ''}</div>
-                    <div class="text-[9px] text-gray-500">Salute: ${Math.floor(car.condition)}% · ${car.tier.toUpperCase()} · ${Math.floor((car.mileage||0)/1000)}k km${upgradePills ? ' · ' + upgradePills : ''}${(car.mileage||0) > 0 && (car.mileage||0) % 5000 < 300 ? ' <span class="text-orange-400">⚠ Tagliando</span>' : ''}</div>
+                    <div class="text-[9px] text-gray-500">${car.tier.toUpperCase()} · ${Math.floor((car.mileage||0)/1000)}k km${upgradePills ? ' · ' + upgradePills : ''}${(car.mileage||0) > 0 && (car.mileage||0) % 5000 < 300 ? ' <span class="text-orange-400">⚠ Tagliando</span>' : ''}</div>
                     ${tuningBadges ? `<div class="mt-0.5 flex gap-1 flex-wrap">${tuningBadges}</div>` : ''}
                     ${isReturning ? `<div class="text-[9px] text-cyan-400 mt-0.5">🏠 In rientro all'Hub…</div>`
                       : poiName && !isAtHub ? `<div class="text-[9px] text-yellow-400 mt-0.5">📍 ${poiName}</div>`
                       : `<div class="text-[9px] text-green-400/60 mt-0.5">🏠 Hub Roma</div>`}
+                    ${condWarn ? `<div class="text-[9px] font-bold mt-0.5" style="color:${condColor}">${condWarn}</div>` : ''}
                     ${outLabel ? `<div class="text-[9px] text-red-400 font-bold mt-0.5">${outLabel}</div>` : ''}
                 </div>
                 <button onclick="openCarModal('${car.id}')" class="btn-blue !py-1 !px-2 ml-2">Gestisci</button>
             </div>
             <div class="flex items-center gap-1 mt-1.5">
+                <span class="text-[8px] text-gray-600 w-8 shrink-0">🔧</span>
+                <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${condPct}%; background:${condColor}"></div></div>
+                <span class="text-[8px] font-mono ml-1" style="color:${condColor}">${condPct}%</span>
+                ${condPct < 100 ? `<button onclick="repairVehicle('${car.id}')" class="workshop-repair-btn ml-1" title="Ripara: €${repairCostCond.toLocaleString()}">🔩 €${repairCostCond.toLocaleString()}</button>` : ''}
+            </div>
+            <div class="flex items-center gap-1 mt-1">
                 <span class="text-[8px] text-gray-600 w-8 shrink-0">⛽</span>
                 <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${fuelPct}%; background:${fuelColor}"></div></div>
                 <span class="text-[8px] font-mono ml-1" style="color:${fuelColor}">${fuelPct}%</span>
@@ -1663,11 +1674,18 @@ function renderTabStaff() {
         const levelData = (DRIVER_LEVELS || [])[d.level || 0] || { name:'Rookie', xpMin:0, xpMax:200, badge:'lvl-rookie' };
         const nextLvl   = (DRIVER_LEVELS || [])[Math.min((d.level||0)+1, DRIVER_LEVELS.length-1)];
         const xpPct = nextLvl ? Math.min(100, Math.round(((d.xp||0) - levelData.xpMin) / (nextLvl.xpMin - levelData.xpMin) * 100)) : 100;
-        const statusLabel = isResting
-            ? `<span class="text-orange-400 font-bold text-[9px]">In Riposo (${d.restHoursLeft}h rimaste)</span>`
-            : fatigue >= 85
-                ? `<span class="text-red-400 text-[9px] font-bold">⚠ ESAUSTO${!hasHR ? ' — Mandalo a riposo!' : ''}</span>`
-                : '';
+        const stress      = d.stress_level !== undefined ? d.stress_level : 0;
+        const isBurnout   = d.burnout_until && (gameState.day * 24 + gameState.hour) < d.burnout_until;
+        const stressColor = stress >= 100 ? '#ff4060' : stress >= 80 ? '#ef4444' : stress >= 50 ? '#f59e0b' : '#22c55e';
+        const statusLabel = isBurnout
+            ? `<span class="text-red-400 font-bold text-[9px]">🔥 BURNOUT — Recupero ${d.restHoursLeft}h</span>`
+            : isResting
+                ? `<span class="text-orange-400 font-bold text-[9px]">☕ Riposo (${d.restHoursLeft}h rimaste)</span>`
+                : fatigue >= 85
+                    ? `<span class="text-red-400 text-[9px] font-bold">⚠ ESAUSTO${!hasHR ? ' — Mandalo a riposo!' : ''}</span>`
+                    : stress >= 80
+                        ? `<span class="text-orange-300 text-[9px] font-bold">😰 Sotto stress — velocità −33%</span>`
+                        : '';
         const avatarHtml = d.avatarBase64
             ? `<img src="${d.avatarBase64}" class="driver-avatar" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Clicca per cambiare foto">`
             : `<div class="driver-avatar-placeholder" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Aggiungi foto">👤</div>`;
@@ -1684,11 +1702,11 @@ function renderTabStaff() {
                         ${statusLabel ? `<div class="mt-0.5">${statusLabel}</div>` : ''}
                     </div>
                 </div>
-                <div class="flex gap-2 items-center shrink-0">
+                <div class="flex gap-1 items-center shrink-0">
                     ${d.isOnStrike
                         ? `<button onclick="resolveStrike('${d.id}')" class="btn-gold !bg-yellow-900/30 !text-yellow-400 !text-[8px]">🤝 Accordo</button>`
-                        : (!isResting && d.status !== 'busy' && fatigue >= 40)
-                            ? `<button onclick="sendDriverToRest('${d.id}')" class="btn-gold !bg-orange-900/30 !text-orange-400 !text-[8px]">Riposo</button>`
+                        : (!isResting && !isBurnout && d.status !== 'busy' && (fatigue >= 40 || stress >= 50))
+                            ? `<button onclick="putDriverOnBreak('${d.id}')" class="btn-gold !bg-orange-900/30 !text-orange-400 !text-[8px]" title="Pausa 4h: riduce stress del 40%">☕ Pausa</button>`
                             : ''}
                     <button onclick="fireDriver('${d.id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[8px]">Licenzia</button>
                 </div>
@@ -1724,6 +1742,16 @@ function renderTabStaff() {
                     <button onclick="payDriverBonus('${d.id}', 500)" class="ml-1 text-[7px] bg-green-900/40 text-green-400 px-1 rounded hover:bg-green-800/50">+€500</button>
                 </div>`;
             })()}
+            <div class="flex items-center gap-1 mt-1">
+                <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">Stress</span>
+                <div class="fatigue-bar-bg flex-1">
+                    <div class="fatigue-bar-fill" style="width:${stress}%; background:${stressColor}"></div>
+                </div>
+                <span class="text-[8px] font-mono ml-1" style="color:${stressColor}">${Math.floor(stress)}%</span>
+                ${stress >= 50 && !isResting && !isBurnout && d.status !== 'busy'
+                    ? `<button onclick="putDriverOnBreak('${d.id}')" class="ml-1 text-[7px] bg-orange-900/40 text-orange-400 px-1 rounded hover:bg-orange-800/50" title="Pausa 4h — stress −40%">☕ −40%</button>`
+                    : ''}
+            </div>
             ${(() => {
                 const specs = typeof DRIVER_SPECIALTIES !== 'undefined' ? DRIVER_SPECIALTIES : [];
                 const curSpec = specs.find(s => s.id === d.specialty);
@@ -2237,7 +2265,26 @@ function renderTabMarketing() {
     const surgeLabel = pending >= 15 ? '🔥 Surge +35%' : pending >= 8 ? '⚡ Surge +15%' : '🟢 Prezzi standard';
     const surgeColor = pending >= 15 ? 'text-red-400' : pending >= 8 ? 'text-yellow-400' : 'text-green-400';
 
+    const _ps = gameState.pricingStrategy || 'standard';
     let html = `
+    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Strategia Tariffaria</h3>
+    <div class="pricing-strategy-panel mb-5">
+        <button onclick="setPricingStrategy('discount')" class="pricing-btn ${_ps === 'discount' ? 'pricing-btn-active' : ''}">
+            <span class="pricing-btn-icon">📉</span>
+            <span class="pricing-btn-label">Scontato</span>
+            <span class="pricing-btn-sub">+30% corse · −20% guadagno</span>
+        </button>
+        <button onclick="setPricingStrategy('standard')" class="pricing-btn ${_ps === 'standard' ? 'pricing-btn-active' : ''}">
+            <span class="pricing-btn-icon">⚖️</span>
+            <span class="pricing-btn-label">Standard</span>
+            <span class="pricing-btn-sub">Bilanciato</span>
+        </button>
+        <button onclick="setPricingStrategy('premium')" class="pricing-btn ${_ps === 'premium' ? 'pricing-btn-active' : ''}">
+            <span class="pricing-btn-icon">💎</span>
+            <span class="pricing-btn-label">Premium</span>
+            <span class="pricing-btn-sub">−30% corse · +40% guadagno</span>
+        </button>
+    </div>
     <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Situazione Mercato</h3>
     <div class="grid grid-cols-2 gap-2 mb-5">
         <div class="hud-card text-center">

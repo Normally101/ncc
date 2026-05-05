@@ -80,6 +80,8 @@ let gameState = {
     totalContractMargin: 0,
     // ── HQ ────────────────────────────────────────────────────────
     hq: { lng: null, lat: null, name: 'Garage Periferico', level: 0, region: null },
+    // ── PRICING STRATEGY ─────────────────────────────────────────
+    pricingStrategy: 'standard',   // 'discount' | 'standard' | 'premium'
     // ── SISTEMA QUEST & DRIVER COINS ─────────────────────────────
     driverCoins:     50,
     questStats:      { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
@@ -363,6 +365,7 @@ function _generateRecruit() {
         skill_efficiency: 20 + Math.floor(Math.random() * 61),
         skill_charisma:   20 + Math.floor(Math.random() * 61),
         skill_speed:      20 + Math.floor(Math.random() * 61),
+        stress_level: 0, burnout_until: null,
     };
 }
 
@@ -383,7 +386,7 @@ function _kickstartIdleDrivers() {
 
 function initGame(fresh = true) {
     if (fresh) {
-        gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50 });
+        gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
         gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'mercedes_e' });
         _refreshRecruits();
     } else {
@@ -2330,6 +2333,10 @@ function processDailyRoutines() {
 // ─── GENERAZIONE CORSE ───
 function generatePOIRide(tierOverride = null) {
     if (gameState.pendingRides.length > 20) return null;
+    // Pricing strategy: premium = 30% fewer rides available; discount = 30% chance of an extra ride
+    const _pStrat = gameState.pricingStrategy || 'standard';
+    if (_pStrat === 'premium' && Math.random() < 0.30) return null;
+    if (_pStrat === 'discount' && Math.random() < 0.30) setTimeout(generatePOIRide, 200);
     const rank = _getRankPosition();
     const availablePOIs = Object.values(POIS).filter(p => {
         if (!gameState.unlockedRegions.includes(p.region)) return false;
@@ -2588,6 +2595,14 @@ function autoDispatchRides() {
 function startNextRide(driver) {
     if (driver.status === 'resting') return;
 
+    // Burnout check: driver is in forced recovery
+    const _nowH = gameState.day * 24 + gameState.hour;
+    if (driver.burnout_until && _nowH < driver.burnout_until) {
+        driver.status = 'resting';
+        driver.restHoursLeft = Math.ceil(driver.burnout_until - _nowH);
+        return;
+    }
+
     if (driver.queue.length === 0) {
         driver.status = 'idle';
         if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
@@ -2595,7 +2610,13 @@ function startNextRide(driver) {
     }
 
     const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
-    if (!car || car.condition <= 10) { driver.status = 'idle'; return; }
+    if (!car || car.condition <= 10) {
+        driver.status = 'idle';
+        if (car && car.condition <= 10 && typeof showNotification === 'function') {
+            showNotification(`🔧 ${car.name}: condizione critica! Vai in Officina.`, 'error');
+        }
+        return;
+    }
     // Auto-heal stale fuel flag if the car's own tank is sufficient
     if (car.outOfService === 'fuel' && (car.fuel || 0) > 5) car.outOfService = null;
     if (car.outOfService) {
@@ -2639,6 +2660,10 @@ function startNextRide(driver) {
     const skillSpeedMult = 1.0 + ((driver.skill_speed || 50) - 50) / 250;
     let speedMult = (driver.trait?.speedMult || 1.0) * trafficMult * weatherSpeed * specialtySpeedBonus * eventSpeedMult * centralinaMult * skillSpeedMult;
     ride.duration = Math.max(5000, Math.floor(ride.duration / speedMult));
+    // Stress: >80% aggiunge 50% di durata (autista teso = più lento)
+    if ((driver.stress_level || 0) >= 80) {
+        ride.duration = Math.floor(ride.duration * 1.5);
+    }
     // Telepass Premium: -10% su trasferimenti interregionali
     if (hasInvestment('inv_telepass') && ride.fromPoi.region !== ride.toPoi.region) {
         ride.duration = Math.floor(ride.duration * 0.90);
@@ -2763,6 +2788,24 @@ function completeRide(ride, _deferPay = false) {
             logToMap(`🛌 FORZATO: ${driver.name} al riposo (fatica 100%).`);
             if(typeof showNotification==='function') showNotification(`🛌 ${driver.name} va in riposo obbligatorio.`, 'error');
         }
+
+        // ── STRESS SYSTEM ────────────────────────────────────────
+        if (driver.stress_level === undefined) driver.stress_level = 0;
+        const stressGain = ride.tier === 'ultra' ? 25 : ride.tier === 'vip' ? 20 : 15;
+        const prevStress = driver.stress_level;
+        driver.stress_level = Math.min(100, driver.stress_level + stressGain);
+        if (prevStress < 80 && driver.stress_level >= 80) {
+            if(typeof showNotification==='function') showNotification(`😰 ${driver.name} sotto stress! Velocità −33%. Fallo riposare.`, 'error');
+        }
+        if (driver.stress_level >= 100) {
+            // BURNOUT: 12h di recupero forzato
+            const _bHour = gameState.day * 24 + gameState.hour;
+            driver.burnout_until = _bHour + 12;
+            driver.stress_level = 0;
+            _sendDriverToRest(driver, 12);
+            logToMap(`🔥 BURNOUT: ${driver.name} — recupero forzato 12h!`);
+            if(typeof showNotification==='function') showNotification(`🔥 ${driver.name} in BURNOUT! Riposo 12 ore.`, 'error');
+        }
     }
 
     // Incidente: auto danneggiata, incasso ridotto
@@ -2825,7 +2868,13 @@ function completeRide(ride, _deferPay = false) {
 
     // Skill Carisma (1-100): a 100 +25% guadagni, a 1 -12.5%
     const skillCharismaMult = 1.0 + ((driver?.skill_charisma || 50) - 50) / 200;
-    const earned = Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult);
+    // Pricing Strategy: discount −20%, standard ×1, premium +40%
+    const _ps = gameState.pricingStrategy || 'standard';
+    const strategyMult = _ps === 'premium' ? 1.40 : _ps === 'discount' ? 0.80 : 1.0;
+    // Condition malus: se il veicolo è sotto il 30% salute, −15% incasso
+    const _car3 = gameState.fleet.find(c => c.id === driver?.assignedCarId);
+    const conditionMult = (_car3 && (_car3.condition || 0) < 30) ? 0.85 : 1.0;
+    const earned = Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult);
 
     const prevCash = gameState.cash;
     if (_deferPay) {
@@ -3812,6 +3861,49 @@ window.payDriverBonus = function(driverId, amount) {
     if (typeof renderTabStaff === 'function') renderTabStaff();
 };
 
+// ── OFFICINA / WORKSHOP ───────────────────────────────────────────────────────
+window.repairVehicle = function(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car) return;
+    const missing = 100 - Math.max(0, Math.floor(car.condition || 0));
+    if (missing <= 0) { showNotification('Veicolo già in ottime condizioni!', 'info'); return; }
+    const cost = Math.max(500, missing * 85);
+    if (gameState.cash < cost) { showNotification(`Fondi insufficienti — Riparazione: €${cost.toLocaleString()}`, 'error'); return; }
+    gameState.cash -= cost;
+    car.condition = 100;
+    car.outOfService = null;
+    logToMap(`🔧 ${car.name} riparata: condizione 100% (costo: €${cost.toLocaleString()})`);
+    showNotification(`✅ ${car.name} riparata!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
+// ── STRESS / PAUSA AUTISTA ────────────────────────────────────────────────────
+window.putDriverOnBreak = function(driverId) {
+    const d = gameState.drivers.find(x => x.id === driverId);
+    if (!d) return;
+    if (d.status === 'busy') { showNotification('Autista in servizio — attendi che finisca la corsa.', 'error'); return; }
+    if (d.status === 'resting') { showNotification(`${d.name} è già a riposo.`, 'info'); return; }
+    _sendDriverToRest(d, 4);
+    d.stress_level = Math.max(0, (d.stress_level || 0) - 40);
+    logToMap(`☕ ${d.name} in pausa 4h — stress −40%.`);
+    showNotification(`☕ ${d.name} in pausa. Stress ridotto.`, 'success');
+    saveGame();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+    if (typeof renderTabCorse  === 'function') renderTabCorse();
+};
+
+// ── STRATEGIA TARIFFARIA ──────────────────────────────────────────────────────
+window.setPricingStrategy = function(mode) {
+    if (!['discount', 'standard', 'premium'].includes(mode)) return;
+    gameState.pricingStrategy = mode;
+    const labels = { discount: '📉 Scontato', standard: '⚖️ Standard', premium: '💎 Premium' };
+    logToMap(`💼 Strategia tariffaria: ${labels[mode]}`);
+    showNotification(`Strategia: ${labels[mode]}`, 'success');
+    saveGame();
+    if (typeof renderTabMarketing === 'function') renderTabMarketing();
+};
+
 window.resolveStrike = function(driverId) {
     const d = gameState.drivers.find(x => x.id === driverId);
     if (!d || !d.isOnStrike) return;
@@ -4021,7 +4113,7 @@ window.hireDriver = function hireDriver(name, salary) {
     gameState.cash -= cost;
     // Find trait from recruits
     const recruit = (gameState.availableRecruits || []).find(r => r.name === name);
-    gameState.drivers.push({ id: 'd_' + Date.now(), name, salary, status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, trait: recruit?.trait || null, upgrades: [], hiredDay: gameState.day, skill_efficiency: recruit?.skill_efficiency ?? 50, skill_charisma: recruit?.skill_charisma ?? 50, skill_speed: recruit?.skill_speed ?? 50 });
+    gameState.drivers.push({ id: 'd_' + Date.now(), name, salary, status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, trait: recruit?.trait || null, upgrades: [], hiredDay: gameState.day, skill_efficiency: recruit?.skill_efficiency ?? 50, skill_charisma: recruit?.skill_charisma ?? 50, skill_speed: recruit?.skill_speed ?? 50, stress_level: 0, burnout_until: null });
     // Rimuovi dalla lista reclute e genera un sostituto
     const idx = gameState.availableRecruits.findIndex(r => r.name === name);
     if (idx > -1) gameState.availableRecruits.splice(idx, 1);
