@@ -274,9 +274,12 @@ async function _onAuthSuccess(user) {
     window.currentUser = user;
     const overlay = document.getElementById('auth-overlay');
     if (overlay) {
-        overlay.querySelector('.auth-card').innerHTML =
-            `<div class="ss-main-logo">👁️</div>
-             <p style="color:#22c55e;font-family:'Orbitron',sans-serif;font-size:13px;margin-top:12px">Connessione all'Impero…</p>`;
+        const card = overlay.querySelector('.lp-glass-card');
+        if (card) card.innerHTML = `
+            <div style="text-align:center;padding:48px 20px">
+                <div style="font-size:2.5rem;margin-bottom:16px">👁️</div>
+                <p style="color:#22c55e;font-family:'Orbitron',sans-serif;font-size:13px;margin:0;letter-spacing:.07em">CONNESSIONE ALL'IMPERO…</p>
+            </div>`;
     }
 
     await _mmoBootSequence(user.id);
@@ -289,13 +292,35 @@ function _showAuthOverlay() {
     const existing = document.getElementById('auth-overlay');
     if (existing) existing.remove();
 
+    const _discordSvgPath = 'M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057.1 18.08.11 18.1.128 18.11a19.9 19.9 0 0 0 5.993 3.03.077.077 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03z';
+
     const overlay = document.createElement('div');
     overlay.id = 'auth-overlay';
     overlay.innerHTML = `
     <div class="lp-page">
 
+        <!-- ══ NAVBAR ════════════════════════════════════════════ -->
+        <nav class="lp-navbar" id="lp-navbar">
+            <div class="lp-navbar-inner">
+                <div class="lp-nav-logo">
+                    <div class="lp-nav-monogram">OV</div>
+                    <span class="lp-nav-brand">Chauffeur Empire</span>
+                </div>
+                <div class="lp-nav-links">
+                    <a href="#lp-hero" class="lp-nav-link">Home</a>
+                    <a href="#lp-news" class="lp-nav-link">News</a>
+                    <a href="#lp-showcase" class="lp-nav-link">Gameplay</a>
+                    <a href="#" class="lp-nav-link lp-nav-discord-link">
+                        <svg class="lp-icon-discord" viewBox="0 0 24 24" fill="currentColor"><path d="${_discordSvgPath}"/></svg>
+                        Discord
+                    </a>
+                    <a href="#lp-hero" class="lp-nav-cta">Accedi →</a>
+                </div>
+            </div>
+        </nav>
+
         <!-- ══ HERO ══════════════════════════════════════════════ -->
-        <section class="lp-hero">
+        <section class="lp-hero" id="lp-hero">
 
             <!-- Sinistra: Copywriting -->
             <div class="lp-copy">
@@ -371,6 +396,70 @@ function _showAuthOverlay() {
             </div>
         </section>
 
+        <!-- ══ NEWS & PATCH NOTES ══════════════════════════════════ -->
+        <section class="lp-news-section" id="lp-news">
+            <div class="lp-section-header">
+                <div class="lp-section-eyebrow">Live Server</div>
+                <h2 class="lp-section-title">Ultime Notizie & Aggiornamenti</h2>
+            </div>
+            <div class="lp-news-grid">
+                <div class="lp-news-card lp-news-hot">
+                    <div class="lp-news-badge">Nuovo</div>
+                    <div class="lp-news-date">Maggio 2026</div>
+                    <div class="lp-news-title">Update 2.1 — Driver Skills & Daily Rewards</div>
+                    <div class="lp-news-body">Tre nuovi attributi per ogni autista: Velocità, Efficienza e Carisma influenzano guadagni, fatica e velocità delle corse. Aggiunto sistema di ricompense giornaliere con streak progressivo e modal dedicata.</div>
+                </div>
+                <div class="lp-news-card">
+                    <div class="lp-news-date">Aprile 2026</div>
+                    <div class="lp-news-title">Update 2.0 — Mercati Finanziari & Broker</div>
+                    <div class="lp-news-body">Borsa valori in tempo reale con azioni volatili e portafoglio personale. Tre broker a rischio crescente: Mutual Fund, Bull Broker, Algo Trader. Investi i profitti del tuo impero per moltiplicare il patrimonio.</div>
+                </div>
+                <div class="lp-news-card">
+                    <div class="lp-news-date">Marzo 2026</div>
+                    <div class="lp-news-title">Update 1.9 — Classifica Globale Live & MMO</div>
+                    <div class="lp-news-body">Infrastruttura server-authoritative completamente riscritta su Supabase. Classifiche globali aggiornate in tempo reale. Guadagni offline calcolati lato server con protezione anti-cheat avanzata.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ══ GAMEPLAY SHOWCASE ═══════════════════════════════════ -->
+        <section class="lp-showcase" id="lp-showcase">
+            <div class="lp-section-header">
+                <div class="lp-section-eyebrow">Preview Esclusiva</div>
+                <h2 class="lp-section-title">Cosa ti aspetta</h2>
+            </div>
+            <div class="lp-showcase-grid">
+                <div class="lp-showcase-slot">
+                    <div class="lp-showcase-thumb lp-st-map">
+                        <div class="lp-st-icon">📡</div>
+                    </div>
+                    <div class="lp-showcase-label">Mappa Globale Live</div>
+                    <div class="lp-showcase-sub">Monitora i tuoi autisti in tempo reale sulla mappa 3D interattiva con traffico e meteo dinamici.</div>
+                </div>
+                <div class="lp-showcase-slot">
+                    <div class="lp-showcase-thumb lp-st-fleet">
+                        <div class="lp-st-icon">🚘</div>
+                    </div>
+                    <div class="lp-showcase-label">Garage & Flotta Elite</div>
+                    <div class="lp-showcase-sub">Da berline premium a Rolls-Royce presidenziali. Ogni auto sblocca contratti e mercati ad alto margine.</div>
+                </div>
+                <div class="lp-showcase-slot">
+                    <div class="lp-showcase-thumb lp-st-rank">
+                        <div class="lp-st-icon">🏆</div>
+                    </div>
+                    <div class="lp-showcase-label">Classifiche Live</div>
+                    <div class="lp-showcase-sub">Scala la vetta della classifica globale e sfida i CEO di tutto il mondo per il dominio assoluto.</div>
+                </div>
+                <div class="lp-showcase-slot">
+                    <div class="lp-showcase-thumb lp-st-fin">
+                        <div class="lp-st-icon">💹</div>
+                    </div>
+                    <div class="lp-showcase-label">Borsa & Finanza</div>
+                    <div class="lp-showcase-sub">Investi in mercati azionari reali e gestisci un portafoglio multi-asset per espandere il tuo impero.</div>
+                </div>
+            </div>
+        </section>
+
         <!-- ══ FEATURES ═══════════════════════════════════════════ -->
         <section class="lp-features">
             <div class="lp-feat-card">
@@ -405,15 +494,65 @@ function _showAuthOverlay() {
             </div>
         </section>
 
+        <!-- ══ COMMUNITY DISCORD ═══════════════════════════════════ -->
+        <section class="lp-community">
+            <div class="lp-community-inner">
+                <h2>Unisciti alla Community</h2>
+                <p>Oltre 1.500 CEO già attivi. Strategie, aggiornamenti in anteprima e tornei esclusivi riservati ai soli membri Discord.</p>
+                <a href="#" class="lp-discord-btn">
+                    <svg class="lp-icon-discord-lg" viewBox="0 0 24 24" fill="currentColor"><path d="${_discordSvgPath}"/></svg>
+                    Entra su Discord — 1.500+ CEO
+                </a>
+            </div>
+        </section>
+
+        <!-- ══ FOOTER PROFESSIONALE ════════════════════════════════ -->
         <footer class="lp-footer">
-            © Olga Vision Agency · Tycoon Edition &nbsp;·&nbsp; Solo per uso privato
+            <div class="lp-footer-inner">
+                <div class="lp-footer-brand">
+                    <div class="lp-footer-monogram">OV</div>
+                    <div>
+                        <div class="lp-footer-name">Chauffeur Empire</div>
+                        <div class="lp-footer-copy">© 2026 Olga Vision Agency</div>
+                    </div>
+                </div>
+                <div class="lp-footer-links">
+                    <a href="#" class="lp-footer-link">Termini di Servizio</a>
+                    <span class="lp-footer-sep">·</span>
+                    <a href="#" class="lp-footer-link">Privacy Policy</a>
+                    <span class="lp-footer-sep">·</span>
+                    <a href="#" class="lp-footer-link">Regolamento</a>
+                    <span class="lp-footer-sep">·</span>
+                    <a href="#" class="lp-footer-link">Support</a>
+                </div>
+            </div>
         </footer>
+
     </div>`;
     document.body.appendChild(overlay);
 
     // Submit on Enter
     overlay.addEventListener('keydown', e => {
         if (e.key === 'Enter') window._authLogin();
+    });
+
+    // Navbar becomes opaque on scroll
+    overlay.addEventListener('scroll', () => {
+        const nav = document.getElementById('lp-navbar');
+        if (nav) nav.classList.toggle('lp-navbar-solid', overlay.scrollTop > 50);
+    }, { passive: true });
+
+    // Smooth-scroll anchor links within the overlay scroll container
+    overlay.addEventListener('click', e => {
+        const link = e.target.closest('a[href^="#"]');
+        if (!link) return;
+        const hash = link.getAttribute('href');
+        if (!hash || hash === '#') return;
+        const target = overlay.querySelector(hash);
+        if (target) {
+            e.preventDefault();
+            overlay.scrollTo({ top: Math.max(0, target.offsetTop - 68), behavior: 'smooth' });
+        }
     });
 
     // Countup animation for live stats

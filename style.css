@@ -1250,12 +1250,246 @@ details[open] .finance-section-title { color: #00f2ff; }
     stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
 }
 
-/* ── FOOTER ── */
-.lp-footer {
-    text-align: center; padding: 18px;
-    font-size: 10px; color: #374151; letter-spacing: 0.08em;
+/* ── CINZEL — Luxury headings on landing page ── */
+.lp-headline,
+.lp-section-title,
+.lp-nav-brand,
+.lp-footer-name,
+.lp-community-inner h2 {
+    font-family: 'Cinzel', 'Orbitron', serif;
+}
+
+/* ── NAVBAR ── */
+.lp-navbar {
+    position: sticky; top: 0; z-index: 100;
+    padding: 0 clamp(24px, 7vw, 100px);
+    transition: background .3s ease, border-color .3s ease, backdrop-filter .3s ease;
+    border-bottom: 1px solid transparent;
+}
+.lp-navbar.lp-navbar-solid {
+    background: rgba(10, 14, 23, 0.96);
+    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
+    border-color: rgba(212,175,55,0.10);
+}
+.lp-navbar-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; max-width: 1400px; margin: 0 auto;
+}
+.lp-nav-logo { display: flex; align-items: center; gap: 12px; }
+.lp-nav-monogram {
+    width: 36px; height: 36px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.05));
+    border: 1px solid rgba(212,175,55,0.4);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px; font-weight: 900; color: #d4af37; letter-spacing: -1px;
+}
+.lp-nav-brand {
+    font-size: 13px; font-weight: 700; color: #c9cdd4; letter-spacing: 0.06em;
+}
+.lp-nav-links { display: flex; align-items: center; gap: 4px; }
+.lp-nav-link {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 500; color: #9ca3af;
+    padding: 6px 12px; border-radius: 8px;
+    text-decoration: none; letter-spacing: 0.02em;
+    transition: color .2s, background .2s;
+}
+.lp-nav-link:hover { color: #e5e7eb; background: rgba(255,255,255,0.05); }
+.lp-nav-discord-link { color: #7289da !important; }
+.lp-nav-discord-link:hover { background: rgba(114,137,218,0.08) !important; }
+.lp-icon-discord { width: 14px; height: 14px; flex-shrink: 0; }
+.lp-nav-cta {
+    display: inline-flex; align-items: center; margin-left: 8px;
+    font-size: 10px; font-weight: 700; color: #d4af37;
+    padding: 7px 16px; border-radius: 8px; text-decoration: none;
+    background: rgba(212,175,55,0.1);
+    border: 1px solid rgba(212,175,55,0.32);
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    transition: background .2s, border-color .2s, box-shadow .2s;
+}
+.lp-nav-cta:hover {
+    background: rgba(212,175,55,0.2); border-color: rgba(212,175,55,0.6);
+    box-shadow: 0 0 14px rgba(212,175,55,0.15);
+}
+
+/* ── SECTION HEADERS (shared) ── */
+.lp-section-header { text-align: center; margin-bottom: 44px; }
+.lp-section-eyebrow {
+    font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: rgba(212,175,55,0.55); font-family: 'Orbitron', sans-serif; margin-bottom: 10px;
+}
+.lp-section-title {
+    font-size: clamp(24px, 3.5vw, 38px); font-weight: 700;
+    color: #f0f0f8; margin: 0; letter-spacing: 0.01em;
+    background: linear-gradient(140deg, #ffffff 30%, #d4af37 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* ── NEWS & PATCH NOTES ── */
+.lp-news-section {
+    padding: 80px clamp(24px, 7vw, 100px);
+    background: rgba(0,0,6,0.55);
     border-top: 1px solid rgba(255,255,255,0.04);
 }
+.lp-news-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;
+}
+.lp-news-card {
+    background: rgba(8,8,22,0.85); border: 1px solid rgba(255,255,255,0.07);
+    border-left: 3px solid rgba(255,255,255,0.08);
+    border-radius: 16px; padding: 24px 20px; position: relative;
+    transition: border-color .25s, box-shadow .25s, transform .25s;
+}
+.lp-news-card:hover {
+    border-color: rgba(212,175,55,0.18); transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+}
+.lp-news-hot { border-left-color: var(--gold); }
+.lp-news-badge {
+    display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: 0.14em;
+    background: rgba(212,175,55,0.12); color: #d4af37;
+    border: 1px solid rgba(212,175,55,0.28);
+    border-radius: 4px; padding: 2px 7px; margin-bottom: 12px;
+    text-transform: uppercase;
+}
+.lp-news-date {
+    font-size: 9px; color: #4b5563; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 7px;
+}
+.lp-news-title {
+    font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700;
+    color: #e5e7eb; letter-spacing: 0.03em; margin-bottom: 10px; line-height: 1.45;
+}
+.lp-news-body { font-size: 12px; color: #6b7280; line-height: 1.75; }
+
+/* ── GAMEPLAY SHOWCASE ── */
+.lp-showcase {
+    padding: 80px clamp(24px, 7vw, 100px);
+    border-top: 1px solid rgba(255,255,255,0.04);
+}
+.lp-showcase-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;
+}
+.lp-showcase-slot { cursor: default; }
+.lp-showcase-thumb {
+    width: 100%; aspect-ratio: 16 / 9; border-radius: 14px;
+    position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    border: 1px solid rgba(255,255,255,0.08); margin-bottom: 14px;
+    transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+}
+.lp-showcase-slot:hover .lp-showcase-thumb {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 36px rgba(0,0,0,0.55);
+    border-color: rgba(212,175,55,0.22);
+}
+.lp-st-map  { background: linear-gradient(135deg, #03091c 0%, #071630 60%, #04102a 100%); }
+.lp-st-fleet{ background: linear-gradient(135deg, #130700 0%, #221100 60%, #160800 100%); }
+.lp-st-rank { background: linear-gradient(135deg, #001515 0%, #002c2c 60%, #001515 100%); }
+.lp-st-fin  { background: linear-gradient(135deg, #001408 0%, #00240f 60%, #001408 100%); }
+.lp-st-icon {
+    font-size: 3.2rem; line-height: 1; position: relative; z-index: 1;
+    filter: drop-shadow(0 0 18px rgba(212,175,55,0.35)); opacity: .7;
+    transition: opacity .3s, filter .3s;
+}
+.lp-showcase-slot:hover .lp-st-icon {
+    opacity: 1; filter: drop-shadow(0 0 28px rgba(212,175,55,0.65));
+}
+.lp-showcase-thumb::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background-image:
+        linear-gradient(rgba(212,175,55,0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,175,55,0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
+}
+.lp-showcase-label {
+    font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700;
+    color: #d4af37; letter-spacing: 0.06em; margin-bottom: 5px;
+}
+.lp-showcase-sub { font-size: 11px; color: #6b7280; line-height: 1.65; }
+
+/* ── COMMUNITY BOX ── */
+.lp-community {
+    padding: 80px clamp(24px, 7vw, 100px);
+    background: rgba(0,0,6,0.55);
+    border-top: 1px solid rgba(255,255,255,0.04);
+}
+.lp-community-inner {
+    max-width: 680px; margin: 0 auto;
+    background: rgba(6,6,20,0.88);
+    border: 1px solid rgba(114,137,218,0.18);
+    border-radius: 24px; padding: 52px 40px;
+    text-align: center;
+    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+    box-shadow: 0 0 60px rgba(114,137,218,0.04), 0 40px 80px rgba(0,0,0,0.5);
+    position: relative; overflow: hidden;
+}
+.lp-community-inner::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 50% at 50% 0%, rgba(114,137,218,0.07), transparent 65%);
+}
+.lp-community-inner h2 {
+    font-size: clamp(22px, 3vw, 32px); font-weight: 700;
+    color: #f0f0f8; margin: 0 0 14px; letter-spacing: 0.02em; position: relative;
+}
+.lp-community-inner p {
+    font-size: 14px; color: #6b7280; line-height: 1.75;
+    max-width: 460px; margin: 0 auto 36px; position: relative;
+}
+.lp-discord-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, rgba(114,137,218,0.18), rgba(114,137,218,0.06));
+    border: 1px solid rgba(114,137,218,0.35); border-radius: 12px;
+    padding: 14px 32px; color: #7289da;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; text-decoration: none; cursor: pointer;
+    transition: background .25s, border-color .25s, box-shadow .25s, color .25s;
+    position: relative;
+}
+.lp-discord-btn:hover {
+    background: linear-gradient(135deg, rgba(114,137,218,0.3), rgba(114,137,218,0.12));
+    border-color: rgba(114,137,218,0.65);
+    box-shadow: 0 0 28px rgba(114,137,218,0.18); color: #a0b4ff;
+}
+.lp-icon-discord-lg { width: 20px; height: 20px; flex-shrink: 0; fill: currentColor; }
+
+/* ── FOOTER (professional) ── */
+.lp-footer {
+    padding: 28px clamp(24px, 7vw, 100px);
+    border-top: 1px solid rgba(255,255,255,0.05);
+    background: rgba(0,0,4,0.75);
+}
+.lp-footer-inner {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 20px; max-width: 1400px; margin: 0 auto;
+}
+.lp-footer-brand { display: flex; align-items: center; gap: 12px; }
+.lp-footer-monogram {
+    width: 34px; height: 34px; flex-shrink: 0;
+    background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.03));
+    border: 1px solid rgba(212,175,55,0.22);
+    border-radius: 8px; display: flex; align-items: center; justify-content: center;
+    font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900;
+    color: rgba(212,175,55,0.6); letter-spacing: -1px;
+}
+.lp-footer-name {
+    font-size: 11px; font-weight: 700; color: #6b7280;
+    letter-spacing: 0.06em; margin-bottom: 2px;
+}
+.lp-footer-copy { font-size: 9px; color: #374151; letter-spacing: 0.05em; }
+.lp-footer-links { display: flex; align-items: center; gap: 2px; flex-wrap: wrap; }
+.lp-footer-link {
+    font-size: 10px; color: #4b5563; text-decoration: none;
+    padding: 5px 10px; border-radius: 6px;
+    transition: color .2s, background .2s;
+}
+.lp-footer-link:hover { color: #9ca3af; background: rgba(255,255,255,0.04); }
+.lp-footer-sep { color: #1f2937; font-size: 10px; user-select: none; padding: 0 2px; }
 
 /* ── Responsive ── */
 @media (max-width: 800px) {
@@ -1268,6 +1502,17 @@ details[open] .finance-section-title { color: #00f2ff; }
     .lp-stats { flex-wrap: wrap; }
     .lp-stat  { min-width: 100%; border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
     .lp-stat:last-child { border-bottom: none; }
+
+    /* Navbar: hide text links, keep brand + CTA */
+    .lp-nav-links .lp-nav-link { display: none; }
+    .lp-nav-cta { font-size: 9px; padding: 6px 12px; margin-left: 4px; }
+
+    /* Sections */
+    .lp-news-section, .lp-showcase, .lp-community { padding-top: 52px; padding-bottom: 52px; }
+    .lp-community-inner { padding: 36px 20px; }
+
+    /* Footer */
+    .lp-footer-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
 }
 
 /* ── Daily Reward Modal ──────────────────────────────────────── */
