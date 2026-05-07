@@ -3485,6 +3485,9 @@ function updateLeasePreview() {
     document.getElementById('lease-base-price').innerText = `€${base}`;
     document.getElementById('lease-km-price').innerText = `+€${Math.floor(extraKm - discountDuration)}`;
     document.getElementById('lease-total-price').innerText = `€${Math.floor(total)}`;
+    const worstPenalty = Math.floor(total * parseInt(months) * 0.5);
+    const el = document.getElementById('lease-penalty-price');
+    if (el) el.innerText = `max €${worstPenalty.toLocaleString()}`;
 }
 
 function confirmLease() {
@@ -3501,12 +3504,49 @@ function confirmLease() {
     gameState.fleet.push({
         id: 'c_' + Date.now(), name: template.name + ' (Leasing)', tier: template.tier,
         condition: 100, isLease: true, dailyCost: daily, leaseDuration: months, leaseElapsedDays: 0,
+        leaseMonthlyRate: Math.floor(monthly),
         fuel: 100, mileage: 0, tirePressure: 100, upgrades: [],
         vehicleClass: _leaseTierToClass[template.tier] || 'mercedes_e'
     });
     if(typeof closeModals === 'function') closeModals();
     if(typeof renderTabFleet === 'function') renderTabFleet();
 }
+
+window.terminateLease = function(carId) {
+    const idx = gameState.fleet.findIndex(c => c.id === carId);
+    if (idx === -1) return;
+    const car = gameState.fleet[idx];
+    if (!car.isLease) return;
+
+    const remainingDays  = Math.max(0, car.leaseDuration * 30 - (car.leaseElapsedDays || 0));
+    const remainingMonths = Math.ceil(remainingDays / 30);
+    const monthly  = car.leaseMonthlyRate || Math.round((car.dailyCost || 0) * 30);
+    const penalty  = Math.round(remainingMonths * monthly * 0.5);
+
+    if (!confirm(
+        `Terminare anticipatamente il leasing di "${car.name}"?\n\n` +
+        `Mesi rimanenti: ${remainingMonths}\n` +
+        `Penale (50% mesi rimanenti): €${penalty.toLocaleString()}\n\n` +
+        `Premere OK per confermare.`
+    )) return;
+
+    if (gameState.cash < penalty) {
+        showNotification(`Fondi insufficienti per la penale: €${penalty.toLocaleString()}`, 'error');
+        return;
+    }
+
+    gameState.cash -= penalty;
+    const driver = (gameState.drivers || []).find(d => d.assignedCarId === carId);
+    if (driver) driver.assignedCarId = null;
+    gameState.fleet.splice(idx, 1);
+
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+    showBigEvent('📋', 'Leasing Terminato', `${car.name} restituita al concessionario. Penale applicata: €${penalty.toLocaleString()}.`);
+    logToMap(`📋 Leasing "${car.name}" terminato anticipatamente — penale €${penalty.toLocaleString()}`);
+    updateUI();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+    if (typeof saveGame === 'function') saveGame();
+};
 
 async function rest(stars) {
     const cost       = stars === 3 ? 80  : (stars === 4 ? 200  : 600);

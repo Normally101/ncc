@@ -1554,7 +1554,15 @@ function renderTabFleet() {
                     <div class="flex-1 min-w-0">
                         <div class="fleet-card-brand truncate">
                             ${car.name}
-                            ${car.isLease ? '<span class="text-[8px] text-blue-300 border border-blue-400/40 px-1 ml-1 rounded uppercase">Leasing</span>' : ''}
+                            ${car.isLease ? (() => {
+                            const remDays = Math.max(0, car.leaseDuration * 30 - (car.leaseElapsedDays || 0));
+                            const remMonths = Math.ceil(remDays / 30);
+                            const monthly = car.leaseMonthlyRate || Math.round((car.dailyCost||0)*30);
+                            const penalty = Math.round(remMonths * monthly * 0.5);
+                            return `<span class="text-[8px] text-blue-300 border border-blue-400/40 px-1 ml-1 rounded uppercase">Leasing</span>` +
+                                   `<span class="text-[8px] text-gray-500 ml-1">· scade in ${remDays}g</span>` +
+                                   `<span class="text-[8px] text-red-400/70 ml-1">· penale €${penalty.toLocaleString()}</span>`;
+                        })() : ''}
                         </div>
                         <div class="fleet-card-tier ${isElectric ? 'fleet-card-electric' : ''}">
                             ${car.tier.toUpperCase()} · ${Math.floor((car.mileage||0)/1000)}k km
@@ -1628,6 +1636,16 @@ function renderTabFleet() {
                     class="w-full mt-1.5 text-[8px] py-1 px-2 rounded border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
                     🏠 Ritorna all'Hub &nbsp;<span class="opacity-60">${returnCostStr}</span>
                 </button>` : ''}
+                ${car.isLease ? (() => {
+                    const remDays   = Math.max(0, car.leaseDuration * 30 - (car.leaseElapsedDays || 0));
+                    const remMonths = Math.ceil(remDays / 30);
+                    const monthly   = car.leaseMonthlyRate || Math.round((car.dailyCost||0)*30);
+                    const penalty   = Math.round(remMonths * monthly * 0.5);
+                    return `<button onclick="window.terminateLease('${car.id}')"
+                        class="w-full mt-1.5 text-[8px] py-1 px-2 rounded border border-red-600/40 bg-red-950/30 text-red-400 hover:bg-red-900/40 transition-colors">
+                        📋 Termina Leasing &nbsp;<span class="opacity-70">penale €${penalty.toLocaleString()}</span>
+                    </button>`;
+                })() : ''}
             </div>
         </div>`;
     });
