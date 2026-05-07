@@ -344,6 +344,8 @@ window.resetGame = function() {
     if (!confirm('Reimposta il tuo Impero? Tutti i progressi verranno eliminati definitivamente.\n\nQuesta azione è irreversibile.')) return;
     // Clear local cache
     localStorage.removeItem('chauffeurEmpireSlot_1');
+    localStorage.removeItem('chauffeurEmpireSlot_2');
+    localStorage.removeItem('chauffeurEmpireSlot_3');
     localStorage.removeItem('_cloudSyncTs_0');
     // Delete from cloud then reload
     if (window.currentUser && window.supabaseClient) {

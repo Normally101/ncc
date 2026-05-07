@@ -631,7 +631,7 @@ visualLoop();
 
 // ─── GARAGE SVG — ISPEZIONE VEICOLO ─────────────────────────────
 window.openGarage3D = function(carId) {
-    const car = gameState.fleet.find(c => c.id === carId);
+    let car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
 
     const modal = document.getElementById('modal-garage3d');

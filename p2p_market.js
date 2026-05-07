@@ -115,7 +115,8 @@ window.buyP2PCar = async function(listingId) {
     if (error) { showNotification(`Acquisto fallito: ${error.message}`, 'error'); return; }
 
     // Aggiorna gameState locale con cash aggiornato e nuova auto
-    gameState.cash -= data.price_paid;
+    // ServerState (Realtime) aggiorna gameState.cash dal server; evitiamo doppia deduzione
+    if (!window.ServerState?.isReady()) gameState.cash -= data.price_paid;
     const newCar = data.car;
     newCar.id = 'c_p2p_' + Date.now(); // nuovo ID locale per evitare conflitti
     gameState.fleet.push(newCar);
@@ -167,7 +168,7 @@ window.contributeHoldingTreasury = async function(holdingId, amount) {
         v_holding_id: holdingId, v_amount: Math.round(amount),
     });
     if (error) { showNotification(`Errore contributo: ${error.message}`, 'error'); return; }
-    gameState.cash -= Math.round(amount);
+    if (!window.ServerState?.isReady()) gameState.cash -= Math.round(amount);
     await saveGame();
     showNotification(`💰 Contribuito €${Math.round(amount).toLocaleString()} alla cassa holding.`, 'success');
     updateUI();

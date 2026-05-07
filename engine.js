@@ -557,7 +557,12 @@ function _kickstartIdleDrivers() {
     });
 }
 
+let _gameIntervals = [];
+
 function initGame(fresh = true) {
+    // Clear any existing intervals to prevent stacking if initGame is called twice
+    _gameIntervals.forEach(clearInterval);
+    _gameIntervals = [];
     if (fresh) {
         gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
         gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'mercedes_e' });
@@ -586,20 +591,22 @@ function initGame(fresh = true) {
         }
     }
 
-    setInterval(gameLoop, 600);
-    setInterval(generatePOIRide, 6000);
-    setInterval(generateContractRide, 9000);  // 40% mix: 1 contract every 9s vs POI every 6s
-    setInterval(generateEmailEvent, 40000);
-    setInterval(generateWorldNews, 60000);
-    setInterval(_maybeGenerateFine, 90000);
-    setInterval(_maybeGenerateZTLFine, 45000);
-    setInterval(_maybePoliceCheckpoint, 50000);
-    setInterval(_maybeParazziEvent, 35000);
-    setInterval(_maybeGreyMarketMission, 120000);
-    setInterval(_maybeShadowMission, 150000);
-    setInterval(_maybeGenerateDynamicEvent, 180000);
-    setInterval(_maybeDiamondContract, 240000);
-    setInterval(checkActiveTrips, 5000);
+    _gameIntervals.push(
+        setInterval(gameLoop, 600),
+        setInterval(generatePOIRide, 6000),
+        setInterval(generateContractRide, 9000),  // 40% mix: 1 contract every 9s vs POI every 6s
+        setInterval(generateEmailEvent, 40000),
+        setInterval(generateWorldNews, 60000),
+        setInterval(_maybeGenerateFine, 90000),
+        setInterval(_maybeGenerateZTLFine, 45000),
+        setInterval(_maybePoliceCheckpoint, 50000),
+        setInterval(_maybeParazziEvent, 35000),
+        setInterval(_maybeGreyMarketMission, 120000),
+        setInterval(_maybeShadowMission, 150000),
+        setInterval(_maybeGenerateDynamicEvent, 180000),
+        setInterval(_maybeDiamondContract, 240000),
+        setInterval(checkActiveTrips, 5000)
+    );
 
     updateUI();
 }
@@ -1871,7 +1878,8 @@ function _maybeShadowMission() {
     );
     if (available.length < 2) return;
     let from = available[Math.floor(Math.random() * available.length)];
-    let to   = available.filter(p => p.region !== from.region)[Math.floor(Math.random() * available.length)];
+    const _filteredTo = available.filter(p => p.region !== from.region);
+    let to   = _filteredTo[Math.floor(Math.random() * _filteredTo.length)];
     if (!to) return;
 
     const basePrice  = Math.floor(from.baseFlat * 5.0 * (2.5 + Math.random()));
@@ -2834,8 +2842,8 @@ function generateContractRide() {
         originName:      route.origin,
         destinationName: route.destination,
         vehicleRequired,
-        fromPoi: originCoords ? { name: route.origin,      lat: originCoords[0], lng: originCoords[1] } : hubPOI,
-        toPoi:   destCoords   ? { name: route.destination, lat: destCoords[0],   lng: destCoords[1]   } : hubPOI,
+        fromPoi: originCoords ? { id: 'route_' + route.id + '_from', name: route.origin,      lat: originCoords[0], lng: originCoords[1] } : hubPOI,
+        toPoi:   destCoords   ? { id: 'route_' + route.id + '_to',   name: route.destination, lat: destCoords[0],   lng: destCoords[1]   } : hubPOI,
         originCoords,
         destCoords,
         tier,
@@ -2898,6 +2906,7 @@ function assignRideToDriver(rideId, driverId) {
 }
 
 function _driverCanTakeRide(driver, ride) {
+    if (driver.status === 'striking') return false;
     const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
     if (!car) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
@@ -3253,7 +3262,7 @@ function completeRide(ride, _deferPay = false) {
     // Milestone €1.000.000 (una volta sola)
     if (prevCash < 1_000_000 && gameState.cash >= 1_000_000 && !gameState._milestoneM1) {
         gameState._milestoneM1 = true;
-        _broadcastNews(`${gameState.companyName} ha raggiunto €1.000.000 di liquidità! 💰`, 'milestone');
+        if (typeof _broadcastNews === 'function') _broadcastNews(`${gameState.companyName} ha raggiunto €1.000.000 di liquidità! 💰`, 'milestone');
         showNotification('🎉 MILESTONE: €1.000.000 in cassa!', 'success');
     }
 
@@ -3519,7 +3528,7 @@ function confirmLease() {
         id: 'c_' + Date.now(), name: template.name + ' (Leasing)', tier: template.tier,
         condition: 100, isLease: true, dailyCost: daily, leaseDuration: months, leaseElapsedDays: 0,
         leaseMonthlyRate: Math.floor(monthly),
-        fuel: 100, mileage: 0, tirePressure: 100, upgrades: [],
+        fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, outOfService: false, upgrades: [],
         vehicleClass: _leaseTierToClass[template.tier] || 'mercedes_e'
     });
     if(typeof closeModals === 'function') closeModals();
@@ -3698,7 +3707,7 @@ function applyAcquisition() {
     RIVALS.splice(RIVALS.findIndex(r => r.id === weakest.id), 1);
     const tiers = ['standard','standard','business','business','vip'];
     for (let i = 0; i < 5; i++) {
-        gameState.fleet.push({ id:'c_acq_'+Date.now()+i, name:`Auto (ex-${weakest.name})`, tier:tiers[i], condition:Math.floor(50+Math.random()*40), isLease:false });
+        gameState.fleet.push({ id:'c_acq_'+Date.now()+i, name:`Auto (ex-${weakest.name})`, tier:tiers[i], condition:Math.floor(50+Math.random()*40), isLease:false, fuel:100, mileage:0, tirePressure:100, engineHealth:100, upgrades:[], vehicleClass:'mercedes_e', outOfService:false });
     }
     logToMap(`🏢 Acquisita ${weakest.name}! +5 veicoli in flotta.`);
 }
@@ -3731,7 +3740,7 @@ window.buyPrototypeCar = function(protoId) {
     if (gameState.reputation < proto.reqRep) { showNotification(`Reputazione insufficiente! Serve ${proto.reqRep}★`, 'error'); return; }
     if (gameState.cash < proto.price) { showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= proto.price;
-    gameState.fleet.push({ id: 'c_proto_' + Date.now(), name: proto.name, tier: proto.tier, condition: 100, isLease: false, fuel: 100, mileage: 0, upgrades: [], protoId: proto.id, vehicleClass: proto.vehicleClass || 'mercedes_e' });
+    gameState.fleet.push({ id: 'c_proto_' + Date.now(), name: proto.name, tier: proto.tier, condition: 100, isLease: false, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, outOfService: false, upgrades: [], protoId: proto.id, vehicleClass: proto.vehicleClass || 'mercedes_e' });
     showBigEvent('🔬', `${proto.name} Acquisita!`, proto.desc);
     logToMap(`🔬 Prototipo: ${proto.name} aggiunta alla flotta!`);
     updateUI();
@@ -3773,7 +3782,7 @@ window.newGamePlus = function() {
         cash: legacyCash, reputation: legacyRep, energy: 100,
         day: 1, month: 1, hour: 8, minute: 0, paused: false,
         fleet: [], drivers: [], staff: [], investments: [],
-        pendingRides: [], activeRides: [], emails: [],
+        pendingRides: [], activeRides: [], activeTrips: [], emails: [],
         unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
         availableRecruits: [],
         weather: 'sole', weatherHoursLeft: 6,
@@ -3797,6 +3806,8 @@ window.newGamePlus = function() {
         totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
         pricewars: [], shadowMissionsTotal: 0,
         ventureCapital: [], annualProfitTracker: 0,
+        driverCoins: 0, npcMarket: [], questStats: {},
+        loginStreak: 0, lastDailyClaim: 0,
         companyName: gameState.companyName || 'Chauffeur Empire',
         companyLogo: gameState.companyLogo || '👁️',
         companyColor: gameState.companyColor || '#d4af37',
@@ -4141,7 +4152,11 @@ window.acceptDiamondContract = function(emailId) {
     // Find best available driver+car
     const driver = gameState.drivers.find(d => d.status === 'idle' && d.id !== 'ceo' && d.level >= 2);
     if (!driver) { showNotification('Serve un autista Expert/Elite disponibile per contratti Diamond!', 'error'); return; }
-    const car = gameState.fleet.find(c => (c.tier === 'ultra' || c.tier === 'vip') && !gameState.activeRides.some(r => r.assignedCarId === c.id));
+    const car = gameState.fleet.find(c => {
+        if (c.tier !== 'ultra' && c.tier !== 'vip') return false;
+        const assignedDriver = gameState.drivers.find(d => d.assignedCarId === c.id);
+        return !assignedDriver || assignedDriver.status === 'idle';
+    });
     if (!car) { showNotification('Serve un veicolo VIP/Ultra disponibile!', 'error'); return; }
     email.status = 'resolved';
     const price = email.offer || 30000;
