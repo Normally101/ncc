@@ -2220,53 +2220,61 @@ window.openCarConfigurator = function(carId, type) {
 
     // ── Build static shell (photo + header) once ──────────────────────────────
     modal.innerHTML = `
-<div style="display:flex;width:100%;max-width:900px;max-height:90vh;border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.08)">
-  <!-- LEFT: photo panel -->
-  <div style="width:42%;position:relative;flex-shrink:0;background:#050810" id="cfg-photo-panel">
+<div style="display:flex;width:100%;max-width:960px;height:88vh;border-radius:18px;overflow:hidden;box-shadow:0 50px 100px rgba(0,0,0,0.9);border:1px solid rgba(255,255,255,0.08)">
+
+  <!-- LEFT: full-height photo -->
+  <div style="width:55%;position:relative;flex-shrink:0;background:#030508">
     <img src="${carImg}" alt="${carT.name}"
-         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center">
-    <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 60%,rgba(5,8,16,0.9))"></div>
-    <div style="position:absolute;bottom:0;left:0;right:0;padding:20px 16px;background:linear-gradient(to top,rgba(5,8,16,0.95),transparent)">
-      <div style="font-size:18px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:1px;line-height:1.2">${carT.name}</div>
-      <div style="font-size:10px;color:#d4af37;margin-top:4px;font-family:monospace">${(carT.vehicleClass||'').replace(/_/g,' ').toUpperCase()}</div>
-      ${isElec ? `<div style="margin-top:6px;display:inline-block;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);color:#4ade80;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">⚡ CO2 ESENTE</div>` : ''}
+         style="width:100%;height:100%;object-fit:cover;object-position:center;display:block">
+    <!-- bottom gradient + name overlay -->
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:28px 24px 24px;background:linear-gradient(to top,rgba(3,5,8,1) 0%,rgba(3,5,8,0.7) 50%,transparent 100%)">
+      <div style="font-size:22px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:2px;line-height:1.1">${carT.name}</div>
+      <div style="font-size:10px;color:#d4af37;margin-top:6px;font-family:monospace;letter-spacing:1px">${(carT.vehicleClass||'').replace(/_/g,' ').toUpperCase()}</div>
+      ${isElec ? `<div style="margin-top:8px;display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.35);color:#4ade80;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px">⚡ CO2 ESENTE</div>` : ''}
     </div>
   </div>
-  <!-- RIGHT: scrollable config panel -->
-  <div id="cfg-right" style="flex:1;background:#0a0a0f;overflow-y:auto;display:flex;flex-direction:column">
+
+  <!-- RIGHT: scrollable config -->
+  <div id="cfg-right" style="flex:1;background:#0d0d12;overflow-y:auto;display:flex;flex-direction:column;min-width:0">
+
     <!-- sticky header -->
-    <div style="position:sticky;top:0;z-index:2;background:#0a0a0f;border-bottom:1px solid rgba(255,255,255,0.07);padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start">
+    <div style="position:sticky;top:0;z-index:2;background:#0d0d12;border-bottom:1px solid rgba(255,255,255,0.06);padding:18px 22px 14px;display:flex;justify-content:space-between;align-items:flex-start">
       <div>
-        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:2px">Showroom · Configuratore</div>
-        <div style="font-size:13px;font-weight:700;color:#fff;margin-top:2px">${carT.name}</div>
-        <div style="font-size:9px;color:#6b7280;margin-top:1px">${carT.tier.toUpperCase()}</div>
+        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:3px;margin-bottom:4px">Showroom / Configuratore</div>
+        <div style="font-size:15px;font-weight:800;color:#fff">${carT.name}</div>
+        <div style="font-size:9px;color:#6b7280;margin-top:2px;text-transform:uppercase;letter-spacing:1px">${carT.tier}</div>
       </div>
-      <button onclick="document.getElementById('modal-configurator').remove()" style="color:#4b5563;font-size:20px;line-height:1;background:none;border:none;cursor:pointer;padding:0" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#4b5563'">✕</button>
+      <button onclick="document.getElementById('modal-configurator').remove()"
+        style="color:#374151;font-size:22px;line-height:1;background:none;border:none;cursor:pointer;padding:0;margin-top:2px"
+        onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#374151'">✕</button>
     </div>
-    <!-- base price -->
-    <div style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
-      <span style="font-family:monospace;font-weight:700;color:#fff;font-size:14px">€${carT.price.toLocaleString()}</span>
+
+    <!-- base price row -->
+    <div style="padding:12px 22px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
+      <span style="font-family:monospace;font-weight:800;color:#fff;font-size:15px">€${carT.price.toLocaleString()}</span>
     </div>
+
     <!-- upgrades list -->
-    <div style="padding:16px 20px;flex:1">
-      <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">Optional disponibili</div>
-      <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:6px">
+    <div style="padding:16px 22px;flex:1">
+      <div style="font-size:8px;color:#d4af37;text-transform:uppercase;letter-spacing:3px;margin-bottom:12px">Optional disponibili</div>
+      <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:5px">
         ${CAR_UPGRADES.map(u => `
-        <div id="cfg-upg-${u.id}" data-uid="${u.id}" onclick="__cfgToggle('${u.id}')"
-             style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.3);cursor:pointer;transition:border-color .15s,background .15s;user-select:none">
-          <div id="cfg-chk-${u.id}" style="margin-top:1px;width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:700;color:#000"></div>
+        <div id="cfg-upg-${u.id}" onclick="__cfgToggle('${u.id}')"
+             style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);cursor:pointer;user-select:none">
+          <div id="cfg-chk-${u.id}"
+               style="width:15px;height:15px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:800;color:#000"></div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#fff">${u.name}</div>
-            <div style="font-size:8px;color:#6b7280;margin-top:2px;line-height:1.4">${u.desc}</div>
+            <div style="font-size:10px;font-weight:700;color:#e5e7eb">${u.name}</div>
+            <div style="font-size:7.5px;color:#6b7280;margin-top:1px;line-height:1.35">${u.desc}</div>
           </div>
-          <div id="cfg-price-${u.id}" style="font-size:10px;font-family:monospace;color:#9ca3af;flex-shrink:0;margin-top:1px">+€${u.price.toLocaleString()}</div>
+          <div id="cfg-price-${u.id}" style="font-size:10px;font-family:monospace;color:#6b7280;flex-shrink:0;font-weight:600">+€${u.price.toLocaleString()}</div>
         </div>`).join('')}
       </div>
     </div>
-    <!-- sticky footer: total + buy -->
-    <div id="cfg-footer" style="position:sticky;bottom:0;background:#0a0a0f;border-top:1px solid rgba(255,255,255,0.07);padding:16px 20px">
-    </div>
+
+    <!-- sticky footer -->
+    <div id="cfg-footer" style="position:sticky;bottom:0;background:#0d0d12;border-top:1px solid rgba(255,255,255,0.06);padding:16px 22px"></div>
   </div>
 </div>`;
 
@@ -2353,7 +2361,7 @@ window.openCarConfigurator = function(carId, type) {
                 _broadcastNews(`${gameState.companyName} ha aggiunto alla flotta una ${car.name} 🚗`, 'milestone');
         }
     };
-    render();
+    _updateSummary();
 };
 
 window.buyCar = function(carId, type) { window.openCarConfigurator(carId, type); };
