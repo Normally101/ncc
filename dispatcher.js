@@ -2082,7 +2082,7 @@ window.closeModals = function() {
 }
 
 // --- LOGICHE FINALI ---
-window.hireOfficeStaff = function(id) {
+window.hireOfficeStaff = async function(id) {
     const s = STAFF_ROLES[Object.keys(STAFF_ROLES).find(k => STAFF_ROLES[k].id === id)];
     if (!s) return;
     const maxStaff = typeof _getMaxStaff === 'function' ? _getMaxStaff() : 2;
@@ -2091,14 +2091,14 @@ window.hireOfficeStaff = function(id) {
         showNotification(`Limite staff raggiunto (${maxStaff}). Potenzia la sede!`, 'error');
         return;
     }
-    if(gameState.cash >= s.salary) {
-        gameState.cash -= s.salary; gameState.staff.push(s);
-        showNotification(`${s.name} assunto con successo!`, "success");
-        updateUI(); renderTabStaff();
-        if(typeof saveGame==='function') saveGame();
-    } else {
-        showNotification('Fondi insufficienti!', 'error');
-    }
+
+    const result = await ServerState.hireDriver(s.name, s.salary, 'STAFF');
+    if (!result) return;
+
+    gameState.staff.push(s);
+    showNotification(`${s.name} assunto con successo!`, 'success');
+    updateUI(); renderTabStaff();
+    if(typeof saveGame==='function') saveGame();
 };
 
 window.openCarConfigurator = function(carId, type) {
@@ -2162,20 +2162,36 @@ window.openCarConfigurator = function(carId, type) {
 
     window.__cfgSel = sel;
     window.__cfgToggle = function(uid) { sel.has(uid) ? sel.delete(uid) : sel.add(uid); render(); };
-    window.__cfgConfirm = function(cId, cType) {
+    window.__cfgConfirm = async function(cId, cType) {
         const car = (cType === 'new' ? NEW_CARS : USED_CARS).find(c => c.id === cId);
         if (!car) return;
-        const ups = [...sel];
+        const ups     = [...sel];
         const upTotal = ups.reduce((s, uid) => { const u = CAR_UPGRADES.find(x => x.id === uid); return s + (u ? u.price : 0); }, 0);
-        const total = car.price + upTotal;
-        if (gameState.cash < total) { showNotification('Fondi insufficienti!', 'error'); return; }
-        gameState.cash -= total;
-        gameState.fleet.push({ id:'c_'+Date.now(), name:car.name, tier:car.tier, condition:car.condition, isLease:false, fuel:100, mileage:0, tirePressure:100, upgrades:ups, vehicleClass:car.vehicleClass||'mercedes_e' });
+        const total   = car.price + upTotal;
+
+        const result = await ServerState.buyVehicle(
+            car.vehicleClass || car.id,
+            total,
+            ServerState.getCompany()?.hq_city || 'roma'
+        );
+        if (!result) return;
+
+        // Apply per-upgrade server records (best-effort, non-blocking)
+        for (const uid of ups) {
+            const u = CAR_UPGRADES.find(x => x.id === uid);
+            if (u) ServerState.buyVehicleUpgrade(result.id, uid, u.price).catch(() => {});
+        }
+
+        gameState.fleet.push({
+            id: 'c_' + Date.now(), _serverId: result.id,
+            name: car.name, tier: car.tier, condition: car.condition || 100,
+            isLease: false, fuel: 100, mileage: 0, tirePressure: 100,
+            upgrades: ups, vehicleClass: car.vehicleClass || 'mercedes_e',
+        });
         document.getElementById('modal-configurator')?.remove();
         updateUI(); renderTabFleet();
         showBigEvent('🚗', `${car.name} Configurata!`, ups.length > 0 ? `${ups.length} optional installati · pronta al servizio.` : 'Veicolo standard pronto per la flotta.');
         if (typeof saveGame === 'function') saveGame();
-        // News: acquisto auto di lusso (ultra/vip con prezzo > €80k)
         if ((car.tier === 'ultra' || car.tier === 'vip') && car.price >= 80000) {
             if (typeof _broadcastNews === 'function')
                 _broadcastNews(`${gameState.companyName} ha aggiunto alla flotta una ${car.name} 🚗`, 'milestone');
@@ -2186,14 +2202,27 @@ window.openCarConfigurator = function(carId, type) {
 
 window.buyCar = function(carId, type) { window.openCarConfigurator(carId, type); };
 
-window.leaseCar = function(carId) {
+window.leaseCar = async function(carId) {
     const c = NEW_CARS.find(x => x.id === carId);
-    let upFront = c.price * 0.1;
-    if(gameState.cash >= upFront) {
-        gameState.cash -= upFront;
-        gameState.fleet.push({ id: 'l_'+Date.now(), name: c.name, tier: c.tier, condition: 100, isLease: true, dailyCost: Math.floor(c.price/300), vehicleClass: c.vehicleClass || 'mercedes_e' });
-        updateUI(); renderTabFleet(); showNotification("Contratto Leasing approvato!", "success");
-    }
+    if (!c) return;
+    const upFront = Math.floor(c.price * 0.1);
+
+    const result = await ServerState.buyVehicle(
+        c.vehicleClass || c.id,
+        upFront,
+        ServerState.getCompany()?.hq_city || 'roma'
+    );
+    if (!result) return;
+
+    gameState.fleet.push({
+        id: 'l_' + Date.now(), _serverId: result.id,
+        name: c.name, tier: c.tier, condition: 100,
+        isLease: true, dailyCost: Math.floor(c.price / 300),
+        vehicleClass: c.vehicleClass || 'mercedes_e',
+        fuel: 100, mileage: 0, tirePressure: 100, upgrades: [],
+    });
+    updateUI(); renderTabFleet();
+    showNotification('Contratto Leasing approvato!', 'success');
 };
 
 function renderTabRegions() {
