@@ -81,26 +81,52 @@ const POIS = {
     aosta:        { id:'aosta',        region:'valle_aosta',lat:45.7376, lng:7.3210,  name:'Aosta',              type:'city',   baseFlat:90,  minTier:'business' },
 };
 
-// ─── MERCATO AUTO — STELLAR & VOLT COLLECTION ───────────────────
+// ─── MERCATO AUTO — FULL CATALOG ────────────────────────────────
 const NEW_CARS = [
-    { id:'stellar_e_exec',  name:'Stellar E-Executive',  tier:'business',     price:120000, condition:100, vehicleClass:'stellar_e_exec'  },
-    { id:'stellar_v_carr',  name:'Stellar V-Carrier',    tier:'business',     price:95000,  condition:100, vehicleClass:'stellar_v_carr'  },
-    { id:'stellar_s_imp',   name:'Stellar S-Imperial',   tier:'vip',          price:250000, condition:100, vehicleClass:'stellar_s_imp'   },
-    { id:'stellar_g_over',  name:'Stellar G-Overlord',   tier:'ultra',        price:320000, condition:100, vehicleClass:'stellar_g_over'  },
-    { id:'volt_s_apex',     name:'Volt S-Apex',          tier:'vip',          price:280000, condition:100, vehicleClass:'volt_s_apex'     },
+    // ── Stellar gasoline ──────────────────────────────────────────
+    { id:'stellar_e_exec',     name:'Stellar E-Executive',  tier:'business', price:120000, condition:100, vehicleClass:'stellar_e_exec'     },
+    { id:'stellar_v_carr',     name:'Stellar V-Carrier',    tier:'business', price:95000,  condition:100, vehicleClass:'stellar_v_carr'     },
+    { id:'stellar_s_imp',      name:'Stellar S-Imperial',   tier:'vip',      price:250000, condition:100, vehicleClass:'stellar_s_imp'      },
+    { id:'stellar_g_over',     name:'Stellar G-Overlord',   tier:'ultra',    price:320000, condition:100, vehicleClass:'stellar_g_over'     },
+    // ── Stellar Q electric ────────────────────────────────────────
+    { id:'stellar_q_exec',     name:'Stellar Q-Executive',  tier:'business', price:95000,  condition:100, vehicleClass:'stellar_q_exec'     },
+    { id:'stellar_q_carr',     name:'Stellar Q-Carrier',    tier:'business', price:110000, condition:100, vehicleClass:'stellar_q_carr'     },
+    { id:'stellar_q_imp',      name:'Stellar Q-Imperial',   tier:'vip',      price:160000, condition:100, vehicleClass:'stellar_q_imp'      },
+    // ── Volt electric ─────────────────────────────────────────────
+    { id:'volt_3_urban',       name:'Volt 3-Urban',         tier:'business', price:55000,  condition:100, vehicleClass:'volt_3_urban'       },
+    { id:'volt_y_cross',       name:'Volt Y-Cross',         tier:'business', price:70000,  condition:100, vehicleClass:'volt_y_cross'       },
+    { id:'volt_s_apex',        name:'Volt S-Apex',          tier:'vip',      price:280000, condition:100, vehicleClass:'volt_s_apex'        },
+    { id:'volt_s_hyper',       name:'Volt S-Hyper',         tier:'ultra',    price:180000, condition:100, vehicleClass:'volt_s_hyper'       },
+    // ── Majestic luxury ───────────────────────────────────────────
+    { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'vip',      price:450000, condition:100, vehicleClass:'majestic_spirit'    },
+    { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'vip',      price:550000, condition:100, vehicleClass:'majestic_e_specter' },
 ];
 
 const USED_CARS = [
-    { id:'uc_e_exec_22', name:'Stellar E-Executive (2022)', tier:'business', price:72000,  condition:62, vehicleClass:'stellar_e_exec' },
-    { id:'uc_v_carr_21', name:'Stellar V-Carrier (2021)',   tier:'business', price:55000,  condition:51, vehicleClass:'stellar_v_carr' },
-    { id:'uc_s_imp_20',  name:'Stellar S-Imperial (2020)',  tier:'vip',      price:140000, condition:44, vehicleClass:'stellar_s_imp'  },
+    { id:'uc_e_exec_22',  name:'Stellar E-Executive (2022)', tier:'business', price:72000,  condition:62, vehicleClass:'stellar_e_exec'  },
+    { id:'uc_v_carr_21',  name:'Stellar V-Carrier (2021)',   tier:'business', price:55000,  condition:51, vehicleClass:'stellar_v_carr'  },
+    { id:'uc_q_exec_22',  name:'Stellar Q-Executive (2022)', tier:'business', price:58000,  condition:57, vehicleClass:'stellar_q_exec'  },
+    { id:'uc_volt3_21',   name:'Volt 3-Urban (2021)',        tier:'business', price:34000,  condition:65, vehicleClass:'volt_3_urban'    },
+    { id:'uc_s_imp_20',   name:'Stellar S-Imperial (2020)',  tier:'vip',      price:140000, condition:44, vehicleClass:'stellar_s_imp'   },
 ];
 
 const LEASING_TEMPLATES = {
-    'business':     { name:'Stellar E-Executive', baseRate:1200, kmRate:0.05, tier:'business', vehicleClass:'stellar_e_exec' },
-    'vip':          { name:'Stellar S-Imperial',  baseRate:2500, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_s_imp'  },
-    'group':        { name:'Stellar V-Carrier',   baseRate:1600, kmRate:0.07, tier:'business', vehicleClass:'stellar_v_carr' },
-    'ultra':        { name:'Stellar G-Overlord',  baseRate:5000, kmRate:0.22, tier:'ultra',    vehicleClass:'stellar_g_over' },
+    'stellar_e_exec':     { name:'Stellar E-Executive',  baseRate:1200, kmRate:0.05, tier:'business', vehicleClass:'stellar_e_exec'     },
+    'stellar_q_exec':     { name:'Stellar Q-Executive',  baseRate:1300, kmRate:0.05, tier:'business', vehicleClass:'stellar_q_exec'     },
+    'stellar_v_carr':     { name:'Stellar V-Carrier',    baseRate:1600, kmRate:0.07, tier:'business', vehicleClass:'stellar_v_carr'     },
+    'stellar_q_carr':     { name:'Stellar Q-Carrier',    baseRate:1700, kmRate:0.07, tier:'business', vehicleClass:'stellar_q_carr'     },
+    'volt_3_urban':       { name:'Volt 3-Urban',         baseRate:900,  kmRate:0.04, tier:'business', vehicleClass:'volt_3_urban'       },
+    'volt_y_cross':       { name:'Volt Y-Cross',         baseRate:1100, kmRate:0.05, tier:'business', vehicleClass:'volt_y_cross'       },
+    'stellar_s_imp':      { name:'Stellar S-Imperial',   baseRate:2500, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_s_imp'      },
+    'stellar_q_imp':      { name:'Stellar Q-Imperial',   baseRate:2800, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_q_imp'      },
+    'volt_s_apex':        { name:'Volt S-Apex',          baseRate:3200, kmRate:0.12, tier:'vip',      vehicleClass:'volt_s_apex'        },
+    'majestic_spirit':    { name:'Majestic Spirit',      baseRate:5500, kmRate:0.22, tier:'ultra',    vehicleClass:'majestic_spirit'    },
+    'stellar_g_over':     { name:'Stellar G-Overlord',   baseRate:5000, kmRate:0.22, tier:'ultra',    vehicleClass:'stellar_g_over'     },
+    // legacy keys (backward compat)
+    'business': { name:'Stellar E-Executive', baseRate:1200, kmRate:0.05, tier:'business', vehicleClass:'stellar_e_exec' },
+    'vip':      { name:'Stellar S-Imperial',  baseRate:2500, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_s_imp'  },
+    'group':    { name:'Stellar V-Carrier',   baseRate:1600, kmRate:0.07, tier:'business', vehicleClass:'stellar_v_carr' },
+    'ultra':    { name:'Stellar G-Overlord',  baseRate:5000, kmRate:0.22, tier:'ultra',    vehicleClass:'stellar_g_over' },
 };
 
 // Tratti personalità autisti (assegnati random al reclutamento)
@@ -371,9 +397,9 @@ const ACHIEVEMENTS = [
 
 // ─── AUTO PROTOTIPO (sbloccabili al raggiungimento di 5★) ─────────
 const PROTOTYPE_CARS = [
-    { id:'proto_tesla',    name:'Tesla Model S Plaid',   tier:'ultra',    price:220000, condition:100, reqRep:4.5, desc:'Elettrica. Velocità +25%, zero emissioni, silenzio totale.',  vehicleClass:'mercedes_e' },
-    { id:'proto_rolls',    name:'Rolls-Royce Spectre',   tier:'ultra',    price:450000, condition:100, reqRep:5.0, desc:'Ultra-luxury. Tariffa base ×5. Solo per clienti Presidential.', vehicleClass:'mercedes_e' },
-    { id:'proto_van_vip',  name:'Mercedes V-Classe EQV', tier:'group',    price:180000, condition:100, reqRep:4.0, desc:'Elettrico luxury group. 7 posti, zero emissioni.',              vehicleClass:'mercedes_v' },
+    { id:'proto_tesla',    name:'Volt S-Hyper',         tier:'ultra',    price:180000, condition:100, reqRep:4.5, desc:'Elettrica. Velocità +25%, zero emissioni, silenzio totale.',     vehicleClass:'volt_s_hyper'       },
+    { id:'proto_rolls',    name:'Majestic E-Specter',   tier:'ultra',    price:550000, condition:100, reqRep:5.0, desc:'Ultra-luxury elettrica. Tariffa base ×5. Solo Presidential.',    vehicleClass:'majestic_e_specter' },
+    { id:'proto_van_vip',  name:'Stellar Q-Carrier',    tier:'group',    price:110000, condition:100, reqRep:4.0, desc:'Elettrico luxury group. 7 posti, zero emissioni.',               vehicleClass:'stellar_q_carr'     },
 ];
 
 // ─── SPECIALIZZAZIONI DRIVER ─────────────────────────────────────

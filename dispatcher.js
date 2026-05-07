@@ -639,8 +639,11 @@ window.openGarage3D = function(carId) {
     const vClass   = car.vehicleClass || 'mercedes_e';
     const upgrades = car.upgrades || [];
 
+    const _LEGACY_NAMES = { 'standard_sedan':'Stellar C-Line', 'van_x':'Vanguard Transit', 'sedan':'Stellar C-Line', 'van':'Vanguard Transit' };
+    if (_LEGACY_NAMES[car.name?.toLowerCase?.()]) car = { ...car, name: _LEGACY_NAMES[car.name.toLowerCase()] };
+
     const catalog  = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : []).find(c => c.vehicleClass === vClass || c.id === vClass);
-    const carImg   = catalog?.img || '';
+    const carImg   = catalog?.img || 'assets/fleet/stellar-e-executive.jpg';
     const isElec   = catalog?.fuel === 'electric';
 
     const template = (typeof FLEET_VEHICLE_CLASSES !== 'undefined' ? FLEET_VEHICLE_CLASSES : []).find(x => x.id === vClass) || {};
@@ -1486,7 +1489,7 @@ function renderTabFleet() {
         const catalog = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : [])
             .find(c => c.vehicleClass === car.vehicleClass || c.id === car.vehicleClass || c.id === car.id);
         const isElectric = catalog?.fuel === 'electric';
-        const cardImg = catalog?.img || '';
+        const cardImg = catalog?.img || 'assets/fleet/stellar-e-executive.jpg';
 
         // Energy level (charge for electric, fuel for gasoline)
         const energyPct = isElectric
@@ -1643,9 +1646,13 @@ function renderTabFleet() {
     html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Concessionario (Nuovo & Leasing)</h3><div class="space-y-2">`;
     NEW_CARS.forEach(c => {
         const vcLabel = {
-            stellar_e_exec:'Berlina Business', stellar_v_carr:'Van Premium',
-            stellar_s_imp:'Ammiraglia', stellar_g_over:'SUV Blindato',
-            volt_s_apex:'Elettrica ⚡ CO2 ESENTE',
+            stellar_e_exec:'Berlina Business',   stellar_v_carr:'Van Premium',
+            stellar_s_imp:'Ammiraglia',          stellar_g_over:'SUV Blindato',
+            stellar_q_exec:'Berlina EV ⚡',      stellar_q_imp:'Ammiraglia EV ⚡',
+            stellar_q_carr:'Van EV ⚡',
+            volt_s_apex:'Gran Turismo EV ⚡',    volt_s_hyper:'Hyper EV ⚡',
+            volt_3_urban:'City EV ⚡',           volt_y_cross:'SUV EV ⚡',
+            majestic_spirit:'Ultra-Luxury',      majestic_e_specter:'Ultra-Luxury EV ⚡',
             mercedes_e:'Sedan', mercedes_v:'Minivan', mercedes_s:'Presidential',
             mercedes_sprinter:'Sprinter', water_taxi:'Acqueo',
         }[c.vehicleClass] || c.vehicleClass || '';

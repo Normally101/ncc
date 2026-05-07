@@ -122,13 +122,25 @@ let gameState = {
 
 function hasInvestment(id) { return gameState.investments.includes(id); }
 
-// ─── STELLAR & VOLT COLLECTION ───────────────────────────────────────────────
+// ─── STELLAR, VOLT & MAJESTIC FULL CATALOG ───────────────────────────────────
 const STELLAR_VOLT_CATALOG = [
-    { id:'stellar_e_exec',  name:'Stellar E-Executive', img:'assets/fleet/stellar-e-executive.jpg',  tier:'BUSINESS',     fuel:'gasoline', price:120000, co2PerKm:0.18, vehicleClass:'stellar_e_exec'  },
-    { id:'stellar_v_carr',  name:'Stellar V-Carrier',   img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PREMIUM',      fuel:'gasoline', price:95000,  co2PerKm:0.22, vehicleClass:'stellar_v_carr'  },
-    { id:'stellar_s_imp',   name:'Stellar S-Imperial',  img:'assets/fleet/stellar-s-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'gasoline', price:250000, co2PerKm:0.20, vehicleClass:'stellar_s_imp'   },
-    { id:'stellar_g_over',  name:'Stellar G-Overlord',  img:'assets/fleet/stellar-g-overlord.jpg',   tier:'ARMORED',      fuel:'gasoline', price:320000, co2PerKm:0.28, vehicleClass:'stellar_g_over'  },
-    { id:'volt_s_apex',     name:'Volt S-Apex',         img:'assets/fleet/volt-s-apex.jpg',          tier:'PRESIDENTIAL', fuel:'electric', price:280000, co2PerKm:0.00, vehicleClass:'volt_s_apex'     },
+    // ── Stellar gasoline ──────────────────────────────────────────────────────
+    { id:'stellar_e_exec',    name:'Stellar E-Executive',   img:'assets/fleet/stellar-e-executive.jpg',  tier:'BUSINESS',     fuel:'gasoline', price:120000, co2PerKm:0.18, vehicleClass:'stellar_e_exec'    },
+    { id:'stellar_v_carr',    name:'Stellar V-Carrier',     img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PREMIUM',      fuel:'gasoline', price:95000,  co2PerKm:0.22, vehicleClass:'stellar_v_carr'    },
+    { id:'stellar_s_imp',     name:'Stellar S-Imperial',    img:'assets/fleet/stellar-s-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'gasoline', price:250000, co2PerKm:0.20, vehicleClass:'stellar_s_imp'     },
+    { id:'stellar_g_over',    name:'Stellar G-Overlord',    img:'assets/fleet/stellar-g-overlord.jpg',   tier:'ARMORED',      fuel:'gasoline', price:320000, co2PerKm:0.28, vehicleClass:'stellar_g_over'    },
+    // ── Stellar Q electric ────────────────────────────────────────────────────
+    { id:'stellar_q_exec',    name:'Stellar Q-Executive',   img:'assets/fleet/stellar-q-executive.jpg',  tier:'BUSINESS',     fuel:'electric', price:95000,  co2PerKm:0.00, vehicleClass:'stellar_q_exec'    },
+    { id:'stellar_q_imp',     name:'Stellar Q-Imperial',    img:'assets/fleet/stellar-q-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'electric', price:160000, co2PerKm:0.00, vehicleClass:'stellar_q_imp'     },
+    { id:'stellar_q_carr',    name:'Stellar Q-Carrier',     img:'assets/fleet/stellar-q-carrier.jpg',    tier:'PREMIUM',      fuel:'electric', price:110000, co2PerKm:0.00, vehicleClass:'stellar_q_carr'    },
+    // ── Volt electric ─────────────────────────────────────────────────────────
+    { id:'volt_s_apex',       name:'Volt S-Apex',           img:'assets/fleet/volt-s-apex.jpg',          tier:'PRESIDENTIAL', fuel:'electric', price:280000, co2PerKm:0.00, vehicleClass:'volt_s_apex'       },
+    { id:'volt_s_hyper',      name:'Volt S-Hyper',          img:'assets/fleet/volt-s-hyper.jpg',         tier:'ULTRA',        fuel:'electric', price:180000, co2PerKm:0.00, vehicleClass:'volt_s_hyper'      },
+    { id:'volt_3_urban',      name:'Volt 3-Urban',          img:'assets/fleet/volt-3-urban.jpg',         tier:'BUSINESS',     fuel:'electric', price:55000,  co2PerKm:0.00, vehicleClass:'volt_3_urban'      },
+    { id:'volt_y_cross',      name:'Volt Y-Cross',          img:'assets/fleet/volt-y-cross.jpg',         tier:'PREMIUM',      fuel:'electric', price:70000,  co2PerKm:0.00, vehicleClass:'volt_y_cross'      },
+    // ── Majestic luxury ───────────────────────────────────────────────────────
+    { id:'majestic_spirit',   name:'Majestic Spirit',       img:'assets/fleet/majestic-spirit.jpg',      tier:'PRESIDENTIAL', fuel:'gasoline', price:450000, co2PerKm:0.25, vehicleClass:'majestic_spirit'   },
+    { id:'majestic_e_specter',name:'Majestic E-Specter',    img:'assets/fleet/majestic-e-specter.jpg',   tier:'PRESIDENTIAL', fuel:'electric', price:550000, co2PerKm:0.00, vehicleClass:'majestic_e_specter' },
 ];
 window.STELLAR_VOLT_CATALOG = STELLAR_VOLT_CATALOG;
 
