@@ -91,20 +91,11 @@ window.saveCurrentSlot = function() {
     try {
         const save = {
             ...gameState,
-            pendingRides: (gameState.pendingRides || []).map(r => {
-                if (!r || !r.fromPoi) return null;
-                return { id:r.id, fromPoi:r.fromPoi.id, toPoi:r.toPoi.id, tier:r.tier, price:r.price, duration:r.duration, elapsed:r.elapsed||0, driverId:r.driverId, hasIncident:r.hasIncident };
-            }).filter(Boolean),
-            activeRides: (gameState.activeRides || []).map(r => {
-                if (!r || !r.fromPoi) return null;
-                return { id:r.id, fromPoi:r.fromPoi.id, toPoi:r.toPoi.id, tier:r.tier, price:r.price, duration:r.duration, elapsed:r.elapsed||0, driverId:r.driverId };
-            }).filter(Boolean),
+            pendingRides: (gameState.pendingRides || []).map(r => typeof _serializeRide === 'function' ? _serializeRide(r) : null).filter(Boolean),
+            activeRides:  (gameState.activeRides  || []).map(r => typeof _serializeRide === 'function' ? _serializeRide(r) : null).filter(Boolean),
             drivers: (gameState.drivers || []).map(d => ({
                 ...d,
-                queue: (d.queue || []).map(r => {
-                    if (!r || !r.fromPoi) return null;
-                    return { id:r.id, fromPoi:r.fromPoi.id, toPoi:r.toPoi.id, tier:r.tier, price:r.price, duration:r.duration, elapsed:r.elapsed||0 };
-                }).filter(Boolean)
+                queue: (d.queue || []).map(r => typeof _serializeRide === 'function' ? _serializeRide(r) : null).filter(Boolean)
             }))
         };
         save._saveTimestamp = Date.now();

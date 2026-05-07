@@ -246,21 +246,31 @@ function _serializeRide(r) {
         elapsed: r.elapsed || 0, driverId: r.driverId, hasIncident: r.hasIncident
     };
     if (r.isContract) {
-        base.isContract     = true;
-        base.routeId        = r.routeId;
-        base.routeType      = r.routeType;
-        base.originName     = r.originName;
-        base.destinationName= r.destinationName;
-        base.vehicleRequired= r.vehicleRequired;
-        base.originCoords   = r.originCoords;
-        base.destCoords     = r.destCoords;
-        base.netCost        = r.netCost;
+        base.isContract      = true;
+        base.routeId         = r.routeId;
+        base.routeType       = r.routeType;
+        base.originName      = r.originName;
+        base.destinationName = r.destinationName;
+        base.vehicleRequired = r.vehicleRequired;
+        base.originCoords    = r.originCoords;
+        base.destCoords      = r.destCoords;
+        base.netCost         = r.netCost;
+        // Contract POIs have synthetic IDs not present in POIS dict — save full objects
+        base.fromPoiData     = r.fromPoi;
+        base.toPoiData       = r.toPoi;
     }
     return base;
 }
 function _deserializeRide(r) {
     if (!r) return null;
-    const from = POIS[r.fromPoi], to = POIS[r.toPoi];
+    let from, to;
+    if (r.isContract && r.fromPoiData && r.toPoiData) {
+        from = r.fromPoiData;
+        to   = r.toPoiData;
+    } else {
+        from = POIS[r.fromPoi];
+        to   = POIS[r.toPoi];
+    }
     if (!from || !to) return null;
     return { ...r, fromPoi: from, toPoi: to };
 }
