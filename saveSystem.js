@@ -344,7 +344,8 @@ window.resetGame = function() {
             .delete()
             .eq('user_id', window.currentUser.id)
             .eq('slot_index', 0)
-            .then(() => location.reload());
+            .then(() => location.reload())
+            .catch(() => location.reload());
     } else {
         location.reload();
     }

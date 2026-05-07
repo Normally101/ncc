@@ -368,6 +368,9 @@ function loadGame() {
         if (!save.claimableQuests) save.claimableQuests = [];
         if (!save.completedQuests) save.completedQuests = [];
         if (!save.activeTrips)     save.activeTrips     = [];
+        if (!save.npcMarket)       save.npcMarket       = [];
+        if (save.loginStreak    === undefined) save.loginStreak    = 0;
+        if (save.lastDailyClaim === undefined) save.lastDailyClaim = 0;
         // Driver satisfaction migration
         (save.drivers || []).forEach(d => {
             if (d.satisfaction === undefined) d.satisfaction = 70;
@@ -4543,7 +4546,7 @@ window.buyNpcCar = function(listingId) {
         mileage: listing.mileage, tirePressure: 80, engineHealth: 100, outOfService: null, upgrades: [],
     };
     gameState.fleet.push(newCar);
-    gameState.npcMarket = gameState.npcMarket.filter(l => l.id !== listingId);
+    gameState.npcMarket = (gameState.npcMarket || []).filter(l => l.id !== listingId);
     logToMap(`🚗 Acquistata: ${listing.name} a €${listing.price.toLocaleString()} (cond. ${listing.condition}%)`);
     showNotification(`✅ ${listing.name} aggiunta alla flotta!`, 'success');
     updateUI(); saveGame();
