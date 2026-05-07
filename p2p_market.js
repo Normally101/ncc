@@ -235,7 +235,7 @@ window.buyCompanyShares = async function(listingId, qty) {
     });
     if (error) { showNotification(`Acquisto azioni fallito: ${error.message}`, 'error'); return; }
 
-    gameState.cash -= total;
+    if (!window.ServerState?.isReady()) gameState.cash -= total;
     await saveGame();
     showNotification(`✅ Comprate ${qty} azioni di ${data.company} a €${data.price}/az.`, 'success');
     updateUI();
@@ -250,7 +250,7 @@ window.sellCompanyShares = async function(listingId, qty) {
     });
     if (error) { showNotification(`Vendita azioni fallita: ${error.message}`, 'error'); return; }
 
-    gameState.cash += data.total;
+    if (!window.ServerState?.isReady()) gameState.cash += data.total;
     await saveGame();
     showNotification(`✅ Vendute ${data.qty_sold} azioni di ${data.company} — +€${data.total.toLocaleString()}`, 'success');
     updateUI();

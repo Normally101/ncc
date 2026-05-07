@@ -542,7 +542,7 @@ function _resolveAuction() {
         // Player wins
         const newCar = {
             id: 'c_' + Date.now(), name: auc.name, tier: auc.tier, vehicleClass: auc.vehicleClass,
-            condition: 100, isLease: false, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [],
+            condition: 100, isLease: false, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, outOfService: false, upgrades: [],
         };
         gameState.fleet.push(newCar);
         showBigEvent('🏆', 'Asta Vinta!', `${auc.name} è tua! Aggiudicata per €${auc.currentBid.toLocaleString()}. Trovala in Flotta.`);
@@ -3438,7 +3438,7 @@ function negotiateEmail(emailId, action, choiceIdx = null) {
     }
 
     email.status = 'resolved';
-    if(typeof renderTabEmails==='function') renderTabEmails(); updateUI();
+    if(typeof renderTabEmails==='function') renderTabEmails(); updateUI(); saveGame();
 }
 
 // ─── GESTIONE AVANZATA AUTO (RIPARA, VENDI, ASSEGNA) ───
@@ -4540,7 +4540,7 @@ window.buyNpcCar = function(listingId) {
         id: 'c_' + Date.now(), name: listing.name, tier: listing.tier,
         vehicleClass: listing.vehicleClass || 'mercedes_e',
         condition: listing.condition, isLease: false, fuel: 60,
-        mileage: listing.mileage, tirePressure: 80, engineHealth: 100, upgrades: [],
+        mileage: listing.mileage, tirePressure: 80, engineHealth: 100, outOfService: false, upgrades: [],
     };
     gameState.fleet.push(newCar);
     gameState.npcMarket = gameState.npcMarket.filter(l => l.id !== listingId);
