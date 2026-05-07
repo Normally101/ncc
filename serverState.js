@@ -438,6 +438,11 @@ const ServerState = (() => {
         return _rpc('rpc_collect_daily_costs', {});
     }
 
+    // ── Sync authoritative cash to server after local daily tick ───────────────
+    async function syncCash(cash) {
+        return _rpc('rpc_sync_cash', { v_cash: Math.round(cash) });
+    }
+
     // ── Idle / Premium ────────────────────────────────────────────────────────
     async function upgradeOfflineLimit(costInCoins) {
         return _rpc('rpc_upgrade_offline_limit', { p_cost_in_coins: costInCoins });
@@ -527,6 +532,7 @@ const ServerState = (() => {
         refillCarTires,
         restCeo,
         collectDailyCosts,
+        syncCash,
         upgradeOfflineLimit,
         buyAutoRest,
         buyEnergyRefill,

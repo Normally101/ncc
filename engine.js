@@ -2161,6 +2161,8 @@ function processDailyRoutines() {
         if (camp) expenses += camp.dailyCost;
     }
     gameState.cash += (income - expenses);
+    // Push authoritative cash to server (fire-and-forget — Realtime will confirm)
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
 
     // Bankruptcy risk: track consecutive days in red
     if (gameState.cash < 0) {
