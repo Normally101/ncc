@@ -3116,8 +3116,8 @@ function startNextRide(driver) {
         driverId:   driver.id,
         carId:      car.id,
         driverName: driver.name,
-        fromName:   ride.fromPoi.name,
-        toName:     ride.toPoi.name,
+        fromName:   ride.fromPoi?.name || '?',
+        toName:     ride.toPoi?.name  || '?',
         tier:       ride.tier,
         startTime:  Date.now(),
         endTime:    Date.now() + _realMs,
@@ -3125,7 +3125,7 @@ function startNextRide(driver) {
     });
 
     const trafficLabel = trafficMult < 1 ? ' 🚦' : trafficMult > 1 ? ' 🌙' : '';
-    logToMap(`🚖 ${driver.name} partito per ${ride.toPoi.name}${trafficLabel}`);
+    logToMap(`🚖 ${driver.name} partito per ${ride.toPoi?.name || '?'}${trafficLabel}`);
 
     if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
 }
@@ -3285,7 +3285,7 @@ function completeRide(ride, _deferPay = false) {
     }
 
     const extras = [hasHR ? '+HR' : null, traitTipMult > 1 ? `+${Math.round((traitTipMult-1)*100)}%` : null, levelTipMult > 1 ? `Lv${driver?.level}` : null, ride.isEmptyLeg ? 'EmptyLeg' : null, ride.isGreyMarket ? '🕵️' : null, isDelayed ? '⏱️+1h' : null].filter(Boolean).join(' ');
-    logToMap(`💰 Incasso: €${earned} da ${ride.toPoi.name}${extras ? ` (${extras})` : ''}`);
+    logToMap(`💰 Incasso: €${earned} da ${ride.toPoi?.name || '?'}${extras ? ` (${extras})` : ''}`);
 
     // ── HUB TAX: se il giocatore possiede un hub di origine/destinazione ──────
     if ((gameState.ownedHubs || []).length > 0) {
