@@ -305,7 +305,9 @@ function _showAuthOverlay() {
         <nav class="lp-navbar" id="lp-navbar">
             <div class="lp-navbar-inner">
                 <div class="lp-nav-logo">
-                    <div class="lp-nav-monogram">OV</div>
+                    <div class="lp-nav-monogram">
+                        <img src="assets/ce-favicon.png" alt="CE" style="width:100%;height:100%;object-fit:contain;border-radius:6px" onerror="this.parentElement.textContent='CE'">
+                    </div>
                     <span class="lp-nav-brand">Chauffeur Empire</span>
                 </div>
                 <div class="lp-nav-links">
@@ -326,7 +328,9 @@ function _showAuthOverlay() {
 
             <!-- Sinistra: Copywriting -->
             <div class="lp-copy">
-                <div class="lp-monogram">OV</div>
+                <div class="lp-monogram">
+                    <img src="assets/ce-logo.png" alt="Chauffeur Empire" style="width:100%;height:100%;object-fit:contain;border-radius:10px" onerror="this.parentElement.textContent='CE'">
+                </div>
                 <h1 class="lp-headline">DOMINA LE STRADE.<br>COSTRUISCI IL TUO IMPERO.</h1>
                 <p class="lp-tagline">Il simulatore gestionale MMO dove ogni corsa, ogni autista e ogni investimento determinano il tuo potere. Fonda la tua compagnia di Chauffeur e scala la vetta globale.</p>
                 <div class="lp-badges">
@@ -434,28 +438,39 @@ function _showAuthOverlay() {
             <div class="lp-showcase-grid">
                 <div class="lp-showcase-slot">
                     <div class="lp-showcase-thumb lp-st-map">
-                        <div class="lp-st-icon">📡</div>
+                        <img src="assets/map-preview.jpg" alt="Mappa Globale Live"
+                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.82"
+                             onerror="this.style.display='none';this.nextSibling.style.display='flex'">
+                        <div class="lp-st-icon" style="display:none">📡</div>
                     </div>
                     <div class="lp-showcase-label">Mappa Globale Live</div>
                     <div class="lp-showcase-sub">Monitora i tuoi autisti in tempo reale sulla mappa 3D interattiva con traffico e meteo dinamici.</div>
                 </div>
                 <div class="lp-showcase-slot">
                     <div class="lp-showcase-thumb lp-st-fleet">
-                        <div class="lp-st-icon">🚘</div>
+                        <img src="assets/fleet/majestic-e-specter.jpg" alt="Garage & Flotta Elite"
+                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.88">
+                        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.45) 0%,transparent 60%);z-index:1"></div>
                     </div>
                     <div class="lp-showcase-label">Garage & Flotta Elite</div>
                     <div class="lp-showcase-sub">Da berline premium a Rolls-Royce presidenziali. Ogni auto sblocca contratti e mercati ad alto margine.</div>
                 </div>
                 <div class="lp-showcase-slot">
                     <div class="lp-showcase-thumb lp-st-rank">
-                        <div class="lp-st-icon">🏆</div>
+                        <img src="assets/fleet/stellar-q-imperial.jpg" alt="Classifiche Live"
+                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.55;filter:hue-rotate(160deg) saturate(0.6)">
+                        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(212,175,55,0.18),transparent 70%);z-index:1"></div>
+                        <div class="lp-st-icon" style="z-index:2">🏆</div>
                     </div>
                     <div class="lp-showcase-label">Classifiche Live</div>
                     <div class="lp-showcase-sub">Scala la vetta della classifica globale e sfida i CEO di tutto il mondo per il dominio assoluto.</div>
                 </div>
                 <div class="lp-showcase-slot">
                     <div class="lp-showcase-thumb lp-st-fin">
-                        <div class="lp-st-icon">💹</div>
+                        <img src="assets/fleet/volt-s-apex.jpg" alt="Borsa & Finanza"
+                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.45;filter:hue-rotate(90deg) saturate(0.7)">
+                        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(34,197,94,0.15),transparent 70%);z-index:1"></div>
+                        <div class="lp-st-icon" style="z-index:2">💹</div>
                     </div>
                     <div class="lp-showcase-label">Borsa & Finanza</div>
                     <div class="lp-showcase-sub">Investi in mercati azionari reali e gestisci un portafoglio multi-asset per espandere il tuo impero.</div>
@@ -513,7 +528,9 @@ function _showAuthOverlay() {
         <footer class="lp-footer">
             <div class="lp-footer-inner">
                 <div class="lp-footer-brand">
-                    <div class="lp-footer-monogram">OV</div>
+                    <div class="lp-footer-monogram">
+                        <img src="assets/ce-favicon.png" alt="CE" style="width:100%;height:100%;object-fit:contain;border-radius:6px" onerror="this.parentElement.textContent='CE'">
+                    </div>
                     <div>
                         <div class="lp-footer-name">Chauffeur Empire</div>
                         <div class="lp-footer-copy">© 2026 Olga Vision Agency</div>
