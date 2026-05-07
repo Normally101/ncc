@@ -2218,63 +2218,65 @@ window.openCarConfigurator = function(carId, type) {
 
     const sel = new Set();
 
-    // ── Build static shell (photo + header) once ──────────────────────────────
+    // ── Build static shell (photo + config panel) once ───────────────────────
     modal.innerHTML = `
-<div style="display:flex;width:100%;max-width:960px;height:88vh;border-radius:18px;overflow:hidden;box-shadow:0 50px 100px rgba(0,0,0,0.9);border:1px solid rgba(255,255,255,0.08)">
+<div style="display:flex;width:100%;max-width:1020px;height:90vh;border-radius:20px;overflow:hidden;box-shadow:0 60px 120px rgba(0,0,0,0.95)">
 
   <!-- LEFT: full-height photo -->
-  <div style="width:55%;position:relative;flex-shrink:0;background:#030508">
+  <div style="width:58%;position:relative;flex-shrink:0;background:#080808">
     <img src="${carImg}" alt="${carT.name}"
          style="width:100%;height:100%;object-fit:cover;object-position:center;display:block">
-    <!-- bottom gradient + name overlay -->
-    <div style="position:absolute;bottom:0;left:0;right:0;padding:28px 24px 24px;background:linear-gradient(to top,rgba(3,5,8,1) 0%,rgba(3,5,8,0.7) 50%,transparent 100%)">
-      <div style="font-size:22px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:2px;line-height:1.1">${carT.name}</div>
-      <div style="font-size:10px;color:#d4af37;margin-top:6px;font-family:monospace;letter-spacing:1px">${(carT.vehicleClass||'').replace(/_/g,' ').toUpperCase()}</div>
-      ${isElec ? `<div style="margin-top:8px;display:inline-flex;align-items:center;gap:4px;background:rgba(34,197,94,0.15);border:1px solid rgba(34,197,94,0.35);color:#4ade80;font-size:9px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:1px">⚡ CO2 ESENTE</div>` : ''}
+    <!-- subtle bottom fade for readability -->
+    <div style="position:absolute;bottom:0;left:0;right:0;height:40%;background:linear-gradient(to top,rgba(0,0,0,0.72) 0%,transparent 100%)"></div>
+    <!-- car name badge bottom-left -->
+    <div style="position:absolute;bottom:28px;left:28px;right:28px">
+      <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:1px;line-height:1.1;text-shadow:0 2px 12px rgba(0,0,0,0.8)">${carT.name}</div>
+      ${isElec ? `<div style="margin-top:10px;display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,0.18);border:1px solid rgba(34,197,94,0.4);color:#4ade80;font-size:9px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:1.5px;backdrop-filter:blur(4px)">⚡ ZERO EMISSIONI</div>` : ''}
     </div>
   </div>
 
-  <!-- RIGHT: scrollable config -->
-  <div id="cfg-right" style="flex:1;background:#0d0d12;overflow-y:auto;display:flex;flex-direction:column;min-width:0">
+  <!-- RIGHT: config panel -->
+  <div id="cfg-right" style="flex:1;background:#111114;overflow-y:auto;display:flex;flex-direction:column;min-width:0;scrollbar-width:thin;scrollbar-color:#2a2a30 transparent">
 
-    <!-- sticky header -->
-    <div style="position:sticky;top:0;z-index:2;background:#0d0d12;border-bottom:1px solid rgba(255,255,255,0.06);padding:18px 22px 14px;display:flex;justify-content:space-between;align-items:flex-start">
-      <div>
-        <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:3px;margin-bottom:4px">Showroom / Configuratore</div>
-        <div style="font-size:15px;font-weight:800;color:#fff">${carT.name}</div>
-        <div style="font-size:9px;color:#6b7280;margin-top:2px;text-transform:uppercase;letter-spacing:1px">${carT.tier}</div>
-      </div>
+    <!-- top bar: close -->
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 0">
+      <div style="font-size:9px;color:#4b5563;text-transform:uppercase;letter-spacing:3px">Configuratore</div>
       <button onclick="document.getElementById('modal-configurator').remove()"
-        style="color:#374151;font-size:22px;line-height:1;background:none;border:none;cursor:pointer;padding:0;margin-top:2px"
-        onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#374151'">✕</button>
+        style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#6b7280;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s"
+        onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'"
+        onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='#6b7280'">✕</button>
     </div>
 
-    <!-- base price row -->
-    <div style="padding:12px 22px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;justify-content:space-between;align-items:center">
-      <span style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
-      <span style="font-family:monospace;font-weight:800;color:#fff;font-size:15px">€${carT.price.toLocaleString()}</span>
+    <!-- car name + tier + base price block -->
+    <div style="padding:16px 24px 20px;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:0.5px;line-height:1.2">${carT.name}</div>
+      <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:2px;margin-top:4px">${carT.tier}</div>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px">
+        <span style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
+        <span style="font-size:24px;font-weight:900;color:#fff;font-family:monospace;letter-spacing:-0.5px">€${carT.price.toLocaleString()}</span>
+      </div>
     </div>
 
-    <!-- upgrades list -->
-    <div style="padding:16px 22px;flex:1">
-      <div style="font-size:8px;color:#d4af37;text-transform:uppercase;letter-spacing:3px;margin-bottom:12px">Optional disponibili</div>
-      <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:5px">
+    <!-- optional list -->
+    <div style="padding:20px 24px;flex:1">
+      <div style="font-size:8px;color:#d4af37;text-transform:uppercase;letter-spacing:3px;margin-bottom:14px">Optional disponibili</div>
+      <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:6px">
         ${CAR_UPGRADES.map(u => `
         <div id="cfg-upg-${u.id}" onclick="__cfgToggle('${u.id}')"
-             style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);cursor:pointer;user-select:none">
+             style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);cursor:pointer;user-select:none;transition:all 0.15s">
           <div id="cfg-chk-${u.id}"
-               style="width:15px;height:15px;border-radius:3px;border:1px solid rgba(255,255,255,0.2);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:800;color:#000"></div>
+               style="width:17px;height:17px;border-radius:4px;border:1.5px solid rgba(255,255,255,0.18);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#000"></div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:10px;font-weight:700;color:#e5e7eb">${u.name}</div>
-            <div style="font-size:7.5px;color:#6b7280;margin-top:1px;line-height:1.35">${u.desc}</div>
+            <div style="font-size:11px;font-weight:700;color:#e5e7eb">${u.name}</div>
+            <div style="font-size:8px;color:#6b7280;margin-top:2px;line-height:1.4">${u.desc}</div>
           </div>
-          <div id="cfg-price-${u.id}" style="font-size:10px;font-family:monospace;color:#6b7280;flex-shrink:0;font-weight:600">+€${u.price.toLocaleString()}</div>
+          <div id="cfg-price-${u.id}" style="font-size:11px;font-family:monospace;color:#6b7280;flex-shrink:0;font-weight:600">+€${u.price.toLocaleString()}</div>
         </div>`).join('')}
       </div>
     </div>
 
     <!-- sticky footer -->
-    <div id="cfg-footer" style="position:sticky;bottom:0;background:#0d0d12;border-top:1px solid rgba(255,255,255,0.06);padding:16px 22px"></div>
+    <div id="cfg-footer" style="position:sticky;bottom:0;background:#111114;border-top:1px solid rgba(255,255,255,0.07);padding:18px 24px"></div>
   </div>
 </div>`;
 
@@ -2284,21 +2286,21 @@ window.openCarConfigurator = function(carId, type) {
         const total   = carT.price + upTotal;
         const ok      = gameState.cash >= total;
         document.getElementById('cfg-footer').innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <span style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">Totale configurazione</span>
-            <span style="font-size:20px;font-family:monospace;font-weight:900;color:${ok ? '#4ade80' : '#f87171'}">€${total.toLocaleString()}</span>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
+            <span style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:2px">Totale</span>
+            <span style="font-size:28px;font-family:monospace;font-weight:900;color:${ok ? '#fff' : '#f87171'};letter-spacing:-1px">€${total.toLocaleString()}</span>
           </div>
-          ${!ok ? `<div style="font-size:9px;color:#f87171;margin-bottom:8px">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
-          <div style="display:flex;gap:8px">
+          ${!ok ? `<div style="font-size:9px;color:#f87171;margin-bottom:10px;text-align:right">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
+          <div style="display:flex;gap:10px">
             <button onclick="document.getElementById('modal-configurator').remove()"
-              style="flex:1;padding:10px;font-size:9px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#9ca3af;background:transparent;cursor:pointer">
+              style="flex:0 0 auto;padding:12px 20px;font-size:10px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#6b7280;background:transparent;cursor:pointer">
               Annulla
             </button>
             <button onclick="__cfgConfirm('${carId}','${type}')" ${!ok ? 'disabled' : ''}
-              style="flex:1;padding:10px;font-size:9px;font-weight:700;border-radius:8px;cursor:${ok ? 'pointer' : 'not-allowed'};
+              style="flex:1;padding:12px;font-size:11px;font-weight:800;border-radius:10px;cursor:${ok ? 'pointer' : 'not-allowed'};letter-spacing:0.5px;
                      background:${ok ? 'linear-gradient(135deg,#d4af37,#b8961f)' : 'rgba(255,255,255,0.05)'};
-                     color:${ok ? '#000' : '#4b5563'};border:${ok ? 'none' : '1px solid rgba(255,255,255,0.1)'}">
-              🚗 Conferma & Acquista
+                     color:${ok ? '#000' : '#4b5563'};border:${ok ? 'none' : '1px solid rgba(255,255,255,0.08)'}">
+              ${ok ? '🚗 Conferma & Acquista' : 'Fondi insufficienti'}
             </button>
           </div>`;
     }
