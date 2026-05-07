@@ -56,7 +56,9 @@ window.listCarForSale = async function(carId, askPrice) {
         // Rollback: restituisci l'auto
         gameState.fleet.push(car);
         if (driver) driver.assignedCarId = carId;
-        await saveGame();
+        saveGame();
+        if (typeof updateUI === 'function') updateUI();
+        if (typeof renderTabFleet === 'function') renderTabFleet();
         showNotification(`Errore pubblicazione: ${error.message}`, 'error');
         return;
     }

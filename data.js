@@ -98,8 +98,8 @@ const NEW_CARS = [
     { id:'volt_s_apex',        name:'Volt S-Apex',          tier:'vip',      price:280000, condition:100, vehicleClass:'volt_s_apex'        },
     { id:'volt_s_hyper',       name:'Volt S-Hyper',         tier:'ultra',    price:180000, condition:100, vehicleClass:'volt_s_hyper'       },
     // ── Majestic luxury ───────────────────────────────────────────
-    { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'vip',      price:450000, condition:100, vehicleClass:'majestic_spirit'    },
-    { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'vip',      price:550000, condition:100, vehicleClass:'majestic_e_specter' },
+    { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'ultra',    price:450000, condition:100, vehicleClass:'majestic_spirit'    },
+    { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'ultra',    price:550000, condition:100, vehicleClass:'majestic_e_specter' },
 ];
 
 const USED_CARS = [

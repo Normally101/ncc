@@ -496,7 +496,7 @@ function _refreshNpcMarket() {
         const cond = tmpl.condRange[0] + Math.floor(Math.random() * (tmpl.condRange[1] - tmpl.condRange[0]));
         const mileage = Math.floor(Math.random() * 150000);
         const price = Math.round(tmpl.basePrice * (cond / 100) * (1 - mileage/500000));
-        return { id: 'npc_' + Date.now() + i, name: tmpl.name, tier: tmpl.tier, vehicleClass: tmpl.vehicleClass, condition: cond, mileage, price };
+        return { id: 'npc_' + Date.now() + '_' + Math.floor(Math.random() * 1e6) + i, name: tmpl.name, tier: tmpl.tier, vehicleClass: tmpl.vehicleClass, condition: cond, mileage, price };
     });
     logToMap('🚗 Mercato auto: nuovi veicoli disponibili!');
 }
@@ -871,14 +871,14 @@ function _tickEmails() {
     const gameHour = gameState.day * 24 + gameState.hour;
     let expired = 0;
     gameState.emails = gameState.emails.filter(e => {
-        if (e.status !== 'unread') return false; // remove resolved too
-        if (e.expiresAt && gameHour >= e.expiresAt) {
+        // Rimuovi solo le email non lette scadute
+        if (e.status === 'unread' && e.expiresAt && gameHour >= e.expiresAt) {
             expired++;
             logToMap(`⏰ Scaduta: "${e.subject}"`);
             return false;
         }
         return true;
-    });
+    }).slice(-60); // max 60 email in inbox
     if (expired > 0 && typeof showNotification === 'function') {
         showNotification(`⏰ ${expired} offerta${expired>1?'e':''} scaduta${expired>1?'e':''}!`, 'error');
     }
@@ -2193,8 +2193,22 @@ function processDailyRoutines() {
     if (hasInvestment('inv_tower'))     { gameState.hqLevel = 3; if (gameState.hq) gameState.hq.level = 3; }
     else if (hasInvestment('inv_hq_campus')) { gameState.hqLevel = 3; if (gameState.hq) gameState.hq.level = 3; }
     else if (hasInvestment('inv_hq_office')) { gameState.hqLevel = 2; if (gameState.hq) gameState.hq.level = 2; }
-    else { gameState.hqLevel = 0; if (gameState.hq) gameState.hq.level = 0; }
+    else { // Senza investimenti avanzati, preserva livello base (1 = azienda fondata)
+        const base = Math.min(1, gameState.hqLevel || 0);
+        gameState.hqLevel = base; if (gameState.hq) gameState.hq.level = base;
+    }
     if (typeof _updateHQMarker === 'function') _updateHQMarker();
+
+    // Watchdog: libera driver bloccati in 'busy' senza corsa attiva
+    (gameState.drivers || []).forEach(d => {
+        if (d.status !== 'busy') return;
+        const hasLocal  = (gameState.activeRides || []).some(r => r.driverId === d.id);
+        const hasServer = (gameState.activeTrips || []).some(t => t.driverId === d.id);
+        if (!hasLocal && !hasServer) {
+            d.status = 'idle';
+            logToMap(`⚠ ${d.name} sbloccato automaticamente (nessuna corsa attiva trovata).`);
+        }
+    });
 
     // Corporate retainer rides
     if (hasInvestment('inv_corporate_retainer')) {
@@ -2820,8 +2834,8 @@ function generateContractRide() {
         originName:      route.origin,
         destinationName: route.destination,
         vehicleRequired,
-        fromPoi:         hubPOI,
-        toPoi:           hubPOI,
+        fromPoi: originCoords ? { name: route.origin,      lat: originCoords[0], lng: originCoords[1] } : hubPOI,
+        toPoi:   destCoords   ? { name: route.destination, lat: destCoords[0],   lng: destCoords[1]   } : hubPOI,
         originCoords,
         destCoords,
         tier,
@@ -2984,7 +2998,7 @@ function startNextRide(driver) {
     driver.status = 'busy';
 
     // Condizione auto
-    let condLoss = ride.tier === 'ultra' ? 1 : 2;
+    let condLoss = ride.tier === 'ultra' ? 2.5 : (ride.tier === 'vip' ? 2 : 1.5);
     if (hasInvestment('inv_driver_school')) condLoss = Math.max(0.5, condLoss * 0.5);
     if (driver.trait?.condMult) condLoss *= driver.trait.condMult;
     car.condition -= condLoss;
@@ -3500,7 +3514,7 @@ function confirmLease() {
     const monthly = template.baseRate + extraKm - discountDuration;
     const daily = monthly / 30;
 
-    const _leaseTierToClass = { ultra: 'mercedes_e', vip: 'mercedes_s', group: 'mercedes_v', business: 'mercedes_e', standard: 'mercedes_e' };
+    const _leaseTierToClass = { ultra: 'majestic_spirit', vip: 'mercedes_s', group: 'mercedes_v', business: 'mercedes_e', standard: 'mercedes_e' };
     gameState.fleet.push({
         id: 'c_' + Date.now(), name: template.name + ' (Leasing)', tier: template.tier,
         condition: 100, isLease: true, dailyCost: daily, leaseDuration: months, leaseElapsedDays: 0,

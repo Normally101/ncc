@@ -361,4 +361,4 @@ window.resetGame = function() {
 window.showSlotSelector  = window.showNewGameSetup; // redirect
 window.startNewGameSlot  = () => window.showNewGameSetup();
 window.loadExistingSlot  = () => window._startGameWithSlot(0, false);
-window.deleteSlot        = () => window.resetGame();
+// window.deleteSlot è definita sopra con la firma corretta deleteSlot(index) — stub rimosso
