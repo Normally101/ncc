@@ -1028,6 +1028,8 @@ window.switchTab = function(tab) {
         case 'store':    title.innerText = "🪙 Driver Store"; _safeRender(renderTabPremiumStore); break;
         case 'market':   title.innerText = "🚗 Mercato Auto"; _safeRender(renderTabMarket); break;
         case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;
+        case 'provinces':  title.innerText = "🏴 Province War"; _safeRender(renderTabProvinces); break;
+        case 'realestate': title.innerText = "🏛 Real Estate"; _safeRender(renderTabRealEstate); break;
         case 'map': title.innerText = "Radar Live"; {
             const heat = gameState.policeHeat || 0;
             const heatColor = heat >= 80 ? '#ff4060' : heat >= 50 ? '#f59e0b' : '#22c55e';
@@ -1453,40 +1455,66 @@ function renderTabFleet() {
         </div>`;
     }
 
-    let html = fuelDepotHtml + `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Tua Flotta</h3><div class="space-y-2 mb-6">`;
-    
+    // Fuel price ticker (always visible)
+    const fp = gameState.fuelPrice || 1.85;
+    const fpColor = fp < 1.68 ? '#22c55e' : fp > 2.20 ? '#ff4060' : '#f59e0b';
+    const fpTrend = fp < 1.68 ? '📉' : fp > 2.20 ? '📈' : '➡️';
+    const fuelTickerHtml = !hasDepot ? `
+    <div class="flex items-center gap-2 mb-3 px-1">
+        <span class="text-[8px] text-gray-500 uppercase tracking-widest">Gasolio Mercato</span>
+        <span class="text-[9px] font-bold font-mono" style="color:${fpColor}">${fpTrend} €${fp.toFixed(4)}/L</span>
+        <span class="text-[8px] text-gray-600">(aggiornamento orario)</span>
+    </div>` : '';
+
+    let html = fuelTickerHtml + fuelDepotHtml + `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Tua Flotta</h3><div class="space-y-3 mb-6">`;
+
     gameState.fleet.forEach(car => {
         if (!car.upgrades) car.upgrades = [];
-        const fuelPct = car.fuel !== undefined ? Math.floor(car.fuel) : 100;
-        const fuelColor = fuelPct < 20 ? '#ff4060' : fuelPct < 50 ? '#f59e0b' : '#00f2ff';
-        const upgradePills = car.upgrades.map(uid => {
-            const u = CAR_UPGRADES.find(x => x.id === uid);
-            return u ? `<span class="upgrade-pill">${u.name}</span>` : '';
-        }).join(' ');
-        const tirePct = car.tirePressure !== undefined ? Math.floor(car.tirePressure) : 100;
+
+        // Catalog lookup for image + electric type
+        const catalog = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : [])
+            .find(c => c.vehicleClass === car.vehicleClass || c.id === car.vehicleClass || c.id === car.id);
+        const isElectric = catalog?.fuel === 'electric';
+        const cardImg = catalog?.img || '';
+
+        // Energy level (charge for electric, fuel for gasoline)
+        const energyPct = isElectric
+            ? Math.floor(car.chargeLevel ?? 100)
+            : (car.fuel !== undefined ? Math.floor(car.fuel) : 100);
+        const energyColor = energyPct < 20 ? '#ff4060' : energyPct < 50 ? '#f59e0b' : (isElectric ? '#22c55e' : '#00f2ff');
+        const energyIcon  = isElectric ? '⚡' : '⛽';
+
+        const tirePct  = car.tirePressure !== undefined ? Math.floor(car.tirePressure) : 100;
         const tireColor = tirePct < 30 ? '#ff4060' : tirePct < 60 ? '#f59e0b' : '#22c55e';
+        const condPct   = Math.max(0, Math.floor(car.condition || 0));
+        const condColor = condPct <= 10 ? '#ff4060' : condPct < 30 ? '#ef4444' : condPct < 60 ? '#f59e0b' : '#22c55e';
+        const eh        = car.engineHealth !== undefined ? car.engineHealth : 100;
+        const ehColor   = eh <= 0 ? '#ff4060' : eh < 30 ? '#ef4444' : eh < 60 ? '#f59e0b' : '#22c55e';
+
         const outReason = car.outOfService;
-        const outLabel = (outReason === 'fuel' && fuelPct > 5) ? null
-                       : outReason === 'fuel'   ? '🔴 FERMA — Serbatoio esaurito (usa Gestisci → Rifornisci)'
-                       : outReason === 'tires'  ? '🔴 FERMA — Deposito Gomme esaurito'
-                       : outReason === 'engine' ? '🔴 MOTORE FUSO — Riparazione urgente'
-                       : null;
-        const hasCentralina   = (car.upgrades||[]).includes('centralina');
-        const hasSerbatoio    = (car.upgrades||[]).includes('serbatoio_ext');
-        const hasVetriC       = (car.upgrades||[]).includes('vetri_oscurati');
-        const hasTelepassCar  = (car.upgrades||[]).includes('telepass_car');
-        const tuningBadges    = [
+        const outLabel  = (outReason === 'fuel' && energyPct > 5) ? null
+                        : outReason === 'fuel'   ? (isElectric ? '🔴 FERMA — Batteria scarica' : '🔴 FERMA — Serbatoio esaurito')
+                        : outReason === 'tires'  ? '🔴 FERMA — Deposito Gomme esaurito'
+                        : outReason === 'engine' ? '🔴 MOTORE FUSO — Riparazione urgente'
+                        : null;
+        const condWarn  = condPct <= 10 ? '🔴 FERMA — Officina urgente!' : condPct < 30 ? '⚠ Salute critica — incasso −15%' : '';
+
+        const hasCentralina  = car.upgrades.includes('centralina');
+        const hasSerbatoio   = car.upgrades.includes('serbatoio_ext');
+        const hasVetriC      = car.upgrades.includes('vetri_oscurati');
+        const hasTelepassCar = car.upgrades.includes('telepass_car');
+        const tuningBadges   = [
             hasCentralina  ? '<span style="background:rgba(0,242,255,0.12);color:#00f2ff;border:1px solid rgba(0,242,255,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🔧+28%</span>' : '',
             hasSerbatoio   ? '<span style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.3);font-size:8px;padding:1px 5px;border-radius:6px">⛽−55%</span>' : '',
             hasVetriC      ? '<span style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🕶−65%</span>' : '',
             hasTelepassCar ? '<span style="background:rgba(212,175,55,0.12);color:#d4af37;border:1px solid rgba(212,175,55,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🛣−15%</span>' : '',
         ].filter(Boolean).join(' ');
+
         // Position tracking
         const assignedDriver = gameState.drivers.find(d => d.assignedCarId === car.id && d.id !== 'ceo');
-        const poiName = car.currentPoiId && typeof POIS !== 'undefined' && POIS[car.currentPoiId] ? POIS[car.currentPoiId].name : null;
-        const isAtHub = !car.currentPoiId || car.currentPoiId === 'roma';
+        const poiName   = car.currentPoiId && typeof POIS !== 'undefined' && POIS[car.currentPoiId] ? POIS[car.currentPoiId].name : null;
+        const isAtHub   = !car.currentPoiId || car.currentPoiId === 'roma';
         const isReturning = assignedDriver && assignedDriver._returning;
-        // Return-to-hub cost estimate
         let returnCostStr = '';
         if (!isAtHub && !isReturning && car.currentPoiId && typeof POIS !== 'undefined' && POIS[car.currentPoiId]) {
             const fp = POIS[car.currentPoiId], hp = POIS['roma'];
@@ -1495,80 +1523,98 @@ function renderTabFleet() {
                 const aa = Math.sin(dL/2)**2 + Math.cos(fp.lat*Math.PI/180)*Math.cos(hp.lat*Math.PI/180)*Math.sin(dG/2)**2;
                 const d2 = R2*2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
                 const fc = Math.round(d2*0.18), tc = (hasTelepassCar || (typeof hasInvestment==='function' && hasInvestment('inv_telepass'))) ? 0 : Math.round(d2*0.08);
-                const hrs = Math.max(1, Math.ceil(d2/90));
-                returnCostStr = `€${(fc+tc).toLocaleString()} · ${hrs}h`;
+                returnCostStr = `€${(fc+tc).toLocaleString()} · ${Math.max(1,Math.ceil(d2/90))}h`;
             }
         }
-        const condPct   = Math.max(0, Math.floor(car.condition || 0));
-        const condColor = condPct <= 10 ? '#ff4060' : condPct < 30 ? '#ef4444' : condPct < 60 ? '#f59e0b' : '#22c55e';
-        const condWarn  = condPct <= 10 ? '🔴 FERMA — Officina urgente!' : condPct < 30 ? '⚠ Salute critica — incasso −15%' : '';
+
         const repairCostCond = Math.max(500, (100 - condPct) * 85);
+        const repairCostEng  = Math.max(800, (100 - eh) * 180);
+        const borderClass    = outReason ? 'border-red-500/60' : condPct <= 10 ? 'border-orange-500/60' : 'border-white/10';
+
         html += `
-        <div class="hud-card ${outReason ? '!border-red-500/50 bg-red-950/10' : condPct <= 10 ? '!border-orange-500/50 bg-orange-950/10' : ''}">
-            <div class="flex justify-between items-center">
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold text-white truncate">${car.name} ${car.isLease ? '<span class="text-[8px] text-blue border border-blue/40 px-1 ml-1 rounded uppercase">Leasing</span>' : ''}</div>
-                    <div class="text-[9px] text-gray-500">${car.tier.toUpperCase()} · ${Math.floor((car.mileage||0)/1000)}k km${upgradePills ? ' · ' + upgradePills : ''}${(car.mileage||0) > 0 && (car.mileage||0) % 5000 < 300 ? ' <span class="text-orange-400">⚠ Tagliando</span>' : ''}</div>
-                    ${tuningBadges ? `<div class="mt-0.5 flex gap-1 flex-wrap">${tuningBadges}</div>` : ''}
-                    ${isReturning ? `<div class="text-[9px] text-cyan-400 mt-0.5">🏠 In rientro all'Hub…</div>`
-                      : poiName && !isAtHub ? `<div class="text-[9px] text-yellow-400 mt-0.5">📍 ${poiName}</div>`
-                      : `<div class="text-[9px] text-green-400/60 mt-0.5">🏠 Hub Roma</div>`}
-                    ${condWarn ? `<div class="text-[9px] font-bold mt-0.5" style="color:${condColor}">${condWarn}</div>` : ''}
-                    ${outLabel ? `<div class="text-[9px] text-red-400 font-bold mt-0.5">${outLabel}</div>` : ''}
+        <div class="fleet-card-luxury ${borderClass}" style="${cardImg ? `--card-img:url('${cardImg}')` : ''}">
+            ${cardImg ? `<div class="fleet-card-photo"></div>` : ''}
+            <div class="fleet-card-glass">
+                <!-- Header -->
+                <div class="fleet-card-header">
+                    <div class="flex-1 min-w-0">
+                        <div class="fleet-card-brand truncate">
+                            ${car.name}
+                            ${car.isLease ? '<span class="text-[8px] text-blue-300 border border-blue-400/40 px-1 ml-1 rounded uppercase">Leasing</span>' : ''}
+                        </div>
+                        <div class="fleet-card-tier ${isElectric ? 'fleet-card-electric' : ''}">
+                            ${car.tier.toUpperCase()} · ${Math.floor((car.mileage||0)/1000)}k km
+                            ${isElectric ? '<span class="ml-1 text-[8px] bg-green-500/20 text-green-400 border border-green-500/30 px-1 rounded">CO2 ESENTE</span>' : ''}
+                            ${(car.mileage||0) > 0 && (car.mileage||0) % 5000 < 300 ? '<span class="ml-1 text-orange-400">⚠ Tagliando</span>' : ''}
+                        </div>
+                        ${tuningBadges ? `<div class="mt-1 flex gap-1 flex-wrap">${tuningBadges}</div>` : ''}
+                        ${isReturning    ? `<div class="text-[9px] text-cyan-400 mt-0.5">🏠 In rientro all'Hub…</div>`
+                          : poiName && !isAtHub ? `<div class="text-[9px] text-yellow-400 mt-0.5">📍 ${poiName}</div>`
+                          : `<div class="text-[9px] text-green-400/60 mt-0.5">🏠 Hub Roma</div>`}
+                        ${condWarn  ? `<div class="text-[9px] font-bold mt-0.5" style="color:${condColor}">${condWarn}</div>` : ''}
+                        ${outLabel  ? `<div class="text-[9px] text-red-400 font-bold mt-0.5">${outLabel}</div>` : ''}
+                    </div>
+                    <button onclick="openCarModal('${car.id}')" class="btn-blue !py-1 !px-2 ml-2 shrink-0">Gestisci</button>
                 </div>
-                <button onclick="openCarModal('${car.id}')" class="btn-blue !py-1 !px-2 ml-2">Gestisci</button>
-            </div>
-            <div class="flex items-center gap-1 mt-1.5">
-                <span class="text-[8px] text-gray-600 w-8 shrink-0">🔧</span>
-                <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${condPct}%; background:${condColor}"></div></div>
-                <span class="text-[8px] font-mono ml-1" style="color:${condColor}">${condPct}%</span>
-                ${condPct < 100 ? `<button onclick="repairVehicle('${car.id}')" class="workshop-repair-btn ml-1" title="Ripara: €${repairCostCond.toLocaleString()}">🔩 €${repairCostCond.toLocaleString()}</button>
-                <button onclick="instantRepairDC('${car.id}')" class="ml-1 text-[7px] bg-yellow-900/40 text-yellow-300 px-1 rounded hover:bg-yellow-800/50" title="Insta-Repair: 2 DC (1 DC con Executive Pass)">⚡2DC</button>` : ''}
-            </div>
-            <div class="flex items-center gap-1 mt-1">
-                <span class="text-[8px] text-gray-600 w-8 shrink-0">⛽</span>
-                <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${fuelPct}%; background:${fuelColor}"></div></div>
-                <span class="text-[8px] font-mono ml-1" style="color:${fuelColor}">${fuelPct}%</span>
-            </div>
-            <div class="flex items-center gap-1 mt-1">
-                <span class="text-[8px] text-gray-600 w-8 shrink-0">🔵</span>
-                <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${tirePct}%; background:${tireColor}"></div></div>
-                <span class="text-[8px] font-mono ml-1" style="color:${tireColor}">${tirePct}%</span>
-            </div>
-            ${(() => {
-                const eh = car.engineHealth !== undefined ? car.engineHealth : 100;
-                const ehColor = eh <= 0 ? '#ff4060' : eh < 30 ? '#ef4444' : eh < 60 ? '#f59e0b' : '#22c55e';
-                const ehWarn  = eh < 30 && eh > 0 ? '<span class="text-[8px] text-red-400 ml-1 font-bold">⚠ −2× Consumo</span>' : '';
-                const repairCost = Math.max(800, (100 - eh) * 180);
-                return `<div class="flex items-center gap-1 mt-1">
-                    <span class="text-[8px] text-gray-600 w-8 shrink-0">⚙️</span>
-                    <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${eh}%; background:${ehColor}"></div></div>
-                    <span class="text-[8px] font-mono ml-1" style="color:${ehColor}">${eh}%</span>
-                    ${ehWarn}
+
+                <!-- Stats bars -->
+                <div class="fleet-card-stats">
+                    <div class="fleet-stat-row">
+                        <span class="fleet-stat-label">🔧 Carrozzeria</span>
+                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${condPct}%;background:${condColor}"></div></div>
+                        <span class="text-[8px] font-mono" style="color:${condColor}">${condPct}%</span>
+                        ${condPct < 100 ? `
+                        <button onclick="repairVehicle('${car.id}')" class="workshop-repair-btn" title="Ripara: €${repairCostCond.toLocaleString()}">🔩 €${repairCostCond.toLocaleString()}</button>
+                        <button onclick="instantRepairDC('${car.id}')" class="text-[7px] bg-yellow-900/40 text-yellow-300 px-1 rounded hover:bg-yellow-800/50" title="Insta-Repair: 2 DC">⚡2DC</button>` : ''}
+                    </div>
+                    <div class="fleet-stat-row">
+                        <span class="fleet-stat-label">${energyIcon} ${isElectric ? 'Batteria' : 'Carburante'}</span>
+                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${energyPct}%;background:${energyColor}"></div></div>
+                        <span class="text-[8px] font-mono" style="color:${energyColor}">${energyPct}%</span>
+                    </div>
+                    <div class="fleet-stat-row">
+                        <span class="fleet-stat-label">🔵 Gomme</span>
+                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${tirePct}%;background:${tireColor}"></div></div>
+                        <span class="text-[8px] font-mono" style="color:${tireColor}">${tirePct}%</span>
+                    </div>
+                    <div class="fleet-stat-row">
+                        <span class="fleet-stat-label">⚙️ Motore</span>
+                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${eh}%;background:${ehColor}"></div></div>
+                        <span class="text-[8px] font-mono" style="color:${ehColor}">${eh}%</span>
+                        ${eh < 30 && eh > 0 ? '<span class="text-[8px] text-red-400 font-bold">⚠ −2×</span>' : ''}
+                    </div>
                 </div>
-                <div class="flex gap-1 mt-1.5">
+
+                <!-- Actions -->
+                <div class="fleet-card-actions">
+                    ${isElectric ? `
+                    <button onclick="window.superchargeVehicle('${car.id}')"
+                        class="flex-1 text-[8px] py-1 px-1 rounded border border-green-600/50 bg-green-950/40 text-green-300 hover:bg-green-900/50 transition-colors">
+                        ⚡ Supercharger<br><span class="text-[7px] opacity-60">€80 flat</span>
+                    </button>` : `
                     <button onclick="window.buyStandardFuel('${car.id}')"
-                        class="flex-1 text-[8px] py-0.5 px-1 rounded border border-cyan-700/50 bg-cyan-950/30 text-cyan-300 hover:bg-cyan-900/40 transition-colors"
-                        title="Distributore pubblico: prezzo pieno, nessun rischio">
+                        class="flex-1 text-[8px] py-1 px-1 rounded border border-cyan-700/50 bg-cyan-950/30 text-cyan-300 hover:bg-cyan-900/40 transition-colors"
+                        title="Distributore pubblico: prezzo pieno">
                         ⛽ Rifornisci<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85))}</span>
                     </button>
                     <button onclick="window.buyBlackMarketFuel('${car.id}')"
-                        class="flex-1 text-[8px] py-0.5 px-1 rounded border border-yellow-700/50 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900/40 transition-colors"
-                        title="Gasolio Agricolo: 40% sconto, 10% rischio motore">
-                        🖤 Agric. (−40%)<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85)*0.60)}</span>
-                    </button>
-                    ${eh < 100 ? `<button onclick="window.repairEngine('${car.id}')"
-                        class="flex-1 text-[8px] py-0.5 px-1 rounded border border-orange-600/50 bg-orange-950/30 text-orange-300 hover:bg-orange-900/40 transition-colors">
-                        🔧 Ripara Motore<br><span class="text-[7px] opacity-60">€${repairCost.toLocaleString()}</span>
+                        class="flex-1 text-[8px] py-1 px-1 rounded border border-yellow-700/50 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900/40 transition-colors"
+                        title="Gasolio Agricolo: −40%, 10% rischio motore">
+                        🖤 Agricolo<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85)*0.60)}</span>
+                    </button>`}
+                    ${eh < 100 ? `
+                    <button onclick="window.repairEngine('${car.id}')"
+                        class="flex-1 text-[8px] py-1 px-1 rounded border border-orange-600/50 bg-orange-950/30 text-orange-300 hover:bg-orange-900/40 transition-colors">
+                        🔧 Motore<br><span class="text-[7px] opacity-60">€${repairCostEng.toLocaleString()}</span>
                     </button>` : ''}
                 </div>
-                ${!isAtHub && !isReturning && assignedDriver && assignedDriver.status === 'idle'
-                    ? `<button onclick="window.returnToHub('${car.id}')"
-                        class="w-full mt-1.5 text-[8px] py-1 px-2 rounded border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
-                        🏠 Ritorna all'Hub &nbsp;<span class="opacity-60">${returnCostStr}</span>
-                    </button>`
-                    : ''}`;
-            })()}
+
+                ${!isAtHub && !isReturning && assignedDriver && assignedDriver.status === 'idle' ? `
+                <button onclick="window.returnToHub('${car.id}')"
+                    class="w-full mt-1.5 text-[8px] py-1 px-2 rounded border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
+                    🏠 Ritorna all'Hub &nbsp;<span class="opacity-60">${returnCostStr}</span>
+                </button>` : ''}
+            </div>
         </div>`;
     });
 
@@ -3838,6 +3884,184 @@ async function _initGlobalNewsFeed() {
             payload => _appendNewsTicker(payload.new.message))
         .subscribe();
 }
+
+// ─── PROVINCE WAR TAB ───────────────────────────────────────────────────────
+async function renderTabProvinces() {
+    const container = document.getElementById('tab-container');
+    container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-6">Caricamento province…</div>`;
+
+    let provinces = [];
+    try {
+        const { data, error } = await window.supabaseClient
+            .from('provinces')
+            .select('*')
+            .order('current_value', { ascending: false });
+        if (error) throw error;
+        provinces = data || [];
+    } catch(e) {
+        container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore caricamento province: ${e.message}</div>`;
+        return;
+    }
+
+    const myCompanyName = gameState.companyName || '';
+    let html = `
+    <div class="mb-4 hud-card border-gold/30 bg-gold/5">
+        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-1">🏴 Province War</div>
+        <div class="text-[9px] text-gray-400">Conquista province pagando almeno il 120% del valore attuale. Il vecchio proprietario riceve l'80% dell'offerta. Ogni corsa che parte da una tua provincia ti frutta il 2.5% della tariffa.</div>
+    </div>
+    <div class="space-y-3">`;
+
+    provinces.forEach(p => {
+        const isOwned = p.owner_company === myCompanyName;
+        const isFree  = !p.owner_id;
+        const minOffer = Math.ceil(p.current_value * 1.20);
+        const taxPct  = Math.round((p.transit_tax_pct || 0.025) * 100);
+
+        html += `
+        <div class="hud-card ${isOwned ? '!border-gold/60 bg-gold/5' : isFree ? '!border-green-500/40 bg-green-950/10' : '!border-white/10'}">
+            <div class="flex justify-between items-center mb-2">
+                <div>
+                    <div class="text-xs font-bold text-white">${p.name}
+                        ${isOwned ? '<span class="ml-1 text-[8px] bg-gold/20 text-gold border border-gold/30 px-1 rounded">TUA</span>' : ''}
+                        ${isFree  ? '<span class="ml-1 text-[8px] bg-green-500/20 text-green-400 border border-green-500/30 px-1 rounded">LIBERA</span>' : ''}
+                    </div>
+                    <div class="text-[9px] text-gray-500 uppercase">${p.region_id} · Tassa transito: ${taxPct}%</div>
+                    ${!isFree && !isOwned ? `<div class="text-[9px] text-gray-400 mt-0.5">Proprietario: <span class="text-blue-300">${p.owner_company || '—'}</span></div>` : ''}
+                </div>
+                <div class="text-right">
+                    <div class="text-xs font-bold text-gold">€${(p.current_value||0).toLocaleString()}</div>
+                    <div class="text-[8px] text-gray-500">Valore attuale</div>
+                </div>
+            </div>
+            <div class="flex items-center gap-1 mt-1 mb-2">
+                <div class="flex-1 fuel-bar-bg">
+                    <div class="fuel-bar-fill" style="width:${Math.min(100, Math.round(p.current_value/10000))}%;background:#d4af37"></div>
+                </div>
+                <span class="text-[8px] text-gray-500">Base: €${(p.base_price||0).toLocaleString()}</span>
+            </div>
+            ${isOwned ? `
+            <div class="text-[9px] text-green-400 bg-green-950/20 border border-green-500/20 rounded px-2 py-1">
+                ✅ Stai percependo il ${taxPct}% su ogni corsa che parte da questa provincia
+            </div>` : `
+            <div class="flex gap-2 mt-1">
+                <input id="offer-${p.id}" type="number" min="${minOffer}" step="1000"
+                    class="flex-1 bg-black/40 border border-white/20 rounded px-2 py-1 text-[9px] text-white"
+                    placeholder="Offerta min. €${minOffer.toLocaleString()}">
+                <button onclick="window.doAcquireProvince('${p.id}')"
+                    class="btn-gold !text-[8px] !py-1 !px-2 shrink-0">
+                    🏴 Conquista
+                </button>
+            </div>
+            <div class="text-[8px] text-gray-600 mt-1">Offerta minima: €${minOffer.toLocaleString()} (120% del valore)</div>`}
+        </div>`;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+window.doAcquireProvince = async function(provinceId) {
+    const input = document.getElementById(`offer-${provinceId}`);
+    const offer = parseInt(input?.value, 10);
+    if (!offer || offer <= 0) { showNotification('Inserisci un\'offerta valida', 'error'); return; }
+    if (gameState.cash < offer) { showNotification('Fondi insufficienti', 'error'); return; }
+    const result = await ServerState.acquireProvince(provinceId, offer);
+    if (result?.success) {
+        showBigEvent('🏴', `${result.province_name} Conquistata!`, `Investimento: €${offer.toLocaleString()}`);
+        renderTabProvinces();
+    }
+};
+
+// ─── REAL ESTATE TAB ────────────────────────────────────────────────────────
+async function renderTabRealEstate() {
+    const container = document.getElementById('tab-container');
+    container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-6">Caricamento immobili…</div>`;
+
+    let listings = [], owned = [];
+    try {
+        const [lRes, oRes] = await Promise.all([
+            window.supabaseClient.from('real_estate_listings').select('*').order('cost'),
+            window.supabaseClient.from('company_real_estate').select('*'),
+        ]);
+        if (lRes.error) throw lRes.error;
+        listings = lRes.data || [];
+        owned    = oRes.data || [];
+    } catch(e) {
+        container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore caricamento immobili: ${e.message}</div>`;
+        return;
+    }
+
+    const ownedIds = new Set(owned.map(o => o.listing_id));
+    const totalDailyRent = listings
+        .filter(l => ownedIds.has(l.id))
+        .reduce((s, l) => s + l.daily_rent, 0);
+
+    let html = `
+    <div class="mb-4 hud-card border-gold/30 bg-gold/5">
+        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-1">🏛 Real Estate</div>
+        <div class="text-[9px] text-gray-400">Acquista proprietà di lusso per generare rendite passive ogni 24 ore. Le rendite vengono accreditate automaticamente dal server.</div>
+        ${totalDailyRent > 0 ? `<div class="mt-1 text-[9px] text-green-400">💰 Rendita totale attiva: <span class="font-bold">€${totalDailyRent.toLocaleString()}/giorno</span></div>` : ''}
+    </div>
+    <div class="space-y-3">`;
+
+    listings.forEach(l => {
+        const isOwned = ownedIds.has(l.id);
+        const canAfford = gameState.cash >= l.cost;
+        const ownedRow = owned.find(o => o.listing_id === l.id);
+        let nextRentStr = '';
+        if (isOwned && ownedRow?.last_rent_at) {
+            const lastRent = new Date(ownedRow.last_rent_at);
+            const nextRent = new Date(lastRent.getTime() + 24*3600*1000);
+            const diffMs   = nextRent - Date.now();
+            if (diffMs > 0) {
+                const hrs = Math.floor(diffMs / 3600000), mins = Math.floor((diffMs % 3600000) / 60000);
+                nextRentStr = `Prossima rendita tra ${hrs}h ${mins}m`;
+            } else {
+                nextRentStr = 'Rendita in arrivo…';
+            }
+        }
+
+        html += `
+        <div class="hud-card ${isOwned ? '!border-gold/60 bg-gold/5' : !canAfford ? '!border-white/5 opacity-70' : '!border-white/10'}">
+            <div class="flex justify-between items-start mb-2">
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-white">${l.name}
+                        ${isOwned ? '<span class="ml-1 text-[8px] bg-gold/20 text-gold border border-gold/30 px-1 rounded">TUO</span>' : ''}
+                    </div>
+                    <div class="text-[9px] text-gray-500 uppercase">${l.city}</div>
+                    ${l.description ? `<div class="text-[9px] text-gray-400 mt-0.5 italic">${l.description}</div>` : ''}
+                    ${l.bonus_type === 'driver_stress_recovery' ? `<div class="text-[9px] text-purple-400 mt-0.5">✨ Bonus: recupero stress autisti a ${l.bonus_city}</div>` : ''}
+                    ${isOwned && nextRentStr ? `<div class="text-[9px] text-cyan-400 mt-0.5">🕐 ${nextRentStr}</div>` : ''}
+                </div>
+                <div class="text-right ml-2 shrink-0">
+                    <div class="text-xs font-bold text-gold">€${(l.cost||0).toLocaleString()}</div>
+                    <div class="text-[9px] text-green-400">+€${(l.daily_rent||0).toLocaleString()}/g</div>
+                </div>
+            </div>
+            ${!isOwned ? `
+            <button onclick="window.doBuyRealEstate('${l.id}')"
+                class="${canAfford ? 'btn-gold' : 'btn-gold opacity-40 cursor-not-allowed'} w-full !text-[9px] !py-1.5"
+                ${canAfford ? '' : 'disabled'}>
+                🏛 Acquista — €${(l.cost||0).toLocaleString()}
+            </button>
+            ${!canAfford ? `<div class="text-[8px] text-red-400 text-center mt-1">Fondi insufficienti (mancano €${((l.cost||0)-gameState.cash).toLocaleString()})</div>` : ''}` : `
+            <div class="text-[9px] text-green-400/80 bg-green-950/20 border border-green-500/20 rounded px-2 py-1">
+                ✅ Rendita automatica: €${(l.daily_rent||0).toLocaleString()} ogni 24h
+            </div>`}
+        </div>`;
+    });
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+window.doBuyRealEstate = async function(listingId) {
+    const result = await ServerState.buyRealEstate(listingId);
+    if (result?.success) {
+        showBigEvent('🏛', `${result.name} Acquistata!`, `Rendita: €${(result.daily_rent||0).toLocaleString()}/giorno`);
+        renderTabRealEstate();
+    }
+};
 
 window.addEventListener('DOMContentLoaded', () => { initMap(); setupDragAndDrop(); _initGlobalNewsFeed(); });
 
