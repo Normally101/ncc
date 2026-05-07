@@ -156,6 +156,7 @@ const STAFF_ROLES = {
     wealth_mgr:      { id:'ewm',      name:'Elite Wealth Manager', salary:8500, skill:'finance',    desc:'Sblocca il tab Finance: Broker personale, mercato azionario $WALL-ST, leva finanziaria avanzata. Accede a rendimenti tra il 4% e il 50% con rischio calibrabile. Necessario per Diamond Contracts e vendita azienda a fondi.' },
     airport_asst_fco:{ id:'apt_fco',  name:'Airport Assistant — FCO',  salary:2200, skill:'meetgreet', city:'roma',   airport:'FCO', desc:'Sblocca missioni passive Meet & Greet a Roma Fiumicino. Entrate senza consumo carburante. Tariffa base €395–€2.929/gruppo.' },
     airport_asst_nap:{ id:'apt_nap',  name:'Airport Assistant — NAP',  salary:2000, skill:'meetgreet', city:'napoli', airport:'NAP', desc:'Sblocca missioni passive Meet & Greet a Napoli Capodichino. Entrate senza consumo carburante.' },
+    talent_scout:    { id:'talent_scout', name:'Talent Scout',             salary:3000, skill:'scouting',  desc:'Ogni 7 giorni cerca un autista leggendario con skills 90–100. Costo ingaggio ridotto del 20%.' },
 };
 
 // ─── LIVELLI AUTISTI (XP SYSTEM) ───────────────────────────────

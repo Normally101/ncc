@@ -1010,7 +1010,7 @@ window.switchTab = function(tab) {
         }
     }
 
-    const _safeRender = (fn) => { try { fn(); } catch(e) { console.error('[switchTab]', e); container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}</div>`; } };
+    const _safeRender = (fn) => { try { fn(); } catch(e) { console.error('[switchTab]', e); const _sup = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'; container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}<br><span class="text-gray-500">Se il problema persiste, scrivi a <a href="mailto:${_sup}" class="underline">${_sup}</a></span></div>`; } };
     switch(tab) {
         case 'corse': title.innerText = "Dispatch Center"; _safeRender(renderTabCorse); break;
         case 'ranking': title.innerText = "Global Ranking"; _safeRender(renderTabRanking); break;
@@ -1026,6 +1026,8 @@ window.switchTab = function(tab) {
         case 'politics': title.innerText = "Politica & Lobbying"; _safeRender(renderTabPolitics); break;
         case 'career':   title.innerText = "Missioni & Carriera"; _safeRender(renderTabCareer); break;
         case 'store':    title.innerText = "🪙 Driver Store"; _safeRender(renderTabPremiumStore); break;
+        case 'market':   title.innerText = "🚗 Mercato Auto"; _safeRender(renderTabMarket); break;
+        case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;
         case 'map': title.innerText = "Radar Live"; {
             const heat = gameState.policeHeat || 0;
             const heatColor = heat >= 80 ? '#ff4060' : heat >= 50 ? '#f59e0b' : '#22c55e';
@@ -1520,7 +1522,8 @@ function renderTabFleet() {
                 <span class="text-[8px] text-gray-600 w-8 shrink-0">🔧</span>
                 <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${condPct}%; background:${condColor}"></div></div>
                 <span class="text-[8px] font-mono ml-1" style="color:${condColor}">${condPct}%</span>
-                ${condPct < 100 ? `<button onclick="repairVehicle('${car.id}')" class="workshop-repair-btn ml-1" title="Ripara: €${repairCostCond.toLocaleString()}">🔩 €${repairCostCond.toLocaleString()}</button>` : ''}
+                ${condPct < 100 ? `<button onclick="repairVehicle('${car.id}')" class="workshop-repair-btn ml-1" title="Ripara: €${repairCostCond.toLocaleString()}">🔩 €${repairCostCond.toLocaleString()}</button>
+                <button onclick="instantRepairDC('${car.id}')" class="ml-1 text-[7px] bg-yellow-900/40 text-yellow-300 px-1 rounded hover:bg-yellow-800/50" title="Insta-Repair: 2 DC (1 DC con Executive Pass)">⚡2DC</button>` : ''}
             </div>
             <div class="flex items-center gap-1 mt-1">
                 <span class="text-[8px] text-gray-600 w-8 shrink-0">⛽</span>
@@ -1630,6 +1633,51 @@ function renderTabFleet() {
             </div>`;
         });
     }
+
+    // ── CONTRATTO MANUTENZIONE ─────────────────────────────────────────────
+    const contractActive = gameState.maintenanceContract && gameState.day <= (gameState.maintenanceContractPaidUntilDay||0);
+    const contractDaysLeft = contractActive ? gameState.maintenanceContractPaidUntilDay - gameState.day : 0;
+    html += `
+    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-5">🔧 Officina & Contratti</h3>
+    <div class="hud-card mb-4 ${contractActive ? '!border-green-500/30 bg-green-950/10' : ''}">
+        <div class="flex justify-between items-center">
+            <div>
+                <div class="text-xs font-bold text-white">Contratto di Manutenzione</div>
+                <div class="text-[9px] text-gray-400">−30% su tutte le riparazioni · 7 giorni</div>
+                ${contractActive ? `<div class="text-[9px] text-green-400 mt-0.5">✅ Attivo — ${contractDaysLeft}g rimasti</div>` : ''}
+            </div>
+            ${contractActive
+                ? '<span class="text-green-500 text-[9px] font-bold">ATTIVO</span>'
+                : `<button onclick="buyMaintenanceContract()" class="btn-gold !text-[8px]">€10.000 / 7g</button>`}
+        </div>
+    </div>`;
+
+    // ── HUB CONQUEST ──────────────────────────────────────────────────────
+    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-2">🏛️ Conquista Hub</h3>
+    <p class="text-[9px] text-gray-500 italic mb-3">Possiedi la concessione: incassi il 5% su ogni corsa che transita da lì.</p>
+    <div class="space-y-2 mb-4">`;
+    const hubIds = ['roma_fco','mil_mxp','mil_lin','nap_capo','olbia','ven_mp','venezia','firenze','bologna'];
+    if (typeof POIS !== 'undefined') {
+        hubIds.filter(id => POIS[id] && (gameState.unlockedRegions||[]).includes(POIS[id].region)).forEach(id => {
+            const hub = POIS[id];
+            const owned = (gameState.ownedHubs||[]).includes(id);
+            const cost  = 50000 + Math.floor(hub.baseFlat * 200);
+            const canBuy = !owned && (gameState.reputation||0) >= 2.5 && gameState.cash >= cost;
+            html += `
+            <div class="hud-card flex justify-between items-center ${owned ? '!border-gold/40 bg-gold/5' : ''}">
+                <div>
+                    <div class="text-xs font-bold text-white">${hub.name}${owned ? ' 🏛️' : ''}</div>
+                    <div class="text-[9px] text-gray-500">${hub.region} · +5% tassa corse · €${Math.round(cost/1000)}k</div>
+                </div>
+                ${owned
+                    ? `<button onclick="sellHub('${id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[7px] !py-0.5">Cedi</button>`
+                    : `<button onclick="buyHub('${id}')" class="${canBuy ? 'btn-gold' : 'btn-gold opacity-40'} !text-[8px] !py-1" ${canBuy ? '' : 'disabled'}>€${Math.round(cost/1000)}k</button>`
+                }
+            </div>`;
+        });
+    }
+    html += `</div>`;
+
     container.innerHTML = html + `</div>`;
 }
 
@@ -1749,7 +1797,8 @@ function renderTabStaff() {
                 </div>
                 <span class="text-[8px] font-mono ml-1" style="color:${stressColor}">${Math.floor(stress)}%</span>
                 ${stress >= 50 && !isResting && !isBurnout && d.status !== 'busy'
-                    ? `<button onclick="putDriverOnBreak('${d.id}')" class="ml-1 text-[7px] bg-orange-900/40 text-orange-400 px-1 rounded hover:bg-orange-800/50" title="Pausa 4h — stress −40%">☕ −40%</button>`
+                    ? `<button onclick="putDriverOnBreak('${d.id}')" class="ml-1 text-[7px] bg-orange-900/40 text-orange-400 px-1 rounded hover:bg-orange-800/50" title="Pausa 4h — stress −40%">☕ −40%</button>
+                       <button onclick="payStressClear('${d.id}')" class="ml-1 text-[7px] bg-green-900/40 text-green-400 px-1 rounded hover:bg-green-800/50" title="Paga €1.000 — azzera stress istantaneamente">💊 €1k</button>`
                     : ''}
             </div>
             ${(() => {
@@ -1814,6 +1863,49 @@ function renderTabStaff() {
     if ((gameState.availableRecruits || []).length === 0) {
         html += `<div class="text-[10px] text-gray-600 italic">Nessun candidato disponibile al momento.</div>`;
     }
+
+    // ── DRIVER ACADEMY ─────────────────────────────────────────────────────
+    html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-5">🎓 Accademia Autisti</h3>`;
+    const coursesConst = typeof ACADEMY_COURSES !== 'undefined' ? ACADEMY_COURSES : (typeof window.ACADEMY_COURSES !== 'undefined' ? window.ACADEMY_COURSES : []);
+    if (gameState.drivers.filter(d => d.id !== 'ceo').length === 0) {
+        html += `<div class="text-[9px] text-gray-600 italic mb-4">Assumi almeno un autista per accedere all'Accademia.</div>`;
+    } else {
+        html += `<p class="text-[9px] text-gray-500 italic mb-3">Manda un autista a formarsi. Durante il corso sarà indisponibile.</p>`;
+        gameState.drivers.filter(d => d.id !== 'ceo').forEach(driver => {
+            const inTraining = (gameState.driverAcademy||[]).find(c => c.driverId === driver.id);
+            const curH = gameState.day * 24 + gameState.hour;
+            html += `
+            <div class="hud-card mb-3">
+                <div class="text-xs font-bold text-white mb-2">${driver.name} ${inTraining ? `<span class="text-[8px] text-yellow-400 ml-1">📚 ${inTraining.courseName} (${Math.max(0, Math.ceil(inTraining.completesHour - curH))}h)</span>` : ''}</div>
+                ${inTraining ? '' : `
+                <div class="grid grid-cols-1 gap-1">
+                    ${coursesConst.map(c => `
+                    <button onclick="startAcademyCourse('${driver.id}', '${c.id}')" class="academy-course-btn text-left">
+                        <span class="font-bold text-white">${c.name}</span><span class="ml-1 text-[7px] text-gold">€${c.cost.toLocaleString()}</span>
+                        <br><span class="text-gray-400">${c.desc}</span>
+                        <span class="text-[7px] text-gray-500 ml-1">· ${c.hours}h</span>
+                    </button>`).join('')}
+                </div>`}
+            </div>`;
+        });
+    }
+
+    // ── CEO DELLA SETTIMANA ────────────────────────────────────────────────
+    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🏆 CEO della Settimana</h3>
+    <div class="hud-card">
+        <div class="flex justify-between items-center">
+            <div>
+                <div class="text-xs font-bold text-white">Settimana in Corso</div>
+                <div class="text-[9px] text-gray-400">Reset domenica · Premio: Driver Coins</div>
+            </div>
+            <div class="text-right">
+                <div class="text-[10px] font-bold text-gold">€${(gameState.weeklyEarnings||0).toLocaleString()}</div>
+                <div class="text-[8px] text-gray-500">${gameState.weeklyRides||0} corse</div>
+            </div>
+        </div>
+        <div class="text-[8px] text-gray-600 mt-1 italic">Il vincitore riceve fino a 50 DC domenica sera.</div>
+    </div>`;
+
     container.innerHTML = html + `</div>`;
 }
 
@@ -1959,9 +2051,27 @@ window.openCarModal = function(carId) {
             ${isSet ? '<span style="font-size:8px;color:#d4af37;margin-left:4px">✓ Assegnato</span>' : ''}
         </button>`;
     });
+    // Skin badge
+    const _activeSkin = car.skin ? (typeof VEHICLE_SKINS !== 'undefined' ? VEHICLE_SKINS : (window.VEHICLE_SKINS||[])).find(s => s.id === car.skin) : null;
+    if (_activeSkin) {
+        html += `<div class="text-[9px] mt-1" style="color:${_activeSkin.color}">🎨 Livrea: ${_activeSkin.name}</div>`;
+    }
     html += `</div>
     <button onclick="openGarage3D('${car.id}')" class="w-full btn-blue !text-[9px]">🚗 Vista 3D Garage</button>`;
-    if(!car.isLease) html += `<button onclick="sellCar('${car.id}')" class="w-full btn-gold !bg-red-900/20 !text-red-400 !border !border-red-900/40 mt-1">💰 Vendi</button>`;
+    // Instant Repair DC
+    const condPctModal = Math.floor(car.condition || 0);
+    const dcRepairCost = gameState.executivePassActive ? 1 : 2;
+    if (condPctModal < 100) {
+        html += `<button onclick="instantRepairDC('${car.id}')" class="w-full btn-gold !text-[9px] mt-1">⚡ Ripara Istant. (${dcRepairCost} DC)</button>`;
+    }
+    if(!car.isLease) {
+        html += `<button onclick="sellCar('${car.id}')" class="w-full btn-gold !bg-red-900/20 !text-red-400 !border !border-red-900/40 mt-1">💰 Vendi (usato)</button>`;
+        const alreadyListed = (gameState.marketplace||[]).some(l => l.carId === car.id);
+        if (!alreadyListed) {
+            const suggestPrice = Math.round(20000 * ((condPctModal/100)) * (car.tier === 'ultra' ? 5 : car.tier === 'vip' ? 3 : car.tier === 'business' ? 1.8 : 1));
+            html += `<button onclick="listCarForSale('${car.id}', ${suggestPrice}); closeModals();" class="w-full btn-gold !bg-purple-900/20 !text-purple-300 !border !border-purple-900/40 mt-1">🏪 Metti in Mercato (~€${(suggestPrice/1000).toFixed(0)}k)</button>`;
+        }
+    }
     document.getElementById('car-modal-content').innerHTML = html + `</div>`;
     document.getElementById('modal-car').classList.remove('hidden');
     document.getElementById('modal-car').classList.add('flex');
@@ -2248,6 +2358,54 @@ function renderTabInvestments() {
         });
         html += `</div>`;
     }
+
+    // ── HOLDING FINANZIARIA ─────────────────────────────────────────
+    const subTemplates = typeof HOLDING_SUBSIDIARIES !== 'undefined' ? HOLDING_SUBSIDIARIES : (window.HOLDING_SUBSIDIARIES || []);
+    const holdingIncorporated = gameState.holding?.incorporated;
+    const holdingDailyIncome = (gameState.holding?.subsidiaries || []).reduce((sum, sid) => {
+        const t = subTemplates.find(s => s.id === sid);
+        return sum + (t ? t.dailyIncome : 0);
+    }, 0);
+    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-6">🏢 Holding Finanziaria</h3>`;
+    if (!holdingIncorporated) {
+        html += `<div class="hud-card mb-4">
+            <div class="text-xs font-bold text-white mb-1">Costituisci una Holding</div>
+            <div class="text-[9px] text-gray-400 mb-2">Fondare una holding ti permette di acquisire aziende sussidiarie che generano reddito passivo ogni giorno, indipendentemente dalle tue corse.</div>
+            <div class="text-[9px] text-gray-500 mb-3">Requisiti: <span class="text-gold">4.0★</span> reputazione · <span class="text-gold">€200.000</span></div>
+            <button onclick="incorporateHolding()" class="btn-gold w-full ${(gameState.reputation||0) >= 4.0 && gameState.cash >= 200000 ? '' : 'opacity-40'}" ${(gameState.reputation||0) >= 4.0 && gameState.cash >= 200000 ? '' : 'disabled'}>
+                🏢 Fondazione Holding — €200.000
+            </button>
+        </div>`;
+    } else {
+        html += `<div class="hud-card !border-green-500/20 bg-green-950/5 mb-3 flex justify-between items-center">
+            <div>
+                <div class="text-xs font-bold text-white">Holding Attiva</div>
+                <div class="text-[9px] text-green-400 font-mono mt-0.5">+€${holdingDailyIncome.toLocaleString()}/g dividendi</div>
+            </div>
+            <div class="text-[9px] text-gray-500">${(gameState.holding.subsidiaries||[]).length} sussidiarie</div>
+        </div>
+        <div class="space-y-2 mb-4">
+        ${subTemplates.map(sub => {
+            const owned = (gameState.holding.subsidiaries || []).includes(sub.id);
+            return `<div class="hud-card flex justify-between items-start gap-2 ${owned ? '!border-green-500/20 bg-green-950/5' : ''}">
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-white">${sub.name}</div>
+                    <div class="text-[9px] text-gray-400 mt-0.5">${sub.desc}</div>
+                    <div class="text-[9px] text-green-400 font-mono mt-0.5">+€${sub.dailyIncome.toLocaleString()}/g</div>
+                </div>
+                <div class="shrink-0">
+                    ${owned
+                        ? `<button onclick="divestSubsidiary('${sub.id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[7px] !py-0.5">Cedi 60%</button>`
+                        : `<button onclick="acquireSubsidiary('${sub.id}')" class="btn-gold !text-[8px] !py-1 ${gameState.cash >= sub.cost ? '' : 'opacity-40'}" ${gameState.cash >= sub.cost ? '' : 'disabled'}>€${Math.round(sub.cost/1000)}k</button>`
+                    }
+                </div>
+            </div>`;
+        }).join('')}
+        </div>`;
+    }
+
+    // ── SINDACATI / HOLDINGS P2P ──
+    if (typeof renderP2PHoldingsSection === 'function') html += renderP2PHoldingsSection();
 
     container.innerHTML = html + '</div>';
 }
@@ -2683,6 +2841,117 @@ function renderTabFinance() {
             <div class="mt-2 hud-card">${loansHtml}</div>
         </details>
 
+        ${(() => {
+            const cp    = gameState.cempPrice || 10;
+            const owned = gameState.cempOwnedShares || 0;
+            const hist  = gameState.cempHistory || [];
+            const prev  = hist.length >= 2 ? hist[hist.length - 2] : cp;
+            const chgPct = ((cp / prev) - 1) * 100;
+            const isUp   = chgPct >= 0;
+            const portVal = owned > 0 ? Math.round(cp * owned) : 0;
+
+            function _sparkCemp(h) {
+                if (!h || h.length < 2) return '';
+                const W = 80, H = 24, mn = Math.min(...h), mx = Math.max(...h), rng = mx - mn || 1;
+                const pts = h.map((v,i) => `${((i/(h.length-1))*W).toFixed(1)},${(H-((v-mn)/rng)*H).toFixed(1)}`).join(' ');
+                return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline points="${pts}" fill="none" stroke="${isUp?'#22c55e':'#ef4444'}" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+            }
+
+            return `
+            <details class="mb-3" open>
+                <summary class="finance-section-title cursor-pointer">📊 $CEMP — La Tua Azienda in Borsa</summary>
+                <div class="mt-2 hud-card">
+                    <div class="flex justify-between items-center mb-3">
+                        <div>
+                            <div class="text-xs font-bold text-white">$CEMP <span class="text-[8px] text-gray-500">Chauffeur Empire SpA</span></div>
+                            <div class="text-[9px] ${isUp ? 'text-green-400' : 'text-red-400'}">${isUp ? '▲' : '▼'} ${Math.abs(chgPct).toFixed(2)}% oggi</div>
+                        </div>
+                        <div class="flex items-end gap-3">
+                            ${_sparkCemp(hist)}
+                            <div class="text-right">
+                                <div class="text-lg font-bold font-mono text-white">€${cp.toFixed(2)}</div>
+                                <div class="text-[8px] text-gray-500">×${(gameState.cempShares||10000).toLocaleString()} azioni</div>
+                            </div>
+                        </div>
+                    </div>
+                    ${owned > 0 ? `
+                    <div class="flex justify-between text-[9px] mb-2 bg-white/5 rounded p-2">
+                        <span class="text-gray-400">In portafoglio: <span class="text-white font-bold">${owned.toLocaleString()} azioni</span></span>
+                        <span class="text-green-400 font-mono font-bold">€${portVal.toLocaleString()}</span>
+                    </div>` : ''}
+                    <div class="grid grid-cols-2 gap-2">
+                        ${[50,100,500,1000].map(qty => {
+                            const cost = Math.round(cp * qty);
+                            return `<button onclick="buyCempShares(${qty})" class="btn-gold !text-[8px] !py-1">
+                                Compra ${qty}<br><span class="opacity-60">€${cost.toLocaleString()}</span></button>`;
+                        }).join('')}
+                    </div>
+                    ${owned > 0 ? `<div class="grid grid-cols-2 gap-2 mt-2">
+                        ${[Math.min(50,owned), Math.min(owned, Math.floor(owned/2))].filter((v,i,a)=>a.indexOf(v)===i && v>0).map(qty => {
+                            const rev = Math.round(cp * qty);
+                            return `<button onclick="sellCempShares(${qty})" class="btn-gold !bg-red-900/30 !text-red-300 !text-[8px] !py-1">
+                                Vendi ${qty}<br><span class="opacity-60">+€${rev.toLocaleString()}</span></button>`;
+                        }).join('')}
+                    </div>` : ''}
+                    <div class="text-[8px] text-gray-600 mt-2 italic">Il prezzo $CEMP riflette la tua reputazione, gli incassi settimanali e la dimensione della flotta.</div>
+                </div>
+            </details>`;
+        })()}
+
+        ${(() => {
+            const ipo = gameState.companyIPO;
+            const rep = gameState.reputation || 0;
+            const canList = !ipo?.listed && rep >= 3.5 && (gameState.cash || 0) >= 50000;
+            if (!ipo?.listed) {
+                return `
+                <details class="mb-3">
+                    <summary class="finance-section-title cursor-pointer">🏛️ Quotazione in Borsa (IPO)</summary>
+                    <div class="mt-2 hud-card">
+                        <div class="text-[10px] text-white font-bold mb-1">Quota la tua azienda sul mercato</div>
+                        <div class="text-[9px] text-gray-400 mb-3">1.000 azioni emesse · 300 acquistate subito da investitori NPC · Prezzo calcolato sul tuo cash</div>
+                        <div class="space-y-1 text-[9px] mb-3">
+                            <div class="flex justify-between"><span class="text-gray-500">Costo quotazione:</span> <span class="text-white">€50.000</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Reputazione richiesta:</span> <span class="${rep >= 3.5 ? 'text-green-400' : 'text-red-400'}">⭐ ${rep.toFixed(1)} / 3.5</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Cash richiesto:</span> <span class="${(gameState.cash||0) >= 50000 ? 'text-green-400' : 'text-red-400'}">€${(gameState.cash||0).toLocaleString()} / €50.000</span></div>
+                            <div class="flex justify-between"><span class="text-gray-500">Prezzo azione stimato:</span> <span class="text-white font-mono">€${Math.max(10, Math.round((gameState.cash||0)/1000)).toLocaleString()}</span></div>
+                        </div>
+                        <button onclick="listCompanyIPO()" ${canList ? '' : 'disabled'} class="btn-gold w-full uppercase tracking-widest ${canList ? '' : 'opacity-40 cursor-not-allowed'}" style="font-size:0.8rem;">
+                            📈 Quota ${gameState.companyName || 'Chauffeur Empire'} in Borsa
+                        </button>
+                        ${!canList ? `<div class="text-[8px] text-red-400 mt-1 text-center">${rep < 3.5 ? 'Reputazione insufficiente.' : 'Cash insufficiente.'}</div>` : ''}
+                    </div>
+                </details>`;
+            }
+            const priceEst = ipo.sharePrice || 10;
+            const totalVal = Math.round(priceEst * ipo.sharesTotal);
+            const npcVal   = Math.round(priceEst * ipo.npcSharesOwned);
+            return `
+            <details class="mb-3" open>
+                <summary class="finance-section-title cursor-pointer">🏛️ IPO — ${gameState.companyName || 'Chauffeur Empire'}</summary>
+                <div class="mt-2 hud-card !border-green-900/40 bg-green-950/5">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <div class="text-xs font-bold text-green-400">✅ Quotata in borsa</div>
+                            <div class="text-[8px] text-gray-500">Dal giorno ${ipo.listedDay}</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-[9px] text-gray-400">Prezzo azione</div>
+                            <div class="text-sm font-bold font-mono text-white">€${priceEst.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div class="space-y-1 text-[9px] mb-2">
+                        <div class="flex justify-between"><span class="text-gray-500">Azioni totali:</span> <span class="text-white">${ipo.sharesTotal.toLocaleString()}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">In mano a NPC:</span> <span class="text-white">${ipo.npcSharesOwned} (valore €${npcVal.toLocaleString()})</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Capitalizzazione:</span> <span class="text-yellow-400 font-bold font-mono">€${totalVal.toLocaleString()}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Dividendi pagati tot.:</span> <span class="text-red-400 font-mono">-€${(ipo.dividendsPaid||0).toLocaleString()}</span></div>
+                    </div>
+                    <div class="text-[8px] text-gray-600 italic">Ogni giorno il 10% degli utili viene distribuito agli azionisti NPC come dividendo.</div>
+                </div>
+            </details>`;
+        })()}
+
+        ${typeof renderP2PSharesSection === 'function' ? renderP2PSharesSection() : ''}
+
         <div class="hud-card !border-red-900/40 bg-red-950/5 text-center mt-2">
             <div class="text-[9px] text-red-400/80 uppercase tracking-widest mb-1">Exit Strategy</div>
             <div class="text-[9px] text-gray-500 mb-2">Vendi l'azienda a un fondo e ricomincia con un vantaggio enorme</div>
@@ -3044,7 +3313,114 @@ function renderTabPremiumStore() {
         <div class="space-y-3 mb-6">${_mgmtHtml}</div>
 
         <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">Interventi Rapidi</div>
-        <div class="space-y-3">${_rapidHtml}</div>`;
+        <div class="space-y-3 mb-6">${_rapidHtml}</div>
+
+        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#d4af37;">💎 Executive Pass</div>
+        ${(() => {
+            const active = gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay||0);
+            const daysLeft = active ? gameState.executivePassExpiresDay - gameState.day : 0;
+            return `<div class="hud-card mb-6 ${active ? '!border-gold/50 bg-gold/5' : ''}">
+                <div class="flex justify-between items-start gap-3">
+                    <div>
+                        <div class="text-xs font-bold text-white">Executive Pass <span class="text-[8px] text-gold ml-1">30 GIORNI</span></div>
+                        <div class="text-[9px] text-gray-400 mt-1">+25% slot corse · −50% stress accu. · Insta-Repair a 1 DC · Accesso VIP extra</div>
+                        ${active ? `<div class="text-[9px] text-green-400 mt-1">✅ Attivo — ${daysLeft} giorni rimasti</div>` : ''}
+                    </div>
+                    ${active
+                        ? '<span class="text-green-500 text-[9px] font-bold shrink-0">ATTIVO</span>'
+                        : `<button onclick="activateExecutivePass()" class="btn-gold shrink-0 !text-[9px]">150 DC</button>`}
+                </div>
+            </div>`;
+        })()}
+
+        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">🎨 Skin Veicoli</div>
+        ${(() => {
+            const skins = typeof VEHICLE_SKINS !== 'undefined' ? VEHICLE_SKINS : (typeof window.VEHICLE_SKINS !== 'undefined' ? window.VEHICLE_SKINS : []);
+            const availCars = (gameState.fleet||[]).filter(c => !c.isLease);
+            if (availCars.length === 0) return `<div class="text-[9px] text-gray-600 italic mb-4">Nessun veicolo di proprietà disponibile.</div>`;
+            const carOptions = availCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            return `<div class="hud-card mb-4">
+                <div class="text-[9px] text-gray-400 mb-2">Seleziona veicolo e applica livrea:</div>
+                <select id="skin-car-select" class="w-full text-[9px] bg-black/40 border border-white/10 rounded px-2 py-1 text-gray-300 mb-2">${carOptions}</select>
+                <div class="grid grid-cols-3 gap-1">
+                    ${skins.map(s => `
+                    <button onclick="applyVehicleSkin(document.getElementById('skin-car-select').value,'${s.id}')"
+                        class="text-[7px] py-1 px-1 rounded border text-center transition-colors hover:opacity-90"
+                        style="border-color:${s.border};background:${s.color}22;color:${s.color}">
+                        ${s.name}<br><span style="color:${s.border}">${s.cost} DC</span>
+                    </button>`).join('')}
+                </div>
+            </div>`;
+        })()}
+
+        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">⚡ Potenziamenti Rapidi</div>
+        <div class="space-y-2 mb-4">
+            <div class="hud-card flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-white">Rifornimento Flotta</div>
+                    <div class="text-[9px] text-gray-400">Tutti i veicoli al 100% carburante istantaneamente</div>
+                </div>
+                <button onclick="fuelBoostDC()" class="btn-gold !text-[8px] shrink-0">3 DC</button>
+            </div>
+            <div class="hud-card flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-white">Ricarica Energia CEO</div>
+                    <div class="text-[9px] text-gray-400">Ripristina la tua energia al 100% senza hotel</div>
+                </div>
+                <button onclick="energyBoostDC()" class="btn-gold !text-[8px] shrink-0">4 DC</button>
+            </div>
+            ${(() => {
+                const restingDrivers = (gameState.drivers||[]).filter(d => d.id !== 'ceo' && d.status === 'resting');
+                if (restingDrivers.length === 0) return `<div class="text-[9px] text-gray-600 italic">Nessun autista a riposo al momento.</div>`;
+                return restingDrivers.map(d => `
+                <div class="hud-card flex justify-between items-center">
+                    <div>
+                        <div class="text-xs font-bold text-white">Sveglia ${d.name}</div>
+                        <div class="text-[9px] text-gray-400">Rimuovi il riposo forzato istantaneamente</div>
+                    </div>
+                    <button onclick="wakeDriverDC('${d.id}')" class="btn-gold !text-[8px] shrink-0">3 DC</button>
+                </div>`).join('');
+            })()}
+            ${(() => {
+                const stressed = (gameState.drivers||[]).filter(d => d.id !== 'ceo' && ((d.stress_level||0) > 0 || d.burnout_until));
+                if (stressed.length === 0) return '';
+                return stressed.map(d => `
+                <div class="hud-card flex justify-between items-center">
+                    <div>
+                        <div class="text-xs font-bold text-white">💊 Insta-Heal — ${d.name}</div>
+                        <div class="text-[9px] text-gray-400">Azzera stress (${d.stress_level||0}%) e burnout istantaneamente</div>
+                    </div>
+                    <button onclick="instaHealDC('${d.id}')" class="btn-gold !text-[8px] shrink-0">2 DC</button>
+                </div>`).join('');
+            })()}
+            ${(() => {
+                const inTraining = (gameState.driverAcademy||[]);
+                if (inTraining.length === 0) return '';
+                return inTraining.map(entry => {
+                    const drv = (gameState.drivers||[]).find(d => d.id === entry.driverId);
+                    if (!drv) return '';
+                    return `<div class="hud-card flex justify-between items-center">
+                        <div>
+                            <div class="text-xs font-bold text-white">Completa Corso — ${drv.name}</div>
+                            <div class="text-[9px] text-gray-400">${entry.courseName} — finisci subito</div>
+                        </div>
+                        <button onclick="skipAcademyTraining('${entry.driverId}')" class="btn-gold !text-[8px] shrink-0">5 DC</button>
+                    </div>`;
+                }).join('');
+            })()}
+            ${(() => {
+                const constructions = (gameState.constructions||[]);
+                if (constructions.length === 0) return '';
+                return constructions.map(c => `
+                <div class="hud-card flex justify-between items-center">
+                    <div>
+                        <div class="text-xs font-bold text-white">Finisci Costruzione</div>
+                        <div class="text-[9px] text-gray-400">${c.invId} — completa istantaneamente</div>
+                    </div>
+                    <button onclick="skipConstruction('${c.invId}')" class="btn-gold !text-[8px] shrink-0">8 DC</button>
+                </div>`).join('');
+            })()}
+        </div>`;
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
@@ -3141,6 +3517,173 @@ window._dcSpend = async function(itemId, cost) {
     updateUI();
     saveGame();
 };
+
+// ── MERCATO AUTO + ASTE LIVE ──────────────────────────────────────────────────
+function renderTabMarket() {
+    const container = document.getElementById('tab-container');
+    let html = '';
+
+    // ── ASTA LIVE ──
+    const auc = gameState.activeAuction;
+    const curH = gameState.day * 24 + gameState.hour;
+    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">🔨 Asta Live</h3>`;
+    if (auc) {
+        const hoursLeft = Math.max(0, auc.endsHour - curH);
+        const isWinning = auc.playerBid && auc.playerBid >= auc.currentBid;
+        html += `
+        <div class="hud-card !border-gold/40 bg-gold/5 mb-5">
+            <div class="flex justify-between items-start mb-2">
+                <div>
+                    <div class="text-xs font-bold text-white">${auc.name}</div>
+                    <div class="text-[9px] text-gray-400">${auc.tier.toUpperCase()} · Offerta attuale: <span class="text-gold font-bold">€${auc.currentBid.toLocaleString()}</span></div>
+                    ${isWinning ? '<div class="text-[9px] text-green-400 font-bold mt-0.5">✅ Stai vincendo!</div>' : auc.playerBid ? '<div class="text-[9px] text-red-400 mt-0.5">⚠ Sei stato superato!</div>' : ''}
+                </div>
+                <div class="text-right">
+                    <div class="text-[8px] text-gray-500 uppercase">Scade in</div>
+                    <div class="text-[10px] font-bold ${hoursLeft < 3 ? 'text-red-400 animate-pulse' : 'text-white'}">${hoursLeft}h</div>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-2">
+                ${[auc.currentBid + 5000, auc.currentBid + 15000, auc.currentBid + 50000].map(bid =>
+                    `<button onclick="bidOnAuction(${bid})" class="flex-1 text-[8px] py-1 rounded border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">+€${(bid - auc.currentBid).toLocaleString()}<br><span class="opacity-60">€${bid.toLocaleString()}</span></button>`
+                ).join('')}
+            </div>
+        </div>`;
+    } else {
+        html += `<div class="hud-card text-center mb-5">
+            <div class="text-2xl mb-1">🔨</div>
+            <div class="text-[10px] text-gray-500 italic">Nessuna asta attiva.<br>Le aste rare partono casualmente ogni giorno.</div>
+        </div>`;
+    }
+
+    // ── VEICOLI NPC DA ACQUISTARE ──
+    const npcList = gameState.npcMarket || [];
+    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">🚗 Usato Disponibile</h3>`;
+    if (npcList.length === 0) {
+        html += `<div class="text-[9px] text-gray-600 italic mb-4">Nessun veicolo disponibile. Si aggiorna ogni 3 giorni.</div>`;
+    } else {
+        html += `<div class="space-y-2 mb-5">`;
+        npcList.forEach(listing => {
+            const condColor = listing.condition < 40 ? '#ef4444' : listing.condition < 70 ? '#f59e0b' : '#22c55e';
+            html += `
+            <div class="hud-card flex justify-between items-center">
+                <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold text-white">${listing.name}</div>
+                    <div class="text-[9px] text-gray-400">${listing.tier.toUpperCase()} · ${Math.floor(listing.mileage/1000)}k km</div>
+                    <div class="flex items-center gap-1 mt-1">
+                        <div class="fuel-bar-bg" style="width:60px"><div class="fuel-bar-fill" style="width:${listing.condition}%;background:${condColor}"></div></div>
+                        <span class="text-[8px]" style="color:${condColor}">${listing.condition}%</span>
+                    </div>
+                </div>
+                <div class="text-right ml-2 shrink-0">
+                    <div class="text-sm font-bold text-gold">€${listing.price.toLocaleString()}</div>
+                    <button onclick="buyNpcCar('${listing.id}')" class="btn-gold !py-0.5 !text-[8px] mt-1">Acquista</button>
+                </div>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // ── LE TUE AUTO IN VENDITA ──
+    const myListings = (gameState.marketplace || []).map(l => ({
+        ...l, car: gameState.fleet.find(c => c.id === l.carId)
+    })).filter(l => l.car);
+    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">📋 Tuoi Annunci</h3>`;
+    if (myListings.length === 0) {
+        html += `<div class="text-[9px] text-gray-600 italic mb-4">Nessun annuncio attivo.<br>Vai in Flotta → card veicolo → Gestisci → Metti in Vendita.</div>`;
+    } else {
+        html += `<div class="space-y-2 mb-5">`;
+        myListings.forEach(l => {
+            const daysLeft = Math.max(0, 2 - (gameState.day - l.listedDay));
+            html += `
+            <div class="hud-card flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-white">${l.car.name}</div>
+                    <div class="text-[9px] text-gray-400">Prezzo: €${l.askPrice.toLocaleString()} · ${daysLeft > 0 ? `Acquirente in ~${daysLeft}g` : 'Vendita in corso…'}</div>
+                </div>
+                <button onclick="cancelListing('${l.id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[8px]">Ritira</button>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // ── VENDI AUTO DALLA FLOTTA ──
+    const sellableCars = gameState.fleet.filter(c =>
+        !c.isLease &&
+        !(gameState.marketplace||[]).some(l => l.carId === c.id) &&
+        !gameState.drivers.some(d => d.assignedCarId === c.id && d.status === 'busy')
+    );
+    if (sellableCars.length > 0) {
+        html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">💰 Metti in Vendita</h3><div class="space-y-2">`;
+        sellableCars.forEach(car => {
+            const condPct = Math.floor(car.condition || 0);
+            const suggestPrice = Math.round(20000 * (condPct/100) * (car.tier === 'ultra' ? 5 : car.tier === 'vip' ? 3 : car.tier === 'business' ? 1.8 : 1));
+            html += `
+            <div class="hud-card flex justify-between items-center">
+                <div>
+                    <div class="text-xs font-bold text-white">${car.name}</div>
+                    <div class="text-[9px] text-gray-400">${car.tier.toUpperCase()} · Cond. ${condPct}%</div>
+                    <div class="text-[9px] text-green-400">Stima: ~€${suggestPrice.toLocaleString()}</div>
+                </div>
+                <button onclick="listCarForSale('${car.id}', ${suggestPrice})" class="btn-gold !text-[8px] !py-1">Vendi ~€${(suggestPrice/1000).toFixed(0)}k</button>
+            </div>`;
+        });
+        html += `</div>`;
+    }
+
+    // ── P2P MERCATO REALE ──
+    if (typeof renderP2PMarketSection === 'function') html += renderP2PMarketSection();
+
+    container.innerHTML = html;
+}
+window.renderTabMarket = renderTabMarket;
+
+// ══════════════════════════════════════════════════════════════════
+// TAB AIUTO & SUPPORTO
+// ══════════════════════════════════════════════════════════════════
+function renderTabHelp() {
+    const container = document.getElementById('tab-container');
+    const cfg = window.GAME_CONFIG || {};
+    const email = cfg.SUPPORT_EMAIL || 'support@chauffeurempire.com';
+    const companyId = window.currentUser?.id || 'N/D';
+    const companyName = (gameState.companyName || 'La tua azienda');
+    const bugSubject = encodeURIComponent(`Segnalazione Bug - ID Compagnia: ${companyId}`);
+    const generalSubject = encodeURIComponent(`Assistenza - ${companyName}`);
+
+    container.innerHTML = `
+    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">🆘 Aiuto & Supporto</h3>
+
+    <div class="hud-card mb-3">
+        <div class="text-[10px] font-bold text-white mb-1">📧 Email Ufficiale</div>
+        <div class="text-[9px] text-gray-400 mb-2">Il nostro team risponde entro 24h nei giorni lavorativi.</div>
+        <a href="mailto:${email}" class="text-[9px] text-gold underline underline-offset-2 break-all">${email}</a>
+    </div>
+
+    <div class="hud-card mb-3">
+        <div class="text-[10px] font-bold text-white mb-1">🐛 Segnala un Bug</div>
+        <div class="text-[9px] text-gray-400 mb-2">Il tuo ID Compagnia verrà precompilato nell'oggetto così possiamo rintracciarti subito nel database.</div>
+        <div class="text-[8px] text-gray-600 font-mono mb-2 break-all">ID: ${companyId}</div>
+        <a href="mailto:${email}?subject=${bugSubject}" class="btn-gold !text-[8px] !py-1 inline-block text-center w-full">
+            🐛 Apri Client Email — Segnala Bug
+        </a>
+    </div>
+
+    <div class="hud-card mb-3">
+        <div class="text-[10px] font-bold text-white mb-1">💬 Assistenza Generale</div>
+        <div class="text-[9px] text-gray-400 mb-2">Domande sul gioco, pagamenti DC, recupero account.</div>
+        <a href="mailto:${email}?subject=${generalSubject}" class="btn-gold !bg-white/5 !text-gray-300 !text-[8px] !py-1 inline-block text-center w-full">
+            ✉️ Contatta il Supporto
+        </a>
+    </div>
+
+    <div class="hud-card !border-white/5 bg-white/2">
+        <div class="text-[9px] text-gray-600 text-center leading-relaxed">
+            Chauffeur Empire · ${cfg.GAME_URL || 'chauffeurempire.com'}<br>
+            <span class="text-[8px]">Versione build ${new Date().toLocaleDateString('it-IT', {month:'short', year:'numeric'})}</span>
+        </div>
+    </div>`;
+}
+window.renderTabHelp = renderTabHelp;
 
 // Re-render whatever tab is currently active (used by lang.js setLang)
 window.renderCurrentTab = function() {

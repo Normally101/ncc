@@ -284,6 +284,8 @@ async function _onAuthSuccess(user) {
 
     await _mmoBootSequence(user.id);
 
+    if (typeof window.p2pInit === 'function') window.p2pInit();
+
     if (overlay) overlay.remove();
 }
 
@@ -363,6 +365,7 @@ function _showAuthOverlay() {
                         <button id="auth-signup-btn" class="lp-btn-secondary"
                                 onclick="window._authSignup()">Crea Account Gratis</button>
                         <p class="auth-hint">Nuovo? Premi "Crea Account" per registrarti con email e password.</p>
+                        <p class="auth-support-link">Problemi di accesso? <a href="mailto:${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}?subject=Problema%20di%20Accesso">Contatta il supporto</a></p>
                     </div>
                 </div>
             </div>
