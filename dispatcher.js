@@ -1788,7 +1788,32 @@ function renderTabStaff() {
         </div>`;
     }
     const hasHR = gameState.staff.some(s => s.id === 'hr');
-    html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">I Tuoi Autisti</h3><div class="space-y-2">`;
+
+    // ── HR Automation premium buff ──────────────────────────────────────────
+    const hrExpires  = gameState.hrAutomationExpiresAt ? new Date(gameState.hrAutomationExpiresAt) : null;
+    const hrActive   = hrExpires && hrExpires > new Date();
+    const hrTimeLeft = hrActive ? (() => {
+        const ms = hrExpires - Date.now();
+        const d  = Math.floor(ms / 86400000);
+        const h  = Math.floor((ms % 86400000) / 3600000);
+        return d > 0 ? `${d}g ${h}h` : `${h}h`;
+    })() : null;
+    html += `</div>
+    <div class="hud-card mb-4 ${hrActive ? '!border-purple-500/50 bg-purple-950/10' : '!border-white/10'}">
+        <div class="flex justify-between items-start">
+            <div>
+                <div class="text-[9px] text-purple-400 uppercase tracking-widest font-bold mb-0.5">🤝 Gestione Sindacale HR</div>
+                <div class="text-[9px] text-gray-400 leading-snug max-w-[220px]">Gli scioperi vengono risolti automaticamente senza popup bloccanti. L'HR applica un accordo immediato.</div>
+                ${hrActive ? `<div class="text-[9px] text-green-400 mt-1 font-bold">✅ Attivo — scade tra ${hrTimeLeft}</div>` : `<div class="text-[9px] text-gray-500 mt-1">7 giorni · 5 DC</div>`}
+            </div>
+            <div class="shrink-0 ml-2">
+                ${hrActive
+                    ? `<span class="text-green-400 text-[9px] font-bold">ATTIVO</span>`
+                    : `<button onclick="window.buyHRAutomation()" class="btn-gold !py-1 !px-2 !text-[8px]">🪙 5 DC<br><span class="opacity-60">7 giorni</span></button>`}
+            </div>
+        </div>
+    </div>
+    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">I Tuoi Autisti</h3><div class="space-y-2">`;
     gameState.drivers.filter(d => d.id !== 'ceo').forEach(d => {
         const fatigue = d.fatigue || 0;
         const fatigueColor = fatigue >= 85 ? '#ef4444' : fatigue >= 60 ? '#f59e0b' : '#8b5cf6';
@@ -2181,61 +2206,118 @@ window.openCarConfigurator = function(carId, type) {
     const old = document.getElementById('modal-configurator');
     if (old) old.remove();
 
+    const catalog = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : [])
+        .find(c => c.vehicleClass === carT.vehicleClass || c.id === carT.vehicleClass);
+    const carImg  = catalog?.img || 'assets/fleet/stellar-e-executive.jpg';
+    const isElec  = catalog?.fuel === 'electric';
+
     const modal = document.createElement('div');
     modal.id = 'modal-configurator';
-    modal.className = 'fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-[9999]';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px';
     document.body.appendChild(modal);
 
     const sel = new Set();
 
-    function render() {
-        const upTotal = [...sel].reduce((s, uid) => { const u = CAR_UPGRADES.find(x => x.id === uid); return s + (u ? u.price : 0); }, 0);
-        const total = carT.price + upTotal;
-        const ok = gameState.cash >= total;
-        modal.innerHTML = `
-<div class="bg-[#0a0a0f] border border-white/10 rounded-xl w-[480px] max-h-[85vh] overflow-y-auto p-6 shadow-2xl">
-  <div class="flex justify-between items-start mb-5">
-    <div>
-      <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-0.5">Configuratore</div>
-      <div class="text-base font-bold text-white">${carT.name}</div>
-      <div class="text-[9px] text-gray-500 uppercase mt-0.5">${carT.tier} · ${(carT.vehicleClass || '').replace('_',' ')}</div>
+    // ── Build static shell (photo + header) once ──────────────────────────────
+    modal.innerHTML = `
+<div style="display:flex;width:100%;max-width:900px;max-height:90vh;border-radius:16px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.8);border:1px solid rgba(255,255,255,0.08)">
+  <!-- LEFT: photo panel -->
+  <div style="width:42%;position:relative;flex-shrink:0;background:#050810" id="cfg-photo-panel">
+    <img src="${carImg}" alt="${carT.name}"
+         style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center">
+    <div style="position:absolute;inset:0;background:linear-gradient(to right,transparent 60%,rgba(5,8,16,0.9))"></div>
+    <div style="position:absolute;bottom:0;left:0;right:0;padding:20px 16px;background:linear-gradient(to top,rgba(5,8,16,0.95),transparent)">
+      <div style="font-size:18px;font-weight:900;color:#fff;text-transform:uppercase;letter-spacing:1px;line-height:1.2">${carT.name}</div>
+      <div style="font-size:10px;color:#d4af37;margin-top:4px;font-family:monospace">${(carT.vehicleClass||'').replace(/_/g,' ').toUpperCase()}</div>
+      ${isElec ? `<div style="margin-top:6px;display:inline-block;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.4);color:#4ade80;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">⚡ CO2 ESENTE</div>` : ''}
     </div>
-    <button onclick="document.getElementById('modal-configurator').remove()" class="text-gray-600 hover:text-white text-lg leading-none mt-1">✕</button>
   </div>
-  <div class="hud-card flex justify-between items-center mb-4">
-    <span class="text-[9px] text-gray-500 uppercase">Prezzo base</span>
-    <span class="font-mono font-bold text-white">€${carT.price.toLocaleString()}</span>
-  </div>
-  <div class="text-[9px] text-gold uppercase tracking-widest mb-2">Optional</div>
-  <div class="space-y-1.5 mb-5">
-    ${CAR_UPGRADES.map(u => {
-        const on = sel.has(u.id);
-        return `<div class="hud-card flex items-start gap-3 cursor-pointer select-none transition-colors ${on ? '!border-gold/50 bg-gold/5' : 'hover:border-white/20'}" onclick="__cfgToggle('${u.id}')">
-          <div class="mt-0.5 w-4 h-4 rounded border ${on ? 'bg-gold border-gold' : 'border-white/20 bg-black/40'} flex items-center justify-center shrink-0 text-[9px] font-bold text-black">${on ? '✓' : ''}</div>
-          <div class="flex-1 min-w-0">
-            <div class="text-[11px] font-bold text-white">${u.name}</div>
-            <div class="text-[8px] text-gray-500 mt-0.5 leading-snug">${u.desc}</div>
+  <!-- RIGHT: scrollable config panel -->
+  <div id="cfg-right" style="flex:1;background:#0a0a0f;overflow-y:auto;display:flex;flex-direction:column">
+    <!-- sticky header -->
+    <div style="position:sticky;top:0;z-index:2;background:#0a0a0f;border-bottom:1px solid rgba(255,255,255,0.07);padding:16px 20px;display:flex;justify-content:space-between;align-items:flex-start">
+      <div>
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:2px">Showroom · Configuratore</div>
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-top:2px">${carT.name}</div>
+        <div style="font-size:9px;color:#6b7280;margin-top:1px">${carT.tier.toUpperCase()}</div>
+      </div>
+      <button onclick="document.getElementById('modal-configurator').remove()" style="color:#4b5563;font-size:20px;line-height:1;background:none;border:none;cursor:pointer;padding:0" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='#4b5563'">✕</button>
+    </div>
+    <!-- base price -->
+    <div style="padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
+      <span style="font-family:monospace;font-weight:700;color:#fff;font-size:14px">€${carT.price.toLocaleString()}</span>
+    </div>
+    <!-- upgrades list -->
+    <div style="padding:16px 20px;flex:1">
+      <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px">Optional disponibili</div>
+      <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:6px">
+        ${CAR_UPGRADES.map(u => `
+        <div id="cfg-upg-${u.id}" data-uid="${u.id}" onclick="__cfgToggle('${u.id}')"
+             style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.3);cursor:pointer;transition:border-color .15s,background .15s;user-select:none">
+          <div id="cfg-chk-${u.id}" style="margin-top:1px;width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,0.2);background:rgba(0,0,0,0.4);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px;font-weight:700;color:#000"></div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:11px;font-weight:700;color:#fff">${u.name}</div>
+            <div style="font-size:8px;color:#6b7280;margin-top:2px;line-height:1.4">${u.desc}</div>
           </div>
-          <div class="text-[10px] font-mono ${on ? 'text-gold' : 'text-gray-400'} shrink-0 mt-0.5">+€${u.price.toLocaleString()}</div>
-        </div>`;
-    }).join('')}
-  </div>
-  <div class="border-t border-white/10 pt-4 space-y-3">
-    <div class="flex justify-between items-center">
-      <span class="text-[10px] text-gray-400 uppercase">Totale</span>
-      <span class="text-xl font-mono font-bold ${ok ? 'text-green-400' : 'text-red-400'}">€${total.toLocaleString()}</span>
+          <div id="cfg-price-${u.id}" style="font-size:10px;font-family:monospace;color:#9ca3af;flex-shrink:0;margin-top:1px">+€${u.price.toLocaleString()}</div>
+        </div>`).join('')}
+      </div>
     </div>
-    ${!ok ? `<div class="text-[9px] text-red-400">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
-    <div class="flex gap-2">
-      <button onclick="document.getElementById('modal-configurator').remove()" class="flex-1 py-2 text-[9px] border border-white/10 rounded-lg text-gray-400 hover:text-white transition">Annulla</button>
-      <button onclick="__cfgConfirm('${carId}','${type}')" ${!ok ? 'disabled' : ''} class="flex-1 py-2 text-[9px] font-bold rounded-lg transition ${ok ? 'btn-gold' : 'opacity-40 cursor-not-allowed bg-white/5 text-gray-500 border border-white/10'}">🚗 Conferma & Acquista</button>
+    <!-- sticky footer: total + buy -->
+    <div id="cfg-footer" style="position:sticky;bottom:0;background:#0a0a0f;border-top:1px solid rgba(255,255,255,0.07);padding:16px 20px">
     </div>
   </div>
 </div>`;
+
+    // ── Summary update (no scroll reset) ──────────────────────────────────────
+    function _updateSummary() {
+        const upTotal = [...sel].reduce((s, uid) => { const u = CAR_UPGRADES.find(x => x.id === uid); return s + (u ? u.price : 0); }, 0);
+        const total   = carT.price + upTotal;
+        const ok      = gameState.cash >= total;
+        document.getElementById('cfg-footer').innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:10px;color:#9ca3af;text-transform:uppercase;letter-spacing:1px">Totale configurazione</span>
+            <span style="font-size:20px;font-family:monospace;font-weight:900;color:${ok ? '#4ade80' : '#f87171'}">€${total.toLocaleString()}</span>
+          </div>
+          ${!ok ? `<div style="font-size:9px;color:#f87171;margin-bottom:8px">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
+          <div style="display:flex;gap:8px">
+            <button onclick="document.getElementById('modal-configurator').remove()"
+              style="flex:1;padding:10px;font-size:9px;border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#9ca3af;background:transparent;cursor:pointer">
+              Annulla
+            </button>
+            <button onclick="__cfgConfirm('${carId}','${type}')" ${!ok ? 'disabled' : ''}
+              style="flex:1;padding:10px;font-size:9px;font-weight:700;border-radius:8px;cursor:${ok ? 'pointer' : 'not-allowed'};
+                     background:${ok ? 'linear-gradient(135deg,#d4af37,#b8961f)' : 'rgba(255,255,255,0.05)'};
+                     color:${ok ? '#000' : '#4b5563'};border:${ok ? 'none' : '1px solid rgba(255,255,255,0.1)'}">
+              🚗 Conferma & Acquista
+            </button>
+          </div>`;
     }
 
+    // ── Toggle: update only the affected row + summary (NO scroll reset) ──────
     window.__cfgSel = sel;
-    window.__cfgToggle = function(uid) { sel.has(uid) ? sel.delete(uid) : sel.add(uid); render(); };
+    window.__cfgToggle = function(uid) {
+        sel.has(uid) ? sel.delete(uid) : sel.add(uid);
+        const on  = sel.has(uid);
+        const row = document.getElementById(`cfg-upg-${uid}`);
+        const chk = document.getElementById(`cfg-chk-${uid}`);
+        const prc = document.getElementById(`cfg-price-${uid}`);
+        if (row) {
+            row.style.borderColor  = on ? 'rgba(212,175,55,0.5)' : 'rgba(255,255,255,0.08)';
+            row.style.background   = on ? 'rgba(212,175,55,0.06)' : 'rgba(0,0,0,0.3)';
+        }
+        if (chk) {
+            chk.style.background   = on ? '#d4af37' : 'rgba(0,0,0,0.4)';
+            chk.style.borderColor  = on ? '#d4af37' : 'rgba(255,255,255,0.2)';
+            chk.textContent        = on ? '✓' : '';
+        }
+        if (prc) prc.style.color = on ? '#d4af37' : '#9ca3af';
+        _updateSummary();
+    };
+
+    _updateSummary();
+
     window.__cfgConfirm = async function(cId, cType) {
         const car = (cType === 'new' ? NEW_CARS : USED_CARS).find(c => c.id === cId);
         if (!car) return;
@@ -3987,6 +4069,20 @@ async function renderTabProvinces() {
     html += `</div>`;
     container.innerHTML = html;
 }
+
+window.buyHRAutomation = async function() {
+    const cost = 5, days = 7;
+    if ((gameState.driverCoins || 0) < cost) {
+        showNotification(`Driver Coins insufficienti (servono ${cost} DC)`, 'error');
+        return;
+    }
+    const result = await ServerState.buyHRAutomation(cost, days);
+    if (result?.success) {
+        gameState.hrAutomationExpiresAt = result.expires_at;
+        showBigEvent('🤝', 'Gestione Sindacale HR Attivata!', `Il sistema HR gestirà automaticamente gli scioperi per i prossimi ${days} giorni.`);
+        if (typeof renderTabStaff === 'function') renderTabStaff();
+    }
+};
 
 window.doAcquireProvince = async function(provinceId) {
     const input = document.getElementById(`offer-${provinceId}`);

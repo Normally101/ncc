@@ -190,11 +190,11 @@ const ServerState = (() => {
         if (!window.gameState || !_company) return;
 
         // Authoritative financial fields — always trust the server
-        gameState.cash         = _company.cash;
-        // driver_coins is authoritative; use local value only if DB has null/undefined
-        gameState.driverCoins  = (_company.driver_coins != null) ? _company.driver_coins : (gameState.driverCoins ?? 0);
-        gameState.reputation   = parseFloat(_company.reputation) || gameState.reputation;
-        gameState.companyName  = _company.company_name || gameState.companyName;
+        gameState.cash                  = _company.cash;
+        gameState.driverCoins           = (_company.driver_coins != null) ? _company.driver_coins : (gameState.driverCoins ?? 0);
+        gameState.reputation            = parseFloat(_company.reputation) || gameState.reputation;
+        gameState.companyName           = _company.company_name || gameState.companyName;
+        gameState.hrAutomationExpiresAt = _company.hr_automation_expires_at || null;
     }
 
     function _bridgeFleetToGameState() {
@@ -462,6 +462,9 @@ const ServerState = (() => {
     async function addDriverCoins(amount) {
         return _rpc('rpc_add_driver_coins', { p_amount: amount });
     }
+    async function buyHRAutomation(costInCoins, days = 7) {
+        return _rpc('rpc_buy_hr_automation', { v_cost_in_coins: costInCoins, v_days: days });
+    }
 
 
     // ==========================================================================
@@ -539,6 +542,7 @@ const ServerState = (() => {
         buyFleetRepair,
         buyVipContact,
         addDriverCoins,
+        buyHRAutomation,
         getState,
         getCompany,
         getVehicles,

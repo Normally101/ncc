@@ -4149,11 +4149,25 @@ function _tickDriverSatisfaction() {
 
         // Strike trigger
         if (d.satisfaction < 30 && !d.isOnStrike) {
-            d.isOnStrike = true;
-            d.status = 'striking';
-            logToMap(`🪧 SCIOPERO: ${d.name} ha incrociato le braccia! (soddisfazione: ${Math.round(d.satisfaction)}%)`);
-            showBigEvent('🪧', `${d.name} in Sciopero!`, `La soddisfazione è crollata al ${Math.round(d.satisfaction)}%. Paga un bonus o rischi di perdere l'autista definitivamente.`);
-            if (typeof renderTabStaff === 'function') renderTabStaff();
+            // Check HR Automation buff
+            const hrExpires = gameState.hrAutomationExpiresAt ? new Date(gameState.hrAutomationExpiresAt) : null;
+            const hrActive  = hrExpires && hrExpires > new Date();
+            if (hrActive) {
+                // Auto-resolve: boost satisfaction, no blocking popup
+                d.satisfaction = 45;
+                d.morale = Math.min(100, (d.morale || 50) + 15);
+                const bonusCost = Math.round((d.salary || 2000) * 0.1);
+                gameState.cash -= bonusCost;
+                if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+                showNotification(`🤝 HR ha gestito automaticamente un potenziale sciopero di ${d.name} (−€${bonusCost.toLocaleString()})`, 'success');
+                logToMap(`🤝 HR Automation: sciopero di ${d.name} evitato automaticamente.`);
+            } else {
+                d.isOnStrike = true;
+                d.status = 'striking';
+                logToMap(`🪧 SCIOPERO: ${d.name} ha incrociato le braccia! (soddisfazione: ${Math.round(d.satisfaction)}%)`);
+                showBigEvent('🪧', `${d.name} in Sciopero!`, `La soddisfazione è crollata al ${Math.round(d.satisfaction)}%. Paga un bonus o rischi di perdere l'autista definitivamente.`);
+                if (typeof renderTabStaff === 'function') renderTabStaff();
+            }
         }
         // If already striking, keep them out
         if (d.isOnStrike && d.status !== 'striking') d.status = 'striking';
