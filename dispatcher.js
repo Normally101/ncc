@@ -4087,11 +4087,32 @@ window.buyHRAutomation = async function() {
         return;
     }
     const result = await ServerState.buyHRAutomation(cost, days);
-    if (result?.success) {
-        gameState.hrAutomationExpiresAt = result.expires_at;
-        showBigEvent('🤝', 'Gestione Sindacale HR Attivata!', `Il sistema HR gestirà automaticamente gli scioperi per i prossimi ${days} giorni.`);
-        if (typeof renderTabStaff === 'function') renderTabStaff();
-    }
+    if (!result?.success) return;
+
+    gameState.hrAutomationExpiresAt = result.expires_at;
+    gameState.driverCoins = Math.max(0, (gameState.driverCoins || 0) - cost);
+
+    // Resolve all drivers already on strike
+    let resolved = 0;
+    (gameState.drivers || []).forEach(d => {
+        if (d.isOnStrike) {
+            d.isOnStrike = false;
+            d.status = 'idle';
+            d.satisfaction = Math.max(d.satisfaction || 0, 55);
+            d.morale = Math.min(100, (d.morale || 50) + 20);
+            resolved++;
+        }
+    });
+
+    const resolvedMsg = resolved > 0
+        ? ` ${resolved} autist${resolved === 1 ? 'a' : 'i'} in sciopero ${resolved === 1 ? 'è stato richiamato' : 'sono stati richiamati'} al lavoro.`
+        : '';
+    showBigEvent('🤝', 'Gestione Sindacale HR Attivata!',
+        `Il sistema HR gestirà automaticamente gli scioperi per i prossimi ${days} giorni.${resolvedMsg}`);
+
+    updateUI();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+    if (typeof saveGame === 'function') saveGame();
 };
 
 window.doAcquireProvince = async function(provinceId) {
