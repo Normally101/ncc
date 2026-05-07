@@ -1631,16 +1631,26 @@ function renderTabFleet() {
 
     html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Concessionario (Nuovo & Leasing)</h3><div class="space-y-2">`;
     NEW_CARS.forEach(c => {
-        const vcLabel = { mercedes_e:'Sedan', mercedes_v:'Minivan', mercedes_sprinter:'Sprinter', mercedes_s:'Presidential', water_taxi:'Acqueo', mercedes_e:'Berlina' }[c.vehicleClass] || c.vehicleClass || '';
+        const vcLabel = {
+            stellar_e_exec:'Berlina Business', stellar_v_carr:'Van Premium',
+            stellar_s_imp:'Ammiraglia', stellar_g_over:'SUV Blindato',
+            volt_s_apex:'Elettrica ⚡ CO2 ESENTE',
+            mercedes_e:'Sedan', mercedes_v:'Minivan', mercedes_s:'Presidential',
+            mercedes_sprinter:'Sprinter', water_taxi:'Acqueo',
+        }[c.vehicleClass] || c.vehicleClass || '';
+        const cat = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : []).find(x => x.vehicleClass === c.vehicleClass);
+        const thumb = cat?.img ? `<img src="${cat.img}" class="w-10 h-10 rounded object-cover mr-2 shrink-0" onerror="this.style.display='none'">` : '';
         html += `
-        <div class="hud-card flex justify-between items-center">
-            <div>
+        <div class="hud-card flex items-center">
+            ${thumb}
+            <div class="flex-1 min-w-0">
                 <div class="text-xs font-bold text-white">${c.name}</div>
                 <div class="text-[9px] text-gray-500 uppercase">${c.tier} · <span class="text-blue-400">${vcLabel}</span></div>
+                <div class="text-[9px] text-gold">€${(c.price||0).toLocaleString()}</div>
             </div>
-            <div class="flex gap-2">
-                <button onclick="openCarConfigurator('${c.id}','new')" class="btn-gold !text-[8px]">🔧 Configura</button>
-                <button onclick="openLeasingModal('${c.tier}')" class="btn-gold !bg-blue-600 !text-white !text-[8px]">Lease</button>
+            <div class="flex gap-1 ml-2">
+                <button onclick="openCarConfigurator('${c.id}','new')" class="btn-gold !text-[8px] !py-1">🔧 Configura</button>
+                <button onclick="openLeasingModal('${c.vehicleClass||c.tier}')" class="btn-gold !bg-blue-600 !text-white !text-[8px] !py-1">Lease</button>
             </div>
         </div>`;
     });

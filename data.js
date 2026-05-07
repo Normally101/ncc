@@ -81,25 +81,26 @@ const POIS = {
     aosta:        { id:'aosta',        region:'valle_aosta',lat:45.7376, lng:7.3210,  name:'Aosta',              type:'city',   baseFlat:90,  minTier:'business' },
 };
 
-// ─── MERCATO AUTO ───────────────────────────────────────────────
+// ─── MERCATO AUTO — STELLAR & VOLT COLLECTION ───────────────────
 const NEW_CARS = [
-    { id:'nc_eclass',   name:'Mercedes E-Class (2024)',   tier:'business', price:72000,  condition:100, vehicleClass:'mercedes_e'       },
-    { id:'nc_sclass',   name:'Mercedes S-Class (2024)',   tier:'vip',      price:145000, condition:100, vehicleClass:'mercedes_s'       },
-    { id:'nc_vclass',   name:'Mercedes V-Class (2024)',   tier:'group',    price:92000,  condition:100, vehicleClass:'mercedes_v'       },
-    { id:'nc_sprinter', name:'Mercedes Sprinter (2024)',  tier:'business', price:85000,  condition:100, vehicleClass:'mercedes_sprinter' },
-    { id:'nc_ghost',    name:'Rolls-Royce Ghost',         tier:'ultra',    price:360000, condition:100, vehicleClass:'mercedes_e'       }
+    { id:'stellar_e_exec',  name:'Stellar E-Executive',  tier:'business',     price:120000, condition:100, vehicleClass:'stellar_e_exec'  },
+    { id:'stellar_v_carr',  name:'Stellar V-Carrier',    tier:'business',     price:95000,  condition:100, vehicleClass:'stellar_v_carr'  },
+    { id:'stellar_s_imp',   name:'Stellar S-Imperial',   tier:'vip',          price:250000, condition:100, vehicleClass:'stellar_s_imp'   },
+    { id:'stellar_g_over',  name:'Stellar G-Overlord',   tier:'ultra',        price:320000, condition:100, vehicleClass:'stellar_g_over'  },
+    { id:'volt_s_apex',     name:'Volt S-Apex',          tier:'vip',          price:280000, condition:100, vehicleClass:'volt_s_apex'     },
 ];
 
 const USED_CARS = [
-    { id:'uc_e2019', name:'Audi A6 (2019)',          tier:'business', price:28000, condition:58, vehicleClass:'mercedes_e' },
-    { id:'uc_s2017', name:'Mercedes S-Class (2017)', tier:'vip',      price:42000, condition:45, vehicleClass:'mercedes_s' }
+    { id:'uc_e_exec_22', name:'Stellar E-Executive (2022)', tier:'business', price:72000,  condition:62, vehicleClass:'stellar_e_exec' },
+    { id:'uc_v_carr_21', name:'Stellar V-Carrier (2021)',   tier:'business', price:55000,  condition:51, vehicleClass:'stellar_v_carr' },
+    { id:'uc_s_imp_20',  name:'Stellar S-Imperial (2020)',  tier:'vip',      price:140000, condition:44, vehicleClass:'stellar_s_imp'  },
 ];
 
 const LEASING_TEMPLATES = {
-    'business': { name:'Mercedes E-Class', baseRate:1100, kmRate:0.05, tier:'business' },
-    'vip': { name:'Mercedes S-Class', baseRate:2200, kmRate:0.10, tier:'vip' },
-    'group': { name:'Mercedes V-Class', baseRate:1600, kmRate:0.07, tier:'group' },
-    'ultra': { name:'Rolls-Royce Ghost', baseRate:5500, kmRate:0.25, tier:'ultra' }
+    'business':     { name:'Stellar E-Executive', baseRate:1200, kmRate:0.05, tier:'business', vehicleClass:'stellar_e_exec' },
+    'vip':          { name:'Stellar S-Imperial',  baseRate:2500, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_s_imp'  },
+    'group':        { name:'Stellar V-Carrier',   baseRate:1600, kmRate:0.07, tier:'business', vehicleClass:'stellar_v_carr' },
+    'ultra':        { name:'Stellar G-Overlord',  baseRate:5000, kmRate:0.22, tier:'ultra',    vehicleClass:'stellar_g_over' },
 };
 
 // Tratti personalità autisti (assegnati random al reclutamento)

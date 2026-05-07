@@ -4704,8 +4704,13 @@ function openHotelModal() {
     m.classList.remove('hidden'); m.classList.add('flex');
 }
 
-function openLeasingModal(tier) {
-    if (!LEASING_TEMPLATES[tier]) return;
+function openLeasingModal(tierOrClass) {
+    // Accept vehicleClass key or legacy tier key
+    const key = LEASING_TEMPLATES[tierOrClass]
+        ? tierOrClass
+        : Object.keys(LEASING_TEMPLATES).find(k => LEASING_TEMPLATES[k].vehicleClass === tierOrClass || LEASING_TEMPLATES[k].tier === tierOrClass);
+    if (!key || !LEASING_TEMPLATES[key]) return;
+    const tier = key;
     tempLeaseTier = tier;
     document.getElementById('lease-car-name').innerText = LEASING_TEMPLATES[tier].name;
     const m = document.getElementById('modal-leasing');
