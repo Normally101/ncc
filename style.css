@@ -1290,12 +1290,12 @@ details[open] .finance-section-title { color: #00f2ff; }
 .lp-nav-logo { display: flex; align-items: center; gap: 12px; }
 .lp-nav-monogram {
     width: 36px; height: 36px; flex-shrink: 0;
-    background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.05));
+    background-color: rgba(212,175,55,0.08);
     border: 1px solid rgba(212,175,55,0.4);
     border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     font-family: 'Orbitron', sans-serif;
-    font-size: 12px; font-weight: 900; color: #d4af37; letter-spacing: -1px;
+    font-size: 0; font-weight: 900; color: transparent; letter-spacing: -1px;
     overflow: hidden; padding: 0;
 }
 .lp-nav-brand {
@@ -1484,11 +1484,11 @@ details[open] .finance-section-title { color: #00f2ff; }
 .lp-footer-brand { display: flex; align-items: center; gap: 12px; }
 .lp-footer-monogram {
     width: 34px; height: 34px; flex-shrink: 0;
-    background: linear-gradient(135deg, rgba(212,175,55,0.12), rgba(212,175,55,0.03));
+    background-color: rgba(212,175,55,0.08);
     border: 1px solid rgba(212,175,55,0.22);
     border-radius: 8px; display: flex; align-items: center; justify-content: center;
-    font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 900;
-    color: rgba(212,175,55,0.6); letter-spacing: -1px;
+    font-family: 'Orbitron', sans-serif; font-size: 0; font-weight: 900;
+    color: transparent; letter-spacing: -1px; overflow: hidden;
 }
 .lp-footer-name {
     font-size: 11px; font-weight: 700; color: #6b7280;

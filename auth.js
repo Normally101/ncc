@@ -305,9 +305,7 @@ function _showAuthOverlay() {
         <nav class="lp-navbar" id="lp-navbar">
             <div class="lp-navbar-inner">
                 <div class="lp-nav-logo">
-                    <div class="lp-nav-monogram">
-                        <img src="assets/ce-favicon.png" alt="CE" style="width:100%;height:100%;object-fit:contain;border-radius:6px" onerror="this.parentElement.textContent='CE'">
-                    </div>
+                    <div class="lp-nav-monogram" style="background-image:url(assets/ce-favicon.png);background-size:cover;background-position:center">CE</div>
                     <span class="lp-nav-brand">Chauffeur Empire</span>
                 </div>
                 <div class="lp-nav-links">
@@ -328,9 +326,7 @@ function _showAuthOverlay() {
 
             <!-- Sinistra: Copywriting -->
             <div class="lp-copy">
-                <div class="lp-monogram">
-                    <img src="assets/ce-logo.png" alt="Chauffeur Empire" style="width:100%;height:100%;object-fit:contain;border-radius:10px" onerror="this.parentElement.textContent='CE'">
-                </div>
+                <div class="lp-monogram" style="background-image:url(assets/ce-logo.png);background-size:contain;background-repeat:no-repeat;background-position:center"></div>
                 <h1 class="lp-headline">DOMINA LE STRADE.<br>COSTRUISCI IL TUO IMPERO.</h1>
                 <p class="lp-tagline">Il simulatore gestionale MMO dove ogni corsa, ogni autista e ogni investimento determinano il tuo potere. Fonda la tua compagnia di Chauffeur e scala la vetta globale.</p>
                 <div class="lp-badges">
@@ -437,11 +433,8 @@ function _showAuthOverlay() {
             </div>
             <div class="lp-showcase-grid">
                 <div class="lp-showcase-slot">
-                    <div class="lp-showcase-thumb lp-st-map">
-                        <img src="assets/map-preview.jpg" alt="Mappa Globale Live"
-                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.82"
-                             onerror="this.style.display='none';this.nextSibling.style.display='flex'">
-                        <div class="lp-st-icon" style="display:none">📡</div>
+                    <div class="lp-showcase-thumb lp-st-map" style="background-image:url(assets/map-preview.jpg);background-size:cover;background-position:center">
+                        <div style="position:absolute;inset:0;background:rgba(0,0,0,0.18);z-index:0"></div>
                     </div>
                     <div class="lp-showcase-label">Mappa Globale Live</div>
                     <div class="lp-showcase-sub">Monitora i tuoi autisti in tempo reale sulla mappa 3D interattiva con traffico e meteo dinamici.</div>
@@ -528,9 +521,7 @@ function _showAuthOverlay() {
         <footer class="lp-footer">
             <div class="lp-footer-inner">
                 <div class="lp-footer-brand">
-                    <div class="lp-footer-monogram">
-                        <img src="assets/ce-favicon.png" alt="CE" style="width:100%;height:100%;object-fit:contain;border-radius:6px" onerror="this.parentElement.textContent='CE'">
-                    </div>
+                    <div class="lp-footer-monogram" style="background-image:url(assets/ce-favicon.png);background-size:cover;background-position:center">CE</div>
                     <div>
                         <div class="lp-footer-name">Chauffeur Empire</div>
                         <div class="lp-footer-copy">© 2026 Olga Vision Agency</div>
