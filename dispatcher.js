@@ -638,22 +638,35 @@ window.openGarage3D = function(carId) {
 
     const vClass   = car.vehicleClass || 'mercedes_e';
     const upgrades = car.upgrades || [];
-    const svgArt   = _generateVehicleSVG(vClass, upgrades);
+
+    const catalog  = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : []).find(c => c.vehicleClass === vClass || c.id === vClass);
+    const carImg   = catalog?.img || '';
+    const isElec   = catalog?.fuel === 'electric';
 
     const template = (typeof FLEET_VEHICLE_CLASSES !== 'undefined' ? FLEET_VEHICLE_CLASSES : []).find(x => x.id === vClass) || {};
-    const seats   = template.capacity || (vClass === 'mercedes_v' ? 7 : vClass === 'mercedes_sprinter' ? 8 : 3);
-    const luggage = vClass === 'mercedes_v' ? 7 : vClass === 'mercedes_sprinter' ? 12 : 3;
+    const seats   = template.capacity || (vClass.includes('carr') || vClass === 'mercedes_v' ? 7 : vClass.includes('sprinter') ? 8 : 3);
+    const luggage = vClass.includes('carr') || vClass === 'mercedes_v' ? 7 : vClass.includes('sprinter') ? 12 : 3;
+
+    const leftPanel = carImg
+        ? `<div class="w-full md:w-3/5 relative flex items-center justify-center overflow-hidden" style="min-height:320px;background:#050810">
+               <img src="${carImg}" alt="${car.name}"
+                    class="absolute inset-0 w-full h-full object-cover opacity-80"
+                    style="object-position:center">
+               <div class="absolute inset-0 bg-gradient-to-r from-transparent to-black/60 pointer-events-none"></div>
+               <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none"></div>
+               ${isElec ? `<div class="absolute top-4 left-4 bg-green-500/90 text-white text-xs font-bold px-2 py-1 rounded shadow">⚡ CO2 ESENTE</div>` : ''}
+               <div class="absolute bottom-4 left-4 right-4 text-white/40 text-[8px] uppercase tracking-widest font-mono">${vClass.replace(/_/g,' ').toUpperCase()}</div>
+           </div>`
+        : `<div class="w-full md:w-3/5 bg-black/80 relative flex items-center justify-center p-8 overflow-hidden" style="min-height:320px">
+               <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black/90 pointer-events-none"></div>
+               <div class="relative z-10 w-full drop-shadow-[0_20px_30px_rgba(0,0,0,1)] transition-transform duration-700 hover:scale-105">
+                   ${typeof _generateVehicleSVG === 'function' ? _generateVehicleSVG(vClass, upgrades) : ''}
+               </div>
+           </div>`;
 
     modal.innerHTML = `
         <div class="bg-panel border border-white/10 rounded-2xl w-[95%] max-w-5xl min-h-[500px] overflow-hidden relative shadow-2xl flex flex-col md:flex-row transform transition-all" style="max-height:90vh">
-            <div class="w-full md:w-3/5 bg-black/80 relative flex items-center justify-center p-8 overflow-hidden" style="min-height:320px">
-                <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black/90 pointer-events-none"></div>
-                <div class="absolute bottom-0 w-full h-32 bg-gradient-to-t from-blue-500/10 to-transparent"></div>
-                <div class="relative z-10 w-full drop-shadow-[0_20px_30px_rgba(0,0,0,1)] transition-transform duration-700 hover:scale-105">
-                    ${svgArt}
-                </div>
-                ${upgrades.includes('upg_vip') ? '<div class="absolute bottom-16 left-1/2 -translate-x-1/2 w-1/2 h-4 bg-gold/30 blur-2xl rounded-[100%]"></div>' : ''}
-            </div>
+            ${leftPanel}
             <div class="w-full md:w-2/5 p-8 bg-panel border-l border-white/10 flex flex-col justify-between overflow-y-auto">
                 <div>
                     <div class="flex justify-between items-start mb-2">
@@ -669,9 +682,9 @@ window.openGarage3D = function(carId) {
                             </div>
                         </div>
                         <div>
-                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">⛽ CARBURANTE</span><span class="text-white">${Math.floor(car.fuel || 100)}%</span></div>
+                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">${isElec ? '⚡ BATTERIA' : '⛽ CARBURANTE'}</span><span class="text-white">${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%</span></div>
                             <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
-                                <div class="h-full bg-blue-500 transition-all duration-1000 ease-out" style="width:0%" id="anim-fuel"></div>
+                                <div class="h-full ${isElec ? 'bg-green-500' : 'bg-blue-500'} transition-all duration-1000 ease-out" style="width:0%" id="anim-fuel"></div>
                             </div>
                         </div>
                         <div>
@@ -713,7 +726,7 @@ window.openGarage3D = function(carId) {
         const fuelEl = document.getElementById('anim-fuel');
         const tireEl = document.getElementById('anim-tire');
         if (condEl) condEl.style.width = `${Math.floor(car.condition)}%`;
-        if (fuelEl) fuelEl.style.width = `${Math.floor(car.fuel || 100)}%`;
+        if (fuelEl) fuelEl.style.width = `${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%`;
         if (tireEl) tireEl.style.width = `${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%`;
     }, 50);
 };
