@@ -44,6 +44,17 @@ const ServerState = (() => {
         // Push authoritative values into the local gameState bridge
         _bridgeToGameState();
 
+        // Sync live fuel price into gameState
+        try {
+            const liveFuelPrice = await getFuelPrice();
+            if (liveFuelPrice && window.gameState) {
+                gameState.fuelPrice = parseFloat(liveFuelPrice);
+                console.log('[ServerState] ⛽ Fuel price:', gameState.fuelPrice);
+            }
+        } catch(e) {
+            console.warn('[ServerState] Fuel price fetch failed (table may not exist yet):', e.message);
+        }
+
         return getState();
     }
 
@@ -110,6 +121,21 @@ const ServerState = (() => {
                 { event: '*', schema: 'public', table: 'active_trips',
                   filter: `company_id=eq.${_company.id}` },
                 _onTripChange)
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'provinces' },
+                () => { if (typeof renderTabProvinces === 'function' && _tabIs?.('provinces')) renderTabProvinces(); })
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'company_real_estate',
+                  filter: `company_id=eq.${_company.id}` },
+                () => { if (typeof renderTabRealEstate === 'function' && _tabIs?.('realestate')) renderTabRealEstate(); })
+            .on('postgres_changes',
+                { event: 'INSERT', schema: 'public', table: 'fuel_market' },
+                (payload) => {
+                    if (payload.new?.price_eur && window.gameState) {
+                        gameState.fuelPrice = parseFloat(payload.new.price_eur);
+                        if (typeof updateUI === 'function') updateUI();
+                    }
+                })
             .subscribe((status) => {
                 console.log('[ServerState] Realtime:', status);
             });
@@ -365,6 +391,43 @@ const ServerState = (() => {
         return _rpc('rpc_unlock_region', { v_region_id: regionId, v_price: Math.round(price) });
     }
 
+    // ── Province War ──────────────────────────────────────────────────────────
+    async function acquireProvince(provinceId, offer) {
+        return _rpc('rpc_acquire_province', { v_province_id: provinceId, v_offer: Math.round(offer) });
+    }
+
+    // ── Real Estate ───────────────────────────────────────────────────────────
+    async function buyRealEstate(listingId) {
+        return _rpc('rpc_buy_real_estate', { v_listing_id: listingId });
+    }
+
+    // ── Fuel Market ───────────────────────────────────────────────────────────
+    async function getFuelPrice() {
+        _assertReady();
+        const { data, error } = await _supabase
+            .from('fuel_market')
+            .select('price_eur')
+            .order('updated_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+        if (error) return null;
+        return data?.price_eur ?? 1.85;
+    }
+
+    // ── Vehicle sell ──────────────────────────────────────────────────────────
+    async function sellVehicle(vehicleId, price) {
+        return _rpc('rpc_sell_vehicle', { v_vehicle_id: vehicleId, v_price: Math.round(price) });
+    }
+
+    // ── Tire refill (per-car) ─────────────────────────────────────────────────
+    async function refillCarTires(vehicleId, cost) {
+        return _rpc('rpc_refuel_vehicle', {
+            v_vehicle_id:  vehicleId,
+            v_fuel_amount: 0,
+            v_cost:        Math.round(cost),
+        });
+    }
+
     // ── CEO Rest ──────────────────────────────────────────────────────────────
     async function restCeo(hotelStars, cost) {
         return _rpc('rpc_rest_ceo', { v_hotel_stars: hotelStars, v_cost: Math.round(cost) });
@@ -422,11 +485,19 @@ const ServerState = (() => {
         if (mustBeReady && !_supabase) throw new Error('[ServerState] non inizializzato — chiama ServerState.init() dopo il login');
     }
 
+    const _CRITICAL_RPCS = new Set([
+        'rpc_claim_trip_reward', 'rpc_buy_vehicle', 'rpc_take_loan',
+        'rpc_acquire_province',  'rpc_buy_real_estate',
+    ]);
+
     function _handleRpcError(rpcName, error) {
         const msg = error?.message || error?.details || JSON.stringify(error);
         console.error(`[ServerState] RPC ${rpcName} fallita:`, msg, error);
         if (typeof showNotification === 'function') {
-            showNotification(`⚠ ${msg}`, 'error');
+            const supportHint = _CRITICAL_RPCS.has(rpcName)
+                ? `\nSe il problema persiste, scrivi a ${(window.GAME_CONFIG || {}).SUPPORT_EMAIL || 'support@chauffeurempire.com'}`
+                : '';
+            showNotification(`⚠ ${msg}${supportHint}`, 'error');
         }
     }
 
@@ -449,6 +520,11 @@ const ServerState = (() => {
         takeLoan,
         repayLoan,
         unlockRegion,
+        acquireProvince,
+        buyRealEstate,
+        getFuelPrice,
+        sellVehicle,
+        refillCarTires,
         restCeo,
         collectDailyCosts,
         upgradeOfflineLimit,
