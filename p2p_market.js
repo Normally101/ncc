@@ -298,17 +298,24 @@ async function p2pFetchHoldings() {
     if (!_sb()) return;
     const uid = _uid();
 
-    const { data: all, error } = await _sb()
-        .from('holdings')
-        .select('*, holding_members(user_id, company_name, role)')
-        .order('created_at', { ascending: false });
+    // Two separate queries to avoid PostgREST embedded-join schema cache issues
+    const [hRes, mRes] = await Promise.all([
+        _sb().from('holdings').select('*').order('created_at', { ascending: false }),
+        _sb().from('holding_members').select('holding_id, user_id, company_name, role'),
+    ]);
 
-    if (!error && all) {
-        window._p2pMarket.holdings = all;
-        window._p2pMarket.myHolding = uid
-            ? (all.find(h => h.holding_members?.some(m => m.user_id === uid)) || null)
-            : null;
-    }
+    if (hRes.error || mRes.error) return;
+
+    const members = mRes.data || [];
+    const all = (hRes.data || []).map(h => ({
+        ...h,
+        holding_members: members.filter(m => m.holding_id === h.id),
+    }));
+
+    window._p2pMarket.holdings = all;
+    window._p2pMarket.myHolding = uid
+        ? (all.find(h => h.holding_members.some(m => m.user_id === uid)) || null)
+        : null;
 }
 
 /** Refresh completo di tutti i dati P2P */
