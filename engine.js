@@ -3020,7 +3020,7 @@ function startNextRide(driver) {
     let condLoss = ride.tier === 'ultra' ? 2.5 : (ride.tier === 'vip' ? 2 : 1.5);
     if (hasInvestment('inv_driver_school')) condLoss = Math.max(0.5, condLoss * 0.5);
     if (driver.trait?.condMult) condLoss *= driver.trait.condMult;
-    car.condition -= condLoss;
+    car.condition = Math.max(0, car.condition - condLoss);
 
     // Durata: traffico + meteo + tratto autista + Telepass
     const trafficMult  = _getTrafficMult();
