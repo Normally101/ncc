@@ -648,14 +648,12 @@ window.openGarage3D = function(carId) {
     const luggage = vClass.includes('carr') || vClass === 'mercedes_v' ? 7 : vClass.includes('sprinter') ? 12 : 3;
 
     const leftPanel = carImg
-        ? `<div class="w-full md:w-3/5 relative flex items-center justify-center overflow-hidden" style="min-height:320px;background:#050810">
+        ? `<div class="w-full md:w-3/5 relative overflow-hidden" style="min-height:320px">
                <img src="${carImg}" alt="${car.name}"
-                    class="absolute inset-0 w-full h-full object-cover opacity-80"
+                    class="absolute inset-0 w-full h-full object-cover"
                     style="object-position:center">
-               <div class="absolute inset-0 bg-gradient-to-r from-transparent to-black/60 pointer-events-none"></div>
-               <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none"></div>
                ${isElec ? `<div class="absolute top-4 left-4 bg-green-500/90 text-white text-xs font-bold px-2 py-1 rounded shadow">⚡ CO2 ESENTE</div>` : ''}
-               <div class="absolute bottom-4 left-4 right-4 text-white/40 text-[8px] uppercase tracking-widest font-mono">${vClass.replace(/_/g,' ').toUpperCase()}</div>
+               <div class="absolute bottom-3 left-4 text-white/50 text-[8px] uppercase tracking-widest font-mono">${vClass.replace(/_/g,' ').toUpperCase()}</div>
            </div>`
         : `<div class="w-full md:w-3/5 bg-black/80 relative flex items-center justify-center p-8 overflow-hidden" style="min-height:320px">
                <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black/90 pointer-events-none"></div>
@@ -719,7 +717,7 @@ window.openGarage3D = function(carId) {
 
     modal.classList.remove('hidden');
     modal.classList.add('flex');
-    modal.style.cssText = 'position:fixed;inset:0;z-index:110;background:rgba(0,0,0,0.85);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:110;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
 
     setTimeout(() => {
         const condEl = document.getElementById('anim-cond');
