@@ -855,18 +855,19 @@ function _checkDriverLevel(driver) {
     }
 }
 
-window.refillTires = function(carId) {
+window.refillTires = async function(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
     if (car.tirePressure === undefined) car.tirePressure = 0;
     const missing = 100 - car.tirePressure;
     if (missing <= 0) { showNotification('Pressione gomme ottimale!', 'error'); return; }
-    const cost = Math.ceil(missing * 0.8); // cheap — tire inflation
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost}`, 'error'); return; }
-    gameState.cash -= cost;
+    const cost = Math.ceil(missing * 0.8);
+
+    const result = await ServerState.refillCarTires(car._serverId, cost);
+    if (!result) return;
+
     car.tirePressure = 100;
     logToMap(`🔧 ${car.name}: pressione gomme ripristinata. (−€${cost})`);
-    updateUI();
     if (typeof closeModals === 'function') closeModals();
     if (typeof renderTabFleet === 'function') renderTabFleet();
     saveGame();
@@ -1283,22 +1284,23 @@ window.returnToHub = function(carId) {
 };
 
 // ─── BLACK MARKET FUEL (Gasolio Agricolo) ─────────────────────────
-window.buyBlackMarketFuel = function(carId) {
+window.buyBlackMarketFuel = async function(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
     if (car.engineHealth <= 0) { showNotification('⚙️ Motore fuso! Ripara prima il motore.', 'error'); return; }
-    const fuelNeeded = 100 - (car.fuel || 0); // % points needed
+    const fuelNeeded = 100 - (car.fuel || 0);
     if (fuelNeeded < 1) { showNotification('Il serbatoio è già pieno!', 'error'); return; }
-    const litres    = fuelNeeded * 0.5;                          // 1% ≈ 0.5 L
-    const price     = (gameState.fuelPrice || 1.85) * 0.60;     // 40% discount
-    const cost      = Math.floor(litres * price);
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost}`, 'error'); return; }
-    gameState.cash -= cost;
+    const litres = fuelNeeded * 0.5;
+    const price  = (gameState.fuelPrice || 1.85) * 0.60;
+    const cost   = Math.floor(litres * price);
+
+    const result = await ServerState.refuelVehicle(car._serverId, Math.ceil(litres), cost);
+    if (!result) return;
+
     car.fuel = 100;
     if (car.outOfService === 'fuel') car.outOfService = null;
     logToMap(`⛽🖤 ${car.name}: rifornito con gasolio agricolo. −€${cost}`);
     showNotification(`⛽ Gasolio agricolo: +${Math.floor(fuelNeeded)}% · −€${cost}`, 'success');
-    // 10% chance of engine damage
     if (Math.random() < 0.10) {
         car.engineHealth = Math.max(0, (car.engineHealth || 100) - 20);
         logToMap(`⚙️ RISCHIO MOTORE: ${car.name} danneggiato (${car.engineHealth}%)!`);
@@ -1313,7 +1315,7 @@ window.buyBlackMarketFuel = function(carId) {
 };
 
 // ─── STANDARD FUEL (distributore pubblico, prezzo pieno) ──────────
-window.buyStandardFuel = function(carId) {
+window.buyStandardFuel = async function(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
     if (car.engineHealth <= 0) { showNotification('⚙️ Motore fuso! Ripara prima il motore.', 'error'); return; }
@@ -1322,8 +1324,10 @@ window.buyStandardFuel = function(carId) {
     const litres = fuelNeeded * 0.5;
     const price  = gameState.fuelPrice || 1.85;
     const cost   = Math.floor(litres * price);
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost}`, 'error'); return; }
-    gameState.cash -= cost;
+
+    const result = await ServerState.refuelVehicle(car._serverId, Math.ceil(litres), cost);
+    if (!result) return;
+
     car.fuel = 100;
     if (car.outOfService === 'fuel') car.outOfService = null;
     logToMap(`⛽ ${car.name}: rifornito al distributore. −€${cost}`);
@@ -1333,14 +1337,16 @@ window.buyStandardFuel = function(carId) {
 };
 
 // ─── RIPARAZIONE MOTORE ───────────────────────────────────────────
-window.repairEngine = function(carId) {
+window.repairEngine = async function(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
     if ((car.engineHealth || 100) >= 100) { showNotification('Il motore è già in perfette condizioni.', 'error'); return; }
     const damage     = 100 - (car.engineHealth || 100);
-    const repairCost = Math.max(800, damage * 180); // €180 per punto danno, min €800
-    if (gameState.cash < repairCost) { showNotification(`Fondi insufficienti! Ripara motore: €${repairCost.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= repairCost;
+    const repairCost = Math.max(800, damage * 180);
+
+    const result = await ServerState.repairVehicle(car._serverId, repairCost);
+    if (!result) return;
+
     car.engineHealth = 100;
     if (car.outOfService === 'engine') car.outOfService = null;
     logToMap(`🔧 ${car.name}: motore riparato. −€${repairCost.toLocaleString()}`);
@@ -3347,7 +3353,7 @@ function negotiateEmail(emailId, action, choiceIdx = null) {
 }
 
 // ─── GESTIONE AVANZATA AUTO (RIPARA, VENDI, ASSEGNA) ───
-function payToRepairCar(carId) {
+async function payToRepairCar(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if(!car) return;
     if(car.condition === 100) return;
@@ -3363,19 +3369,19 @@ function payToRepairCar(carId) {
     }
 
     let cost = (100 - car.condition) * 25;
-    if (gameState.staff.some(s => s.id === 'mech')) cost = cost * 0.5;
+    if (gameState.staff.some(s => s.id === 'mech')) cost = Math.floor(cost * 0.5);
     if (hasInvestment('inv_mobile_workshop')) cost = Math.floor(cost * 0.8);
 
-    if(gameState.cash >= cost) {
-        gameState.cash -= cost;
-        car.condition = 100;
-        if(typeof closeModals === 'function') closeModals();
-        if(typeof renderTabFleet === 'function') renderTabFleet();
-        updateUI();
-    }
+    const result = await ServerState.repairVehicle(car._serverId, cost);
+    if (!result) return;
+
+    car.condition = 100;
+    if(typeof closeModals === 'function') closeModals();
+    if(typeof renderTabFleet === 'function') renderTabFleet();
+    updateUI();
 }
 
-function sellCar(carId) {
+async function sellCar(carId) {
     const idx = gameState.fleet.findIndex(c => c.id === carId);
     if(idx === -1) return;
     const car = gameState.fleet[idx];
@@ -3386,10 +3392,11 @@ function sellCar(carId) {
     let baseValue = car.tier === 'ultra' ? 180000 : (car.tier === 'vip' ? 70000 : 35000);
     let sellPrice = Math.floor(baseValue * (car.condition / 100) * 0.7);
 
-    gameState.cash += sellPrice;
+    const result = await ServerState.sellVehicle(car._serverId, sellPrice);
+    if (!result) return;
+
     let driver = gameState.drivers.find(d => d.assignedCarId === car.id);
     if (driver) driver.assignedCarId = null;
-
     gameState.fleet.splice(idx, 1);
     if(typeof closeModals === 'function') closeModals();
     if(typeof renderTabFleet === 'function') renderTabFleet();
@@ -3445,15 +3452,18 @@ function confirmLease() {
     if(typeof renderTabFleet === 'function') renderTabFleet();
 }
 
-function rest(stars) {
-    let cost = stars === 3 ? 80 : (stars === 4 ? 200 : 600);
-    let energyGain = stars === 3 ? 50 : (stars === 4 ? 75 : 100);
-    let repGain = stars === 5 ? 0.1 : 0;
+async function rest(stars) {
+    const cost       = stars === 3 ? 80  : (stars === 4 ? 200  : 600);
+    const energyGain = stars === 3 ? 50  : (stars === 4 ? 75   : 100);
+    const repGain    = stars === 5 ? 0.1 : 0;
 
-    if(gameState.cash >= cost) {
-        gameState.cash -= cost; gameState.energy = Math.min(100, gameState.energy + energyGain); gameState.reputation += repGain;
-        if(typeof closeModals === 'function') closeModals(); updateUI();
-    }
+    const result = await ServerState.restCeo(stars, cost);
+    if (!result) return;
+
+    gameState.energy     = Math.min(100, gameState.energy + energyGain);
+    gameState.reputation += repGain;
+    if(typeof closeModals === 'function') closeModals();
+    updateUI();
 }
 
 window.foundCompany = function(lng, lat, customName) {
@@ -3483,31 +3493,36 @@ window.foundCompany = function(lng, lat, customName) {
     saveGame();
 };
 
-function buyRegion(regionId) {
+async function buyRegion(regionId) {
     const region = REGIONS[regionId];
-    if (gameState.cash >= region.price && gameState.reputation >= region.repReq) {
-        gameState.cash -= region.price; gameState.unlockedRegions.push(regionId);
-        if (window.ServerState?.isReady()) window.ServerState.unlockRegion(regionId, region.price).catch(() => {});
-        updateUI(); if(typeof renderTabRegions==='function') renderTabRegions();
-        if (typeof drawHighways === 'function') drawHighways();
-        if (typeof drawPOIs === 'function') drawPOIs();
-        if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
-        saveGame();
+    if (!region) return;
+    if (gameState.reputation < region.repReq) {
+        showNotification(`Reputazione insufficiente (${region.repReq}★ richiesti)`, 'error');
+        return;
     }
+
+    const result = await ServerState.unlockRegion(regionId, region.price);
+    if (!result) return;
+
+    gameState.unlockedRegions.push(regionId);
+    updateUI();
+    if(typeof renderTabRegions==='function') renderTabRegions();
+    if (typeof drawHighways === 'function') drawHighways();
+    if (typeof drawPOIs === 'function') drawPOIs();
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+    saveGame();
 }
 
-function buyInvestment(invId) {
+async function buyInvestment(invId) {
     const item = INVESTMENTS.find(i => i.id === invId);
     if (!item || gameState.investments.includes(invId)) return;
-    // Check if already under construction
     if ((gameState.constructions || []).some(c => c.invId === invId)) {
         if (typeof showNotification === 'function') showNotification('Costruzione già in corso!', 'error');
         return;
     }
-    if (gameState.cash < item.price) { if(typeof showNotification==='function') showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= item.price;
-    // Server-authoritative debit — fires in parallel, does not block UI
-    if (window.ServerState?.isReady()) window.ServerState.buyInvestment(invId, item.price).catch(() => {});
+
+    const result = await ServerState.buyInvestment(invId, item.price);
+    if (!result) return;
 
     if (item.buildTime) {
         // Time-gated: enter construction queue instead of activating immediately
