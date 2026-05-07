@@ -56,7 +56,7 @@ window.listCarForSale = async function(carId, askPrice) {
         // Rollback: restituisci l'auto
         gameState.fleet.push(car);
         if (driver) driver.assignedCarId = carId;
-        saveGame();
+        await saveGame();
         if (typeof updateUI === 'function') updateUI();
         if (typeof renderTabFleet === 'function') renderTabFleet();
         showNotification(`Errore pubblicazione: ${error.message}`, 'error');
@@ -112,7 +112,7 @@ window.buyP2PCar = async function(listingId) {
         v_listing_id: listingId,
     });
 
-    if (error) { showNotification(`Acquisto fallito: ${error.message}`, 'error'); return; }
+    if (error || !data) { showNotification(`Acquisto fallito: ${error?.message || 'risposta vuota'}`, 'error'); return; }
 
     // Aggiorna gameState locale con cash aggiornato e nuova auto
     // ServerState (Realtime) aggiorna gameState.cash dal server; evitiamo doppia deduzione
@@ -199,10 +199,10 @@ window.listCompanyIPO = async function() {
         v_shares_total: 1000,
     });
 
-    if (error) { showNotification(`IPO fallita: ${error.message}`, 'error'); return; }
+    if (error || !data) { showNotification(`IPO fallita: ${error?.message || 'risposta vuota'}`, 'error'); return; }
 
     // Aggiorna gameState locale
-    gameState.cash -= 50000;
+    if (!window.ServerState?.isReady()) gameState.cash -= 50000;
     gameState.companyIPO = {
         listed:      true,
         listedDay:   gameState.day,
@@ -233,7 +233,7 @@ window.buyCompanyShares = async function(listingId, qty) {
     const { data, error } = await _sb().rpc('rpc_buy_company_shares', {
         v_listing_id: listingId, v_qty: qty,
     });
-    if (error) { showNotification(`Acquisto azioni fallito: ${error.message}`, 'error'); return; }
+    if (error || !data) { showNotification(`Acquisto azioni fallito: ${error?.message || 'risposta vuota'}`, 'error'); return; }
 
     if (!window.ServerState?.isReady()) gameState.cash -= total;
     await saveGame();
@@ -248,7 +248,7 @@ window.sellCompanyShares = async function(listingId, qty) {
     const { data, error } = await _sb().rpc('rpc_sell_company_shares', {
         v_listing_id: listingId, v_qty: qty,
     });
-    if (error) { showNotification(`Vendita azioni fallita: ${error.message}`, 'error'); return; }
+    if (error || !data) { showNotification(`Vendita azioni fallita: ${error?.message || 'risposta vuota'}`, 'error'); return; }
 
     if (!window.ServerState?.isReady()) gameState.cash += data.total;
     await saveGame();
