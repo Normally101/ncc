@@ -122,6 +122,48 @@ let gameState = {
 
 function hasInvestment(id) { return gameState.investments.includes(id); }
 
+// ─── STELLAR & VOLT COLLECTION ───────────────────────────────────────────────
+const STELLAR_VOLT_CATALOG = [
+    { id:'stellar_e_exec',  name:'Stellar E-Executive', img:'assets/fleet/stellar-e-executive.jpg',  tier:'BUSINESS',     fuel:'gasoline', price:120000, co2PerKm:0.18, vehicleClass:'stellar_e_exec'  },
+    { id:'stellar_v_carr',  name:'Stellar V-Carrier',   img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PREMIUM',      fuel:'gasoline', price:95000,  co2PerKm:0.22, vehicleClass:'stellar_v_carr'  },
+    { id:'stellar_s_imp',   name:'Stellar S-Imperial',  img:'assets/fleet/stellar-s-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'gasoline', price:250000, co2PerKm:0.20, vehicleClass:'stellar_s_imp'   },
+    { id:'stellar_g_over',  name:'Stellar G-Overlord',  img:'assets/fleet/stellar-g-overlord.jpg',   tier:'ARMORED',      fuel:'gasoline', price:320000, co2PerKm:0.28, vehicleClass:'stellar_g_over'  },
+    { id:'volt_s_apex',     name:'Volt S-Apex',         img:'assets/fleet/volt-s-apex.jpg',          tier:'PRESIDENTIAL', fuel:'electric', price:280000, co2PerKm:0.00, vehicleClass:'volt_s_apex'     },
+];
+window.STELLAR_VOLT_CATALOG = STELLAR_VOLT_CATALOG;
+
+function _isElectric(car) {
+    const cat = STELLAR_VOLT_CATALOG.find(c => c.vehicleClass === car.vehicleClass || c.id === car.vehicleClass);
+    return cat?.fuel === 'electric';
+}
+
+const CO2_RATE_EUR_PER_KG = 0.15; // €0.15/kg CO2 (EU ETS semplificato)
+
+function _co2TaxForRide(car, distKm) {
+    const cat = STELLAR_VOLT_CATALOG.find(c => c.vehicleClass === car.vehicleClass || c.id === car.vehicleClass);
+    const co2PerKm = cat?.co2PerKm ?? 0.18;
+    return Math.round(distKm * co2PerKm * CO2_RATE_EUR_PER_KG);
+}
+window._co2TaxForRide = _co2TaxForRide;
+
+window.superchargeVehicle = async function(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car || !_isElectric(car)) return;
+    const charge = car.chargeLevel ?? 100;
+    if (charge >= 100) { showNotification('Batteria già al 100%!', 'error'); return; }
+    const cost = 80; // Supercharger flat fee €80
+
+    const result = await ServerState.refuelVehicle(car._serverId, 0, cost);
+    if (!result) return;
+
+    car.chargeLevel = 100;
+    if (car.outOfService === 'fuel') car.outOfService = null;
+    logToMap(`⚡ ${car.name}: ricaricata al Supercharger. −€${cost}`);
+    showNotification(`⚡ Supercharger: batteria al 100% · −€${cost}`, 'success');
+    saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
 function _applyBrandColor() {
     const color = gameState.companyColor || '#d4af37';
     document.documentElement.style.setProperty('--gold', color);
