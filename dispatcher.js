@@ -1447,28 +1447,39 @@ function renderTabFleet() {
     const activeBrand = window._fleetFilter.brand;
     const activeTier  = window._fleetFilter.tier;
 
+    const _brandMeta = {
+        'Stellar':  { color:'#3b82f6', bg:'rgba(59,130,246,0.12)',  border:'rgba(59,130,246,0.35)',  icon:'✦' },
+        'Volt':     { color:'#22c55e', bg:'rgba(34,197,94,0.12)',   border:'rgba(34,197,94,0.35)',   icon:'⚡' },
+        'Majestic': { color:'#d4af37', bg:'rgba(212,175,55,0.12)',  border:'rgba(212,175,55,0.35)',  icon:'♛' },
+    };
+    const _bm = b => _brandMeta[b] || { color:'#9ca3af', bg:'rgba(255,255,255,0.04)', border:'rgba(255,255,255,0.12)', icon:b.charAt(0).toUpperCase() };
+
     const filterBar = (allBrands.length > 1 || allTiers.length > 1) ? `
-    <div class="mb-3">
+    <div class="mb-4">
         ${allBrands.length > 1 ? `
-        <div class="text-[8px] text-gray-600 uppercase tracking-widest mb-1">Produttore</div>
-        <div class="flex flex-wrap gap-1.5 mb-2">
+        <div class="text-[8px] text-gray-500 uppercase tracking-widest mb-2">Produttore</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:12px">
             <button onclick="window._fleetFilter.brand=null;renderTabFleet()"
-                class="text-[8px] px-2 py-1 rounded-full border transition-colors"
-                style="${!activeBrand ? 'background:rgba(212,175,55,0.2);border-color:rgba(212,175,55,0.6);color:#d4af37;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#6b7280'}">
-                Tutti (${gameState.fleet.length})
+                style="padding:12px 6px;border-radius:12px;border:1px solid ${!activeBrand ? 'rgba(212,175,55,0.55)' : 'rgba(255,255,255,0.1)'};background:${!activeBrand ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.03)'};text-align:center;cursor:pointer;transition:all .15s">
+                <div style="font-size:16px;margin-bottom:4px">🚗</div>
+                <div style="font-size:10px;font-weight:800;color:${!activeBrand ? '#d4af37' : '#9ca3af'}">Tutti</div>
+                <div style="font-size:9px;color:#4b5563;margin-top:2px">${gameState.fleet.length} auto</div>
             </button>
             ${allBrands.map(b => {
                 const cnt = gameState.fleet.filter(c => _getBrand(c) === b).length;
                 const isActive = activeBrand === b;
-                return `<button onclick="window._fleetFilter.brand=${isActive?'null':JSON.stringify(b)};renderTabFleet()"
-                    class="text-[8px] px-2 py-1 rounded-full border transition-colors"
-                    style="${isActive ? 'background:rgba(212,175,55,0.2);border-color:rgba(212,175,55,0.6);color:#d4af37;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#9ca3af'}">
-                    ${b} <span style="opacity:0.6">${cnt}</span>
+                const bm = _bm(b);
+                const brandVal = isActive ? 'null' : `'${b}'`;
+                return `<button onclick="window._fleetFilter.brand=${brandVal};renderTabFleet()"
+                    style="padding:12px 6px;border-radius:12px;border:1px solid ${isActive ? bm.border.replace('0.35','0.7') : bm.border};background:${isActive ? bm.bg.replace('0.12','0.22') : bm.bg};text-align:center;cursor:pointer;transition:all .15s">
+                    <div style="font-size:16px;margin-bottom:4px;color:${bm.color}">${bm.icon}</div>
+                    <div style="font-size:10px;font-weight:800;color:${isActive ? bm.color : '#9ca3af'}">${b}</div>
+                    <div style="font-size:9px;color:#4b5563;margin-top:2px">${cnt} auto</div>
                 </button>`;
             }).join('')}
         </div>` : ''}
         ${allTiers.length > 1 ? `
-        <div class="text-[8px] text-gray-600 uppercase tracking-widest mb-1">Categoria</div>
+        <div class="text-[8px] text-gray-500 uppercase tracking-widest mb-1.5">Categoria</div>
         <div class="flex flex-wrap gap-1.5">
             <button onclick="window._fleetFilter.tier=null;renderTabFleet()"
                 class="text-[8px] px-2 py-1 rounded-full border transition-colors"
@@ -1478,9 +1489,10 @@ function renderTabFleet() {
             ${allTiers.map(t => {
                 const cnt = gameState.fleet.filter(c => c.tier === t).length;
                 const isActive = activeTier === t;
-                return `<button onclick="window._fleetFilter.tier=${isActive?'null':JSON.stringify(t)};renderTabFleet()"
+                const tierVal = isActive ? 'null' : `'${t}'`;
+                return `<button onclick="window._fleetFilter.tier=${tierVal};renderTabFleet()"
                     class="text-[8px] px-2 py-1 rounded-full border transition-colors"
-                    style="${isActive ? `background:${tierColors[t]};border-color:${tierBorder[t]};color:#e5e7eb;font-weight:700` : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#9ca3af'}">
+                    style="${isActive ? 'background:' + tierColors[t] + ';border-color:' + tierBorder[t] + ';color:#e5e7eb;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#9ca3af'}">
                     ${tierLabels[t]||t} <span style="opacity:0.6">${cnt}</span>
                 </button>`;
             }).join('')}
@@ -2029,29 +2041,23 @@ function renderTabStaff() {
     }
 
     // ── DRIVER ACADEMY ─────────────────────────────────────────────────────
-    html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-5">🎓 Accademia Autisti</h3>`;
-    const coursesConst = typeof ACADEMY_COURSES !== 'undefined' ? ACADEMY_COURSES : (typeof window.ACADEMY_COURSES !== 'undefined' ? window.ACADEMY_COURSES : []);
-    if (gameState.drivers.filter(d => d.id !== 'ceo').length === 0) {
+    const _academyDrivers = gameState.drivers.filter(d => d.id !== 'ceo');
+    const _inTrainingCount = (gameState.driverAcademy||[]).length;
+    html += `</div><div class="flex items-center justify-between border-b border-white/10 pb-1 mb-3 mt-5">
+        <h3 class="text-[10px] text-gold uppercase tracking-widest">🎓 Accademia Autisti</h3>
+        ${_inTrainingCount > 0 ? `<span class="text-[9px] text-yellow-400 font-bold">📚 ${_inTrainingCount} in formazione</span>` : ''}
+    </div>`;
+    if (_academyDrivers.length === 0) {
         html += `<div class="text-[9px] text-gray-600 italic mb-4">Assumi almeno un autista per accedere all'Accademia.</div>`;
     } else {
-        html += `<p class="text-[9px] text-gray-500 italic mb-3">Manda un autista a formarsi. Durante il corso sarà indisponibile.</p>`;
-        gameState.drivers.filter(d => d.id !== 'ceo').forEach(driver => {
-            const inTraining = (gameState.driverAcademy||[]).find(c => c.driverId === driver.id);
-            const curH = gameState.day * 24 + gameState.hour;
-            html += `
-            <div class="hud-card mb-3">
-                <div class="text-xs font-bold text-white mb-2">${driver.name} ${inTraining ? `<span class="text-[8px] text-yellow-400 ml-1">📚 ${inTraining.courseName} (${Math.max(0, Math.ceil(inTraining.completesHour - curH))}h)</span>` : ''}</div>
-                ${inTraining ? '' : `
-                <div class="grid grid-cols-1 gap-1">
-                    ${coursesConst.map(c => `
-                    <button onclick="startAcademyCourse('${driver.id}', '${c.id}')" class="academy-course-btn text-left">
-                        <span class="font-bold text-white">${c.name}</span><span class="ml-1 text-[7px] text-gold">€${c.cost.toLocaleString()}</span>
-                        <br><span class="text-gray-400">${c.desc}</span>
-                        <span class="text-[7px] text-gray-500 ml-1">· ${c.hours}h</span>
-                    </button>`).join('')}
-                </div>`}
-            </div>`;
-        });
+        html += `
+        <div class="hud-card mb-3 flex items-center justify-between gap-3">
+            <div>
+                <div class="text-xs font-bold text-white">Gestione Corsi</div>
+                <div class="text-[9px] text-gray-500 mt-0.5">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
+            </div>
+            <button onclick="window.openAcademyModal()" class="btn-gold !text-[9px] !py-1.5 !px-3 shrink-0">Apri Accademia →</button>
+        </div>`;
     }
 
     // ── CEO DELLA SETTIMANA ────────────────────────────────────────────────
@@ -4481,6 +4487,101 @@ function _updateActiveRouteLinesColored() {
 // Hook into the visual loop — replace the old call
 const _origVisualLoopUpdateRoutes = window._updateActiveRouteLines;
 window._updateActiveRouteLines = _updateActiveRouteLinesColored;
+
+// ─── ACCADEMIA AUTISTI MODAL ─────────────────────────────────────
+window.openAcademyModal = function() {
+    document.getElementById('academy-modal')?.remove();
+
+    const courses = typeof ACADEMY_COURSES !== 'undefined' ? ACADEMY_COURSES
+                  : (typeof window.ACADEMY_COURSES !== 'undefined' ? window.ACADEMY_COURSES : []);
+    const drivers = (gameState.drivers || []).filter(d => d.id !== 'ceo');
+    const curH    = gameState.day * 24 + gameState.hour;
+
+    const modal = document.createElement('div');
+    modal.id    = 'academy-modal';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px';
+
+    const renderModal = (selectedDriverId) => {
+        const selDriver = drivers.find(d => d.id === selectedDriverId) || drivers[0];
+        const inTraining = selDriver ? (gameState.driverAcademy||[]).find(c => c.driverId === selDriver.id) : null;
+
+        modal.innerHTML = `
+<div style="width:100%;max-width:820px;max-height:90vh;border-radius:20px;background:#0d0d14;border:1px solid rgba(255,255,255,0.08);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,0.9)">
+
+  <!-- Header -->
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:20px 28px 16px;border-bottom:1px solid rgba(255,255,255,0.07)">
+    <div>
+      <div style="font-size:13px;font-weight:800;color:#f3f4f6;letter-spacing:.04em">🎓 Accademia Autisti</div>
+      <div style="font-size:10px;color:#6b7280;margin-top:2px">Seleziona un autista e iscrivilo a un corso</div>
+    </div>
+    <button onclick="document.getElementById('academy-modal').remove()"
+      style="width:30px;height:30px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#6b7280;font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center">✕</button>
+  </div>
+
+  <div style="display:flex;flex:1;overflow:hidden;min-height:0">
+
+    <!-- LEFT: driver list -->
+    <div style="width:220px;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;padding:12px;scrollbar-width:thin;scrollbar-color:#2a2a30 transparent">
+      ${drivers.map(d => {
+        const training = (gameState.driverAcademy||[]).find(c => c.driverId === d.id);
+        const hoursLeft = training ? Math.max(0, Math.ceil(training.completesHour - curH)) : 0;
+        const isSel     = selDriver && d.id === selDriver.id;
+        const statusColor = training ? '#facc15' : d.status === 'resting' ? '#60a5fa' : d.status === 'busy' ? '#4ade80' : '#9ca3af';
+        const statusIcon  = training ? '📚' : d.status === 'resting' ? '😴' : d.status === 'busy' ? '🚗' : '✓';
+        return `<button onclick="window._academySelectDriver('${d.id}')"
+          style="width:100%;text-align:left;padding:10px 12px;border-radius:10px;border:1px solid ${isSel ? 'rgba(212,175,55,0.55)' : 'rgba(255,255,255,0.06)'};background:${isSel ? 'rgba(212,175,55,0.1)' : 'rgba(255,255,255,0.02)'};margin-bottom:6px;cursor:pointer;transition:all .15s">
+          <div style="font-size:11px;font-weight:700;color:${isSel ? '#d4af37' : '#e5e7eb'};margin-bottom:3px">${d.name}</div>
+          <div style="font-size:9px;color:${statusColor}">${statusIcon} ${training ? training.courseName + ' — ' + hoursLeft + 'h' : d.status === 'busy' ? 'In servizio' : d.status === 'resting' ? 'A riposo' : 'Disponibile'}</div>
+          <div style="font-size:8px;color:#4b5563;margin-top:2px">${d.tier?.toUpperCase() || ''} · ⭐ ${d.salary?.toLocaleString()}/g</div>
+        </button>`;
+      }).join('')}
+    </div>
+
+    <!-- RIGHT: courses -->
+    <div style="flex:1;overflow-y:auto;padding:20px 24px;scrollbar-width:thin;scrollbar-color:#2a2a30 transparent">
+      ${!selDriver ? '<div style="color:#4b5563;font-size:12px;text-align:center;padding-top:60px">Nessun autista disponibile</div>' : `
+      <div style="font-size:13px;font-weight:800;color:#f3f4f6;margin-bottom:4px">${selDriver.name}</div>
+      <div style="font-size:9px;color:#6b7280;margin-bottom:18px">${selDriver.tier?.toUpperCase() || ''} · Stipendio €${selDriver.salary?.toLocaleString()}/g</div>
+
+      ${inTraining ? `
+      <div style="background:rgba(250,204,21,0.08);border:1px solid rgba(250,204,21,0.25);border-radius:12px;padding:18px 20px">
+        <div style="font-size:11px;font-weight:800;color:#facc15;margin-bottom:4px">📚 In Formazione</div>
+        <div style="font-size:13px;font-weight:700;color:#f3f4f6;margin-bottom:6px">${inTraining.courseName}</div>
+        <div style="font-size:10px;color:#9ca3af">Completamento tra <strong style="color:#facc15">${Math.max(0, Math.ceil(inTraining.completesHour - curH))} ore</strong></div>
+        <div style="margin-top:14px;background:rgba(255,255,255,0.06);border-radius:6px;overflow:hidden;height:4px">
+          <div style="height:100%;background:#d4af37;width:${Math.max(5,Math.min(100,(1-(Math.max(0,inTraining.completesHour-curH)/(courses.find(c=>c.id==(inTraining.skill||'lang'))?.hours||8)))*100))}%"></div>
+        </div>
+      </div>` : `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        ${courses.map(c => {
+          const canAfford = gameState.cash >= c.cost;
+          const notBusy   = selDriver.status !== 'busy';
+          const enabled   = canAfford && notBusy;
+          return `<button onclick="startAcademyCourse('${selDriver.id}','${c.id}');window.openAcademyModal()"
+            style="text-align:left;padding:16px 18px;border-radius:14px;border:1px solid ${enabled ? 'rgba(212,175,55,0.25)' : 'rgba(255,255,255,0.06)'};background:${enabled ? 'rgba(212,175,55,0.06)' : 'rgba(255,255,255,0.02)'};cursor:${enabled ? 'pointer' : 'not-allowed'};opacity:${enabled ? '1' : '0.45'};transition:all .15s"
+            ${enabled ? '' : 'disabled'}>
+            <div style="font-size:11px;font-weight:800;color:${enabled ? '#f3f4f6' : '#6b7280'};margin-bottom:2px">${c.name}</div>
+            <div style="font-size:9px;color:#9ca3af;margin-bottom:8px;line-height:1.5">${c.desc}</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-size:11px;font-weight:700;color:#d4af37;font-family:monospace">€${c.cost.toLocaleString()}</span>
+              <span style="font-size:9px;color:#4b5563">⏱ ${c.hours}h</span>
+            </div>
+            ${!canAfford ? '<div style="font-size:8px;color:#ef4444;margin-top:4px">Fondi insufficienti</div>' : ''}
+            ${!notBusy ? '<div style="font-size:8px;color:#ef4444;margin-top:4px">Autista in servizio</div>' : ''}
+          </button>`;
+        }).join('')}
+      </div>`}
+      `}
+    </div>
+  </div>
+</div>`;
+    };
+
+    window._academySelectDriver = (dId) => renderModal(dId);
+    document.body.appendChild(modal);
+    modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
+    renderModal(drivers[0]?.id || null);
+};
 
 // ─── TRAIT BADGE HELPER ──────────────────────────────────────────
 window._traitBadgeHTML = function(driver) {
