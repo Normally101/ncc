@@ -453,7 +453,7 @@ function _showAuthOverlay() {
                 <div class="lp-showcase-slot" onclick="openShowcase(2)" style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-rank">
                         <img src="assets/fleet/stellar-q-imperial.jpg" alt="Classifiche Live"
-                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.55;filter:hue-rotate(160deg) saturate(0.6)">
+                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.9">
                         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(212,175,55,0.18),transparent 70%);z-index:1"></div>
                         <div class="lp-sc-expand">&#x26F6;</div>
                     </div>
@@ -463,7 +463,7 @@ function _showAuthOverlay() {
                 <div class="lp-showcase-slot" onclick="openShowcase(3)" style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-fin">
                         <img src="assets/fleet/volt-s-apex.jpg" alt="Borsa & Finanza"
-                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.45;filter:hue-rotate(90deg) saturate(0.7)">
+                             style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.9">
                         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(34,197,94,0.15),transparent 70%);z-index:1"></div>
                         <div class="lp-sc-expand">&#x26F6;</div>
                     </div>
@@ -588,13 +588,13 @@ const _showcaseData = [
     {
         title: 'Classifiche Live',
         img: 'assets/fleet/stellar-q-imperial.jpg',
-        imgStyle: 'object-fit:cover;opacity:0.7;filter:hue-rotate(160deg) saturate(0.6)',
+        imgStyle: 'object-fit:cover;opacity:1',
         desc: 'La classifica globale si aggiorna in tempo reale: ogni corsa completata, ogni contratto firmato, ogni acquisizione cambia le posizioni. Competi con CEO da tutto il mondo per il dominio delle regioni più ricche. Scala la vetta del ranking, accumula reputazione e accedi a tornei esclusivi con premi in denaro virtuale. Nella stagione competitiva mensile, solo i migliori trenta CEO vengono premiati. Il podio non aspetta nessuno.'
     },
     {
         title: 'Borsa & Finanza',
         img: 'assets/fleet/volt-s-apex.jpg',
-        imgStyle: 'object-fit:cover;opacity:0.6;filter:hue-rotate(90deg) saturate(0.7)',
+        imgStyle: 'object-fit:cover;opacity:1',
         desc: 'L\'impero non si costruisce solo con le corse. Investi i tuoi profitti nel mercato azionario interno, acquista partecipazioni in aziende di altri giocatori e lancia la tua IPO per raccogliere capitali freschi. Il sistema finanziario MMO è interconnesso in tempo reale: le scelte strategiche degli altri CEO spostano i prezzi e creano opportunità. Chi sa leggere il mercato prima degli altri vince anche senza muovere un\'auto.'
     }
 ];

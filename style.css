@@ -1445,7 +1445,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .lp-lb-panel {
     position: relative; display: flex; flex-direction: row; gap: 0;
-    max-width: 900px; width: 100%; max-height: 90vh;
+    max-width: 1100px; width: 100%; max-height: 90vh;
     background: #07070f;
     border: 1px solid rgba(212,175,55,0.18);
     border-radius: 18px; overflow: hidden;
@@ -1455,7 +1455,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 #lp-lightbox.lp-lb-in .lp-lb-panel { opacity: 1; transform: scale(1) translateY(0); }
 .lp-lb-img-wrap {
-    flex: 0 0 52%; position: relative; overflow: hidden; min-height: 300px;
+    flex: 0 0 65%; position: relative; overflow: hidden; min-height: 440px;
 }
 .lp-lb-img-wrap img {
     position: absolute; inset: 0; width: 100%; height: 100%;
