@@ -1356,6 +1356,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     border-left: 3px solid rgba(255,255,255,0.08);
     border-radius: 16px; padding: 24px 20px; position: relative;
     transition: border-color .25s, box-shadow .25s, transform .25s;
+    cursor: pointer; color: inherit;
 }
 .lp-news-card:hover {
     border-color: rgba(212,175,55,0.18); transform: translateY(-2px);

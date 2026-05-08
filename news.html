@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>News &amp; Aggiornamenti — Chauffeur Empire</title>
+    <meta name="description" content="Tutti gli aggiornamenti, patch note e novit&agrave; di Chauffeur Empire. Scopri le nuove funzionalit&agrave; aggiunte ad ogni update.">
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{background:#05050e;color:#d1d5db;font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.8;min-height:100vh}
+        /* NAV */
+        .top-nav{position:sticky;top:0;z-index:100;background:rgba(5,5,14,0.92);border-bottom:1px solid rgba(255,255,255,0.07);backdrop-filter:blur(16px);padding:0 clamp(20px,5vw,80px)}
+        .nav-inner{max-width:960px;margin:0 auto;height:56px;display:flex;align-items:center;justify-content:space-between}
+        .nav-brand{display:flex;align-items:center;gap:10px;text-decoration:none}
+        .nav-monogram{width:30px;height:30px;border-radius:6px;background:#07070f;border:1px solid rgba(212,175,55,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#d4af37;letter-spacing:.04em}
+        .nav-name{font-size:13px;font-weight:700;color:#e5e7eb;letter-spacing:.04em}
+        .nav-back{color:#d4af37;text-decoration:none;font-size:13px;display:flex;align-items:center;gap:6px;transition:opacity .2s}
+        .nav-back:hover{opacity:.7}
+        /* HERO */
+        .news-hero{padding:72px clamp(20px,5vw,80px) 48px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.05)}
+        .news-hero-eyebrow{font-size:11px;font-weight:700;letter-spacing:.14em;color:#d4af37;text-transform:uppercase;margin-bottom:14px}
+        .news-hero-title{font-size:clamp(2rem,5vw,3.2rem);font-weight:800;color:#f3f4f6;line-height:1.15;margin-bottom:16px;font-family:'Georgia',serif}
+        .news-hero-sub{font-size:15px;color:#6b7280;max-width:540px;margin:0 auto}
+        /* LAYOUT */
+        .wrap{max-width:960px;margin:0 auto;padding:56px clamp(20px,5vw,80px) 100px}
+        /* ARTICLE CARD */
+        .article{border:1px solid rgba(255,255,255,0.07);border-radius:18px;overflow:hidden;margin-bottom:40px;background:rgba(255,255,255,0.015);transition:border-color .25s}
+        .article:hover{border-color:rgba(212,175,55,0.2)}
+        .article-header{padding:32px 36px 24px;border-bottom:1px solid rgba(255,255,255,0.06)}
+        .article-meta{display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+        .badge-new{background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.4);color:#d4af37;font-size:10px;font-weight:800;letter-spacing:.1em;padding:3px 10px;border-radius:20px;text-transform:uppercase}
+        .badge-date{font-size:11px;color:#4b5563;text-transform:uppercase;letter-spacing:.08em}
+        .badge-version{background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.3);color:#93c5fd;font-size:10px;font-weight:700;letter-spacing:.06em;padding:3px 10px;border-radius:20px}
+        .article-title{font-size:1.4rem;font-weight:800;color:#f3f4f6;line-height:1.25;margin-bottom:10px}
+        .article-lead{font-size:14px;color:#6b7280;line-height:1.7}
+        .article-body{padding:28px 36px 32px}
+        h3.section{font-size:.8rem;font-weight:700;color:#d4af37;letter-spacing:.1em;text-transform:uppercase;margin:28px 0 12px;padding-bottom:6px;border-bottom:1px solid rgba(212,175,55,0.12)}
+        h3.section:first-child{margin-top:0}
+        .changelog{list-style:none;margin:0 0 20px;padding:0}
+        .changelog li{padding:8px 0 8px 20px;border-bottom:1px solid rgba(255,255,255,0.04);color:#9ca3af;font-size:14px;position:relative;line-height:1.6}
+        .changelog li:last-child{border-bottom:none}
+        .changelog li::before{content:'';position:absolute;left:0;top:17px;width:6px;height:6px;border-radius:50%;background:#d4af37;opacity:.5}
+        .tag-feat::before{background:#22c55e !important;opacity:.8 !important}
+        .tag-fix::before{background:#f59e0b !important;opacity:.8 !important}
+        .tag-balance::before{background:#818cf8 !important;opacity:.8 !important}
+        .tag-new::before{background:#d4af37 !important;opacity:1 !important}
+        .tag{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.06em;padding:1px 7px;border-radius:4px;margin-right:6px;text-transform:uppercase;vertical-align:middle;position:relative;top:-1px}
+        .tag-feat-lbl{background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.25)}
+        .tag-fix-lbl{background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.25)}
+        .tag-balance-lbl{background:rgba(129,140,248,0.15);color:#a5b4fc;border:1px solid rgba(129,140,248,0.25)}
+        .tag-new-lbl{background:rgba(212,175,55,0.15);color:#d4af37;border:1px solid rgba(212,175,55,0.3)}
+        p.body-text{color:#9ca3af;font-size:14px;margin-bottom:16px;line-height:1.75}
+        .highlight-box{background:rgba(212,175,55,0.05);border-left:3px solid #d4af37;padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0;font-size:13px;color:#9ca3af}
+        .highlight-box strong{color:#e5e7eb}
+        /* OLDER NEWS LIST */
+        .older-title{font-size:.75rem;font-weight:700;color:#4b5563;letter-spacing:.12em;text-transform:uppercase;margin:56px 0 20px}
+        .older-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+        .older-card{border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:20px 22px;background:rgba(255,255,255,0.01);transition:border-color .2s;cursor:default}
+        .older-card:hover{border-color:rgba(212,175,55,0.18)}
+        .older-date{font-size:10px;color:#4b5563;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+        .older-t{font-size:.9rem;font-weight:700;color:#e5e7eb;margin-bottom:6px;line-height:1.3}
+        .older-b{font-size:12px;color:#6b7280;line-height:1.6}
+        /* FOOTER */
+        .news-footer{text-align:center;padding:24px;font-size:12px;color:#374151;border-top:1px solid rgba(255,255,255,0.04)}
+        .news-footer a{color:#d4af37;text-decoration:none}
+    </style>
+</head>
+<body>
+
+<nav class="top-nav">
+    <div class="nav-inner">
+        <a href="index.html" class="nav-brand">
+            <div class="nav-monogram">CE</div>
+            <span class="nav-name">Chauffeur Empire</span>
+        </a>
+        <a href="index.html" class="nav-back">&#8592; Torna al gioco</a>
+    </div>
+</nav>
+
+<div class="news-hero">
+    <div class="news-hero-eyebrow">Live Server</div>
+    <h1 class="news-hero-title">News &amp; Aggiornamenti</h1>
+    <p class="news-hero-sub">Tutti i patch note, le nuove funzionalit&agrave; e le modifiche di bilanciamento. Rimani aggiornato su ogni versione dell&rsquo;impero.</p>
+</div>
+
+<div class="wrap">
+
+    <!-- ══ UPDATE 2.1 ══════════════════════════════════════════ -->
+    <article class="article" id="v2-1">
+        <div class="article-header">
+            <div class="article-meta">
+                <span class="badge-new">Nuovo</span>
+                <span class="badge-version">v2.1</span>
+                <span class="badge-date">Maggio 2026</span>
+            </div>
+            <div class="article-title">Update 2.1 &mdash; Driver Skills &amp; Daily Rewards</div>
+            <div class="article-lead">Un sistema di competenze completamente nuovo per gli autisti e un meccanismo di ricompense giornaliere che premia la costanza. Pi&ugrave; profondit&agrave; gestionale, pi&ugrave; motivi per tornare ogni giorno.</div>
+        </div>
+        <div class="article-body">
+            <div class="highlight-box">
+                <strong>In sintesi:</strong> Ogni autista ora ha tre attributi numerici &mdash; Velocit&agrave;, Efficienza e Carisma &mdash; che influenzano direttamente guadagni e performance. Il daily reward introduce uno streak progressivo che raddoppia i bonus dopo 7 giorni consecutivi.
+            </div>
+
+            <h3 class="section">&#x2728; Nuove Funzionalit&agrave;</h3>
+            <ul class="changelog">
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Tre attributi per autista: <strong>Velocit&agrave;</strong> (riduce durata corse), <strong>Efficienza</strong> (riduce consumo carburante), <strong>Carisma</strong> (aumenta mance e soddisfazione cliente)</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Sistema di <strong>Daily Rewards</strong>: accedendo ogni giorno ricevi monete, carburante o bonus esperienza. Streak da 1 a 30 giorni con ricompense scalanti</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Modal dedicata per il ritiro del premio giornaliero con animazione e riepilogo streak</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Attributi visibili nel pannello autista con barre di progresso e icone dedicate</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Gli autisti ora accumulano <strong>esperienza passiva</strong> durante ogni corsa completata, migliorando gradualmente i propri attributi</li>
+            </ul>
+
+            <h3 class="section">&#x2696; Bilanciamento</h3>
+            <ul class="changelog">
+                <li class="tag-balance"><span class="tag tag-balance-lbl">Balance</span>Autisti con Carisma &gt; 70 generano il +12% di mance sulle corse Business e VIP</li>
+                <li class="tag-balance"><span class="tag tag-balance-lbl">Balance</span>Efficienza &gt; 80 riduce il consumo carburante del 18% &mdash; significativo con flotte grandi</li>
+                <li class="tag-balance"><span class="tag tag-balance-lbl">Balance</span>Velocit&agrave; alta riduce la durata delle corse standard fino al 15%</li>
+                <li class="tag-balance"><span class="tag tag-balance-lbl">Balance</span>Autisti assunti tramite l&rsquo;Accademia partono con attributi base pi&ugrave; alti rispetto al mercato libero</li>
+            </ul>
+
+            <h3 class="section">&#x1F527; Correzioni</h3>
+            <ul class="changelog">
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Risolto crash occasionale all&rsquo;avvio se il salvataggio cloud era pi&ugrave; vecchio di quello locale</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Correzione della logica di fatica: gli autisti in burnout ora rimangono correttamente in stato &ldquo;resting&rdquo;</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Il pannello daily reward non appare pi&ugrave; in loop se riscattato nella stessa sessione</li>
+            </ul>
+        </div>
+    </article>
+
+    <!-- ══ UPDATE 2.0 ══════════════════════════════════════════ -->
+    <article class="article" id="v2-0">
+        <div class="article-header">
+            <div class="article-meta">
+                <span class="badge-version">v2.0</span>
+                <span class="badge-date">Aprile 2026</span>
+            </div>
+            <div class="article-title">Update 2.0 &mdash; Mercati Finanziari &amp; Broker</div>
+            <div class="article-lead">Il tuo impero non dorme mai. L&rsquo;update 2.0 introduce una borsa valori interna con azioni volatili in tempo reale, tre broker con profili di rischio distinti e un portafoglio personale per gestire i tuoi investimenti.</div>
+        </div>
+        <div class="article-body">
+            <div class="highlight-box">
+                <strong>In sintesi:</strong> I profitti del gioco ora possono essere reinvestiti in asset finanziari virtuali. I prezzi oscillano in base alle azioni degli altri CEO. Chi legge il mercato prima degli altri vince anche senza muovere un&rsquo;auto.
+            </div>
+
+            <h3 class="section">&#x2728; Nuove Funzionalit&agrave;</h3>
+            <ul class="changelog">
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span><strong>Borsa valori MMO</strong>: 8 titoli azionari con prezzi che fluttuano ogni ora in base a eventi di gioco e volumi di scambio dei giocatori</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Tre broker selezionabili con risk/reward diverso: <strong>Mutual Fund</strong> (stabile, +3-8%/settimana), <strong>Bull Broker</strong> (aggressivo, +15-40% o &minus;20%), <strong>Algo Trader</strong> (automatico, segue trend di mercato)</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Portafoglio personale con storico transazioni, P&amp;L realizzato e non realizzato, e grafico andamento</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Possibilit&agrave; di lanciare la propria <strong>IPO aziendale</strong>: altri giocatori possono acquistare quote della tua societ&agrave; e ricevere dividendi</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Sezione <strong>$WALL-ST</strong> nel pannello di gioco con dashboard finanziaria completa</li>
+            </ul>
+
+            <h3 class="section">&#x2696; Bilanciamento</h3>
+            <ul class="changelog">
+                <li class="tag-balance"><span class="tag tag-balance-lbl">Balance</span>Il guadagno massimo da investimenti &egrave; limitato al 40% del reddito operativo settimanale per evitare strategie puramente finanziarie</li>
+                <li class="tag-balance"><span class="tag tag-balance-lbl">Balance</span>I dividendi delle IPO vengono distribuiti ogni 7 giorni di gioco in base all&rsquo;utile netto della societ&agrave;</li>
+                <li class="tag-balance"><span class="tag tag-balance-lbl">Balance</span>Algo Trader ha un costo fisso settimanale di &euro;5.000 per restare attivo</li>
+            </ul>
+
+            <h3 class="section">&#x1F527; Correzioni</h3>
+            <ul class="changelog">
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Risolto il race condition sull&rsquo;acquisto IPO che poteva sottrarre denaro senza registrare le quote</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Il grafico del portafoglio ora mostra correttamente i dati delle ultime 24 ore di gioco</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Correzione della schermata di vendita azioni: il campo quantit&agrave; ora accetta solo valori interi positivi</li>
+            </ul>
+        </div>
+    </article>
+
+    <!-- ══ UPDATE 1.9 ══════════════════════════════════════════ -->
+    <article class="article" id="v1-9">
+        <div class="article-header">
+            <div class="article-meta">
+                <span class="badge-version">v1.9</span>
+                <span class="badge-date">Marzo 2026</span>
+            </div>
+            <div class="article-title">Update 1.9 &mdash; Classifica Globale Live &amp; MMO</div>
+            <div class="article-lead">La pi&ugrave; grande riscrittura tecnica della storia del gioco. L&rsquo;infrastruttura &egrave; stata completamente migrata su Supabase con architettura server-authoritative. Le classifiche ora si aggiornano in tempo reale per tutti i giocatori connessi.</div>
+        </div>
+        <div class="article-body">
+            <div class="highlight-box">
+                <strong>In sintesi:</strong> Chauffeur Empire &egrave; ora un vero MMO. Il tuo saldo, le tue corse e la tua posizione in classifica sono visibili agli altri giocatori in tempo reale. Il sistema anti-cheat lato server rende impossibile manipolare i dati localmente.
+            </div>
+
+            <h3 class="section">&#x2728; Nuove Funzionalit&agrave;</h3>
+            <ul class="changelog">
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span><strong>Classifica Globale Live</strong>: top 100 CEO aggiornata ogni 30 secondi con punteggio basato su patrimonio netto, reputazione e volume corse</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Database cloud Supabase: i progressi vengono sincronizzati automaticamente tra dispositivi diversi</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span><strong>Guadagni offline server-side</strong>: anche quando sei disconnesso, il server calcola i tuoi guadagni passivi in modo sicuro</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Mercato P2P per la compravendita di veicoli tra giocatori con prezzi negoziabili</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Sistema di autenticazione email con recupero password e sessioni persistenti</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Stagioni competitive mensili con premi esclusivi per i primi 30 classificati</li>
+            </ul>
+
+            <h3 class="section">&#x1F6E1; Anti-Cheat &amp; Sicurezza</h3>
+            <ul class="changelog">
+                <li class="tag-feat"><span class="tag tag-feat-lbl">Security</span>Tutte le transazioni economiche vengono validate lato server tramite RPC Supabase &mdash; modificare il localStorage non ha effetto</li>
+                <li class="tag-feat"><span class="tag tag-feat-lbl">Security</span>Sistema di rilevamento bot: pattern di click innaturali vengono registrati e analizzati automaticamente</li>
+                <li class="tag-feat"><span class="tag tag-feat-lbl">Security</span>Rate limiting sulle operazioni critiche (acquisti, corse, investimenti) per prevenire abusi</li>
+            </ul>
+
+            <h3 class="section">&#x1F527; Correzioni</h3>
+            <ul class="changelog">
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Risolti oltre 40 bug minori identificati nella fase di stress test MMO</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Ottimizzazione delle query Supabase: tempo di caricamento del salvataggio ridotto del 60%</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Correzione del calcolo guadagni offline che poteva generare cifre negative in edge case</li>
+            </ul>
+        </div>
+    </article>
+
+    <!-- ══ AGGIORNAMENTI PRECEDENTI ══════════════════════════════ -->
+    <div class="older-title">Aggiornamenti Precedenti</div>
+    <div class="older-list">
+        <div class="older-card">
+            <div class="older-date">Febbraio 2026 &mdash; v1.8</div>
+            <div class="older-t">Province War &amp; Licenze Regionali</div>
+            <div class="older-b">Sistema di conquista territoriale: acquista licenze operative nelle province italiane per sbloccare contratti esclusivi e moltiplicatori di guadagno.</div>
+        </div>
+        <div class="older-card">
+            <div class="older-date">Gennaio 2026 &mdash; v1.7</div>
+            <div class="older-t">Real Estate &amp; Investimenti</div>
+            <div class="older-b">Costruisci uffici, depositi e hub logistici. Gli investimenti generano rendite passive e sbloccano capacit&agrave; operative avanzate.</div>
+        </div>
+        <div class="older-card">
+            <div class="older-date">Dicembre 2025 &mdash; v1.6</div>
+            <div class="older-t">Contratti VIP &amp; Diamond</div>
+            <div class="older-b">Clienti Diamond con richieste ultra-premium: veicoli specifici, driver dedicati, route personalizzate. Margini fino a 10&times; rispetto alle corse standard.</div>
+        </div>
+        <div class="older-card">
+            <div class="older-date">Novembre 2025 &mdash; v1.5</div>
+            <div class="older-t">Driver Academy &amp; Formazione</div>
+            <div class="older-b">Invia i tuoi autisti all&rsquo;accademia per migliorarne le competenze. Corsi da 2 a 24 ore con sblocco di specializzazioni esclusive.</div>
+        </div>
+        <div class="older-card">
+            <div class="older-date">Ottobre 2025 &mdash; v1.4</div>
+            <div class="older-t">Aste Live &amp; Mercato NPC</div>
+            <div class="older-b">Ogni ora appare un&rsquo;asta con veicoli rari. Fai offerte in tempo reale contro NPC e altri CEO per aggiudicarti auto esclusive a prezzi competitivi.</div>
+        </div>
+        <div class="older-card">
+            <div class="older-date">Settembre 2025 &mdash; v1.3</div>
+            <div class="older-t">Sistema Meteo &amp; Traffico Dinamico</div>
+            <div class="older-b">Pioggia, nebbia e traffico ora influenzano i tempi di percorrenza e i guadagni. Ogni ora ha un profilo di traffico diverso che cambia le strategie ottimali.</div>
+        </div>
+    </div>
+
+</div>
+
+<div class="news-footer">
+    Chauffeur Empire &mdash; <a href="index.html">Torna al gioco</a> &nbsp;&middot;&nbsp; <a href="support.html">Support</a> &nbsp;&middot;&nbsp; <a href="terms.html">Termini</a>
+</div>
+
+</body>
+</html>

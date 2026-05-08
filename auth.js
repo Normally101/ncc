@@ -310,7 +310,7 @@ function _showAuthOverlay() {
                 </div>
                 <div class="lp-nav-links">
                     <a href="#lp-hero" class="lp-nav-link">Home</a>
-                    <a href="#lp-news" class="lp-nav-link">News</a>
+                    <a href="news.html" target="_blank" class="lp-nav-link">News</a>
                     <a href="#lp-showcase" class="lp-nav-link">Gameplay</a>
                     <a href="#" class="lp-nav-link lp-nav-discord-link">
                         <svg class="lp-icon-discord" viewBox="0 0 24 24" fill="currentColor"><path d="${_discordSvgPath}"/></svg>
@@ -406,22 +406,25 @@ function _showAuthOverlay() {
                 <h2 class="lp-section-title">Ultime Notizie & Aggiornamenti</h2>
             </div>
             <div class="lp-news-grid">
-                <div class="lp-news-card lp-news-hot">
+                <a href="news.html#v2-1" target="_blank" class="lp-news-card lp-news-hot" style="text-decoration:none;display:block">
                     <div class="lp-news-badge">Nuovo</div>
                     <div class="lp-news-date">Maggio 2026</div>
                     <div class="lp-news-title">Update 2.1 — Driver Skills & Daily Rewards</div>
                     <div class="lp-news-body">Tre nuovi attributi per ogni autista: Velocità, Efficienza e Carisma influenzano guadagni, fatica e velocità delle corse. Aggiunto sistema di ricompense giornaliere con streak progressivo e modal dedicata.</div>
-                </div>
-                <div class="lp-news-card">
+                    <div style="margin-top:14px;font-size:11px;color:#d4af37;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
+                </a>
+                <a href="news.html#v2-0" target="_blank" class="lp-news-card" style="text-decoration:none;display:block">
                     <div class="lp-news-date">Aprile 2026</div>
                     <div class="lp-news-title">Update 2.0 — Mercati Finanziari & Broker</div>
                     <div class="lp-news-body">Borsa valori in tempo reale con azioni volatili e portafoglio personale. Tre broker a rischio crescente: Mutual Fund, Bull Broker, Algo Trader. Investi i profitti del tuo impero per moltiplicare il patrimonio.</div>
-                </div>
-                <div class="lp-news-card">
+                    <div style="margin-top:14px;font-size:11px;color:#d4af37;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
+                </a>
+                <a href="news.html#v1-9" target="_blank" class="lp-news-card" style="text-decoration:none;display:block">
                     <div class="lp-news-date">Marzo 2026</div>
                     <div class="lp-news-title">Update 1.9 — Classifica Globale Live & MMO</div>
                     <div class="lp-news-body">Infrastruttura server-authoritative completamente riscritta su Supabase. Classifiche globali aggiornate in tempo reale. Guadagni offline calcolati lato server con protezione anti-cheat avanzata.</div>
-                </div>
+                    <div style="margin-top:14px;font-size:11px;color:#d4af37;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
+                </a>
             </div>
         </section>
 
