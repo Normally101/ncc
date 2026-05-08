@@ -118,6 +118,7 @@ let gameState = {
     constructions:   [],   // [{ invId, startDay, buildDays, completesDay }]
     claimableQuests: [],
     completedQuests: [],
+    hasEVHub: false,
 };
 
 function hasInvestment(id) { return gameState.investments.includes(id); }
@@ -125,22 +126,22 @@ function hasInvestment(id) { return gameState.investments.includes(id); }
 // ─── STELLAR, VOLT & MAJESTIC FULL CATALOG ───────────────────────────────────
 const STELLAR_VOLT_CATALOG = [
     // ── Stellar gasoline ──────────────────────────────────────────────────────
-    { id:'stellar_e_exec',    name:'Stellar E-Executive',   img:'assets/fleet/stellar-e-executive.jpg',  tier:'BUSINESS',     fuel:'gasoline', price:120000, co2PerKm:0.18, vehicleClass:'stellar_e_exec'    },
-    { id:'stellar_v_carr',    name:'Stellar V-Carrier',     img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PREMIUM',      fuel:'gasoline', price:95000,  co2PerKm:0.22, vehicleClass:'stellar_v_carr'    },
-    { id:'stellar_s_imp',     name:'Stellar S-Imperial',    img:'assets/fleet/stellar-s-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'gasoline', price:250000, co2PerKm:0.20, vehicleClass:'stellar_s_imp'     },
-    { id:'stellar_g_over',    name:'Stellar G-Overlord',    img:'assets/fleet/stellar-g-overlord.jpg',   tier:'ARMORED',      fuel:'gasoline', price:320000, co2PerKm:0.28, vehicleClass:'stellar_g_over'    },
+    { id:'stellar_e_exec',    name:'Stellar E-Executive',   img:'assets/fleet/stellar-e-executive.jpg',  tier:'BUSINESS',     fuel:'gasoline', price:120000,  rideGate:0,    co2PerKm:0.18, vehicleClass:'stellar_e_exec'    },
+    { id:'stellar_v_carr',    name:'Stellar V-Carrier',     img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PREMIUM',      fuel:'gasoline', price:95000,   rideGate:0,    co2PerKm:0.22, vehicleClass:'stellar_v_carr'    },
+    { id:'stellar_s_imp',     name:'Stellar S-Imperial',    img:'assets/fleet/stellar-s-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'gasoline', price:480000,  rideGate:250,  co2PerKm:0.20, vehicleClass:'stellar_s_imp'     },
+    { id:'stellar_g_over',    name:'Stellar G-Overlord',    img:'assets/fleet/stellar-g-overlord.jpg',   tier:'ARMORED',      fuel:'gasoline', price:950000,  rideGate:1000, co2PerKm:0.28, vehicleClass:'stellar_g_over'    },
     // ── Stellar Q electric ────────────────────────────────────────────────────
-    { id:'stellar_q_exec',    name:'Stellar Q-Executive',   img:'assets/fleet/stellar-q-executive.jpg',  tier:'BUSINESS',     fuel:'electric', price:95000,  co2PerKm:0.00, vehicleClass:'stellar_q_exec'    },
-    { id:'stellar_q_imp',     name:'Stellar Q-Imperial',    img:'assets/fleet/stellar-q-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'electric', price:160000, co2PerKm:0.00, vehicleClass:'stellar_q_imp'     },
-    { id:'stellar_q_carr',    name:'Stellar Q-Carrier',     img:'assets/fleet/stellar-q-carrier.jpg',    tier:'PREMIUM',      fuel:'electric', price:110000, co2PerKm:0.00, vehicleClass:'stellar_q_carr'    },
+    { id:'stellar_q_exec',    name:'Stellar Q-Executive',   img:'assets/fleet/stellar-q-executive.jpg',  tier:'BUSINESS',     fuel:'electric', price:95000,   rideGate:0,    co2PerKm:0.00, vehicleClass:'stellar_q_exec'    },
+    { id:'stellar_q_imp',     name:'Stellar Q-Imperial',    img:'assets/fleet/stellar-q-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'electric', price:320000,  rideGate:250,  co2PerKm:0.00, vehicleClass:'stellar_q_imp'     },
+    { id:'stellar_q_carr',    name:'Stellar Q-Carrier',     img:'assets/fleet/stellar-q-carrier.jpg',    tier:'PREMIUM',      fuel:'electric', price:110000,  rideGate:0,    co2PerKm:0.00, vehicleClass:'stellar_q_carr'    },
     // ── Volt electric ─────────────────────────────────────────────────────────
-    { id:'volt_s_apex',       name:'Volt S-Apex',           img:'assets/fleet/volt-s-apex.jpg',          tier:'PRESIDENTIAL', fuel:'electric', price:280000, co2PerKm:0.00, vehicleClass:'volt_s_apex'       },
-    { id:'volt_s_hyper',      name:'Volt S-Hyper',          img:'assets/fleet/volt-s-hyper.jpg',         tier:'ULTRA',        fuel:'electric', price:180000, co2PerKm:0.00, vehicleClass:'volt_s_hyper'      },
-    { id:'volt_3_urban',      name:'Volt 3-Urban',          img:'assets/fleet/volt-3-urban.jpg',         tier:'BUSINESS',     fuel:'electric', price:55000,  co2PerKm:0.00, vehicleClass:'volt_3_urban'      },
-    { id:'volt_y_cross',      name:'Volt Y-Cross',          img:'assets/fleet/volt-y-cross.jpg',         tier:'PREMIUM',      fuel:'electric', price:70000,  co2PerKm:0.00, vehicleClass:'volt_y_cross'      },
+    { id:'volt_s_apex',       name:'Volt S-Apex',           img:'assets/fleet/volt-s-apex.jpg',          tier:'PRESIDENTIAL', fuel:'electric', price:560000,  rideGate:250,  co2PerKm:0.00, vehicleClass:'volt_s_apex'       },
+    { id:'volt_s_hyper',      name:'Volt S-Hyper',          img:'assets/fleet/volt-s-hyper.jpg',         tier:'ULTRA',        fuel:'electric', price:1400000, rideGate:1000, co2PerKm:0.00, vehicleClass:'volt_s_hyper'      },
+    { id:'volt_3_urban',      name:'Volt 3-Urban',          img:'assets/fleet/volt-3-urban.jpg',         tier:'BUSINESS',     fuel:'electric', price:55000,   rideGate:0,    co2PerKm:0.00, vehicleClass:'volt_3_urban'      },
+    { id:'volt_y_cross',      name:'Volt Y-Cross',          img:'assets/fleet/volt-y-cross.jpg',         tier:'PREMIUM',      fuel:'electric', price:70000,   rideGate:0,    co2PerKm:0.00, vehicleClass:'volt_y_cross'      },
     // ── Majestic luxury ───────────────────────────────────────────────────────
-    { id:'majestic_spirit',   name:'Majestic Spirit',       img:'assets/fleet/majestic-spirit.jpg',      tier:'PRESIDENTIAL', fuel:'gasoline', price:450000, co2PerKm:0.25, vehicleClass:'majestic_spirit'   },
-    { id:'majestic_e_specter',name:'Majestic E-Specter',    img:'assets/fleet/majestic-e-specter.jpg',   tier:'PRESIDENTIAL', fuel:'electric', price:550000, co2PerKm:0.00, vehicleClass:'majestic_e_specter' },
+    { id:'majestic_spirit',   name:'Majestic Spirit',       img:'assets/fleet/majestic-spirit.jpg',      tier:'PRESIDENTIAL', fuel:'gasoline', price:2000000, rideGate:1000, co2PerKm:0.25, vehicleClass:'majestic_spirit'   },
+    { id:'majestic_e_specter',name:'Majestic E-Specter',    img:'assets/fleet/majestic-e-specter.jpg',   tier:'PRESIDENTIAL', fuel:'electric', price:3200000, rideGate:1000, co2PerKm:0.00, vehicleClass:'majestic_e_specter' },
 ];
 window.STELLAR_VOLT_CATALOG = STELLAR_VOLT_CATALOG;
 
@@ -415,6 +416,7 @@ function loadGame() {
             if (d.hiredDay  === undefined) d.hiredDay  = 1;
         });
         save.paused = false; // never restore a paused state
+        if (save.hasEVHub === undefined) save.hasEVHub = (save.investments || []).includes('inv_ev_hub');
         Object.assign(gameState, save);
         // Dismiss any stale VIP toast left from previous session
         document.getElementById('vip-event-toast')?.remove();
@@ -2317,6 +2319,7 @@ function processDailyRoutines() {
         });
         completed.forEach(c => {
             if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId);
+            if (c.invId === 'inv_ev_hub') gameState.hasEVHub = true;
             const inv = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : []).find(i => i.id === c.invId);
             const name = inv ? inv.name : c.invId;
             logToMap(`🏗️ Costruzione completata: ${name} è ora operativo!`);
@@ -3652,6 +3655,13 @@ async function buyInvestment(invId) {
         if (typeof showNotification === 'function') showNotification('Costruzione già in corso!', 'error');
         return;
     }
+    if (item.reqRides) {
+        const ridesDone = gameState.questStats?.totalRides || 0;
+        if (ridesDone < item.reqRides) {
+            if (typeof showNotification === 'function') showNotification(`Requisito: ${item.reqRides} corse completate (hai ${ridesDone}).`, 'error');
+            return;
+        }
+    }
 
     const result = await ServerState.buyInvestment(invId, item.price);
     if (!result) return;
@@ -3664,6 +3674,7 @@ async function buyInvestment(invId) {
     } else {
         gameState.investments.push(invId);
         if (item.rep) gameState.reputation = Math.min(5.0, gameState.reputation + item.rep);
+        if (invId === 'inv_ev_hub') gameState.hasEVHub = true;
         if (invId === 'inv_acquire') applyAcquisition();
         if (invId === 'inv_sponsorship') applySponsorship();
         if (invId === 'inv_national_license') applyNationalLicense();
@@ -3688,6 +3699,7 @@ window.speedUpConstruction = function(invId) {
     // Complete immediately
     gameState.constructions = gameState.constructions.filter(x => x.invId !== invId);
     if (!gameState.investments.includes(invId)) gameState.investments.push(invId);
+    if (invId === 'inv_ev_hub') gameState.hasEVHub = true;
     const inv = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : []).find(i => i.id === invId);
     const name = inv ? inv.name : invId;
     logToMap(`⚡ Costruzione accelerata: ${name} completato istantaneamente! (−${dcCost} DC)`);
@@ -3751,6 +3763,9 @@ window.buyPrototypeCar = function(protoId) {
     if (!proto) return;
     if (gameState.fleet.some(f => f.protoId === protoId)) { showNotification('Hai già questo prototipo!', 'error'); return; }
     if (gameState.reputation < proto.reqRep) { showNotification(`Reputazione insufficiente! Serve ${proto.reqRep}★`, 'error'); return; }
+    const _protoRides = gameState.questStats?.totalRides || 0;
+    if ((proto.rideGate || 0) > _protoRides) { showNotification(`Sblocco non raggiunto! Servono ${proto.rideGate} corse completate — hai ${_protoRides}.`, 'error'); return; }
+    if (proto.fuel === 'electric' && !gameState.hasEVHub) { showNotification('Infrastruttura mancante: costruisci l\'Hub di Ricarica Corporate prima di acquistare veicoli EV.', 'error'); return; }
     if (gameState.cash < proto.price) { showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= proto.price;
     gameState.fleet.push({ id: 'c_proto_' + Date.now(), name: proto.name, tier: proto.tier, condition: 100, isLease: false, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, outOfService: null, upgrades: [], protoId: proto.id, vehicleClass: proto.vehicleClass || 'mercedes_e' });

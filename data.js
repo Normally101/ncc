@@ -84,30 +84,30 @@ const POIS = {
 // ─── MERCATO AUTO — FULL CATALOG ────────────────────────────────
 const NEW_CARS = [
     // ── Stellar gasoline ──────────────────────────────────────────
-    { id:'stellar_e_exec',     name:'Stellar E-Executive',  tier:'business', price:120000, condition:100, vehicleClass:'stellar_e_exec'     },
-    { id:'stellar_v_carr',     name:'Stellar V-Carrier',    tier:'business', price:95000,  condition:100, vehicleClass:'stellar_v_carr'     },
-    { id:'stellar_s_imp',      name:'Stellar S-Imperial',   tier:'vip',      price:250000, condition:100, vehicleClass:'stellar_s_imp'      },
-    { id:'stellar_g_over',     name:'Stellar G-Overlord',   tier:'ultra',    price:320000, condition:100, vehicleClass:'stellar_g_over'     },
+    { id:'stellar_e_exec',     name:'Stellar E-Executive',  tier:'business', price:120000,  condition:100, vehicleClass:'stellar_e_exec',     fuel:'gasoline', rideGate:0    },
+    { id:'stellar_v_carr',     name:'Stellar V-Carrier',    tier:'business', price:95000,   condition:100, vehicleClass:'stellar_v_carr',     fuel:'gasoline', rideGate:0    },
+    { id:'stellar_s_imp',      name:'Stellar S-Imperial',   tier:'vip',      price:480000,  condition:100, vehicleClass:'stellar_s_imp',      fuel:'gasoline', rideGate:250  },
+    { id:'stellar_g_over',     name:'Stellar G-Overlord',   tier:'ultra',    price:950000,  condition:100, vehicleClass:'stellar_g_over',     fuel:'gasoline', rideGate:1000 },
     // ── Stellar Q electric ────────────────────────────────────────
-    { id:'stellar_q_exec',     name:'Stellar Q-Executive',  tier:'business', price:95000,  condition:100, vehicleClass:'stellar_q_exec'     },
-    { id:'stellar_q_carr',     name:'Stellar Q-Carrier',    tier:'business', price:110000, condition:100, vehicleClass:'stellar_q_carr'     },
-    { id:'stellar_q_imp',      name:'Stellar Q-Imperial',   tier:'vip',      price:160000, condition:100, vehicleClass:'stellar_q_imp'      },
+    { id:'stellar_q_exec',     name:'Stellar Q-Executive',  tier:'business', price:95000,   condition:100, vehicleClass:'stellar_q_exec',     fuel:'electric', rideGate:0    },
+    { id:'stellar_q_carr',     name:'Stellar Q-Carrier',    tier:'business', price:110000,  condition:100, vehicleClass:'stellar_q_carr',     fuel:'electric', rideGate:0    },
+    { id:'stellar_q_imp',      name:'Stellar Q-Imperial',   tier:'vip',      price:320000,  condition:100, vehicleClass:'stellar_q_imp',      fuel:'electric', rideGate:250  },
     // ── Volt electric ─────────────────────────────────────────────
-    { id:'volt_3_urban',       name:'Volt 3-Urban',         tier:'business', price:55000,  condition:100, vehicleClass:'volt_3_urban'       },
-    { id:'volt_y_cross',       name:'Volt Y-Cross',         tier:'business', price:70000,  condition:100, vehicleClass:'volt_y_cross'       },
-    { id:'volt_s_apex',        name:'Volt S-Apex',          tier:'vip',      price:280000, condition:100, vehicleClass:'volt_s_apex'        },
-    { id:'volt_s_hyper',       name:'Volt S-Hyper',         tier:'ultra',    price:180000, condition:100, vehicleClass:'volt_s_hyper'       },
+    { id:'volt_3_urban',       name:'Volt 3-Urban',         tier:'business', price:55000,   condition:100, vehicleClass:'volt_3_urban',       fuel:'electric', rideGate:0    },
+    { id:'volt_y_cross',       name:'Volt Y-Cross',         tier:'business', price:70000,   condition:100, vehicleClass:'volt_y_cross',       fuel:'electric', rideGate:0    },
+    { id:'volt_s_apex',        name:'Volt S-Apex',          tier:'vip',      price:560000,  condition:100, vehicleClass:'volt_s_apex',        fuel:'electric', rideGate:250  },
+    { id:'volt_s_hyper',       name:'Volt S-Hyper',         tier:'ultra',    price:1400000, condition:100, vehicleClass:'volt_s_hyper',       fuel:'electric', rideGate:1000 },
     // ── Majestic luxury ───────────────────────────────────────────
-    { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'ultra',    price:450000, condition:100, vehicleClass:'majestic_spirit'    },
-    { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'ultra',    price:550000, condition:100, vehicleClass:'majestic_e_specter' },
+    { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'ultra',    price:2000000, condition:100, vehicleClass:'majestic_spirit',    fuel:'gasoline', rideGate:1000 },
+    { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'ultra',    price:3200000, condition:100, vehicleClass:'majestic_e_specter', fuel:'electric', rideGate:1000 },
 ];
 
 const USED_CARS = [
-    { id:'uc_e_exec_22',  name:'Stellar E-Executive (2022)', tier:'business', price:72000,  condition:62, vehicleClass:'stellar_e_exec'  },
-    { id:'uc_v_carr_21',  name:'Stellar V-Carrier (2021)',   tier:'business', price:55000,  condition:51, vehicleClass:'stellar_v_carr'  },
-    { id:'uc_q_exec_22',  name:'Stellar Q-Executive (2022)', tier:'business', price:58000,  condition:57, vehicleClass:'stellar_q_exec'  },
-    { id:'uc_volt3_21',   name:'Volt 3-Urban (2021)',        tier:'business', price:34000,  condition:65, vehicleClass:'volt_3_urban'    },
-    { id:'uc_s_imp_20',   name:'Stellar S-Imperial (2020)',  tier:'vip',      price:140000, condition:44, vehicleClass:'stellar_s_imp'   },
+    { id:'uc_e_exec_22',  name:'Stellar E-Executive (2022)', tier:'business', price:72000,  condition:62, vehicleClass:'stellar_e_exec', fuel:'gasoline', rideGate:0   },
+    { id:'uc_v_carr_21',  name:'Stellar V-Carrier (2021)',   tier:'business', price:55000,  condition:51, vehicleClass:'stellar_v_carr', fuel:'gasoline', rideGate:0   },
+    { id:'uc_q_exec_22',  name:'Stellar Q-Executive (2022)', tier:'business', price:58000,  condition:57, vehicleClass:'stellar_q_exec', fuel:'electric', rideGate:0   },
+    { id:'uc_volt3_21',   name:'Volt 3-Urban (2021)',        tier:'business', price:34000,  condition:65, vehicleClass:'volt_3_urban',   fuel:'electric', rideGate:0   },
+    { id:'uc_s_imp_20',   name:'Stellar S-Imperial (2020)',  tier:'vip',      price:270000, condition:44, vehicleClass:'stellar_s_imp',  fuel:'gasoline', rideGate:250 },
 ];
 
 const LEASING_TEMPLATES = {
@@ -227,27 +227,28 @@ const INVESTMENTS = [
     { id:'inv_fuel_depot',       tier:2, name:'Deposito Carburante Aziendale', price:350000,   passive:0,     rep:0.0, buildTime:3,  dailyUpkeep:500,  desc:'Cisterna aziendale da 50.000L. Le auto si riforniscono gratis dal deposito se hai il Logistics Manager. Acquista gasolio al prezzo di mercato.' },
     { id:'inv_grey_market',      tier:2, name:'Canali Discreti (Grey Market)', price:55000,    passive:0,     rep:0.0, desc:'Missioni anonime a 3× tariffa. Alto rischio: un posto di blocco può sequestrare il veicolo per 7 giorni.' },
     { id:'inv_empty_leg',        tier:2, name:'Empty Leg Optimizer',           price:28000,    passive:0,     rep:0.1, desc:'Corse di ritorno automatiche al 50% tariffa. Elimina i viaggi a vuoto dopo i trasferimenti lunghi.' },
+    { id:'inv_ev_hub',           tier:2, name:'Hub di Ricarica Corporate',     price:750000,   passive:0,     rep:0.2, buildTime:4,  reqRides:500,     desc:'Infrastruttura di ricarica per veicoli elettrici. Obbligatorio per acquistare qualsiasi veicolo EV della flotta.' },
     { id:'inv_hq_office',        tier:2, name:'Ufficio Executive (HQ Lv2)',    price:600000,   passive:0,     rep:0.1, buildTime:5,  dailyUpkeep:800,  desc:'Amplia la sede: fino a 4 dipendenti contemporanei. Sblocca slot HR e Logistics.' },
 
     // ─── TIER 3: LUSSO ESTREMO ───────────────────────────────────
     { id:'inv_pension_fund',     tier:3, name:'Fondo Pensione Dipendenti',    price:75000,    passive:0,     rep:0.3, desc:'Dopo 60 giorni di gioco: +€1.200/g rendita pensionistica. Migliora morale.' },
     { id:'inv_vip_lounge_hq',    tier:3, name:'VIP Lounge HQ',                price:85000,    passive:0,     rep:0.2, desc:'Sala relax interna: i driver recuperano stanchezza 30% più veloce. CEO recupera +2% energia/h quando non è in corsa.' },
     { id:'inv_carbon_neutral',   tier:3, name:'Certificazione Carbon Neutral', price:65000,    passive:0,     rep:0.3, desc:'Sblocca contratti Corporate Green. +15% tariffa su clienti aziende eco-sensitive.' },
-    { id:'inv_hotel_exclusive',  tier:3, name:'Esclusiva Hotel de Russie Roma',price:120000,   passive:500,   rep:0.5, desc:'Accordo esclusivo: +€500/g + 5 corse VIP garantite ogni giorno dal principale hotel partner.' },
-    { id:'inv_corporate_retainer',tier:3, name:'Corporate Retainer (3 Aziende)',price:150000,  passive:2000,  rep:0.4, desc:'+€2.000/g da contratti fissi con Fortune 500. +3 corse Business/g garantite anche senza richieste.' },
-    { id:'inv_hq_campus',        tier:3, name:'Campus Chauffeur Empire (HQ Lv3)',   price:1800000,  passive:0,     rep:0.3, buildTime:10, dailyUpkeep:2000, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
+    { id:'inv_hotel_exclusive',  tier:3, name:'Esclusiva Hotel de Russie Roma',price:280000,   passive:500,   rep:0.5, desc:'Accordo esclusivo: +€500/g + 5 corse VIP garantite ogni giorno dal principale hotel partner.' },
+    { id:'inv_corporate_retainer',tier:3, name:'Corporate Retainer (3 Aziende)',price:420000,  passive:2000,  rep:0.4, desc:'+€2.000/g da contratti fissi con Fortune 500. +3 corse Business/g garantite anche senza richieste.' },
+    { id:'inv_hq_campus',        tier:3, name:'Campus Chauffeur Empire (HQ Lv3)',   price:3800000,  passive:0,     rep:0.3, buildTime:10, dailyUpkeep:2000, desc:'Campus completo: staff illimitato. Morale driver +10 permanente. Accelera recupero stanchezza.' },
     { id:'inv_security_escort',     tier:3, name:'Security Escort Team',          price:95000,    passive:0,     rep:0.4, desc:'Auto di scorta per clienti HVT (High Value Target). +80% tariffa su missioni diplomatiche. -50% rischio incidenti.' },
     { id:'inv_philanthropy',     tier:3, name:'Fondazione Chauffeur Empire Onlus', price:95000,    passive:0,     rep:0.0, desc:'+0.5★ Reputazione ogni settimana. Migliora l\'immagine pubblica del brand.' },
     { id:'inv_sabotaggio',       tier:3, name:'Agenzia PR Negativa',          price:120000,   passive:0,     rep:0.0, desc:'Diffonde recensioni negative sui competitor. −10% reputazione rivali ogni settimana.' },
-    { id:'inv_hangar',           tier:3, name:'Hangar Jet Privati',           price:3500000,  passive:0,     rep:1.0, buildTime:14, dailyUpkeep:5000, desc:'Sblocca corse ULTRA. +1 corsa Ultra ogni ora.' },
+    { id:'inv_hangar',           tier:3, name:'Hangar Jet Privati',           price:8500000,  passive:0,     rep:1.0, buildTime:14, dailyUpkeep:5000, desc:'Sblocca corse ULTRA. +1 corsa Ultra ogni ora.' },
     { id:'inv_armored',          tier:3, name:'Chauffeur Blindato',           price:200000,   passive:0,     rep:0.5, desc:'Clienti ad alto rischio: pagano 3× il tariffario.' },
     { id:'inv_yacht',            tier:3, name:'Yacht Charter (Smeralda/Capri)',price:180000,  passive:2500,  rep:1.0, desc:'+€2.500/g & corse stagionali ultra-remunerate.' },
     { id:'inv_helipad',          tier:3, name:'Piazzola Elicottero Centro',   price:450000,   passive:0,     rep:1.5, desc:'+1.5★ Reputazione immediata. Percorrenze più rapide.' },
 
     // ─── TIER 4: DOMINIO DEL MERCATO ─────────────────────────────
     { id:'inv_national_license', tier:4, name:'Licenza Nazionale NCC',        price:150000,   passive:0,     rep:1.5, desc:'Sblocca TUTTE le regioni d\'Italia in un colpo solo. Risparmio enorme vs sblocco singolo. Simbolo di dominio assoluto.' },
-    { id:'inv_real_estate',      tier:4, name:'Fondo Immobiliare Lusso',      price:1200000,  passive:15000, rep:0.5, desc:'€15.000/g di rendita passiva garantita.' },
-    { id:'inv_tower',            tier:4, name:'Chauffeur Empire Tower (Milano)',   price:25000000, passive:0,     rep:2.0, buildTime:30, dailyUpkeep:15000, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
+    { id:'inv_real_estate',      tier:4, name:'Fondo Immobiliare Lusso',      price:2800000,  passive:15000, rep:0.5, desc:'€15.000/g di rendita passiva garantita.' },
+    { id:'inv_tower',            tier:4, name:'Chauffeur Empire Tower (Milano)',   price:45000000, passive:0,     rep:2.0, buildTime:30, dailyUpkeep:15000, desc:'Dimezza tutte le tasse. Boost permanente al Ranking.' },
     { id:'inv_acquire',          tier:4, name:'Acquisizione Competitor Minore',price:500000,  passive:0,     rep:1.0, desc:'Acquisisci il rivale più debole: +5 veicoli e quota.' },
     { id:'inv_sponsorship',      tier:4, name:'Sponsor Festival di Cannes',   price:300000,   passive:0,     rep:2.0, desc:'Rep a 5.0★ istantanea. Prezzi 2× per 7 giorni.' },
 ];
@@ -397,9 +398,9 @@ const ACHIEVEMENTS = [
 
 // ─── AUTO PROTOTIPO (sbloccabili al raggiungimento di 5★) ─────────
 const PROTOTYPE_CARS = [
-    { id:'proto_tesla',    name:'Volt S-Hyper',         tier:'ultra',    price:180000, condition:100, reqRep:4.5, desc:'Elettrica. Velocità +25%, zero emissioni, silenzio totale.',     vehicleClass:'volt_s_hyper'       },
-    { id:'proto_rolls',    name:'Majestic E-Specter',   tier:'ultra',    price:550000, condition:100, reqRep:5.0, desc:'Ultra-luxury elettrica. Tariffa base ×5. Solo Presidential.',    vehicleClass:'majestic_e_specter' },
-    { id:'proto_van_vip',  name:'Stellar Q-Carrier',    tier:'group',    price:110000, condition:100, reqRep:4.0, desc:'Elettrico luxury group. 7 posti, zero emissioni.',               vehicleClass:'stellar_q_carr'     },
+    { id:'proto_tesla',    name:'Volt S-Hyper',         tier:'ultra',    price:1400000, condition:100, reqRep:4.5, fuel:'electric', rideGate:1000, desc:'Elettrica. Velocità +25%, zero emissioni, silenzio totale.',     vehicleClass:'volt_s_hyper'       },
+    { id:'proto_rolls',    name:'Majestic E-Specter',   tier:'ultra',    price:3200000, condition:100, reqRep:5.0, fuel:'electric', rideGate:1000, desc:'Ultra-luxury elettrica. Tariffa base ×5. Solo Presidential.',    vehicleClass:'majestic_e_specter' },
+    { id:'proto_van_vip',  name:'Stellar Q-Carrier',    tier:'group',    price:110000,  condition:100, reqRep:4.0, fuel:'electric', rideGate:0,    desc:'Elettrico luxury group. 7 posti, zero emissioni.',               vehicleClass:'stellar_q_carr'     },
 ];
 
 // ─── SPECIALIZZAZIONI DRIVER ─────────────────────────────────────

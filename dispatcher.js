@@ -1679,41 +1679,63 @@ function renderTabFleet() {
     }
 
     html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Concessionario (Nuovo & Leasing)</h3><div class="space-y-2">`;
+    const _totalRides = gameState.questStats?.totalRides || 0;
+    const _hasEVHub   = gameState.hasEVHub || false;
+    const _vcLabel = vc => ({
+        stellar_e_exec:'Berlina Business',   stellar_v_carr:'Van Premium',
+        stellar_s_imp:'Ammiraglia',          stellar_g_over:'SUV Blindato',
+        stellar_q_exec:'Berlina EV ⚡',      stellar_q_imp:'Ammiraglia EV ⚡',
+        stellar_q_carr:'Van EV ⚡',
+        volt_s_apex:'Gran Turismo EV ⚡',    volt_s_hyper:'Hyper EV ⚡',
+        volt_3_urban:'City EV ⚡',           volt_y_cross:'SUV EV ⚡',
+        majestic_spirit:'Ultra-Luxury',      majestic_e_specter:'Ultra-Luxury EV ⚡',
+        mercedes_e:'Sedan', mercedes_v:'Minivan', mercedes_s:'Presidential',
+        mercedes_sprinter:'Sprinter', water_taxi:'Acqueo',
+    }[vc] || vc || '');
+    const _carLockReason = c => {
+        if ((c.rideGate||0) > _totalRides) return `🔒 Richiede ${c.rideGate} corse (hai ${_totalRides})`;
+        if (c.fuel === 'electric' && !_hasEVHub) return '⚡ Richiede Hub di Ricarica Corporate';
+        return null;
+    };
+
     NEW_CARS.forEach(c => {
-        const vcLabel = {
-            stellar_e_exec:'Berlina Business',   stellar_v_carr:'Van Premium',
-            stellar_s_imp:'Ammiraglia',          stellar_g_over:'SUV Blindato',
-            stellar_q_exec:'Berlina EV ⚡',      stellar_q_imp:'Ammiraglia EV ⚡',
-            stellar_q_carr:'Van EV ⚡',
-            volt_s_apex:'Gran Turismo EV ⚡',    volt_s_hyper:'Hyper EV ⚡',
-            volt_3_urban:'City EV ⚡',           volt_y_cross:'SUV EV ⚡',
-            majestic_spirit:'Ultra-Luxury',      majestic_e_specter:'Ultra-Luxury EV ⚡',
-            mercedes_e:'Sedan', mercedes_v:'Minivan', mercedes_s:'Presidential',
-            mercedes_sprinter:'Sprinter', water_taxi:'Acqueo',
-        }[c.vehicleClass] || c.vehicleClass || '';
+        const vcLabel = _vcLabel(c.vehicleClass);
         const cat = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : []).find(x => x.vehicleClass === c.vehicleClass);
-        const thumb = cat?.img ? `<img src="${cat.img}" class="w-10 h-10 rounded object-cover mr-2 shrink-0" onerror="this.style.display='none'">` : '';
+        const thumb = cat?.img ? `<img src="${cat.img}" class="w-10 h-10 rounded object-cover mr-2 shrink-0" onerror="this.style.display='none'" style="${_carLockReason(c)?'filter:grayscale(1);opacity:0.5':''}">` : '';
+        const lockReason = _carLockReason(c);
         html += `
-        <div class="hud-card flex items-center">
+        <div class="hud-card flex items-center${lockReason ? ' opacity-60' : ''}">
             ${thumb}
             <div class="flex-1 min-w-0">
-                <div class="text-xs font-bold text-white">${c.name}</div>
+                <div class="text-xs font-bold ${lockReason ? 'text-gray-500' : 'text-white'}">${c.name}</div>
                 <div class="text-[9px] text-gray-500 uppercase">${c.tier} · <span class="text-blue-400">${vcLabel}</span></div>
-                <div class="text-[9px] text-gold">€${(c.price||0).toLocaleString()}</div>
+                <div class="text-[9px] ${lockReason ? 'text-gray-600' : 'text-gold'}">€${(c.price||0).toLocaleString()}</div>
+                ${lockReason ? `<div class="text-[9px] text-red-400 mt-0.5">${lockReason}</div>` : ''}
             </div>
             <div class="flex gap-1 ml-2">
-                <button onclick="openCarConfigurator('${c.id}','new')" class="btn-gold !text-[8px] !py-1">🔧 Configura</button>
-                <button onclick="openLeasingModal('${c.vehicleClass||c.tier}')" class="btn-gold !bg-blue-600 !text-white !text-[8px] !py-1">Lease</button>
+                ${lockReason
+                    ? `<span class="text-[9px] text-gray-600 font-bold px-2">🔒</span>`
+                    : `<button onclick="openCarConfigurator('${c.id}','new')" class="btn-gold !text-[8px] !py-1">🔧 Configura</button>
+                       <button onclick="openLeasingModal('${c.vehicleClass||c.tier}')" class="btn-gold !bg-blue-600 !text-white !text-[8px] !py-1">Lease</button>`
+                }
             </div>
         </div>`;
     });
 
     html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">Mercato dell'Usato</h3><div class="space-y-2">`;
     USED_CARS.forEach(c => {
+        const lockReason = _carLockReason(c);
         html += `
-        <div class="hud-card flex justify-between items-center">
-            <div><div class="text-xs font-bold text-white">${c.name}</div><div class="text-[9px] text-red-400">Salute: ${c.condition}%</div></div>
-            <button onclick="openCarConfigurator('${c.id}','used')" class="btn-gold !bg-gray-800 !text-[8px]">🔧 Configura</button>
+        <div class="hud-card flex justify-between items-center${lockReason ? ' opacity-60' : ''}">
+            <div>
+                <div class="text-xs font-bold ${lockReason ? 'text-gray-500' : 'text-white'}">${c.name}</div>
+                <div class="text-[9px] text-red-400">Salute: ${c.condition}%</div>
+                ${lockReason ? `<div class="text-[9px] text-red-400 mt-0.5">${lockReason}</div>` : ''}
+            </div>
+            ${lockReason
+                ? `<span class="text-[9px] text-gray-600 font-bold px-2">🔒</span>`
+                : `<button onclick="openCarConfigurator('${c.id}','used')" class="btn-gold !bg-gray-800 !text-[8px]">🔧 Configura</button>`
+            }
         </div>`;
     });
 
@@ -1721,9 +1743,16 @@ function renderTabFleet() {
     if (typeof PROTOTYPE_CARS !== 'undefined' && PROTOTYPE_CARS.length > 0) {
         html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🔬 Prototipi Esclusivi</h3><div class="space-y-2">`;
         PROTOTYPE_CARS.forEach(c => {
-            const isOwned = gameState.fleet.some(f => f.protoId === c.id);
-            const canBuy  = gameState.reputation >= c.reqRep && !isOwned;
-            const lockMsg = isOwned ? '✓ In Flotta' : gameState.reputation < c.reqRep ? `🔒 Richiede ${c.reqRep}★ Rep` : '';
+            const isOwned    = gameState.fleet.some(f => f.protoId === c.id);
+            const repOk      = gameState.reputation >= c.reqRep;
+            const rideOk     = (c.rideGate||0) <= _totalRides;
+            const evOk       = c.fuel !== 'electric' || _hasEVHub;
+            const canBuy     = repOk && rideOk && evOk && !isOwned;
+            const lockParts  = [];
+            if (!repOk)  lockParts.push(`Rep ${c.reqRep}★`);
+            if (!rideOk) lockParts.push(`${c.rideGate} corse`);
+            if (!evOk)   lockParts.push('Hub EV');
+            const lockMsg = isOwned ? '' : lockParts.length ? `🔒 Richiede: ${lockParts.join(' · ')}` : '';
             html += `
             <div class="hud-card ${canBuy ? 'hover:border-gold/50' : 'opacity-60'}">
                 <div class="flex justify-between items-center">
@@ -1731,12 +1760,13 @@ function renderTabFleet() {
                         <div class="text-xs font-bold text-white">${c.name}</div>
                         <div class="text-[9px] text-purple-400">${c.desc}</div>
                         <div class="text-[9px] text-gray-500">Tier: ${c.tier.toUpperCase()} · Min Rep: ${c.reqRep}★</div>
+                        ${lockMsg ? `<div class="text-[9px] text-red-400 mt-0.5">${lockMsg}</div>` : ''}
                     </div>
                     ${isOwned
                         ? `<span class="text-green-400 text-[9px] font-bold">✓ In Flotta</span>`
                         : canBuy
                             ? `<button onclick="buyPrototypeCar('${c.id}')" class="btn-gold !text-[8px]">€${c.price.toLocaleString()}</button>`
-                            : `<span class="text-gray-600 text-[9px]">${lockMsg}</span>`
+                            : `<span class="text-gray-600 text-[9px] font-bold px-2">🔒</span>`
                     }
                 </div>
             </div>`;
@@ -2238,6 +2268,16 @@ window.hireOfficeStaff = async function(id) {
 window.openCarConfigurator = function(carId, type) {
     const carT = (type === 'new' ? NEW_CARS : USED_CARS).find(c => c.id === carId);
     if (!carT) return;
+    const totalRides = gameState.questStats?.totalRides || 0;
+    const rideGate = carT.rideGate || 0;
+    if (totalRides < rideGate) {
+        showNotification(`Sblocco non raggiunto! Servono ${rideGate} corse completate — hai ${totalRides}.`, 'error');
+        return;
+    }
+    if (carT.fuel === 'electric' && !gameState.hasEVHub) {
+        showNotification('Infrastruttura mancante: costruisci l\'Hub di Ricarica Corporate prima di acquistare veicoli EV.', 'error');
+        return;
+    }
     const old = document.getElementById('modal-configurator');
     if (old) old.remove();
 
@@ -2497,6 +2537,7 @@ function renderTabInvestments() {
                 ${i.passive ? `<div class="text-[9px] text-green-400 font-mono mt-0.5">+€${i.passive.toLocaleString()}/g</div>` : ''}
                 ${i.dailyUpkeep ? `<div class="text-[9px] text-red-400 font-mono mt-0.5">−€${i.dailyUpkeep.toLocaleString()}/g manutenzione</div>` : ''}
                 ${i.buildTime ? `<div class="text-[8px] text-yellow-500/60 mt-0.5">🏗️ ${i.buildTime} giorni costruzione</div>` : ''}
+                ${i.reqRides && !owned ? `<div class="text-[8px] text-${(gameState.questStats?.totalRides||0)>=i.reqRides?'green':'red'}-400 mt-0.5">🔒 Richiede ${i.reqRides} corse (hai ${gameState.questStats?.totalRides||0})</div>` : ''}
             </div>
             <div class="flex-shrink-0 flex flex-col items-end gap-1">
                 ${owned
@@ -2507,7 +2548,7 @@ function renderTabInvestments() {
                              <div class="text-[9px] text-yellow-400 font-bold">🏗️ ${daysLeft}g</div>
                              <button onclick="window.speedUpConstruction('${i.id}')" class="text-[7px] bg-yellow-600/20 border border-yellow-500/40 text-yellow-300 rounded px-1.5 py-0.5 mt-0.5 hover:bg-yellow-600/40">⚡ ${dcCost} DC</button>
                            </div>`
-                        : `<button onclick="buyInvestment('${i.id}')" class="btn-gold !text-[8px] !py-1 !px-2">€${i.price.toLocaleString()}</button>`}
+                        : `<button onclick="buyInvestment('${i.id}')" class="btn-gold !text-[8px] !py-1 !px-2" ${i.reqRides&&(gameState.questStats?.totalRides||0)<i.reqRides?'disabled style="opacity:0.35;cursor:not-allowed"':''}>€${i.price.toLocaleString()}</button>`}
             </div>
         </div>`;
     });
