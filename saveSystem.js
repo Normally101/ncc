@@ -99,6 +99,8 @@ window.saveCurrentSlot = function() {
             }))
         };
         save._saveTimestamp = Date.now();
+        // Ensure cash is always stored as integer to prevent bigint cast errors in SQL
+        save.cash = Math.floor(save.cash || 0);
         // Cloud is the single source of truth — no localStorage write
         _cloudSaveSlot(window.currentSlotIndex, save);
     } catch(e) { console.error('[SaveSystem] Save failed:', e); }
