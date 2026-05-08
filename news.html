@@ -70,7 +70,7 @@
 <nav class="top-nav">
     <div class="nav-inner">
         <a href="index.html" class="nav-brand">
-            <div class="nav-monogram">CE</div>
+            <div class="nav-monogram" style="background-image:url(assets/ce-favicon.png);background-size:cover;background-position:center;font-size:0"></div>
             <span class="nav-name">Chauffeur Empire</span>
         </a>
         <a href="index.html" class="nav-back">&#8592; Torna al gioco</a>
@@ -120,7 +120,7 @@
 
             <h3 class="section">&#x1F527; Correzioni</h3>
             <ul class="changelog">
-                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Risolto crash occasionale all&rsquo;avvio se il salvataggio cloud era pi&ugrave; vecchio di quello locale</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Risolto crash occasionale all&rsquo;avvio in caso di conflitto tra salvataggi di sessioni diverse</li>
                 <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Correzione della logica di fatica: gli autisti in burnout ora rimangono correttamente in stato &ldquo;resting&rdquo;</li>
                 <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Il pannello daily reward non appare pi&ugrave; in loop se riscattato nella stessa sessione</li>
             </ul>
@@ -175,18 +175,18 @@
                 <span class="badge-date">Marzo 2026</span>
             </div>
             <div class="article-title">Update 1.9 &mdash; Classifica Globale Live &amp; MMO</div>
-            <div class="article-lead">La pi&ugrave; grande riscrittura tecnica della storia del gioco. L&rsquo;infrastruttura &egrave; stata completamente migrata su Supabase con architettura server-authoritative. Le classifiche ora si aggiornano in tempo reale per tutti i giocatori connessi.</div>
+            <div class="article-lead">Il pi&ugrave; grande aggiornamento della storia del gioco. Chauffeur Empire diventa un MMO a tutti gli effetti: classifiche live, progressi sincronizzati e mercato tra giocatori attivo 24/7.</div>
         </div>
         <div class="article-body">
             <div class="highlight-box">
-                <strong>In sintesi:</strong> Chauffeur Empire &egrave; ora un vero MMO. Il tuo saldo, le tue corse e la tua posizione in classifica sono visibili agli altri giocatori in tempo reale. Il sistema anti-cheat lato server rende impossibile manipolare i dati localmente.
+                <strong>In sintesi:</strong> Chauffeur Empire &egrave; ora un vero MMO. Il tuo saldo, le tue corse e la tua posizione in classifica sono visibili agli altri giocatori in tempo reale. Il sistema anti-cheat integrato rende impossibile alterare i risultati delle partite.
             </div>
 
             <h3 class="section">&#x2728; Nuove Funzionalit&agrave;</h3>
             <ul class="changelog">
                 <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span><strong>Classifica Globale Live</strong>: top 100 CEO aggiornata ogni 30 secondi con punteggio basato su patrimonio netto, reputazione e volume corse</li>
-                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Database cloud Supabase: i progressi vengono sincronizzati automaticamente tra dispositivi diversi</li>
-                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span><strong>Guadagni offline server-side</strong>: anche quando sei disconnesso, il server calcola i tuoi guadagni passivi in modo sicuro</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span><strong>Salvataggio cloud automatico</strong>: i progressi vengono sincronizzati tra dispositivi diversi &mdash; cambia device senza perdere nulla</li>
+                <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span><strong>Guadagni offline</strong>: anche quando non sei connesso, i tuoi autisti continuano a lavorare e i guadagni vengono conteggiati al tuo rientro</li>
                 <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Mercato P2P per la compravendita di veicoli tra giocatori con prezzi negoziabili</li>
                 <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Sistema di autenticazione email con recupero password e sessioni persistenti</li>
                 <li class="tag-new"><span class="tag tag-new-lbl">Nuovo</span>Stagioni competitive mensili con premi esclusivi per i primi 30 classificati</li>
@@ -194,7 +194,7 @@
 
             <h3 class="section">&#x1F6E1; Anti-Cheat &amp; Sicurezza</h3>
             <ul class="changelog">
-                <li class="tag-feat"><span class="tag tag-feat-lbl">Security</span>Tutte le transazioni economiche vengono validate lato server tramite RPC Supabase &mdash; modificare il localStorage non ha effetto</li>
+                <li class="tag-feat"><span class="tag tag-feat-lbl">Security</span>Tutte le transazioni economiche (acquisti, corse, investimenti) vengono verificate prima di essere applicate &mdash; nessuna modifica non autorizzata ha effetto</li>
                 <li class="tag-feat"><span class="tag tag-feat-lbl">Security</span>Sistema di rilevamento bot: pattern di click innaturali vengono registrati e analizzati automaticamente</li>
                 <li class="tag-feat"><span class="tag tag-feat-lbl">Security</span>Rate limiting sulle operazioni critiche (acquisti, corse, investimenti) per prevenire abusi</li>
             </ul>
@@ -202,7 +202,7 @@
             <h3 class="section">&#x1F527; Correzioni</h3>
             <ul class="changelog">
                 <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Risolti oltre 40 bug minori identificati nella fase di stress test MMO</li>
-                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Ottimizzazione delle query Supabase: tempo di caricamento del salvataggio ridotto del 60%</li>
+                <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Ottimizzazione del caricamento del salvataggio: tempo di avvio ridotto del 60%</li>
                 <li class="tag-fix"><span class="tag tag-fix-lbl">Fix</span>Correzione del calcolo guadagni offline che poteva generare cifre negative in edge case</li>
             </ul>
         </div>
