@@ -153,8 +153,7 @@
 
   <!-- SMART SIDEBAR: Map + Fleet + Hub Hamburger -->
   <nav class="fixed left-4 top-1/2 -translate-y-1/2 z-50 flex flex-col gap-3 pointer-events-auto">
-    <button onclick="switchTab('map')" data-tab="map" class="nav-btn active tooltip-right" data-title="Mappa Live 3D">📡</button>
-    <button onclick="switchTab('corse')" data-tab="corse" class="nav-btn tooltip-right" data-title="Dispatch Center">🚕</button>
+    <button onclick="switchTab('corse')" data-tab="corse" class="nav-btn active tooltip-right" data-title="Dispatch Center">🚕</button>
     <button onclick="switchTab('fleet')" data-tab="fleet" class="nav-btn tooltip-right" data-title="Garage & Flotta">🚘</button>
     <div class="hub-divider"></div>
     <!-- Hamburger Hub -->
@@ -441,8 +440,7 @@
       banner.textContent = `JS ERROR ${file} L${line}: ${msg}`;
       return false;
     };
-    // Initialize panel to map tab (before save slot is chosen)
-    if (typeof window.switchTab === 'function') window.switchTab('map');
+    if (typeof window.switchTab === 'function') window.switchTab('corse');
   </script>
 </body>
 </html>

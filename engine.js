@@ -4978,8 +4978,7 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     if (typeof window._injectLangToggle === 'function') {
         setTimeout(window._injectLangToggle, 200);
     }
-    // Show map tab
-    if (typeof window.switchTab === 'function') window.switchTab('map');
+    if (typeof window.switchTab === 'function') window.switchTab('corse');
     // Push leaderboard as soon as the game is live (fresh or loaded save)
     setTimeout(() => {
         if (typeof window.forceLeaderboardUpdate === 'function') window.forceLeaderboardUpdate();
@@ -5168,6 +5167,111 @@ window.instaHealDC = function(driverId) {
     showNotification(`💊 ${driver.name} è guarito! Stress → 0 (−${cost} DC)`, 'success');
     updateUI(); saveGame();
     if (typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+window.wakeAllDriversDC = function() {
+    const resting = (gameState.drivers || []).filter(d => d.id !== 'ceo' && d.status === 'resting');
+    if (resting.length === 0) { showNotification('Nessun autista a riposo.', 'info'); return; }
+    const cost = Math.max(3, resting.length * 2);
+    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
+    gameState.driverCoins -= cost;
+    resting.forEach(d => { d.status = 'idle'; d.restHoursLeft = 0; d.fatigue = Math.max(0, (d.fatigue || 0) - 30); });
+    logToMap(`⏰ ${resting.length} autisti risvegliati (${cost} DC)`);
+    showNotification(`⏰ ${resting.length} autisti disponibili! (−${cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+window.healAllDriversDC = function() {
+    const stressed = (gameState.drivers || []).filter(d => d.id !== 'ceo' && ((d.stress_level || 0) > 0 || d.burnout_until));
+    if (stressed.length === 0) { showNotification('Staff già in forma.', 'info'); return; }
+    const cost = Math.max(4, stressed.length * 2);
+    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
+    gameState.driverCoins -= cost;
+    stressed.forEach(d => { d.stress_level = 0; d.burnout_until = null; d.fatigue = Math.max(0, (d.fatigue || 0) - 50); if (d.status === 'resting') { d.status = 'idle'; d.restHoursLeft = 0; } });
+    logToMap(`💊 Benessere staff ripristinato (${cost} DC)`);
+    showNotification(`💊 ${stressed.length} autisti guariti! (−${cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+window.skipAllAcademyDC = function() {
+    const entries = (gameState.driverAcademy || []).slice();
+    if (entries.length === 0) { showNotification('Nessun corso attivo.', 'info'); return; }
+    const cost = entries.length * 5;
+    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
+    gameState.driverCoins -= cost;
+    entries.forEach(entry => {
+        const drv = gameState.drivers.find(d => d.id === entry.driverId);
+        if (!drv) return;
+        drv[entry.skill] = Math.min(100, (drv[entry.skill] || 50) + (entry.skillGain || 10));
+        drv.status = 'idle';
+    });
+    gameState.driverAcademy = [];
+    logToMap(`🎓 ${entries.length} corsi completati (${cost} DC)`);
+    showNotification(`🎓 ${entries.length} corsi completati! (−${cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+};
+
+window.skipAllConstructionsDC = function() {
+    const list = (gameState.constructions || []).slice();
+    if (list.length === 0) { showNotification('Nessuna costruzione in corso.', 'info'); return; }
+    const cost = list.length * 8;
+    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
+    gameState.driverCoins -= cost;
+    list.forEach(c => { if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId); });
+    gameState.constructions = [];
+    logToMap(`🏗️ ${list.length} costruzioni completate (${cost} DC)`);
+    showNotification(`🏗️ ${list.length} costruzioni pronte! (−${cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.opsBundleDC = function() {
+    const cost = 9;
+    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
+    gameState.driverCoins -= cost;
+    (gameState.fleet || []).forEach(c => { c.fuel = 100; });
+    gameState.energy = 100;
+    (gameState.drivers || []).filter(d => d.id !== 'ceo' && d.status === 'resting').forEach(d => { d.status = 'idle'; d.restHoursLeft = 0; d.fatigue = Math.max(0, (d.fatigue || 0) - 30); });
+    logToMap(`🚀 Pacchetto Operativo attivato (${cost} DC)`);
+    showNotification(`🚀 Pacchetto Operativo: flotta rifornita, CEO ricaricato, staff svegliato! (−${cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+};
+
+window.fullBundleDC = function() {
+    const cost = 35;
+    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
+    gameState.driverCoins -= cost;
+    (gameState.fleet || []).forEach(c => { c.fuel = 100; });
+    gameState.energy = 100;
+    (gameState.drivers || []).filter(d => d.id !== 'ceo').forEach(d => {
+        if (d.status === 'resting') { d.status = 'idle'; d.restHoursLeft = 0; }
+        d.stress_level = 0; d.burnout_until = null; d.fatigue = Math.max(0, (d.fatigue || 0) - 60);
+    });
+    const entries = (gameState.driverAcademy || []).slice();
+    entries.forEach(entry => {
+        const drv = gameState.drivers.find(d => d.id === entry.driverId);
+        if (!drv) return;
+        drv[entry.skill] = Math.min(100, (drv[entry.skill] || 50) + (entry.skillGain || 10));
+        drv.status = 'idle';
+    });
+    gameState.driverAcademy = [];
+    const constructions = (gameState.constructions || []).slice();
+    constructions.forEach(c => { if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId); });
+    gameState.constructions = [];
+    logToMap(`👑 Pacchetto Imperiale attivato (${cost} DC)`);
+    showNotification(`👑 Pacchetto Imperiale: tutto l'impero è al massimo! (−${cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+    if (typeof renderTabStaff === 'function') renderTabStaff();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
 };
 
 // ════════════════════════════════════════════════════════════════════

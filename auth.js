@@ -432,38 +432,40 @@ function _showAuthOverlay() {
                 <h2 class="lp-section-title">Cosa ti aspetta</h2>
             </div>
             <div class="lp-showcase-grid">
-                <div class="lp-showcase-slot">
+                <div class="lp-showcase-slot" onclick="openShowcase(0)" style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-map" style="background-image:url(assets/map-preview.jpg);background-size:cover;background-position:center">
                         <div style="position:absolute;inset:0;background:rgba(0,0,0,0.18);z-index:0"></div>
+                        <div class="lp-sc-expand">&#x26F6;</div>
                     </div>
                     <div class="lp-showcase-label">Mappa Globale Live</div>
                     <div class="lp-showcase-sub">Monitora i tuoi autisti in tempo reale sulla mappa 3D interattiva con traffico e meteo dinamici.</div>
                 </div>
-                <div class="lp-showcase-slot">
+                <div class="lp-showcase-slot" onclick="openShowcase(1)" style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-fleet">
                         <img src="assets/fleet/majestic-e-specter.jpg" alt="Garage & Flotta Elite"
                              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.88">
                         <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.45) 0%,transparent 60%);z-index:1"></div>
+                        <div class="lp-sc-expand">&#x26F6;</div>
                     </div>
                     <div class="lp-showcase-label">Garage & Flotta Elite</div>
                     <div class="lp-showcase-sub">Da berline premium a Rolls-Royce presidenziali. Ogni auto sblocca contratti e mercati ad alto margine.</div>
                 </div>
-                <div class="lp-showcase-slot">
+                <div class="lp-showcase-slot" onclick="openShowcase(2)" style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-rank">
                         <img src="assets/fleet/stellar-q-imperial.jpg" alt="Classifiche Live"
                              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.55;filter:hue-rotate(160deg) saturate(0.6)">
                         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(212,175,55,0.18),transparent 70%);z-index:1"></div>
-                        <div class="lp-st-icon" style="z-index:2">🏆</div>
+                        <div class="lp-sc-expand">&#x26F6;</div>
                     </div>
                     <div class="lp-showcase-label">Classifiche Live</div>
                     <div class="lp-showcase-sub">Scala la vetta della classifica globale e sfida i CEO di tutto il mondo per il dominio assoluto.</div>
                 </div>
-                <div class="lp-showcase-slot">
+                <div class="lp-showcase-slot" onclick="openShowcase(3)" style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-fin">
                         <img src="assets/fleet/volt-s-apex.jpg" alt="Borsa & Finanza"
                              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.45;filter:hue-rotate(90deg) saturate(0.7)">
                         <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 80%,rgba(34,197,94,0.15),transparent 70%);z-index:1"></div>
-                        <div class="lp-st-icon" style="z-index:2">💹</div>
+                        <div class="lp-sc-expand">&#x26F6;</div>
                     </div>
                     <div class="lp-showcase-label">Borsa & Finanza</div>
                     <div class="lp-showcase-sub">Investi in mercati azionari reali e gestisci un portafoglio multi-asset per espandere il tuo impero.</div>
@@ -480,7 +482,7 @@ function _showAuthOverlay() {
                     </svg>
                 </div>
                 <div class="lp-feat-title">Costruisci la tua Flotta</div>
-                <div class="lp-feat-desc">Acquista veicoli di lusso, dalle berline premium alle Mercedes S-Class presidenziali. Ogni auto apre contratti esclusivi e nuovi mercati ad alto margine.</div>
+                <div class="lp-feat-desc">Parti da un'unica berlina executive e scala fino a 50+ veicoli: Rolls-Royce, Tesla presidenziali, hypercar GT. Ogni modello sblocca contratti VIP, clienti premium e mercati ad alto margine inaccessibili ai rivali. Il tuo garage è il tuo vantaggio competitivo.</div>
             </div>
             <div class="lp-feat-card">
                 <div class="lp-feat-icon-wrap">
@@ -491,7 +493,7 @@ function _showAuthOverlay() {
                     </svg>
                 </div>
                 <div class="lp-feat-title">Gestisci lo Staff</div>
-                <div class="lp-feat-desc">Assumi autisti con skill uniche — Velocità, Carisma, Efficienza. Ottimizza i turni, monitora la fatica e incassa commissioni anche mentre sei offline.</div>
+                <div class="lp-feat-desc">Recluta autisti con abilità uniche — Velocità, Carisma, Efficienza Carburante. Assegna i turni, monitora umore e rendimento, ottimizza le commissioni per massimizzare i profitti. Mentre sei offline il tuo staff lavora: il management fa la differenza tra una piccola NCC e un grande gruppo.</div>
             </div>
             <div class="lp-feat-card">
                 <div class="lp-feat-icon-wrap">
@@ -501,7 +503,7 @@ function _showAuthOverlay() {
                     </svg>
                 </div>
                 <div class="lp-feat-title">Schiaccia la Concorrenza</div>
-                <div class="lp-feat-desc">Scala la classifica globale, conquista le regioni con licenze esclusive e lancia guerre di prezzo contro i tuoi rivali. Solo uno comanda le strade.</div>
+                <div class="lp-feat-desc">La classifica globale si aggiorna in tempo reale: ogni scelta pesa. Conquista licenze regionali esclusive, lancia OPA ostili sui competitor e domina le rotte premium della città. In Chauffeur Empire non esistono secondi posti — o cresci o vieni acquisito.</div>
             </div>
         </section>
 
@@ -524,17 +526,17 @@ function _showAuthOverlay() {
                     <div class="lp-footer-monogram" style="background-image:url(assets/ce-favicon.png);background-size:cover;background-position:center">CE</div>
                     <div>
                         <div class="lp-footer-name">Chauffeur Empire</div>
-                        <div class="lp-footer-copy">© 2026 Olga Vision Agency</div>
+                        <div class="lp-footer-copy">© 2026 — A product of OV Agency</div>
                     </div>
                 </div>
                 <div class="lp-footer-links">
-                    <a href="#" class="lp-footer-link">Termini di Servizio</a>
+                    <a href="terms.html" target="_blank" class="lp-footer-link">Termini di Servizio</a>
                     <span class="lp-footer-sep">·</span>
-                    <a href="#" class="lp-footer-link">Privacy Policy</a>
+                    <a href="privacy.html" target="_blank" class="lp-footer-link">Privacy Policy</a>
                     <span class="lp-footer-sep">·</span>
-                    <a href="#" class="lp-footer-link">Regolamento</a>
+                    <a href="rules.html" target="_blank" class="lp-footer-link">Regolamento</a>
                     <span class="lp-footer-sep">·</span>
-                    <a href="#" class="lp-footer-link">Support</a>
+                    <a href="support.html" target="_blank" class="lp-footer-link">Support</a>
                 </div>
             </div>
         </footer>
@@ -569,6 +571,65 @@ function _showAuthOverlay() {
     // Countup animation for live stats
     _animateLpCounters();
 }
+
+const _showcaseData = [
+    {
+        title: 'Mappa Globale Live',
+        img: 'assets/map-preview.jpg',
+        imgStyle: 'object-fit:cover;filter:none;opacity:1',
+        desc: 'Tieni sotto controllo ogni movimento della tua flotta. La mappa interattiva mostra in tempo reale la posizione di tutti i tuoi autisti, il loro carico di lavoro e le rotte più redditizie. Meteo dinamico e traffico simulato influenzano tempi e guadagni. Ogni decisione strategica parte da qui: assegna i turni, identifica le zone calde e massimizza i ricavi ora per ora.'
+    },
+    {
+        title: 'Garage & Flotta Elite',
+        img: 'assets/fleet/majestic-e-specter.jpg',
+        imgStyle: 'object-fit:cover;opacity:0.95',
+        desc: 'Il tuo garage è la spina dorsale dell\'impero. Dalle berline executive alle limousine di rappresentanza fino alle hypercar presidenziali, ogni veicolo ha statistiche proprie: consumo, usura, prestigio e velocità commerciale. I modelli premium sbloccano contratti VIP e mercati ad alto margine completamente inaccessibili ai competitor con flotte ordinarie. Investire nel giusto veicolo al momento giusto è la mossa che separa i grandi CEO dagli altri.'
+    },
+    {
+        title: 'Classifiche Live',
+        img: 'assets/fleet/stellar-q-imperial.jpg',
+        imgStyle: 'object-fit:cover;opacity:0.7;filter:hue-rotate(160deg) saturate(0.6)',
+        desc: 'La classifica globale si aggiorna in tempo reale: ogni corsa completata, ogni contratto firmato, ogni acquisizione cambia le posizioni. Competi con CEO da tutto il mondo per il dominio delle regioni più ricche. Scala la vetta del ranking, accumula reputazione e accedi a tornei esclusivi con premi in denaro virtuale. Nella stagione competitiva mensile, solo i migliori trenta CEO vengono premiati. Il podio non aspetta nessuno.'
+    },
+    {
+        title: 'Borsa & Finanza',
+        img: 'assets/fleet/volt-s-apex.jpg',
+        imgStyle: 'object-fit:cover;opacity:0.6;filter:hue-rotate(90deg) saturate(0.7)',
+        desc: 'L\'impero non si costruisce solo con le corse. Investi i tuoi profitti nel mercato azionario interno, acquista partecipazioni in aziende di altri giocatori e lancia la tua IPO per raccogliere capitali freschi. Il sistema finanziario MMO è interconnesso in tempo reale: le scelte strategiche degli altri CEO spostano i prezzi e creano opportunità. Chi sa leggere il mercato prima degli altri vince anche senza muovere un\'auto.'
+    }
+];
+
+window.openShowcase = function(idx) {
+    const d = _showcaseData[idx];
+    if (!d) return;
+    const existing = document.getElementById('lp-lightbox');
+    if (existing) existing.remove();
+    const lb = document.createElement('div');
+    lb.id = 'lp-lightbox';
+    lb.innerHTML = `
+        <div class="lp-lb-backdrop" onclick="closeLbIfBackdrop(event)">
+            <div class="lp-lb-panel">
+                <button class="lp-lb-close" onclick="document.getElementById('lp-lightbox').remove()">&times;</button>
+                <div class="lp-lb-img-wrap">
+                    <img src="${d.img}" alt="${d.title}" style="${d.imgStyle}">
+                </div>
+                <div class="lp-lb-body">
+                    <div class="lp-lb-title">${d.title}</div>
+                    <div class="lp-lb-desc">${d.desc}</div>
+                </div>
+            </div>
+        </div>`;
+    document.body.appendChild(lb);
+    requestAnimationFrame(() => lb.classList.add('lp-lb-in'));
+};
+
+window.closeLbIfBackdrop = function(e) {
+    if (e.target === e.currentTarget) document.getElementById('lp-lightbox')?.remove();
+};
+
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') document.getElementById('lp-lightbox')?.remove();
+}, { passive: true });
 
 function _animateLpCounters() {
     [

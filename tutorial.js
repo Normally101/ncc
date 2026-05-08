@@ -19,9 +19,9 @@ const _TUT_STEPS = [
         position: 'bottom',
     },
     {
-        target: '[data-tab="map"]',
-        title: '🗺️ Mappa Operativa',
-        body: 'La mappa mostra le corse disponibili. Clicca su un pallino colorato per assegnare un autista. Standard=verde, Business=blu, VIP=viola, Ultra=nero.',
+        target: '[data-tab="corse"]',
+        title: '🚕 Dispatch Center',
+        body: 'Il Dispatch Center mostra le corse disponibili. Assegna un autista a ogni corsa per iniziare a guadagnare. Standard=verde, Business=blu, VIP=viola, Ultra=nero.',
         position: 'right',
     },
     {

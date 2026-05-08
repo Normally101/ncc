@@ -11,8 +11,10 @@ styleFix.innerHTML = `
 `;
 document.head.appendChild(styleFix);
 
-let map = null; 
-let _poiMarkers = {}; 
+let map = null;
+window._fleetFilter = { brand: null, tier: null };
+let _fleetFilter = window._fleetFilter;
+let _poiMarkers = {};
 let _vehicleMarkers = {};
 let _routeLines = {};
 let _rideGeomCache = {}; // survives ride removal from activeRides so activeTrips can position marker at dest
@@ -314,8 +316,7 @@ function initMap() {
         // Secondo render ritardato: assicura che highway e POI siano visibili
         setTimeout(() => { drawHighways(); drawPOIs(); }, 800);
         setTimeout(() => { drawHighways(); drawPOIs(); }, 2500);
-        // Ensure panel shows map tab once map is ready
-        if (typeof window.switchTab === 'function') window.switchTab('map');
+        if (typeof window.switchTab === 'function') window.switchTab('corse');
     });
 }
 
@@ -1016,13 +1017,7 @@ window.switchTab = function(tab) {
         if (btn) btn.textContent = '◀';
     }
 
-    if(mapLog) {
-        if(tab === 'map') {
-            mapLog.classList.remove('hidden'); mapLog.classList.add('flex');
-        } else {
-            mapLog.classList.add('hidden'); mapLog.classList.remove('flex');
-        }
-    }
+    if(mapLog) { mapLog.classList.add('hidden'); mapLog.classList.remove('flex'); }
 
     const _safeRender = (fn) => { try { fn(); } catch(e) { console.error('[switchTab]', e); const _sup = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'; container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}<br><span class="text-gray-500">Se il problema persiste, scrivi a <a href="mailto:${_sup}" class="underline">${_sup}</a></span></div>`; } };
     switch(tab) {
@@ -1044,46 +1039,6 @@ window.switchTab = function(tab) {
         case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;
         case 'provinces':  title.innerText = "🏴 Province War"; _safeRender(renderTabProvinces); break;
         case 'realestate': title.innerText = "🏛 Real Estate"; _safeRender(renderTabRealEstate); break;
-        case 'map': title.innerText = "Radar Live"; {
-            const heat = gameState.policeHeat || 0;
-            const heatColor = heat >= 80 ? '#ff4060' : heat >= 50 ? '#f59e0b' : '#22c55e';
-            const ev = gameState.activeDynamicEvent;
-            const evBanner = ev
-                ? `<div class="hud-card border-gold/40 bg-gold/5 mb-2">
-                    <div class="flex items-center gap-2">
-                        <span class="text-xl">${ev.icon}</span>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-[10px] font-bold text-gold">${ev.name}</div>
-                            <div class="text-[9px] text-gray-400">×${(ev.priceMult||1).toFixed(1)} prezzi · ${Math.max(0, (ev.endsHour||0) - (gameState.day*24+gameState.hour))}h rimaste</div>
-                        </div>
-                    </div>
-                   </div>`
-                : '';
-            container.innerHTML = `
-                ${evBanner}
-                <div class="text-[10px] text-gray-500 text-center mt-4 uppercase tracking-widest">Sistemi Radar Operativi</div>
-                <div class="mt-4 space-y-2 px-2">
-                    <div class="hud-card text-center">
-                        <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Traffico Ora</div>
-                        <div id="map-traffic-label" class="text-sm font-bold text-white">—</div>
-                    </div>
-                    <div class="hud-card">
-                        <div class="flex justify-between text-[9px] mb-1">
-                            <span class="text-gray-500 uppercase tracking-widest">Allerta Polizia</span>
-                            <span style="color:${heatColor}" class="font-bold font-mono">${Math.round(heat)}%</span>
-                        </div>
-                        <div class="w-full h-1.5 rounded-full overflow-hidden" style="background:rgba(255,255,255,0.06)">
-                            <div style="width:${heat}%;height:100%;background:${heatColor};border-radius:4px;transition:width 0.4s ease;box-shadow:0 0 6px ${heatColor}"></div>
-                        </div>
-                        ${heat >= 80 ? '<div class="text-[8px] text-red-400 mt-1">⚠ Rischio checkpoint attivo!</div>' : ''}
-                    </div>
-                </div>
-                <div class="absolute bottom-4 left-0 right-0 flex justify-center">
-                    <button onclick="resetGame()" class="text-[9px] border border-red-900/40 text-red-500/60 px-3 py-1.5 rounded-lg hover:border-red-500/60 hover:text-red-400 transition-colors">⚠ Reset Partita</button>
-                </div>`;
-            _updateTrafficLabel();
-        }
-        break;
     }
 }
 
@@ -1480,9 +1435,71 @@ function renderTabFleet() {
         <span class="text-[8px] text-gray-600">(aggiornamento orario)</span>
     </div>` : '';
 
-    let html = fuelTickerHtml + fuelDepotHtml + `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Tua Flotta</h3><div class="space-y-3 mb-6">`;
+    // ── Fleet filter bar ──────────────────────────────────────
+    const _getBrand = car => car.name ? car.name.split(' ')[0] : 'Altro';
+    const allBrands = [...new Set((gameState.fleet || []).map(_getBrand))].sort();
+    const allTiers  = [...new Set((gameState.fleet || []).map(c => c.tier))];
+    const tierOrder = ['standard','business','vip','ultra'];
+    allTiers.sort((a,b) => tierOrder.indexOf(a) - tierOrder.indexOf(b));
+    const tierLabels = { standard:'Standard', business:'Business', vip:'VIP', ultra:'Ultra' };
+    const tierColors = { standard:'rgba(107,114,128,0.35)', business:'rgba(59,130,246,0.25)', vip:'rgba(168,85,247,0.25)', ultra:'rgba(212,175,55,0.2)' };
+    const tierBorder = { standard:'rgba(107,114,128,0.5)', business:'rgba(59,130,246,0.5)', vip:'rgba(168,85,247,0.5)', ultra:'rgba(212,175,55,0.6)' };
+    const activeBrand = window._fleetFilter.brand;
+    const activeTier  = window._fleetFilter.tier;
 
-    gameState.fleet.forEach(car => {
+    const filterBar = (allBrands.length > 1 || allTiers.length > 1) ? `
+    <div class="mb-3">
+        ${allBrands.length > 1 ? `
+        <div class="text-[8px] text-gray-600 uppercase tracking-widest mb-1">Produttore</div>
+        <div class="flex flex-wrap gap-1.5 mb-2">
+            <button onclick="window._fleetFilter.brand=null;renderTabFleet()"
+                class="text-[8px] px-2 py-1 rounded-full border transition-colors"
+                style="${!activeBrand ? 'background:rgba(212,175,55,0.2);border-color:rgba(212,175,55,0.6);color:#d4af37;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#6b7280'}">
+                Tutti (${gameState.fleet.length})
+            </button>
+            ${allBrands.map(b => {
+                const cnt = gameState.fleet.filter(c => _getBrand(c) === b).length;
+                const isActive = activeBrand === b;
+                return `<button onclick="window._fleetFilter.brand=${isActive?'null':JSON.stringify(b)};renderTabFleet()"
+                    class="text-[8px] px-2 py-1 rounded-full border transition-colors"
+                    style="${isActive ? 'background:rgba(212,175,55,0.2);border-color:rgba(212,175,55,0.6);color:#d4af37;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#9ca3af'}">
+                    ${b} <span style="opacity:0.6">${cnt}</span>
+                </button>`;
+            }).join('')}
+        </div>` : ''}
+        ${allTiers.length > 1 ? `
+        <div class="text-[8px] text-gray-600 uppercase tracking-widest mb-1">Categoria</div>
+        <div class="flex flex-wrap gap-1.5">
+            <button onclick="window._fleetFilter.tier=null;renderTabFleet()"
+                class="text-[8px] px-2 py-1 rounded-full border transition-colors"
+                style="${!activeTier ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.5);color:#d4af37;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#6b7280'}">
+                Tutte
+            </button>
+            ${allTiers.map(t => {
+                const cnt = gameState.fleet.filter(c => c.tier === t).length;
+                const isActive = activeTier === t;
+                return `<button onclick="window._fleetFilter.tier=${isActive?'null':JSON.stringify(t)};renderTabFleet()"
+                    class="text-[8px] px-2 py-1 rounded-full border transition-colors"
+                    style="${isActive ? `background:${tierColors[t]};border-color:${tierBorder[t]};color:#e5e7eb;font-weight:700` : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#9ca3af'}">
+                    ${tierLabels[t]||t} <span style="opacity:0.6">${cnt}</span>
+                </button>`;
+            }).join('')}
+        </div>` : ''}
+    </div>` : '';
+
+    const filteredFleet = (gameState.fleet || []).filter(car => {
+        if (window._fleetFilter.brand && _getBrand(car) !== window._fleetFilter.brand) return false;
+        if (window._fleetFilter.tier  && car.tier !== window._fleetFilter.tier) return false;
+        return true;
+    });
+
+    const noResults = filteredFleet.length === 0
+        ? `<div class="text-[10px] text-gray-600 text-center py-8">Nessun veicolo corrisponde ai filtri selezionati.</div>`
+        : '';
+
+    let html = fuelTickerHtml + fuelDepotHtml + filterBar + `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Tua Flotta <span class="text-gray-600 font-normal">${filteredFleet.length}/${gameState.fleet.length}</span></h3>` + noResults + `<div class="space-y-3 mb-6">`;
+
+    filteredFleet.forEach(car => {
         if (!car.upgrades) car.upgrades = [];
 
         // Catalog lookup for image + electric type
@@ -3546,94 +3563,125 @@ function renderTabPremiumStore() {
             </div>`;
         })()}
 
-        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">🎨 Skin Veicoli</div>
+        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">⚡ Pacchetti Flotta</div>
         ${(() => {
-            const skins = typeof VEHICLE_SKINS !== 'undefined' ? VEHICLE_SKINS : (typeof window.VEHICLE_SKINS !== 'undefined' ? window.VEHICLE_SKINS : []);
-            const availCars = (gameState.fleet||[]).filter(c => !c.isLease);
-            if (availCars.length === 0) return `<div class="text-[9px] text-gray-600 italic mb-4">Nessun veicolo di proprietà disponibile.</div>`;
-            const carOptions = availCars.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            return `<div class="hud-card mb-4">
-                <div class="text-[9px] text-gray-400 mb-2">Seleziona veicolo e applica livrea:</div>
-                <select id="skin-car-select" class="w-full text-[9px] bg-black/40 border border-white/10 rounded px-2 py-1 text-gray-300 mb-2">${carOptions}</select>
-                <div class="grid grid-cols-3 gap-1">
-                    ${skins.map(s => `
-                    <button onclick="applyVehicleSkin(document.getElementById('skin-car-select').value,'${s.id}')"
-                        class="text-[7px] py-1 px-1 rounded border text-center transition-colors hover:opacity-90"
-                        style="border-color:${s.border};background:${s.color}22;color:${s.color}">
-                        ${s.name}<br><span style="color:${s.border}">${s.cost} DC</span>
-                    </button>`).join('')}
-                </div>
-            </div>`;
-        })()}
+            const restingCount   = (gameState.drivers||[]).filter(d => d.id !== 'ceo' && d.status === 'resting').length;
+            const stressedCount  = (gameState.drivers||[]).filter(d => d.id !== 'ceo' && ((d.stress_level||0) > 0 || d.burnout_until)).length;
+            const trainingCount  = (gameState.driverAcademy||[]).length;
+            const constructions  = (gameState.constructions||[]);
+            const lowFuel        = (gameState.fleet||[]).filter(c => (c.fuel||0) < 100).length;
+            const ceoNeedEnergy  = (gameState.energy||0) < 100;
 
-        <div class="uppercase tracking-widest border-b border-white/10 pb-1 mb-3" style="font-size:0.8rem;color:#9ca3af;">⚡ Potenziamenti Rapidi</div>
-        <div class="space-y-2 mb-4">
-            <div class="hud-card flex justify-between items-center">
-                <div>
-                    <div class="text-xs font-bold text-white">Rifornimento Flotta</div>
-                    <div class="text-[9px] text-gray-400">Tutti i veicoli al 100% carburante istantaneamente</div>
-                </div>
-                <button onclick="fuelBoostDC()" class="btn-gold !text-[8px] shrink-0">3 DC</button>
-            </div>
-            <div class="hud-card flex justify-between items-center">
-                <div>
-                    <div class="text-xs font-bold text-white">Ricarica Energia CEO</div>
-                    <div class="text-[9px] text-gray-400">Ripristina la tua energia al 100% senza hotel</div>
-                </div>
-                <button onclick="energyBoostDC()" class="btn-gold !text-[8px] shrink-0">4 DC</button>
-            </div>
-            ${(() => {
-                const restingDrivers = (gameState.drivers||[]).filter(d => d.id !== 'ceo' && d.status === 'resting');
-                if (restingDrivers.length === 0) return `<div class="text-[9px] text-gray-600 italic">Nessun autista a riposo al momento.</div>`;
-                return restingDrivers.map(d => `
-                <div class="hud-card flex justify-between items-center">
-                    <div>
-                        <div class="text-xs font-bold text-white">Sveglia ${d.name}</div>
-                        <div class="text-[9px] text-gray-400">Rimuovi il riposo forzato istantaneamente</div>
-                    </div>
-                    <button onclick="wakeDriverDC('${d.id}')" class="btn-gold !text-[8px] shrink-0">3 DC</button>
-                </div>`).join('');
-            })()}
-            ${(() => {
-                const stressed = (gameState.drivers||[]).filter(d => d.id !== 'ceo' && ((d.stress_level||0) > 0 || d.burnout_until));
-                if (stressed.length === 0) return '';
-                return stressed.map(d => `
-                <div class="hud-card flex justify-between items-center">
-                    <div>
-                        <div class="text-xs font-bold text-white">💊 Insta-Heal — ${d.name}</div>
-                        <div class="text-[9px] text-gray-400">Azzera stress (${d.stress_level||0}%) e burnout istantaneamente</div>
-                    </div>
-                    <button onclick="instaHealDC('${d.id}')" class="btn-gold !text-[8px] shrink-0">2 DC</button>
-                </div>`).join('');
-            })()}
-            ${(() => {
-                const inTraining = (gameState.driverAcademy||[]);
-                if (inTraining.length === 0) return '';
-                return inTraining.map(entry => {
-                    const drv = (gameState.drivers||[]).find(d => d.id === entry.driverId);
-                    if (!drv) return '';
-                    return `<div class="hud-card flex justify-between items-center">
-                        <div>
-                            <div class="text-xs font-bold text-white">Completa Corso — ${drv.name}</div>
-                            <div class="text-[9px] text-gray-400">${entry.courseName} — finisci subito</div>
+            const pkgs = [
+                {
+                    id: 'fuel',
+                    icon: '⛽',
+                    name: 'Rifornimento Flotta',
+                    desc: `Porta tutti i ${lowFuel} veicoli al 100% di carburante istantaneamente`,
+                    cost: 3,
+                    badge: `${lowFuel} veicoli`,
+                    disabled: lowFuel === 0,
+                    onclick: 'fuelBoostDC()',
+                    disabledLabel: 'Flotta piena'
+                },
+                {
+                    id: 'energy',
+                    icon: '⚡',
+                    name: 'Ricarica Energia CEO',
+                    desc: 'Ripristina la tua energia personale al 100% senza hotel',
+                    cost: 4,
+                    badge: 'CEO',
+                    disabled: !ceoNeedEnergy,
+                    onclick: 'energyBoostDC()',
+                    disabledLabel: 'Già al 100%'
+                },
+                {
+                    id: 'rest',
+                    icon: '⏰',
+                    name: 'Sveglia Flotta',
+                    desc: `Rimuovi il riposo forzato da tutti i ${restingCount} autisti contemporaneamente`,
+                    cost: Math.max(3, restingCount * 2),
+                    badge: `${restingCount} autisti`,
+                    disabled: restingCount === 0,
+                    onclick: 'wakeAllDriversDC()',
+                    disabledLabel: 'Nessuno a riposo'
+                },
+                {
+                    id: 'heal',
+                    icon: '💊',
+                    name: 'Benessere Staff',
+                    desc: `Azzera stress e burnout di tutti i ${stressedCount} autisti del team istantaneamente`,
+                    cost: Math.max(4, stressedCount * 2),
+                    badge: `${stressedCount} autisti`,
+                    disabled: stressedCount === 0,
+                    onclick: 'healAllDriversDC()',
+                    disabledLabel: 'Staff in forma'
+                },
+                {
+                    id: 'training',
+                    icon: '🎓',
+                    name: 'Completamento Corsi',
+                    desc: `Porta a termine tutti i ${trainingCount} corsi in accademia istantaneamente`,
+                    cost: trainingCount * 5,
+                    badge: `${trainingCount} corsi`,
+                    disabled: trainingCount === 0,
+                    onclick: 'skipAllAcademyDC()',
+                    disabledLabel: 'Nessun corso attivo'
+                },
+                {
+                    id: 'construct',
+                    icon: '🏗️',
+                    name: 'Costruzioni Lampo',
+                    desc: `Completa le ${constructions.length} costruzioni in corso istantaneamente`,
+                    cost: constructions.length * 8,
+                    badge: `${constructions.length} edifici`,
+                    disabled: constructions.length === 0,
+                    onclick: 'skipAllConstructionsDC()',
+                    disabledLabel: 'Nessuna in corso'
+                },
+                {
+                    id: 'bundle_ops',
+                    icon: '🚀',
+                    name: 'Pacchetto Operativo',
+                    desc: 'Carburante + Energia CEO + Sveglia autisti tutto in una volta',
+                    cost: 9,
+                    badge: 'Bundle',
+                    disabled: lowFuel === 0 && !ceoNeedEnergy && restingCount === 0,
+                    onclick: 'opsBundleDC()',
+                    disabledLabel: 'Tutto OK'
+                },
+                {
+                    id: 'bundle_full',
+                    icon: '👑',
+                    name: 'Pacchetto Imperiale',
+                    desc: 'Tutto: Carburante · Energia · Riposo Staff · Benessere · Corsi · Costruzioni',
+                    cost: 35,
+                    badge: 'All-in',
+                    disabled: false,
+                    onclick: 'fullBundleDC()',
+                    disabledLabel: ''
+                }
+            ];
+
+            return `<div class="grid grid-cols-2 gap-2 mb-4">
+                ${pkgs.map(p => `
+                <div class="hud-card flex flex-col gap-1.5 ${p.disabled ? 'opacity-40' : ''}">
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg leading-none">${p.icon}</span>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[10px] font-bold text-white leading-tight truncate">${p.name}</div>
+                            <div class="text-[8px]" style="color:#d4af37">${p.badge}</div>
                         </div>
-                        <button onclick="skipAcademyTraining('${entry.driverId}')" class="btn-gold !text-[8px] shrink-0">5 DC</button>
-                    </div>`;
-                }).join('');
-            })()}
-            ${(() => {
-                const constructions = (gameState.constructions||[]);
-                if (constructions.length === 0) return '';
-                return constructions.map(c => `
-                <div class="hud-card flex justify-between items-center">
-                    <div>
-                        <div class="text-xs font-bold text-white">Finisci Costruzione</div>
-                        <div class="text-[9px] text-gray-400">${c.invId} — completa istantaneamente</div>
                     </div>
-                    <button onclick="skipConstruction('${c.invId}')" class="btn-gold !text-[8px] shrink-0">8 DC</button>
-                </div>`).join('');
-            })()}
-        </div>`;
+                    <div class="text-[8px] text-gray-500 leading-snug">${p.desc}</div>
+                    <button onclick="${p.disabled ? '' : p.onclick}"
+                        ${p.disabled ? 'disabled' : ''}
+                        class="btn-gold !text-[8px] w-full mt-auto ${p.disabled ? 'opacity-50 cursor-not-allowed' : ''}">
+                        ${p.disabled ? p.disabledLabel : `${p.cost} DC`}
+                    </button>
+                </div>`).join('')}
+            </div>`;
+        })()}`;
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 

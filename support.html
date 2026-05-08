@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support — Chauffeur Empire</title>
+    <style>
+        *{box-sizing:border-box;margin:0;padding:0}
+        body{background:#05050e;color:#d1d5db;font-family:'Segoe UI',system-ui,sans-serif;font-size:15px;line-height:1.8;min-height:100vh}
+        .wrap{max-width:800px;margin:0 auto;padding:60px 24px 80px}
+        .logo-bar{margin-bottom:48px}
+        .logo-bar a{color:#d4af37;text-decoration:none;font-size:13px;letter-spacing:.04em}
+        h1{font-family:'Georgia',serif;font-size:2rem;color:#f3f4f6;margin-bottom:8px}
+        .meta{font-size:12px;color:#6b7280;margin-bottom:40px}
+        h2{font-size:1.1rem;font-weight:700;color:#e5e7eb;margin:36px 0 10px;border-bottom:1px solid rgba(255,255,255,0.07);padding-bottom:8px}
+        p{margin-bottom:14px;color:#9ca3af}
+        ul{margin:0 0 14px 22px;color:#9ca3af}
+        ul li{margin-bottom:6px}
+        a{color:#d4af37;text-decoration:none}
+        a:hover{text-decoration:underline}
+        .card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin:20px 0}
+        .card{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:12px;padding:22px 20px;transition:border-color .2s}
+        .card:hover{border-color:rgba(212,175,55,0.25)}
+        .card-icon{font-size:1.8rem;margin-bottom:10px}
+        .card-title{font-weight:600;color:#e5e7eb;margin-bottom:6px;font-size:.95rem}
+        .card-sub{font-size:13px;color:#6b7280}
+        .faq-item{border-bottom:1px solid rgba(255,255,255,0.06);padding:18px 0}
+        .faq-q{font-weight:600;color:#e5e7eb;margin-bottom:8px;cursor:pointer}
+        .faq-a{color:#9ca3af;font-size:14px}
+        .contact-box{background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.15);border-radius:12px;padding:28px 24px;margin:28px 0}
+        label{display:block;font-size:13px;color:#9ca3af;margin-bottom:5px;margin-top:16px}
+        input,select,textarea{width:100%;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:#e5e7eb;font-size:14px;padding:10px 14px;outline:none;font-family:inherit;transition:border-color .2s}
+        input:focus,select:focus,textarea:focus{border-color:rgba(212,175,55,0.4)}
+        select option{background:#111}
+        textarea{resize:vertical;min-height:120px}
+        .btn-send{margin-top:20px;background:linear-gradient(135deg,#b8922a,#d4af37);color:#000;border:none;border-radius:8px;font-size:14px;font-weight:700;padding:12px 28px;cursor:pointer;letter-spacing:.03em;transition:opacity .2s}
+        .btn-send:hover{opacity:.88}
+        .sent-msg{display:none;color:#86efac;font-size:14px;margin-top:14px}
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="logo-bar">
+        <a href="index.html">&larr; Torna a Chauffeur Empire</a>
+    </div>
+    <h1>Support Center</h1>
+    <div class="meta">Siamo qui per aiutarti. Tempo medio di risposta: &lt;24 ore nei giorni feriali.</div>
+
+    <div class="card-grid">
+        <div class="card">
+            <div class="card-icon">📖</div>
+            <div class="card-title">Regolamento</div>
+            <div class="card-sub"><a href="rules.html">Leggi le regole del gioco</a> per capire cosa è consentito e cosa non lo è.</div>
+        </div>
+        <div class="card">
+            <div class="card-icon">🔒</div>
+            <div class="card-title">Privacy & Dati</div>
+            <div class="card-sub">Richieste GDPR (accesso, rettifica, cancellazione dati): <a href="mailto:privacy@ovagency.io">privacy@ovagency.io</a></div>
+        </div>
+        <div class="card">
+            <div class="card-icon">⚖️</div>
+            <div class="card-title">Termini di Servizio</div>
+            <div class="card-sub"><a href="terms.html">Leggi i Termini</a> per informazioni su acquisti, recesso e responsabilità.</div>
+        </div>
+    </div>
+
+    <h2>Domande Frequenti</h2>
+
+    <div class="faq-item">
+        <div class="faq-q">Come recupero l'accesso al mio account?</div>
+        <div class="faq-a">Dalla schermata di login clicca "Password dimenticata" e inserisci la tua email. Riceverai un link di reset entro pochi minuti. Controlla anche la cartella spam. Se l'email non arriva, contattaci tramite il modulo qui sotto indicando il tuo username.</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-q">I miei progressi di gioco sono andati persi. Cosa faccio?</div>
+        <div class="faq-a">I progressi sono salvati sia localmente (localStorage) che sul cloud (Supabase). Se hai effettuato il login con lo stesso account, i dati cloud vengono ripristinati automaticamente. Se il problema persiste, contattaci con il tuo username e la data approssimativa dell'ultimo accesso.</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-q">Come posso richiedere il rimborso di un acquisto?</div>
+        <div class="faq-a">Se hai acquistato contenuti premium e vuoi esercitare il diritto di recesso (entro 14 giorni dall'acquisto, art. 52 Cod. Consumo), scrivici a <a href="mailto:support@ovagency.io">support@ovagency.io</a> con oggetto "Recesso — [tuo username]" indicando data e importo dell'acquisto.</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-q">Ho ricevuto un ban. Posso fare appello?</div>
+        <div class="faq-a">Sì. Puoi fare appello entro 14 giorni inviando un'email a <a href="mailto:support@ovagency.io">support@ovagency.io</a> con oggetto "Appello Ban — [tuo username]" e spiegando la tua situazione. Esamineremo il caso entro 5 giorni lavorativi.</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-q">Come segnalo un bug o un giocatore che bara?</div>
+        <div class="faq-a">Usa il modulo di contatto qui sotto selezionando la categoria appropriata. Per i bug includi una descrizione dettagliata e, se possibile, uno screenshot. Ogni segnalazione viene esaminata dal team.</div>
+    </div>
+    <div class="faq-item">
+        <div class="faq-q">Come cancello il mio account e i miei dati?</div>
+        <div class="faq-a">Inviaci una richiesta di cancellazione a <a href="mailto:privacy@ovagency.io">privacy@ovagency.io</a> dall'indirizzo email associato all'account. Procederemo entro 30 giorni come previsto dal GDPR. Nota: la cancellazione è irreversibile e comporta la perdita di tutti i progressi di gioco.</div>
+    </div>
+
+    <h2>Contattaci</h2>
+    <div class="contact-box">
+        <p style="margin-bottom:4px;color:#e5e7eb;font-weight:600">Modulo di Contatto</p>
+        <p style="margin-bottom:0;font-size:13px">Compila il form o scrivici direttamente a <a href="mailto:support@ovagency.io">support@ovagency.io</a></p>
+
+        <label for="s-name">Nome / Username in-game</label>
+        <input type="text" id="s-name" placeholder="Il tuo username">
+
+        <label for="s-email">Email</label>
+        <input type="email" id="s-email" placeholder="tua@email.com">
+
+        <label for="s-cat">Categoria</label>
+        <select id="s-cat">
+            <option value="">— Seleziona —</option>
+            <option value="account">Problema account / password</option>
+            <option value="bug">Segnalazione bug</option>
+            <option value="cheat">Segnalazione cheat/bot</option>
+            <option value="ban">Appello ban</option>
+            <option value="refund">Rimborso / diritto di recesso</option>
+            <option value="gdpr">Richiesta GDPR (dati personali)</option>
+            <option value="other">Altro</option>
+        </select>
+
+        <label for="s-msg">Messaggio</label>
+        <textarea id="s-msg" placeholder="Descrivi il problema nel dettaglio..."></textarea>
+
+        <button class="btn-send" onclick="sendSupport()">Invia Richiesta</button>
+        <div class="sent-msg" id="sent-msg">Richiesta inviata. Ti risponderemo entro 24 ore lavorative.</div>
+    </div>
+
+    <p style="font-size:12px;color:#4b5563;margin-top:32px">
+        Chauffeur Empire è operato da OV Agency. Per questioni legali: <a href="mailto:legal@ovagency.io">legal@ovagency.io</a><br>
+        Per la piattaforma di risoluzione alternativa delle controversie UE: <a href="https://ec.europa.eu/consumers/odr" target="_blank" rel="noopener">ec.europa.eu/consumers/odr</a>
+    </p>
+</div>
+<script>
+function sendSupport() {
+    const name = document.getElementById('s-name').value.trim();
+    const email = document.getElementById('s-email').value.trim();
+    const cat = document.getElementById('s-cat').value;
+    const msg = document.getElementById('s-msg').value.trim();
+    if (!email || !cat || !msg) { alert('Compila tutti i campi obbligatori (email, categoria, messaggio).'); return; }
+    const subject = encodeURIComponent('[CE Support] ' + (cat || 'Contatto') + (name ? ' — ' + name : ''));
+    const body = encodeURIComponent('Username: ' + name + '\nCategoria: ' + cat + '\n\n' + msg);
+    window.location.href = 'mailto:support@ovagency.io?subject=' + subject + '&body=' + body;
+    document.getElementById('sent-msg').style.display = 'block';
+}
+</script>
+</body>
+</html>
