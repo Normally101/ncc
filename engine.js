@@ -1440,7 +1440,8 @@ window.buyFuelForDepot = function(litres) {
     const lobbyDiscount  = (gameState.activeLobbyLaws || []).includes('law_fuel_subsidy') ? 0.70 : 1.0;
     const depotLvlData   = _DEPOT_LEVELS.find(d => d.level === (gameState.fuelTankLevel || 1)) || _DEPOT_LEVELS[0];
     const depotDiscount  = 1.0 - (depotLvlData.priceDiscount || 0);
-    const fuelDiscount   = lobbyDiscount * depotDiscount;
+    const _consorzioFuelDiscount = ((window._sindacatoState || {}).consorzioMembersCount >= 3) ? 0.95 : 1.0;
+    const fuelDiscount   = lobbyDiscount * depotDiscount * _consorzioFuelDiscount;
     const cost = Math.floor(actual * (gameState.fuelPrice || 1.85) * fuelDiscount);
     if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
     gameState.cash -= cost;
@@ -2710,6 +2711,9 @@ function processDailyRoutines() {
     }
 
     logToMap(`📊 Chiusura Giornaliera: Entrate +€${income} | Uscite -€${Math.floor(expenses)} (Inc. Tasse: €${luxuryTax})`);
+
+    // GdF inspection — fire-and-forget, async (requires user logged in)
+    if (typeof window._sindacatoGdfDailyCheck === 'function') window._sindacatoGdfDailyCheck();
 }
 
 // ─── GENERAZIONE CORSE ───
@@ -3264,7 +3268,12 @@ function completeRide(ride, _deferPay = false) {
     const conditionMult = _cond3 < 30 ? 0.80 : _cond3 < 50 ? 0.85 : 1.0;
     const _kmEst = _car3 && ride.fromPoi?.region !== ride.toPoi?.region ? 250 : 60;
     const _fuelDeduction = Math.round((_kmEst / 10) * (gameState.fuelPrice || 1.85));
-    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult) - _fuelDeduction);
+    // Sindacato modifiers (server-authoritative state cached in _sindacatoState)
+    const _ss = window._sindacatoState || {};
+    const _strikeMult    = _ss.strikeActive ? 0.70 : 1.0;
+    const _crumiriMult   = (_ss.crumiriBoostUntil && new Date() < new Date(_ss.crumiriBoostUntil)) ? 1.50 : 1.0;
+    const _consorzioMult = (_ss.consorzioMembersCount >= 5) ? 1.08 : 1.0;
+    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult) - _fuelDeduction);
 
     const prevCash = gameState.cash;
     if (_deferPay) {

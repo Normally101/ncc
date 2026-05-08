@@ -12,8 +12,22 @@ window._p2pMarket = {
     myShareHoldings: [], // share_holdings dove owner = me
     holdings:      [],   // holdings (sindacati)
     myHolding:     null, // la mia holding corrente
+    consorzi:      [],   // consorzi cooperativi
+    myConsorzio:   null, // il mio consorzio
     _subs:         [],   // subscriptions Realtime attive
     _lastFetch:    0,
+};
+
+// ── STATO SINDACATO GLOBALE (cache server-side) ────────────────────────────
+window._sindacatoState = {
+    tension:               0,
+    strikeActive:          false,
+    strikeEndsAt:          null,
+    gdfRisk:               0,
+    crumiriBoostUntil:     null,
+    carmineImmunityUntil:  null,
+    consorzioId:           null,
+    consorzioMembersCount: 0,
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -164,13 +178,27 @@ window.leaveHolding = async function(holdingId) {
 
 window.contributeHoldingTreasury = async function(holdingId, amount) {
     if (!_uid()) return;
+    const roundedAmount = Math.round(amount);
     const { data, error } = await _sb().rpc('rpc_contribute_holding_treasury', {
-        v_holding_id: holdingId, v_amount: Math.round(amount),
+        v_holding_id: holdingId, v_amount: roundedAmount,
     });
     if (error) { showNotification(`Errore contributo: ${error.message}`, 'error'); return; }
-    if (!window.ServerState?.isReady()) gameState.cash -= Math.round(amount);
+    if (!window.ServerState?.isReady()) gameState.cash -= roundedAmount;
     await saveGame();
-    showNotification(`💰 Contribuito €${Math.round(amount).toLocaleString()} alla cassa holding.`, 'success');
+
+    // Ogni contributo sindacale riduce il Barometro della Collera (fire-and-forget)
+    if (roundedAmount >= 10000) {
+        _sb().rpc('rpc_dampen_tension', { v_amount: roundedAmount })
+            .then(({ data: newTension }) => {
+                if (newTension !== null) {
+                    window._sindacatoState.tension = newTension;
+                    const reduction = Math.floor(roundedAmount / 10000);
+                    showNotification(`🌡️ Barometro −${reduction} pt (${Math.round(newTension)}%)`, 'info');
+                }
+            }).catch(() => {});
+    }
+
+    showNotification(`💰 Contribuito €${roundedAmount.toLocaleString()} alla cassa holding.`, 'success');
     updateUI();
     await p2pFetchHoldings();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -321,12 +349,88 @@ async function p2pFetchHoldings() {
         : null;
 }
 
+async function p2pFetchConsorzi() {
+    if (!_sb()) return;
+    const uid = _uid();
+
+    const [cRes, mRes] = await Promise.all([
+        _sb().from('consorzi').select('*').order('created_at', { ascending: false }),
+        _sb().from('consorzio_members').select('consorzio_id, user_id, company_name, role'),
+    ]);
+    if (cRes.error || mRes.error) return;
+
+    const members = mRes.data || [];
+    const all = (cRes.data || []).map(c => ({
+        ...c,
+        consorzio_members: members.filter(m => m.consorzio_id === c.id),
+    }));
+
+    window._p2pMarket.consorzi   = all;
+    window._p2pMarket.myConsorzio = uid
+        ? (all.find(c => c.consorzio_members.some(m => m.user_id === uid)) || null)
+        : null;
+
+    // Aggiorna sindacatoState con info consorzio
+    if (window._p2pMarket.myConsorzio) {
+        window._sindacatoState.consorzioId           = window._p2pMarket.myConsorzio.id;
+        window._sindacatoState.consorzioMembersCount = window._p2pMarket.myConsorzio.consorzio_members.length;
+    } else {
+        window._sindacatoState.consorzioId           = null;
+        window._sindacatoState.consorzioMembersCount = 0;
+    }
+}
+
+async function p2pFetchTension() {
+    if (!_sb()) return;
+    // Tick server-side (aggiorna tensione in base al tempo trascorso)
+    const { data, error } = await _sb().rpc('rpc_tick_tension');
+    if (error || !data) return;
+    window._sindacatoState.tension      = data.tension      ?? 0;
+    window._sindacatoState.strikeActive = data.strike_active ?? false;
+    window._sindacatoState.strikeEndsAt = data.strike_ends_at ?? null;
+    if (data.strike_started) {
+        showBigEvent('🚨', 'SCIOPERO NAZIONALE!',
+            'La tensione sindacale ha raggiunto il limite. Tutti i redditi NCC sono ridotti del 30% per 24 ore.\nContribuisci alla cassa del tuo Sindacato per abbassare il Barometro prima del prossimo sciopero.');
+        if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    }
+}
+
+async function p2pFetchGdfRisk() {
+    if (!_sb() || !_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_get_gdf_risk');
+    if (error || !data) return;
+    window._sindacatoState.gdfRisk              = data.risk_level           ?? 0;
+    window._sindacatoState.crumiriBoostUntil    = data.crumiri_boost_until  ?? null;
+    window._sindacatoState.carmineImmunityUntil = data.carmine_immunity_until ?? null;
+}
+
+/** Check giornaliero GdF — chiamata da processDailyRoutines() in engine.js */
+window._sindacatoGdfDailyCheck = async function() {
+    if (!_sb() || !_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_gdf_inspection_check');
+    if (error || !data) return;
+    if (data.inspected) {
+        const fine = data.fine || 0;
+        if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, gameState.cash - fine);
+        await saveGame();
+        showBigEvent('🚔', 'ISPEZIONE GdF!',
+            `La Guardia di Finanza ha fatto irruzione. Multa: −€${fine.toLocaleString()}.\nRischio GdF ridotto di 30 punti dopo l'ispezione.\nPaga Don Carmine per evitare future visite.`);
+        logToMap(`🚔 GdF: ispezione! Multa −€${fine.toLocaleString()}`);
+        window._sindacatoState.gdfRisk = Math.max(0, (window._sindacatoState.gdfRisk || 0) - 30);
+        updateUI();
+        if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    }
+};
+
 /** Refresh completo di tutti i dati P2P */
 window.p2pRefreshAll = async function() {
     await Promise.all([
         p2pFetchMarket(),
         p2pFetchShares(),
         p2pFetchHoldings(),
+        p2pFetchConsorzi(),
+        p2pFetchTension(),
+        p2pFetchGdfRisk(),
     ]);
 };
 
@@ -392,8 +496,20 @@ window.p2pStartRealtime = function() {
         )
         .subscribe();
 
-    window._p2pMarket._subs = [marketChannel, sharesChannel, holdingChannel];
-    console.log('[P2P] Realtime attivo su: market_listings, company_shares, holding_members');
+    // ── Consorzi: nuovi membri, nuove gilde ─────────────────────────────────
+    const consorzioChannel = _sb()
+        .channel('public:consorzio_members')
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'consorzio_members' },
+            async () => {
+                await p2pFetchConsorzi();
+                if (typeof renderTabInvestments === 'function') renderTabInvestments();
+            }
+        )
+        .subscribe();
+
+    window._p2pMarket._subs = [marketChannel, sharesChannel, holdingChannel, consorzioChannel];
+    console.log('[P2P] Realtime attivo su: market_listings, company_shares, holding_members, consorzio_members');
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -595,6 +711,291 @@ window.renderP2PHoldingsSection = function() {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SEZIONE 3b: CONSORZI — azioni
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.createConsorzio = async function(name, description) {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_create_consorzio', {
+        v_name: name, v_description: description || '',
+    });
+    if (error) { showNotification(`Errore creazione: ${error.message}`, 'error'); return; }
+    showNotification(`🤝 Consorzio "${data.name}" fondato!`, 'success');
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.joinConsorzio = async function(consorzioId) {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_join_consorzio', { v_consorzio_id: consorzioId });
+    if (error) { showNotification(`Errore ingresso: ${error.message}`, 'error'); return; }
+    showNotification('✅ Sei entrato nel consorzio!', 'success');
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.leaveConsorzio = async function(consorzioId) {
+    if (!_uid()) return;
+    const { error } = await _sb().rpc('rpc_leave_consorzio', { v_consorzio_id: consorzioId });
+    if (error) { showNotification(`Errore uscita: ${error.message}`, 'error'); return; }
+    showNotification('Hai lasciato il consorzio.', 'info');
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.contributeConsorzio = async function(consorzioId, amount) {
+    if (!_uid()) return;
+    const roundedAmount = Math.round(amount);
+    const { data, error } = await _sb().rpc('rpc_contribute_consorzio', {
+        v_consorzio_id: consorzioId, v_amount: roundedAmount,
+    });
+    if (error) { showNotification(`Errore contributo: ${error.message}`, 'error'); return; }
+    if (!window.ServerState?.isReady()) gameState.cash -= roundedAmount;
+    await saveGame();
+    showNotification(`💰 Contribuito €${roundedAmount.toLocaleString()} alla cassa consorzio.`, 'success');
+    updateUI();
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEZIONE 3c: ISPETTORATO — azioni
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.hireCrumiri = async function() {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_hire_crumiri');
+    if (error) { showNotification(`${error.message}`, 'error'); return; }
+    window._sindacatoState.gdfRisk           = data.risk_level || 0;
+    window._sindacatoState.crumiriBoostUntil = data.crumiri_boost_until || null;
+    showBigEvent('👷', 'Crumiri Assunti!',
+        `Lavoratori non sindacalizzati operativi per 48 ore.\n+50% redditi su tutte le corse.\n\n⚠️ Rischio GdF ora: ${data.risk_level}%.\nSe supera 70%, rischi un\'ispezione con multa del 10% del cash.`);
+    logToMap(`👷 Crumiri assunti — +50% redditi 48h | GdF rischio: ${data.risk_level}%`);
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.payDonCarmine = async function() {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_pay_don_carmine');
+    if (error) { showNotification(`Don Carmine: ${error.message}`, 'error'); return; }
+    if (!window.ServerState?.isReady()) gameState.cash -= 50000;
+    await saveGame();
+    window._sindacatoState.gdfRisk              = 0;
+    window._sindacatoState.carmineImmunityUntil = data.immunity_until || null;
+    showBigEvent('🤵', 'Don Carmine ha parlato.',
+        `Dossier GdF distrutto. Rischio azzerato.\nImmunità garantita per 24 ore.\n\n"Non dimenticare chi ti ha aiutato." — Don Carmine`);
+    logToMap('🤵 Don Carmine: dossier eliminato. Immunità 24h.');
+    updateUI();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEZIONE 6b: RENDER — Barometro della Collera
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.renderBarometroWidget = function() {
+    const ss = window._sindacatoState || {};
+    const t  = ss.tension || 0;
+
+    const barColor = t >= 90 ? '#ef4444' : t >= 70 ? '#f97316' : t >= 40 ? '#eab308' : '#22c55e';
+    const bgColor  = t >= 90 ? 'rgba(239,68,68,0.08)' : t >= 70 ? 'rgba(249,115,22,0.08)' : 'rgba(0,0,0,0)';
+    const label    = t >= 90 ? 'CRITICA' : t >= 70 ? 'Alta' : t >= 40 ? 'Moderata' : 'Bassa';
+
+    let html = `
+    <div class="hud-card mb-3" style="border-color:${barColor}40;background:${bgColor}">
+        <div class="flex justify-between items-center mb-1">
+            <div class="text-[10px] font-bold" style="color:${barColor}">🌡️ Barometro della Collera</div>
+            <div class="text-[9px] font-mono font-bold" style="color:${barColor}">${Math.round(t)}% — ${label}</div>
+        </div>
+        <div class="w-full rounded-full h-2 bg-white/10 mb-1">
+            <div class="h-2 rounded-full transition-all duration-500" style="width:${Math.round(t)}%;background:${barColor}"></div>
+        </div>
+        <div class="text-[8px] text-gray-400">Contribuisci alla cassa del tuo Sindacato per abbassare la tensione · €10.000 = −1 punto</div>`;
+
+    if (ss.strikeActive) {
+        const endsAt = ss.strikeEndsAt ? new Date(ss.strikeEndsAt) : null;
+        const remaining = endsAt ? Math.max(0, Math.ceil((endsAt - Date.now()) / 3600000)) : '?';
+        html += `
+        <div class="mt-2 p-2 rounded" style="background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4)">
+            <div class="text-[10px] font-bold text-red-400">🚨 SCIOPERO NAZIONALE IN CORSO</div>
+            <div class="text-[8px] text-red-300 mt-0.5">Tutti i redditi NCC −30% · Termina tra ~${remaining}h</div>
+            <div class="text-[8px] text-gray-400 mt-0.5">Puoi assumere crumiri nell'Ispettorato per mantenere i redditi</div>
+        </div>`;
+    }
+
+    html += `</div>`;
+    return html;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEZIONE 6c: RENDER — Consorzi
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.renderP2PConsorziSection = function() {
+    const uid = _uid();
+    if (!uid) return '';
+
+    const consorzi   = window._p2pMarket.consorzi   || [];
+    const myC        = window._p2pMarket.myConsorzio;
+    const memberCount = myC?.consorzio_members?.length || 0;
+
+    let html = `<div class="uppercase tracking-widest text-[8px] text-gold border-b border-white/10 pb-1 mb-3 mt-4">🤝 Consorzi — Gilde Cooperative</div>`;
+
+    // Benefici attivi
+    const fuelBonus    = memberCount >= 3;
+    const incomeBonus  = memberCount >= 5;
+    html += `
+    <div class="flex gap-2 mb-3">
+        <div class="flex-1 hud-card !py-1.5 text-center">
+            <div class="text-[8px] ${fuelBonus ? 'text-green-400' : 'text-gray-600'}">⛽ ${fuelBonus ? '−5% carburante' : '−5% carburante'}</div>
+            <div class="text-[7px] text-gray-500">${fuelBonus ? '✅ Attivo' : '≥3 membri'}</div>
+        </div>
+        <div class="flex-1 hud-card !py-1.5 text-center">
+            <div class="text-[8px] ${incomeBonus ? 'text-green-400' : 'text-gray-600'}">💰 ${incomeBonus ? '+8% redditi' : '+8% redditi'}</div>
+            <div class="text-[7px] text-gray-500">${incomeBonus ? '✅ Attivo' : '≥5 membri'}</div>
+        </div>
+    </div>`;
+
+    if (myC) {
+        const myRole = myC.consorzio_members?.find(m => m.user_id === uid)?.role || 'member';
+        html += `
+        <div class="hud-card !border-gold/30 bg-gold/5 mb-3">
+            <div class="text-[10px] font-bold text-gold mb-1">🤝 ${myC.name}</div>
+            <div class="text-[8px] text-gray-400 mb-1">${myC.description || ''}</div>
+            <div class="text-[8px] text-gray-400">Cassa: <span class="text-yellow-400 font-mono">€${(myC.treasury || 0).toLocaleString()}</span> · Ruolo: <span class="text-white capitalize">${myRole}</span></div>
+            <div class="text-[8px] text-gray-500 mt-1">Membri (${memberCount}/${myC.max_members}):</div>
+            <div class="flex flex-wrap gap-1 mt-1">
+                ${(myC.consorzio_members || []).map(m => `
+                <span class="text-[7px] px-1.5 py-0.5 rounded border border-white/10 ${m.role === 'leader' ? 'text-gold border-gold/30' : 'text-gray-400'}">
+                    ${m.company_name} ${m.role === 'leader' ? '👑' : ''}
+                </span>`).join('')}
+            </div>
+            <div class="flex gap-2 mt-2">
+                <input id="cso-contrib-amt" type="number" min="5000" step="5000" placeholder="Contributo €"
+                    class="finance-input flex-1 text-[9px]">
+                <button onclick="contributeConsorzio('${myC.id}', parseInt(document.getElementById('cso-contrib-amt').value)||0)"
+                    class="btn-gold !text-[8px]">Versa</button>
+                <button onclick="leaveConsorzio('${myC.id}')"
+                    class="btn-gold !bg-red-900/30 !text-red-300 !text-[8px]">
+                    ${myRole === 'leader' ? 'Sciogli' : 'Esci'}
+                </button>
+            </div>
+        </div>`;
+    } else {
+        html += `
+        <div class="hud-card mb-3">
+            <div class="text-[9px] font-bold text-white mb-2">Fonda il tuo Consorzio</div>
+            <input id="cso-name" placeholder="Nome consorzio..." class="finance-input w-full text-[9px] mb-2">
+            <input id="cso-desc" placeholder="Descrizione (opzionale)" class="finance-input w-full text-[9px] mb-2">
+            <button onclick="createConsorzio(document.getElementById('cso-name').value, document.getElementById('cso-desc').value)"
+                class="btn-gold w-full !text-[8px]">🤝 Fonda il Consorzio</button>
+        </div>`;
+
+        if (consorzi.length > 0) {
+            html += `<div class="text-[8px] text-gray-500 uppercase mb-2">Consorzi disponibili</div>`;
+            consorzi.slice(0, 8).forEach(c => {
+                const cnt  = c.consorzio_members?.length || 0;
+                const full = cnt >= c.max_members;
+                const fb   = cnt >= 3 ? '<span class="text-green-400">⛽</span> ' : '';
+                const ib   = cnt >= 5 ? '<span class="text-yellow-400">💰</span> ' : '';
+                html += `
+                <div class="hud-card mb-2 !py-2 flex justify-between items-center">
+                    <div>
+                        <div class="text-[10px] font-bold text-white">${c.name} ${fb}${ib}</div>
+                        <div class="text-[8px] text-gray-400">${cnt}/${c.max_members} membri · Cassa €${(c.treasury||0).toLocaleString()}</div>
+                    </div>
+                    <button onclick="joinConsorzio('${c.id}')" ${full ? 'disabled' : ''}
+                        class="btn-gold !text-[8px] ${full ? 'opacity-40 cursor-not-allowed' : ''}">
+                        ${full ? 'Pieno' : 'Unisciti'}
+                    </button>
+                </div>`;
+            });
+        }
+    }
+
+    return html;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEZIONE 6d: RENDER — Ispettorato del Lavoro
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.renderIspettoratoSection = function() {
+    const uid = _uid();
+    if (!uid) return '';
+
+    const ss           = window._sindacatoState || {};
+    const risk         = ss.gdfRisk || 0;
+    const strikeActive = ss.strikeActive || false;
+    const crumiriActive = ss.crumiriBoostUntil && new Date() < new Date(ss.crumiriBoostUntil);
+    const immActive     = ss.carmineImmunityUntil && new Date() < new Date(ss.carmineImmunityUntil);
+
+    const riskColor = risk >= 70 ? '#ef4444' : risk >= 40 ? '#f97316' : '#22c55e';
+    const riskLabel = risk >= 70 ? 'ALTA — Rischi ispezione' : risk >= 40 ? 'Moderato' : 'Basso';
+
+    let html = `<div class="uppercase tracking-widest text-[8px] text-gold border-b border-white/10 pb-1 mb-3 mt-4">🔍 Ispettorato del Lavoro</div>`;
+
+    // Rischio GdF meter
+    html += `
+    <div class="hud-card mb-3" style="border-color:${riskColor}30">
+        <div class="flex justify-between items-center mb-1">
+            <div class="text-[9px] font-bold text-white">🚔 Rischio GdF</div>
+            <div class="text-[9px] font-mono font-bold" style="color:${riskColor}">${risk}% — ${riskLabel}</div>
+        </div>
+        <div class="w-full rounded-full h-1.5 bg-white/10 mb-1.5">
+            <div class="h-1.5 rounded-full transition-all duration-500" style="width:${risk}%;background:${riskColor}"></div>
+        </div>`;
+
+    if (immActive) {
+        const immUntil = new Date(ss.carmineImmunityUntil);
+        const h = Math.max(0, Math.ceil((immUntil - Date.now()) / 3600000));
+        html += `<div class="text-[8px] text-green-400">🛡️ Immunità attiva — ancora ~${h}h (Don Carmine)</div>`;
+    } else if (crumiriActive) {
+        const cUntil = new Date(ss.crumiriBoostUntil);
+        const h = Math.max(0, Math.ceil((cUntil - Date.now()) / 3600000));
+        html += `<div class="text-[8px] text-yellow-400">👷 Crumiri attivi (+50% redditi) — ancora ~${h}h</div>`;
+    }
+
+    html += `</div>`;
+
+    // Don Carmine (mostra se rischio > 20 o immunità attiva)
+    if (risk > 20 || immActive) {
+        const canAfford = (gameState.cash || 0) >= 50000;
+        html += `
+        <div class="hud-card mb-3" style="border-color:rgba(212,175,55,0.3);background:rgba(212,175,55,0.04)">
+            <div class="text-[10px] font-bold text-gold mb-1">🤵 Don Carmine</div>
+            <div class="text-[8px] text-gray-300 mb-2 italic">"Ho parlato con i giusti uffici. Il tuo dossier può sparire."</div>
+            <div class="text-[8px] text-gray-400 mb-2">Azzera il rischio GdF · Immunità 24 ore · Costo: <span class="text-yellow-400 font-mono">€50.000</span></div>
+            <button onclick="payDonCarmine()"
+                ${canAfford && !immActive ? '' : 'disabled'}
+                class="btn-gold w-full !text-[8px] ${!canAfford || immActive ? 'opacity-40 cursor-not-allowed' : ''}">
+                ${immActive ? '🛡️ Immunità già attiva' : canAfford ? '🤵 Chiama Don Carmine (€50.000)' : '💸 Fondi insufficienti'}
+            </button>
+        </div>`;
+    }
+
+    // Crumiri (mostra solo durante sciopero)
+    if (strikeActive) {
+        html += `
+        <div class="hud-card mb-3" style="border-color:rgba(249,115,22,0.3);background:rgba(249,115,22,0.04)">
+            <div class="text-[10px] font-bold text-orange-400 mb-1">👷 Crumiri</div>
+            <div class="text-[8px] text-gray-300 mb-1">Lavoratori non sindacalizzati disposti a operare durante lo sciopero.</div>
+            <div class="flex gap-3 mb-2">
+                <div class="text-[8px] text-green-400">✅ +50% redditi per 48h</div>
+                <div class="text-[8px] text-red-400">⚠️ +25 Rischio GdF</div>
+            </div>
+            <button onclick="hireCrumiri()"
+                ${crumiriActive ? 'disabled' : ''}
+                class="btn-gold w-full !text-[8px] ${crumiriActive ? 'opacity-40 cursor-not-allowed' : '!bg-orange-900/40 !text-orange-300'}">
+                ${crumiriActive ? '👷 Crumiri già operativi' : '👷 Assumi i Crumiri'}
+            </button>
+        </div>`;
+    }
+
+    return html;
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEZIONE 7: INIT — avvia tutto all'avvio
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -602,14 +1003,21 @@ window.p2pInit = async function() {
     if (!_sb() || !_uid()) return;
     await window.p2pRefreshAll();
     window.p2pStartRealtime();
+
     // Refresh automatico ogni 60s (backup del Realtime)
     setInterval(async () => {
         await p2pFetchMarket();
-        if (typeof renderTabMarket === 'function' && document.getElementById('tab-container')) {
-            // Aggiorna silenziosamente solo se la tab market è aperta
-        }
     }, 60_000);
-    console.log('[P2P] Market inizializzato — Realtime attivo.');
+
+    // Barometro: tick tensione ogni 5 minuti
+    setInterval(async () => {
+        await p2pFetchTension();
+        if (typeof renderTabInvestments === 'function' && document.getElementById('tab-container')) {
+            // Aggiorna silenziosamente solo se la tab invest è aperta
+        }
+    }, 5 * 60_000);
+
+    console.log('[P2P] Market inizializzato — Realtime + Barometro attivi.');
 };
 
 // p2pInit viene chiamato da auth.js dopo il login

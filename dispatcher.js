@@ -2681,8 +2681,17 @@ function renderTabInvestments() {
         </div>`;
     }
 
+    // ── BAROMETRO DELLA COLLERA ──
+    if (typeof renderBarometroWidget === 'function') html += renderBarometroWidget();
+
     // ── SINDACATI / HOLDINGS P2P ──
     if (typeof renderP2PHoldingsSection === 'function') html += renderP2PHoldingsSection();
+
+    // ── CONSORZI COOPERATIVI ──
+    if (typeof renderP2PConsorziSection === 'function') html += renderP2PConsorziSection();
+
+    // ── ISPETTORATO DEL LAVORO ──
+    if (typeof renderIspettoratoSection === 'function') html += renderIspettoratoSection();
 
     container.innerHTML = html + '</div>';
 }
