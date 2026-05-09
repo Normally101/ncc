@@ -412,27 +412,34 @@ function loadGame() {
         });
         // Migrate fleet: remap legacy Mercedes vehicleClass → Stellar/Volt brand names & images
         const _VCLASS_REMAP = {
-            'mercedes_e':        { vc: 'stellar_e_exec', re: /^Mercedes\b.*E.*/i,        newName: 'Stellar E-Executive' },
-            'mercedes_v':        { vc: 'stellar_v_carr', re: /^Mercedes\b.*V.*/i,        newName: 'Stellar V-Carrier'   },
-            'mercedes_sprinter': { vc: 'stellar_v_carr', re: /^Mercedes\b.*Sprinter.*/i, newName: 'Stellar V-Carrier'   },
-            'mercedes_s':        { vc: 'stellar_s_imp',  re: /^Mercedes\b.*S.*/i,        newName: 'Stellar S-Imperial'  },
+            'mercedes_e':        { vc: 'stellar_e_exec', re: /mercedes|^Stellar E/i, newName: 'Stellar E-Executive' },
+            'mercedes_v':        { vc: 'stellar_v_carr', re: /mercedes|^Stellar V/i, newName: 'Stellar V-Carrier'   },
+            'mercedes_sprinter': { vc: 'stellar_v_carr', re: /mercedes|sprinter/i,   newName: 'Stellar V-Carrier'   },
+            'mercedes_s':        { vc: 'stellar_s_imp',  re: /mercedes|^Stellar S/i, newName: 'Stellar S-Imperial'  },
         };
+        let _migrationApplied = false;
         (save.fleet || []).forEach(c => {
             // Migrate old CEO bugatti limited car
             if (c.id === 'ceo_bugatti') {
                 c.id = 'ceo_prestige';
                 c.name = 'Majestic G-Prestige CEO Edition';
                 c.vehicleClass = 'majestic_spirit';
+                _migrationApplied = true;
                 return;
             }
             const remap = _VCLASS_REMAP[c.vehicleClass];
             if (!remap) return;
             c.vehicleClass = remap.vc;
-            if (remap.re.test(c.name || '')) {
-                const yearMatch = (c.name || '').match(/\((\d{4})\)$/);
-                c.name = remap.newName + (yearMatch ? ` (${yearMatch[1]})` : '');
-            }
+            // Preserve "(Leasing)" suffix; strip other non-year suffixes before renaming
+            const isLeasing = /\(leasing\)/i.test(c.name || '');
+            const yearMatch = (c.name || '').match(/\((\d{4})\)$/);
+            c.name = remap.newName + (yearMatch ? ` (${yearMatch[1]})` : '') + (isLeasing ? ' (Leasing)' : '');
+            _migrationApplied = true;
         });
+        // Persist migration immediately so cloud save reflects new brand names on next login
+        if (_migrationApplied) {
+            setTimeout(() => { if (typeof window.saveCurrentSlot === 'function') window.saveCurrentSlot(); }, 2000);
+        }
         // Migrate drivers: add morale/hiredDay if missing
         (save.drivers || []).forEach(d => {
             if (d.morale    === undefined) d.morale    = 100;
