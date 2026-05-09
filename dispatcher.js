@@ -637,19 +637,29 @@ window.openGarage3D = function(carId) {
 
     const modal = document.getElementById('modal-garage3d');
 
-    const vClass   = car.vehicleClass || 'mercedes_e';
+    // Remap legacy vehicleClass on the fly for display (persistent fix is in loadGame migration)
+    const _VC_LEGACY = { 'mercedes_e':'stellar_e_exec', 'mercedes_v':'stellar_v_carr', 'mercedes_sprinter':'stellar_v_carr', 'mercedes_s':'stellar_s_imp' };
+    const vClass   = _VC_LEGACY[car.vehicleClass] || car.vehicleClass || 'stellar_e_exec';
     const upgrades = car.upgrades || [];
 
-    const _LEGACY_NAMES = { 'standard_sedan':'Stellar C-Line', 'van_x':'Vanguard Transit', 'sedan':'Stellar C-Line', 'van':'Vanguard Transit' };
-    if (_LEGACY_NAMES[car.name?.toLowerCase?.()]) car = { ...car, name: _LEGACY_NAMES[car.name.toLowerCase()] };
+    const _LEGACY_NAMES = {
+        'standard_sedan':'Stellar C-Line', 'van_x':'Vanguard Transit',
+        'sedan':'Stellar C-Line', 'van':'Vanguard Transit',
+        'mercedes e-class sedan':'Stellar E-Executive', 'mercedes e-class':'Stellar E-Executive',
+        'mercedes v-class minivan':'Stellar V-Carrier', 'mercedes v-class':'Stellar V-Carrier',
+        'mercedes sprinter':'Stellar V-Carrier',
+        'mercedes s-class presidential':'Stellar S-Imperial', 'mercedes s-class':'Stellar S-Imperial',
+    };
+    const _nameLow = (car.name || '').toLowerCase();
+    if (_LEGACY_NAMES[_nameLow]) car = { ...car, name: _LEGACY_NAMES[_nameLow] };
 
     const catalog  = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : []).find(c => c.vehicleClass === vClass || c.id === vClass);
     const carImg   = catalog?.img || 'assets/fleet/stellar-e-executive.jpg';
     const isElec   = catalog?.fuel === 'electric';
 
     const template = (typeof FLEET_VEHICLE_CLASSES !== 'undefined' ? FLEET_VEHICLE_CLASSES : []).find(x => x.id === vClass) || {};
-    const seats   = template.capacity || (vClass.includes('carr') || vClass === 'mercedes_v' ? 7 : vClass.includes('sprinter') ? 8 : 3);
-    const luggage = vClass.includes('carr') || vClass === 'mercedes_v' ? 7 : vClass.includes('sprinter') ? 12 : 3;
+    const seats   = template.capacity || (vClass.includes('carr') ? 7 : vClass.includes('sprinter') ? 8 : 3);
+    const luggage = vClass.includes('carr') ? 7 : vClass.includes('sprinter') ? 12 : 3;
 
     const leftPanel = carImg
         ? `<div class="w-full md:w-3/5 relative overflow-hidden" style="min-height:320px">
@@ -1514,9 +1524,11 @@ function renderTabFleet() {
     filteredFleet.forEach(car => {
         if (!car.upgrades) car.upgrades = [];
 
-        // Catalog lookup for image + electric type
+        // Catalog lookup for image + electric type (remap legacy vehicleClass on the fly)
+        const _VC_LG = { 'mercedes_e':'stellar_e_exec', 'mercedes_v':'stellar_v_carr', 'mercedes_sprinter':'stellar_v_carr', 'mercedes_s':'stellar_s_imp' };
+        const _vc = _VC_LG[car.vehicleClass] || car.vehicleClass;
         const catalog = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : [])
-            .find(c => c.vehicleClass === car.vehicleClass || c.id === car.vehicleClass || c.id === car.id);
+            .find(c => c.vehicleClass === _vc || c.id === _vc || c.id === car.id);
         const isElectric = catalog?.fuel === 'electric';
         const cardImg = catalog?.img || 'assets/fleet/stellar-e-executive.jpg';
 

@@ -410,6 +410,22 @@ function loadGame() {
                     c.vehicleClass = 'mercedes_e';
             }
         });
+        // Migrate fleet: remap legacy Mercedes vehicleClass → Stellar/Volt brand names & images
+        const _VCLASS_REMAP = {
+            'mercedes_e':        { vc: 'stellar_e_exec', re: /^Mercedes\b.*E.*/i,        newName: 'Stellar E-Executive' },
+            'mercedes_v':        { vc: 'stellar_v_carr', re: /^Mercedes\b.*V.*/i,        newName: 'Stellar V-Carrier'   },
+            'mercedes_sprinter': { vc: 'stellar_v_carr', re: /^Mercedes\b.*Sprinter.*/i, newName: 'Stellar V-Carrier'   },
+            'mercedes_s':        { vc: 'stellar_s_imp',  re: /^Mercedes\b.*S.*/i,        newName: 'Stellar S-Imperial'  },
+        };
+        (save.fleet || []).forEach(c => {
+            const remap = _VCLASS_REMAP[c.vehicleClass];
+            if (!remap) return;
+            c.vehicleClass = remap.vc;
+            if (remap.re.test(c.name || '')) {
+                const yearMatch = (c.name || '').match(/\((\d{4})\)$/);
+                c.name = remap.newName + (yearMatch ? ` (${yearMatch[1]})` : '');
+            }
+        });
         // Migrate drivers: add morale/hiredDay if missing
         (save.drivers || []).forEach(d => {
             if (d.morale    === undefined) d.morale    = 100;
