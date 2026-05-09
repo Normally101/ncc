@@ -418,9 +418,9 @@ const DRIVER_SPECIALTIES = [
 // ─── CLASSI VEICOLI UFFICIALI W-3 CONTRACT ───────────────────────
 const FLEET_VEHICLE_CLASSES = [
     {
-        id:           'mercedes_e',
-        name:         'Mercedes E-Class Sedan',
-        shortName:    'Sedan E',
+        id:           'stellar_e_exec',
+        name:         'Stellar E-Executive',
+        shortName:    'Stellar E',
         tier:         'business',
         capacity:     2,
         extraHrNet:   105.00,
@@ -434,9 +434,9 @@ const FLEET_VEHICLE_CLASSES = [
         icon:         '🚗',
     },
     {
-        id:           'mercedes_v',
-        name:         'Mercedes V-Class Minivan',
-        shortName:    'Minivan V',
+        id:           'stellar_v_carr',
+        name:         'Stellar V-Carrier',
+        shortName:    'Stellar V',
         tier:         'vip',
         capacity:     7,
         extraHrNet:   125.00,
@@ -450,9 +450,9 @@ const FLEET_VEHICLE_CLASSES = [
         icon:         '🚐',
     },
     {
-        id:           'mercedes_sprinter',
-        name:         'Mercedes Sprinter',
-        shortName:    'Sprinter',
+        id:           'stellar_q_exec',
+        name:         'Stellar Q-Executive',
+        shortName:    'Stellar Q',
         tier:         'vip',
         capacity:     8,
         extraHrNet:   150.00,
@@ -466,9 +466,9 @@ const FLEET_VEHICLE_CLASSES = [
         icon:         '🚌',
     },
     {
-        id:           'mercedes_s',
-        name:         'Mercedes S-Class Presidential',
-        shortName:    'Presidential',
+        id:           'stellar_s_imp',
+        name:         'Stellar S-Imperial',
+        shortName:    'Imperial',
         tier:         'ultra',
         capacity:     3,
         extraHrNet:   195.00,
@@ -478,10 +478,15 @@ const FLEET_VEHICLE_CLASSES = [
         fuelPerKm:    0.14,
         purchasePrice:220000,
         dailyLeaseCost:185,
-        desc:         'Berlina presidenziale per VIP, diplomatici e clienti premium. Sblocca 154 tratte Presidential del contratto Classic Vacations.',
+        desc:         'Berlina presidenziale per VIP, diplomatici e clienti premium. Sblocca tratte Presidential del contratto Classic Vacations.',
         icon:         '👑',
         requiresRep:  3.5,
     },
+    // Legacy aliases — keep for backward compat with any old save data references
+    { id:'mercedes_e', name:'Stellar E-Executive', shortName:'Stellar E', tier:'business', capacity:2,  icon:'🚗', fuelPerKm:0.09 },
+    { id:'mercedes_v', name:'Stellar V-Carrier',   shortName:'Stellar V', tier:'vip',      capacity:7,  icon:'🚐', fuelPerKm:0.13 },
+    { id:'mercedes_sprinter', name:'Stellar Q-Executive', shortName:'Stellar Q', tier:'vip', capacity:8, icon:'🚌', fuelPerKm:0.18 },
+    { id:'mercedes_s', name:'Stellar S-Imperial',  shortName:'Imperial',  tier:'ultra',    capacity:3,  icon:'👑', fuelPerKm:0.14 },
     {
         id:           'water_taxi',
         name:         'Water Taxi',

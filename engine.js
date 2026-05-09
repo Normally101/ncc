@@ -528,12 +528,12 @@ function _generateLegendaryRecruit() {
 }
 
 const _NPC_MARKET_CARS = [
-    { name:'Berlina Usata 2019', tier:'standard', vehicleClass:'mercedes_e', basePrice:18000, condRange:[40,75] },
-    { name:'Minivan Business 2020', tier:'business', vehicleClass:'mercedes_v', basePrice:35000, condRange:[50,80] },
-    { name:'Sedan Premium 2021',   tier:'business', vehicleClass:'mercedes_e', basePrice:42000, condRange:[60,90] },
-    { name:'Van Executive 2020',   tier:'vip',      vehicleClass:'mercedes_v', basePrice:65000, condRange:[55,85] },
-    { name:'Limousine 2018',       tier:'vip',      vehicleClass:'mercedes_s', basePrice:90000, condRange:[35,70] },
-    { name:'Sprinter 2022',        tier:'business', vehicleClass:'mercedes_sprinter', basePrice:58000, condRange:[65,95] },
+    { name:'Stellar E-Executive 2021', tier:'business', vehicleClass:'stellar_e_exec', basePrice:22000, condRange:[40,75] },
+    { name:'Stellar V-Carrier 2020',   tier:'business', vehicleClass:'stellar_v_carr', basePrice:38000, condRange:[50,80] },
+    { name:'Volt 3-Urban 2022',        tier:'business', vehicleClass:'volt_3_urban',   basePrice:28000, condRange:[60,90] },
+    { name:'Stellar V-Carrier 2022',   tier:'vip',      vehicleClass:'stellar_v_carr', basePrice:68000, condRange:[55,85] },
+    { name:'Stellar S-Imperial 2019',  tier:'vip',      vehicleClass:'stellar_s_imp',  basePrice:92000, condRange:[35,70] },
+    { name:'Stellar Q-Executive 2022', tier:'business', vehicleClass:'stellar_q_exec', basePrice:55000, condRange:[65,95] },
 ];
 
 function _refreshNpcMarket() {
@@ -547,11 +547,11 @@ function _refreshNpcMarket() {
 }
 
 const _RARE_AUCTION_CARS = [
-    { name:'Limousine Presidenziale',   tier:'ultra', vehicleClass:'mercedes_s', minBid:250000 },
-    { name:'Rolls-Royce Phantom (Rep)', tier:'ultra', vehicleClass:'mercedes_s', minBid:480000 },
-    { name:'Bugatti CEO Edition',       tier:'ultra', vehicleClass:'mercedes_s', minBid:750000 },
-    { name:'Mercedes Classe S L Blindata', tier:'vip', vehicleClass:'mercedes_s', minBid:180000 },
-    { name:'Maybach Executive',         tier:'ultra', vehicleClass:'mercedes_s', minBid:320000 },
+    { name:'Majestic Spirit Presidential',   tier:'ultra', vehicleClass:'majestic_spirit', minBid:250000 },
+    { name:'Majestic Phantom Prestige',       tier:'ultra', vehicleClass:'majestic_spirit', minBid:480000 },
+    { name:'Stellar G-Overlord Blindato',     tier:'ultra', vehicleClass:'stellar_g_over',  minBid:750000 },
+    { name:'Stellar S-Imperial Blindata',     tier:'vip',   vehicleClass:'stellar_s_imp',   minBid:180000 },
+    { name:'Majestic Executive Supreme',      tier:'ultra', vehicleClass:'majestic_spirit', minBid:320000 },
 ];
 
 function _maybeStartAuction() {
@@ -610,7 +610,7 @@ function initGame(fresh = true) {
     _gameIntervals = [];
     if (fresh) {
         gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
-        gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'mercedes_e' });
+        gameState.fleet.push({ id: 'c_loaner', name: 'Stellar E-Executive', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'stellar_e_exec' });
         _refreshRecruits();
     } else {
         _refreshRecruits();
@@ -2832,18 +2832,34 @@ function generatePOIRide(tierOverride = null) {
 
 // ─── CONTRACT RIDE GENERATOR (italianRoutesDB) ───────────────────────────────
 const _VEHICLE_CLASS_MAP = {
-    'Mercedes E-Class Sedan':         'mercedes_e',
-    'Mercedes V-Class Minivan':       'mercedes_v',
-    'Mercedes S-Class Presidential':  'mercedes_s',
-    'Mercedes Sprinter':              'mercedes_sprinter',
+    'Stellar E-Executive':            'stellar_e_exec',
+    'Stellar V-Carrier':              'stellar_v_carr',
+    'Stellar S-Imperial':             'stellar_s_imp',
+    'Stellar G-Overlord':             'stellar_g_over',
+    'Majestic Spirit':                'majestic_spirit',
     'Water Taxi':                     'water_taxi',
+    // Legacy backward-compat keys (old routes DB still uses these names)
+    'Mercedes E-Class Sedan':         'stellar_e_exec',
+    'Mercedes V-Class Minivan':       'stellar_v_carr',
+    'Mercedes S-Class Presidential':  'stellar_s_imp',
+    'Mercedes Sprinter':              'stellar_v_carr',
 };
 const _CONTRACT_TIER = {
-    mercedes_s:          'ultra',
-    water_taxi:          'ultra',
-    mercedes_v:          'vip',
-    mercedes_sprinter:   'business',
-    mercedes_e:          'business',
+    stellar_s_imp:    'ultra',
+    stellar_g_over:   'ultra',
+    majestic_spirit:  'ultra',
+    water_taxi:       'ultra',
+    stellar_v_carr:   'vip',
+    stellar_q_carr:   'vip',
+    stellar_e_exec:   'business',
+    stellar_q_exec:   'business',
+    volt_3_urban:     'business',
+    volt_y_cross:     'business',
+    // Legacy
+    mercedes_s:       'ultra',
+    mercedes_v:       'vip',
+    mercedes_sprinter:'business',
+    mercedes_e:       'business',
 };
 
 function generateContractRide() {
@@ -2860,17 +2876,19 @@ function generateContractRide() {
     // Filter routes: unlocked region + required vehicle available
     const candidates = italianRoutesDB.filter(r => {
         if (!availDBRegions.has(r.region)) return false;
-        const vc = _VEHICLE_CLASS_MAP[r.vehicle] || 'mercedes_e';
+        const vc = _VEHICLE_CLASS_MAP[r.vehicle] || 'stellar_e_exec';
         // Skip routes requiring vehicles the player doesn't own
-        if (vc === 'mercedes_s'        && !gameState.fleet.some(c => c.vehicleClass === 'mercedes_s'        && !c.outOfService)) return false;
-        if (vc === 'mercedes_sprinter' && !gameState.fleet.some(c => c.vehicleClass === 'mercedes_sprinter' && !c.outOfService)) return false;
-        if (r.requiresWaterTaxi        && !gameState.fleet.some(c => c.vehicleClass === 'water_taxi'        && !c.outOfService)) return false;
+        const _ultraVcs = ['stellar_s_imp','stellar_g_over','majestic_spirit','mercedes_s'];
+        const _vanVcs   = ['stellar_v_carr','stellar_q_carr','mercedes_sprinter','mercedes_v'];
+        if (_ultraVcs.includes(vc) && !gameState.fleet.some(c => (_ultraVcs.includes(c.vehicleClass)) && !c.outOfService)) return false;
+        if (_vanVcs.includes(vc)   && !gameState.fleet.some(c => (_vanVcs.includes(c.vehicleClass))   && !c.outOfService)) return false;
+        if (r.requiresWaterTaxi    && !gameState.fleet.some(c => c.vehicleClass === 'water_taxi'       && !c.outOfService)) return false;
         return true;
     });
     if (candidates.length === 0) return null;
 
     const route = candidates[Math.floor(Math.random() * candidates.length)];
-    const vehicleRequired = _VEHICLE_CLASS_MAP[route.vehicle] || 'mercedes_e';
+    const vehicleRequired = _VEHICLE_CLASS_MAP[route.vehicle] || 'stellar_e_exec';
     const tier = _CONTRACT_TIER[vehicleRequired] || 'business';
 
     // Hub POI for map display and serialization
