@@ -418,6 +418,13 @@ function loadGame() {
             'mercedes_s':        { vc: 'stellar_s_imp',  re: /^Mercedes\b.*S.*/i,        newName: 'Stellar S-Imperial'  },
         };
         (save.fleet || []).forEach(c => {
+            // Migrate old CEO bugatti limited car
+            if (c.id === 'ceo_bugatti') {
+                c.id = 'ceo_prestige';
+                c.name = 'Majestic G-Prestige CEO Edition';
+                c.vehicleClass = 'majestic_spirit';
+                return;
+            }
             const remap = _VCLASS_REMAP[c.vehicleClass];
             if (!remap) return;
             c.vehicleClass = remap.vc;
@@ -1946,13 +1953,14 @@ window.acceptShadowMission = function(emailId) {
     email.status = 'resolved';
     gameState.policeHeat = Math.min(100, (gameState.policeHeat || 0) + 10);
     logToMap(`🔴 SHADOW: ${from.name} → ${to.name} — €${price.toLocaleString()}. Checkpoint sulla rotta!`);
-    showNotification(`🔴 Shadow mission accettata! Il Logistics Manager piazza un checkpoint sulla rotta.`, 'error');
-    // Spawna subito un checkpoint marker sulla mappa
-    if (typeof addCheckpointMarker === 'function') {
-        const midLat = (from.lat + to.lat) / 2 + (Math.random() - 0.5) * 0.5;
-        const midLng = (from.lng + to.lng) / 2 + (Math.random() - 0.5) * 0.5;
-        addCheckpointMarker(midLat, midLng, ride.id);
-    }
+    showNotification(`🔴 Shadow mission accettata! ⚠️ Checkpoint della polizia sulla rotta — operazione ad alto rischio!`, 'error');
+    // Spawna checkpoint marker — ritarda di 300ms per dare tempo alla mappa di essere pronta
+    const _cpLat = (from.lat + to.lat) / 2 + (Math.random() - 0.5) * 0.5;
+    const _cpLng = (from.lng + to.lng) / 2 + (Math.random() - 0.5) * 0.5;
+    const _cpRideId = ride.id;
+    setTimeout(() => {
+        if (typeof addCheckpointMarker === 'function') addCheckpointMarker(_cpLat, _cpLng, _cpRideId);
+    }, 300);
     if (typeof renderTabEmails === 'function') renderTabEmails();
     if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
     saveGame();
@@ -2597,16 +2605,16 @@ function processDailyRoutines() {
             const prizeTC = Math.min(50, Math.floor(weekWinner / 10000));
             gameState.driverCoins = (gameState.driverCoins || 0) + prizeTC;
             // Premio auto Limited Edition se settimanale > €100.000
-            if (weekWinner >= 100000 && !(gameState.fleet || []).some(c => c.id === 'ceo_bugatti')) {
+            if (weekWinner >= 100000 && !(gameState.fleet || []).some(c => c.id === 'ceo_prestige')) {
                 const limitedCar = {
-                    id: 'ceo_bugatti', name: 'Bugatti Chiron CEO Edition', tier: 'ultra',
-                    vehicleClass: 'mercedes_s', condition: 100, isLease: false,
+                    id: 'ceo_prestige', name: 'Majestic G-Prestige CEO Edition', tier: 'ultra',
+                    vehicleClass: 'majestic_spirit', condition: 100, isLease: false,
                     isLimitedEdition: true, fuel: 100, mileage: 0,
                     tirePressure: 100, engineHealth: 100, upgrades: [],
                     skin: 'gold_chrome',
                 };
                 gameState.fleet.push(limitedCar);
-                showBigEvent('🏆', 'CEO della Settimana — Black Card!', `Settimana da €${weekWinner.toLocaleString()}. Hai vinto la Bugatti Chiron CEO Edition (Limited — non vendibile) + ${prizeTC} DC!`);
+                showBigEvent('🏆', 'CEO della Settimana — Black Card!', `Settimana da €${weekWinner.toLocaleString()}. Hai vinto la Majestic G-Prestige CEO Edition (Limited — non vendibile) + ${prizeTC} DC!`);
             } else {
                 showBigEvent('🏆', 'CEO della Settimana!', `Hai guadagnato €${weekWinner.toLocaleString()} in ${weekRides} corse questa settimana. Premio: +${prizeTC} Driver Coins!`);
             }
@@ -3564,7 +3572,7 @@ function confirmLease() {
     const monthly = template.baseRate + extraKm - discountDuration;
     const daily = monthly / 30;
 
-    const _leaseTierToClass = { ultra: 'majestic_spirit', vip: 'mercedes_s', group: 'mercedes_v', business: 'mercedes_e', standard: 'mercedes_e' };
+    const _leaseTierToClass = { ultra: 'majestic_spirit', vip: 'stellar_s_imp', group: 'stellar_v_carr', business: 'stellar_e_exec', standard: 'stellar_e_exec' };
     gameState.fleet.push({
         id: 'c_' + Date.now(), name: template.name + ' (Leasing)', tier: template.tier,
         condition: 100, isLease: true, dailyCost: daily, leaseDuration: months, leaseElapsedDays: 0,
@@ -3802,6 +3810,23 @@ window.buyPrototypeCar = function(protoId) {
 };
 
 // ─── SISTEMA PRESTITI ─────────────────────────────────────────────
+window.repayLoan = function(loanId) {
+    const loan = (gameState.loans || []).find(l => l.id === loanId);
+    if (!loan) return;
+    if (gameState.cash < loan.amount) {
+        showNotification(`Fondi insufficienti — servono €${loan.amount.toLocaleString()} per saldare questo prestito.`, 'error');
+        return;
+    }
+    gameState.cash -= loan.amount;
+    gameState.loans = gameState.loans.filter(l => l.id !== loanId);
+    gameState.creditScore = Math.min(900, (gameState.creditScore || 300) + 20);
+    logToMap(`✅ Prestito #${loanId} saldato — €${loan.amount.toLocaleString()} rimborsati. Credit Score +20`);
+    showNotification(`✅ Prestito saldato! +20 Credit Score`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
 window.takeLoan = function(amount) {
     if (!gameState.loans) gameState.loans = [];
     const creditTier = _getCreditTier(gameState.creditScore || 300);
@@ -4203,8 +4228,11 @@ window.acceptDiamondContract = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
     // Find best available driver+car
-    const driver = gameState.drivers.find(d => d.status === 'idle' && d.id !== 'ceo' && d.level >= 2);
-    if (!driver) { showNotification('Serve un autista Expert/Elite disponibile per contratti Diamond!', 'error'); return; }
+    const driver = gameState.drivers.find(d =>
+        d.status === 'idle' && d.id !== 'ceo' &&
+        (d.level >= 2 || d.tier === 'vip' || d.tier === 'ultra')
+    );
+    if (!driver) { showNotification('Serve un autista Expert/Elite/VIP disponibile per contratti Diamond!', 'error'); return; }
     const car = gameState.fleet.find(c => {
         if (c.tier !== 'ultra' && c.tier !== 'vip') return false;
         const assignedDriver = gameState.drivers.find(d => d.assignedCarId === c.id);

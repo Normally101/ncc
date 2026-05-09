@@ -2597,9 +2597,10 @@ function renderTabInvestments() {
         ${activeLoans.length > 0 ? `
         <div class="space-y-1">
             ${activeLoans.map(l => `
-            <div class="text-[8px] text-gray-500 flex justify-between">
-                <span>Prestito #${l.id}</span>
+            <div class="text-[8px] flex justify-between items-center gap-1">
+                <span class="text-gray-500">Prestito #${l.id}</span>
                 <span class="text-red-400">Residuo: €${l.amount.toLocaleString()} (${((l.rate||0.08)*100).toFixed(0)}%/mese)</span>
+                <button onclick="repayLoan(${l.id})" class="btn-gold !text-[7px] !py-0.5 !px-1.5 shrink-0" ${gameState.cash < l.amount ? 'disabled style="opacity:0.4"' : ''}>Salda</button>
             </div>`).join('')}
         </div>` : ''}
         <div class="space-y-2">`;
@@ -3077,9 +3078,11 @@ function renderTabFinance() {
     if (activeLoans.length > 0) {
         loansHtml += `<div class="text-[9px] text-red-400 mb-2 font-bold">Prestiti attivi: €${activeLoanTotal.toLocaleString()}</div>`;
         activeLoans.forEach(l => {
-            loansHtml += `<div class="hud-card !py-1.5 mb-1 flex justify-between text-[9px]">
+            const canRepay = gameState.cash >= l.amount;
+            loansHtml += `<div class="hud-card !py-1.5 mb-1 flex justify-between items-center text-[9px] gap-2">
                 <span>Prestito #${l.id}</span>
-                <span class="text-red-400 font-mono">€${l.amount.toLocaleString()}</span>
+                <span class="text-red-400 font-mono flex-1 text-right">€${l.amount.toLocaleString()}</span>
+                <button onclick="repayLoan(${l.id})" class="btn-gold !text-[7px] !py-0.5 !px-2 shrink-0" ${canRepay ? '' : 'disabled style="opacity:0.4"'}>Salda</button>
             </div>`;
         });
     }
