@@ -342,6 +342,14 @@ function loadGame() {
         if (save.totalDividendsEarned === undefined) save.totalDividendsEarned = 0;
         if (save.totalStockProfit === undefined) save.totalStockProfit = 0;
         if (save.diamondContractsCompleted === undefined) save.diamondContractsCompleted = 0;
+        // VIP Clients
+        if (!save.activeBuffs)      save.activeBuffs      = [];
+        if (!save.vipCooldowns)     save.vipCooldowns     = {};
+        if (save.politicalTokens === undefined) save.politicalTokens = 0;
+        if (save.strataStreak    === undefined) save.strataStreak    = 0;
+        if (save.watchDropCount  === undefined) save.watchDropCount  = 0;
+        if (save.fuelPriceLock   === undefined) save.fuelPriceLock   = null;
+        if (save.fuelPriceLockUntil === undefined) save.fuelPriceLockUntil = 0;
         // Macro-economia
         if (save.inflationRate     === undefined) save.inflationRate     = 0.020;
         if (save.interestRateBase  === undefined) save.interestRateBase  = 0.045;
@@ -650,7 +658,18 @@ function initGame(fresh = true) {
         setInterval(_maybeShadowMission, 150000),
         setInterval(_maybeGenerateDynamicEvent, 180000),
         setInterval(_maybeDiamondContract, 240000),
-        setInterval(checkActiveTrips, 5000)
+        setInterval(checkActiveTrips, 5000),
+        // VIP Clients
+        setInterval(() => { if (typeof window._maybeVipGrigori  === 'function') window._maybeVipGrigori();  }, 180000),
+        setInterval(() => { if (typeof window._maybeVipStrata   === 'function') window._maybeVipStrata();   }, 90000),
+        setInterval(() => { if (typeof window._maybeVipPlatinum === 'function') window._maybeVipPlatinum(); }, 120000),
+        setInterval(() => { if (typeof window._maybeVipOnorevole=== 'function') window._maybeVipOnorevole();}, 150000),
+        setInterval(() => { if (typeof window._maybeVipEmiro    === 'function') window._maybeVipEmiro();    }, 240000),
+        setInterval(() => { if (typeof window._maybeVipGolden   === 'function') window._maybeVipGolden();   }, 150000),
+        setInterval(() => { if (typeof window._maybeVipTechBro  === 'function') window._maybeVipTechBro();  }, 120000),
+        setInterval(() => { if (typeof window._maybeVipGarante  === 'function') window._maybeVipGarante();  }, 240000),
+        setInterval(() => { if (typeof window._maybeVipWedding  === 'function') window._maybeVipWedding();  }, 200000),
+        setInterval(() => { if (typeof window._maybeVipErede    === 'function') window._maybeVipErede();    }, 120000)
     );
 
     updateUI();
@@ -3322,7 +3341,9 @@ function completeRide(ride, _deferPay = false) {
     const _strikeMult    = _ss.strikeActive ? 0.70 : 1.0;
     const _crumiriMult   = (_ss.crumiriBoostUntil && new Date() < new Date(_ss.crumiriBoostUntil)) ? 1.50 : 1.0;
     const _consorzioMult = (_ss.consorzioMembersCount >= 5) ? 1.08 : 1.0;
-    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult) - _fuelDeduction);
+    const _vipEarningsBuff = typeof window._getBuffValue === 'function' ? (1 + window._getBuffValue('earnings_pct') / 100) : 1.0;
+    const _vipTipBuff      = typeof window._getBuffValue === 'function' ? (1 + window._getBuffValue('tip_pct') / 100) : 1.0;
+    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff) - _fuelDeduction);
 
     const prevCash = gameState.cash;
     if (_deferPay) {
@@ -3409,6 +3430,11 @@ function completeRide(ride, _deferPay = false) {
 
     // Check quest progress after every completed ride
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+
+    // VIP client completion hook
+    if (ride.vipClientId && typeof window._vipOnComplete === 'function') {
+        window._vipOnComplete(ride.vipClientId, ride, driver, earned);
+    }
 
     saveGame();
 
@@ -4811,6 +4837,14 @@ window.divestVentureStake = function(agencyId) {
 // ─────────────────────────────────────────────────────────────────
 // ─── REAL-TIME TRIP COMPLETION ────────────────────────────────────
 function checkActiveTrips() {
+    // VIP buff tick and fuel lock enforcement
+    if (typeof window._vipBuffTick === 'function') window._vipBuffTick();
+    if (gameState.fuelPriceLock && gameState.fuelPriceLockUntil > gameState.day * 24 + gameState.hour) {
+        gameState.fuelPrice = gameState.fuelPriceLock;
+    } else if (gameState.fuelPriceLock) {
+        gameState.fuelPriceLock = null;
+    }
+
     const trips = gameState.activeTrips || [];
     if (!trips.length) return;
     const now = Date.now();
