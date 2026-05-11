@@ -4323,75 +4323,131 @@ async function _initGlobalNewsFeed() {
 // ─── PROVINCE WAR TAB ───────────────────────────────────────────────────────
 async function renderTabProvinces() {
     const container = document.getElementById('tab-container');
-    container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-6">Caricamento province…</div>`;
+    container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-6">Caricamento mappa territoriale…</div>`;
 
-    let provinces = [];
+    let provinces = [], regions = [], influence = {};
     try {
-        const { data, error } = await window.supabaseClient
-            .from('provinces')
-            .select('*')
-            .order('current_value', { ascending: false });
-        if (error) throw error;
-        provinces = data || [];
+        const snap = await window.ServerState.getTerritorySnapshot();
+        if (!snap) throw new Error('snapshot nullo');
+        provinces = snap.provinces || [];
+        regions   = snap.regions   || [];
+        influence = snap.influence  || {};
     } catch(e) {
-        container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore caricamento province: ${e.message}</div>`;
+        container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore caricamento territorio: ${e.message}</div>`;
         return;
     }
 
+    // Build region lookup
+    const regionMap = {};
+    regions.forEach(r => { regionMap[r.id] = r; });
+
+    // Count provinces per region owned by me
     const myCompanyName = gameState.companyName || '';
-    let html = `
-    <div class="mb-4 hud-card border-gold/30 bg-gold/5">
-        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-1">🏴 Province War</div>
-        <div class="text-[9px] text-gray-400">Conquista province pagando almeno il 120% del valore attuale. Il vecchio proprietario riceve l'80% dell'offerta. Ogni corsa che parte da una tua provincia ti frutta il 2.5% della tariffa.</div>
-    </div>
-    <div class="space-y-3">`;
-
+    const myOwnedCount  = {}; // regionId → count
+    const totalCount    = {}; // regionId → total
     provinces.forEach(p => {
-        const isOwned = p.owner_company === myCompanyName;
-        const isFree  = !p.owner_id;
-        const minOffer = Math.ceil(p.current_value * 1.20);
-        const taxPct  = Math.round((p.transit_tax_pct || 0.025) * 100);
-
-        html += `
-        <div class="hud-card ${isOwned ? '!border-gold/60 bg-gold/5' : isFree ? '!border-green-500/40 bg-green-950/10' : '!border-white/10'}">
-            <div class="flex justify-between items-center mb-2">
-                <div>
-                    <div class="text-xs font-bold text-white">${p.name}
-                        ${isOwned ? '<span class="ml-1 text-[8px] bg-gold/20 text-gold border border-gold/30 px-1 rounded">TUA</span>' : ''}
-                        ${isFree  ? '<span class="ml-1 text-[8px] bg-green-500/20 text-green-400 border border-green-500/30 px-1 rounded">LIBERA</span>' : ''}
-                    </div>
-                    <div class="text-[9px] text-gray-500 uppercase">${p.region_id} · Tassa transito: ${taxPct}%</div>
-                    ${!isFree && !isOwned ? `<div class="text-[9px] text-gray-400 mt-0.5">Proprietario: <span class="text-blue-300">${p.owner_company || '—'}</span></div>` : ''}
-                </div>
-                <div class="text-right">
-                    <div class="text-xs font-bold text-gold">€${(p.current_value||0).toLocaleString()}</div>
-                    <div class="text-[8px] text-gray-500">Valore attuale</div>
-                </div>
-            </div>
-            <div class="flex items-center gap-1 mt-1 mb-2">
-                <div class="flex-1 fuel-bar-bg">
-                    <div class="fuel-bar-fill" style="width:${Math.min(100, Math.round(p.current_value/10000))}%;background:#d4af37"></div>
-                </div>
-                <span class="text-[8px] text-gray-500">Base: €${(p.base_price||0).toLocaleString()}</span>
-            </div>
-            ${isOwned ? `
-            <div class="text-[9px] text-green-400 bg-green-950/20 border border-green-500/20 rounded px-2 py-1">
-                ✅ Stai percependo il ${taxPct}% su ogni corsa che parte da questa provincia
-            </div>` : `
-            <div class="flex gap-2 mt-1">
-                <input id="offer-${p.id}" type="number" min="${minOffer}" step="1000"
-                    class="flex-1 bg-black/40 border border-white/20 rounded px-2 py-1 text-[9px] text-white"
-                    placeholder="Offerta min. €${minOffer.toLocaleString()}">
-                <button onclick="window.doAcquireProvince('${p.id}')"
-                    class="btn-gold !text-[8px] !py-1 !px-2 shrink-0">
-                    🏴 Conquista
-                </button>
-            </div>
-            <div class="text-[8px] text-gray-600 mt-1">Offerta minima: €${minOffer.toLocaleString()} (120% del valore)</div>`}
-        </div>`;
+        totalCount[p.region_id] = (totalCount[p.region_id] || 0) + 1;
+        if (p.owner_company === myCompanyName) {
+            myOwnedCount[p.region_id] = (myOwnedCount[p.region_id] || 0) + 1;
+        }
     });
 
-    html += `</div>`;
+    // Group by region for display
+    const byRegion = {};
+    provinces.forEach(p => {
+        if (!byRegion[p.region_id]) byRegion[p.region_id] = [];
+        byRegion[p.region_id].push(p);
+    });
+
+    let html = `
+    <div class="mb-3 hud-card !border-gold/30 bg-gold/5">
+        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-1">🏴 Guerra Territoriale</div>
+        <div class="text-[9px] text-gray-400 leading-relaxed">
+            Ogni corsa che parte o arriva in una provincia ti guadagna <b class="text-white">+10 Punti Influenza</b>.
+            Raggiungi la soglia per lanciare un'OPA (120% del valore). Chi controlla >50% delle province di una regione
+            diventa <b class="text-yellow-300">Governatore</b> e percepisce l'1% su ogni corsa nella regione.
+        </div>
+    </div>`;
+
+    // Render by region
+    Object.entries(byRegion).forEach(([regionId, provs]) => {
+        const reg = regionMap[regionId] || { name: regionId, governor_company: null };
+        const myCount  = myOwnedCount[regionId]  || 0;
+        const total    = totalCount[regionId]     || 0;
+        const amGov    = reg.governor_company === myCompanyName;
+        const govLabel = reg.governor_company
+            ? `<span class="text-yellow-300">👑 ${reg.governor_company}</span>`
+            : `<span class="text-gray-600">— nessun governatore</span>`;
+
+        html += `
+        <div class="mb-4">
+            <div class="flex items-center justify-between mb-2 px-1">
+                <div class="text-[9px] font-bold text-gray-300 uppercase tracking-widest">${reg.name}</div>
+                <div class="text-[8px] text-gray-500">
+                    ${govLabel}
+                    ${amGov ? ' <span class="text-[7px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1 rounded">TU SEI GOVERNATORE</span>' : ''}
+                    · ${myCount}/${total} province
+                </div>
+            </div>
+            <div class="space-y-2">`;
+
+        provs.forEach(p => {
+            const isOwned   = p.owner_company === myCompanyName;
+            const isFree    = !p.owner_id;
+            const myInf     = influence[p.id] || 0;
+            const threshold = p.required_influence || 500;
+            const infPct    = Math.min(100, Math.round((myInf / threshold) * 100));
+            const infUnlocked = myInf >= threshold;
+            const minOffer  = Math.ceil((p.current_value || 0) * 1.20);
+            const taxPct    = ((p.transit_tax_pct || 0.025) * 100).toFixed(1);
+
+            html += `
+            <div class="hud-card ${isOwned ? '!border-gold/60 bg-gold/5' : isFree ? '!border-green-500/30 bg-green-950/10' : '!border-white/10'}">
+                <div class="flex justify-between items-start mb-1">
+                    <div>
+                        <span class="text-[10px] font-bold text-white">${p.name}</span>
+                        ${isOwned ? '<span class="ml-1 text-[7px] bg-gold/20 text-gold border border-gold/30 px-1 rounded">TUA</span>' : ''}
+                        ${isFree  ? '<span class="ml-1 text-[7px] bg-green-500/20 text-green-400 border border-green-500/30 px-1 rounded">LIBERA</span>' : ''}
+                        ${amGov && !isOwned ? '<span class="ml-1 text-[7px] bg-yellow-500/10 text-yellow-500 border border-yellow-600/30 px-1 rounded">+1% regionale</span>' : ''}
+                    </div>
+                    <div class="text-right">
+                        <div class="text-[10px] font-bold text-gold">€${(p.current_value||0).toLocaleString()}</div>
+                        <div class="text-[7px] text-gray-600">tassa: ${taxPct}%</div>
+                    </div>
+                </div>
+
+                ${!isOwned && !isFree ? `<div class="text-[8px] text-gray-400 mb-1">Proprietario: <span class="text-blue-300">${p.owner_company}</span></div>` : ''}
+
+                <!-- Barra influenza -->
+                <div class="mb-1">
+                    <div class="flex justify-between text-[7px] text-gray-500 mb-0.5">
+                        <span>Influenza</span>
+                        <span class="${infUnlocked ? 'text-green-400' : 'text-gray-500'}">${myInf}/${threshold} ${infUnlocked ? '✅' : ''}</span>
+                    </div>
+                    <div class="fuel-bar-bg">
+                        <div class="fuel-bar-fill" style="width:${infPct}%;background:${infUnlocked ? '#22c55e' : infPct > 60 ? '#f59e0b' : '#6b7280'}"></div>
+                    </div>
+                    ${!infUnlocked ? `<div class="text-[7px] text-gray-600 mt-0.5">Completa corse da/verso questa provincia per aumentare l'influenza</div>` : ''}
+                </div>
+
+                ${isOwned ? `
+                <div class="text-[8px] text-green-400 bg-green-950/20 border border-green-500/20 rounded px-2 py-1">
+                    ✅ Percepisci il ${taxPct}% su ogni corsa provinciale${amGov ? ` + 1% come Governatore di ${reg.name}` : ''}
+                </div>` : infUnlocked ? `
+                <div class="flex gap-1 mt-1">
+                    <input id="offer-${p.id}" type="number" min="${minOffer}" step="10000"
+                        class="flex-1 bg-black/40 border border-white/20 rounded px-2 py-1 text-[8px] text-white"
+                        placeholder="Offerta min. €${minOffer.toLocaleString()}">
+                    <button onclick="window.doAcquireProvince('${p.id}')" class="btn-gold !text-[7px] !py-1 !px-2 shrink-0">🏴 OPA</button>
+                </div>
+                <div class="text-[7px] text-gray-600 mt-0.5">Min: €${minOffer.toLocaleString()} · Vecchio proprietario riceve 80%</div>` : `
+                <div class="text-[7px] text-gray-600 mt-1 italic">🔒 Raggiungi ${threshold} punti influenza per sbloccare l'OPA</div>`}
+            </div>`;
+        });
+
+        html += `</div></div>`;
+    });
+
     container.innerHTML = html;
 }
 

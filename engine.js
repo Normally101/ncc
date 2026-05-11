@@ -3,6 +3,76 @@
    engine.js — Chauffeur Empire · Tycoon Engine v8.0
    ================================================================ */
 
+// ─── POI → PROVINCE MAPPING (mirrors provinces.mapped_pois in DB) ────────────
+// Used client-side to quickly determine which province a POI belongs to
+// so influence can be awarded after each local ride completion.
+const _POI_TO_PROVINCE = {
+    // Lazio
+    'roma':         'prov_roma',    'roma_fco':    'prov_roma',
+    'roma_hassler': 'prov_roma',    'civitavecchia':'prov_civita',
+    // Lombardia
+    'milano':       'prov_milano',  'mil_mxp':     'prov_milano',
+    'mil_lin':      'prov_milano',  'mil_armani':  'prov_milano',
+    'como':         'prov_como',
+    // Toscana
+    'firenze':      'prov_firenze',
+    // Campania
+    'napoli':       'prov_napoli',  'nap_capo':    'prov_napoli',
+    'sorrento':     'prov_amalfi',  'amalfi':      'prov_amalfi',
+    // Veneto
+    'venezia':      'prov_venezia', 'ven_mp':      'prov_padova',
+    'cortina':      'prov_cortina',
+    // Puglia
+    'bari':         'prov_bari',    'brindisi':    'prov_bari',
+    'lecce':        'prov_bari',    'borgo_egnazia':'prov_egnazia',
+    // Sicilia
+    'palermo':      'prov_palermo', 'catania':     'prov_palermo',
+    'taormina':     'prov_taormina',
+    // Sardegna
+    'cagliari':     'prov_cagliari','olbia':       'prov_cagliari',
+    'porto_cervo':  'prov_cervo',
+    // Liguria
+    'genova':       'prov_genova',  'portofino':   'prov_genova',
+    'splendido':    'prov_genova',
+    // Emilia
+    'bologna':      'prov_bologna',
+    // Piemonte
+    'torino':       'prov_torino',
+    // Friuli
+    'trieste':      'prov_trieste',
+    // Trentino
+    'trento':       'prov_trento',
+    // Umbria/Marche
+    'perugia':      'prov_perugia', 'ancona':      'prov_perugia',
+    // Valle d'Aosta
+    'aosta':        'prov_aosta',
+};
+
+// Earn influence after completing a ride in a mapped province (async, fire & forget)
+function _awardTerritoryInfluence(ride) {
+    if (!window.supabaseClient || !window.ServerState?.addProvinceInfluence) return;
+    const provinces = new Set();
+    if (ride.fromPoi?.id && _POI_TO_PROVINCE[ride.fromPoi.id]) {
+        provinces.add(_POI_TO_PROVINCE[ride.fromPoi.id]);
+    }
+    if (ride.toPoi?.id && _POI_TO_PROVINCE[ride.toPoi.id]) {
+        provinces.add(_POI_TO_PROVINCE[ride.toPoi.id]);
+    }
+    provinces.forEach(provId => {
+        window.ServerState.addProvinceInfluence(provId, 10).then(result => {
+            if (!result) return;
+            // Cache locally
+            if (!gameState.territoryInfluence) gameState.territoryInfluence = {};
+            gameState.territoryInfluence[provId] = result.influence || 0;
+            // Notify if just crossed the threshold
+            if (result.unlocked && (result.influence - 10) < result.threshold) {
+                showNotification(`🏴 Influenza sbloccata: puoi ora conquistare ${result.province_name}!`, 'success');
+                logToMap(`🏴 Soglia influenza raggiunta: ${result.province_name} — OPA disponibile!`);
+            }
+        }).catch(() => {}); // silent fail — not critical
+    });
+}
+
 // Stub: dispatcher.js overwrites this with the real notification UI.
 // Having this here ensures engine.js code never throws "showNotification is not defined".
 function showNotification(msg, type) {
@@ -342,6 +412,8 @@ function loadGame() {
         if (save.totalDividendsEarned === undefined) save.totalDividendsEarned = 0;
         if (save.totalStockProfit === undefined) save.totalStockProfit = 0;
         if (save.diamondContractsCompleted === undefined) save.diamondContractsCompleted = 0;
+        // Territory War
+        if (!save.territoryInfluence)  save.territoryInfluence  = {};
         // VIP Clients
         if (!save.activeBuffs)      save.activeBuffs      = [];
         if (!save.vipCooldowns)     save.vipCooldowns     = {};
@@ -3435,6 +3507,9 @@ function completeRide(ride, _deferPay = false) {
     if (ride.vipClientId && typeof window._vipOnComplete === 'function') {
         window._vipOnComplete(ride.vipClientId, ride, driver, earned);
     }
+
+    // Territory influence (async, fire & forget)
+    _awardTerritoryInfluence(ride);
 
     saveGame();
 

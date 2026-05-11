@@ -391,9 +391,21 @@ const ServerState = (() => {
         return _rpc('rpc_unlock_region', { v_region_id: regionId, v_price: Math.round(price) });
     }
 
-    // ── Province War ──────────────────────────────────────────────────────────
+    // ── Province War + Territory System ──────────────────────────────────────
     async function acquireProvince(provinceId, offer) {
         return _rpc('rpc_acquire_province', { v_province_id: provinceId, v_offer: Math.round(offer) });
+    }
+
+    async function addProvinceInfluence(provinceId, amount) {
+        return _rpc('rpc_add_province_influence', { v_province_id: provinceId, v_amount: amount || 10 });
+    }
+
+    async function getTerritorySnapshot() {
+        return _rpc('rpc_get_territory_snapshot', {});
+    }
+
+    async function getMyInfluence() {
+        return _rpc('rpc_get_my_influence', {});
     }
 
     // ── Real Estate ───────────────────────────────────────────────────────────
@@ -529,6 +541,9 @@ const ServerState = (() => {
         repayLoan,
         unlockRegion,
         acquireProvince,
+        addProvinceInfluence,
+        getTerritorySnapshot,
+        getMyInfluence,
         buyRealEstate,
         getFuelPrice,
         sellVehicle,
