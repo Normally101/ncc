@@ -422,6 +422,11 @@ function loadGame() {
         if (save.watchDropCount  === undefined) save.watchDropCount  = 0;
         if (save.fuelPriceLock   === undefined) save.fuelPriceLock   = null;
         if (save.fuelPriceLockUntil === undefined) save.fuelPriceLockUntil = 0;
+        // Executive Club
+        if (save.tempKaskoExpiresDay === undefined) save.tempKaskoExpiresDay = 0;
+        if (save.tangenteUntil       === undefined) save.tangenteUntil       = 0;
+        if (save.hasPrestigiousPlate === undefined) save.hasPrestigiousPlate = false;
+        if (save._permKasko          === undefined) save._permKasko = (save.investments||[]).includes('inv_kasko') && (save.tempKaskoExpiresDay||0) === 0;
         // Macro-economia
         if (save.inflationRate     === undefined) save.inflationRate     = 0.020;
         if (save.interestRateBase  === undefined) save.interestRateBase  = 0.045;
@@ -3833,6 +3838,7 @@ async function buyInvestment(invId) {
     } else {
         gameState.investments.push(invId);
         if (item.rep) gameState.reputation = Math.min(5.0, gameState.reputation + item.rep);
+        if (invId === 'inv_kasko') gameState._permKasko = true;
         if (invId === 'inv_ev_hub') gameState.hasEVHub = true;
         if (invId === 'inv_acquire') applyAcquisition();
         if (invId === 'inv_sponsorship') applySponsorship();
@@ -4918,6 +4924,15 @@ function checkActiveTrips() {
         gameState.fuelPrice = gameState.fuelPriceLock;
     } else if (gameState.fuelPriceLock) {
         gameState.fuelPriceLock = null;
+    }
+
+    // Temp Kasko pruning — remove when past expiry day (unless player bought permanent kasko)
+    if ((gameState.tempKaskoExpiresDay || 0) > 0 && gameState.day > gameState.tempKaskoExpiresDay) {
+        if (!gameState._permKasko) {
+            gameState.investments = (gameState.investments || []).filter(i => i !== 'inv_kasko');
+        }
+        gameState.tempKaskoExpiresDay = 0;
+        if (typeof logToMap === 'function') logToMap('🛡️ Polizza Kasko Corporate scaduta.');
     }
 
     const trips = gameState.activeTrips || [];

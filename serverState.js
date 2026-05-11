@@ -474,6 +474,9 @@ const ServerState = (() => {
     async function addDriverCoins(amount) {
         return _rpc('rpc_add_driver_coins', { p_amount: amount });
     }
+    async function spendDriverCoins(itemId, amount) {
+        return _rpc('rpc_ec_spend', { p_item_id: itemId, p_amount: amount });
+    }
     async function buyHRAutomation(costInCoins, days = 7) {
         return _rpc('rpc_buy_hr_automation', { v_cost_in_coins: costInCoins, v_days: days });
     }
@@ -557,6 +560,7 @@ const ServerState = (() => {
         buyFleetRepair,
         buyVipContact,
         addDriverCoins,
+        spendDriverCoins,
         buyHRAutomation,
         getState,
         getCompany,
