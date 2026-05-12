@@ -29,6 +29,7 @@ const _SRM_FILTERS = [
     { id:'granturismo', label:'Gran Turismo',    icon:'🏎' },
     { id:'hypercar',    label:'Hypercar',        icon:'⚡' },
     { id:'ammiraglia',  label:'Ammiraglia',      icon:'👑' },
+    { id:'city',        label:'City EV',         icon:'🏙' },
 ];
 
 const _SRM_SECTIONS = [
@@ -264,6 +265,9 @@ function renderTabShowroom() {
     _srmInjectStyles();
     let overlay = document.getElementById('srm-overlay');
     if (!overlay) {
+        _srmState.view = 'gallery';
+        _srmState.selectedId = null;
+        _srmState.selectedOpts.clear();
         overlay = document.createElement('div');
         overlay.id = 'srm-overlay';
         document.body.appendChild(overlay);
@@ -280,6 +284,7 @@ function renderTabShowroom() {
 }
 
 window._srmClose = function() {
+    if (_srmState.animFrame) { cancelAnimationFrame(_srmState.animFrame); _srmState.animFrame = null; }
     document.getElementById('srm-overlay')?.remove();
     const panel = document.getElementById('main-panel');
     if (panel) panel.style.display = '';

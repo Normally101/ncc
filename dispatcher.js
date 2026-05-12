@@ -1057,6 +1057,10 @@ window.switchTab = function(tab) {
 
     if(mapLog) { mapLog.classList.add('hidden'); mapLog.classList.remove('flex'); }
 
+    // Clean up any open full-screen overlays before rendering the new tab.
+    if (document.getElementById('srm-overlay')) { if (window._srmClose) window._srmClose(); else document.getElementById('srm-overlay')?.remove(); }
+    if (document.getElementById('wr-overlay'))  { if (window._wrClose)  window._wrClose();  else document.getElementById('wr-overlay')?.remove(); }
+
     const _safeRender = (fn) => { try { fn(); } catch(e) { console.error('[switchTab]', e); const _sup = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'; container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}<br><span class="text-gray-500">Se il problema persiste, scrivi a <a href="mailto:${_sup}" class="underline">${_sup}</a></span></div>`; } };
     switch(tab) {
         case 'corse': title.innerText = "Dispatch Center"; _safeRender(renderTabCorse); break;

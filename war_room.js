@@ -144,7 +144,7 @@ function _wrGeoToSVG(geo, svgOwn) {
         </g>`;
     }).join('');
 
-    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+    return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
         <rect width="${W}" height="${H}" fill="#0B1525"/>
         ${regions}
     </svg>`;
