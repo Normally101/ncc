@@ -1,10 +1,9 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   war_room.js — Chauffeur Empire · War Room (Mappa Geopolitica SVG)
-   ═══════════════════════════════════════════════════════════════════════════ */
 'use strict';
+/* ═══════════════════════════════════════════════════════════════════════════
+   war_room.js — Chauffeur Empire · War Room (eRepublik-style full-screen map)
+   ═══════════════════════════════════════════════════════════════════════════ */
 
 // ─── SVG REGION PATHS ────────────────────────────────────────────────────────
-// viewBox "0 0 490 720", scale ~40px/°lon · 64px/°lat, origin 6.5°E / 47.1°N
 const _WR_PATHS = {
     reg_vda:        'M18,88 L58,72 L70,78 L65,100 L36,106 Z',
     reg_piemonte:   'M6,72 L18,88 L36,106 L65,100 L70,78 L58,72 L108,58 L130,78 L136,112 L116,158 L95,205 L64,220 L36,215 L10,188 Z',
@@ -28,31 +27,29 @@ const _WR_PATHS = {
     reg_sardegna:   'M95,392 L148,398 L162,422 L160,460 L165,492 L150,532 L125,558 L88,558 L68,530 L62,492 L75,455 L70,422 Z',
 };
 
-// Region centroid labels
 const _WR_META = [
-    { id:'reg_vda',        name:"Valle\nd'Aosta",    cx:38,  cy:90  },
-    { id:'reg_piemonte',   name:'Piemonte',           cx:60,  cy:152 },
-    { id:'reg_lombardia',  name:'Lombardia',          cx:182, cy:97  },
-    { id:'reg_trentino',   name:'Trentino\nA.A.',    cx:235, cy:48  },
-    { id:'reg_veneto',     name:'Veneto',             cx:290, cy:112 },
-    { id:'reg_fvg',        name:'Friuli\nV.G.',       cx:375, cy:92  },
-    { id:'reg_liguria',    name:'Liguria',            cx:112, cy:215 },
-    { id:'reg_emilia',     name:'Emilia-\nRomagna',  cx:240, cy:182 },
-    { id:'reg_toscana',    name:'Toscana',            cx:158, cy:302 },
-    { id:'reg_marche',     name:'Marche',             cx:308, cy:258 },
-    { id:'reg_umbria',     name:'Umbria',             cx:242, cy:280 },
-    { id:'reg_lazio',      name:'Lazio',              cx:215, cy:355 },
-    { id:'reg_abruzzo',    name:'Abruzzo',            cx:328, cy:258 },
-    { id:'reg_molise',     name:'Molise',             cx:338, cy:318 },
-    { id:'reg_campania',   name:'Campania',           cx:282, cy:440 },
-    { id:'reg_puglia',     name:'Puglia',             cx:418, cy:405 },
-    { id:'reg_basilicata', name:'Basilicata',         cx:335, cy:498 },
-    { id:'reg_calabria',   name:'Calabria',           cx:318, cy:572 },
-    { id:'reg_sicilia',    name:'Sicilia',            cx:278, cy:645 },
-    { id:'reg_sardegna',   name:'Sardegna',           cx:110, cy:475 },
+    { id:'reg_vda',        name:"Valle d'Aosta", cx:38,  cy:90  },
+    { id:'reg_piemonte',   name:'Piemonte',       cx:58,  cy:152 },
+    { id:'reg_lombardia',  name:'Lombardia',      cx:182, cy:92  },
+    { id:'reg_trentino',   name:'Trentino',       cx:238, cy:40  },
+    { id:'reg_veneto',     name:'Veneto',         cx:295, cy:108 },
+    { id:'reg_fvg',        name:'Friuli V.G.',    cx:378, cy:88  },
+    { id:'reg_liguria',    name:'Liguria',        cx:118, cy:215 },
+    { id:'reg_emilia',     name:'Emilia-Romagna', cx:238, cy:182 },
+    { id:'reg_toscana',    name:'Toscana',        cx:162, cy:298 },
+    { id:'reg_marche',     name:'Marche',         cx:308, cy:258 },
+    { id:'reg_umbria',     name:'Umbria',         cx:245, cy:278 },
+    { id:'reg_lazio',      name:'Lazio',          cx:218, cy:358 },
+    { id:'reg_abruzzo',    name:'Abruzzo',        cx:328, cy:255 },
+    { id:'reg_molise',     name:'Molise',         cx:338, cy:315 },
+    { id:'reg_campania',   name:'Campania',       cx:282, cy:442 },
+    { id:'reg_puglia',     name:'Puglia',         cx:415, cy:405 },
+    { id:'reg_basilicata', name:'Basilicata',     cx:335, cy:498 },
+    { id:'reg_calabria',   name:'Calabria',       cx:318, cy:568 },
+    { id:'reg_sicilia',    name:'Sicilia',        cx:278, cy:645 },
+    { id:'reg_sardegna',   name:'Sardegna',       cx:112, cy:470 },
 ];
 
-// DB region name → SVG region ID
 const _WR_NAME_TO_SVG = {
     'Piemonte':             'reg_piemonte',
     "Valle d'Aosta":        'reg_vda',
@@ -76,8 +73,33 @@ const _WR_NAME_TO_SVG = {
     'Sardegna':             'reg_sardegna',
 };
 
-// Module state
-let _wrCache = null;
+// ─── Base political-map palette (neutral state) ─────────────────────────────
+const _WR_BASE = {
+    reg_vda:        '#7A5C2E',
+    reg_piemonte:   '#B87030',
+    reg_lombardia:  '#3A70B8',
+    reg_trentino:   '#4A8AAA',
+    reg_veneto:     '#6A4EA8',
+    reg_fvg:        '#2E8860',
+    reg_liguria:    '#A83838',
+    reg_emilia:     '#B88020',
+    reg_toscana:    '#4A8048',
+    reg_marche:     '#3A68A0',
+    reg_umbria:     '#7A58A0',
+    reg_lazio:      '#9A3030',
+    reg_abruzzo:    '#308070',
+    reg_molise:     '#485090',
+    reg_campania:   '#A86020',
+    reg_puglia:     '#307840',
+    reg_basilicata: '#806820',
+    reg_calabria:   '#3068A0',
+    reg_sicilia:    '#A02860',
+    reg_sardegna:   '#6A4828',
+};
+
+// ─── Module state ────────────────────────────────────────────────────────────
+let _wrCache        = null;
+let _wrSelectedSvg  = null;
 
 // ─── CSS ─────────────────────────────────────────────────────────────────────
 function _wrInjectStyles() {
@@ -85,411 +107,386 @@ function _wrInjectStyles() {
     const st = document.createElement('style');
     st.id = 'wr-style';
     st.textContent = `
-        #wr-map-wrap {
-            background: radial-gradient(ellipse at 40% 35%, #03071a 0%, #010305 100%);
-            border: 1px solid rgba(0,200,200,0.12); border-radius: 12px;
-            overflow: hidden; position: relative; user-select: none;
+        #wr-overlay {
+            position: fixed; inset: 0; z-index: 4500;
+            display: flex; flex-direction: column;
+            font-family: system-ui, sans-serif;
+            background: #0B1525;
         }
-        #wr-map-wrap svg { display: block; width: 100%; height: auto; }
-        .wr-region {
-            cursor: pointer;
-            transition: fill 0.18s ease, filter 0.18s ease;
+        #wr-header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 10px 20px; flex-shrink: 0;
+            background: rgba(0,0,0,0.55);
+            border-bottom: 1px solid rgba(0,200,200,0.15);
         }
-        .wr-region:hover {
-            filter: brightness(1.7) drop-shadow(0 0 5px rgba(0,220,220,0.5));
+        #wr-body {
+            flex: 1; display: flex; overflow: hidden;
         }
-        #wr-tooltip {
-            position: fixed; pointer-events: none; z-index: 9999;
-            background: linear-gradient(140deg, rgba(3,7,22,0.98), rgba(8,14,38,0.98));
-            border: 1px solid rgba(0,200,200,0.28); border-radius: 10px;
-            padding: 10px 13px; min-width: 175px;
-            box-shadow: 0 8px 28px rgba(0,0,0,0.7);
-            display: none; font-size: 11px; color: #e2e8f0;
+        #wr-map-pane {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            overflow: hidden; padding: 8px;
+            background: #0B1525;
+            cursor: default;
         }
-        #wr-tooltip .tt-title { font-weight: 800; color: #00cccc; font-size: 12.5px; margin-bottom: 5px; }
-        #wr-tooltip .tt-row { display: flex; justify-content: space-between; gap: 14px; margin-top: 3px; }
-        #wr-tooltip .tt-lbl { color: #4b5563; }
-        #wr-tooltip .tt-val { font-weight: 700; color: #e2e8f0; }
-        .wr-modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,5,0.82); z-index: 10000;
+        #wr-map-pane svg {
+            height: 100%; max-height: calc(100vh - 56px);
+            width: auto; display: block;
+        }
+        #wr-sidebar {
+            width: 320px; flex-shrink: 0;
+            background: #080f1c; border-left: 1px solid rgba(0,200,200,0.1);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+        #wr-sidebar-inner { flex: 1; overflow-y: auto; padding: 14px; }
+        .wr-region path { cursor: pointer; }
+        .wr-region path:hover { filter: brightness(1.35); }
+        .wr-region.wr-selected path { filter: brightness(1.4); }
+        .wr-close-btn {
+            width: 30px; height: 30px; border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.15); background: transparent;
+            color: #6b7280; font-size: 15px; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(4px); animation: wrFadeIn .15s ease;
+            transition: all .15s;
         }
-        .wr-modal {
-            background: linear-gradient(150deg, rgba(3,6,20,0.99), rgba(6,10,28,0.99));
-            border: 1px solid rgba(0,200,200,0.18); border-radius: 16px;
-            width: 94%; max-width: 560px; max-height: 88vh; overflow-y: auto;
-            padding: 20px; box-shadow: 0 24px 64px rgba(0,0,0,0.9);
-            animation: wrSlideUp .2s cubic-bezier(0.34,1.56,0.64,1);
-        }
+        .wr-close-btn:hover { border-color: rgba(255,255,255,0.4); color: #e2e8f0; }
+        /* Province cards */
         .wr-prov-card {
-            background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07);
-            border-radius: 10px; padding: 12px; margin-bottom: 8px;
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 9px; padding: 11px; margin-bottom: 7px;
         }
-        .wr-prov-card.is-mine  { border-color: rgba(212,175,55,0.4);  background: rgba(212,175,55,0.06); }
-        .wr-prov-card.is-free  { border-color: rgba(34,197,94,0.32);  background: rgba(34,197,94,0.05); }
-        .wr-prov-card.is-enemy { border-color: rgba(239,68,68,0.32);  background: rgba(239,68,68,0.05); }
-        .wr-inf-track { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; margin: 3px 0; }
-        .wr-inf-fill  { height: 100%; border-radius: 2px; transition: width .5s ease; }
-        .wr-btn       { display: flex; align-items: center; justify-content: center; padding: 7px 14px;
-                        border: none; border-radius: 7px; font-size: 0.72rem; font-weight: 800;
-                        cursor: pointer; white-space: nowrap; transition: all .15s; }
-        .wr-btn-green { background: linear-gradient(135deg,#15803d,#22c55e); color: #fff; }
-        .wr-btn-green:hover { background: linear-gradient(135deg,#16a34a,#4ade80); }
-        .wr-btn-red   { background: linear-gradient(135deg,#991b1b,#ef4444); color: #fff; }
-        .wr-btn-red:hover { background: linear-gradient(135deg,#b91c1c,#f87171); }
-        .wr-btn-locked { background: rgba(30,41,59,0.8); color: #4b5563; border: 1px solid #1e293b; cursor: not-allowed; }
-        .wr-offer-input {
-            flex: 1; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 6px; padding: 7px 10px; font-size: 0.72rem; color: #fff;
+        .wr-prov-card.is-mine  { border-color: rgba(212,175,55,0.38);  background: rgba(212,175,55,0.06); }
+        .wr-prov-card.is-free  { border-color: rgba(34,197,94,0.28);   background: rgba(34,197,94,0.04); }
+        .wr-prov-card.is-enemy { border-color: rgba(239,68,68,0.28);   background: rgba(239,68,68,0.04); }
+        .wr-inf-track { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; margin: 4px 0 2px; }
+        .wr-inf-fill  { height: 100%; border-radius: 2px; transition: width .5s; }
+        .wr-btn { padding: 7px 14px; border: none; border-radius: 7px; font-size: 11px;
+                  font-weight: 800; cursor: pointer; transition: all .15s; white-space: nowrap; }
+        .wr-btn-green { background: linear-gradient(135deg,#166534,#22c55e); color: #fff; }
+        .wr-btn-green:hover { filter: brightness(1.15); }
+        .wr-btn-red   { background: linear-gradient(135deg,#7f1d1d,#ef4444); color: #fff; }
+        .wr-btn-red:hover { filter: brightness(1.15); }
+        .wr-btn-lock  { background: rgba(30,41,59,0.8); color: #374151;
+                        border: 1px solid #1e293b; cursor: not-allowed; }
+        .wr-offer-inp {
+            flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 6px; padding: 6px 9px; font-size: 11px; color: #fff;
             outline: none; min-width: 0;
         }
-        .wr-offer-input:focus { border-color: rgba(0,200,200,0.4); }
-        @keyframes wrFadeIn   { from { opacity:0 } to { opacity:1 } }
-        @keyframes wrSlideUp  { from { transform:translateY(18px);opacity:0 } to { transform:translateY(0);opacity:1 } }
+        .wr-offer-inp:focus { border-color: rgba(0,200,200,0.4); }
+        @keyframes wrFadeIn { from { opacity:0 } to { opacity:1 } }
     `;
     document.head.appendChild(st);
 }
 
-// ─── MAIN RENDER ─────────────────────────────────────────────────────────────
+// ─── MAIN ENTRY ──────────────────────────────────────────────────────────────
 async function renderTabWarRoom() {
-    const container = document.getElementById('tab-container');
     _wrInjectStyles();
-    container.innerHTML = `
-        <div style="color:#00cccc;font-size:0.7rem;text-align:center;padding:24px 0;letter-spacing:.12em;animation:wrFadeIn .3s">
-            INIZIALIZZAZIONE WAR ROOM…
-        </div>`;
 
+    // Create full-screen overlay
+    document.getElementById('wr-overlay')?.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'wr-overlay';
+    document.body.appendChild(overlay);
+
+    const panel = document.getElementById('main-panel');
+    if (panel) panel.style.display = 'none';
+    const tc = document.getElementById('tab-container');
+    if (tc) tc.innerHTML = '';
+
+    overlay.innerHTML = `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+        color:#00cccc;font-size:13px;letter-spacing:.18em;animation:wrFadeIn .3s">
+        INIZIALIZZAZIONE WAR ROOM…
+    </div>`;
+
+    // ── Fetch data ──
     let provinces = [], regions = [], influence = {};
-    let _dataUnavailable = false;
+    let offline = false;
     try {
         const snap = await window.ServerState?.getTerritorySnapshot();
         if (snap) {
             provinces = snap.provinces || [];
             regions   = snap.regions   || [];
             influence = snap.influence || {};
-        } else {
-            _dataUnavailable = true;
-        }
-    } catch(e) {
-        _dataUnavailable = true;
-    }
+        } else { offline = true; }
+    } catch { offline = true; }
 
     const regById = {};
     regions.forEach(r => { regById[r.id] = r; });
-
     const myCompany = gameState.companyName || '';
 
-    // Build per-SVG-region ownership summary
     const svgOwn = {};
     provinces.forEach(p => {
         const reg = regById[p.region_id] || {};
-        const svgId = _WR_NAME_TO_SVG[reg.name];
-        if (!svgId) return;
-        if (!svgOwn[svgId]) svgOwn[svgId] = {
-            mine: 0, enemy: 0, free: 0, total: 0,
-            governor: reg.governor_company || null,
-            govTax: reg.region_tax_pct || 0.01,
-            regName: reg.name || '',
-            regId: reg.id || '',
-        };
-        const o = svgOwn[svgId];
-        o.total++;
-        if (!p.owner_id) o.free++;
-        else if (p.owner_company === myCompany) o.mine++;
-        else o.enemy++;
+        const sid = _WR_NAME_TO_SVG[reg.name];
+        if (!sid) return;
+        if (!svgOwn[sid]) svgOwn[sid] = { mine:0, enemy:0, free:0, total:0,
+            governor: reg.governor_company||null, govTax: reg.region_tax_pct||0.01,
+            regName: reg.name||'', regId: reg.id||'' };
+        svgOwn[sid].total++;
+        if (!p.owner_id)                          svgOwn[sid].free++;
+        else if (p.owner_company === myCompany)   svgOwn[sid].mine++;
+        else                                       svgOwn[sid].enemy++;
     });
 
     _wrCache = { provinces, regions, regById, influence, myCompany };
+    _wrSelectedSvg = null;
 
-    // Player stats summary
-    let totalMine = 0, totalProvs = provinces.length;
-    provinces.forEach(p => { if (p.owner_company === myCompany) totalMine++; });
-    const isGovSomewhere = regions.some(r => r.governor_company === myCompany);
+    let totalMine = provinces.filter(p => p.owner_company === myCompany).length;
 
-    container.innerHTML = `
-        <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <div>
-                <div style="font-size:0.58rem;letter-spacing:.18em;color:rgba(0,200,200,0.55);text-transform:uppercase;font-weight:700;">CHAUFFEUR EMPIRE</div>
-                <div style="font-size:1.02rem;font-weight:900;color:#00cccc;letter-spacing:.04em;">WAR ROOM</div>
-                <div style="font-size:0.6rem;color:#374151;margin-top:1px;">Geopolitica & Conquista Territoriale</div>
+    // ── Build HTML ──
+    overlay.innerHTML = `
+        <div id="wr-header">
+            <div style="display:flex;align-items:center;gap:16px;">
+                <div style="font-size:9px;letter-spacing:.18em;color:rgba(0,200,200,0.55);font-weight:800;text-transform:uppercase;">CHAUFFEUR EMPIRE</div>
+                <div style="font-size:19px;font-weight:900;color:#00cccc;letter-spacing:.06em;">WAR ROOM</div>
+                ${offline ? `<span style="font-size:9px;color:#92400e;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.25);border-radius:4px;padding:2px 8px;">⚠ offline</span>` : ''}
             </div>
-            <div style="text-align:right;">
-                <div style="font-size:0.62rem;font-weight:700;color:#d4af37;">${totalMine} / ${totalProvs}</div>
-                <div style="font-size:0.58rem;color:#4b5563;">province</div>
-                ${isGovSomewhere ? `<div style="font-size:0.58rem;color:#d4af37;margin-top:2px;">👑 Governatore attivo</div>` : ''}
+            <div style="display:flex;align-items:center;gap:20px;">
+                <div>
+                    <span style="font-size:17px;font-weight:900;color:#d4af37;">${totalMine}</span>
+                    <span style="font-size:10px;color:#4b5563;"> / ${provinces.length} province</span>
+                </div>
+                <button class="wr-close-btn" onclick="window._wrClose()">✕</button>
             </div>
         </div>
 
-        <!-- Legend -->
-        <div style="display:flex;gap:14px;font-size:0.6rem;align-items:center;margin-bottom:8px;flex-wrap:wrap;">
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;background:rgba(212,175,55,0.55);border-radius:2px;"></div><span style="color:#6b7280;">Tuo controllo</span></div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;background:rgba(212,175,55,0.28);border-radius:2px;"></div><span style="color:#6b7280;">Influenza parziale</span></div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;background:rgba(239,68,68,0.38);border-radius:2px;"></div><span style="color:#6b7280;">Nemico</span></div>
-            <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;background:rgba(18,30,55,0.9);border:1px solid rgba(0,200,200,0.15);border-radius:2px;"></div><span style="color:#6b7280;">Neutrale</span></div>
-        </div>
-
-        <!-- Data warning (shown only when Supabase unavailable) -->
-        ${_dataUnavailable ? `<div style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.18);border-radius:7px;padding:7px 10px;font-size:0.62rem;color:#92400e;margin-bottom:8px;">
-            ⚠ Dati territorio non disponibili — mappa in sola lettura
-        </div>` : ''}
-
-        <!-- SVG Map -->
-        <div id="wr-map-wrap">${_wrBuildSVG(svgOwn)}</div>
-        <div style="margin-top:6px;font-size:0.6rem;color:#374151;text-align:center;">
-            Hover per dettagli · Click per aprire il pannello di conquista
-        </div>
-
-        <!-- Floating tooltip -->
-        <div id="wr-tooltip">
-            <div class="tt-title" id="wr-tt-name">—</div>
-            <div class="tt-row"><span class="tt-lbl">Governatore</span><span class="tt-val" id="wr-tt-gov">—</span></div>
-            <div class="tt-row"><span class="tt-lbl">Tassa regionale</span><span class="tt-val" id="wr-tt-tax">—</span></div>
-            <div class="tt-row"><span class="tt-lbl">Province</span><span class="tt-val" id="wr-tt-prov">—</span></div>
+        <div id="wr-body">
+            <div id="wr-map-pane">
+                ${_wrBuildSVG(svgOwn)}
+            </div>
+            <div id="wr-sidebar">
+                <!-- Legend -->
+                <div style="padding:12px 14px;border-bottom:1px solid rgba(255,255,255,0.05);flex-shrink:0;">
+                    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6b7280;">
+                            <div style="width:12px;height:12px;background:#d4af37;border-radius:2px;"></div> Mio territorio
+                        </div>
+                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6b7280;">
+                            <div style="width:12px;height:12px;background:#dc2626;border-radius:2px;"></div> Nemico
+                        </div>
+                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6b7280;">
+                            <div style="width:12px;height:12px;background:#3A68A0;border-radius:2px;"></div> Libero
+                        </div>
+                    </div>
+                </div>
+                <!-- Detail area -->
+                <div id="wr-sidebar-inner">
+                    <div style="text-align:center;padding:48px 16px;animation:wrFadeIn .3s;">
+                        <div style="font-size:32px;margin-bottom:10px;">🗺</div>
+                        <div style="font-size:11px;color:#374151;letter-spacing:.08em;text-transform:uppercase;">Clicca su una regione</div>
+                        <div style="font-size:10px;color:#1f2937;margin-top:4px;line-height:1.5;">Seleziona una regione sulla mappa per vedere le province e lanciarci un'OPA</div>
+                    </div>
+                </div>
+            </div>
         </div>
     `;
 
     _wrSetupInteractions(svgOwn);
 }
 
+window._wrClose = function () {
+    document.getElementById('wr-overlay')?.remove();
+    const panel = document.getElementById('main-panel');
+    if (panel) panel.style.display = '';
+};
+
 // ─── SVG BUILD ───────────────────────────────────────────────────────────────
 function _wrBuildSVG(svgOwn) {
-    const regionPaths = _WR_META.map(m => {
-        const d = _WR_PATHS[m.id];
+    const regions = _WR_META.map(m => {
+        const d   = _WR_PATHS[m.id];
         if (!d) return '';
         const own  = svgOwn[m.id] || {};
-        const fill = _wrFill(own);
-        const lines = m.name.split('\n');
-        const textY = m.cy - (lines.length > 1 ? 4 : 0);
+        const fill = _wrFill(own, m.id);
+        const stroke = _wrStroke(own);
+        const sw     = _wrStrokeW(own);
+        const label  = m.name;
+        const cx = m.cx, cy = m.cy;
+        const badge = own.mine > 0 && own.mine === own.total ? '★' : own.governor ? '♛' : '';
+
         return `
-            <path id="${m.id}" class="wr-region" d="${d}"
-                fill="${fill}" stroke="rgba(0,180,180,0.18)" stroke-width="0.6"
-                data-svgid="${m.id}"/>
-            ${lines.map((l, i) => `<text x="${m.cx}" y="${textY + i * 9}"
-                text-anchor="middle" pointer-events="none"
-                style="font-size:5.5px;fill:rgba(255,255,255,0.38);font-weight:700;
-                       letter-spacing:0.03em;font-family:system-ui,sans-serif;">${l}</text>`).join('')}
-        `;
+            <g class="wr-region" id="${m.id}" data-id="${m.id}">
+                <path d="${d}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" stroke-linejoin="round"/>
+                <text x="${cx}" y="${cy - (badge ? 5 : 0)}" text-anchor="middle" pointer-events="none"
+                    style="font-size:6px;fill:rgba(255,255,255,0.9);font-weight:700;font-family:system-ui,sans-serif;
+                           text-shadow:0 0 3px rgba(0,0,0,0.9);letter-spacing:0.02em;">${label}</text>
+                ${badge ? `<text x="${cx}" y="${cy + 7}" text-anchor="middle" pointer-events="none"
+                    style="font-size:8px;fill:#FFD700;font-family:system-ui,sans-serif;">${badge}</text>` : ''}
+            </g>`;
     }).join('');
 
-    return `<svg viewBox="0 0 490 720" xmlns="http://www.w3.org/2000/svg" style="max-height:510px;">
-        <defs>
-            <radialGradient id="sea-grad" cx="50%" cy="50%" r="60%">
-                <stop offset="0%" stop-color="#020a1e"/>
-                <stop offset="100%" stop-color="#010408"/>
-            </radialGradient>
-        </defs>
-        <rect width="490" height="720" fill="url(#sea-grad)"/>
-        <!-- Strait of Messina marker -->
-        <line x1="285" y1="630" x2="312" y2="618" stroke="rgba(0,200,200,0.08)" stroke-width="1" stroke-dasharray="3,3"/>
-        ${regionPaths}
+    return `<svg viewBox="0 0 490 720" xmlns="http://www.w3.org/2000/svg">
+        <rect width="490" height="720" fill="#0B1525"/>
+        ${regions}
     </svg>`;
 }
 
-function _wrFill(own) {
-    if (!own || own.total === 0) return 'rgba(15,25,50,0.85)';
-    if (own.mine > 0 && own.mine === own.total)  return 'rgba(212,175,55,0.58)'; // full control
-    if (own.mine > 0 && own.mine > own.enemy)    return 'rgba(212,175,55,0.30)'; // I lead
-    if (own.enemy > 0 && own.enemy >= own.mine)  return 'rgba(239,68,68,0.38)'; // enemy leads
-    if (own.free === own.total)                  return 'rgba(15,28,55,0.88)';  // all neutral
-    return 'rgba(25,40,75,0.75)';                                               // mixed
+function _wrFill(own, svgId) {
+    if (!own || own.total === 0) return _WR_BASE[svgId] || '#2A3A5A';
+    if (own.mine > 0 && own.mine >= own.enemy)  return '#B8920A';   // gold (mine dominant)
+    if (own.enemy > 0 && own.enemy > own.mine)  return '#A02020';   // red (enemy dominant)
+    if (own.free === own.total)                  return _WR_BASE[svgId] || '#2A3A5A';
+    return '#7A6020'; // mixed
+}
+
+function _wrStroke(own) {
+    if (!own || own.total === 0) return 'rgba(255,255,255,0.12)';
+    if (own.mine > 0 && own.mine >= own.enemy)  return '#FFD700';
+    if (own.enemy > 0 && own.enemy > own.mine)  return '#FF4444';
+    return 'rgba(255,255,255,0.15)';
+}
+
+function _wrStrokeW(own) {
+    if (!own || own.total === 0) return 1;
+    if (own.mine > 0 && own.mine >= own.enemy)  return 2.5;
+    if (own.enemy > 0 && own.enemy > own.mine)  return 2;
+    return 1;
 }
 
 // ─── INTERACTIONS ─────────────────────────────────────────────────────────────
 function _wrSetupInteractions(svgOwn) {
-    const tooltip = document.getElementById('wr-tooltip');
-    const svg = document.querySelector('#wr-map-wrap svg');
+    const svg = document.querySelector('#wr-map-pane svg');
     if (!svg) return;
 
     svg.querySelectorAll('.wr-region').forEach(el => {
-        const svgId = el.dataset.svgid;
+        const svgId = el.dataset.id;
         const meta  = _WR_META.find(m => m.id === svgId) || {};
-        const own   = svgOwn[svgId] || {};
-
-        el.addEventListener('mouseenter', () => {
-            if (!tooltip) return;
-            const govLabel = own.governor || 'Territorio Libero';
-            const taxPct   = ((own.govTax || 0.01) * 100).toFixed(1);
-            const fullName = (meta.name || svgId).replace('\n', ' ');
-            document.getElementById('wr-tt-name').textContent  = fullName;
-            document.getElementById('wr-tt-gov').textContent   = govLabel;
-            document.getElementById('wr-tt-gov').style.color   = own.governor ? '#d4af37' : '#4b5563';
-            document.getElementById('wr-tt-tax').textContent   = taxPct + '%';
-            document.getElementById('wr-tt-prov').textContent  = `${own.mine || 0} / ${own.total || 0} mie`;
-            tooltip.style.display = 'block';
-        });
-
-        el.addEventListener('mousemove', e => {
-            if (!tooltip) return;
-            tooltip.style.left = (e.clientX + 16) + 'px';
-            tooltip.style.top  = Math.max(4, e.clientY - 50) + 'px';
-        });
-
-        el.addEventListener('mouseleave', () => {
-            if (tooltip) tooltip.style.display = 'none';
-        });
 
         el.addEventListener('click', () => {
-            if (tooltip) tooltip.style.display = 'none';
+            // Deselect old
+            svg.querySelectorAll('.wr-region.wr-selected').forEach(e => e.classList.remove('wr-selected'));
+            el.classList.add('wr-selected');
+            _wrSelectedSvg = svgId;
+
             if (!_wrCache) return;
             const { provinces, regById } = _wrCache;
             const regionEntry = Object.values(regById).find(r => _WR_NAME_TO_SVG[r.name] === svgId);
-            if (!regionEntry) {
-                _wrShowModal(svgId, (meta.name || svgId).replace('\n', ' '), null, []);
-                return;
-            }
-            const provs = provinces.filter(p => p.region_id === regionEntry.id);
-            _wrShowModal(svgId, (meta.name || svgId).replace('\n', ' '), regionEntry, provs);
+            const provs = regionEntry ? provinces.filter(p => p.region_id === regionEntry.id) : [];
+            _wrShowSidebar(svgId, meta.name || svgId, regionEntry || null, provs);
         });
+
+        el.addEventListener('mouseenter', () => { el.style.cursor = 'pointer'; });
     });
 }
 
-// ─── CONQUEST MODAL ──────────────────────────────────────────────────────────
-function _wrShowModal(svgId, regionName, regionData, provs) {
-    document.getElementById('wr-modal-overlay')?.remove();
+// ─── SIDEBAR DETAIL ──────────────────────────────────────────────────────────
+function _wrShowSidebar(svgId, regionName, regionData, provs) {
+    const inner = document.getElementById('wr-sidebar-inner');
+    if (!inner) return;
 
-    const myCompany = _wrCache?.myCompany || '';
-    const influence = _wrCache?.influence || {};
+    const myCompany  = _wrCache?.myCompany || '';
+    const influence  = _wrCache?.influence || {};
     const govCompany = regionData?.governor_company || null;
-    const taxReg    = ((regionData?.region_tax_pct || 0.01) * 100).toFixed(1);
-    const amGov     = govCompany === myCompany;
+    const taxReg     = ((regionData?.region_tax_pct || 0.01) * 100).toFixed(1);
+    const amGov      = govCompany === myCompany;
 
-    // Province cards
     let provHtml = '';
     if (!provs.length) {
-        provHtml = `<div style="color:#374151;font-size:0.75rem;text-align:center;padding:24px;">
+        provHtml = `<div style="color:#374151;font-size:11px;text-align:center;padding:24px 0;">
             Nessuna provincia mappata per questa regione.</div>`;
     } else {
         provs.forEach(p => {
-            const isOwned  = p.owner_company === myCompany;
-            const isFree   = !p.owner_id;
-            const isEnemy  = !isOwned && !isFree;
-            const myInf    = influence[p.id] || 0;
-            const thresh   = p.required_influence || 500;
-            const pct      = Math.min(100, Math.round(myInf / thresh * 100));
-            const unlocked = myInf >= thresh;
-            const taxPct   = ((p.transit_tax_pct || 0.025) * 100).toFixed(1);
-            const val      = p.current_value || 0;
-            const minOpa   = Math.ceil(val * 1.20);
-            const hostOpa  = Math.ceil(val * 2.30);
-            const infColor = unlocked ? '#22c55e' : pct > 60 ? '#f59e0b' : '#475569';
-
-            const cardCls = isOwned ? 'is-mine' : isFree ? 'is-free' : 'is-enemy';
+            const isOwned = p.owner_company === myCompany;
+            const isFree  = !p.owner_id;
+            const isEnemy = !isOwned && !isFree;
+            const myInf   = influence[p.id] || 0;
+            const thresh  = p.required_influence || 500;
+            const pct     = Math.min(100, Math.round(myInf / thresh * 100));
+            const unl     = myInf >= thresh;
+            const taxPct  = ((p.transit_tax_pct || 0.025) * 100).toFixed(1);
+            const val     = p.current_value || 0;
+            const minOpa  = Math.ceil(val * 1.20);
+            const hostOpa = Math.ceil(val * 2.30);
+            const infCol  = unl ? '#22c55e' : pct > 60 ? '#f59e0b' : '#475569';
+            const cls     = isOwned ? 'is-mine' : isFree ? 'is-free' : 'is-enemy';
             const badge   = isOwned
-                ? `<span style="color:#d4af37;font-size:0.6rem;">✦ Tua</span>`
+                ? `<span style="color:#d4af37;font-size:9px;">✦ Tua</span>`
                 : isFree
-                ? `<span style="color:#22c55e;font-size:0.6rem;">◎ Libera</span>`
-                : `<span style="color:#ef4444;font-size:0.6rem;">⚔ ${p.owner_company}</span>`;
+                ? `<span style="color:#22c55e;font-size:9px;">◎ Libera</span>`
+                : `<span style="color:#ef4444;font-size:9px;">⚔ ${p.owner_company}</span>`;
 
             let ctaHtml = '';
             if (isOwned) {
-                ctaHtml = `<div style="font-size:0.68rem;color:#22c55e;background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.18);border-radius:6px;padding:6px 10px;">
-                    ✅ Incassi il ${taxPct}% su ogni corsa${amGov ? ` + ${taxReg}% come Governatore` : ''}
-                </div>`;
-            } else if (!unlocked) {
-                ctaHtml = `<button class="wr-btn wr-btn-locked" style="width:100%;padding:8px;" disabled>
-                    🔒 Influenza Insufficiente — ${(thresh - myInf).toLocaleString()} pt mancanti
-                </button>`;
+                ctaHtml = `<div style="font-size:9px;color:#22c55e;background:rgba(34,197,94,0.07);
+                    border:1px solid rgba(34,197,94,0.15);border-radius:5px;padding:5px 8px;">
+                    ✅ Incassi il ${taxPct}%${amGov ? ` + ${taxReg}% (Governatore)` : ''}</div>`;
+            } else if (!unl) {
+                ctaHtml = `<button class="wr-btn wr-btn-lock" style="width:100%;padding:6px;" disabled>
+                    🔒 ${(thresh - myInf).toLocaleString()} pt influenza mancanti</button>`;
             } else if (isFree) {
-                ctaHtml = `<div style="display:flex;gap:6px;align-items:center;">
-                    <input id="wr-offer-${p.id}" type="number" min="${minOpa}" step="5000"
-                        class="wr-offer-input" placeholder="Min €${minOpa.toLocaleString()}">
-                    <button class="wr-btn wr-btn-green" onclick="window._wrAcquire('${p.id}')">🏴 Acquisisci</button>
+                ctaHtml = `<div style="display:flex;gap:6px;align-items:center;margin-bottom:3px;">
+                    <input id="wri-${p.id}" type="number" min="${minOpa}" step="5000"
+                        class="wr-offer-inp" placeholder="Min €${minOpa.toLocaleString()}">
+                    <button class="wr-btn wr-btn-green" onclick="window._wrAcquire('${p.id}')">🏴 OPA</button>
                 </div>
-                <div style="font-size:0.6rem;color:#374151;margin-top:3px;">OPA minima: €${minOpa.toLocaleString()}</div>`;
+                <div style="font-size:9px;color:#374151;">Min €${minOpa.toLocaleString()}</div>`;
             } else {
-                ctaHtml = `<div style="display:flex;gap:6px;align-items:center;">
-                    <input id="wr-offer-${p.id}" type="number" min="${hostOpa}" step="5000"
-                        class="wr-offer-input" style="border-color:rgba(239,68,68,0.3);"
+                ctaHtml = `<div style="display:flex;gap:6px;align-items:center;margin-bottom:3px;">
+                    <input id="wri-${p.id}" type="number" min="${hostOpa}" step="5000"
+                        class="wr-offer-inp" style="border-color:rgba(239,68,68,0.3);"
                         placeholder="Min €${hostOpa.toLocaleString()}">
                     <button class="wr-btn wr-btn-red" onclick="window._wrAcquire('${p.id}')">⚔ OPA Ostile</button>
                 </div>
-                <div style="font-size:0.6rem;color:#374151;margin-top:3px;">OPA Ostile +130% · Min €${hostOpa.toLocaleString()}</div>`;
+                <div style="font-size:9px;color:#374151;">+130% · Min €${hostOpa.toLocaleString()}</div>`;
             }
 
             provHtml += `
-            <div class="wr-prov-card ${cardCls}">
-                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:8px;">
+            <div class="wr-prov-card ${cls}">
+                <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:6px;">
                     <div>
-                        <div style="font-size:0.82rem;font-weight:800;color:#fff;">${p.name}</div>
-                        <div style="font-size:0.62rem;color:#374151;margin-top:2px;">${badge} · Tassa: ${taxPct}%</div>
+                        <div style="font-size:12px;font-weight:800;color:#e2e8f0;">${p.name}</div>
+                        <div style="font-size:9px;color:#374151;margin-top:1px;">${badge} · ${taxPct}% tassa</div>
                     </div>
                     <div style="text-align:right;flex-shrink:0;">
-                        <div style="font-size:0.88rem;font-weight:900;color:#d4af37;">€${val.toLocaleString()}</div>
-                        <div style="font-size:0.58rem;color:#374151;">valore</div>
+                        <div style="font-size:12px;font-weight:900;color:#d4af37;">€${val.toLocaleString()}</div>
                     </div>
                 </div>
-
-                <!-- Influence progress -->
-                <div style="margin-bottom:9px;">
-                    <div style="display:flex;justify-content:space-between;font-size:0.6rem;margin-bottom:3px;">
-                        <span style="color:#4b5563;">Influenza</span>
-                        <span style="color:${infColor};font-weight:700;">${myInf.toLocaleString()} / ${thresh.toLocaleString()} ${unlocked ? '✅' : ''}</span>
-                    </div>
-                    <div class="wr-inf-track">
-                        <div class="wr-inf-fill" style="width:${pct}%;background:${infColor};"></div>
-                    </div>
-                    ${!unlocked ? `<div style="font-size:0.58rem;color:#374151;margin-top:2px;">Completa corse da/verso questa provincia per guadagnare influenza</div>` : ''}
+                <div style="display:flex;justify-content:space-between;font-size:9px;color:#4b5563;">
+                    <span>Influenza</span>
+                    <span style="color:${infCol};font-weight:700;">${myInf.toLocaleString()} / ${thresh.toLocaleString()} ${unl ? '✅' : ''}</span>
                 </div>
-
-                ${ctaHtml}
+                <div class="wr-inf-track"><div class="wr-inf-fill" style="width:${pct}%;background:${infCol};"></div></div>
+                <div style="margin-top:8px;">${ctaHtml}</div>
             </div>`;
         });
     }
 
-    const overlay = document.createElement('div');
-    overlay.id = 'wr-modal-overlay';
-    overlay.className = 'wr-modal-overlay';
-    overlay.innerHTML = `
-        <div class="wr-modal">
-            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px;">
-                <div>
-                    <div style="font-size:0.58rem;letter-spacing:.15em;color:rgba(0,200,200,0.55);text-transform:uppercase;font-weight:700;">REGIONE ITALIANA</div>
-                    <div style="font-size:1.1rem;font-weight:900;color:#00cccc;">${regionName}</div>
-                    <div style="font-size:0.66rem;color:#4b5563;margin-top:3px;">
-                        Governatore: <span style="font-weight:700;color:${govCompany ? '#d4af37' : '#374151'}">${govCompany || 'Nessuno'}</span>
-                        · Tassa regionale: <span style="font-weight:700;color:#fff;">${taxReg}%</span>
-                        ${amGov ? `<span style="color:#d4af37;font-size:0.58rem;"> — TU SEI GOVERNATORE</span>` : ''}
-                    </div>
+    inner.innerHTML = `
+        <div style="animation:wrFadeIn .2s;">
+            <div style="margin-bottom:12px;">
+                <div style="font-size:9px;letter-spacing:.14em;color:rgba(0,200,200,0.5);text-transform:uppercase;font-weight:800;margin-bottom:2px;">REGIONE</div>
+                <div style="font-size:16px;font-weight:900;color:#00cccc;">${regionName}</div>
+                <div style="font-size:9px;color:#4b5563;margin-top:2px;">
+                    Gov: <span style="color:${govCompany ? '#d4af37' : '#374151'};font-weight:700;">${govCompany || 'Nessuno'}</span>
+                    · Tassa: <span style="color:#9ca3af;font-weight:700;">${taxReg}%</span>
+                    ${amGov ? `<span style="color:#d4af37;"> · 👑 SEI GOVERNATORE</span>` : ''}
                 </div>
-                <button onclick="document.getElementById('wr-modal-overlay').remove()"
-                    style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);
-                           color:#6b7280;width:28px;height:28px;border-radius:50%;font-size:14px;
-                           cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;">✕</button>
             </div>
-
-            <div style="font-size:0.64rem;color:#374151;padding:6px 10px;background:rgba(0,200,200,0.04);
-                        border:1px solid rgba(0,200,200,0.1);border-radius:7px;margin-bottom:12px;line-height:1.5;">
-                ${provs.length} province · >50% controllo = Governatore + ${taxReg}% su ogni corsa regionale
+            <div style="font-size:9px;color:#374151;background:rgba(0,200,200,0.04);border:1px solid rgba(0,200,200,0.08);
+                border-radius:6px;padding:6px 10px;margin-bottom:10px;line-height:1.5;">
+                ${provs.length} province · >50% = diventi Governatore + ${taxReg}% su corse regionali
             </div>
-
             ${provHtml}
-        </div>
-    `;
-
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
+        </div>`;
 }
 
-// ─── ACQUIRE ────────────────────────────────────────────────────────────────
-window._wrAcquire = async function(provinceId) {
-    const input = document.getElementById(`wr-offer-${provinceId}`);
+// ─── ACQUIRE ─────────────────────────────────────────────────────────────────
+window._wrAcquire = async function (provinceId) {
+    const input = document.getElementById(`wri-${provinceId}`);
     const offer = parseInt(input?.value, 10);
-    if (!offer || offer <= 0) { showNotification('Inserisci un\'offerta valida', 'error'); return; }
+    if (!offer || offer <= 0) { showNotification("Inserisci un'offerta valida", 'error'); return; }
     if (gameState.cash < offer) { showNotification('Fondi insufficienti', 'error'); return; }
     try {
         const result = await ServerState.acquireProvince(provinceId, offer);
         if (result?.success) {
-            document.getElementById('wr-modal-overlay')?.remove();
             showBigEvent('🏴', `${result.province_name} Conquistata!`, `Investimento: €${offer.toLocaleString()}`);
             _wrCache = null;
             renderTabWarRoom();
         }
-    } catch(e) {
+    } catch (e) {
         showNotification('Errore OPA: ' + (e.message || e), 'error');
     }
 };
 
-// Override dispatcher.js version
+// Override dispatcher's renderTabProvinces
+window.renderTabWarRoom   = renderTabWarRoom;
 window.renderTabProvinces = renderTabWarRoom;
