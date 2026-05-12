@@ -459,7 +459,7 @@ function _srmSectionContent(v, meta) {
     if (section === 'riepilogo') {
         const selectedOpts = [..._srmState.selectedOpts].map(oid => _SRM_OPTIONS.find(o => o.id === oid)).filter(Boolean);
         const total = _srmTotalPrice();
-        const canAfford = (gameState?.capital || 0) >= total;
+        const canAfford = (gameState?.cash || 0) >= total;
 
         const optsHtml = selectedOpts.length > 0
             ? selectedOpts.map(o => `<div class="srm-recap-row">
@@ -480,7 +480,7 @@ function _srmSectionContent(v, meta) {
                 <span style="font-size:20px;font-weight:900;color:#00d4ff;font-family:monospace;">€ ${total.toLocaleString('it-IT')}</span>
             </div>
             ${!canAfford ? `<div style="font-size:10px;color:#ef4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:7px;padding:8px 10px;margin-top:10px;">
-                ⚠ Fondi insufficienti. Hai € ${(gameState?.capital||0).toLocaleString('it-IT')}, mancano € ${(total-(gameState?.capital||0)).toLocaleString('it-IT')}.
+                ⚠ Fondi insufficienti. Hai € ${(gameState?.cash||0).toLocaleString('it-IT')}, mancano € ${(total-(gameState?.cash||0)).toLocaleString('it-IT')}.
             </div>` : ''}
         </div>
         <button class="srm-buy-btn" id="srm-buy-btn" onclick="window._srmPurchase()" ${!canAfford ? 'disabled' : ''}>
@@ -611,7 +611,7 @@ window._srmPurchase = async function() {
     const total = _srmTotalPrice();
     const opts  = [..._srmState.selectedOpts];
 
-    if ((gameState.capital || 0) < total) {
+    if ((gameState.cash || 0) < total) {
         showNotification(`Fondi insufficienti. Servono € ${total.toLocaleString('it-IT')}`, 'error');
         return;
     }
