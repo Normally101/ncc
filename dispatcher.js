@@ -1075,7 +1075,7 @@ window.switchTab = function(tab) {
         case 'store':    title.innerText = "💎 Executive Club"; _safeRender(renderTabPremiumStore); break;
         case 'market':   title.innerText = "🚗 Mercato Auto"; _safeRender(renderTabMarket); break;
         case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;
-        case 'provinces':  title.innerText = "🗺️ War Room"; _safeRender(renderTabProvinces); break;
+        case 'provinces':  title.innerText = "🗺️ War Room"; _safeRender(window.renderTabWarRoom || renderTabProvinces); break;
         case 'showroom':   title.innerText = "🚘 Showroom"; _safeRender(renderTabShowroom); break;
         case 'realestate': title.innerText = "🏛 Real Estate"; _safeRender(renderTabRealEstate); break;
     }
