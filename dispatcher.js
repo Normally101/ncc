@@ -304,6 +304,30 @@ function initMap() {
             paint: { 'line-color': ['get', 'color'], 'line-width': 2.5, 'line-opacity': 0.90 }
         });
 
+        // ─── Italian Region Borders (cyan neon overlay) ────────────
+        map.addSource('italy-reg-src', {
+            type: 'vector',
+            url: 'mapbox://mapbox.mapbox-streets-v8'
+        });
+        // Glow halo
+        map.addLayer({
+            id: 'italy-reg-glow',
+            type: 'line',
+            source: 'italy-reg-src',
+            'source-layer': 'admin',
+            filter: ['all', ['==', 'admin_level', 4], ['==', 'maritime', 'false']],
+            paint: { 'line-color': '#00cccc', 'line-width': 6, 'line-opacity': 0.10, 'line-blur': 5 }
+        });
+        // Core border
+        map.addLayer({
+            id: 'italy-reg-line',
+            type: 'line',
+            source: 'italy-reg-src',
+            'source-layer': 'admin',
+            filter: ['all', ['==', 'admin_level', 4], ['==', 'maritime', 'false']],
+            paint: { 'line-color': '#00cccc', 'line-width': 1.0, 'line-opacity': 0.55, 'line-dasharray': [3, 3] }
+        });
+
         map.on('zoom', _updatePOIVisibility);
 
         _mapReady = true;

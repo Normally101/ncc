@@ -161,20 +161,18 @@ async function renderTabWarRoom() {
         </div>`;
 
     let provinces = [], regions = [], influence = {};
+    let _dataUnavailable = false;
     try {
         const snap = await window.ServerState?.getTerritorySnapshot();
-        if (!snap) throw new Error('snapshot nullo');
-        provinces = snap.provinces || [];
-        regions   = snap.regions   || [];
-        influence = snap.influence || {};
+        if (snap) {
+            provinces = snap.provinces || [];
+            regions   = snap.regions   || [];
+            influence = snap.influence || {};
+        } else {
+            _dataUnavailable = true;
+        }
     } catch(e) {
-        container.innerHTML = `
-            <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:14px;font-size:0.78rem;color:#ef4444;margin-top:8px;">
-                ⚠ Mappa non disponibile offline<br>
-                <span style="color:#4b5563;font-size:0.65rem;">${e.message}</span>
-            </div>
-            <div style="margin-top:12px;font-size:0.7rem;color:#4b5563;text-align:center;">Le Province War sono accessibili solo con connessione attiva.</div>`;
-        return;
+        _dataUnavailable = true;
     }
 
     const regById = {};
@@ -231,6 +229,11 @@ async function renderTabWarRoom() {
             <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;background:rgba(239,68,68,0.38);border-radius:2px;"></div><span style="color:#6b7280;">Nemico</span></div>
             <div style="display:flex;align-items:center;gap:4px;"><div style="width:10px;height:10px;background:rgba(18,30,55,0.9);border:1px solid rgba(0,200,200,0.15);border-radius:2px;"></div><span style="color:#6b7280;">Neutrale</span></div>
         </div>
+
+        <!-- Data warning (shown only when Supabase unavailable) -->
+        ${_dataUnavailable ? `<div style="background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.18);border-radius:7px;padding:7px 10px;font-size:0.62rem;color:#92400e;margin-bottom:8px;">
+            ⚠ Dati territorio non disponibili — mappa in sola lettura
+        </div>` : ''}
 
         <!-- SVG Map -->
         <div id="wr-map-wrap">${_wrBuildSVG(svgOwn)}</div>
