@@ -1389,8 +1389,8 @@ function refillVehicle(carId) {
 
     let outReason = null;
 
-    // — Gasolio — (deposito aziendale è opzionale; l'auto si ferma solo se il suo serbatoio è sotto il 5%)
-    if (car.fuel < 99) {
+    // — Gasolio — (solo veicoli non-EV; gli EV non consumano carburante)
+    if (!_isElectric(car) && car.fuel < 99) {
         const litresNeeded = (100 - car.fuel) * 0.5; // 1% serbatoio ≈ 0.5 L
         if ((gameState.fuelTank || 0) >= litresNeeded) {
             gameState.fuelTank -= litresNeeded;
@@ -2311,6 +2311,13 @@ function processDailyRoutines() {
 
     if (hasInvestment('inv_garage_hq')) expenses *= 0.90;
 
+    // Pension fund: after day 60, passive income (must be before tax calc so it's taxed + credited)
+    if (hasInvestment('inv_pension_fund') && gameState.day >= 60) {
+        const pensionIncome = 1200;
+        income += pensionIncome;
+        if (gameState.day === 60) logToMap('🏦 Fondo Pensione attivo: +€1.200/g di rendita!');
+    }
+
     let baseTax = gameState.staff.some(s => s.id === 'admin') ? 0.24 : 0.42;
     if ((gameState.activeLobbyLaws || []).includes('law_tax_cut')) baseTax = Math.min(baseTax, 0.28);
     if (hasInvestment('inv_tower')) baseTax *= 0.5;
@@ -2487,13 +2494,6 @@ function processDailyRoutines() {
             }
             return true;
         });
-    }
-
-    // Pension fund: after day 60, passive income
-    if (hasInvestment('inv_pension_fund') && gameState.day >= 60) {
-        const pensionIncome = 1200;
-        income += pensionIncome;
-        if (gameState.day === 60) logToMap('🏦 Fondo Pensione attivo: +€1.200/g di rendita!');
     }
 
     // Loyalty bonuses: check drivers for 30/60/90-day milestones
@@ -3047,8 +3047,15 @@ function assignRideToDriver(rideId, driverId) {
         if (ride.vehicleRequired) {
             const assignedCar = gameState.fleet.find(c => c.id === driver.assignedCarId);
             if (!assignedCar || assignedCar.vehicleClass !== ride.vehicleRequired) {
-                const vcNames = { mercedes_e:'Mercedes E-Class Sedan', mercedes_v:'Mercedes V-Class Minivan',
-                    mercedes_sprinter:'Mercedes Sprinter', mercedes_s:'Mercedes S-Class Presidential', water_taxi:'Water Taxi' };
+                const vcNames = {
+                    stellar_e_exec:'Stellar E-Executive', stellar_v_carr:'Stellar V-Carrier',
+                    stellar_s_imp:'Stellar S-Imperial',   stellar_q_exec:'Stellar Q-Executive',
+                    stellar_q_imp:'Stellar Q-Imperial',   stellar_q_carr:'Stellar Q-Carrier',
+                    volt_s_apex:'Volt S-Apex',            volt_s_hyper:'Volt S-Hyper',
+                    volt_3_urban:'Volt 3-Urban',          volt_y_cross:'Volt Y-Cross',
+                    majestic_spirit:'Majestic Spirit',    majestic_e_specter:'Majestic E-Specter',
+                    water_taxi:'Water Taxi'
+                };
                 if (typeof showNotification === 'function')
                     showNotification(`❌ Veicolo errato! Questa tratta richiede: ${vcNames[ride.vehicleRequired] || ride.vehicleRequired}`, 'error');
                 return;
@@ -3059,9 +3066,10 @@ function assignRideToDriver(rideId, driverId) {
         driver.queue.push(ride);
 
         // Fetch real road geometry for smooth map animation (async, non-blocking)
+        // resolveCoords returns [lat,lng]; _fetchRoadGeom (Mapbox) needs [lng,lat]
         if (typeof window._fetchRoadGeom === 'function') {
-            const from = ride.originCoords || (ride.fromPoi ? [ride.fromPoi.lng, ride.fromPoi.lat] : null);
-            const to   = ride.destCoords   || (ride.toPoi   ? [ride.toPoi.lng,   ride.toPoi.lat]   : null);
+            const from = ride.originCoords ? [ride.originCoords[1], ride.originCoords[0]] : (ride.fromPoi ? [ride.fromPoi.lng, ride.fromPoi.lat] : null);
+            const to   = ride.destCoords   ? [ride.destCoords[1],   ride.destCoords[0]]   : (ride.toPoi   ? [ride.toPoi.lng,   ride.toPoi.lat]   : null);
             if (from && to) window._fetchRoadGeom(from, to).then(geom => { if (geom) ride.roadGeom = geom; });
         }
 
@@ -3233,23 +3241,27 @@ function startNextRide(driver) {
         if (typeof showNotification === 'function') showNotification(`⚠️ ${car.name}: pressione gomme critica!`, 'error');
     }
 
-    // Fuel consumption: intercity uses more fuel; low tire pressure wastes more fuel
-    const fuelCost = { standard:12, business:16, vip:20, ultra:25, group:18 };
-    const baseFuel = fuelCost[ride.tier] || 14;
-    const tireFuelMult = car.tirePressure < 50 ? 1.25 : car.tirePressure < 70 ? 1.10 : 1.0;
-    // Serbatoio Maggiorato: -55% consumo
-    const serbatoioMult = (car.upgrades || []).includes('serbatoio_ext') ? 0.45 : 1.0;
-    car.fuel = Math.max(0, car.fuel - (ride.fromPoi.region !== ride.toPoi.region ? baseFuel * 1.5 : baseFuel) * tireFuelMult * serbatoioMult);
+    // Fuel consumption: intercity uses more fuel; EVs skip gasoline logic entirely
+    if (!_isElectric(car)) {
+        const fuelCost = { standard:12, business:16, vip:20, ultra:25, group:18 };
+        const baseFuel = fuelCost[ride.tier] || 14;
+        const tireFuelMult = car.tirePressure < 50 ? 1.25 : car.tirePressure < 70 ? 1.10 : 1.0;
+        // Serbatoio Maggiorato: -55% consumo
+        const serbatoioMult = (car.upgrades || []).includes('serbatoio_ext') ? 0.45 : 1.0;
+        car.fuel = Math.max(0, car.fuel - (ride.fromPoi.region !== ride.toPoi.region ? baseFuel * 1.5 : baseFuel) * tireFuelMult * serbatoioMult);
 
-    // Engine health penalty: <30% → double fuel consumption on next ride
-    if ((car.engineHealth || 100) === 0) {
-        // Car should already be stopped; safety guard
-        car.outOfService = 'engine';
-        return;
-    }
-    const _ehMult = (car.engineHealth || 100) < 30 ? 2.0 : 1.0;
-    if (_ehMult > 1) {
-        car.fuel = Math.max(0, car.fuel - (baseFuel * (_ehMult - 1) * serbatoioMult));
+        // Engine health penalty: <30% → double fuel consumption on next ride
+        if ((car.engineHealth || 100) === 0) {
+            car.outOfService = 'engine';
+            return;
+        }
+        const _ehMult = (car.engineHealth || 100) < 30 ? 2.0 : 1.0;
+        if (_ehMult > 1) {
+            car.fuel = Math.max(0, car.fuel - (baseFuel * (_ehMult - 1) * serbatoioMult));
+        }
+    } else {
+        // EV: engine seized check still applies
+        if ((car.engineHealth || 100) === 0) { car.outOfService = 'engine'; return; }
     }
 
     // Mileage tracking
@@ -3393,9 +3405,15 @@ function completeRide(ride, _deferPay = false) {
         isDelayed   = true;
         delayHours  = 1; // 1 extra hour billed
         const car3  = gameState.fleet.find(c => c.id === driver?.assignedCarId);
-        const vClass = car3?.vehicleClass || 'mercedes_e';
-        const extraRates = { mercedes_e:105, mercedes_v:125, mercedes_sprinter:150, water_taxi:221 };
-        const extraRate = extraRates[vClass] || extraRates.mercedes_e;
+        const vClass = car3?.vehicleClass || 'stellar_e_exec';
+        const extraRates = {
+            stellar_e_exec:105, stellar_q_exec:105, volt_3_urban:105,
+            stellar_v_carr:125, stellar_q_carr:125, volt_y_cross:125,
+            stellar_s_imp:195,  stellar_q_imp:195,  volt_s_apex:195,
+            volt_s_hyper:250,   majestic_spirit:300, majestic_e_specter:300,
+            water_taxi:221
+        };
+        const extraRate = extraRates[vClass] || 105;
         delayBonus  = Math.floor(extraRate * 1.25); // selling price version
         if (ride.duration !== undefined) ride.duration += 60; // car blocked 1 more hour
         logToMap(`⏱️ Ritardo cliente: +1h fatturata a ${driver?.name || 'autista'} (corsa ${ride.toPoi?.name || ''}). Bonus +€${delayBonus}`);
@@ -3497,8 +3515,8 @@ function completeRide(ride, _deferPay = false) {
         const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
     }
 
-    // F2P Driver Coins drop: 5% chance on Presidential ultra ride
-    if (ride.tier === 'ultra' && ride.vehicleRequired === 'mercedes_s' && Math.random() < 0.05) {
+    // F2P Driver Coins drop: 5% chance on ultra-tier ride
+    if (ride.tier === 'ultra' && Math.random() < 0.05) {
         const drop = 1 + Math.floor(Math.random() * 3);
         gameState.driverCoins = (gameState.driverCoins || 0) + drop;
         logToMap(`🪙 Driver Coins: +${drop} DC da transfer Presidential!`);

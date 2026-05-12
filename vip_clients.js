@@ -105,8 +105,9 @@ function _vipFleetCar(vcSet, minCond, requireNonEV, requireEV) {
         if (c.outOfService || c.isSeized) return false;
         if (!vcSet.includes(c.vehicleClass)) return false;
         if ((c.condition || 0) < minCond) return false;
-        if (requireNonEV && c.fuel === 'electric') return false;
-        if (requireEV && c.fuel !== 'electric') return false;
+        const isEV = typeof _isElectric === 'function' ? _isElectric(c) : false;
+        if (requireNonEV && isEV) return false;
+        if (requireEV && !isEV) return false;
         return true;
     });
 }

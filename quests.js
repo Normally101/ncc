@@ -100,15 +100,15 @@ const QUEST_DB = [
 
   /* ═══════════════ CAPITOLO 2 — L\'AGENZIA ═══════════════ */
   { id:'q16', ch:2, icon:'🚐', title:'Minivan Aziendale',
-    desc:'Acquista un Mercedes V-Class per il trasporto gruppi.',
+    desc:'Acquista uno Stellar V-Carrier per il trasporto gruppi.',
     prereqs:['q15'],
-    check: gs => ({ cur: gs.fleet.some(c=>c.vehicleClass==='mercedes_v')?1:0, tgt: 1 }),
+    check: gs => ({ cur: gs.fleet.some(c=>c.vehicleClass==='stellar_v_carr'||c.vehicleClass==='stellar_q_carr')?1:0, tgt: 1 }),
     rewards:{ cash:20000, tc:8, rep:0.2, desc:'+€20.000 · +8 DC · +0.2★' } },
 
-  { id:'q17', ch:2, icon:'🚚', title:'Sprinter in Flotta',
-    desc:'Acquista un Mercedes Sprinter per i transfer di gruppo.',
+  { id:'q17', ch:2, icon:'🚚', title:'Carrier in Flotta',
+    desc:'Acquista un secondo Carrier (V o Q) per i transfer di gruppo.',
     prereqs:['q16'],
-    check: gs => ({ cur: gs.fleet.some(c=>c.vehicleClass==='mercedes_sprinter')?1:0, tgt: 1 }),
+    check: gs => ({ cur: gs.fleet.filter(c=>c.vehicleClass==='stellar_v_carr'||c.vehicleClass==='stellar_q_carr').length, tgt: 2 }),
     rewards:{ cash:25000, tc:10, rep:0.2, desc:'+€25.000 · +10 DC · +0.2★' } },
 
   { id:'q18', ch:2, icon:'🛢️', title:'Deposito Carburante',
@@ -197,9 +197,9 @@ const QUEST_DB = [
     rewards:{ cash:50000, tc:15, rep:0.2, desc:'+€50.000 · +15 DC · +0.2★' } },
 
   { id:'q32', ch:3, icon:'👑', title:'Limousine Presidenziale',
-    desc:'Acquista la Mercedes S-Class Presidential.',
+    desc:'Acquista la Stellar S-Imperial o un veicolo Presidential.',
     prereqs:['q25','q31'],
-    check: gs => ({ cur: gs.fleet.some(c=>c.vehicleClass==='mercedes_s')?1:0, tgt: 1 }),
+    check: gs => ({ cur: gs.fleet.some(c=>['stellar_s_imp','stellar_q_imp','volt_s_apex','majestic_spirit','majestic_e_specter'].includes(c.vehicleClass))?1:0, tgt: 1 }),
     rewards:{ cash:60000, tc:20, rep:0.3, desc:'+€60.000 · +20 DC · +0.3★' } },
 
   { id:'q33', ch:3, icon:'💎', title:'Cinque Ultra',

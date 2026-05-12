@@ -191,7 +191,7 @@ async function _upsertLeaderboard(saveData) {
     const payload = {
         user_id:      userId,
         company_name: saveData.companyName || 'Chauffeur Empire',
-        owner_name:   window.currentUser.email || '',
+        owner_name:   saveData.companyName || saveData.ceoName || window.currentUser.email || '',
         liquid_assets: Math.floor(saveData.cash || 0),
         reputation:   saveData.reputation || 0,
         fleet_count:  (saveData.fleet || []).length,

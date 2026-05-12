@@ -529,7 +529,7 @@ function _showAuthOverlay() {
                     <div class="lp-footer-monogram" style="background-image:url(assets/ce-favicon.png);background-size:cover;background-position:center">CE</div>
                     <div>
                         <div class="lp-footer-name">Chauffeur Empire</div>
-                        <div class="lp-footer-copy">© 2026 — A product of OV Agency</div>
+                        <div class="lp-footer-copy">© 2026 — Chauffeur Empire</div>
                     </div>
                 </div>
                 <div class="lp-footer-links">

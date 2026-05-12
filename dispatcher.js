@@ -505,8 +505,9 @@ function _trailGeom(roadGeom, progress) {
 }
 
 // ─── VISUAL LOOP (Mapbox vehicle markers + trail scia) ────────────
+let _visualLoopRafId = null;
 function visualLoop() {
-    requestAnimationFrame(visualLoop);
+    _visualLoopRafId = requestAnimationFrame(visualLoop);
     if (!map || !_mapReady || !gameState || gameState.paused) return;
     const now = Date.now();
     const trailFeatures = [];
@@ -652,6 +653,8 @@ function visualLoop() {
     if (!visualLoop._frame) visualLoop._frame = 0;
     if (++visualLoop._frame % 60 === 0) _updateActiveRouteLines();
 }
+// Cancel any existing loop before starting (prevents duplicate loops on hot-reload)
+if (_visualLoopRafId) cancelAnimationFrame(_visualLoopRafId);
 visualLoop();
 
 // ─── GARAGE SVG — ISPEZIONE VEICOLO ─────────────────────────────
