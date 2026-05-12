@@ -1707,66 +1707,22 @@ function renderTabFleet() {
         html += `</div>`;
     }
 
-    html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Concessionario (Nuovo & Leasing)</h3><div class="space-y-2">`;
+    html += `</div>
+    <div onclick="window.hubNavigate('showroom')"
+         style="margin:12px 0;padding:14px 16px;border-radius:10px;
+                border:1px solid rgba(0,212,255,0.2);background:rgba(0,212,255,0.05);
+                cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .18s;"
+         onmouseover="this.style.borderColor='rgba(0,212,255,0.45)'"
+         onmouseout="this.style.borderColor='rgba(0,212,255,0.2)'">
+        <div>
+            <div style="font-size:11px;font-weight:800;color:#00d4ff;">🚘 Acquisto Veicoli</div>
+            <div style="font-size:10px;color:#4b5563;margin-top:2px;">Vai allo Showroom per configurare e acquistare nuovi veicoli</div>
+        </div>
+        <div style="font-size:18px;color:rgba(0,212,255,0.4);">→</div>
+    </div>`;
+
     const _totalRides = gameState.questStats?.totalRides || 0;
     const _hasEVHub   = gameState.hasEVHub || false;
-    const _vcLabel = vc => ({
-        stellar_e_exec:'Berlina Business',   stellar_v_carr:'Van Premium',
-        stellar_s_imp:'Ammiraglia',          stellar_g_over:'SUV Blindato',
-        stellar_q_exec:'Berlina EV ⚡',      stellar_q_imp:'Ammiraglia EV ⚡',
-        stellar_q_carr:'Van EV ⚡',
-        volt_s_apex:'Gran Turismo EV ⚡',    volt_s_hyper:'Hyper EV ⚡',
-        volt_3_urban:'City EV ⚡',           volt_y_cross:'SUV EV ⚡',
-        majestic_spirit:'Ultra-Luxury',      majestic_e_specter:'Ultra-Luxury EV ⚡',
-        mercedes_e:'Sedan', mercedes_v:'Minivan', mercedes_s:'Presidential',
-        mercedes_sprinter:'Sprinter', water_taxi:'Acqueo',
-    }[vc] || vc || '');
-    const _carLockReason = c => {
-        if ((c.rideGate||0) > _totalRides) return `🔒 Richiede ${c.rideGate} corse (hai ${_totalRides})`;
-        if (c.fuel === 'electric' && !_hasEVHub) return '⚡ Richiede Hub di Ricarica Corporate';
-        return null;
-    };
-
-    NEW_CARS.forEach(c => {
-        const vcLabel = _vcLabel(c.vehicleClass);
-        const cat = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : []).find(x => x.vehicleClass === c.vehicleClass);
-        const thumb = cat?.img ? `<img src="${cat.img}" class="w-10 h-10 rounded object-cover mr-2 shrink-0" onerror="this.style.display='none'" style="${_carLockReason(c)?'filter:grayscale(1);opacity:0.5':''}">` : '';
-        const lockReason = _carLockReason(c);
-        html += `
-        <div class="hud-card flex items-center${lockReason ? ' opacity-60' : ''}">
-            ${thumb}
-            <div class="flex-1 min-w-0">
-                <div class="text-xs font-bold ${lockReason ? 'text-gray-500' : 'text-white'}">${c.name}</div>
-                <div class="text-[9px] text-gray-500 uppercase">${c.tier} · <span class="text-blue-400">${vcLabel}</span></div>
-                <div class="text-[9px] ${lockReason ? 'text-gray-600' : 'text-gold'}">€${(c.price||0).toLocaleString()}</div>
-                ${lockReason ? `<div class="text-[9px] text-red-400 mt-0.5">${lockReason}</div>` : ''}
-            </div>
-            <div class="flex gap-1 ml-2">
-                ${lockReason
-                    ? `<span class="text-[9px] text-gray-600 font-bold px-2">🔒</span>`
-                    : `<button onclick="openCarConfigurator('${c.id}','new')" class="btn-gold !text-[8px] !py-1">🔧 Configura</button>
-                       <button onclick="openLeasingModal('${c.vehicleClass||c.tier}')" class="btn-gold !bg-blue-600 !text-white !text-[8px] !py-1">Lease</button>`
-                }
-            </div>
-        </div>`;
-    });
-
-    html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">Mercato dell'Usato</h3><div class="space-y-2">`;
-    USED_CARS.forEach(c => {
-        const lockReason = _carLockReason(c);
-        html += `
-        <div class="hud-card flex justify-between items-center${lockReason ? ' opacity-60' : ''}">
-            <div>
-                <div class="text-xs font-bold ${lockReason ? 'text-gray-500' : 'text-white'}">${c.name}</div>
-                <div class="text-[9px] text-red-400">Salute: ${c.condition}%</div>
-                ${lockReason ? `<div class="text-[9px] text-red-400 mt-0.5">${lockReason}</div>` : ''}
-            </div>
-            ${lockReason
-                ? `<span class="text-[9px] text-gray-600 font-bold px-2">🔒</span>`
-                : `<button onclick="openCarConfigurator('${c.id}','used')" class="btn-gold !bg-gray-800 !text-[8px]">🔧 Configura</button>`
-            }
-        </div>`;
-    });
 
     // Prototype / exclusive vehicles
     if (typeof PROTOTYPE_CARS !== 'undefined' && PROTOTYPE_CARS.length > 0) {
