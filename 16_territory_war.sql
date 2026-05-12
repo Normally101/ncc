@@ -586,7 +586,7 @@ DECLARE
     v_regions   JSONB;
     v_influence JSONB;
 BEGIN
-    SELECT jsonb_agg(row_to_json(p.*)) INTO v_provinces FROM provinces p ORDER BY current_value DESC;
+    SELECT jsonb_agg(row_to_json(p.*) ORDER BY p.current_value DESC) INTO v_provinces FROM provinces p;
     SELECT jsonb_agg(row_to_json(r.*)) INTO v_regions   FROM regions   r;
 
     SELECT jsonb_object_agg(province_id, influence)
