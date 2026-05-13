@@ -471,8 +471,8 @@ const ServerState = (() => {
     async function buyVipContact(costInCoins) {
         return _rpc('rpc_buy_vip_contact', { p_cost_in_coins: costInCoins });
     }
-    async function addDriverCoins(amount) {
-        return _rpc('rpc_add_driver_coins', { p_amount: amount });
+    async function addDriverCoins(amount, itemId = 'sim_purchase') {
+        return _rpc('rpc_add_driver_coins', { p_amount: amount, p_item_id: itemId });
     }
     async function spendDriverCoins(itemId, amount) {
         return _rpc('rpc_ec_spend', { p_item_id: itemId, p_amount: amount });
