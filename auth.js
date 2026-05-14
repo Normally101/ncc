@@ -673,7 +673,7 @@ window._authLogin = async function() {
         const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
         if (error) { _setAuthError(_translateAuthError(error.message)); _setAuthLoading(false); return; }
         await _onAuthSuccess(data.user);
-    } catch(e) { _setAuthError('Errore di connessione. Riprova.'); _setAuthLoading(false); }
+    } catch(e) { _setAuthError(`Errore di connessione. Riprova. Se il problema persiste, scrivi a ${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}`); _setAuthLoading(false); }
 };
 
 window._authSignup = async function() {
@@ -694,11 +694,12 @@ window._authSignup = async function() {
             _setAuthLoading(false); return;
         }
         await _onAuthSuccess(data.user);
-    } catch(e) { _setAuthError('Errore di connessione. Riprova.'); _setAuthLoading(false); }
+    } catch(e) { _setAuthError(`Errore di connessione. Riprova. Se il problema persiste, scrivi a ${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}`); _setAuthLoading(false); }
 };
 
 function _translateAuthError(msg) {
-    if (!msg) return 'Errore sconosciuto.';
+    const _supportEmail = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com';
+    if (!msg) return `Errore sconosciuto. Se il problema persiste, scrivi a ${_supportEmail}`;
     const m = msg.toLowerCase();
     if (m.includes('invalid login') || m.includes('invalid credentials')) return 'Credenziali errate. Controlla email e password.';
     if (m.includes('email not confirmed')) return 'Email non confermata. Controlla la tua casella.';

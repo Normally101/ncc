@@ -5,6 +5,12 @@
    Carica DOPO dispatcher.js nel tag <script> di index.html
    ============================================================ */
 
+// ── HELPER ERRORI ──────────────────────────────────────────────────────────────
+function _p2pErrMsg(prefix, err) {
+    const se = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com';
+    return `${prefix}: ${err.message} — Se il problema persiste scrivi a ${se}`;
+}
+
 // ── STATO LOCALE CACHE ─────────────────────────────────────────────────────────
 window._p2pMarket = {
     listings:      [],   // market_listings (refresh ogni 30s + Realtime)
@@ -73,7 +79,7 @@ window.listCarForSale = async function(carId, askPrice) {
         await saveGame();
         if (typeof updateUI === 'function') updateUI();
         if (typeof renderTabFleet === 'function') renderTabFleet();
-        showNotification(`Errore pubblicazione: ${error.message}`, 'error');
+        showNotification(_p2pErrMsg('Errore pubblicazione', error), 'error');
         return;
     }
 
@@ -94,7 +100,7 @@ window.cancelP2PListing = async function(listingId) {
         v_listing_id: listingId,
     });
 
-    if (error) { showNotification(`Errore ritiro: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore ritiro', error), 'error'); return; }
 
     // L'RPC restituisce lo snapshot auto: reinseriscilo in flotta
     const carSnapshot = data;
@@ -126,7 +132,7 @@ window.buyP2PCar = async function(listingId) {
         v_listing_id: listingId,
     });
 
-    if (error || !data) { showNotification(`Acquisto fallito: ${error?.message || 'risposta vuota'}`, 'error'); return; }
+    if (error || !data) { showNotification(_p2pErrMsg('Acquisto fallito', error || {message: 'risposta vuota'}), 'error'); return; }
 
     // Aggiorna gameState locale con cash aggiornato e nuova auto
     // ServerState (Realtime) aggiorna gameState.cash dal server; evitiamo doppia deduzione
@@ -152,7 +158,7 @@ window.createHolding = async function(name, description) {
     const { data, error } = await _sb().rpc('rpc_create_holding', {
         v_name: name, v_description: description || '',
     });
-    if (error) { showNotification(`Errore creazione: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore creazione holding', error), 'error'); return; }
     showNotification(`🏢 Holding "${data.name}" creata!`, 'success');
     await p2pFetchHoldings();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -161,7 +167,7 @@ window.createHolding = async function(name, description) {
 window.joinHolding = async function(holdingId) {
     if (!_uid()) return;
     const { data, error } = await _sb().rpc('rpc_join_holding', { v_holding_id: holdingId });
-    if (error) { showNotification(`Errore ingresso: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore ingresso holding', error), 'error'); return; }
     showNotification('✅ Sei entrato nella holding!', 'success');
     await p2pFetchHoldings();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -170,7 +176,7 @@ window.joinHolding = async function(holdingId) {
 window.leaveHolding = async function(holdingId) {
     if (!_uid()) return;
     const { data, error } = await _sb().rpc('rpc_leave_holding', { v_holding_id: holdingId });
-    if (error) { showNotification(`Errore uscita: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore uscita holding', error), 'error'); return; }
     showNotification('Hai lasciato la holding.', 'info');
     await p2pFetchHoldings();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -182,7 +188,7 @@ window.contributeHoldingTreasury = async function(holdingId, amount) {
     const { data, error } = await _sb().rpc('rpc_contribute_holding_treasury', {
         v_holding_id: holdingId, v_amount: roundedAmount,
     });
-    if (error) { showNotification(`Errore contributo: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore contributo holding', error), 'error'); return; }
     if (!window.ServerState?.isReady()) gameState.cash -= roundedAmount;
     await saveGame();
 
@@ -227,7 +233,7 @@ window.listCompanyIPO = async function() {
         v_shares_total: 1000,
     });
 
-    if (error || !data) { showNotification(`IPO fallita: ${error?.message || 'risposta vuota'}`, 'error'); return; }
+    if (error || !data) { showNotification(_p2pErrMsg('IPO fallita', error || {message: 'risposta vuota'}), 'error'); return; }
 
     // Aggiorna gameState locale
     if (!window.ServerState?.isReady()) gameState.cash -= 50000;
@@ -261,7 +267,7 @@ window.buyCompanyShares = async function(listingId, qty) {
     const { data, error } = await _sb().rpc('rpc_buy_company_shares', {
         v_listing_id: listingId, v_qty: qty,
     });
-    if (error || !data) { showNotification(`Acquisto azioni fallito: ${error?.message || 'risposta vuota'}`, 'error'); return; }
+    if (error || !data) { showNotification(_p2pErrMsg('Acquisto azioni fallito', error || {message: 'risposta vuota'}), 'error'); return; }
 
     if (!window.ServerState?.isReady()) gameState.cash -= total;
     await saveGame();
@@ -276,7 +282,7 @@ window.sellCompanyShares = async function(listingId, qty) {
     const { data, error } = await _sb().rpc('rpc_sell_company_shares', {
         v_listing_id: listingId, v_qty: qty,
     });
-    if (error || !data) { showNotification(`Vendita azioni fallita: ${error?.message || 'risposta vuota'}`, 'error'); return; }
+    if (error || !data) { showNotification(_p2pErrMsg('Vendita azioni fallita', error || {message: 'risposta vuota'}), 'error'); return; }
 
     if (!window.ServerState?.isReady()) gameState.cash += data.total;
     await saveGame();
@@ -671,7 +677,7 @@ window.renderP2PHoldingsSection = function() {
                     class="btn-gold !text-[8px]">Contribuisci</button>
                 <button onclick="leaveHolding('${myH.id}')"
                     class="btn-gold !bg-red-900/30 !text-red-300 !text-[8px]">
-                    ${myRole === 'leader' ? 'Scioglie' : 'Esci'}
+                    ${myRole === 'leader' ? 'Sciogli' : 'Esci'}
                 </button>
             </div>
         </div>`;
@@ -719,7 +725,7 @@ window.createConsorzio = async function(name, description) {
     const { data, error } = await _sb().rpc('rpc_create_consorzio', {
         v_name: name, v_description: description || '',
     });
-    if (error) { showNotification(`Errore creazione: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore creazione consorzio', error), 'error'); return; }
     showNotification(`🤝 Consorzio "${data.name}" fondato!`, 'success');
     await p2pFetchConsorzi();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -728,7 +734,7 @@ window.createConsorzio = async function(name, description) {
 window.joinConsorzio = async function(consorzioId) {
     if (!_uid()) return;
     const { data, error } = await _sb().rpc('rpc_join_consorzio', { v_consorzio_id: consorzioId });
-    if (error) { showNotification(`Errore ingresso: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore ingresso consorzio', error), 'error'); return; }
     showNotification('✅ Sei entrato nel consorzio!', 'success');
     await p2pFetchConsorzi();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -737,7 +743,7 @@ window.joinConsorzio = async function(consorzioId) {
 window.leaveConsorzio = async function(consorzioId) {
     if (!_uid()) return;
     const { error } = await _sb().rpc('rpc_leave_consorzio', { v_consorzio_id: consorzioId });
-    if (error) { showNotification(`Errore uscita: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore uscita consorzio', error), 'error'); return; }
     showNotification('Hai lasciato il consorzio.', 'info');
     await p2pFetchConsorzi();
     if (typeof renderTabInvestments === 'function') renderTabInvestments();
@@ -749,7 +755,7 @@ window.contributeConsorzio = async function(consorzioId, amount) {
     const { data, error } = await _sb().rpc('rpc_contribute_consorzio', {
         v_consorzio_id: consorzioId, v_amount: roundedAmount,
     });
-    if (error) { showNotification(`Errore contributo: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore contributo consorzio', error), 'error'); return; }
     if (!window.ServerState?.isReady()) gameState.cash -= roundedAmount;
     await saveGame();
     showNotification(`💰 Contribuito €${roundedAmount.toLocaleString()} alla cassa consorzio.`, 'success');
@@ -765,7 +771,7 @@ window.contributeConsorzio = async function(consorzioId, amount) {
 window.hireCrumiri = async function() {
     if (!_uid()) return;
     const { data, error } = await _sb().rpc('rpc_hire_crumiri');
-    if (error) { showNotification(`${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Errore crumiri', error), 'error'); return; }
     window._sindacatoState.gdfRisk           = data.risk_level || 0;
     window._sindacatoState.crumiriBoostUntil = data.crumiri_boost_until || null;
     showBigEvent('👷', 'Crumiri Assunti!',
@@ -777,7 +783,7 @@ window.hireCrumiri = async function() {
 window.payDonCarmine = async function() {
     if (!_uid()) return;
     const { data, error } = await _sb().rpc('rpc_pay_don_carmine');
-    if (error) { showNotification(`Don Carmine: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(_p2pErrMsg('Don Carmine', error), 'error'); return; }
     if (!window.ServerState?.isReady()) gameState.cash -= 50000;
     await saveGame();
     window._sindacatoState.gdfRisk              = 0;
