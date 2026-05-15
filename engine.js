@@ -2841,6 +2841,8 @@ function processDailyRoutines() {
 
     // GdF inspection — fire-and-forget, async (requires user logged in)
     if (typeof window._sindacatoGdfDailyCheck === 'function') window._sindacatoGdfDailyCheck();
+    // B2B corporate contract daily payout
+    if (typeof window._b2bDailyTick === 'function') window._b2bDailyTick();
 }
 
 // ─── GENERAZIONE CORSE ───
@@ -3087,6 +3089,8 @@ function _driverCanTakeRide(driver, ride) {
     const _epSlots = (gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0)) ? 12 : 10;
     if (driver.queue.length >= _epSlots) return false;
     if (driver.status === 'resting') return false;
+    // B2B contract locks: vehicles committed to a corporate contract are unavailable
+    if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;
     return true;
 }
 
