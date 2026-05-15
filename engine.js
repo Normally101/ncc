@@ -3461,7 +3461,10 @@ function completeRide(ride, _deferPay = false) {
     const _consorzioMult = (_ss.consorzioMembersCount >= 5) ? 1.08 : 1.0;
     const _vipEarningsBuff = typeof window._getBuffValue === 'function' ? (1 + window._getBuffValue('earnings_pct') / 100) : 1.0;
     const _vipTipBuff      = typeof window._getBuffValue === 'function' ? (1 + window._getBuffValue('tip_pct') / 100) : 1.0;
-    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult) - _fuelDeduction);
+    // Server decree effects (Espansione 5)
+    const _decreeFx  = (typeof window.getDecreeEffects === 'function') ? window.getDecreeEffects() : {};
+    const _decreeTip = _decreeFx.tipMult || 1.0;
+    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult * _decreeTip) - _fuelDeduction);
 
     const prevCash = gameState.cash;
     if (_deferPay) {

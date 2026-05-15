@@ -3547,6 +3547,58 @@ function renderTabLifestyle() {
 window.renderTabLifestyle = renderTabLifestyle;
 
 // ── POLITICS TAB ─────────────────────────────────────────────────
+// ── SERVER DECREES STATE ──────────────────────────────────────────────────────
+window._decreesState = { decrees: [], activeDecrees: [], _lastFetch: 0 };
+
+window.decreesRefresh = async function(force = false) {
+    const now = Date.now();
+    if (!force && now - window._decreesState._lastFetch < 60000) return;
+    window._decreesState._lastFetch = now;
+    const sb = window.supabase;
+    if (!sb) return;
+    const [dRes, aRes] = await Promise.all([
+        sb.rpc('rpc_get_server_decrees'),
+        sb.rpc('rpc_get_active_decrees'),
+    ]);
+    if (!dRes.error) window._decreesState.decrees = dRes.data || [];
+    if (!aRes.error) window._decreesState.activeDecrees = aRes.data || [];
+};
+
+window.getDecreeEffects = function() {
+    const fx = {};
+    for (const d of window._decreesState.activeDecrees) {
+        for (const [k, v] of Object.entries(d.effects || {})) {
+            if (typeof v === 'number') {
+                fx[k] = (fx[k] || 1.0) * v;
+            } else {
+                fx[k] = v;
+            }
+        }
+    }
+    return fx;
+};
+
+window.voteServerDecree = async function(decreeId, points) {
+    const pts = parseInt(points, 10);
+    if (!pts || pts < 1) { if(typeof showNotification==='function') showNotification('Inserisci punti validi', 'error'); return; }
+    if ((gameState.lobbyingPoints || 0) < pts) { if(typeof showNotification==='function') showNotification('Punti lobbying insufficienti', 'error'); return; }
+
+    const sb = window.supabase;
+    if (!sb) return;
+    const { data, error } = await sb.rpc('rpc_vote_server_decree', { v_decree_id: decreeId, v_points_spent: pts });
+    if (error) { if(typeof showNotification==='function') showNotification('Voto fallito: ' + error.message, 'error'); return; }
+
+    gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) - pts;
+    if (typeof saveGameState === 'function') saveGameState();
+    if (data.passed) {
+        if(typeof showNotification==='function') showNotification(`🎉 Decreto approvato: ${data.title}!`, 'success');
+    } else {
+        if(typeof showNotification==='function') showNotification(`✅ Voto registrato. (${data.votes_current}/${window._decreesState.decrees.find(d=>d.id===decreeId)?.votes_required||'?'})`, 'success');
+    }
+    await window.decreesRefresh(true);
+    if (typeof renderTabPolitics === 'function') renderTabPolitics();
+};
+
 function renderTabPolitics() {
     const container = document.getElementById('tab-container');
     const inflPct   = ((gameState.inflationRate || 0.020) * 100).toFixed(2);
@@ -3614,9 +3666,99 @@ function renderTabPolitics() {
     </div>
 
     <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">⚖️ Leggi Disponibili</h3>
-    <div>${lawsHtml}</div>`;
+    <div>${lawsHtml}</div>
+
+    ${_renderDecreesSection(points)}`;
 }
 window.renderTabPolitics = renderTabPolitics;
+
+function _renderDecreesSection(lobbyPoints) {
+    const decrees = window._decreesState?.decrees || [];
+    const passed  = (window._decreesState?.activeDecrees || []);
+
+    let passedHtml = '';
+    if (passed.length > 0) {
+        passedHtml = `
+          <div class="bg-green-950/20 border border-green-500/20 rounded-lg p-3 mb-3">
+            <div class="text-[9px] text-green-400 font-bold uppercase mb-2">✅ Decreti Attivi</div>
+            ${passed.map(d => `
+              <div class="flex justify-between items-center text-[10px] mb-1">
+                <span class="text-white">${d.icon} ${d.title}</span>
+                <span class="text-gray-400 text-[9px]">${d.ends_at ? 'Scade ' + new Date(d.ends_at).toLocaleDateString('it-IT') : 'Permanente'}</span>
+              </div>`).join('')}
+          </div>`;
+    }
+
+    let votingHtml = '';
+    if (decrees.length === 0) {
+        votingHtml = `<div class="text-[10px] text-gray-500 text-center py-4">Nessun decreto in votazione.<br><span class="text-[9px]">Aggiorna tra poco.</span></div>`;
+    } else {
+        votingHtml = decrees.map(d => {
+            const isPassed = d.status === 'passed';
+            const pct = Math.min(100, Math.round((d.votes_current / d.votes_required) * 100));
+            const myVotes = d.my_votes || 0;
+            const inputId = `decree-pts-${d.id.substring(0, 8)}`;
+            const expires = new Date(d.expires_at);
+            const daysLeft = Math.max(0, Math.ceil((expires - Date.now()) / 86400000));
+            const fxBadges = Object.entries(d.effects || {}).map(([k, v]) => {
+                if (k === 'tipMult')         return `+${Math.round((v-1)*100)}% mance`;
+                if (k === 'xpMult')          return `+${Math.round((v-1)*100)}% XP`;
+                if (k === 'fuelCostMult')    return `${Math.round((v-1)*100)}% carb.`;
+                if (k === 'maintenanceMult') return `${Math.round((v-1)*100)}% manutenzione`;
+                if (k === 'taxRateMult')     return `${Math.round((v-1)*100)}% tasse`;
+                if (k === 'vehiclePriceMult')return `${Math.round((v-1)*100)}% veicoli`;
+                if (k === 'extraRidePct')    return `+${Math.round(v*100)}% corse`;
+                return null;
+            }).filter(Boolean);
+
+            return `
+              <div class="hud-card mb-2 ${isPassed ? '!border-green-500/30' : ''}">
+                <div class="flex justify-between items-start gap-2 mb-2">
+                  <div class="flex-1 min-w-0">
+                    <div class="text-xs font-bold ${isPassed ? 'text-green-400' : 'text-white'}">${d.icon} ${d.title} ${isPassed ? '✓' : ''}</div>
+                    <div class="text-[9px] text-gray-400 mt-0.5 leading-tight">${d.description || ''}</div>
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      ${fxBadges.map(b => `<span class="text-[8px] bg-white/10 rounded px-1 py-0.5">${b}</span>`).join('')}
+                    </div>
+                  </div>
+                  <div class="shrink-0 text-right">
+                    ${isPassed
+                        ? '<span class="text-[9px] text-green-400 font-bold">Approvato</span>'
+                        : `<div class="text-[8px] text-gray-500">${daysLeft}g rimasti</div>
+                           ${myVotes > 0 ? `<div class="text-[8px] text-blue-400">Votato: ${myVotes}pt</div>` : ''}`}
+                  </div>
+                </div>
+
+                <div class="mb-2">
+                  <div class="flex justify-between text-[8px] text-gray-500 mb-1">
+                    <span>${d.votes_current}/${d.votes_required} voti</span>
+                    <span>${pct}%</span>
+                  </div>
+                  <div class="w-full bg-white/5 rounded-full h-1.5">
+                    <div class="bg-gold h-1.5 rounded-full transition-all" style="width:${pct}%"></div>
+                  </div>
+                </div>
+
+                ${!isPassed ? `
+                  <div class="flex gap-2">
+                    <input id="${inputId}" type="number" min="1" max="${lobbyPoints}" value="1"
+                      class="finance-input flex-1 !text-[9px] !py-1" placeholder="punti">
+                    <button onclick="window.voteServerDecree('${d.id}', document.getElementById('${inputId}').value)"
+                      class="btn-gold !text-[9px] !py-1 !px-2 ${lobbyPoints < 1 ? 'opacity-40 pointer-events-none' : ''}">
+                      Vota
+                    </button>
+                  </div>` : ''}
+              </div>`;
+        }).join('');
+    }
+
+    return `
+      <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mt-4 mb-3">📜 Decreti Server</h3>
+      <div class="text-[9px] text-gray-500 mb-3">Vota i decreti collettivi con i tuoi punti lobbying. Una volta raggiunta la soglia, l'effetto si applica a tutti i giocatori.</div>
+      <button onclick="window.decreesRefresh(true).then(()=>window.renderTabPolitics())" class="text-[9px] text-gray-400 hover:text-white mb-3 block">↻ Aggiorna decreti</button>
+      ${passedHtml}
+      ${votingHtml}`;
+}
 
 function renderTabCareer() {
     const container = document.getElementById('tab-container');

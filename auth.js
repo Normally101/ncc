@@ -289,6 +289,7 @@ async function _onAuthSuccess(user) {
     if (typeof window.auctionsInit === 'function') window.auctionsInit();
     if (typeof window.driverSkillsInit === 'function') window.driverSkillsInit();
     if (typeof window.globalEventsInit === 'function') window.globalEventsInit();
+    if (typeof window.decreesRefresh === 'function') window.decreesRefresh(true);
 
     if (overlay) overlay.remove();
 }
