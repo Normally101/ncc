@@ -1089,6 +1089,7 @@ window.switchTab = function(tab) {
         case 'auctions':   title.innerText = "⚖️ Aste Giudiziarie"; _safeRender(window.renderTabAuctions); break;
         case 'shadow':     title.innerText = "🕵️ Agenzia Ombra"; _safeRender(window.renderTabShadow); break;
         case 'crypto':     title.innerText = "₿ Crypto & Offshore"; _safeRender(window.renderTabCrypto); break;
+        case 'hq':         title.innerText = "🏗️ HQ Base Builder"; _safeRender(window.renderTabHQ); break;
     }
 }
 

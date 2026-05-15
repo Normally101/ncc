@@ -478,6 +478,8 @@ function loadGame() {
             if (!d.skill_tree) d.skill_tree = { branch: null, unlocked: [], skill_points: 0 };
         });
         if (!save.driverObituaries) save.driverObituaries = [];
+        if (!save.hqRooms) save.hqRooms = ['garage_main'];
+        if (!save.hqGrid)  save.hqGrid  = { 7: 'garage_main' };
         // Migrate fleet: add fuel/mileage/tirePressure if missing
         (save.fleet || []).forEach(c => {
             if (c.fuel         === undefined) c.fuel         = 100;
@@ -2851,6 +2853,8 @@ function processDailyRoutines() {
     if (typeof window._sindacatoGdfDailyCheck === 'function') window._sindacatoGdfDailyCheck();
     // B2B corporate contract daily payout
     if (typeof window._b2bDailyTick === 'function') window._b2bDailyTick();
+    // HQ daily effects (auto-repair, morale, EV recharge)
+    if (typeof window._hqDailyTick === 'function') window._hqDailyTick();
 }
 
 // ─── GENERAZIONE CORSE ───
@@ -3474,7 +3478,10 @@ function completeRide(ride, _deferPay = false) {
     // Server decree effects (Espansione 5)
     const _decreeFx  = (typeof window.getDecreeEffects === 'function') ? window.getDecreeEffects() : {};
     const _decreeTip = _decreeFx.tipMult || 1.0;
-    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult * _decreeTip) - _fuelDeduction);
+    // HQ allEarningsMult (Espansione 6: Penthouse CEO)
+    const _hqFx  = (typeof window.hqAllEffects === 'function') ? window.hqAllEffects() : {};
+    const _hqTip = _hqFx.allEarningsMult || 1.0;
+    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult * _decreeTip * _hqTip) - _fuelDeduction);
 
     const prevCash = gameState.cash;
     if (_deferPay) {

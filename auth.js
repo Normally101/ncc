@@ -293,6 +293,7 @@ async function _onAuthSuccess(user) {
     if (typeof window.shadowInit === 'function') window.shadowInit();
     if (typeof window.cryptoInit === 'function') window.cryptoInit();
     if (typeof window.realWeatherInit === 'function') window.realWeatherInit();
+    if (typeof window.hqInit === 'function') window.hqInit();
 
     if (overlay) overlay.remove();
 }
