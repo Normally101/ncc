@@ -59,7 +59,7 @@ LANGUAGE sql
 SECURITY DEFINER
 STABLE
 AS $$
-    SELECT h.user_id, c.name AS company_name, h.rooms_built, h.hq_score, h.hq_name
+    SELECT h.user_id, c.company_name, h.rooms_built, h.hq_score, h.hq_name
     FROM public.hq_status h
     JOIN public.companies c ON c.user_id = h.user_id
     WHERE h.rooms_built > 0
