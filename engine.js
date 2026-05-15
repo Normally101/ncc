@@ -216,6 +216,8 @@ const STELLAR_VOLT_CATALOG = [
 window.STELLAR_VOLT_CATALOG = STELLAR_VOLT_CATALOG;
 
 function _isElectric(car) {
+    // Aviation vehicles (avgas/jet) are treated like EVs for ground fuel logic
+    if (car.vehicleClass === 'helicopter' || car.vehicleClass === 'private_jet') return true;
     const cat = STELLAR_VOLT_CATALOG.find(c => c.vehicleClass === car.vehicleClass || c.id === car.vehicleClass);
     return cat?.fuel === 'electric';
 }
@@ -3097,6 +3099,11 @@ function _driverCanTakeRide(driver, ride) {
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable
     if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;
+    // Aviation vehicles: elicotteri e jet solo per corse intercity (Espansione 1)
+    const _carDef = [...(typeof NEW_CARS !== 'undefined' ? NEW_CARS : [])].find(c => c.vehicleClass === car.vehicleClass);
+    if (_carDef?.intercityOnly && ride.fromPoi && ride.toPoi) {
+        if (ride.fromPoi.region === ride.toPoi.region) return false;
+    }
     return true;
 }
 

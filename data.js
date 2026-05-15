@@ -100,6 +100,9 @@ const NEW_CARS = [
     // ── Majestic luxury ───────────────────────────────────────────
     { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'ultra',    price:2000000, condition:100, vehicleClass:'majestic_spirit',    fuel:'gasoline', rideGate:1000 },
     { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'ultra',    price:3200000, condition:100, vehicleClass:'majestic_e_specter', fuel:'electric', rideGate:1000 },
+    // ── Aviazione Privata (Espansione 1) ──────────────────────────
+    { id:'helicopter_as350',   name:'Airbus AS350 Écureuil', tier:'ultra',   price:4500000, condition:100, vehicleClass:'helicopter',         fuel:'avgas',    rideGate:2000, isAviation:true, intercityOnly:true, maxFleetCount:2 },
+    { id:'private_jet_phenom', name:'Embraer Phenom 300',    tier:'ultra',   price:18000000,condition:100, vehicleClass:'private_jet',        fuel:'jet',      rideGate:5000, isAviation:true, intercityOnly:true, maxFleetCount:1 },
 ];
 
 const USED_CARS = [
@@ -122,6 +125,9 @@ const LEASING_TEMPLATES = {
     'volt_s_apex':        { name:'Volt S-Apex',          baseRate:3200, kmRate:0.12, tier:'vip',      vehicleClass:'volt_s_apex'        },
     'majestic_spirit':    { name:'Majestic Spirit',      baseRate:5500, kmRate:0.22, tier:'ultra',    vehicleClass:'majestic_spirit'    },
     'stellar_g_over':     { name:'Stellar G-Overlord',   baseRate:5000, kmRate:0.22, tier:'ultra',    vehicleClass:'stellar_g_over'     },
+    // ── Aviazione Privata ────────────────────────────────────────
+    'helicopter':  { name:'Airbus AS350',    baseRate:12000, kmRate:0.80, tier:'ultra', vehicleClass:'helicopter'  },
+    'private_jet': { name:'Embraer Phenom',  baseRate:45000, kmRate:2.50, tier:'ultra', vehicleClass:'private_jet' },
     // legacy keys (backward compat)
     'business': { name:'Stellar E-Executive', baseRate:1200, kmRate:0.05, tier:'business', vehicleClass:'stellar_e_exec' },
     'vip':      { name:'Stellar S-Imperial',  baseRate:2500, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_s_imp'  },

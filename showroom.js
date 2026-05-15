@@ -19,6 +19,9 @@ const _SRM_META = {
     volt_s_hyper:       { body:'hypercar',    bodyLabel:'Hypercar EV',        desc:'La punta di diamante. Tecnologia derivata dalla Formula, comfort da sala riunioni. Irripetibile.',           stats:{ prestigio:10, comfort:9,  durabilita:7,  velocita:10 } },
     majestic_spirit:    { body:'ammiraglia',  bodyLabel:'Ultra Luxury',       desc:'Il pinnacolo della mobilità terrestre. Commissionato da capi di stato, oligarchi e CEO Fortune 500.',       stats:{ prestigio:10, comfort:10, durabilita:9,  velocita:9  } },
     majestic_e_specter: { body:'ammiraglia',  bodyLabel:'Ultra Luxury EV',    desc:'Ultra-luxury elettrica. Zero emissioni, zero compromessi. Il futuro della mobilità presidenziale.',         stats:{ prestigio:10, comfort:10, durabilita:9,  velocita:10 } },
+    // Aviazione Privata (Espansione 1)
+    helicopter:         { body:'aviation',   bodyLabel:'Elicottero Privato', desc:'Airbus AS350 per transfer intercity rapidi. Zero traffico, max 6 passeggeri, atterraggio ovunque.',           stats:{ prestigio:10, comfort:8,  durabilita:7,  velocita:10 } },
+    private_jet:        { body:'aviation',   bodyLabel:'Jet Privato',        desc:'Embraer Phenom 300. Il massimo della mobilità aerea privata per i tuoi clienti più esclusivi.',                 stats:{ prestigio:10, comfort:10, durabilita:8,  velocita:10 } },
 };
 
 const _SRM_FILTERS = [
@@ -30,6 +33,7 @@ const _SRM_FILTERS = [
     { id:'hypercar',    label:'Hypercar',        icon:'⚡' },
     { id:'ammiraglia',  label:'Ammiraglia',      icon:'👑' },
     { id:'city',        label:'City EV',         icon:'🏙' },
+    { id:'aviation',    label:'Aviazione',       icon:'🚁' },
 ];
 
 const _SRM_SECTIONS = [
