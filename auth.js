@@ -291,6 +291,7 @@ async function _onAuthSuccess(user) {
     if (typeof window.globalEventsInit === 'function') window.globalEventsInit();
     if (typeof window.decreesRefresh === 'function') window.decreesRefresh(true);
     if (typeof window.shadowInit === 'function') window.shadowInit();
+    if (typeof window.cryptoInit === 'function') window.cryptoInit();
 
     if (overlay) overlay.remove();
 }

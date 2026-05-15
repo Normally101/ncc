@@ -1088,6 +1088,7 @@ window.switchTab = function(tab) {
         case 'b2b':        title.innerText = "💼 Contratti B2B"; _safeRender(window.renderTabB2B); break;
         case 'auctions':   title.innerText = "⚖️ Aste Giudiziarie"; _safeRender(window.renderTabAuctions); break;
         case 'shadow':     title.innerText = "🕵️ Agenzia Ombra"; _safeRender(window.renderTabShadow); break;
+        case 'crypto':     title.innerText = "₿ Crypto & Offshore"; _safeRender(window.renderTabCrypto); break;
     }
 }
 
