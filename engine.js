@@ -561,10 +561,13 @@ if (!window.resetGame) {
 // ─── TRAFFICO DINAMICO ────────────────────────────────────────────
 function _getTrafficMult() {
     const h = gameState.hour;
-    if (h >= 7  && h <  9)  return 0.70;   // Rush mattutino
-    if (h >= 17 && h < 19)  return 0.70;   // Rush serale
-    if (h >= 22 || h <  6)  return 1.25;   // Notte libera
-    return 1.00;
+    let mult = 1.00;
+    if (h >= 7  && h <  9)  mult = 0.70;   // Rush mattutino
+    else if (h >= 17 && h < 19)  mult = 0.70;   // Rush serale
+    else if (h >= 22 || h <  6)  mult = 1.25;   // Notte libera
+    // Real-world traffic from OpenWeatherMap (Espansione 8)
+    const realMult = (gameState._realTrafficMult || 1.0);
+    return mult * realMult;
 }
 
 // ─── RECLUTAMENTO ─────────────────────────────────────────────────
