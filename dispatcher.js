@@ -1086,6 +1086,7 @@ window.switchTab = function(tab) {
         case 'showroom':   title.innerText = "🚘 Showroom"; _safeRender(renderTabShowroom); break;
         case 'realestate': title.innerText = "🏛 Real Estate"; _safeRender(renderTabRealEstate); break;
         case 'b2b':        title.innerText = "💼 Contratti B2B"; _safeRender(window.renderTabB2B); break;
+        case 'auctions':   title.innerText = "⚖️ Aste Giudiziarie"; _safeRender(window.renderTabAuctions); break;
     }
 }
 

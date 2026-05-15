@@ -286,6 +286,7 @@ async function _onAuthSuccess(user) {
 
     if (typeof window.p2pInit === 'function') window.p2pInit();
     if (typeof window.b2bInit === 'function') window.b2bInit();
+    if (typeof window.auctionsInit === 'function') window.auctionsInit();
 
     if (overlay) overlay.remove();
 }
