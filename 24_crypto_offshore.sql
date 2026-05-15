@@ -209,8 +209,8 @@ $$;
 -- ── Deposita in conto offshore ──────────────────────────────────────────────
 
 CREATE OR REPLACE FUNCTION public.rpc_deposit_offshore(
-    v_jurisdiction TEXT    DEFAULT 'cayman',
-    v_eur_amount   BIGINT
+    v_eur_amount   BIGINT,
+    v_jurisdiction TEXT    DEFAULT 'cayman'
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -249,8 +249,8 @@ $$;
 -- ── Preleva da conto offshore (riciclo, soggetto a rischio GdF) ─────────────
 
 CREATE OR REPLACE FUNCTION public.rpc_withdraw_offshore(
-    v_jurisdiction TEXT   DEFAULT 'cayman',
-    v_eur_amount   BIGINT
+    v_eur_amount   BIGINT,
+    v_jurisdiction TEXT   DEFAULT 'cayman'
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -325,6 +325,6 @@ $$;
 
 GRANT EXECUTE ON FUNCTION public.rpc_buy_crypto(TEXT, BIGINT)           TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_sell_crypto(TEXT, NUMERIC)         TO authenticated;
-GRANT EXECUTE ON FUNCTION public.rpc_deposit_offshore(TEXT, BIGINT)     TO authenticated;
-GRANT EXECUTE ON FUNCTION public.rpc_withdraw_offshore(TEXT, BIGINT)    TO authenticated;
+GRANT EXECUTE ON FUNCTION public.rpc_deposit_offshore(BIGINT, TEXT)     TO authenticated;
+GRANT EXECUTE ON FUNCTION public.rpc_withdraw_offshore(BIGINT, TEXT)    TO authenticated;
 GRANT EXECUTE ON FUNCTION public.rpc_get_crypto_portfolio()             TO authenticated;
