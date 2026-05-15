@@ -473,7 +473,9 @@ function loadGame() {
             if (d.xp    === undefined) d.xp    = 0;
             if (d.level === undefined) d.level = 0;
             if (d.upgrades === undefined) d.upgrades = [];
+            if (!d.skill_tree) d.skill_tree = { branch: null, unlocked: [], skill_points: 0 };
         });
+        if (!save.driverObituaries) save.driverObituaries = [];
         // Migrate fleet: add fuel/mileage/tirePressure if missing
         (save.fleet || []).forEach(c => {
             if (c.fuel         === undefined) c.fuel         = 100;
@@ -1051,6 +1053,7 @@ function _checkDriverLevel(driver) {
                 const lvl = levels[i];
                 logToMap(`⭐ ${driver.name} ha raggiunto il livello ${lvl.name}!`);
                 showBigEvent('⭐', `${driver.name} — Livello ${lvl.name}!`, `${driver.name} ha guadagnato abbastanza esperienza. Bonus permanenti: +${Math.round((lvl.tipBonus-1)*100)}% mance, −${Math.round((1-lvl.fatigueBonus)*100)}% fatica.`);
+                if (i > 0 && typeof window.driverAwardSkillPoint === 'function') window.driverAwardSkillPoint(driver);
             }
             return;
         }
@@ -3250,9 +3253,10 @@ function startNextRide(driver) {
         const fuelCost = { standard:12, business:16, vip:20, ultra:25, group:18 };
         const baseFuel = fuelCost[ride.tier] || 14;
         const tireFuelMult = car.tirePressure < 50 ? 1.25 : car.tirePressure < 70 ? 1.10 : 1.0;
-        // Serbatoio Maggiorato: -55% consumo
+        // Serbatoio Maggiorato: -55% consumo; Tecnico Guida Eco: -20%
         const serbatoioMult = (car.upgrades || []).includes('serbatoio_ext') ? 0.45 : 1.0;
-        car.fuel = Math.max(0, car.fuel - (ride.fromPoi.region !== ride.toPoi.region ? baseFuel * 1.5 : baseFuel) * tireFuelMult * serbatoioMult);
+        const _ecoMult = (driver && typeof window.driverAllEffects === 'function') ? (window.driverAllEffects(driver).fuelMult || 1.0) : 1.0;
+        car.fuel = Math.max(0, car.fuel - (ride.fromPoi.region !== ride.toPoi.region ? baseFuel * 1.5 : baseFuel) * tireFuelMult * serbatoioMult * _ecoMult);
 
         // Engine health penalty: <30% → double fuel consumption on next ride
         if ((car.engineHealth || 100) === 0) {
@@ -3378,13 +3382,25 @@ function completeRide(ride, _deferPay = false) {
     if (ride.hasIncident && typeof addIncidentMarker === 'function') {
         addIncidentMarker(ride.toPoi.lat, ride.toPoi.lng, driver?.name || '?');
     }
+    // Permadeath roll (Espansione 2: Alberi Abilità)
+    if (ride.hasIncident && driver && driver.id !== 'ceo' && typeof window.driverPermadeathRoll === 'function') {
+        const _pCar = gameState.fleet.find(c => c.id === driver.assignedCarId);
+        window.driverPermadeathRoll(driver, _pCar);
+    }
 
-    // Mance: HR +15%, tratto Gentleman, livello XP, upgrade auto, specialty, dynamic event
+    // Mance: HR +15%, tratto Gentleman, livello XP, upgrade auto, specialty, dynamic event, skill tree
     const hrTipMult     = hasHR ? 1.15 : 1.0;
     const isVipOrUltra  = ride.tier === 'vip' || ride.tier === 'ultra';
     const traitTipMult  = (driver?.trait?.tipMult || 1.0) * (isVipOrUltra ? (driver?.trait?.vipTipMult || 1.0) : 1.0);
     const levelData     = driver ? (DRIVER_LEVELS[driver.level] || DRIVER_LEVELS[0]) : DRIVER_LEVELS[0];
     const levelTipMult  = driver ? levelData.tipBonus : 1.0;
+    // Skill tree tip bonus (Diplomatico: Sorriso di Platino)
+    const _skillEffects = (driver && typeof window.driverAllEffects === 'function') ? window.driverAllEffects(driver) : {};
+    const skillTipMult  = _skillEffects.tipMult || 1.0;
+    // Diplomatico: Ambasciatore — VIP rep gain
+    if (isVipOrUltra && _skillEffects.vipRepGain && driver?.id !== 'ceo') {
+        gameState.reputation = Math.min(5.0, (gameState.reputation || 0) + _skillEffects.vipRepGain);
+    }
     // Specialty tip bonus
     let specTipMult = 1.0;
     if (driver?.specialty === 'night_owl' && (gameState.hour >= 22 || gameState.hour < 6)) specTipMult = 1.30;
@@ -3442,7 +3458,7 @@ function completeRide(ride, _deferPay = false) {
     const _consorzioMult = (_ss.consorzioMembersCount >= 5) ? 1.08 : 1.0;
     const _vipEarningsBuff = typeof window._getBuffValue === 'function' ? (1 + window._getBuffValue('earnings_pct') / 100) : 1.0;
     const _vipTipBuff      = typeof window._getBuffValue === 'function' ? (1 + window._getBuffValue('tip_pct') / 100) : 1.0;
-    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff) - _fuelDeduction);
+    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult) - _fuelDeduction);
 
     const prevCash = gameState.cash;
     if (_deferPay) {
@@ -3460,12 +3476,24 @@ function completeRide(ride, _deferPay = false) {
         showNotification('🎉 MILESTONE: €1.000.000 in cassa!', 'success');
     }
 
-    // XP gain for non-CEO drivers
+    // XP gain for non-CEO drivers (+ Velocista bonus)
     if (driver && driver.id !== 'ceo') {
         const xpGain = { standard:10, business:20, vip:35, ultra:60, group:15 };
         if (driver.xp === undefined) driver.xp = 0;
-        driver.xp += (xpGain[ride.tier] || 10);
+        const _xpMult = (typeof window.driverAllEffects === 'function' ? (window.driverAllEffects(driver).xpMult || 1.0) : 1.0);
+        driver.xp += Math.round((xpGain[ride.tier] || 10) * _xpMult);
         _checkDriverLevel(driver);
+    }
+
+    // Tecnico: Maestro Meccanico — auto-repair if condition low
+    if (driver && typeof window.driverAllEffects === 'function') {
+        const _tec = window.driverAllEffects(driver);
+        if (_tec.autoRepair) {
+            const _tCar = gameState.fleet.find(c => c.id === driver.assignedCarId);
+            if (_tCar && (_tCar.condition || 0) < (_tec.autoRepairThreshold || 30)) {
+                _tCar.condition = Math.min(100, (_tCar.condition || 0) + _tec.autoRepair);
+            }
+        }
     }
 
     const extras = [hasHR ? '+HR' : null, traitTipMult > 1 ? `+${Math.round((traitTipMult-1)*100)}%` : null, levelTipMult > 1 ? `Lv${driver?.level}` : null, ride.isEmptyLeg ? 'EmptyLeg' : null, ride.isGreyMarket ? '🕵️' : null, isDelayed ? '⏱️+1h' : null].filter(Boolean).join(' ');

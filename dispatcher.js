@@ -1938,6 +1938,7 @@ function renderTabStaff() {
                         : (!isResting && !isBurnout && d.status !== 'busy' && (fatigue >= 40 || stress >= 50))
                             ? `<button onclick="putDriverOnBreak('${d.id}')" class="btn-gold !bg-orange-900/30 !text-orange-400 !text-[8px]" title="Pausa 4h: riduce stress del 40%">☕ Pausa</button>`
                             : ''}
+                    <button onclick="window.renderDriverSkillModal('${d.id}')" class="btn-gold !bg-blue-900/30 !text-blue-300 !text-[8px]" title="Albero Abilità">⭐ Skills</button>
                     <button onclick="fireDriver('${d.id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[8px]">Licenzia</button>
                 </div>
             </div>
