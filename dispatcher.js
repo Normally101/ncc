@@ -344,6 +344,23 @@ function initMap() {
     });
 }
 
+function _ensureMap() {
+    if (map) return;
+    if (window.innerWidth < 768) return;
+    initMap();
+}
+
+function _destroyMap() {
+    if (!map) return;
+    Object.values(_cantiereMarkers || {}).forEach(m => m.remove());
+    Object.keys(_cantiereMarkers || {}).forEach(k => delete _cantiereMarkers[k]);
+    if (window._hqMarker) { window._hqMarker.remove(); window._hqMarker = null; }
+    map.remove();
+    map = null;
+    const el = document.getElementById('leaflet-map');
+    if (el) el.classList.add('hidden');
+}
+
 function _updateRegionLabels() {
     if (!map || !_mapReady || typeof REGION_CENTROIDS === 'undefined') return;
     const features = (gameState.unlockedRegions || []).map(rid => {
@@ -1034,7 +1051,19 @@ window.togglePanel = function() {
 };
 
 window.switchTab = function(tab) {
+    // Lifecycle mappa: mostra solo nei tab che la usano
+    const _mapTabs = new Set(['corse', 'provinces']);
+    const _prevTab = _activeTab;
     _activeTab = tab;
+
+    if (_mapTabs.has(tab)) {
+        const mapEl = document.getElementById('leaflet-map');
+        if (mapEl) mapEl.classList.remove('hidden');
+        _ensureMap();
+    } else if (!_mapTabs.has(tab) && map) {
+        _destroyMap();
+    }
+
     const container = document.getElementById('tab-container');
     const title = document.getElementById('panel-title');
     const mapLog = document.getElementById('live-map-overlay');
@@ -4780,7 +4809,7 @@ window.doBuyRealEstate = async function(listingId) {
     }
 };
 
-window.addEventListener('DOMContentLoaded', () => { initMap(); setupDragAndDrop(); _initGlobalNewsFeed(); });
+window.addEventListener('DOMContentLoaded', () => { setupDragAndDrop(); _initGlobalNewsFeed(); });
 
 // ─── MONEY PARTICLES ────────────────────────────────────────────
 window.spawnMoneyParticles = function(x, y, amount) {
