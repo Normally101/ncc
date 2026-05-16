@@ -1125,6 +1125,8 @@ window.togglePanel = function() {
 window.switchTab = function(tab) {
     // Lifecycle mappa: mostra solo nei tab che la usano
     const _mapTabs = new Set(['corse', 'provinces']);
+    // showroom/war_room gestiscono i propri overlay full-screen indipendentemente
+    const _selfOverlayTabs = new Set(['showroom']);
     const _prevTab = _activeTab;
     _activeTab = tab;
 
@@ -1149,14 +1151,41 @@ window.switchTab = function(tab) {
     const peekIcon = document.getElementById('peek-tab-icon');
     if (peekIcon) peekIcon.textContent = _TAB_ICONS[tab] || '📋';
 
-    // Auto-expand panel when a tab is selected via nav
-    const panel = document.getElementById('main-panel');
-    const peek  = document.getElementById('panel-peek-tab');
-    if (panel && panel.classList.contains('panel-collapsed')) {
-        panel.classList.remove('panel-collapsed');
-        if (peek)  peek.classList.remove('visible');
-        const btn = document.getElementById('panel-collapse-btn');
-        if (btn) btn.textContent = '◀';
+    // ── Full-screen vs pannello stretto ─────────────────────────────────────
+    // Dispatch/mappa → pannello stretto a destra
+    // Tutti gli altri → pannello a tutto schermo (nasconde mappa e navbar)
+    // showroom → ha il proprio overlay, non tocchiamo il pannello
+    const panel       = document.getElementById('main-panel');
+    const collapseBtn = document.getElementById('panel-collapse-btn');
+    const backBtn     = document.getElementById('panel-back-btn');
+    if (panel) {
+        if (_mapTabs.has(tab)) {
+            // Ripristina pannello stretto
+            panel.style.cssText = '';
+            if (collapseBtn) collapseBtn.style.display = '';
+            if (backBtn)     backBtn.style.display     = 'none';
+            // Rimuovi panel-collapsed se era rimasto
+            const peek = document.getElementById('panel-peek-tab');
+            if (panel.classList.contains('panel-collapsed')) {
+                panel.classList.remove('panel-collapsed');
+                if (peek) peek.classList.remove('visible');
+                if (collapseBtn) collapseBtn.textContent = '◀';
+            }
+        } else if (!_selfOverlayTabs.has(tab)) {
+            // Espandi a tutto schermo
+            panel.style.cssText = 'position:fixed;inset:0;width:auto;border-radius:0;z-index:2000;';
+            if (collapseBtn) collapseBtn.style.display = 'none';
+            if (backBtn)     backBtn.style.display     = '';
+        }
+    } else {
+        // Fallback legacy: auto-expand se collassato
+        const peek = document.getElementById('panel-peek-tab');
+        if (panel && panel.classList.contains('panel-collapsed')) {
+            panel.classList.remove('panel-collapsed');
+            if (peek)  peek.classList.remove('visible');
+            const btn = document.getElementById('panel-collapse-btn');
+            if (btn) btn.textContent = '◀';
+        }
     }
 
     if(mapLog) { mapLog.classList.add('hidden'); mapLog.classList.remove('flex'); }
@@ -1980,8 +2009,15 @@ function renderTabStaff() {
                 <div class="text-[9px] text-gray-500">€${s.salary}/mese</div>
                 <div class="text-[9px] text-gray-400 mt-0.5 leading-tight">${s.desc}</div>
             </div>
-            <div class="flex-shrink-0 pt-0.5">
-                ${owned ? '<span class="text-green-500 text-[9px] font-bold uppercase">✓ Attivo</span>' : `<button onclick="hireOfficeStaff('${s.id}')" class="btn-gold !py-1 !px-2">Assumi</button>`}
+            <div class="flex-shrink-0 pt-0.5 flex flex-col items-end gap-1">
+                ${owned
+                    ? `<span class="text-green-500 text-[9px] font-bold uppercase">✓ Attivo</span>
+                       <button onclick="window.fireStaff('${s.id}')"
+                         class="text-[8px] text-red-400 border border-red-500/30 hover:bg-red-500/10 px-1.5 py-0.5 rounded transition-colors cursor-pointer">
+                         Licenzia
+                       </button>`
+                    : `<button onclick="hireOfficeStaff('${s.id}')" class="btn-gold !py-1 !px-2">Assumi</button>`
+                }
             </div>
         </div>`;
     }
@@ -2549,6 +2585,17 @@ window.closeModals = function() {
 }
 
 // --- LOGICHE FINALI ---
+
+window.fireStaff = function(staffId) {
+    const s = gameState.staff.find(x => x.id === staffId);
+    if (!s) return;
+    if (!confirm(`Licenziare ${s.name}?\n\nRisparmio: €${s.salary.toLocaleString('it-IT')}/mese.\nTutti i benefici verranno rimossi immediatamente.`)) return;
+    gameState.staff = gameState.staff.filter(x => x.id !== staffId);
+    if (typeof showNotification === 'function') showNotification(`${s.name} licenziato.`, 'warning');
+    renderTabStaff();
+    if (typeof saveGame === 'function') saveGame();
+};
+
 window.hireOfficeStaff = async function(id) {
     const s = STAFF_ROLES[Object.keys(STAFF_ROLES).find(k => STAFF_ROLES[k].id === id)];
     if (!s) return;
