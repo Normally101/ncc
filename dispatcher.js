@@ -1198,6 +1198,7 @@ window.switchTab = function(tab) {
         case 'shadow':     title.innerText = "🕵️ Agenzia Ombra"; _safeRender(window.renderTabShadow); break;
         case 'crypto':     title.innerText = "₿ Crypto & Offshore"; _safeRender(window.renderTabCrypto); break;
         case 'hq':         title.innerText = "🏗️ HQ Base Builder"; _safeRender(window.renderTabHQ); break;
+        case 'opa': title.innerText = "🦅 OPA Ostili"; _safeRender(window.renderTabOPA); break;
     }
 }
 
