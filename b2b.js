@@ -85,9 +85,12 @@ window.b2bAcceptContract = async function(contractId, vehicleIds, driverIds) {
         id:             data.id,
         daily_payout:   data.daily_payout,
         days_remaining: data.days_remaining,
+        days_total:     data.duration_days || data.days_remaining,
         contract_title: data.title,
         contract_client: data.client,
+        contract_icon:  data.icon || '💼',
         penalty_amount:  data.penalty,
+        sla_score:      100,
         status:         'active',
     };
     await saveGame();
@@ -282,7 +285,8 @@ function renderTabB2B() {
 
     // ── CONTRATTO ATTIVO ──
     if (active) {
-        const pct = Math.min(100, Math.round(((active.days_total - active.days_remaining) / (active.days_total||1)) * 100));
+        const _dt = active.days_total || active.days_remaining || 1;
+        const pct = Math.max(0, Math.min(100, Math.round((((_dt) - active.days_remaining) / _dt) * 100)));
         const sla = active.sla_score ?? 100;
         const slaColor = sla >= 90 ? '#22c55e' : sla >= 70 ? '#f59e0b' : '#ef4444';
         const lockedVehicles = window.b2bLockedVehicleIds();

@@ -632,9 +632,14 @@ window._srmPurchase = async function() {
         if (btn) { btn.disabled = false; btn.textContent = `Acquista ${v.name}`; }
         return;
     }
+    // Mappa i tier del catalogo Showroom ai tier compatibili con TIER_COMPATIBILITY
+    const _SHOWROOM_TIER_MAP = {
+        BUSINESS:'business', PREMIUM:'business', STANDARD:'standard',
+        PRESIDENTIAL:'ultra', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group'
+    };
     gameState.fleet.push({
         id: 'c_' + Date.now(), _serverId: result.id,
-        name: v.name, tier: (v.tier||'business').toLowerCase(),
+        name: v.name, tier: _SHOWROOM_TIER_MAP[(v.tier||'').toUpperCase()] || 'business',
         condition: 100, isLease: false, fuel: 100, mileage: 0,
         tirePressure: 100, engineHealth: 100, outOfService: false,
         upgrades: opts, vehicleClass: v.id,

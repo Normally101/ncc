@@ -21,7 +21,7 @@ window.globalEventsRefresh = async function(force = false) {
     if (!sb) return;
 
     // Sync statuses server-side first (idempotent)
-    await sb.rpc('rpc_sync_global_event_status').catch(() => {});
+    await sb.rpc('rpc_sync_global_event_status').then(null, () => {});
 
     const { data, error } = await sb.rpc('rpc_get_active_global_events');
     if (!error && data) {

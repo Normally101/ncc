@@ -192,7 +192,8 @@ const ServerState = (() => {
         // Authoritative financial fields — always trust the server
         gameState.cash                  = _company.cash;
         gameState.driverCoins           = (_company.driver_coins != null) ? _company.driver_coins : (gameState.driverCoins ?? 0);
-        gameState.reputation            = parseFloat(_company.reputation) || gameState.reputation;
+        const _rep = parseFloat(_company.reputation);
+        gameState.reputation            = Number.isFinite(_rep) ? _rep : gameState.reputation;
         gameState.companyName           = _company.company_name || gameState.companyName;
         gameState.hrAutomationExpiresAt = _company.hr_automation_expires_at || null;
     }

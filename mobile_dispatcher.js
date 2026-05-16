@@ -52,7 +52,7 @@ function _mobUpdateStats() {
 function _mobRefreshRides() {
     const list = document.getElementById('mob-rides-list');
     if (!list) return;
-    const rides = ((typeof gameState !== 'undefined' && gameState?.availableRides) ? gameState.availableRides : []).slice(0, 8);
+    const rides = ((typeof gameState !== 'undefined' && gameState?.pendingRides) ? gameState.pendingRides : []).slice(0, 8);
     if (!rides.length) {
         list.innerHTML = '<div class="mobile-empty">Nessuna corsa disponibile — attendi...</div>';
         return;
@@ -94,17 +94,24 @@ window.mobTab = function(tab) {
 };
 
 window._mobAcceptRide = function(idx) {
-    const ride = ((typeof gameState !== 'undefined' && gameState?.availableRides) ? gameState.availableRides : [])[idx];
+    const rides = (typeof gameState !== 'undefined' && gameState?.pendingRides) ? gameState.pendingRides : [];
+    const ride = rides[idx];
     if (!ride) return;
-    if (typeof window.acceptRide === 'function') {
-        window.acceptRide(ride);
-        setTimeout(_mobRefreshRides, 300);
+    // Assegna la corsa al primo autista disponibile (come fa la UI desktop)
+    const driver = (gameState.drivers || []).find(d => d.status === 'idle' && d.id !== 'ceo');
+    if (driver && typeof window.assignRideToDriver === 'function') {
+        window.assignRideToDriver(driver, ride);
+    } else if (typeof window.assignRideToDriver === 'function') {
+        // Nessun driver disponibile — affida al CEO
+        const ceo = (gameState.drivers || []).find(d => d.id === 'ceo');
+        if (ceo) window.assignRideToDriver(ceo, ride);
     }
+    setTimeout(_mobRefreshRides, 300);
 };
 
 window._mobRejectRide = function(idx) {
-    if (typeof gameState !== 'undefined' && gameState?.availableRides) {
-        gameState.availableRides.splice(idx, 1);
+    if (typeof gameState !== 'undefined' && gameState?.pendingRides) {
+        gameState.pendingRides.splice(idx, 1);
         _mobRefreshRides();
     }
 };

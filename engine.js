@@ -5608,9 +5608,10 @@ window.fullBundleDC = function() {
 };
 
 // ════════════════════════════════════════════════════════════════════
-// BORSA VALORI AZIENDALE — Company IPO (simulata, con dividendi NPC)
+// BORSA VALORI AZIENDALE — Company IPO (versione NPC locale, fallback)
+// La versione reale P2P è in p2p_market.js e sovrascrive questa.
 // ════════════════════════════════════════════════════════════════════
-window.listCompanyIPO = function() {
+window._listCompanyIPO_NPC = function() {
     const cost = 50000;
     const repReq = 3.5;
     if (gameState.companyIPO?.listed) { showNotification('Azienda già quotata in borsa.', 'info'); return; }

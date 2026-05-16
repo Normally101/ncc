@@ -395,6 +395,7 @@ function _destroyMap() {
     const el = document.getElementById('leaflet-map');
     if (el) el.classList.add('hidden');
 }
+window._destroyMap = _destroyMap;
 
 function _updateVehicleLayer() {
     if (!map || !map.getSource('vehicles')) return;
@@ -550,7 +551,7 @@ window.addIncidentMarker = function(lat, lng, driverName) {
     const marker = new mapboxgl.Marker({ element: el })
         .setLngLat([lng, lat])
         .addTo(map);
-    setTimeout(() => marker.remove(), 60000);
+    setTimeout(() => { try { marker.remove(); } catch(e) {} }, 60000);
 };
 
 // ─── CHECKPOINT MARKERS (Shadow/Grey) ────────────────────────────
@@ -565,7 +566,7 @@ window.addCheckpointMarker = function(lat, lng, rideId) {
         .addTo(map);
     if (rideId) _checkpointMarkers[rideId] = marker;
     // Auto-rimuovi dopo 90s
-    setTimeout(() => { marker.remove(); delete _checkpointMarkers[rideId]; }, 90000);
+    setTimeout(() => { try { marker.remove(); } catch(e) {} delete _checkpointMarkers[rideId]; }, 90000);
 };
 window.removeCheckpointMarker = function(rideId) {
     if (_checkpointMarkers[rideId]) { _checkpointMarkers[rideId].remove(); delete _checkpointMarkers[rideId]; }
@@ -2017,7 +2018,8 @@ function renderTabStaff() {
         const isResting = d.status === 'resting';
         const levelData = (DRIVER_LEVELS || [])[d.level || 0] || { name:'Rookie', xpMin:0, xpMax:200, badge:'lvl-rookie' };
         const nextLvl   = (DRIVER_LEVELS || [])[Math.min((d.level||0)+1, DRIVER_LEVELS.length-1)];
-        const xpPct = nextLvl ? Math.min(100, Math.round(((d.xp||0) - levelData.xpMin) / (nextLvl.xpMin - levelData.xpMin) * 100)) : 100;
+        const _xpDenom = nextLvl ? (nextLvl.xpMin - levelData.xpMin) : 0;
+        const xpPct = (!nextLvl || nextLvl === levelData || _xpDenom <= 0) ? 100 : Math.max(0, Math.min(100, Math.round(((d.xp||0) - levelData.xpMin) / _xpDenom * 100)));
         const stress      = d.stress_level !== undefined ? d.stress_level : 0;
         const isBurnout   = d.burnout_until && (gameState.day * 24 + gameState.hour) < d.burnout_until;
         const stressColor = stress >= 100 ? '#ff4060' : stress >= 80 ? '#ef4444' : stress >= 50 ? '#f59e0b' : '#22c55e';
@@ -4218,6 +4220,11 @@ window._dcSpend = async function(itemId, cost) {
                     logToMap('🛌 Auto-Rest CEO attivato (DC)!');
                 }
                 break;
+            default:
+                // itemId non riconosciuto — rollback immediato
+                gameState.driverCoins += cost;
+                if (typeof showNotification === 'function') showNotification(`⚠ Operazione non riconosciuta: ${itemId}`, 'error');
+                return;
         }
 
         if (result && !result.ok) {

@@ -214,13 +214,13 @@ window.hqBuildRoom = async function(roomId, slotIndex) {
     if (typeof updateUI === 'function') updateUI();
 
     // Update leaderboard
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (sb) {
         const score = _hqRooms().reduce((s, id) => s + (window.HQ_ROOMS.find(r=>r.id===id)?.score || 0), 0);
         sb.rpc('rpc_update_hq_status', {
             v_rooms_built: _hqRooms().length,
             v_hq_score:    score,
-        }).catch(() => {});
+        }).then(null, () => {});
     }
 
     if(typeof showNotification==='function') showNotification(`🏗️ ${room.icon} ${room.name} costruita!`, 'success');

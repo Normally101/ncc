@@ -40,7 +40,7 @@ window._nemesisAddVip = function(vipId, vipName, reason) {
     // Push email di minaccia
     if (typeof _vipPushEmail === 'function') {
         _vipPushEmail({
-            id: (gameState.nextId || 0) + 1,
+            id: gameState.nextId++,
             sender: vipName + ' — Avvocato',
             subject: n.level >= 2
                 ? `⚠️ NEMESI: ${vipName} dichiara guerra alla tua agenzia`
@@ -52,7 +52,6 @@ window._nemesisAddVip = function(vipId, vipName, reason) {
                 ? `${vipName} non dimentica. A partire da oggi finanzierà attivamente le tue concorrenti per vederti fallire. Paga una compensazione o affronta le conseguenze.`
                 : `${vipName} si aspettava di meglio. Se non provvederai a rimediare, inizierà a supportare le agenzie rivali.`
         });
-        if (gameState.nextId !== undefined) gameState.nextId++;
     }
     if (typeof saveGame === 'function') saveGame();
 };
