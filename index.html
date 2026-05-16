@@ -333,6 +333,17 @@
           <div class="hub-mod-desc">Rastrella & controlla rival</div>
           <div class="hub-mod-badge hub-mod-badge-red hidden" id="hmod-opa">0</div>
         </div>
+        <div class="hub-module" onclick="window.hubNavigate('nemesis')">
+          <div class="hub-mod-icon">🦹</div>
+          <div class="hub-mod-title">Nemici VIP</div>
+          <div class="hub-mod-desc">VIP che cospirano contro di te</div>
+          <div class="hub-mod-badge hub-mod-badge-red hidden" id="hmod-nemesis">0</div>
+        </div>
+        <div class="hub-module" onclick="window.hubNavigate('infrastructure')">
+          <div class="hub-mod-icon">⛽</div>
+          <div class="hub-mod-title">Carburante</div>
+          <div class="hub-mod-desc">Depositi e monopoli provinciali</div>
+        </div>
       </div>
 
       <!-- Active Event Banner -->
@@ -475,6 +486,8 @@
   <script src="hq.js"></script>
   <script src="mobile_dispatcher.js"></script>
   <script src="hostile_takeover.js"></script>
+  <script src="nemesis.js"></script>
+  <script src="infrastructure.js"></script>
   <script src="tutorial.js"></script>
   <script>
     (function initTicker() {

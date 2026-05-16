@@ -1199,6 +1199,8 @@ window.switchTab = function(tab) {
         case 'crypto':     title.innerText = "₿ Crypto & Offshore"; _safeRender(window.renderTabCrypto); break;
         case 'hq':         title.innerText = "🏗️ HQ Base Builder"; _safeRender(window.renderTabHQ); break;
         case 'opa': title.innerText = "🦅 OPA Ostili"; _safeRender(window.renderTabOPA); break;
+        case 'nemesis': title.innerText = "🦹 Nemici VIP"; _safeRender(window.renderTabNemesis); break;
+        case 'infrastructure': title.innerText = "⛽ Monopolio Infrastrutture"; _safeRender(window.renderTabInfrastructure); break;
     }
 }
 
@@ -4565,6 +4567,14 @@ function _updateHubStats() {
     if (staffEl) staffEl.innerText = (gameState.drivers||[]).filter(d=>d.id!=='ceo').length;
     if (mailEl)  { mailEl.innerText = unread; mailEl.classList.toggle('hidden', unread === 0); }
     if (strikeEl) strikeEl.classList.toggle('hidden', striking === 0);
+
+    // Espansione 11: badge nemici VIP
+    const nemBadge = document.getElementById('hmod-nemesis');
+    if (nemBadge) {
+        const nemCount = Object.keys(gameState.vipNemeses || {}).length;
+        nemBadge.textContent = nemCount;
+        nemBadge.classList.toggle('hidden', nemCount === 0);
+    }
 
     // Active event banner
     const ev = gameState.activeDynamicEvent;

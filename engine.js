@@ -776,6 +776,7 @@ function gameLoop() {
         _maybeStrike();
         _checkPrestige();
         autoNegotiateEmails();
+        if (typeof window._nemesisTick === 'function') window._nemesisTick();
         _tickStockMarket();
         _tickBrokerInvestments();
         _payStockDividends();
@@ -1032,6 +1033,17 @@ function _tickEmails() {
         if (e.status === 'unread' && e.expiresAt && gameHour >= e.expiresAt) {
             expired++;
             logToMap(`⏰ Scaduta: "${e.subject}"`);
+            // Espansione 11: VIP deluso — diventa nemico
+            if (e.type && e.type.startsWith('vip_') && typeof window._nemesisAddVip === 'function') {
+                const _vipNamesMap = {
+                    vip_grigori: 'Grigori V.', vip_strata: "L'Erede", vip_techbro: 'Il Tech Bro',
+                    vip_onorevole: 'Il Ministro', vip_emiro: "Lo Sceicco", vip_golden: 'La Popstar',
+                    vip_garante: 'Il Don', vip_wedding: 'La Diva', vip_platinum: 'Il CEO', vip_erede: "L'Agente"
+                };
+                const key = e.type.replace(/_event.*/, '');
+                const vipName = _vipNamesMap[key] || 'VIP';
+                window._nemesisAddVip(key, vipName, 'scaduta');
+            }
             return false;
         }
         return true;
