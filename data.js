@@ -758,21 +758,6 @@ const LIFESTYLE_ASSETS = [
         energyBonus:0, staffBonus:0, intlUnlock:true,
         desc:'Piano 148 del Burj Khalifa. La proprietà più esclusiva al mondo. +€15.000/g, +1.0★. Sblocca rotte internazionali verso Dubai, Abu Dhabi, Doha. Diamond Contracts garantiti.'
     },
-    // ── NUOVI MEZZI ELITE ─────────────────────────────────────────
-    {
-        id:'ferrari_sf90', name:'Ferrari SF90 Stradale', location:'Maranello / Roma',
-        category:'vehicle_elite', icon:'🏎️', price:1800000,
-        passive:0, repBonus:0.5, unlocksDiamond:false, stockBonus:0,
-        energyBonus:1.0, staffBonus:0, intlUnlock:false,
-        desc:'1.000 cv ibrido. Auto personale del CEO per spostamenti ultra-rapidi. +0.5★ rep. CEO recupera +1.0 energia ogni ora. I clienti Ultra chiedono di essere accompagnati personalmente.'
-    },
-    {
-        id:'elicottero_aw139', name:'AgustaWestland AW139', location:'Hangar Roma / Milano',
-        category:'vehicle_elite', icon:'🚁', price:2200000,
-        passive:0, repBonus:0.7, unlocksDiamond:false, stockBonus:0,
-        energyBonus:0, staffBonus:0.20, intlUnlock:false,
-        desc:'Elicottero executive da 15 pax. +0.7★ rep. Staff recupera energia +20% più veloce. Sblocca corse elicottero premium tra città italiane senza dipendenza dalla rete stradale.'
-    },
 ];
 
 // ─── DIAMOND CONTRACTS (clienti Tier 5 — solo per Empire Builder) ─

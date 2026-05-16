@@ -3639,6 +3639,9 @@ function renderTabLifestyle() {
         ufficio_wall_street:'assets/lifestyle/ufficio-one-world-trade.jpg',
         jet_privato:        'assets/lifestyle/gulfstream-g700.jpg',
         yacht_lusso:        'assets/lifestyle/mega-yacht.jpg',
+        villa_como:         'assets/lifestyle/villa-como.jpg',
+        casino_montecarlo:  'assets/lifestyle/casino-montecarlo.jpg',
+        penthouse_dubai:    'assets/lifestyle/penthouse-dubai.jpg',
     };
 
     const _lifestyleCard = (a, accentColor) => {
