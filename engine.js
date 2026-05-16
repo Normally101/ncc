@@ -539,6 +539,23 @@ function loadGame() {
         save.paused = false; // never restore a paused state
         if (save.hasEVHub === undefined) save.hasEVHub = (save.investments || []).includes('inv_ev_hub');
         Object.assign(gameState, save);
+
+        // Normalizza i tier dei veicoli in flotta da valori legacy (uppercase/showroom)
+        // ai valori attesi da TIER_COMPATIBILITY: standard, business, vip, ultra, group
+        const _FLEET_TIER_MAP = {
+            STANDARD:'standard', ECONOMY:'standard', PREMIUM:'business',
+            BUSINESS:'business', VIP:'vip', ULTRA:'ultra',
+            PRESIDENTIAL:'ultra', ARMORED:'ultra', GROUP:'group',
+            HELICOPTER:'helicopter', JET:'jet', FIRST:'first',
+        };
+        if (Array.isArray(gameState.fleet)) {
+            gameState.fleet.forEach(v => {
+                if (v.tier) {
+                    v.tier = _FLEET_TIER_MAP[v.tier.toUpperCase()] || v.tier.toLowerCase();
+                }
+            });
+        }
+
         // Dismiss any stale VIP toast left from previous session
         document.getElementById('vip-event-toast')?.remove();
         return true;

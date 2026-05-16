@@ -277,26 +277,28 @@ window.renderTabHQ = function() {
         </div>
       </div>`).join('');
 
-    // Active effects summary
+    // Active effects summary — use switch to avoid eager toFixed() on boolean values
+    const _hqFxLabel = (k, v) => {
+        if (typeof v !== 'number') return (k === 'freeEVRecharge' && v) ? 'Ricarica EV gratuita' : null;
+        switch (k) {
+            case 'extraVehicleSlots':          return `+${v} slot veicoli`;
+            case 'dailyMoraleBonus':           return `+${v}% morale/giorno`;
+            case 'driverXpMult':               return `×${v.toFixed(2)} XP autisti`;
+            case 'autoRepairDaily':            return `+${v} riparazione auto/giorno`;
+            case 'salaryCostMult':             return `×${v.toFixed(2)} costo salari`;
+            case 'vipRideBonus':               return `+${Math.round(v*100)}% corse VIP`;
+            case 'burnoutReduction':           return `−${Math.round(v*100)}% burnout`;
+            case 'tipMult':                    return `×${v.toFixed(2)} mance`;
+            case 'helicopterRideGateOverride': return `Elicottero sbloccato a ${v} corse`;
+            case 'upgradeDiscountMult':        return `×${v.toFixed(2)} upgrade`;
+            case 'allEarningsMult':            return `×${v.toFixed(2)} tutti i redditi`;
+            default:                           return null;
+        }
+    };
     const fxItems = Object.entries(fx)
         .filter(([k]) => !['reputationBonus', 'shadowDefenseBonus'].includes(k))
-        .map(([k, v]) => {
-            const labels = {
-                extraVehicleSlots: `+${v} slot veicoli`,
-                dailyMoraleBonus: `+${v}% morale/giorno`,
-                driverXpMult: `×${v.toFixed(2)} XP autisti`,
-                autoRepairDaily: `+${v} riparazione auto/giorno`,
-                salaryCostMult: `×${v.toFixed(2)} costo salari`,
-                vipRideBonus: `+${Math.round(v*100)}% corse VIP`,
-                burnoutReduction: `−${Math.round(v*100)}% burnout`,
-                tipMult: `×${v.toFixed(2)} mance`,
-                freeEVRecharge: v ? 'Ricarica EV gratuita' : null,
-                helicopterRideGateOverride: `Elicottero sbloccato a ${v} corse`,
-                upgradeDiscountMult: `×${v.toFixed(2)} upgrade`,
-                allEarningsMult: `×${v.toFixed(2)} tutti i redditi`,
-            };
-            return labels[k] || null;
-        }).filter(Boolean);
+        .map(([k, v]) => _hqFxLabel(k, v))
+        .filter(Boolean);
 
     container.innerHTML = `
       <div class="p-1">
