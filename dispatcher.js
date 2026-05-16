@@ -12,6 +12,10 @@ styleFix.innerHTML = `
 document.head.appendChild(styleFix);
 
 let map = null;
+
+function _isMobile() {
+    return window.innerWidth < 768;
+}
 window._fleetFilter = { brand: null, tier: null };
 let _fleetFilter = window._fleetFilter;
 let _poiMarkers = {};
@@ -4809,7 +4813,18 @@ window.doBuyRealEstate = async function(listingId) {
     }
 };
 
-window.addEventListener('DOMContentLoaded', () => { setupDragAndDrop(); _initGlobalNewsFeed(); });
+window.addEventListener('DOMContentLoaded', () => {
+    setupDragAndDrop();
+    _initGlobalNewsFeed();
+    if (_isMobile()) {
+        document.body.classList.add('mobile-mode');
+        const sidebar = document.querySelector('nav.fixed.left-4');
+        if (sidebar) sidebar.style.display = 'none';
+        if (typeof window.renderMobileDispatcher === 'function') {
+            window.renderMobileDispatcher();
+        }
+    }
+});
 
 // ─── MONEY PARTICLES ────────────────────────────────────────────
 window.spawnMoneyParticles = function(x, y, amount) {
