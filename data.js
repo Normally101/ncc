@@ -736,6 +736,43 @@ const LIFESTYLE_ASSETS = [
         energyBonus:0, staffBonus:0.30, intlUnlock:false,
         desc:'100 metri di pura lusso galleggiante. +€5.000/g charter estive. +0.7★ rep. Staff recupera energia +30% più veloce. I clienti Ultra pagano il 20% in più sulle corse costiere.'
     },
+    // ── NUOVI REAL ESTATE ─────────────────────────────────────────
+    {
+        id:'villa_como', name:'Villa Lago di Como', location:'Como, Italia',
+        category:'real_estate', icon:'🏔️', price:3800000,
+        passive:7000, repBonus:0.6, unlocksDiamond:true, stockBonus:0,
+        energyBonus:1.5, staffBonus:0, intlUnlock:false,
+        desc:'Villa neoclassica sul lago più glamour d\'Europa. +€7.000/g, +0.6★. Il CEO recupera +1.5 energia/ora. Sblocca Diamond Contracts con clienti europei UHNW.'
+    },
+    {
+        id:'casino_montecarlo', name:'Membership Casino Monte Carlo', location:'Monaco, Principato',
+        category:'real_estate', icon:'🎰', price:1500000,
+        passive:3000, repBonus:0.3, unlocksDiamond:false, stockBonus:0.10,
+        energyBonus:0, staffBonus:0, intlUnlock:false,
+        desc:'Accesso permanente alla sala privée del Casinò di Monte Carlo. +€3.000/g rendita tavoli. +10% su tutti i rendimenti azionari. Clienti VIP con connessioni finanziarie ti cercheranno.'
+    },
+    {
+        id:'penthouse_dubai', name:'Penthouse Burj Khalifa', location:'Dubai, UAE',
+        category:'real_estate', icon:'🌃', price:8000000,
+        passive:15000, repBonus:1.0, unlocksDiamond:true, stockBonus:0,
+        energyBonus:0, staffBonus:0, intlUnlock:true,
+        desc:'Piano 148 del Burj Khalifa. La proprietà più esclusiva al mondo. +€15.000/g, +1.0★. Sblocca rotte internazionali verso Dubai, Abu Dhabi, Doha. Diamond Contracts garantiti.'
+    },
+    // ── NUOVI MEZZI ELITE ─────────────────────────────────────────
+    {
+        id:'ferrari_sf90', name:'Ferrari SF90 Stradale', location:'Maranello / Roma',
+        category:'vehicle_elite', icon:'🏎️', price:1800000,
+        passive:0, repBonus:0.5, unlocksDiamond:false, stockBonus:0,
+        energyBonus:1.0, staffBonus:0, intlUnlock:false,
+        desc:'1.000 cv ibrido. Auto personale del CEO per spostamenti ultra-rapidi. +0.5★ rep. CEO recupera +1.0 energia ogni ora. I clienti Ultra chiedono di essere accompagnati personalmente.'
+    },
+    {
+        id:'elicottero_aw139', name:'AgustaWestland AW139', location:'Hangar Roma / Milano',
+        category:'vehicle_elite', icon:'🚁', price:2200000,
+        passive:0, repBonus:0.7, unlocksDiamond:false, stockBonus:0,
+        energyBonus:0, staffBonus:0.20, intlUnlock:false,
+        desc:'Elicottero executive da 15 pax. +0.7★ rep. Staff recupera energia +20% più veloce. Sblocca corse elicottero premium tra città italiane senza dipendenza dalla rete stradale.'
+    },
 ];
 
 // ─── DIAMOND CONTRACTS (clienti Tier 5 — solo per Empire Builder) ─

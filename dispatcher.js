@@ -4873,7 +4873,7 @@ window.doAcquireProvince = async function(provinceId) {
 // ─── REAL ESTATE TAB ────────────────────────────────────────────────────────
 async function renderTabRealEstate() {
     const container = document.getElementById('tab-container');
-    container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-6">Caricamento immobili…</div>`;
+    container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-10">Caricamento immobili…</div>`;
 
     let listings = [], owned = [];
     try {
@@ -4892,60 +4892,77 @@ async function renderTabRealEstate() {
     const ownedIds = new Set(owned.map(o => o.listing_id));
     const totalDailyRent = listings
         .filter(l => ownedIds.has(l.id))
-        .reduce((s, l) => s + l.daily_rent, 0);
+        .reduce((s, l) => s + (l.daily_rent || 0), 0);
+    const portfolioValue = listings
+        .filter(l => ownedIds.has(l.id))
+        .reduce((s, l) => s + (l.cost || 0), 0);
 
     let html = `
-    <div class="mb-4 hud-card border-gold/30 bg-gold/5">
-        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-1">🏛 Real Estate</div>
-        <div class="text-[9px] text-gray-400">Acquista proprietà di lusso per generare rendite passive ogni 24 ore. Le rendite vengono accreditate automaticamente dal server.</div>
-        ${totalDailyRent > 0 ? `<div class="mt-1 text-[9px] text-green-400">💰 Rendita totale attiva: <span class="font-bold">€${totalDailyRent.toLocaleString()}/giorno</span></div>` : ''}
+    <div class="mb-5 ls-card !border-yellow-800/40">
+      <div class="px-4 py-3">
+        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-2">🏛 Real Estate Portfolio</div>
+        <div class="flex gap-4">
+          <div><div class="text-[8px] text-gray-500 uppercase">Proprietà</div><div class="text-sm font-bold text-white">${ownedIds.size}</div></div>
+          <div><div class="text-[8px] text-gray-500 uppercase">Valore</div><div class="text-sm font-bold font-mono text-gold">€${portfolioValue.toLocaleString('it-IT')}</div></div>
+          <div><div class="text-[8px] text-gray-500 uppercase">Rendita/g</div><div class="text-sm font-bold font-mono text-green-400">${totalDailyRent > 0 ? '€' + totalDailyRent.toLocaleString('it-IT') : '—'}</div></div>
+        </div>
+        <div class="text-[9px] text-gray-500 mt-2">Le rendite vengono accreditate automaticamente dal server ogni 24h.</div>
+      </div>
     </div>
-    <div class="space-y-3">`;
+    <div class="space-y-4">`;
 
     listings.forEach(l => {
-        const isOwned = ownedIds.has(l.id);
-        const canAfford = gameState.cash >= l.cost;
-        const ownedRow = owned.find(o => o.listing_id === l.id);
+        const isOwned   = ownedIds.has(l.id);
+        const canAfford = gameState.cash >= (l.cost || 0);
+        const ownedRow  = owned.find(o => o.listing_id === l.id);
+
         let nextRentStr = '';
         if (isOwned && ownedRow?.last_rent_at) {
-            const lastRent = new Date(ownedRow.last_rent_at);
-            const nextRent = new Date(lastRent.getTime() + 24*3600*1000);
-            const diffMs   = nextRent - Date.now();
+            const diffMs = new Date(ownedRow.last_rent_at).getTime() + 86400000 - Date.now();
             if (diffMs > 0) {
                 const hrs = Math.floor(diffMs / 3600000), mins = Math.floor((diffMs % 3600000) / 60000);
-                nextRentStr = `Prossima rendita tra ${hrs}h ${mins}m`;
+                nextRentStr = `🕐 Prossima rendita tra ${hrs}h ${mins}m`;
             } else {
-                nextRentStr = 'Rendita in arrivo…';
+                nextRentStr = '🕐 Rendita in arrivo…';
             }
         }
 
         html += `
-        <div class="hud-card ${isOwned ? '!border-gold/60 bg-gold/5' : !canAfford ? '!border-white/5 opacity-70' : '!border-white/10'}">
-            <div class="flex justify-between items-start mb-2">
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold text-white">${l.name}
-                        ${isOwned ? '<span class="ml-1 text-[8px] bg-gold/20 text-gold border border-gold/30 px-1 rounded">TUO</span>' : ''}
-                    </div>
-                    <div class="text-[9px] text-gray-500 uppercase">${l.city}</div>
-                    ${l.description ? `<div class="text-[9px] text-gray-400 mt-0.5 italic">${l.description}</div>` : ''}
-                    ${l.bonus_type === 'driver_stress_recovery' ? `<div class="text-[9px] text-purple-400 mt-0.5">✨ Bonus: recupero stress autisti a ${l.bonus_city}</div>` : ''}
-                    ${isOwned && nextRentStr ? `<div class="text-[9px] text-cyan-400 mt-0.5">🕐 ${nextRentStr}</div>` : ''}
-                </div>
-                <div class="text-right ml-2 shrink-0">
-                    <div class="text-xs font-bold text-gold">€${(l.cost||0).toLocaleString()}</div>
-                    <div class="text-[9px] text-green-400">+€${(l.daily_rent||0).toLocaleString()}/g</div>
-                </div>
+        <div class="ls-card ${isOwned ? 'ls-card-owned' : !canAfford ? 'opacity-60' : ''}">
+          ${l.image_url ? `
+          <div class="ls-card-img-wrap">
+            <img src="${l.image_url}" alt="${l.name}" class="ls-card-img" loading="lazy">
+            ${isOwned ? '<div class="ls-card-owned-badge">✓ Tuo</div>' : ''}
+            <div class="ls-card-img-overlay"></div>
+            <div class="ls-card-img-title">
+              <div class="ls-card-name">${l.name}</div>
+              <div class="ls-card-location" style="color:#d4af37">${l.city}</div>
             </div>
-            ${!isOwned ? `
-            <button onclick="window.doBuyRealEstate('${l.id}')"
-                class="${canAfford ? 'btn-gold' : 'btn-gold opacity-40 cursor-not-allowed'} w-full !text-[9px] !py-1.5"
-                ${canAfford ? '' : 'disabled'}>
-                🏛 Acquista — €${(l.cost||0).toLocaleString()}
-            </button>
-            ${!canAfford ? `<div class="text-[8px] text-red-400 text-center mt-1">Fondi insufficienti (mancano €${((l.cost||0)-gameState.cash).toLocaleString()})</div>` : ''}` : `
-            <div class="text-[9px] text-green-400/80 bg-green-950/20 border border-green-500/20 rounded px-2 py-1">
-                ✅ Rendita automatica: €${(l.daily_rent||0).toLocaleString()} ogni 24h
-            </div>`}
+          </div>` : `
+          <div class="ls-card-no-img px-4 pt-3 flex justify-between">
+            <div><div class="ls-card-name">${l.name}</div><div class="ls-card-location" style="color:#d4af37">${l.city}</div></div>
+            ${isOwned ? '<div class="ls-card-owned-badge" style="position:static;margin-top:4px">✓ Tuo</div>' : ''}
+          </div>`}
+          <div class="px-4 py-3">
+            ${l.description ? `<div class="text-[9px] text-gray-400 leading-relaxed mb-2">${l.description}</div>` : ''}
+            <div class="flex flex-wrap gap-1 mb-3">
+              <span class="ls-badge ls-badge-green">+€${(l.daily_rent||0).toLocaleString('it-IT')}/g</span>
+              ${l.bonus_type === 'driver_stress_recovery' ? `<span class="ls-badge ls-badge-purple">✨ Recupero stress autisti</span>` : ''}
+              ${isOwned && nextRentStr ? `<span class="ls-badge ls-badge-cyan">${nextRentStr}</span>` : ''}
+            </div>
+            <div class="flex justify-between items-center">
+              <div class="text-xs font-bold font-mono text-gold">€${(l.cost||0).toLocaleString('it-IT')}</div>
+              ${isOwned
+                ? `<span class="text-[9px] font-bold text-green-400">✓ Rendita attiva</span>`
+                : `<button onclick="window.doBuyRealEstate('${l.id}')"
+                     class="btn-gold !text-[9px] !py-1.5 !px-3 ${canAfford ? '' : 'opacity-40 cursor-not-allowed'}"
+                     ${canAfford ? '' : 'disabled'}>
+                     Acquista
+                   </button>`
+              }
+            </div>
+            ${!isOwned && !canAfford ? `<div class="text-[8px] text-red-400 text-right mt-1">Mancano €${((l.cost||0) - gameState.cash).toLocaleString('it-IT')}</div>` : ''}
+          </div>
         </div>`;
     });
 
