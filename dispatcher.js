@@ -3632,67 +3632,75 @@ function renderTabLifestyle() {
         ${intlUnlocked ? `<div class="mt-2 text-[9px] text-center" style="color:#00f2ff">✈️ Tratte internazionali attive — Ginevra · Montecarlo · Cannes</div>` : ''}
     </div>`;
 
-    // Real Estate section
-    const realEstate = assets.filter(a => a.category === 'real_estate');
-    html += `<div class="text-[9px] uppercase tracking-widest mb-2 mt-1" style="color:#d4af37">🏙️ Immobili di Lusso</div>`;
-    realEstate.forEach(a => {
-        const isOwned = owned.includes(a.id);
+    // Mappa asset → immagine
+    const _LIFESTYLE_IMG = {
+        attico_milano:      'assets/lifestyle/attico-citylife.jpg',
+        villa_porto_cervo:  'assets/lifestyle/villa-porto-cervo.jpg',
+        ufficio_wall_street:'assets/lifestyle/ufficio-one-world-trade.jpg',
+        jet_privato:        'assets/lifestyle/gulfstream-g700.jpg',
+        yacht_lusso:        'assets/lifestyle/mega-yacht.jpg',
+    };
+
+    const _lifestyleCard = (a, accentColor) => {
+        const isOwned   = owned.includes(a.id);
         const canAfford = gameState.cash >= a.price;
-        html += `
-        <div class="lifestyle-card mb-3 ${isOwned ? 'lifestyle-owned' : ''}">
-            <div class="flex items-start gap-3 mb-2">
+        const imgSrc    = _LIFESTYLE_IMG[a.id];
+        const badges = [
+            a.passive > 0      ? `<span class="ls-badge ls-badge-green">+€${a.passive.toLocaleString()}/g</span>` : '',
+            a.repBonus > 0     ? `<span class="ls-badge ls-badge-gold">+${a.repBonus}★ rep</span>` : '',
+            a.unlocksDiamond   ? `<span class="ls-badge ls-badge-gold">🔶 Diamond</span>` : '',
+            a.stockBonus > 0   ? `<span class="ls-badge ls-badge-cyan">+${Math.round(a.stockBonus*100)}% stocks</span>` : '',
+            a.intlUnlock       ? `<span class="ls-badge ls-badge-cyan">✈️ Rotte Intl</span>` : '',
+            a.staffBonus > 0   ? `<span class="ls-badge ls-badge-purple">Staff +${Math.round(a.staffBonus*100)}%</span>` : '',
+            a.energyBonus > 0  ? `<span class="ls-badge ls-badge-purple">CEO +${a.energyBonus} energia</span>` : '',
+        ].filter(Boolean).join('');
+
+        return `
+        <div class="ls-card mb-4 ${isOwned ? 'ls-card-owned' : ''}">
+            ${imgSrc ? `
+            <div class="ls-card-img-wrap">
+                <img src="${imgSrc}" alt="${a.name}" class="ls-card-img" loading="lazy">
+                ${isOwned ? '<div class="ls-card-owned-badge">✓ Posseduto</div>' : ''}
+                <div class="ls-card-img-overlay"></div>
+                <div class="ls-card-img-title">
+                    <div class="ls-card-name">${a.name}</div>
+                    <div class="ls-card-location" style="color:${accentColor}">${a.location}</div>
+                </div>
+            </div>` : `
+            <div class="ls-card-no-img px-4 pt-4 flex items-center gap-3">
                 <span class="text-3xl">${a.icon}</span>
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold text-white">${a.name}</div>
-                    <div class="text-[9px]" style="color:#d4af37">${a.location}</div>
-                    <div class="text-[9px] text-gray-400 mt-1 leading-relaxed">${a.desc}</div>
+                <div>
+                    <div class="ls-card-name">${a.name}</div>
+                    <div class="ls-card-location" style="color:${accentColor}">${a.location}</div>
                 </div>
-            </div>
-            <div class="flex justify-between items-center mt-2">
-                <div class="flex gap-3">
-                    ${a.passive > 0 ? `<span class="text-[9px] text-green-400">+€${a.passive.toLocaleString()}/g</span>` : ''}
-                    ${a.repBonus > 0 ? `<span class="text-[9px]" style="color:#d4af37">+${a.repBonus}★</span>` : ''}
-                    ${a.unlocksDiamond ? `<span class="text-[9px]" style="color:#d4af37">🔶 Diamond</span>` : ''}
-                    ${a.stockBonus > 0 ? `<span class="text-[9px]" style="color:#00f2ff">+${Math.round(a.stockBonus*100)}% stocks</span>` : ''}
+            </div>`}
+            <div class="px-4 py-3">
+                <div class="text-[9px] text-gray-400 leading-relaxed mb-3">${a.desc}</div>
+                <div class="flex flex-wrap gap-1 mb-3">${badges}</div>
+                <div class="flex justify-between items-center">
+                    <div class="text-xs font-bold font-mono" style="color:${accentColor}">€${a.price.toLocaleString('it-IT')}</div>
+                    ${isOwned
+                        ? `<span class="text-[9px] font-bold text-green-400 uppercase">✓ Nel portfolio</span>`
+                        : `<button onclick="buyLifestyleAsset('${a.id}')"
+                             class="btn-gold !text-[9px] !py-1.5 !px-3 ${canAfford ? '' : 'opacity-40 cursor-not-allowed'}"
+                             ${canAfford ? '' : 'disabled'}>
+                             Acquista
+                           </button>`
+                    }
                 </div>
-                ${isOwned
-                    ? `<span class="text-[9px] font-bold text-green-400 uppercase">✓ Posseduto</span>`
-                    : `<button onclick="buyLifestyleAsset('${a.id}')" class="btn-gold !text-[9px] !py-1 ${canAfford?'':'opacity-50'}"  ${canAfford?'':'disabled'}>€${a.price.toLocaleString()}</button>`
-                }
             </div>
         </div>`;
-    });
+    };
+
+    // Real Estate section
+    const realEstate = assets.filter(a => a.category === 'real_estate');
+    html += `<div class="text-[9px] uppercase tracking-widest mb-3 mt-1" style="color:#d4af37">🏙️ Immobili di Lusso</div>`;
+    realEstate.forEach(a => { html += _lifestyleCard(a, '#d4af37'); });
 
     // Elite vehicles
     const eliteVehicles = assets.filter(a => a.category === 'vehicle_elite');
-    html += `<div class="text-[9px] uppercase tracking-widest mb-2 mt-3" style="color:#00f2ff">✈️ Mezzi Elite</div>`;
-    eliteVehicles.forEach(a => {
-        const isOwned = owned.includes(a.id);
-        const canAfford = gameState.cash >= a.price;
-        html += `
-        <div class="lifestyle-card mb-3 ${isOwned ? 'lifestyle-owned' : ''}">
-            <div class="flex items-start gap-3 mb-2">
-                <span class="text-3xl">${a.icon}</span>
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold text-white">${a.name}</div>
-                    <div class="text-[9px]" style="color:#00f2ff">${a.location}</div>
-                    <div class="text-[9px] text-gray-400 mt-1 leading-relaxed">${a.desc}</div>
-                </div>
-            </div>
-            <div class="flex justify-between items-center mt-2">
-                <div class="flex gap-3">
-                    ${a.passive > 0 ? `<span class="text-[9px] text-green-400">+€${a.passive.toLocaleString()}/g</span>` : ''}
-                    ${a.repBonus > 0 ? `<span class="text-[9px]" style="color:#d4af37">+${a.repBonus}★</span>` : ''}
-                    ${a.intlUnlock ? `<span class="text-[9px]" style="color:#00f2ff">✈️ Intl Routes</span>` : ''}
-                    ${a.staffBonus > 0 ? `<span class="text-[9px] text-purple-400">Staff +${Math.round(a.staffBonus*100)}% energy</span>` : ''}
-                </div>
-                ${isOwned
-                    ? `<span class="text-[9px] font-bold text-green-400 uppercase">✓ Posseduto</span>`
-                    : `<button onclick="buyLifestyleAsset('${a.id}')" class="btn-gold !text-[9px] !py-1 ${canAfford?'':'opacity-50'}" ${canAfford?'':'disabled'}>€${a.price.toLocaleString()}</button>`
-                }
-            </div>
-        </div>`;
-    });
+    html += `<div class="text-[9px] uppercase tracking-widest mb-3 mt-4" style="color:#00f2ff">✈️ Mezzi Elite</div>`;
+    eliteVehicles.forEach(a => { html += _lifestyleCard(a, '#00f2ff'); });
 
     // Diamond requirements info
     const diamondEligible = owned.some(id => assets.find(a => a.id === id && a.unlocksDiamond));
