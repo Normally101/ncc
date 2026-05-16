@@ -345,6 +345,9 @@ function initMap() {
         setTimeout(() => { drawHighways(); drawPOIs(); }, 800);
         setTimeout(() => { drawHighways(); drawPOIs(); }, 2500);
         if (typeof window.switchTab === 'function') window.switchTab('corse');
+        // Rimuovi loading placeholder
+        const _mapLoader = document.getElementById('map-loading');
+        if (_mapLoader) _mapLoader.remove();
     });
 }
 
@@ -1115,7 +1118,15 @@ window.switchTab = function(tab) {
         case 'store':    title.innerText = "💎 Executive Club"; _safeRender(renderTabPremiumStore); break;
         case 'market':   title.innerText = "🚗 Mercato Auto"; _safeRender(renderTabMarket); break;
         case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;
-        case 'provinces':  title.innerText = "🗺️ War Room"; _safeRender(window.renderTabWarRoom || renderTabProvinces); break;
+        case 'provinces':
+            title.innerText = "🗺️ War Room";
+            {
+                const _mapEl = document.getElementById('leaflet-map');
+                if (_mapEl) _mapEl.classList.remove('hidden');
+                _ensureMap();
+            }
+            _safeRender(window.renderTabWarRoom || renderTabProvinces);
+            break;
         case 'showroom':   title.innerText = "🚘 Showroom"; _safeRender(renderTabShowroom); break;
         case 'realestate': title.innerText = "🏛 Real Estate"; _safeRender(renderTabRealEstate); break;
         case 'b2b':        title.innerText = "💼 Contratti B2B"; _safeRender(window.renderTabB2B); break;
