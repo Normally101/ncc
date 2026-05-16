@@ -3489,6 +3489,13 @@ function completeRide(ride, _deferPay = false) {
         if (_trip) _trip.earnings = earned;
     } else {
         gameState.cash += earned;
+        // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
+        if (window.supabaseClient && window.currentUser) {
+            window.supabaseClient.rpc('rpc_pay_majority_dividend', {
+                v_target_user_id: window.currentUser.id,
+                v_ride_earnings:  earned
+            }).catch(() => { /* silent — offline o nessuna OPA attiva */ });
+        }
     }
     gameState.reputation = Math.min(5.0 + gameState.prestige, gameState.reputation + 0.02);
 
@@ -5018,6 +5025,13 @@ function checkActiveTrips() {
         // Pay earnings
         if (trip.earnings != null) {
             gameState.cash += trip.earnings;
+            // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
+            if (window.supabaseClient && window.currentUser) {
+                window.supabaseClient.rpc('rpc_pay_majority_dividend', {
+                    v_target_user_id: window.currentUser.id,
+                    v_ride_earnings:  trip.earnings
+                }).catch(() => { /* silent — offline o nessuna OPA attiva */ });
+            }
             const fmt = trip.earnings >= 1000
                 ? `€${(trip.earnings / 1000).toFixed(1)}k`
                 : `€${trip.earnings}`;
