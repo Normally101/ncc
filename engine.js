@@ -5265,9 +5265,9 @@ window._claimDailyUI = function(cash, titanCoins) {
             showNotification(`💰 +€${cash.toLocaleString('it-IT')} bonus giornaliero!`, 'success');
     }
     if (titanCoins > 0) {
-        gameState.titanCoins = (gameState.titanCoins || 0) + titanCoins;
+        gameState.driverCoins = (gameState.driverCoins || 0) + titanCoins;
         if (typeof showNotification === 'function')
-            showNotification(`💎 +${titanCoins} TC bonus settimanale!`, 'success');
+            showNotification(`🪙 +${titanCoins} Driver Coins bonus settimanale!`, 'success');
     }
     updateUI();
     saveGame();

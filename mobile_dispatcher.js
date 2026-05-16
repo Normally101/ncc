@@ -99,12 +99,14 @@ window._mobAcceptRide = function(idx) {
     if (!ride) return;
     // Assegna la corsa al primo autista disponibile (come fa la UI desktop)
     const driver = (gameState.drivers || []).find(d => d.status === 'idle' && d.id !== 'ceo');
-    if (driver && typeof window.assignRideToDriver === 'function') {
-        window.assignRideToDriver(driver, ride);
-    } else if (typeof window.assignRideToDriver === 'function') {
-        // Nessun driver disponibile — affida al CEO
-        const ceo = (gameState.drivers || []).find(d => d.id === 'ceo');
-        if (ceo) window.assignRideToDriver(ceo, ride);
+    if (typeof window.assignRideToDriver === 'function') {
+        if (driver) {
+            window.assignRideToDriver(ride.id, driver.id);
+        } else {
+            // Nessun driver disponibile — affida al CEO
+            const ceo = (gameState.drivers || []).find(d => d.id === 'ceo');
+            if (ceo) window.assignRideToDriver(ride.id, ceo.id);
+        }
     }
     setTimeout(_mobRefreshRides, 300);
 };
