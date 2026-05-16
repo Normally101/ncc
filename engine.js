@@ -3322,6 +3322,7 @@ function startNextRide(driver) {
         driverName: driver.name,
         fromName:   ride.fromPoi?.name || '?',
         toName:     ride.toPoi?.name  || '?',
+        fromPoiId:  ride.fromPoi?.id  || null,
         tier:       ride.tier,
         startTime:  Date.now(),
         endTime:    Date.now() + _realMs,
@@ -3507,6 +3508,14 @@ function completeRide(ride, _deferPay = false) {
                 v_target_user_id: window.currentUser.id,
                 v_ride_earnings:  earned
             }).catch(() => { /* silent — offline o nessuna OPA attiva */ });
+            // Espansione 12: levy deposito carburante
+            const _levyProv = ride.fromPoi?.id ? _POI_TO_PROVINCE[ride.fromPoi.id] : null;
+            if (_levyProv) {
+                window.supabaseClient.rpc('rpc_pay_fuel_levy', {
+                    v_province_id: _levyProv,
+                    v_fare: earned
+                }).catch(() => {});
+            }
         }
     }
     gameState.reputation = Math.min(5.0 + gameState.prestige, gameState.reputation + 0.02);
@@ -5043,6 +5052,14 @@ function checkActiveTrips() {
                     v_target_user_id: window.currentUser.id,
                     v_ride_earnings:  trip.earnings
                 }).catch(() => { /* silent — offline o nessuna OPA attiva */ });
+                // Espansione 12: levy deposito carburante
+                const _tripProvince = trip.fromPoiId ? _POI_TO_PROVINCE[trip.fromPoiId] : null;
+                if (_tripProvince) {
+                    window.supabaseClient.rpc('rpc_pay_fuel_levy', {
+                        v_province_id: _tripProvince,
+                        v_fare: trip.earnings
+                    }).catch(() => {});
+                }
             }
             const fmt = trip.earnings >= 1000
                 ? `€${(trip.earnings / 1000).toFixed(1)}k`
