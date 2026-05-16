@@ -3668,7 +3668,7 @@ window.decreesRefresh = async function(force = false) {
     const now = Date.now();
     if (!force && now - window._decreesState._lastFetch < 60000) return;
     window._decreesState._lastFetch = now;
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     const [dRes, aRes] = await Promise.all([
         sb.rpc('rpc_get_server_decrees'),
@@ -3697,7 +3697,7 @@ window.voteServerDecree = async function(decreeId, points) {
     if (!pts || pts < 1) { if(typeof showNotification==='function') showNotification('Inserisci punti validi', 'error'); return; }
     if ((gameState.lobbyingPoints || 0) < pts) { if(typeof showNotification==='function') showNotification('Punti lobbying insufficienti', 'error'); return; }
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_vote_server_decree', { v_decree_id: decreeId, v_points_spent: pts });
     if (error) { if(typeof showNotification==='function') showNotification('Voto fallito: ' + error.message, 'error'); return; }
@@ -5053,7 +5053,7 @@ function _updateActiveRouteLinesColored() {
             map.setPaintProperty('active-routes-glow', 'line-color', '#ff4060');
             map.setPaintProperty('active-routes-core', 'line-color', '#ff6080');
             setTimeout(() => {
-                if (!map.getSource('active-routes')) return;
+                if (!map || !map.getSource('active-routes')) return;
                 if (trafficFeatures.length === 0) {
                     try { map.setPaintProperty('active-routes-glow', 'line-color', '#f59e0b'); } catch(e) {}
                     try { map.setPaintProperty('active-routes-core', 'line-color', '#fbbf24'); } catch(e) {}

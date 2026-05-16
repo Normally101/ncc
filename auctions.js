@@ -55,7 +55,7 @@ window.auctionsRefresh = async function(force = false) {
     if (!force && now - window._auctionsState._lastFetch < 30000) return;
     window._auctionsState._lastFetch = now;
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
 
     const [aRes, wRes, bRes] = await Promise.all([
@@ -70,7 +70,7 @@ window.auctionsRefresh = async function(force = false) {
 };
 
 window.auctionsPlaceBid = async function(auctionId, amount) {
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return { error: 'Supabase non disponibile' };
 
     const { data, error } = await sb.rpc('rpc_place_auction_bid', {
@@ -346,7 +346,7 @@ window.renderTabAuctions = function() {
 // ── REALTIME ──────────────────────────────────────────────────────────────────
 
 function _auctionsSubscribeRealtime() {
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb || window._auctionsState._sub) return;
 
     window._auctionsState._sub = sb

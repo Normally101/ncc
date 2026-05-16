@@ -17,7 +17,7 @@ window.globalEventsRefresh = async function(force = false) {
     if (!force && now - window._globalEventsState._lastFetch < 120000) return; // 2-min cache
     window._globalEventsState._lastFetch = now;
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
 
     // Sync statuses server-side first (idempotent)
@@ -120,7 +120,7 @@ function _applyGlobalEventBanner() {
 // ── REALTIME ──────────────────────────────────────────────────────────────────
 
 function _globalEventsSubscribe() {
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb || window._globalEventsState._sub) return;
 
     window._globalEventsState._sub = sb

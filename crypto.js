@@ -49,7 +49,7 @@ window.cryptoRefresh = async function(force = false) {
     if (!force && now - window._cryptoState._lastFetch < 30000) return;
     window._cryptoState._lastFetch = now;
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
 
     const [mRes, pRes, oRes] = await Promise.all([
@@ -68,7 +68,7 @@ window.cryptoBuy = async function(coinId, eurAmount) {
     if (!amount || amount < 100) { if(typeof showNotification==='function') showNotification('Minimo €100', 'error'); return; }
     if ((gameState.cash || 0) < amount) { if(typeof showNotification==='function') showNotification('Fondi insufficienti', 'error'); return; }
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_buy_crypto', { v_coin_id: coinId, v_eur_in: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Acquisto fallito', error), 'error'); return; }
@@ -85,7 +85,7 @@ window.cryptoSell = async function(coinId, coinAmount) {
     const amount = parseFloat(coinAmount);
     if (!amount || amount <= 0) { if(typeof showNotification==='function') showNotification('Quantità non valida', 'error'); return; }
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_sell_crypto', { v_coin_id: coinId, v_coins_in: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Vendita fallita', error), 'error'); return; }
@@ -105,7 +105,7 @@ window.cryptoDepositOffshore = async function(jurisdiction, eurAmount) {
 
     if (!confirm(`Depositare €${amount.toLocaleString()} nel conto offshore ${jurisdiction}? Commissione: 3%.`)) return;
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_deposit_offshore', { v_jurisdiction: jurisdiction, v_eur_amount: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Deposito offshore fallito', error), 'error'); return; }
@@ -124,7 +124,7 @@ window.cryptoWithdrawOffshore = async function(jurisdiction, eurAmount) {
 
     if (!confirm(`Prelevare €${amount.toLocaleString()} dal conto ${jurisdiction}? RISCHIO: sequestro GdF (8%+).`)) return;
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_withdraw_offshore', { v_jurisdiction: jurisdiction, v_eur_amount: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Prelievo fallito', error), 'error'); return; }
@@ -319,7 +319,7 @@ window.renderTabCrypto = function() {
 // ── REALTIME ──────────────────────────────────────────────────────────────────
 
 function _cryptoSubscribeRealtime() {
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb || window._cryptoState._sub) return;
 
     window._cryptoState._sub = sb

@@ -100,7 +100,7 @@ window.shadowRefresh = async function(force = false) {
     const now = Date.now();
     if (!force && now - window._shadowState._lastFetch < 30000) return;
     window._shadowState._lastFetch = now;
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     const [tRes, lRes] = await Promise.all([
         sb.rpc('rpc_get_shadow_targets'),
@@ -122,7 +122,7 @@ window.shadowExecuteOp = async function(targetId, opId) {
         return;
     }
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
 
     if (!confirm(`Eseguire "${op.name}" su ${target.name || 'target'} per €${op.cost.toLocaleString()}?`)) return;
@@ -163,7 +163,7 @@ window.shadowExecuteOp = async function(targetId, opId) {
 };
 
 window.shadowUpgradeDefense = async function() {
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
     // Get current defense level from log (most recent op received)
     const currentLevel = gameState._shadowDefenseLevel || 0;

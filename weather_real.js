@@ -17,7 +17,7 @@ window.realWeatherRefresh = async function(force = false) {
     if (!force && now - window._realWeatherState._lastFetch < 300000) return; // 5-min cache
     window._realWeatherState._lastFetch = now;
 
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb) return;
 
     const { data, error } = await sb.rpc('rpc_get_real_weather');
@@ -125,7 +125,7 @@ window.renderRealWeatherPanel = function() {
 // ── REALTIME SUBSCRIPTION ─────────────────────────────────────────────────────
 
 function _realWeatherSubscribe() {
-    const sb = window.supabase;
+    const sb = window.supabaseClient;
     if (!sb || window._realWeatherState._sub) return;
 
     window._realWeatherState._sub = sb
