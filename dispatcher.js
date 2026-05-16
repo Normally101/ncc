@@ -332,6 +332,34 @@ function initMap() {
             paint: { 'line-color': '#00cccc', 'line-width': 1.0, 'line-opacity': 0.55, 'line-dasharray': [3, 3] }
         });
 
+        // Sorgente GeoJSON per veicoli — rendering nativo WebGL (niente DOM nodes)
+        map.addSource('vehicles', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'vehicles-layer',
+            type: 'circle',
+            source: 'vehicles',
+            paint: {
+                'circle-radius': [
+                    'match', ['get', 'tier'],
+                    'economy',   5, 'business', 6, 'first', 7,
+                    'vip',       9, 'helicopter', 10, 'jet', 10, 5
+                ],
+                'circle-color': [
+                    'match', ['get', 'tier'],
+                    'economy',   '#9ca3af', 'business', '#60a5fa', 'first', '#a78bfa',
+                    'vip',       '#fbbf24', 'helicopter', '#34d399', 'jet', '#f472b6',
+                    '#9ca3af'
+                ],
+                'circle-opacity': 0.95,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff',
+                'circle-stroke-opacity': 0.5
+            }
+        });
+
         map.on('zoom', _updatePOIVisibility);
 
         _mapReady = true;
@@ -366,6 +394,39 @@ function _destroyMap() {
     map = null;
     const el = document.getElementById('leaflet-map');
     if (el) el.classList.add('hidden');
+}
+
+function _updateVehicleLayer() {
+    if (!map || !map.getSource('vehicles')) return;
+    const features = [];
+    (gameState.activeRides || []).forEach(ride => {
+        const cached = _rideGeomCache[ride.id];
+        if (!cached || !cached.lastPos) return;
+        const [lat, lng] = cached.lastPos;
+        features.push({
+            type: 'Feature',
+            properties: { id: ride.id, tier: ride.tier || 'economy' },
+            geometry: { type: 'Point', coordinates: [lng, lat] }
+        });
+    });
+    (gameState.activeTrips || []).forEach(trip => {
+        const cached = _rideGeomCache[trip.id];
+        if (!cached) return;
+        let pos = cached.lastPos;
+        if (cached.roadGeom && cached.roadGeom.length >= 2) {
+            const dest = cached.roadGeom[cached.roadGeom.length - 1];
+            pos = [dest[1], dest[0]];
+        } else if (cached.toPoi) {
+            pos = [cached.toPoi.lat, cached.toPoi.lng];
+        }
+        if (!pos) return;
+        features.push({
+            type: 'Feature',
+            properties: { id: trip.id, tier: trip.tier || 'economy' },
+            geometry: { type: 'Point', coordinates: [pos[1], pos[0]] }
+        });
+    });
+    map.getSource('vehicles').setData({ type: 'FeatureCollection', features });
 }
 
 function _updateRegionLabels() {
@@ -668,6 +729,9 @@ function visualLoop() {
             delete _rideGeomCache[id];
         }
     }
+
+    // ── Aggiorna GeoJSON vehicle layer (WebGL circles) ─────────────
+    _updateVehicleLayer();
 
     // ── Update trail source ─────────────────────────────────────────
     const trailSrc = map.getSource('vehicle-trails');
