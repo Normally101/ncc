@@ -105,6 +105,72 @@ function _applyEmailTemplate(emailObj, type, vars) {
     emailObj.signature   = sub(tpl.signature);
 }
 
+function _getBrandVolumeBonus() {
+    const bv = gameState.brandVolume || 0;
+    if (bv >= 100) return 0.40;
+    if (bv >= 75)  return 0.30;
+    if (bv >= 50)  return 0.18;
+    if (bv >= 25)  return 0.08;
+    return 0;
+}
+
+function _getBrandPrestigeBonus() {
+    const bp = gameState.brandPrestige || 0;
+    if (bp >= 100) return 0.55;
+    if (bp >= 75)  return 0.40;
+    if (bp >= 50)  return 0.25;
+    if (bp >= 25)  return 0.10;
+    return 0;
+}
+
+function _applyMarketingCampaign(campaignId) {
+    if (!gameState.activeCampaigns) gameState.activeCampaigns = [];
+    const hasMarkDir = gameState.staff.some(s => s.id === 'marketing_dir' || s.id === 'mktg');
+    const maxSlots = hasMarkDir ? 2 : 1;
+    if (gameState.activeCampaigns.length >= maxSlots) {
+        showNotification(`⚠️ Slot campagne pieni (${maxSlots}/${maxSlots}). Rimuovi una campagna prima.`, 'error');
+        return false;
+    }
+    const camp = MARKETING_CAMPAIGNS.find(c => c.id === campaignId);
+    if (!camp) return false;
+    // Check cooldown
+    const existing = (gameState.activeCampaigns || []).find(ac => ac.id === campaignId);
+    if (existing) { showNotification('Campagna già attiva.', 'error'); return false; }
+    // Check unlock requirements
+    const bv = gameState.brandVolume || 0;
+    const bp = gameState.brandPrestige || 0;
+    if (camp.tier === 'growth' && bv < camp.unlockBrand && bp < camp.unlockBrand) {
+        showNotification(`Richiede Brand Volume o Prestige ≥ ${camp.unlockBrand}.`, 'error'); return false;
+    }
+    if (camp.tier === 'empire') {
+        if (bv < camp.unlockBrand && bp < camp.unlockBrand) {
+            showNotification(`Richiede Brand Volume o Prestige ≥ ${camp.unlockBrand}.`, 'error'); return false;
+        }
+        if (camp.unlockRep > 0 && gameState.reputation < camp.unlockRep) {
+            showNotification(`Richiede reputazione ≥ ${camp.unlockRep}★.`, 'error'); return false;
+        }
+    }
+    if (gameState.cash < camp.dailyCost) {
+        showNotification(`Liquidità insufficiente (costo giornaliero €${camp.dailyCost.toLocaleString('it-IT')}).`, 'error'); return false;
+    }
+    const endsDay = gameState.day + camp.duration;
+    gameState.activeCampaigns.push({ id: campaignId, startDay: gameState.day, endsDay, cooldownUntil: endsDay + (camp.cooldown || 0) });
+    if (camp.repBonus) gameState.reputation = Math.min(5.0, (gameState.reputation || 0) + camp.repBonus);
+    showNotification(`🚀 Campagna "${camp.name}" avviata! Dura ${camp.duration} giorni.`, 'success');
+    if (typeof renderTabMarketing === 'function') renderTabMarketing();
+    return true;
+}
+
+function _stopMarketingCampaign(campaignId) {
+    if (!gameState.activeCampaigns) return;
+    gameState.activeCampaigns = gameState.activeCampaigns.filter(ac => ac.id !== campaignId);
+    showNotification('Campagna interrotta.', 'info');
+    if (typeof renderTabMarketing === 'function') renderTabMarketing();
+}
+
+window._applyMarketingCampaign = _applyMarketingCampaign;
+window._stopMarketingCampaign  = _stopMarketingCampaign;
+
 let tempLeaseTier = null;
 
 let gameState = {
@@ -116,6 +182,12 @@ let gameState = {
     availableRecruits: [],
     weather: 'sole', weatherHoursLeft: 6,
     activeCampaign: null,
+    activeCampaigns: [],     // [{id, startDay, endsDay, cooldownUntil}]
+    brandVolume: 0,          // 0-100
+    brandPrestige: 0,        // 0-100
+    campaignROI: {},         // {campaignId: totalRevenue}
+    portfolioValueYesterday: 0,
+    stockPrevPrices: {},
     activeFines: [],
     achievements: [],
     loans: [],
@@ -833,10 +905,26 @@ function gameLoop() {
         // Stagionalità: genera corse extra nelle alte stagioni
         const season = _getSeasonalMult();
         if (season.rideBonus > 1.0 && Math.random() < (season.rideBonus - 1.0) * 2) generatePOIRide();
-        if (gameState.activeCampaign) {
-            const camp = MARKETING_CAMPAIGNS.find(c => c.id === gameState.activeCampaign);
-            if (camp) for (let i = 0; i < camp.extRidesPerHour; i++) generatePOIRide();
-        }
+        // Active campaigns: apply volumeBonus/prestigeBonus to ride spawn
+        const _acList = gameState.activeCampaigns || [];
+        _acList.forEach(ac => {
+            const _camp = MARKETING_CAMPAIGNS.find(c => c.id === ac.id);
+            if (!_camp) return;
+            // Volume bonus → extra standard rides
+            if (_camp.volumeBonus > 0 && Math.random() < _camp.volumeBonus) generatePOIRide();
+            // Prestige bonus → extra VIP rides
+            if (_camp.prestigeBonus > 0 && Math.random() < _camp.prestigeBonus * 0.5) generatePOIRide('vip');
+        });
+        // Brand Volume threshold → extra standard rides
+        const _bv = gameState.brandVolume || 0;
+        const _bp = gameState.brandPrestige || 0;
+        if (_bv >= 75 && Math.random() < 0.30) generatePOIRide();
+        else if (_bv >= 50 && Math.random() < 0.18) generatePOIRide();
+        else if (_bv >= 25 && Math.random() < 0.08) generatePOIRide();
+        // Brand Prestige threshold → extra VIP rides
+        if (_bp >= 75 && Math.random() < 0.40) generatePOIRide('vip');
+        else if (_bp >= 50 && Math.random() < 0.25) generatePOIRide('vip');
+        else if (_bp >= 25 && Math.random() < 0.10) generatePOIRide('vip');
     }
 
     // Rival AI tick ogni 15 minuti di gioco
@@ -1758,6 +1846,7 @@ function _maybeGenerateFine() {
     };
     gameState.activeFines.push(fine);
     gameState.policeHeat = Math.min(100, (gameState.policeHeat || 0) + 5); // each fine adds heat
+    gameState.brandPrestige = Math.max(0, (gameState.brandPrestige || 0) - 5);
 
     // Auto-contest with legal advisor
     const hasLegal = gameState.staff.some(s => s.id === 'legal');
@@ -2399,10 +2488,52 @@ function processDailyRoutines() {
     if (hasInvestment('inv_tower')) luxuryTax = Math.floor(luxuryTax * 0.5);
 
     expenses += luxuryTax + profitTaxes;
-    if (gameState.activeCampaign) {
-        const camp = MARKETING_CAMPAIGNS.find(c => c.id === gameState.activeCampaign);
-        if (camp) expenses += camp.dailyCost;
+
+    // === MARKETING SYSTEM ===
+    // Migrate old activeCampaign string → activeCampaigns array (backward compat)
+    if (gameState.activeCampaign && !(gameState.activeCampaigns || []).length) {
+        gameState.activeCampaigns = [{ id: gameState.activeCampaign, startDay: gameState.day, endsDay: gameState.day + 999, cooldownUntil: 0 }];
+        gameState.activeCampaign = null;
     }
+    if (!gameState.activeCampaigns) gameState.activeCampaigns = [];
+    if (!gameState.campaignROI) gameState.campaignROI = {};
+    if (typeof gameState.brandVolume !== 'number') gameState.brandVolume = 0;
+    if (typeof gameState.brandPrestige !== 'number') gameState.brandPrestige = 0;
+
+    // Deduct daily cost + apply brand gains + expire finished campaigns
+    let hasVolumeCampaign = false, hasPrestigeCampaign = false;
+    gameState.activeCampaigns = gameState.activeCampaigns.filter(ac => {
+        if (gameState.day > ac.endsDay) return false; // expired
+        const camp = MARKETING_CAMPAIGNS.find(c => c.id === ac.id);
+        if (!camp) return false;
+        expenses += camp.dailyCost;
+        gameState.brandVolume   = Math.min(100, gameState.brandVolume   + (camp.volumeGain   || 0));
+        gameState.brandPrestige = Math.min(100, gameState.brandPrestige + (camp.prestigeGain || 0));
+        if (camp.axis === 'volume' || camp.axis === 'both') hasVolumeCampaign = true;
+        if (camp.axis === 'prestige' || camp.axis === 'both') hasPrestigeCampaign = true;
+        return true;
+    });
+
+    // Brand decay
+    if (!hasVolumeCampaign)   gameState.brandVolume   = Math.max(0, gameState.brandVolume   - 3);
+    if (!hasPrestigeCampaign) gameState.brandPrestige = Math.max(0, gameState.brandPrestige - 2);
+
+    // Unlock Diamond every 3 days if Prestige = 100
+    if (gameState.brandPrestige >= 100 && gameState.day % 3 === 0) {
+        if (typeof _generateDiamondContract === 'function') _generateDiamondContract();
+    }
+
+    // Portfolio tracking for Finance tab daily P&L
+    const _holdings = gameState.stockHoldings || {};
+    const _prices   = gameState.stockPrices   || {};
+    const _stockVal = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : [])
+        .reduce((s, t) => s + ((_holdings[t.id] || {}).shares || 0) * (_prices[t.id] || t.basePrice), 0);
+    const _brokerVal = (gameState.brokerInvestments || []).filter(b => b.active !== false)
+        .reduce((s, b) => s + (b.capital || 0), 0);
+    gameState.portfolioValueYesterday = _stockVal + _brokerVal;
+    // Snapshot prev prices for flash animation
+    gameState.stockPrevPrices = Object.assign({}, _prices);
+
     gameState.cash += (income - expenses);
     // Push authoritative cash to server (fire-and-forget — Realtime will confirm)
     if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
@@ -3457,6 +3588,7 @@ function completeRide(ride, _deferPay = false) {
             if(typeof showNotification==='function') showNotification(`🛡️ Kasko: incidente coperto!`, 'success');
         } else {
             if (car) car.condition = Math.max(0, car.condition - 20);
+            gameState.brandVolume = Math.max(0, (gameState.brandVolume || 0) - 3);
             logToMap(`💥 Guasto en-route: ${driver?.name}! Auto danneggiata (-20 cond.).`);
             if(typeof showNotification==='function') showNotification(`💥 Guasto! Auto di ${driver?.name} danneggiata.`, 'error');
         }
