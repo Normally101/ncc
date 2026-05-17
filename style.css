@@ -2475,3 +2475,116 @@ details[open] .finance-section-title { color: #00f2ff; }
     font-size: 8px;
     margin-bottom: 6px;
 }
+
+/* ═══════════════════════════════════════════════════════════
+   $WALL-ST FINANCE — BLOOMBERG AESTHETIC
+═══════════════════════════════════════════════════════════ */
+
+.finance-portfolio-dashboard {
+    background: linear-gradient(135deg, rgba(0,20,0,0.6), rgba(0,10,20,0.6));
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 8px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    font-family: 'Courier New', monospace;
+}
+.finance-portfolio-title {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #4b5563;
+    margin-bottom: 4px;
+}
+.finance-portfolio-total {
+    font-size: 22px;
+    font-weight: 900;
+    color: #f0fdf4;
+    font-family: 'Courier New', monospace;
+    letter-spacing: -0.5px;
+}
+.finance-portfolio-pl {
+    font-size: 11px;
+    font-weight: 600;
+    margin-left: 8px;
+    font-family: 'Courier New', monospace;
+}
+.finance-portfolio-pl.positive { color: #22c55e; }
+.finance-portfolio-pl.negative { color: #ef4444; }
+
+.finance-alloc-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    font-size: 8px;
+    font-family: 'Courier New', monospace;
+}
+.finance-alloc-label {
+    color: #6b7280;
+    width: 48px;
+    flex-shrink: 0;
+}
+.finance-alloc-bar-wrap {
+    flex: 1;
+    height: 4px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+}
+.finance-alloc-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+.finance-alloc-bar.stocks { background: #22c55e; }
+.finance-alloc-bar.broker { background: #3b82f6; }
+.finance-alloc-value {
+    color: #9ca3af;
+    width: 72px;
+    text-align: right;
+}
+.finance-alloc-pct {
+    color: #4b5563;
+    width: 28px;
+    text-align: right;
+}
+
+.finance-section-header {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #d97706;
+    border-bottom: 1px solid rgba(217,119,6,0.2);
+    padding-bottom: 4px;
+    margin: 14px 0 8px;
+    font-family: 'Courier New', monospace;
+}
+
+.finance-ticker-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.04);
+    margin-bottom: 4px;
+    font-family: 'Courier New', monospace;
+    font-size: 9px;
+    transition: background 0.15s;
+}
+.finance-ticker-row:hover { background: rgba(255,255,255,0.04); }
+.finance-ticker-symbol { color: #e5e7eb; font-weight: 700; width: 64px; }
+.finance-ticker-price  { color: #f9fafb; font-weight: 600; width: 64px; text-align: right; }
+.finance-ticker-change { width: 56px; text-align: right; font-size: 8px; font-weight: 600; }
+.finance-ticker-change.up   { color: #22c55e; }
+.finance-ticker-change.down { color: #ef4444; }
+.finance-ticker-change.flat { color: #6b7280; }
+.finance-ticker-shares { color: #6b7280; font-size: 8px; width: 48px; text-align: right; }
+
+@keyframes flashUp   { 0%{ background: rgba(22,163,74,0.25);  } 100%{ background: transparent; } }
+@keyframes flashDown { 0%{ background: rgba(220,38,38,0.25);  } 100%{ background: transparent; } }
+.price-flash-up   { animation: flashUp   0.5s ease-out; }
+.price-flash-down { animation: flashDown 0.5s ease-out; }

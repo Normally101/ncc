@@ -3378,6 +3378,14 @@ window.showNotification = window._realShowNotification = function(msg, type) {
 // ══════════════════════════════════════════════════════════════════
 // TAB FINANCE — $WALL-ST · Broker · Credit Score
 // ══════════════════════════════════════════════════════════════════
+function _flashTicker(id, dir) {
+    const el = document.getElementById('ftick-' + id);
+    if (!el) return;
+    el.classList.remove('price-flash-up', 'price-flash-down');
+    void el.offsetWidth; // reflow
+    el.classList.add(dir === 'up' ? 'price-flash-up' : 'price-flash-down');
+}
+
 function renderTabFinance() {
     const container = document.getElementById('tab-container');
     const hasWM = typeof _hasWealthManager === 'function' && _hasWealthManager();
@@ -3408,9 +3416,51 @@ function renderTabFinance() {
     const activeLoans = (gameState.loans || []).filter(l => l.amount > 0);
     const activeLoanTotal = activeLoans.reduce((s, l) => s + l.amount, 0);
 
+    // ── PORTFOLIO DASHBOARD CALCULATIONS ────────────────────────
+    const holdingsForDash = gameState.stockHoldings || {};
+    const pricesForDash = gameState.stockPrices || {};
+    const totalStockValue = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).reduce((sum, t) => {
+        const h = holdingsForDash[t.id] || { shares: 0 };
+        return sum + h.shares * (pricesForDash[t.id] || t.basePrice);
+    }, 0);
+    const brokerActiveForDash = (gameState.brokerInvestments || []).filter(b => b.active !== false);
+    const totalBrokerValue = brokerActiveForDash.reduce((s, b) => s + (b.capital || 0), 0);
+    const totalPortfolio = totalStockValue + totalBrokerValue;
+    const yesterday = gameState.portfolioValueYesterday || totalPortfolio;
+    const dailyPL = totalPortfolio - yesterday;
+    const dailyPct = yesterday > 0 ? (dailyPL / yesterday * 100) : 0;
+    const stockPct = totalPortfolio > 0 ? Math.round((totalStockValue / totalPortfolio) * 100) : 0;
+    const brokerPct = totalPortfolio > 0 ? Math.round((totalBrokerValue / totalPortfolio) * 100) : 0;
+    const plPositive = dailyPL >= 0;
+    const plClass = plPositive ? 'positive' : 'negative';
+    const plArrow = plPositive ? '▲' : '▼';
+    const plSign = plPositive ? '+' : '-';
+
+    const portfolioDashHtml = totalPortfolio > 0 ? `
+    <div class="finance-portfolio-dashboard">
+        <div class="finance-portfolio-title">▸ PORTAFOGLIO TOTALE</div>
+        <div>
+            <span class="finance-portfolio-total">€${Math.round(totalPortfolio).toLocaleString()}</span>
+            <span class="finance-portfolio-pl ${plClass}">${plSign}€${Math.round(Math.abs(dailyPL)).toLocaleString()} oggi ${plArrow} ${Math.abs(dailyPct).toFixed(2)}%</span>
+        </div>
+        <div class="finance-alloc-row">
+            <span class="finance-alloc-label">Azioni</span>
+            <div class="finance-alloc-bar-wrap"><div class="finance-alloc-bar stocks" style="width:${stockPct}%"></div></div>
+            <span class="finance-alloc-value">€${Math.round(totalStockValue).toLocaleString()}</span>
+            <span class="finance-alloc-pct">${stockPct}%</span>
+        </div>
+        <div class="finance-alloc-row">
+            <span class="finance-alloc-label">Broker</span>
+            <div class="finance-alloc-bar-wrap"><div class="finance-alloc-bar broker" style="width:${brokerPct}%"></div></div>
+            <span class="finance-alloc-value">€${Math.round(totalBrokerValue).toLocaleString()}</span>
+            <span class="finance-alloc-pct">${brokerPct}%</span>
+        </div>
+    </div>` : '';
+
     // ── STOCK MARKET ─────────────────────────────────────────────
     const stockHistory  = gameState.stockHistory  || {};
     const shortPositions = gameState.shortPositions || {};
+    const stockPrevPrices = gameState.stockPrevPrices || {};
 
     function _buildSparkline(history, color) {
         if (!history || history.length < 2) return '';
@@ -3432,30 +3482,33 @@ function renderTabFinance() {
         const price = prices[t.id] || t.basePrice;
         const holding = holdings[t.id] || { shares: 0, avgCost: 0 };
         const shortPos = shortPositions[t.id];
-        const pricePct = ((price / t.basePrice) - 1) * 100;
+        const prevPrice = stockPrevPrices[t.id];
+        const pricePct = prevPrice ? ((price / prevPrice) - 1) * 100 : ((price / t.basePrice) - 1) * 100;
         const isUp = pricePct >= 0;
+        const isFlat = Math.abs(pricePct) < 0.01;
+        const changeClass = isFlat ? 'flat' : (isUp ? 'up' : 'down');
+        const changeArrow = isFlat ? '─' : (isUp ? '▲' : '▼');
         const plAmt = holding.shares > 0 ? Math.round((price - holding.avgCost) * holding.shares) : 0;
         const plPct = holding.avgCost > 0 ? ((price / holding.avgCost) - 1) * 100 : 0;
         const sparkline = _buildSparkline(stockHistory[t.id], t.color);
         const shortPl = shortPos ? Math.round((shortPos.openPrice - price) * shortPos.shares) : 0;
         stockHtml += `
-        <div class="finance-stock-card mb-2">
-            <div class="flex justify-between items-center mb-1">
-                <div class="flex items-center gap-2">
-                    <span class="text-base">${t.icon}</span>
-                    <div>
-                        <div class="text-[11px] font-bold font-mono" style="color:${t.color}">${t.name}</div>
-                        <div class="text-[8px] text-gray-500">${t.fullName}</div>
-                    </div>
-                </div>
-                <div class="flex items-end gap-2">
-                    ${sparkline}
-                    <div class="text-right">
-                        <div class="text-sm font-bold font-mono text-white">€${price.toFixed(2)}</div>
-                        <div class="text-[9px] font-mono ${isUp ? 'text-green-400' : 'text-red-400'}">${isUp ? '▲' : '▼'} ${Math.abs(pricePct).toFixed(1)}%</div>
-                    </div>
+        <div id="ftick-${t.id}" class="finance-ticker-row">
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+                <span class="text-base">${t.icon}</span>
+                <div style="min-width:0;">
+                    <div class="finance-ticker-symbol">${t.name}</div>
+                    <div class="text-[7px] text-gray-600" style="font-family:'Courier New',monospace;">${t.fullName}</div>
                 </div>
             </div>
+            <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+                ${sparkline}
+                <span class="finance-ticker-price">€${price.toFixed(2)}</span>
+                <span class="finance-ticker-change ${changeClass}">${changeArrow} ${Math.abs(pricePct).toFixed(1)}%</span>
+                ${holding.shares > 0 ? `<span class="finance-ticker-shares">${holding.shares}sh</span>` : ''}
+            </div>
+        </div>
+        <div class="mb-2 px-1">
             ${holding.shares > 0 ? `
             <div class="flex justify-between text-[9px] mb-1">
                 <span class="text-gray-400">Long: <b class="text-white">${holding.shares}</b></span>
@@ -3466,7 +3519,7 @@ function renderTabFinance() {
                 <span class="text-purple-400">Short: <b class="text-white">${shortPos.shares}</b> @ €${shortPos.openPrice}</span>
                 <span class="${shortPl >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">${shortPl >= 0 ? '+' : ''}€${shortPl.toLocaleString()}</span>
             </div>` : ''}
-            <div class="flex gap-1">
+            <div class="flex gap-1 mt-1">
                 <input id="stock-qty-${t.id}" type="number" min="1" value="10" class="finance-input flex-1 text-[10px]" placeholder="qty">
                 <button onclick="buyStocks('${t.id}', parseInt(document.getElementById('stock-qty-${t.id}').value)||1)" class="btn-gold !text-[9px] !py-1 !px-2">Compra</button>
                 ${holding.shares > 0 ? `<button onclick="sellStocks('${t.id}', parseInt(document.getElementById('stock-qty-${t.id}').value)||1)" class="btn-blue !text-[9px] !py-1 !px-2">Vendi</button>` : ''}
@@ -3570,7 +3623,7 @@ function renderTabFinance() {
         ${loanAmounts.map(a => `<button onclick="takeLoan(${a})" class="btn-gold !text-[8px] !py-1 !px-2">+€${(a/1000).toFixed(0)}k</button>`).join('')}
     </div>`;
 
-    // ── PORTFOLIO SUMMARY ────────────────────────────────────────
+    // ── PORTFOLIO SUMMARY (header stats) ─────────────────────────
     const totalDiv = gameState.totalDividendsEarned || 0;
     const totalPlStock = gameState.totalStockProfit || 0;
 
@@ -3602,24 +3655,20 @@ function renderTabFinance() {
             </div>
         </div>
 
-        <details open class="mb-3">
-            <summary class="finance-section-title cursor-pointer">📈 Mercato Azionario</summary>
-            <div class="mt-2">${stockHtml}</div>
-        </details>
+        ${portfolioDashHtml}
 
-        <details class="mb-3">
-            <summary class="finance-section-title cursor-pointer">💼 Broker Personale</summary>
-            <div class="mt-2">
-                ${brokerActiveHtml}
-                <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-2 mt-3 border-t border-white/5 pt-2">Nuovo Investimento</div>
-                ${brokerFormHtml}
-            </div>
-        </details>
+        <h3 class="finance-section-header">── MERCATO AZIONARIO ────────────────────</h3>
+        <div class="mb-3">${stockHtml}</div>
 
-        <details class="mb-3">
-            <summary class="finance-section-title cursor-pointer">🏦 Credit Score & Leva</summary>
-            <div class="mt-2 hud-card">${loansHtml}</div>
-        </details>
+        <h3 class="finance-section-header">── BROKER PERSONALE ─────────────────────</h3>
+        <div class="mb-3">
+            ${brokerActiveHtml}
+            <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-2 mt-3 border-t border-white/5 pt-2">Nuovo Investimento</div>
+            ${brokerFormHtml}
+        </div>
+
+        <h3 class="finance-section-header">── CREDITO & LEVA ───────────────────────</h3>
+        <div class="mb-3 hud-card">${loansHtml}</div>
 
         ${(() => {
             const cp    = gameState.cempPrice || 10;
@@ -3737,6 +3786,15 @@ function renderTabFinance() {
             <div class="text-[9px] text-gray-500 mb-2">Vendi l'azienda a un fondo e ricomincia con un vantaggio enorme</div>
             <button onclick="sellCompanyNGP()" class="text-[9px] border border-red-800/50 text-red-400/70 px-3 py-1 rounded hover:border-red-600 hover:text-red-300 transition-colors">Avvia Exit Strategy ↗</button>
         </div>`;
+
+    // ── PRICE FLASH ANIMATIONS ────────────────────────────────────
+    (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).forEach(t => {
+        const prevP = stockPrevPrices[t.id];
+        const curP = prices[t.id] || t.basePrice;
+        if (prevP !== undefined && prevP !== curP) {
+            _flashTicker(t.id, curP > prevP ? 'up' : 'down');
+        }
+    });
 }
 window.renderTabFinance = renderTabFinance;
 
