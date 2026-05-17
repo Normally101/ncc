@@ -134,6 +134,12 @@ const LEASING_TEMPLATES = {
     'volt_s_apex':        { name:'Volt S-Apex',          baseRate:3200, kmRate:0.12, tier:'vip',      vehicleClass:'volt_s_apex'        },
     'majestic_spirit':    { name:'Majestic Spirit',      baseRate:5500, kmRate:0.22, tier:'ultra',    vehicleClass:'majestic_spirit'    },
     'stellar_g_over':     { name:'Stellar G-Overlord',   baseRate:5000, kmRate:0.22, tier:'ultra',    vehicleClass:'stellar_g_over'     },
+    // ── Nuovi modelli ────────────────────────────────────────────
+    'nexus_h_line':      { name:'Nexus H-Line',       baseRate:700,  kmRate:0.03, tier:'business', vehicleClass:'nexus_h_line'      },
+    'volt_ciudad':       { name:'Volt Ciudad',         baseRate:800,  kmRate:0.03, tier:'business', vehicleClass:'volt_ciudad'       },
+    'volt_e_estate':     { name:'Volt E-Estate',       baseRate:1800, kmRate:0.08, tier:'vip',      vehicleClass:'volt_e_estate'     },
+    'majestic_citadel':  { name:'Majestic Citadel',    baseRate:2200, kmRate:0.09, tier:'vip',      vehicleClass:'majestic_citadel'  },
+    'stellar_m_cruiser': { name:'Stellar M-Cruiser',   baseRate:1400, kmRate:0.06, tier:'business', vehicleClass:'stellar_m_cruiser' },
     // ── Aviazione Privata ────────────────────────────────────────
     'helicopter':  { name:'Airbus AS350',    baseRate:12000, kmRate:0.80, tier:'ultra', vehicleClass:'helicopter'  },
     'private_jet': { name:'Embraer Phenom',  baseRate:45000, kmRate:2.50, tier:'ultra', vehicleClass:'private_jet' },

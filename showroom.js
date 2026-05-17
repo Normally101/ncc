@@ -19,6 +19,15 @@ const _SRM_META = {
     volt_s_hyper:       { body:'hypercar',    bodyLabel:'Hypercar EV',        desc:'La punta di diamante. Tecnologia derivata dalla Formula, comfort da sala riunioni. Irripetibile.',           stats:{ prestigio:10, comfort:9,  durabilita:7,  velocita:10 } },
     majestic_spirit:    { body:'ammiraglia',  bodyLabel:'Ultra Luxury',       desc:'Il pinnacolo della mobilità terrestre. Commissionato da capi di stato, oligarchi e CEO Fortune 500.',       stats:{ prestigio:10, comfort:10, durabilita:9,  velocita:9  } },
     majestic_e_specter: { body:'ammiraglia',  bodyLabel:'Ultra Luxury EV',    desc:'Ultra-luxury elettrica. Zero emissioni, zero compromessi. Il futuro della mobilità presidenziale.',         stats:{ prestigio:10, comfort:10, durabilita:9,  velocita:10 } },
+    // Nexus entry-level
+    nexus_h_line:       { body:'berlina',     bodyLabel:'Berlina Entry',      desc:'La berlina d\'ingresso ideale per iniziare. Affidabile, economica da gestire, ottima per la formazione della flotta.',  stats:{ prestigio:4,  comfort:5,  durabilita:8,  velocita:6  } },
+    // Volt expanded
+    volt_ciudad:        { body:'city',        bodyLabel:'City EV Compact',    desc:'Piccola elettrica ultracompatta per la città. Perfetta nelle ZTL, costo operativo quasi zero.',                        stats:{ prestigio:5,  comfort:5,  durabilita:8,  velocita:7  } },
+    volt_e_estate:      { body:'berlina',     bodyLabel:'Station Wagon EV',   desc:'Station wagon elettrica a ruote alte. Spazio bagagli XL, autonomia elevata, silenzio totale in cabina.',               stats:{ prestigio:7,  comfort:8,  durabilita:8,  velocita:7  } },
+    // Majestic SUV
+    majestic_citadel:   { body:'suv',         bodyLabel:'SUV Luxury',         desc:'SUV luxury urbano firmato Majestic. Presenza scenica, sospensioni pneumatiche adattive, interni in pelle pieno fiore.',stats:{ prestigio:8,  comfort:9,  durabilita:9,  velocita:7  } },
+    // Stellar commercial
+    stellar_m_cruiser:  { body:'van',         bodyLabel:'Van Commercial',     desc:'Monovolume commerciale per transfer aeroportuali e aziendali. Robusto, capiente, ottimo rapporto costo/km.',           stats:{ prestigio:5,  comfort:6,  durabilita:9,  velocita:5  } },
     // Aviazione Privata (Espansione 1)
     helicopter:         { body:'aviation',   bodyLabel:'Elicottero Privato', desc:'Airbus AS350 per transfer intercity rapidi. Zero traffico, max 6 passeggeri, atterraggio ovunque.',           stats:{ prestigio:10, comfort:8,  durabilita:7,  velocita:10 } },
     private_jet:        { body:'aviation',   bodyLabel:'Jet Privato',        desc:'Embraer Phenom 300. Il massimo della mobilità aerea privata per i tuoi clienti più esclusivi.',                 stats:{ prestigio:10, comfort:10, durabilita:8,  velocita:10 } },
