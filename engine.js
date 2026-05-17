@@ -310,6 +310,14 @@ const STELLAR_VOLT_CATALOG = [
     // ── Majestic luxury ───────────────────────────────────────────────────────
     { id:'majestic_spirit',   name:'Majestic Spirit',       img:'assets/fleet/majestic-spirit.jpg',      tier:'PRESIDENTIAL', fuel:'gasoline', price:2000000, rideGate:1000, co2PerKm:0.25, vehicleClass:'majestic_spirit'   },
     { id:'majestic_e_specter',name:'Majestic E-Specter',    img:'assets/fleet/majestic-e-specter.jpg',   tier:'PRESIDENTIAL', fuel:'electric', price:3200000, rideGate:1000, co2PerKm:0.00, vehicleClass:'majestic_e_specter' },
+    { id:'majestic_citadel',  name:'Majestic Citadel',      img:'assets/fleet/majestic-citadel.jpg',     tier:'PRESIDENTIAL', fuel:'gasoline', price:135000,  rideGate:250,  co2PerKm:0.24, vehicleClass:'majestic_citadel'  },
+    // ── Nexus entry-level ─────────────────────────────────────────────────────
+    { id:'nexus_h_line',      name:'Nexus H-Line',          img:'assets/fleet/nexus-h-line.jpg',         tier:'STANDARD',     fuel:'gasoline', price:35000,   rideGate:0,    co2PerKm:0.17, vehicleClass:'nexus_h_line'      },
+    // ── Volt expanded ─────────────────────────────────────────────────────────
+    { id:'volt_ciudad',       name:'Volt Ciudad',           img:'assets/fleet/volt-ciudad.jpg',          tier:'BUSINESS',     fuel:'electric', price:48000,   rideGate:0,    co2PerKm:0.00, vehicleClass:'volt_ciudad'       },
+    { id:'volt_e_estate',     name:'Volt E-Estate',         img:'assets/fleet/volt-e-estate.jpg',        tier:'ULTRA',        fuel:'electric', price:92000,   rideGate:250,  co2PerKm:0.00, vehicleClass:'volt_e_estate'     },
+    // ── Stellar commercial ────────────────────────────────────────────────────
+    { id:'stellar_m_cruiser', name:'Stellar M-Cruiser',     img:'assets/fleet/stellar-m-cruiser.jpg',    tier:'COMMERCIAL',   fuel:'gasoline', price:80000,   rideGate:0,    co2PerKm:0.26, vehicleClass:'stellar_m_cruiser' },
 ];
 window.STELLAR_VOLT_CATALOG = STELLAR_VOLT_CATALOG;
 

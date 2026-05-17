@@ -100,6 +100,15 @@ const NEW_CARS = [
     // ── Majestic luxury ───────────────────────────────────────────
     { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'ultra',    price:2000000, condition:100, vehicleClass:'majestic_spirit',    fuel:'gasoline', rideGate:1000 },
     { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'ultra',    price:3200000, condition:100, vehicleClass:'majestic_e_specter', fuel:'electric', rideGate:1000 },
+    // ── Nexus entry-level ─────────────────────────────────────────
+    { id:'nexus_h_line',       name:'Nexus H-Line',          tier:'business', price:35000,   condition:100, vehicleClass:'nexus_h_line',       fuel:'gasoline', rideGate:0    },
+    // ── Volt expanded ─────────────────────────────────────────────
+    { id:'volt_ciudad',        name:'Volt Ciudad',           tier:'business', price:48000,   condition:100, vehicleClass:'volt_ciudad',        fuel:'electric', rideGate:0    },
+    { id:'volt_e_estate',      name:'Volt E-Estate',         tier:'vip',      price:92000,   condition:100, vehicleClass:'volt_e_estate',      fuel:'electric', rideGate:250  },
+    // ── Majestic SUV ──────────────────────────────────────────────
+    { id:'majestic_citadel',   name:'Majestic Citadel',      tier:'vip',      price:135000,  condition:100, vehicleClass:'majestic_citadel',   fuel:'gasoline', rideGate:250  },
+    // ── Stellar commercial ────────────────────────────────────────
+    { id:'stellar_m_cruiser',  name:'Stellar M-Cruiser',     tier:'business', price:80000,   condition:100, vehicleClass:'stellar_m_cruiser',  fuel:'gasoline', rideGate:0    },
     // ── Aviazione Privata (Espansione 1) ──────────────────────────
     { id:'helicopter_as350',   name:'Airbus AS350 Écureuil', tier:'ultra',   price:4500000, condition:100, vehicleClass:'helicopter',         fuel:'avgas',    rideGate:2000, isAviation:true, intercityOnly:true, maxFleetCount:2 },
     { id:'private_jet_phenom', name:'Embraer Phenom 300',    tier:'ultra',   price:18000000,condition:100, vehicleClass:'private_jet',        fuel:'jet',      rideGate:5000, isAviation:true, intercityOnly:true, maxFleetCount:1 },
