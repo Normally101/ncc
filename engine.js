@@ -79,6 +79,32 @@ function showNotification(msg, type) {
     if (typeof window._realShowNotification === 'function') window._realShowNotification(msg, type);
 }
 
+// ─── EMAIL TEMPLATE ENGINE ────────────────────────────────────────
+// Enriches an email object with senderName, senderRole, senderIcon,
+// subject, body, signature from EMAIL_TEMPLATES[type].
+// Gracefully no-ops if EMAIL_TEMPLATES is not yet loaded.
+function _applyEmailTemplate(emailObj, type, vars) {
+    if (typeof EMAIL_TEMPLATES === 'undefined') return;
+    const pool = EMAIL_TEMPLATES[type];
+    if (!pool || !pool.length) return;
+    const tpl = pool[Math.floor(Math.random() * pool.length)];
+    const body = tpl.bodies[Math.floor(Math.random() * tpl.bodies.length)];
+    const sub = (str) => str
+        .replace(/\{\{driverName\}\}/g, vars.driverName || '')
+        .replace(/\{\{rivalName\}\}/g, vars.rivalName || '')
+        .replace(/\{\{amount\}\}/g, vars.amount != null ? Math.round(vars.amount).toLocaleString('it-IT') : '')
+        .replace(/\{\{city\}\}/g, vars.city || '')
+        .replace(/\{\{day\}\}/g, vars.day != null ? vars.day : (gameState.day || 1))
+        .replace(/\{\{companyName\}\}/g, vars.companyName || gameState.companyName || 'Italy Executive')
+        .replace(/\{\{ceoName\}\}/g, vars.ceoName || gameState.ceoName || 'CEO');
+    emailObj.senderName  = sub(tpl.senderName);
+    emailObj.senderRole  = sub(tpl.senderRole);
+    emailObj.senderIcon  = tpl.senderIcon;
+    emailObj.subject     = sub(tpl.subject);
+    emailObj.body        = sub(body);
+    emailObj.signature   = sub(tpl.signature);
+}
+
 let tempLeaseTier = null;
 
 let gameState = {
@@ -1399,12 +1425,14 @@ function _tickFuelPrice() {
     if (gameState.fuelPrice < 1.68) {
         const space = gameState.fuelTankCapacity - gameState.fuelTank;
         if (space > 3000 && Math.random() < 0.5) {
-            gameState.emails.push({
+            const _infoEmail = {
                 id: gameState.nextId++, sender: 'Logistics Manager',
                 subject: `🛢️ OPPORTUNITÀ: Gasolio a €${gameState.fuelPrice.toFixed(2)}/L — Acquistare ora!`,
                 type: 'info', status: 'unread',
                 expiresAt: gameState.day * 24 + gameState.hour + 3
-            });
+            };
+            _applyEmailTemplate(_infoEmail, 'info', {});
+            gameState.emails.push(_infoEmail);
             const dot = document.getElementById('mail-dot');
             if (dot) dot.classList.remove('hidden');
         }
@@ -1957,14 +1985,16 @@ function _maybeGreyMarketMission() {
 
     const isLong = from.region !== to.region;
     const basePrice = Math.floor(from.baseFlat * 3.0 * (isLong ? 2.8 : 1.2));
-    gameState.emails.push({
+    const _gmEmail = {
         id: gameState.nextId++,
         sender: '░░░ ANONIMO ░░░',
         subject: `[RISERVATO] Trasporto discreto: ${from.name} → ${to.name} — €${basePrice}`,
         type: 'grey_market', status: 'unread',
         greyRideData: { fromId: from.id, toId: to.id, price: basePrice, isLong },
         expiresAt: gameState.day * 24 + gameState.hour + 6
-    });
+    };
+    _applyEmailTemplate(_gmEmail, 'grey_market', { city: from.name || 'città', amount: basePrice || 0 });
+    gameState.emails.push(_gmEmail);
     const dot = document.getElementById('mail-dot');
     if (dot) dot.classList.remove('hidden');
     logToMap(`🕵️ Proposta anonima: ${from.name} → ${to.name} — €${basePrice} (3×). Alto rischio.`);
@@ -2066,14 +2096,16 @@ function _maybeShadowMission() {
     const basePrice  = Math.floor(from.baseFlat * 5.0 * (2.5 + Math.random()));
     const seizureRisk = Math.round(55 + (gameState.policeHeat / 100) * 30); // 55–85%
 
-    gameState.emails.push({
+    const _shadowEmail = {
         id: gameState.nextId++,
         sender: '🔴 NETWORK OMBRA',
         subject: `[SHADOW] Trasporto X5: ${from.name} → ${to.name} — €${basePrice.toLocaleString()}`,
         type: 'shadow', status: 'unread',
         shadowData: { fromId: from.id, toId: to.id, price: basePrice, seizureRisk },
         expiresAt: gameState.day * 24 + gameState.hour + 4
-    });
+    };
+    _applyEmailTemplate(_shadowEmail, 'shadow', { rivalName: 'Rete Ombra' });
+    gameState.emails.push(_shadowEmail);
     const dot = document.getElementById('mail-dot');
     if (dot) dot.classList.remove('hidden');
     logToMap(`🔴 Rete Ombra: ${from.name} → ${to.name} — €${basePrice.toLocaleString()} (×5). Rischio sequestro ${seizureRisk}%.`);
@@ -2254,7 +2286,7 @@ function _maybeRivalSabotage() {
         if (richRival) {
             const target = [...myDrivers].sort((a,b) => (b.xp||0) - (a.xp||0))[0];
             const poachOffer = Math.floor((target.salary || 2500) * 2.2);
-            gameState.emails.push({
+            const _poachEmail = {
                 id: gameState.nextId++,
                 sender: richRival.name,
                 subject: `💼 Offerta per ${target.name}: €${poachOffer}/mese`,
@@ -2265,7 +2297,9 @@ function _maybeRivalSabotage() {
                 rivalName: richRival.name,
                 counterOffer: poachOffer,
                 expiresAt: gameState.day * 24 + gameState.hour + 8,
-            });
+            };
+            _applyEmailTemplate(_poachEmail, 'poaching', { driverName: target.name, rivalName: richRival.name, amount: poachOffer });
+            gameState.emails.push(_poachEmail);
             const dot = document.getElementById('mail-dot');
             if (dot) dot.classList.remove('hidden');
             showNotification(`💼 ${richRival.name} vuole rubarti ${target.name}! Controlla l'inbox.`, 'error');
@@ -2562,12 +2596,14 @@ function processDailyRoutines() {
         // Autista esausto (< 30% energia rimasta = fatigue > 70)
         if (fatigue > 70 && !d._warnedExhausted) {
             d._warnedExhausted = true;
-            gameState.emails.push({
+            const _driverEmail = {
                 id: gameState.nextId++, sender: d.name,
                 subject: `[${d.name}] Capo, sono distrutto`,
                 body: `Capo, sono completamente a pezzi. Se non mi fai riposare giuro che mi licenzio. La macchina è la mia vita, ma così non reggo.`,
                 type: 'driver_msg', status: 'unread', driverId: d.id, expiresAt
-            });
+            };
+            _applyEmailTemplate(_driverEmail, 'driver_msg', { driverName: d.name });
+            gameState.emails.push(_driverEmail);
             const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
         }
         if (fatigue <= 50) d._warnedExhausted = false; // reset when recovered
@@ -2578,12 +2614,14 @@ function processDailyRoutines() {
             d._strikeEndsDay = gameState.day + 1;
             d.status = 'resting';
             d.restHoursLeft = 24;
-            gameState.emails.push({
+            const _strikeEmail = {
                 id: gameState.nextId++, sender: d.name,
                 subject: `[SCIOPERO] ${d.name} si ferma`,
                 body: `Non ce la faccio più. Mi fermo per 24 ore. Niente corse, niente discussioni. Quando sarò riposato torno al lavoro.`,
                 type: 'driver_msg', status: 'unread', driverId: d.id, expiresAt
-            });
+            };
+            _applyEmailTemplate(_strikeEmail, 'driver_msg', { driverName: d.name });
+            gameState.emails.push(_strikeEmail);
             showBigEvent('🪧', `${d.name} in Sciopero!`, `Il driver è esausto al 100%. Si ferma per 24h. Monitora l'energia degli autisti per evitarlo.`);
             const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
         }
@@ -3605,12 +3643,14 @@ function completeRide(ride, _deferPay = false) {
         const bonus = 250 + Math.floor(Math.random() * 250);
         gameState.cash += bonus;
         const gameHour = gameState.day * 24 + gameState.hour;
-        gameState.emails.push({
+        const _charmanteEmail = {
             id: gameState.nextId++, sender: driver.name,
             subject: `[${driver.name}] Il cliente era estasiato!`,
             body: `Capo, il cliente era in estasi per il servizio. Mi ha lasciato una mancia extra di €${bonus * 2}. Come promesso, ti giro la metà: +€${bonus} in cassa.`,
             type: 'driver_msg', status: 'unread', expiresAt: gameHour + 48
-        });
+        };
+        _applyEmailTemplate(_charmanteEmail, 'driver_msg', { driverName: driver?.name || '' });
+        gameState.emails.push(_charmanteEmail);
         logToMap(`✨ Charmante: ${driver.name} → mancia extra +€${bonus}!`);
         const dot = document.getElementById('mail-dot'); if (dot) dot.classList.remove('hidden');
     }
@@ -3662,7 +3702,11 @@ function generateEmailEvent() {
     const expiresAt = gameHour + 12; // expires in 12 game hours
 
     if (currentEvent && Math.random() > 0.5) {
-        gameState.emails.push({ id: gameState.nextId++, sender: "Networking Board", subject: `[INVITO] ${currentEvent.name}`, type: 'ceo_event', status: 'unread', eventData: currentEvent, expiresAt });
+        const _eventEmail = { id: gameState.nextId++, sender: "Networking Board", subject: `[INVITO] ${currentEvent.name}`, type: 'ceo_event', status: 'unread', eventData: currentEvent, expiresAt };
+        _applyEmailTemplate(_eventEmail, 'ceo_event', { day: gameState.day });
+        // Restore eventData in case template overwrote it (it won't, but belt-and-suspenders)
+        _eventEmail.eventData = currentEvent;
+        gameState.emails.push(_eventEmail);
     } else {
         gameState.emails.push({ id: gameState.nextId++, sender: "Concierge Lusso", subject: "Appalto B2B: Delega 3 Giorni", offer: Math.floor(Math.random() * 8000) + 3500, type: 'b2b', status: 'unread', expiresAt });
     }
@@ -4255,7 +4299,7 @@ function _tickBrokerInvestments() {
             `Il tuo portafoglio "${inv.riskName}" da €${inv.capital.toLocaleString()} ha chiuso con ${label}.\n${isProfit ? 'Il Wealth Manager ha fatto un ottimo lavoro.' : 'Il mercato è stato impietoso. Rivedi la strategia di rischio.'}`
         );
         // Notifica nel tab Finance
-        gameState.emails.push({
+        const _brokerEmail = {
             id: gameState.nextId++,
             sender: 'Elite Wealth Manager',
             subject: `${icon} Broker Report: ${label}`,
@@ -4263,7 +4307,13 @@ function _tickBrokerInvestments() {
             brokerGain: gain, brokerCapital: inv.capital, brokerRisk: inv.riskName,
             status: 'unread',
             expiresAt: (gameState.day * 24 + gameState.hour) + 48
-        });
+        };
+        _applyEmailTemplate(_brokerEmail, 'broker_result', { amount: Math.abs(gain) });
+        // Preserve game-logic fields that template must not overwrite
+        _brokerEmail.brokerGain = gain;
+        _brokerEmail.brokerCapital = inv.capital;
+        _brokerEmail.brokerRisk = inv.riskName;
+        gameState.emails.push(_brokerEmail);
         if (typeof renderTabEmails === 'function') renderTabEmails();
         updateUI();
     });
