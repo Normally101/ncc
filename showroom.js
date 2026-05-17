@@ -33,17 +33,37 @@ const _SRM_META = {
     private_jet:        { body:'aviation',   bodyLabel:'Jet Privato',        desc:'Embraer Phenom 300. Il massimo della mobilità aerea privata per i tuoi clienti più esclusivi.',                 stats:{ prestigio:10, comfort:10, durabilita:8,  velocita:10 } },
 };
 
-const _SRM_FILTERS = [
-    { id:'all',         label:'Tutti i Modelli', icon:'⊞' },
-    { id:'berlina',     label:'Berlina',         icon:'🚗' },
-    { id:'van',         label:'Van & Carrier',   icon:'🚐' },
-    { id:'suv',         label:'SUV',             icon:'🚙' },
-    { id:'granturismo', label:'Gran Turismo',    icon:'🏎' },
-    { id:'hypercar',    label:'Hypercar',        icon:'⚡' },
-    { id:'ammiraglia',  label:'Ammiraglia',      icon:'👑' },
-    { id:'city',        label:'City EV',         icon:'🏙' },
-    { id:'aviation',    label:'Aviazione',       icon:'🚁' },
+const _SRM_FUEL_FILTERS = [
+    { id:'all',      label:'Tutti',    icon:'⊞' },
+    { id:'electric', label:'Elettrico',icon:'⚡' },
+    { id:'thermal',  label:'Termico',  icon:'⛽' },
+    { id:'aviation', label:'Aviazione',icon:'🚁' },
 ];
+
+const _SRM_BRAND_FILTERS = [
+    { id:'all',      label:'Tutti i Marchi', icon:'⊞' },
+    { id:'stellar',  label:'Stellar',        icon:'★' },
+    { id:'volt',     label:'Volt',           icon:'⚡' },
+    { id:'majestic', label:'Majestic',       icon:'👑' },
+    { id:'nexus',    label:'Nexus',          icon:'◈' },
+    { id:'aviation', label:'Aviazione',      icon:'🚁' },
+];
+
+function _srmFuelGroup(v) {
+    if (v.fuel === 'electric') return 'electric';
+    if (v.fuel === 'avgas' || v.fuel === 'jet') return 'aviation';
+    return 'thermal';
+}
+
+function _srmBrand(v) {
+    const id = v.id || '';
+    if (id.startsWith('stellar'))                              return 'stellar';
+    if (id.startsWith('volt'))                                 return 'volt';
+    if (id.startsWith('majestic'))                             return 'majestic';
+    if (id.startsWith('nexus'))                                return 'nexus';
+    if (id.startsWith('helicopter') || id.startsWith('private_jet')) return 'aviation';
+    return 'other';
+}
 
 const _SRM_SECTIONS = [
     { id:'generali',  label:'Generali',   icon:'📋' },
@@ -72,7 +92,8 @@ const _srmState = {
     selectedId:     null,
     section:        'generali',
     selectedOpts:   new Set(),
-    filterBody:     'all',
+    filterFuel:     'all',
+    filterBrand:    'all',
     animFrame:      null,
     displayedPrice: 0,
     targetPrice:    0,
@@ -145,18 +166,30 @@ function _srmInjectStyles() {
         .srm-close-btn:hover { border-color:rgba(255,255,255,0.3); color:#e2e8f0; background:rgba(255,255,255,0.06); }
         /* ── Filter bar ── */
         #srm-filter-bar {
-            display:flex; gap:6px; padding:12px 24px; flex-wrap:wrap;
+            display:flex; flex-direction:column; gap:0;
             border-bottom:1px solid rgba(255,255,255,0.05);
             background:#070c14; flex-shrink:0;
         }
+        .srm-filter-row {
+            display:flex; align-items:center; gap:6px;
+            padding:8px 24px; flex-wrap:wrap;
+        }
+        .srm-filter-row:first-child { border-bottom:1px solid rgba(255,255,255,0.04); }
+        .srm-filter-label {
+            font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.12em;
+            color:#374151; margin-right:4px; width:52px; flex-shrink:0;
+        }
         .srm-fbtn {
-            padding:6px 16px; border-radius:20px; font-size:11px; font-weight:700;
+            padding:5px 14px; border-radius:20px; font-size:11px; font-weight:700;
             cursor:pointer; border:1px solid rgba(255,255,255,0.1);
             background:rgba(255,255,255,0.04); color:#6b7280;
             transition:all .18s; letter-spacing:.04em;
         }
         .srm-fbtn:hover  { border-color:rgba(255,255,255,0.25); color:#9ca3af; }
-        .srm-fbtn.srm-fa { background:rgba(0,212,255,0.12); border-color:rgba(0,212,255,0.4); color:#00d4ff; }
+        /* fuel row active */
+        .srm-filter-row.fuel-row .srm-fbtn.srm-fa { background:rgba(0,212,255,0.12); border-color:rgba(0,212,255,0.4); color:#00d4ff; }
+        /* brand row active */
+        .srm-filter-row.brand-row .srm-fbtn.srm-fa { background:rgba(168,85,247,0.12); border-color:rgba(168,85,247,0.4); color:#c084fc; }
         /* ── Gallery grid ── */
         #srm-grid-wrap { flex:1; overflow-y:auto; }
         #srm-grid {
@@ -308,21 +341,40 @@ window._srmClose = function() {
 // ═══════════════════════════════════════════════════════════════════
 function _srmRenderGallery(overlay) {
     const catalog = _srmCatalog();
-    const activeFilter = _srmState.filterBody;
+    const activeFuel  = _srmState.filterFuel;
+    const activeBrand = _srmState.filterBrand;
 
     const filtered = catalog.filter(v => {
-        if (activeFilter === 'all') return true;
-        return (_SRM_META[v.id]?.body || _SRM_META[v.vehicleClass]?.body) === activeFilter;
+        const fuelOk  = activeFuel  === 'all' || _srmFuelGroup(v) === activeFuel;
+        const brandOk = activeBrand === 'all' || _srmBrand(v)    === activeBrand;
+        return fuelOk && brandOk;
     });
 
-    const filterHtml = _SRM_FILTERS.map(f => {
+    const fuelRowHtml = _SRM_FUEL_FILTERS.map(f => {
         const count = f.id === 'all' ? catalog.length
-            : catalog.filter(v => (_SRM_META[v.id]?.body || _SRM_META[v.vehicleClass]?.body) === f.id).length;
+            : catalog.filter(v => _srmFuelGroup(v) === f.id).length;
         if (count === 0 && f.id !== 'all') return '';
-        return `<button class="srm-fbtn${activeFilter === f.id ? ' srm-fa' : ''}" onclick="window._srmFilter('${f.id}')">
+        return `<button class="srm-fbtn${activeFuel === f.id ? ' srm-fa' : ''}" onclick="window._srmFilterFuel('${f.id}')">
             ${f.icon} ${f.label} <span style="opacity:0.5;font-weight:400">${count}</span>
         </button>`;
     }).join('');
+
+    const brandRowHtml = _SRM_BRAND_FILTERS.map(f => {
+        const count = f.id === 'all' ? catalog.length
+            : catalog.filter(v => _srmBrand(v) === f.id).length;
+        if (count === 0 && f.id !== 'all') return '';
+        return `<button class="srm-fbtn${activeBrand === f.id ? ' srm-fa' : ''}" onclick="window._srmFilterBrand('${f.id}')">
+            ${f.icon} ${f.label} <span style="opacity:0.5;font-weight:400">${count}</span>
+        </button>`;
+    }).join('');
+
+    const filterHtml = `
+        <div class="srm-filter-row fuel-row">
+            <span class="srm-filter-label">Motore</span>${fuelRowHtml}
+        </div>
+        <div class="srm-filter-row brand-row">
+            <span class="srm-filter-label">Marchio</span>${brandRowHtml}
+        </div>`;
 
     const cardsHtml = filtered.map(v => {
         const meta = _SRM_META[v.id] || _SRM_META[v.vehicleClass] || {};
@@ -365,8 +417,15 @@ function _srmRenderGallery(overlay) {
         </div>`;
 }
 
-window._srmFilter = function(bodyId) {
-    _srmState.filterBody = bodyId;
+window._srmFilterFuel = function(fuelId) {
+    _srmState.filterFuel = fuelId;
+    const overlay = document.getElementById('srm-overlay');
+    if (overlay) _srmRenderGallery(overlay);
+    else renderTabShowroom();
+};
+
+window._srmFilterBrand = function(brandId) {
+    _srmState.filterBrand = brandId;
     const overlay = document.getElementById('srm-overlay');
     if (overlay) _srmRenderGallery(overlay);
     else renderTabShowroom();
