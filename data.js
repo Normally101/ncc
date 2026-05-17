@@ -380,6 +380,1098 @@ const MARKETING_CAMPAIGNS = [
     { id:'elite',    name:'Elite Media Blitz',  dailyCost:4000, extRidesPerHour:7, desc:'+7 corse/ora extra. TV & stampa lusso.' },
 ];
 
+// ─── EMAIL TEMPLATES ──────────────────────────────────────────────
+const EMAIL_TEMPLATES = {
+
+    poaching: [
+        {
+            id: 'poach_001',
+            senderName: 'Marco Ferretti',
+            senderRole: 'Direttore HR, {{rivalName}}',
+            senderIcon: '👔',
+            subject: 'Proposta per il suo autista {{driverName}}',
+            signature: 'Cordialmente,\nMarco Ferretti\nDirettore HR, {{rivalName}}',
+            bodies: [
+                'Gentile CEO,\n\nLe scrivo a nome di {{rivalName}}. Dopo un\'attenta ricerca di mercato, abbiamo individuato in {{driverName}} un profilo di eccellenza. Siamo pronti a offrirgli un pacchetto retributivo di €{{amount}}/mese, con benefit aggiuntivi e prospettive di crescita concrete.\n\nSiamo certi che saprà valutare questa comunicazione con la professionalità che La contraddistingue.',
+                'Gentile Direttore,\n\n{{driverName}} ha attirato la nostra attenzione per le sue eccezionali performance. In {{rivalName}} crediamo nel talento e siamo disposti a riconoscerlo: €{{amount}}/mese, più bonus trimestrali.\n\nLa informiamo per correttezza professionale, nella speranza che possa rifletterci.',
+            ]
+        },
+        {
+            id: 'poach_002',
+            senderName: 'Valentina Rossi',
+            senderRole: 'Head of Talent, {{rivalName}}',
+            senderIcon: '💼',
+            subject: 'Offerta riservata — {{driverName}}',
+            signature: 'Con stima,\nValentina Rossi\nHead of Talent Acquisition, {{rivalName}}',
+            bodies: [
+                'Egregio Direttore,\n\nAbbiamo condotto un\'analisi approfondita del mercato NCC in {{city}} e il profilo di {{driverName}} è emerso con forza. La nostra offerta: €{{amount}}/mese netti, auto aziendale di rappresentanza e piano welfare completo.\n\nConfidiamo nella sua comprensione.',
+                'Gentile CEO,\n\nIn {{rivalName}} siamo sempre alla ricerca dei migliori professionisti. {{driverName}} rappresenta esattamente il profilo che cerchiamo. Offriamo €{{amount}}/mese con contratto a tempo indeterminato e benefit esclusivi.\n\nRimango a disposizione per qualsiasi chiarimento.',
+            ]
+        },
+        {
+            id: 'poach_003',
+            senderName: 'Dott. Luca Conti',
+            senderRole: 'CEO, {{rivalName}}',
+            senderIcon: '🕴',
+            subject: 'Comunicazione diretta — autista {{driverName}}',
+            signature: 'Distinti saluti,\nDott. Luca Conti\nCEO, {{rivalName}}',
+            bodies: [
+                'Egregio collega,\n\nMi permetto di scriverLe direttamente. Il suo autista {{driverName}} è un professionista di raro valore. Gli abbiamo già proposto €{{amount}}/mese. La informo formalmente, come da prassi del settore.\n\nSono sicuro che comprenderà le regole del mercato.',
+                'Caro Direttore,\n\nIl mercato del lusso premia il talento. {{driverName}} merita di lavorare per la struttura più adatta alle sue ambizioni. Noi offriamo €{{amount}}/mese e un ambiente di lavoro all\'altezza.\n\nLa ringrazio per la sua abituale professionalità.',
+            ]
+        },
+        {
+            id: 'poach_004',
+            senderName: 'Irene Marini',
+            senderRole: 'Responsabile Selezione, {{rivalName}}',
+            senderIcon: '📋',
+            subject: 'Interesse per {{driverName}} — offerta economica',
+            signature: 'Cordiali saluti,\nIrene Marini\nResponsabile Selezione del Personale',
+            bodies: [
+                'Spettabile Direzione,\n\nA seguito di una valutazione interna, abbiamo identificato {{driverName}} come candidato ideale per un ruolo senior nella nostra flotta. La retribuzione proposta è di €{{amount}}/mese, con possibilità di crescita nel primo anno.\n\nLa preghiamo di prendere atto della presente comunicazione.',
+                'Gentile CEO,\n\nSiamo specializzati nell\'individuare i migliori autisti NCC sul territorio. {{driverName}} soddisfa pienamente i nostri criteri. L\'offerta economica — €{{amount}}/mese — è stata già comunicata direttamente all\'interessato.\n\nLa ringraziamo per l\'attenzione.',
+            ]
+        },
+        {
+            id: 'poach_005',
+            senderName: 'Antonio De Luca',
+            senderRole: 'Operations Manager, {{rivalName}}',
+            senderIcon: '🚗',
+            subject: 'Acquisizione profilo {{driverName}} — NCC {{city}}',
+            signature: 'Grazie e saluti,\nAntonio De Luca\nOperations Manager',
+            bodies: [
+                'Buongiorno,\n\nLe comunico che {{rivalName}} ha avviato una trattativa con {{driverName}} per un ingresso nella nostra struttura operativa di {{city}}. Il pacchetto prevede €{{amount}}/mese + rimborso spese + polizza sanitaria integrativa.\n\nRimaniamo in attesa di riscontro da parte sua.',
+                'Egregio Direttore,\n\nLa nostra espansione a {{city}} richiede professionisti di alto livello. {{driverName}} è in cima alla nostra lista. Abbiamo preparato un\'offerta di €{{amount}}/mese con incentivi variabili legati alle performance.\n\nDistinti saluti.',
+            ]
+        },
+        {
+            id: 'poach_006',
+            senderName: 'Sofia Bianchi',
+            senderRole: 'Direttrice Risorse Umane',
+            senderIcon: '👩‍💼',
+            subject: 'Pacchetto esclusivo per {{driverName}}',
+            signature: 'A presto,\nSofia Bianchi\nDirettrice HR, {{rivalName}}',
+            bodies: [
+                'Gentile Direttore,\n\nCi risulta che {{driverName}} sia tra i professionisti più apprezzati della sua flotta. La nostra proposta è strutturata su misura: €{{amount}}/mese, auto premium assegnata, e accesso al circuito clienti VIP di {{rivalName}}.\n\nSperiamo di poter contare sulla sua sportività professionale.',
+                'Buongiorno,\n\nIn qualità di HR Director di {{rivalName}}, desidero informarLa formalmente dell\'interesse della nostra azienda verso {{driverName}}. Offerta: €{{amount}}/mese netti con benefit welfare di primo livello.\n\nRimango disponibile per eventuali confronti.',
+            ]
+        },
+        {
+            id: 'poach_007',
+            senderName: 'Riccardo Esposito',
+            senderRole: 'Managing Director, {{rivalName}}',
+            senderIcon: '🏆',
+            subject: 'Offerta premium — autista {{driverName}}',
+            signature: 'Con rispetto,\nRiccardo Esposito\nManaging Director, {{rivalName}}',
+            bodies: [
+                'Egregio CEO,\n\nIn {{rivalName}} investiamo nei migliori. {{driverName}} ha costruito una reputazione invidiabile nel settore NCC. Gli offriamo €{{amount}}/mese, più una partecipazione agli utili trimestrali.\n\nLa informiamo come gesto di correttezza tra professionisti.',
+                'Gentile Direttore,\n\nIl mercato del lusso si muove veloce. {{driverName}} ha qualità che il nostro team sa valorizzare. La nostra offerta di €{{amount}}/mese è tra le più competitive del settore in {{city}}.\n\nDistinti saluti e buon lavoro.',
+            ]
+        },
+        {
+            id: 'poach_008',
+            senderName: 'Claudia Ferrara',
+            senderRole: 'Talent Scout Senior, {{rivalName}}',
+            senderIcon: '🔍',
+            subject: 'Scouting: profilo {{driverName}} — aggiornamento',
+            signature: 'Cordialmente,\nClaudia Ferrara\nSenior Talent Scout, {{rivalName}}',
+            bodies: [
+                'Spettabile Direzione,\n\nDesidero aggiornarLa: dopo mesi di osservazione, abbiamo formalizzato la nostra offerta a {{driverName}}. Il pacchetto ammonta a €{{amount}}/mese con clausola di revisione semestrale.\n\nComprendiamo che possa essere una notizia scomoda, ma il talento va dove viene valorizzato.',
+                'Gentile CEO,\n\nIl nostro network ci ha segnalato {{driverName}} come uno degli autisti NCC più affidabili di {{city}}. Offriamo €{{amount}}/mese più un bonus d\'ingresso immediato.\n\nLa ringraziamo per la comprensione e rimaniamo a disposizione.',
+                'Egregio Direttore,\n\n{{rivalName}} è in forte crescita e cerca i migliori talenti. {{driverName}} è esattamente il profilo che ci serve. La nostra offerta: €{{amount}}/mese, netti, con contratto blindato a 24 mesi.\n\nCorrettamente La informiamo prima di procedere.',
+            ]
+        },
+    ],
+
+    ceo_event: [
+        {
+            id: 'ceo_001',
+            senderName: 'Segreteria Gala di Milano',
+            senderRole: 'Organizzazione Evento',
+            senderIcon: '🥂',
+            subject: 'Invito esclusivo — Gala della Mobilità di Lusso {{city}}',
+            signature: 'Con i migliori auspici,\nSegreteria Organizzativa\nGala della Mobilità di Lusso',
+            bodies: [
+                'Egregio CEO,\n\nÈ con grande piacere che La invitiamo al Gala della Mobilità di Lusso di {{city}}, in programma {{day}}. L\'evento riunirà i principali operatori NCC d\'Italia in un\'atmosfera di eleganza e networking esclusivo.\n\nLa sua presenza sarebbe per noi un onore. Dress code: smoking.',
+                'Gentile Direttore,\n\nSi terrà {{day}} il Gala Annuale della Mobilità Premium. La invitiamo a partecipare come ospite d\'onore. La serata prevede cena di gala, premiazioni di settore e networking con i CEO più influenti del comparto.\n\nConfermi la sua presenza entro 48 ore.',
+            ]
+        },
+        {
+            id: 'ceo_002',
+            senderName: 'Forum Economico del Nord Italia',
+            senderRole: 'Segreteria Generale',
+            senderIcon: '🏛',
+            subject: 'Summit CEO — Mobilità e Lusso 2026',
+            signature: 'Distinti saluti,\nSegreteria Generale\nForum Economico del Nord Italia',
+            bodies: [
+                'Egregio Presidente,\n\nSiamo lieti di annunciarLe il Summit CEO dedicato al settore Mobilità & Lusso, previsto per {{day}} a {{city}}. Relatori di fama internazionale e tavole rotonde esclusive attendono i partecipanti selezionati.\n\nLa sua azienda è stata nominata tra le realtà più innovative del settore.',
+                'Gentile CEO,\n\nIl Forum Economico del Nord Italia La invita al Summit annuale dedicato alla mobilità di lusso. {{day}}, {{city}}, ore 10:00. Partecipazione su invito personale. Quote di adesione incluse nel pacchetto premium.\n\nAttendiamo conferma.',
+            ]
+        },
+        {
+            id: 'ceo_003',
+            senderName: 'Club del Golf Imperiale',
+            senderRole: 'Segreteria Soci',
+            senderIcon: '⛳',
+            subject: 'CEO Golf Day — {{day}}, {{city}}',
+            signature: 'Alla prossima,\nSegreteria Soci\nClub del Golf Imperiale',
+            bodies: [
+                'Caro Direttore,\n\nÈ arrivato il momento del nostro CEO Golf Day! {{day}} sul green di {{city}}, tra un drive e l\'altro, si fanno i migliori affari. Colazione di benvenuto, 18 buche, pranzo di gala e networking informale.\n\nI posti sono limitati a 20 partecipanti. La aspettiamo.',
+                'Gentile Membro,\n\nIl Club del Golf Imperiale di {{city}} è lieto di invitarLa al CEO Golf Day del {{day}}. Un\'occasione per incontrare colleghi di settore in un contesto rilassato ma esclusivo.\n\nConfermi la sua presenza e il numero di caddie.',
+            ]
+        },
+        {
+            id: 'ceo_004',
+            senderName: 'Confindustria Trasporti Premium',
+            senderRole: 'Ufficio Relazioni Istituzionali',
+            senderIcon: '🏅',
+            subject: 'Cerimonia di Premiazione — Eccellenze NCC 2026',
+            signature: 'Con stima,\nUfficio Relazioni Istituzionali\nConfindustria Trasporti Premium',
+            bodies: [
+                'Egregio CEO,\n\nÈ con orgoglio che annunciamo la Cerimonia di Premiazione "Eccellenze NCC 2026", in programma {{day}} a {{city}}. La sua azienda è stata candidata nella categoria "Innovazione di Servizio".\n\nLa sua presenza è fondamentale per la credibilità dell\'evento.',
+                'Gentile Direttore,\n\nConfindustria Trasporti Premium La invita alla cerimonia annuale di premiazione del settore. {{day}}, {{city}}, Teatro della Scala. Dress code rigoroso. Posti limitati a 50 aziende selezionate.\n\nIn allegato il programma dettagliato della serata.',
+            ]
+        },
+        {
+            id: 'ceo_005',
+            senderName: 'Associazione CEO d\'Italia',
+            senderRole: 'Presidenza',
+            senderIcon: '🤝',
+            subject: 'Assemblea Annuale CEO — {{day}}',
+            signature: 'Con stima collegiale,\nPresidenza\nAssociazione CEO d\'Italia',
+            bodies: [
+                'Egregio Collega,\n\nL\'Assemblea Annuale dell\'Associazione CEO d\'Italia si terrà {{day}} a {{city}}. Quest\'anno il tema centrale è "Mobilità Sostenibile e Lusso: il Futuro del Settore NCC". La sua esperienza arricchirebbe il dibattito.\n\nIscriversi entro {{day}} dà diritto al posto in prima fila.',
+                'Gentile CEO,\n\nSiamo orgogliosi di presentarle il programma dell\'Assemblea Annuale. Keynote, panel di esperti, e la tradizionale cena di chiusura al Grand Hotel di {{city}}. {{day}}, ore 09:30.\n\nLa aspettiamo.',
+            ]
+        },
+        {
+            id: 'ceo_006',
+            senderName: 'Luxury Business Forum',
+            senderRole: 'Event Management',
+            senderIcon: '💎',
+            subject: 'Invito VIP — Luxury Business Forum {{city}}',
+            signature: 'A presto,\nEvent Management Team\nLuxury Business Forum',
+            bodies: [
+                'Egregio CEO,\n\nIl Luxury Business Forum di {{city}} è l\'evento più esclusivo dell\'anno per i leader del settore premium. {{day}}, Hotel Principe di Savoia. Keynote di ospiti internazionali, networking privato e cocktail di chiusura.\n\nInvito personale non trasferibile.',
+                'Gentile Direttore,\n\nSolo 30 CEO selezionati parteciperanno al Luxury Business Forum di quest\'anno. La sua azienda è stata identificata come player di riferimento nel settore NCC. {{day}}, {{city}}.\n\nConfermi via email riservata.',
+            ]
+        },
+        {
+            id: 'ceo_007',
+            senderName: 'Camera di Commercio di {{city}}',
+            senderRole: 'Ufficio Grandi Imprese',
+            senderIcon: '🏦',
+            subject: 'Tavola Rotonda — Trasporti e Lusso, {{day}}',
+            signature: 'Cordiali saluti,\nUfficio Grandi Imprese\nCamera di Commercio di {{city}}',
+            bodies: [
+                'Spettabile Azienda,\n\nLa Camera di Commercio di {{city}} organizza {{day}} una Tavola Rotonda sul tema "Trasporti di Lusso: Regolamentazione e Opportunità". Parteciperanno rappresentanti istituzionali e i principali operatori NCC della regione.\n\nLa sua partecipazione rafforzerebbe la rappresentatività del tavolo.',
+                'Gentile CEO,\n\nSiamo lieti di invitarLa alla Tavola Rotonda annuale dedicata al settore dei trasporti premium. {{day}}, Palazzo della Camera di Commercio, {{city}}. Interventi istituzionali e confronto tra operatori privati.\n\nLa preghiamo di confermare la presenza.',
+            ]
+        },
+        {
+            id: 'ceo_008',
+            senderName: 'Fondazione Italia Mobilità',
+            senderRole: 'Direzione Culturale',
+            senderIcon: '🎭',
+            subject: 'Serata di Gala — Fondazione Italia Mobilità',
+            signature: 'Con affetto istituzionale,\nDirezione Culturale\nFondazione Italia Mobilità',
+            bodies: [
+                'Egregio Presidente,\n\nLa Fondazione Italia Mobilità La invita alla serata di Gala di raccolta fondi per i programmi di formazione degli autisti di lusso. {{day}}, {{city}}. Cena a sei portate, asta di beneficienza e live music.\n\nIl contributo minimo per la partecipazione è di €{{amount}}.',
+                'Gentile CEO,\n\nUn\'altra stagione, un altro Gala. La Fondazione Italia Mobilità {{day}} a {{city}} festeggia dieci anni di eccellenza nel settore. La sua presenza darebbe lustro alla serata.\n\nBiglietti disponibili su richiesta diretta.',
+            ]
+        },
+        {
+            id: 'ceo_009',
+            senderName: 'Automobilclub d\'Elite',
+            senderRole: 'Segreteria Presidente',
+            senderIcon: '🚘',
+            subject: 'Rally CEO — Tour delle Dolomiti {{day}}',
+            signature: 'Buon viaggio,\nSegreteria del Presidente\nAutomobilclub d\'Elite',
+            bodies: [
+                'Caro CEO,\n\nTorna il Rally CEO attraverso le Dolomiti! {{day}}, partenza da {{city}}, arrivo con cena di gala in alta quota. Un\'esperienza unica tra guida sportiva e networking d\'élite.\n\nPosti limitati a 15 vetture. Iscrizione entro la settimana.',
+                'Gentile Collega,\n\nL\'Automobilclub d\'Elite La invita al tradizionale Tour delle Dolomiti riservato ai CEO del settore automotive e mobilità. {{day}}, raduno a {{city}} ore 07:00.\n\nIn allegato la roadmap dell\'evento.',
+            ]
+        },
+        {
+            id: 'ceo_010',
+            senderName: 'Grand Hotel Palace {{city}}',
+            senderRole: 'Relazioni VIP',
+            senderIcon: '🏨',
+            subject: 'Suite riservata — Summit CEO {{day}}',
+            signature: 'Con piacere,\nRelazioni VIP\nGrand Hotel Palace {{city}}',
+            bodies: [
+                'Egregio Ospite,\n\nIl Grand Hotel Palace di {{city}} è lieto di comunicare che la suite presidenziale Le è stata riservata per il Summit CEO del {{day}}. Check-in ore 15:00, Summit dalle 18:00, cena di gala ore 21:00.\n\nI nostri concierge sono a sua disposizione 24/7.',
+                'Gentile Direttore,\n\nIn occasione del Summit CEO del {{day}}, abbiamo predisposto un pacchetto esclusivo: suite superior, accesso alla lounge privata, spa riservata e trasferimento in limousine dall\'aeroporto.\n\nConfermi l\'arrivo e le sue preferenze.',
+            ]
+        },
+        {
+            id: 'ceo_011',
+            senderName: 'Rotary Club Internazionale — Chapter {{city}}',
+            senderRole: 'Presidente di Chapter',
+            senderIcon: '🌐',
+            subject: 'Cena di Gala Rotary — {{day}}, {{city}}',
+            signature: 'Rotary in service,\nPresidente di Chapter\nRotary Club {{city}}',
+            bodies: [
+                'Gentile CEO,\n\nIl Rotary Club di {{city}} La invita alla Cena di Gala annuale del {{day}}. Un appuntamento irrinunciabile per i leader del tessuto imprenditoriale locale. Serata di beneficienza, musica dal vivo e networking di alto profilo.\n\nLa quota di partecipazione è di €{{amount}} a persona.',
+                'Egregio Direttore,\n\nÈ un onore estenderLe l\'invito alla nostra Cena di Gala. Il Rotary di {{city}} riunisce ogni anno {{day}} i CEO e i professionisti più in vista della regione.\n\nPosti esauriti rapidamente — confermi al più presto.',
+            ]
+        },
+        {
+            id: 'ceo_012',
+            senderName: 'Istituto della Mobilità Sostenibile',
+            senderRole: 'Direttore Scientifico',
+            senderIcon: '🌿',
+            subject: 'Conferenza annuale — NCC Green 2026',
+            signature: 'Con rispetto accademico,\nProf. {{ceoName}}\nDirettore Scientifico, IMS',
+            bodies: [
+                'Spettabile CEO,\n\nL\'Istituto della Mobilità Sostenibile La invita alla Conferenza Annuale NCC Green 2026, {{day}} a {{city}}. Si dibatterà di elettrificazione delle flotte, normative europee e opportunità di incentivo per gli operatori NCC.\n\nLa sua testimonianza diretta arricchirebbe il programma.',
+                'Gentile Direttore,\n\nNCC Green 2026 è l\'evento di riferimento per chi opera nella mobilità di lusso sostenibile. {{day}}, {{city}}. Relatori da tutta Europa, workshop pratici e sessioni di confronto tra operatori.\n\nInscriviti ora — posti limitati.',
+            ]
+        },
+    ],
+
+    grey_market: [
+        {
+            id: 'grey_001',
+            senderName: 'Fonte Anonima',
+            senderRole: 'Informatore di Settore',
+            senderIcon: '🕵️',
+            subject: 'Segnalazione riservata — attività irregolare a {{city}}',
+            signature: '[Mittente anonimo]\nCanale criptato',
+            bodies: [
+                'CEO,\n\nHo saputo che a {{city}} opera una rete di NCC abusivi organizzata. Tariffe al nero, nessuna assicurazione, clientela ignara. Il giro vale circa €{{amount}}/settimana.\n\nSe vuoi intervenire — o approfittarne — sai come trovarmi. Non rispondere a questa mail.',
+                'Direttore,\n\nUna fonte nel porto di {{city}} mi ha riferito di un\'organizzazione che gestisce trasporti "ufficiosamente". Clienti di alto bordo, nessuna fattura, tariffe doppie rispetto al mercato. Giro d\'affari stimato: €{{amount}}/mese.\n\nFacci sapere se sei interessato a saperne di più.',
+            ]
+        },
+        {
+            id: 'grey_002',
+            senderName: 'Il Corvo',
+            senderRole: 'Informatore indipendente',
+            senderIcon: '🦅',
+            subject: 'Concorrenza sleale — zona {{city}}',
+            signature: 'Il Corvo\n[identità protetta]',
+            bodies: [
+                'Boss,\n\nQuella zona tra il porto e l\'aeroporto di {{city}} è terra di nessuno. Almeno tre operatori abusivi raccolgono clienti ogni giorno senza licenza. Incassano €{{amount}} a settimana in contanti.\n\nSe vuoi che quella fetta di mercato torni a chi di dovere, posso aiutare.',
+                'Direttore,\n\nUn\'insider dell\'aeroporto di {{city}} mi ha passato i dettagli di un giro parallelo. Autisti senza NCC, clienti VIP inconsapevoli. Il volume mensile supera €{{amount}}.\n\nSta a te decidere il da farsi. Io ho fatto la mia parte.',
+            ]
+        },
+        {
+            id: 'grey_003',
+            senderName: 'Guardia di Finanza — Nucleo Speciale',
+            senderRole: '[email non verificabile]',
+            senderIcon: '⚠️',
+            subject: 'ATTENZIONE: attività non autorizzate rilevate — {{city}}',
+            signature: '[Non rispondere a questa comunicazione]',
+            bodies: [
+                'AVVISO RISERVATO\n\nSono stati rilevati movimenti anomali nel settore NCC di {{city}}. Operatori non registrati con volume d\'affari superiore a €{{amount}}/mese. La segnalazione è in corso di verifica.\n\nSe sei a conoscenza di tali attività, sei tenuto a comunicarlo alle autorità competenti.',
+                'COMUNICAZIONE INTERNA\n\nNucleo Speciale GdF — Operazione Taxi Ombra. Rilevati 7 veicoli non autorizzati nella zona di {{city}}. Giro stimato €{{amount}}/settimana. Operazione in corso.\n\nRiservato. Non divulgare.',
+            ]
+        },
+        {
+            id: 'grey_004',
+            senderName: 'Massimo N.',
+            senderRole: 'Vecchio contatto di settore',
+            senderIcon: '🤫',
+            subject: 'Ti passo una cosa interessante...',
+            signature: 'M.\n[cancella dopo aver letto]',
+            bodies: [
+                'Ciao,\n\nSento che a {{city}} c\'è un tipo che muove clienti VIP senza licenza. Ha agganci negli hotel a cinque stelle, dicono che fatturi €{{amount}} al mese in nero.\n\nTi do i contatti se vuoi fare due conti insieme. O se vuoi toglierlo dai piedi tu.',
+                'Direttore,\n\nUn amico comune mi ha detto di segnalarti questa situazione. C\'è chi a {{city}} fa il tuo lavoro senza pagare tasse né contributi. €{{amount}}/mese finiscono in tasca senza passare da nessun registro.\n\nPotrebbe essere un\'opportunità o un problema. Dipende da te.',
+            ]
+        },
+        {
+            id: 'grey_005',
+            senderName: 'Network Intelligence NCC',
+            senderRole: 'Divisione Monitoraggio Concorrenza',
+            senderIcon: '📡',
+            subject: 'Alert mercato grigio — zona {{city}}',
+            signature: 'NIN — Network Intelligence NCC\nRapporto automatico',
+            bodies: [
+                'ALERT AUTOMATICO\n\nIl nostro sistema ha rilevato attività NCC non autorizzate nella zona di {{city}}. Volume stimato: €{{amount}}/settimana. Tipologia: trasporti aeroportuali e congressuali.\n\nSi consiglia monitoraggio attivo e segnalazione alle autorità se ritenuto opportuno.',
+                'RAPPORTO CONCORRENZA\n\nZona: {{city}} — Centro/Porto.\nOperatori irregolari rilevati: 4.\nFatturato stimato grey market: €{{amount}}/mese.\nRischio per operatori regolari: ALTO.\n\nSi consiglia azione entro 7 giorni.',
+            ]
+        },
+        {
+            id: 'grey_006',
+            senderName: 'Anonimo',
+            senderRole: '',
+            senderIcon: '📩',
+            subject: 'Sai cosa succede la notte a {{city}}?',
+            signature: '—',
+            bodies: [
+                'Caro CEO,\n\nLa notte a {{city}} certi autisti lavorano senza divisa, senza app, senza niente. Clienti di club privati, hotel di lusso, eventi esclusivi. Incassano €{{amount}} a serata.\n\nMe l\'ha detto un portiere di albergo. Pensavo te lo dovessi far sapere.',
+                'Boss,\n\nQuella zona degli hotel di lusso a {{city}} è territorio non presidiato. Chiunque può raccogliere clienti. C\'è chi lo fa già — e guadagna €{{amount}} a settimana senza nemmeno una licenza.\n\nSe vuoi presidiarla, muoviti prima degli altri.',
+            ]
+        },
+        {
+            id: 'grey_007',
+            senderName: 'Studio Legale Aversa & Associati',
+            senderRole: 'Consulenza Antitrust e Regolamentazione',
+            senderIcon: '⚖️',
+            subject: 'Segnalazione abusi di mercato — {{city}}',
+            signature: 'Avv. Filippo Aversa\nStudio Legale Aversa & Associati',
+            bodies: [
+                'Egregio Cliente,\n\nAbbiamo rilevato anomalie competitive nella zona di {{city}} che potrebbero ledere i diritti degli operatori regolari. Entità irregolari con giro d\'affari di circa €{{amount}}/mese operano senza autorizzazioni.\n\nLe consigliamo di valutare un esposto formale o un\'azione diretta di mercato.',
+                'Gentile CEO,\n\nIn risposta alla sua richiesta di monitoraggio competitivo, segnaliamo la presenza di operatori abusivi a {{city}} con volumi stimati in €{{amount}}/mese. Siamo pronti ad assisterLa nelle azioni legali necessarie.\n\nDistinti saluti professionali.',
+            ]
+        },
+        {
+            id: 'grey_008',
+            senderName: 'Dario F.',
+            senderRole: 'Ex autista, ora consulente',
+            senderIcon: '🚕',
+            subject: 'Roba che so io — ti può interessare',
+            signature: 'Dario\n(sai come trovarmi)',
+            bodies: [
+                'Capo,\n\nHo lavorato per un\'organizzazione a {{city}} prima di mettermi in proprio. Quello che fanno è semplice: raccolgono clienti dagli hotel senza licenza, cash, nessuna ricevuta. Volume settimanale: €{{amount}}.\n\nSe ti serve qualcuno che conosce i meccanismi dall\'interno, sono disponibile.',
+                'Direttore,\n\nUno che lavora all\'aeroporto di {{city}} mi ha dato i nomi di chi gestisce il giro abusivo nella zona. €{{amount}}/mese in nero, tutto sotto il radar. Vuoi sapere di più? Trovami al solito posto.',
+            ]
+        },
+    ],
+
+    shadow: [
+        {
+            id: 'shadow_001',
+            senderName: 'Agenzia Ombra',
+            senderRole: 'Intelligence Competitiva',
+            senderIcon: '🕶',
+            subject: 'Rapporto riservato — attività di {{rivalName}}',
+            signature: 'Agenzia Ombra\n[comunicazione criptata — non conservare]',
+            bodies: [
+                'CEO,\n\nIl nostro agente a {{city}} ha monitorato {{rivalName}} negli ultimi 14 giorni. Risultati: espansione flotta di 3 veicoli, assunzione di 2 nuovi autisti senior, accordo preliminare con l\'Hotel Grand Palace.\n\nSi consiglia risposta strategica entro 10 giorni.',
+                'Direttore,\n\nRapporto mensile su {{rivalName}}: fatturato in crescita del 18%, nuovi contratti corporate con due multinazionali di {{city}}, e voci di un round di investimento privato.\n\nLa situazione competitiva si sta evolvendo rapidamente.',
+            ]
+        },
+        {
+            id: 'shadow_002',
+            senderName: 'Network di Informatori',
+            senderRole: 'Divisione Analisi Rivali',
+            senderIcon: '📊',
+            subject: 'Intel su {{rivalName}} — aggiornamento settimanale',
+            signature: 'Network di Informatori\nRapporto #{{amount}}',
+            bodies: [
+                'Aggiornamento settimanale:\n\n{{rivalName}} ha perso due clienti VIP questa settimana, secondo le nostre fonti interne. Il loro autista di punta ha manifestato insoddisfazione per le condizioni di lavoro.\n\nFinestra di opportunità stimata: 3-4 settimane.',
+                'INTEL RISERVATO\n\n{{rivalName}} sta trattando l\'acquisizione di una piccola flotta a {{city}}. Se l\'operazione va in porto, il loro parco auto crescerebbe del 40%.\n\nSi suggerisce monitoraggio costante e azione preventiva sul territorio.',
+            ]
+        },
+        {
+            id: 'shadow_003',
+            senderName: 'Osservatorio NCC Italia',
+            senderRole: 'Unità Analisi Competitiva',
+            senderIcon: '🔭',
+            subject: 'Analisi competitor — {{rivalName}}, {{city}}',
+            signature: 'Osservatorio NCC Italia\nUnità Analisi Competitiva',
+            bodies: [
+                'RAPPORTO TRIMESTRALE\n\nSoggetto: {{rivalName}}\nZona operativa: {{city}}\nPunti di forza: reputazione consolidata, clientela fidelizzata.\nPunti di debolezza: flotta datata, turnover autisti elevato.\n\nOpportunità per la sua azienda: aggredire il segmento corporate non presidiato.',
+                'Egregio CEO,\n\n{{rivalName}} ha mostrato segni di difficoltà finanziaria nell\'ultimo trimestre. Ritardi nei pagamenti ai fornitori e riduzione dei servizi notturni.\n\nLa finestra per sottrarre quote di mercato è aperta. Agisca con tempestività.',
+            ]
+        },
+        {
+            id: 'shadow_004',
+            senderName: 'Fonte interna [protetta]',
+            senderRole: 'Ex dipendente {{rivalName}}',
+            senderIcon: '🤐',
+            subject: 'Informazioni dall\'interno — {{rivalName}}',
+            signature: '[Fonte protetta]\nCanale sicuro',
+            bodies: [
+                'CEO,\n\nHo lavorato per {{rivalName}} fino al mese scorso. So come funzionano. Il loro margine reale è del 12%, molto meno di quanto dichiarano. E il contratto con l\'aeroporto di {{city}} è in scadenza tra 60 giorni.\n\nSe vuoi i dettagli, sai come contattarmi in modo sicuro.',
+                'Direttore,\n\nDall\'interno di {{rivalName}} arrivano segnali di tensione. Il CEO e il CFO litigano sulla direzione strategica. Due autisti senior stanno valutando di andarsene.\n\nMomento ideale per fare offerte concrete ai loro migliori profili.',
+            ]
+        },
+        {
+            id: 'shadow_005',
+            senderName: 'BriefingMarket SRL',
+            senderRole: 'Consulenza Strategica',
+            senderIcon: '📋',
+            subject: 'Briefing competitivo mensile — {{rivalName}}',
+            signature: 'Team BriefingMarket\nConsulenza Strategica NCC',
+            bodies: [
+                'Gentile Cliente,\n\nIl briefing di questo mese riguarda {{rivalName}}. Hanno aperto un nuovo garage a {{city}} con capacità per 8 veicoli aggiuntivi. Il piano è di aumentare le corse aeroportuali del 30% entro fine trimestre.\n\nLa sua risposta strategica dovrebbe essere immediata.',
+                'Spettabile Direzione,\n\n{{rivalName}} ha siglato un accordo di partnership con una catena alberghiera di {{city}}. Impatto stimato: +25 corse/settimana garantite. La situazione richiede un intervento sulla fidelizzazione dei suoi clienti attuali.',
+            ]
+        },
+        {
+            id: 'shadow_006',
+            senderName: 'Marco — Contatto Porto',
+            senderRole: 'Informatore locale',
+            senderIcon: '⚓',
+            subject: 'Cosa ho visto al porto di {{city}}',
+            signature: 'Marco\n[non richiamare su questo numero]',
+            bodies: [
+                'Boss,\n\nIeri sera al porto di {{city}} ho visto tre auto di {{rivalName}} che aspettavano l\'attracco del cruise liner. Erano lì prima di tutti. Qualcuno gli ha passato il programma degli arrivi in anticipo.\n\nQualcuno dentro ha i contatti giusti. Vuoi che faccia accertamenti?',
+                'Capo,\n\n{{rivalName}} ha piazzato un autista fisso al porto di {{city}} tutti i giorni. Raccoglie clienti appena scendono dalle navi. Si parla di €{{amount}} a settimana solo da quel segmento.\n\nSe vuoi entrare in quella fetta, devi muoverti adesso.',
+            ]
+        },
+        {
+            id: 'shadow_007',
+            senderName: 'Intelligence Corporate',
+            senderRole: 'Servizio di Monitoraggio Premium',
+            senderIcon: '🔐',
+            subject: 'Alert strategico — mossa di {{rivalName}}',
+            signature: 'Intelligence Corporate\nServizio Premium — Rapporto automatico',
+            bodies: [
+                'ALERT STRATEGICO\n\n{{rivalName}} ha pubblicato un annuncio di selezione per 5 nuovi autisti senior. Budget retributivo stimato: €{{amount}}/mese totali.\n\nSi tratta di un segnale chiaro di espansione. Si consiglia di verificare la solidità della propria flotta.',
+                'NOTIFICA IMMEDIATA\n\n{{rivalName}} ha aggiornato la propria app con funzionalità di prenotazione anticipata a 30 giorni. L\'upgrade è costato circa €{{amount}}.\n\nSi raccomanda di valutare investimenti tecnologici analoghi per rimanere competitivi.',
+            ]
+        },
+        {
+            id: 'shadow_008',
+            senderName: 'Agenzia Specchio',
+            senderRole: 'Controspionaggio Commerciale',
+            senderIcon: '🪞',
+            subject: 'URGENTE — {{rivalName}} si muove su {{city}}',
+            signature: 'Agenzia Specchio\n[contatto monouso]',
+            bodies: [
+                'CEO — URGENTE\n\n{{rivalName}} ha acquisito questa settimana i diritti esclusivi per i trasporti di un grande evento a {{city}} il {{day}}. Valore stimato dell\'appalto: €{{amount}}.\n\nSe vuole contestare l\'assegnazione o prepararsi a coprire i segmenti residuali, deve agire entro 48 ore.',
+                'FLASH INTEL\n\n{{rivalName}} è in trattativa avanzata con l\'aeroporto di {{city}} per uno slot esclusivo di raccolta clienti business class.\n\nSe l\'accordo va in porto, il loro vantaggio competitivo diventa strutturale. Si raccomanda azione immediata.',
+            ]
+        },
+    ],
+
+    vip_request: [
+        {
+            id: 'vip_001',
+            senderName: 'Dott.ssa Eleonora Savini',
+            senderRole: 'Assistente personale del Senatore Marchetti',
+            senderIcon: '⭐',
+            subject: 'Richiesta servizio NCC — {{day}}, {{city}}',
+            signature: 'Cordialmente,\nDott.ssa Eleonora Savini\nAssistente Personale',
+            bodies: [
+                'Spettabile Direzione,\n\nIl Senatore Marchetti necessita di un servizio di trasporto riservato per {{day}} a {{city}}. Partenza ore 08:30 dall\'Hotel Excelsior, arrivo Palazzo del Senato. Il Senatore richiede massima discrezione e puntualità assoluta.\n\nLa retribuzione concordata è di €{{amount}} per la giornata. Confermi disponibilità.',
+                'Gentile Azienda,\n\nPer conto del mio assistito, richiedo un autista per l\'intera giornata del {{day}} a {{city}}. Profilo richiesto: esperienza con clienti istituzionali, conoscenza del protocollo, abito scuro obbligatorio.\n\nPrezzo: €{{amount}} tutto incluso. Risponda entro oggi.',
+            ]
+        },
+        {
+            id: 'vip_002',
+            senderName: 'Chiara Montesi',
+            senderRole: 'PA — Studio Legale Montesi & Partners',
+            senderIcon: '💼',
+            subject: 'Transfer urgente per cliente VIP — {{city}}',
+            signature: 'Grazie,\nChiara Montesi\nPersonal Assistant',
+            bodies: [
+                'Buongiorno,\n\nAbbiamo necessità di un transfer urgente per un nostro cliente di rilievo. {{day}}, {{city}}, tratto aeroporto-Hotel Quattro Stagioni. Cliente di nazionalità straniera, richiede autista con conoscenza dell\'inglese e acqua minerale a bordo.\n\nDisponiamo di un budget di €{{amount}}. Risposta urgente richiesta.',
+                'Gentile Azienda,\n\nUn nostro partner internazionale arriva a {{city}} il {{day}}. Ha bisogno di un servizio di alto livello: auto berlina premium, autista in divisa, zero compromessi sulla puntualità.\n\nPagamento immediato: €{{amount}}. Confermate?',
+            ]
+        },
+        {
+            id: 'vip_003',
+            senderName: 'Grand Hotel Villa d\'Este',
+            senderRole: 'Concierge Service',
+            senderIcon: '🏰',
+            subject: 'Richiesta transfer per ospiti — {{day}}',
+            signature: 'Con rispetto,\nConcierge Service\nGrand Hotel Villa d\'Este',
+            bodies: [
+                'Spettabile NCC,\n\nPer conto di due dei nostri ospiti di suite presidenziale, siamo alla ricerca di un servizio di trasporto esclusivo per {{day}}. Percorso: Villa d\'Este — Milano centro — ritorno. Budget: €{{amount}}.\n\nI nostri ospiti sono abituati al meglio. La qualità del servizio rifletterà sulla nostra struttura.',
+                'Gentile Direttore,\n\nIl Grand Hotel Villa d\'Este richiede un autista dedicato per {{day}} per accompagnare tre ospiti VIP in giro per {{city}}. Disponibilità richiesta: ore 09:00-20:00. Compenso: €{{amount}} netti.',
+            ]
+        },
+        {
+            id: 'vip_004',
+            senderName: 'Produzione Cinema Lux',
+            senderRole: 'Coordinamento Logistico',
+            senderIcon: '🎬',
+            subject: 'Trasporti per cast cinematografico — {{city}}, {{day}}',
+            signature: 'Grazie per la collaborazione,\nCoordinamento Logistico\nCinema Lux Productions',
+            bodies: [
+                'Egregio CEO,\n\nStiamo girando a {{city}} il {{day}} e abbiamo bisogno di 2 autisti per il trasporto del cast principale. Massima discrezione obbligatoria — NDA richiesto. Budget totale: €{{amount}} per la giornata.\n\nPersonale stampa sul set: la riservatezza è non negoziabile.',
+                'Buongiorno,\n\nProduciamo un film con cast internazionale attualmente a {{city}}. Cerchiamo autisti in grado di gestire talent di livello mondiale. Il {{day}} abbiamo bisogno di copertura completa dalle 06:00 alle 24:00.\n\nOfferta: €{{amount}} per veicolo. Rispondete oggi.',
+            ]
+        },
+        {
+            id: 'vip_005',
+            senderName: 'Fondazione Arte e Cultura',
+            senderRole: 'Segreteria Direttore',
+            senderIcon: '🎨',
+            subject: 'Servizio per vernissage — {{city}}, {{day}}',
+            signature: 'Con stima,\nSegreteria del Direttore\nFondazione Arte e Cultura',
+            bodies: [
+                'Spettabile Azienda,\n\nIn occasione del vernissage della nuova mostra alla Fondazione Arte e Cultura di {{city}}, {{day}}, siamo alla ricerca di un servizio di transfer per i collezionisti e ospiti internazionali.\n\nBudget disponibile: €{{amount}} per la serata. Eleganza e discrezione sono requisiti fondamentali.',
+                'Gentile Direttore,\n\nIl vernissage del {{day}} accoglierà circa 15 ospiti d\'onore da tutta Europa. Cerchiamo un NCC in grado di gestire arrivi scaglionati all\'aeroporto di {{city}} e trasferimenti verso la sede della Fondazione.\n\nPagamento: €{{amount}} a forfait.',
+            ]
+        },
+        {
+            id: 'vip_006',
+            senderName: 'Marianna Greco',
+            senderRole: 'Assistente CEO, Gruppo Lusso Italia',
+            senderIcon: '💎',
+            subject: 'Autista dedicato per amministratore delegato',
+            signature: 'Distinti saluti,\nMarianna Greco\nAssistente di Direzione',
+            bodies: [
+                'Buongiorno,\n\nIl nostro Amministratore Delegato necessita di un autista personale dedicato per il mese di {{day}} con base a {{city}}. Disponibilità richiesta: lunedì-venerdì, 07:00-22:00, con reperibilità weekend.\n\nRetribuzione: €{{amount}}/mese. Esperienza con clientela di alto profilo indispensabile.',
+                'Gentile CEO,\n\nCerchiamo un autista di fiducia per il nostro AD, in servizio a {{city}} a partire da {{day}}. Il profilo ideale ha esperienza in contesti corporate di lusso, inglese fluente e massima riservatezza.\n\nOfferta: €{{amount}}/mese + benefit.',
+            ]
+        },
+        {
+            id: 'vip_007',
+            senderName: 'Consolato Generale',
+            senderRole: 'Ufficio Protocollo',
+            senderIcon: '🏛',
+            subject: 'Richiesta autista per delegazione ufficiale — {{day}}',
+            signature: 'Con riguardo istituzionale,\nUfficio Protocollo\nConsolato Generale',
+            bodies: [
+                'Spettabile Operatore NCC,\n\nIl Consolato Generale richiede un servizio di trasporto per una delegazione ufficiale in visita a {{city}} il {{day}}. Veicolo: berlina nera di rappresentanza. Autista: abito scuro, italiano e inglese fluente.\n\nCompenso: €{{amount}}. Confermate la disponibilità?',
+                'Egregio Direttore,\n\nPer conto della delegazione in visita ufficiale il {{day}} a {{city}}, siamo alla ricerca di un NCC di alto livello. I requisiti di protocollo sono stringenti. Budget: €{{amount}} per l\'intera giornata.',
+            ]
+        },
+        {
+            id: 'vip_008',
+            senderName: 'Lorenzo Venier',
+            senderRole: 'Imprenditore',
+            senderIcon: '🤵',
+            subject: 'Richiesta personale — autista per matrimonio',
+            signature: 'Grazie,\nLorenzo Venier',
+            bodies: [
+                'Buongiorno,\n\nMi sposo il {{day}} a {{city}} e cerco un servizio NCC impeccabile per gli sposi e i testimoni. Vettura: berlina di lusso, bianca o argento. Autista: divisa elegante, nessun ritardo tollerato.\n\nSono disposto a pagare €{{amount}} per la giornata. Il meglio o niente.',
+                'Gentile Azienda,\n\nIl matrimonio è il {{day}}. Ho bisogno di un autista che conosca {{city}} come le sue tasche e che abbia esperienza con eventi nuziali VIP.\n\nBudget: €{{amount}}. Rispondete entro domani mattina.',
+            ]
+        },
+        {
+            id: 'vip_009',
+            senderName: 'Segreteria Personale',
+            senderRole: 'Per conto di cliente anonimo',
+            senderIcon: '🔒',
+            subject: 'Richiesta riservata — trasporto cliente anonimo',
+            signature: '[Segreteria riservata]\nContatto tramite intermediario',
+            bodies: [
+                'Spettabile Direzione,\n\nUn nostro cliente preferisce mantenere l\'anonimato. Necessita di un transfer il {{day}} a {{city}}, tratto privato con massima riservatezza. Nessuna registrazione del percorso richiesta.\n\nCompenso: €{{amount}} in contanti. Interesse?',
+                'Gentile CEO,\n\nPer ragioni di sicurezza, il nostro cliente non può rivelare la propria identità. Il servizio richiesto è un transfer {{day}} da {{city}} verso destinazione da comunicare il giorno stesso.\n\nPagamento: €{{amount}} anticipati.',
+            ]
+        },
+        {
+            id: 'vip_010',
+            senderName: 'Azienda Farmaceutica Salus',
+            senderRole: 'Ufficio Logistica',
+            senderIcon: '🏥',
+            subject: 'Trasporto dirigente per meeting internazionale',
+            signature: 'Distinti saluti,\nUfficio Logistica\nSalus SpA',
+            bodies: [
+                'Buongiorno,\n\nIl nostro Direttore Medico partecipa a un meeting internazionale a {{city}} il {{day}}. Cerchiamo un NCC affidabile per trasporto aeroporto-centro congressi e rientro serale.\n\nBudget: €{{amount}}. Autista puntuale e professionale è il minimo indispensabile.',
+                'Gentile Azienda,\n\nAbbiamo una delegazione di 4 dirigenti in arrivo a {{city}} il {{day}}. Cerchiamo due vetture con autisti esperti per il trasporto durante l\'intera giornata di lavoro.\n\nOfferta: €{{amount}} totali. Confermate.',
+            ]
+        },
+    ],
+
+    diamond: [
+        {
+            id: 'diamond_001',
+            senderName: 'Principessa Alessandra von Hartenberg',
+            senderRole: 'Casa Reale von Hartenberg',
+            senderIcon: '👑',
+            subject: 'Richiesta servizio Diamond — visita a {{city}}',
+            signature: 'Per conto di S.A.R.,\nSegreteria di Corte\nCasa von Hartenberg',
+            bodies: [
+                'Spettabile Direttore,\n\nS.A.R. la Principessa Alessandra sarà a {{city}} il {{day}} e richiede un servizio di trasporto adeguato al suo rango. Rolls-Royce o equivalente, autista con esperienza in protocollo reale, scorta discreta.\n\nIl compenso non è in discussione: €{{amount}} per la giornata. Siete in grado di soddisfare questi standard?',
+                'Egregio CEO,\n\nLa Casa Reale von Hartenberg seleziona con estrema cura i propri fornitori di servizi. Il vostro nome ci è stato segnalato come eccellenza nel settore NCC di {{city}}.\n\nSe avete le risorse e il savoir-faire necessari, contattate la segreteria. Compenso: €{{amount}}.',
+            ]
+        },
+        {
+            id: 'diamond_002',
+            senderName: 'Hamid Al-Rashid',
+            senderRole: 'Ufficio Privato — Famiglia Al-Rashid',
+            senderIcon: '🌟',
+            subject: 'Servizio esclusivo per famiglia Al-Rashid — {{city}}',
+            signature: 'Con rispetto,\nUfficio Privato\nFamiglia Al-Rashid',
+            bodies: [
+                'Gentile Direttore,\n\nLa famiglia Al-Rashid trascorrerà una settimana a {{city}} a partire da {{day}}. Necessitano di 3 veicoli con autisti dedicati, disponibili 24/7, con conoscenza di arabo e inglese.\n\nIl budget settimanale è di €{{amount}}. Nessun compromesso sulla qualità.',
+                'Spettabile CEO,\n\nPer conto della famiglia Al-Rashid, siamo alla ricerca del miglior servizio NCC disponibile a {{city}}. La loro visita prevede eventi privati, shopping di lusso e cene in ristoranti selezionati.\n\nOfferta: €{{amount}} per l\'intera permanenza.',
+            ]
+        },
+        {
+            id: 'diamond_003',
+            senderName: 'Cristina Lombardi',
+            senderRole: 'CEO, Lombardi Fashion Group',
+            senderIcon: '👗',
+            subject: 'Autista per Fashion Week — {{city}}',
+            signature: 'Grazie,\nCristina Lombardi\nCEO, Lombardi Fashion Group',
+            bodies: [
+                'Caro CEO,\n\nDurante la Fashion Week di {{city}} ho bisogno di un autista dedicato che mi segua in ogni spostamento, dal {{day}} per tutta la settimana. Massima flessibilità, auto sportiva elegante, riservatezza assoluta.\n\nPago €{{amount}} per i 7 giorni. Voglio il meglio.',
+                'Gentile Azienda,\n\nLombardi Fashion Group ha bisogno di un servizio premium durante la Fashion Week. Tre autisti, tre veicoli di lusso, disponibilità 06:00-02:00.\n\nBudget totale: €{{amount}}. Interesse?',
+            ]
+        },
+        {
+            id: 'diamond_004',
+            senderName: 'Massimiliano Orsini',
+            senderRole: 'Private Banking, Banca Imperiale',
+            senderIcon: '💰',
+            subject: 'Servizio NCC per cliente private banking',
+            signature: 'Con discrezione,\nMassimiliano Orsini\nPrivate Banker, Banca Imperiale',
+            bodies: [
+                'Egregio CEO,\n\nUno dei nostri clienti private con portafoglio superiore ai €50M richiede un servizio NCC dedicato per un periodo di 3 mesi a {{city}}. Budget mensile: €{{amount}}.\n\nL\'identità del cliente è riservata. Disponete delle credenziali necessarie per gestire questo livello?',
+                'Gentile Direttore,\n\nBanca Imperiale seleziona i propri partner logistici con la stessa cura con cui gestisce i portafogli. Il servizio richiesto è per un cliente ultra-HNW in visita a {{city}} dal {{day}}.\n\nCompensazione: €{{amount}}. Solo i migliori.',
+            ]
+        },
+        {
+            id: 'diamond_005',
+            senderName: 'Arturo Benedetti',
+            senderRole: 'Produttore musicale internazionale',
+            senderIcon: '🎵',
+            subject: 'Tour europeo — servizio NCC {{city}}',
+            signature: 'Rock on,\nArturo Benedetti\nManagement Team',
+            bodies: [
+                'Ciao CEO,\n\nStiamo organizzando la tappa italiana di un tour musicale internazionale. L\'artista — top 10 mondiale — sarà a {{city}} il {{day}} e nei giorni seguenti.\n\nAbbiamo bisogno di 2 SUV premium con autisti che sappiano gestire fan e media. Budget: €{{amount}}. NDA obbligatorio.',
+                'Spettabile Azienda,\n\nPer un artista di fama mondiale in tour a {{city}}, cerchiamo un NCC di altissimo livello. Nessuna foto, nessuna indiscrezione, discrezione totale.\n\nCompenso: €{{amount}}. Rispondete in giornata.',
+            ]
+        },
+        {
+            id: 'diamond_006',
+            senderName: 'Conte Alessandro Visconti',
+            senderRole: 'Casata Visconti',
+            senderIcon: '🏰',
+            subject: 'Servizio di rappresentanza — Casata Visconti',
+            signature: 'Con stima nobiliare,\nConte Alessandro Visconti',
+            bodies: [
+                'Egregio Direttore,\n\nLa Casata Visconti organizza un ricevimento a {{city}} il {{day}}. Abbiamo bisogno di un servizio di trasporto per 12 ospiti illustri — diplomatici, industriali e rappresentanti della cultura.\n\nIl compenso è di €{{amount}} per la serata. L\'eleganza è l\'unico standard accettabile.',
+                'Gentile CEO,\n\nPer un evento privato della Casata Visconti, cerchiamo il NCC più prestigioso di {{city}}. Quattro vetture, autisti in livrea, puntualità svizzera.\n\nOfferta: €{{amount}}. Solo se siete all\'altezza.',
+            ]
+        },
+        {
+            id: 'diamond_007',
+            senderName: 'Yuki Tanaka',
+            senderRole: 'Personal Advisor — Famiglia Tanaka',
+            senderIcon: '🗾',
+            subject: 'Servizio ultra-premium — famiglia Tanaka, {{city}}',
+            signature: 'Arigatou gozaimasu,\nYuki Tanaka\nPersonal Advisor',
+            bodies: [
+                'Buongiorno,\n\nLa famiglia Tanaka, imprenditori giapponesi di primo piano, sarà a {{city}} dal {{day}} per 10 giorni. Richiedono un autista che parli inglese fluentemente, con conoscenza della cultura orientale.\n\nBudget: €{{amount}} per tutto il periodo. Zero difetti tollerati.',
+                'Egregio CEO,\n\nPer i miei clienti, il meglio non è mai abbastanza. La famiglia Tanaka ha standard elevatissimi. Se la sua azienda è davvero la migliore di {{city}}, dimostratelo.\n\nCompenso: €{{amount}}. Risposta entro domani.',
+            ]
+        },
+        {
+            id: 'diamond_008',
+            senderName: 'Segreteria Riservata',
+            senderRole: 'Per conto di cliente Diamond [non divulgabile]',
+            senderIcon: '💠',
+            subject: 'Richiesta Diamond Tier — massima riservatezza',
+            signature: '[Contatto criptato]\nSegreteria Diamond',
+            bodies: [
+                'Spettabile CEO,\n\nUn cliente di profilo eccezionale richiede un servizio NCC su misura a {{city}} per il {{day}}. I dettagli dell\'itinerario verranno comunicati solo all\'autista scelto, il giorno stesso.\n\nCompenso: €{{amount}}. Firma NDA richiesta prima di procedere.',
+                'Gentile Direttore,\n\nIl nostro cliente Diamond richiede il silenzio assoluto. Nessun dato personale, nessun registro del percorso, pagamento in anticipo.\n\nBudget: €{{amount}}. Se accettate le condizioni, rispondete con una parola: CONFERMATO.',
+            ]
+        },
+    ],
+
+    broker_result: [
+        {
+            id: 'broker_001',
+            senderName: 'Roberto Salvi',
+            senderRole: 'Broker Finanziario, Salvi & Partners',
+            senderIcon: '📈',
+            subject: 'Aggiornamento portafoglio — settimana {{day}}',
+            signature: 'Cordialmente,\nRoberto Salvi\nBroker Senior, Salvi & Partners',
+            bodies: [
+                'Egregio Cliente,\n\nLe comunico i risultati della settimana. Le sue posizioni su ENI (+4.2%), Stellantis (+2.8%) e Mediobanca (+1.5%) hanno generato un utile netto di €{{amount}}.\n\nIl portafoglio è in ottima salute. Nessuna azione correttiva necessaria.',
+                'Gentile Direttore,\n\nSettimana positiva per il suo portafoglio. Il rally di Ferrari (FCA.MI, +6.1%) ha compensato la flessione di Telecom Italia (-1.3%).\n\nSaldo netto: +€{{amount}}. Suggerisco di mantenere le posizioni attuali.',
+            ]
+        },
+        {
+            id: 'broker_002',
+            senderName: 'Francesca Canova',
+            senderRole: 'Wealth Manager, Banca Privata Italiana',
+            senderIcon: '💹',
+            subject: 'AVVISO: perdita registrata — portafoglio NCC',
+            signature: 'Con rispetto,\nFrancesca Canova\nWealth Manager',
+            bodies: [
+                'Egregio Cliente,\n\nDevo informarLa di una perdita netta di €{{amount}} registrata questa settimana. La forte volatilità su Azimut (-8.3%) e Saipem (-5.1%) ha penalizzato il portafoglio.\n\nSi consiglia di valutare una revisione delle posizioni. Sono disponibile per una call urgente.',
+                'Gentile Direttore,\n\nLa settimana è stata difficile. I mercati europei hanno registrato una correzione generalizzata. Il suo portafoglio ha subito una perdita di €{{amount}}, principalmente su Banco BPM (-6.7%) e Pirelli (-4.2%).\n\nMonitoriamo la situazione costantemente.',
+            ]
+        },
+        {
+            id: 'broker_003',
+            senderName: 'Dott. Emilio Faro',
+            senderRole: 'Trading Desk, Finanza Alpina SIM',
+            senderIcon: '📊',
+            subject: 'Flash report — movimenti su RACE e ENI',
+            signature: 'Distinti saluti,\nDott. Emilio Faro\nHead of Trading, Finanza Alpina SIM',
+            bodies: [
+                'CEO,\n\nFlash report: RACE (Ferrari) ha segnato +9.3% in apertura di seduta dopo i risultati trimestrali. La sua posizione da €{{amount}} vale ora significativamente di più.\n\nConsiglio di tenere e aspettare il consolidamento sopra i 450€.',
+                'Egregio Cliente,\n\nENI ha annunciato un dividendo straordinario. Le sue {{amount}} azioni generano un rendimento aggiuntivo di €{{amount}} netti.\n\nInoltre INTESA SP ha rotto la resistenza dei 3,80€ — posizione da tenere.',
+            ]
+        },
+        {
+            id: 'broker_004',
+            senderName: 'Simone Fabbri',
+            senderRole: 'Consulente Investimenti, Mediolanum',
+            senderIcon: '🏦',
+            subject: 'Riepilogo mensile portafoglio — performance +{{amount}}%',
+            signature: 'A presto,\nSimone Fabbri\nConsulente Patrimoniale, Mediolanum',
+            bodies: [
+                'Gentile Cliente,\n\nIl mese si chiude positivamente. Performance portafoglio: +{{amount}}%. I titoli migliori: Moncler (+12%), Brunello Cucinelli (+8.4%), LVMH Milano (+5.2%).\n\nIl suo patrimonio investito cresce in linea con le aspettative.',
+                'Buongiorno,\n\nEcco il riepilogo mensile. Il settore lusso ha sovraperformato rispetto all\'indice FTSE MIB. Il suo portafoglio tematico ha guadagnato €{{amount}} questo mese.\n\nNessuna variazione strategica necessaria per il prossimo periodo.',
+            ]
+        },
+        {
+            id: 'broker_005',
+            senderName: 'Alert Automatico — Trading System',
+            senderRole: 'Sistema di Trading Algoritmico',
+            senderIcon: '🤖',
+            subject: 'STOP LOSS ATTIVATO — perdita €{{amount}}',
+            signature: '[Sistema automatico — non rispondere]',
+            bodies: [
+                'AVVISO AUTOMATICO\n\nStop loss attivato sul titolo STLAM (Stellantis) alle ore 10:47. Perdita realizzata: -€{{amount}}.\n\nIl sistema ha chiuso automaticamente la posizione per limitare i danni. Il mercato ha subito una pressione inattesa dopo le notizie macroeconomiche delle 10:30.',
+                'ALERT TRADING\n\nMargine call attivato. Il conto trading ha raggiunto il livello di guardia. Sono stati liquidati €{{amount}} di posizioni per ripristinare il margine.\n\nSi prega di effettuare un bonifico di rifinanziamento entro 24 ore.',
+            ]
+        },
+        {
+            id: 'broker_006',
+            senderName: 'Luca Amadori',
+            senderRole: 'Private Equity, Fondo Meridiano',
+            senderIcon: '🏗',
+            subject: 'Opportunità di investimento — settore NCC',
+            signature: 'Con stima,\nLuca Amadori\nManaging Partner, Fondo Meridiano',
+            bodies: [
+                'Egregio CEO,\n\nIl Fondo Meridiano sta valutando investimenti nel settore NCC italiano. Il suo profilo di azienda in crescita ci ha incuriositi.\n\nSiamo pronti a discutere un\'iniezione di capitale di €{{amount}} in cambio di una quota minoritaria. Interesse a incontrarci?',
+                'Gentile Direttore,\n\nAbbiamo analizzato il mercato NCC di lusso in Italia. Le aziende come la sua stanno performando meglio del mercato generale.\n\nIl Fondo Meridiano offre €{{amount}} di liquidità per accelerare la sua espansione. Siamo seri e rapidi.',
+            ]
+        },
+        {
+            id: 'broker_007',
+            senderName: 'Giulia Terranova',
+            senderRole: 'Research Analyst, Borsa Italiana',
+            senderIcon: '📉',
+            subject: 'Analisi settore NCC quotato — impatto su portafoglio',
+            signature: 'Cordiali saluti,\nGiulia Terranova\nSenior Analyst',
+            bodies: [
+                'Egregio Investitore,\n\nL\'indice di settore NCC/Mobility ha perso il 3.2% questa settimana a causa delle notizie regolatorie dall\'UE. Il suo portafoglio tematico ha subito un impatto di -€{{amount}}.\n\nSuggerisco di non vendere: i fondamentali del settore restano solidi.',
+                'Gentile Cliente,\n\nAggiornamento settimanale: il settore luxury mobility ha outperformato il mercato generale di 2.1%. La sua esposizione su titoli del segmento premium le ha fruttato €{{amount}} aggiuntivi.\n\nManteniamo il giudizio positivo sul comparto.',
+            ]
+        },
+        {
+            id: 'broker_008',
+            senderName: 'Banca Nazionale Privata',
+            senderRole: 'Ufficio Titoli',
+            senderIcon: '🏛',
+            subject: 'Estratto conto titoli — {{day}}',
+            signature: 'Distinti saluti,\nUfficio Titoli\nBanca Nazionale Privata',
+            bodies: [
+                'Gentile Cliente,\n\nLe inviamo l\'estratto conto titoli aggiornato al {{day}}. Valore totale portafoglio: €{{amount}}. Variazione rispetto al mese precedente: +3.4%.\n\nDettaglio posizioni disponibile nell\'allegato sicuro.',
+                'Egregio Correntista,\n\nEstratto titoli al {{day}}. Il suo portafoglio ha registrato un incremento di €{{amount}} nell\'ultimo trimestre.\n\nI titoli più performanti: ENI (+7.2%), Generali (+5.8%), Prysmian (+11.3%). Ottimo risultato complessivo.',
+            ]
+        },
+    ],
+
+    driver_msg: [
+        {
+            id: 'driver_001',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '🚗',
+            subject: 'Messaggio da {{driverName}}',
+            signature: '{{driverName}} 🚗',
+            bodies: [
+                'Capo, buongiorno!\n\nVolevo aggiornarla: la corsa di stamattina è andata benissimo, cliente soddisfattissimo, mi ha lasciato una mancia da €{{amount}}. Dice che tornerà sicuramente.\n\nA dopo!',
+                'Direttore, tutto ok?\n\nStamattina ho avuto un piccolo problema di traffico sull\'A4 ma sono arrivato con 5 minuti di anticipo comunque. Il cliente non ha detto niente. Siamo a posto.\n\nCi sentiamo stasera.',
+            ]
+        },
+        {
+            id: 'driver_002',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '⚠️',
+            subject: 'Problema tecnico — auto in panne',
+            signature: '{{driverName}}\n[in attesa di istruzioni]',
+            bodies: [
+                'Capo URGENTE\n\nL\'auto si è fermata sulla tangenziale di {{city}}. Spia del motore accesa, non riparte. Ho già chiamato il soccorso stradale ma il cliente è con me.\n\nCosa faccio? Mando un\'altra macchina?',
+                'Direttore, brutta situazione.\n\nPneumatico forato in zona {{city}}, cliente VIP a bordo. Ho cambiato la ruota in 8 minuti, cliente impressionato ma siamo in ritardo di 15 minuti.\n\nHo già avvisato la destinazione. Gestisco io?',
+            ]
+        },
+        {
+            id: 'driver_003',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '💬',
+            subject: 'Aggiornamento giornata',
+            signature: '{{driverName}}',
+            bodies: [
+                'Capo buona sera,\n\nGiornata intensa oggi. 7 corse, nessun problema. Il cliente delle 14:00 era un tipo strano ma alla fine tutto ok. Totale incassato: €{{amount}}.\n\nDomani sono disponibile dalle 7.',
+                'Direttore,\n\nOggi ho completato tutte le corse in programma. Il cliente VIP delle 16:30 mi ha chiesto se poteva prenotarmi personalmente per la settimana prossima.\n\nGli dico di contattare lei direttamente?',
+            ]
+        },
+        {
+            id: 'driver_004',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '🤒',
+            subject: 'Malattia — non disponibile oggi',
+            signature: '{{driverName}}\nMi dispiace davvero',
+            bodies: [
+                'Capo mi dispiace tanto\n\nSto malissimo, febbre a 39. Non ce la faccio a venire oggi. Ho già mandato il certificato medico.\n\nSa com\'è, non l\'ho mai fatto prima. Se riesce a coprire le mie corse... grazie.',
+                'Direttore buongiorno.\n\nHo avuto un problema di salute stanotte. Devo restare a casa oggi. Le mando subito i documenti medici.\n\nMi dispiace per i disagi. Domani sarò operativo.',
+            ]
+        },
+        {
+            id: 'driver_005',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '💰',
+            subject: 'Proposta — turno extra weekend',
+            signature: '{{driverName}} 💪',
+            bodies: [
+                'Ciao capo!\n\nSento che questo weekend c\'è molto lavoro. Sono disponibile sabato e domenica, tutto il giorno. Se c\'è da fare ore extra, sono dentro.\n\nFacciamo qualcosa in più sulla tariffa del weekend? 😊',
+                'Direttore,\n\nHo letto del grande evento a {{city}} il {{day}}. Potrei coprire io le corse serali? Ho già l\'esperienza con quel tipo di clientela.\n\nMe lo dice se sono utile. Sono disponibile.',
+            ]
+        },
+        {
+            id: 'driver_006',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '😤',
+            subject: 'Lamentela — cliente maleducato',
+            signature: '{{driverName}}\n[ho fatto del mio meglio]',
+            bodies: [
+                'Capo devo dirle una cosa.\n\nIl cliente delle 11:00 oggi era scortese in modo inaccettabile. Mi ha insultato per il traffico (che non dipende da me) e ha preteso uno sconto.\n\nNon ho detto niente, ma lei dovrebbe sapere. Non voglio più quel cliente.',
+                'Direttore,\n\nVolevo avvisarla: il signor [nome omesso] di stamattina ha lasciato una recensione negativa falsa. Dice che ero in ritardo di 20 minuti ma ho la prova GPS che ero davanti al suo palazzo in anticipo.\n\nPosso mandarle gli screenshot?',
+            ]
+        },
+        {
+            id: 'driver_007',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '🎉',
+            subject: 'Mancia record oggi!',
+            signature: '{{driverName}} 🤩',
+            bodies: [
+                'CAPO! 🎉\n\nNon ci crederà. Il cliente di oggi — un imprenditore del lusso — mi ha lasciato una mancia di €{{amount}}! Ha detto che sono il miglior autista che abbia mai avuto.\n\nGiornata da incorniciare. Grazie per questa opportunità!',
+                'Direttore, buone notizie!\n\nLa signora che ho accompagnato stamattina vuole diventare cliente fisso. Ha chiesto di prenotare ogni martedì e giovedì solo con me.\n\nE mi ha dato €{{amount}} di mancia. Ottima cosa, no?',
+            ]
+        },
+        {
+            id: 'driver_008',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '🔧',
+            subject: 'Auto — segnalo problema da verificare',
+            signature: '{{driverName}}\n[meglio prevenire]',
+            bodies: [
+                'Capo buongiorno,\n\nSegnalo che la vettura ha un rumore strano al motore da questa mattina. Non è grave ma si sente. Meglio farla vedere dal meccanico prima che diventi un problema serio.\n\nSe mi dice dove portarla, ci penso io.',
+                'Direttore,\n\nL\'auto di ieri sera aveva le luci posteriori con un problema. Ho usato l\'altra macchina per le corse di stanotte.\n\nFarei controllare entrambe prima di usarle con clienti VIP. La reputazione vale più del costo di un\'officina.',
+            ]
+        },
+        {
+            id: 'driver_009',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '🤔',
+            subject: 'Mi ha contattato {{rivalName}}...',
+            signature: '{{driverName}}\n[le dico tutto, capo]',
+            bodies: [
+                'Capo, devo dirle una cosa.\n\nMi ha scritto qualcuno di {{rivalName}}. Offerta di €{{amount}}/mese. Ho detto che non ero interessato, ma volevo che lei sapesse.\n\nSto bene qui. Solo per trasparenza.',
+                'Direttore buongiorno.\n\nIeri sera ho ricevuto una telefonata da {{rivalName}}. Volevano propormi un contratto nuovo. Ho detto no, ma se c\'è modo di parlare delle mie condizioni attuali, mi farebbe piacere.\n\nNessuna fretta, ci pensiamo con calma.',
+            ]
+        },
+        {
+            id: 'driver_010',
+            senderName: '{{driverName}}',
+            senderRole: 'Autista — Tua flotta',
+            senderIcon: '🏆',
+            subject: 'Feedback positivo dal cliente VIP',
+            signature: '{{driverName}} ⭐⭐⭐⭐⭐',
+            bodies: [
+                'Capo buonasera!\n\nIl cliente VIP di oggi ha chiamato l\'ufficio per complimentarsi. Ha detto che il servizio era "di livello internazionale". Le gira il messaggio per sua conoscenza.\n\nSiamo forti. 💪',
+                'Direttore,\n\nHo ricevuto un messaggio diretto dal cliente di questa mattina: "Servizio impeccabile, tornerò sicuramente e consiglierò la sua azienda ai miei colleghi".\n\nPenso che valga la pena di aggiornare il profilo del cliente come VIP fisso.',
+            ]
+        },
+    ],
+
+    info: [
+        {
+            id: 'info_001',
+            senderName: 'Ministero delle Infrastrutture e dei Trasporti',
+            senderRole: 'Direzione Generale Trasporto Locale',
+            senderIcon: '🏛',
+            subject: 'Circolare ministeriale n. 47/2026 — NCC',
+            signature: 'Il Direttore Generale\nMinistero delle Infrastrutture e dei Trasporti',
+            bodies: [
+                'Spettabile Operatore,\n\nSi comunica che a decorrere dal {{day}}, tutti gli operatori NCC con flotta superiore a 5 veicoli sono tenuti a registrare ogni corsa sul portale nazionale MIT entro 24 ore dal completamento.\n\nIl mancato rispetto della presente circolare comporta sanzioni amministrative da €{{amount}} a €{{amount}} per ogni violazione accertata.',
+                'Spettabile Azienda,\n\nLa circolare ministeriale n. 47/2026 introduce nuovi obblighi per gli operatori NCC riguardanti la tracciabilità delle corse e la comunicazione dei dati di flotta.\n\nLa preghiamo di adeguare i propri sistemi entro il {{day}}.',
+            ]
+        },
+        {
+            id: 'info_002',
+            senderName: 'Agenzia delle Entrate',
+            senderRole: 'Ufficio Grandi Contribuenti',
+            senderIcon: '📋',
+            subject: 'Comunicazione fiscale — periodo d\'imposta 2025',
+            signature: 'L\'Ufficio\nAgenzia delle Entrate — Grandi Contribuenti',
+            bodies: [
+                'Spettabile Contribuente,\n\nSi ricorda che il termine per la presentazione della dichiarazione dei redditi relativa al periodo d\'imposta 2025 è fissato al {{day}}.\n\nPer le aziende del settore trasporti, si segnala l\'applicazione delle deduzioni previste dalla Legge 214/2025 sui veicoli ad emissioni ridotte.',
+                'Egregio Operatore,\n\nL\'Agenzia delle Entrate comunica l\'avvio dei controlli sistematici sul settore NCC per il periodo 2024-2025. Si raccomanda di conservare tutta la documentazione relativa alle corse effettuate.\n\nUn eventuale accertamento richiede disponibilità di registri completi.',
+            ]
+        },
+        {
+            id: 'info_003',
+            senderName: 'Comune di {{city}}',
+            senderRole: 'Ufficio Mobilità',
+            senderIcon: '🏙',
+            subject: 'Modifiche alla viabilità — zona centro, {{day}}',
+            signature: 'L\'Assessore alla Mobilità\nComune di {{city}}',
+            bodies: [
+                'Spettabile Operatore NCC,\n\nSi comunica che in occasione dell\'evento del {{day}}, il centro storico di {{city}} sarà interdetto al traffico privato dalle ore 10:00 alle 22:00.\n\nGli operatori NCC autorizzati potranno accedere alle zone riservate previa esposizione del pass ZTL emesso dall\'Ufficio Mobilità.',
+                'Gentile Azienda,\n\nIl Comune di {{city}} informa che a partire da {{day}} entreranno in vigore nuove norme per gli accessi in zona ZTL. I veicoli Euro 5 e inferiori saranno esclusi dalle aree centrali nelle fasce orarie 07:00-20:00.\n\nSi prega di adeguare la flotta di conseguenza.',
+            ]
+        },
+        {
+            id: 'info_004',
+            senderName: 'Associazione Nazionale NCC Italia',
+            senderRole: 'Segreteria Generale',
+            senderIcon: '📢',
+            subject: 'Newsletter trimestrale — Mercato NCC Q1 2026',
+            signature: 'La Segreteria Generale\nAssociazione Nazionale NCC Italia',
+            bodies: [
+                'Cari Associati,\n\nIl mercato NCC italiano ha registrato nel primo trimestre 2026 una crescita del 14% rispetto all\'anno precedente. Il segmento luxury ha guidato la crescita con +21%.\n\nLe nostre stime per Q2 prevedono ulteriore espansione, trainata dal turismo internazionale e dagli eventi corporate.',
+                'Spettabili Soci,\n\nLa newsletter trimestrale include un\'analisi approfondita sull\'impatto delle nuove normative UE sulla flotta NCC. In sintesi: le agevolazioni per i veicoli elettrici sono state estese al {{day}}.\n\nIn allegato il report completo del settore.',
+            ]
+        },
+        {
+            id: 'info_005',
+            senderName: 'INPS — Sede Locale',
+            senderRole: 'Ufficio Contributivo Imprese',
+            senderIcon: '🏦',
+            subject: 'Scadenza contributi previdenziali — {{day}}',
+            signature: 'L\'Ufficio Contributivo\nINPS — Sede di {{city}}',
+            bodies: [
+                'Spettabile Datore di Lavoro,\n\nSi ricorda che il versamento dei contributi previdenziali per i lavoratori dipendenti del periodo gennaio-marzo 2026 deve essere effettuato entro il {{day}}.\n\nIl mancato pagamento comporta sanzioni pari al {{amount}}% mensile sull\'importo dovuto.',
+                'Gentile Azienda,\n\nL\'INPS informa che a partire da {{day}} saranno operativi i nuovi massimali contributivi previsti dalla Legge di Bilancio 2026. Per le aziende con più di 5 dipendenti, l\'aliquota contributiva totale passa al 33.2%.\n\nAggiornate i vostri calcoli di conseguenza.',
+            ]
+        },
+        {
+            id: 'info_006',
+            senderName: 'Motorizzazione Civile',
+            senderRole: 'Ufficio Revisioni e Licenze',
+            senderIcon: '🔧',
+            subject: 'Scadenza revisioni — veicoli a noleggio',
+            signature: 'L\'Ufficio Revisioni\nMotorizzazione Civile — {{city}}',
+            bodies: [
+                'Spettabile Operatore NCC,\n\nSi ricorda che i veicoli adibiti a servizio di noleggio con conducente devono essere sottoposti a revisione obbligatoria ogni 12 mesi.\n\nI veicoli con revisione scaduta non possono circolare e sono soggetti a sequestro immediato con sanzione fino a €{{amount}}.',
+                'Gentile Azienda,\n\nDall\'analisi della sua flotta registrata, risulta che uno o più veicoli hanno la revisione in scadenza entro {{day}}.\n\nSi prega di prenotare l\'appuntamento presso la Motorizzazione Civile di {{city}} con almeno 15 giorni di anticipo.',
+            ]
+        },
+        {
+            id: 'info_007',
+            senderName: 'Camera di Commercio',
+            senderRole: 'Registro Imprese',
+            senderIcon: '📄',
+            subject: 'Rinnovo iscrizione — Registro NCC',
+            signature: 'Il Conservatore del Registro\nCamera di Commercio di {{city}}',
+            bodies: [
+                'Spettabile Azienda,\n\nSi avvicina la scadenza per il rinnovo annuale dell\'iscrizione al Registro delle Imprese di Trasporto NCC.\n\nIl termine è fissato al {{day}}. Il diritto annuale ammonta a €{{amount}}. Il mancato rinnovo comporta la sospensione dell\'autorizzazione all\'esercizio.',
+                'Gentile Operatore,\n\nLa informiamo che dal {{day}} saranno obbligatorie le comunicazioni telematiche per tutte le variazioni societarie degli operatori NCC.\n\nPer assistenza nell\'adeguamento ai nuovi obblighi, contatti lo Sportello Imprese della Camera di Commercio di {{city}}.',
+            ]
+        },
+        {
+            id: 'info_008',
+            senderName: 'Prefettura di {{city}}',
+            senderRole: 'Ufficio Sicurezza Pubblica',
+            senderIcon: '⚖️',
+            subject: 'Comunicazione sicurezza — servizi NCC eventi pubblici',
+            signature: 'Il Prefetto\nPrefettura di {{city}}',
+            bodies: [
+                'Spettabile Operatore,\n\nIn vista degli eventi pubblici previsti a {{city}} nel mese corrente, la Prefettura ricorda agli operatori NCC i protocolli di sicurezza obbligatori.\n\nGli autisti che operano in prossimità di eventi con oltre 500 partecipanti devono essere in possesso di certificazione antimafia aggiornata.',
+                'Egregio Direttore,\n\nLa Prefettura di {{city}} ha avviato un piano di controlli straordinari sugli operatori NCC attivi nella zona metropolitana.\n\nSi raccomanda di tenere disponibile tutta la documentazione di flotta, licenze e contratti di lavoro dei dipendenti.',
+            ]
+        },
+    ],
+
+    rival_provoc: [
+        {
+            id: 'rival_001',
+            senderName: 'CEO di {{rivalName}}',
+            senderRole: 'Concorrente',
+            senderIcon: '😤',
+            subject: 'Un messaggio da {{rivalName}}',
+            signature: 'Con disprezzo,\nCEO di {{rivalName}}',
+            bodies: [
+                'Senti bene,\n\nHo visto i tuoi numeri. Niente di speciale. Mentre tu perdi tempo a raccogliere le briciole, noi stiamo costruendo qualcosa di serio a {{city}}.\n\nGoditi il tuo piccolo feudo — non durerà.',
+                'Caro CEO di serie B,\n\nHo saputo che hai perso {{driverName}}. Peccato. Ma forse era ora che trovasse un posto migliore.\n\n{{rivalName}} cresce ogni giorno. Tu stai ferma. Pensa ai tuoi affari.',
+            ]
+        },
+        {
+            id: 'rival_002',
+            senderName: 'Direzione Generale, {{rivalName}}',
+            senderRole: 'Avversario di settore',
+            senderIcon: '⚔️',
+            subject: 'Avviso formale — non ostacolate la nostra espansione',
+            signature: 'Distinti saluti (se meritati),\nDirezione Generale, {{rivalName}}',
+            bodies: [
+                'Egregio CEO,\n\nAbbiamo notato i vostri tentativi di interferire con i nostri clienti a {{city}}. Vi avvertiamo formalmente: {{rivalName}} non tollera pratiche sleali.\n\nSe continua così, porteremo la questione nelle sedi opportune — e abbiamo avvocati migliori dei vostri.',
+                'Gentile Collega,\n\nSappiamo quello che state facendo. Sappiamo anche che i vostri numeri sono gonfiati.\n\n{{rivalName}} ha le risorse per sopportare una guerra di mercato a lungo. Voi no. Consideratelo un avvertimento amichevole.',
+            ]
+        },
+        {
+            id: 'rival_003',
+            senderName: '{{rivalName}} — PR Team',
+            senderRole: 'Comunicazione Esterna',
+            senderIcon: '📣',
+            subject: 'Per sua informazione — siamo ovunque',
+            signature: 'Con arroganza calcolata,\n{{rivalName}} PR Team',
+            bodies: [
+                'Caro CEO,\n\nAbbiamo appena siglato accordi con 5 hotel a cinque stelle di {{city}}. Sì, quelli dove pensavi di espanderti.\n\nIl mercato premium ha scelto {{rivalName}}. Tu puoi tenere le corse dai discount.',
+                'Gentile Direttore,\n\nAbbiamo letto la sua ultima intervista. Coraggiosa, per chi ha quei numeri.\n\n{{rivalName}} ha fatturato €{{amount}} il mese scorso. Quanto ha fatto lei? Esatto.',
+            ]
+        },
+        {
+            id: 'rival_004',
+            senderName: 'CEO personale — {{rivalName}}',
+            senderRole: '',
+            senderIcon: '😏',
+            subject: 'Ti do un consiglio gratis',
+            signature: 'Il tuo futuro ex-concorrente',
+            bodies: [
+                'Ciao,\n\nTi do un consiglio non richiesto: smetti di competere con noi sul segmento VIP di {{city}}. Non sei attrezzato. Non hai i clienti. Non hai gli autisti giusti.\n\n{{rivalName}} domina quel mercato. Trovati una nicchia più adatta al tuo livello.',
+                'Senti,\n\nQuesto mese abbiamo preso 3 dei tuoi clienti. Il mese prossimo probabilmente qualcuno del tuo team. Poi chissà.\n\nNon è personale — è business. Ma se vuoi, possiamo parlare di una tua uscita dal mercato con dignità.',
+            ]
+        },
+        {
+            id: 'rival_005',
+            senderName: 'Ufficio Legale, {{rivalName}}',
+            senderRole: 'Consulenza Legale',
+            senderIcon: '⚖️',
+            subject: 'Diffida formale — pratiche commerciali scorrette',
+            signature: 'Avv. Lorenzo Mancini\nPer conto di {{rivalName}}',
+            bodies: [
+                'Spettabile Azienda,\n\nSi diffida formalmente dal continuare a contattare i clienti di {{rivalName}} con pratiche commerciali che riteniamo scorrette.\n\nIn caso di ulteriori violazioni, ci riserviamo di agire nelle sedi competenti per un risarcimento di €{{amount}}.',
+                'Egregio CEO,\n\nAbbiamo documentazione sufficiente per procedere contro la sua azienda per concorrenza sleale.\n\nLa invitiamo a riconsiderare le sue strategie commerciali nella zona di {{city}}. Il nostro studio ha vinto 47 cause simili negli ultimi 3 anni.',
+            ]
+        },
+        {
+            id: 'rival_006',
+            senderName: 'Un amico di {{rivalName}}',
+            senderRole: '[non verificabile]',
+            senderIcon: '🃏',
+            subject: 'Sai già come va a finire',
+            signature: '— qualcuno che sa come va a finire',
+            bodies: [
+                'Ehi,\n\nHai visto {{rivalName}} ultimamente? Nuovi uffici a {{city}}, flotta rinnovata, accordi con i migliori hotel.\n\nE tu? Sei ancora lì a inseguire corse da €{{amount}} come sempre. Il settore ha un leader ormai — e non sei tu.',
+                'CEO,\n\nVuoi sapere una cosa divertente? {{rivalName}} ha già pianificato dove ti sostituirà tra 6 mesi. Zona aeroporto, zona congressi, zona lusso.\n\nNon è una minaccia. È solo la realtà del mercato.',
+            ]
+        },
+        {
+            id: 'rival_007',
+            senderName: 'CEO di {{rivalName}}',
+            senderRole: 'Messaggio diretto',
+            senderIcon: '🥊',
+            subject: 'Cara concorrenza — a viso aperto',
+            signature: 'Senza rancori (ma senza pietà),\nCEO di {{rivalName}}',
+            bodies: [
+                'Direttore,\n\nTi scrivo a viso aperto. Apprezzo chi lavora sodo, ma il mercato di {{city}} non ha spazio per tutti.\n\nNoi abbiamo €{{amount}} di investimenti pronti per espanderci nella tua zona. Puoi combattere o trovare un accordo. Scegli tu.',
+                'CEO,\n\nIl rispetto si guadagna sul campo. Finora ho rispettato il tuo territorio. Ma d\'ora in poi {{rivalName}} non avrà più remore.\n\nIl {{day}} apriamo la nostra nuova sede a {{city}}. Benvenuto nella nostra zona.',
+            ]
+        },
+        {
+            id: 'rival_008',
+            senderName: '{{rivalName}} — Comunicato',
+            senderRole: 'Ufficio Comunicazione',
+            senderIcon: '📰',
+            subject: 'Comunicato: {{rivalName}} supera quota €{{amount}} di fatturato',
+            signature: 'Ufficio Comunicazione\n{{rivalName}}',
+            bodies: [
+                'Per sua informazione,\n\n{{rivalName}} ha superato il traguardo dei €{{amount}} di fatturato mensile. Siamo orgogliosi di annunciarlo a tutti — inclusa la concorrenza.\n\nLa corsa al vertice del mercato NCC di {{city}} è già finita. Abbiamo vinto noi.',
+                'Nota informativa,\n\nIl nostro ultimo trimestre ha visto una crescita del 34% rispetto all\'anno precedente. {{rivalName}} è ora il principale operatore NCC nella regione.\n\nSappiamo che questi dati Le faranno riflettere. È il momento giusto per farlo.',
+            ]
+        },
+    ],
+
+};
+
 // ─── STAGIONALITÀ ─────────────────────────────────────────────────
 const SEASONAL_MULT = [
     { months:[12,1],         name:'🎄 Alta Stagione Festiva',   priceMult:1.35, rideBonus:1.4 },
