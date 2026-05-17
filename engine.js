@@ -578,6 +578,7 @@ function loadGame() {
         if (!save.driverObituaries) save.driverObituaries = [];
         if (!save.hqRooms) save.hqRooms = ['garage_main'];
         if (!save.hqGrid)  save.hqGrid  = { 7: 'garage_main' };
+        if (!save.vipNemeses) save.vipNemeses = {};
         // Migrate fleet: add fuel/mileage/tirePressure if missing
         (save.fleet || []).forEach(c => {
             if (c.fuel         === undefined) c.fuel         = 100;
