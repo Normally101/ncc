@@ -2588,3 +2588,223 @@ details[open] .finance-section-title { color: #00f2ff; }
 @keyframes flashDown { 0%{ background: rgba(220,38,38,0.25);  } 100%{ background: transparent; } }
 .price-flash-up   { animation: flashUp   0.5s ease-out; }
 .price-flash-down { animation: flashDown 0.5s ease-out; }
+
+/* ═══════════════════════════════════════════════════════════
+   MARKETING STRATEGY — DUAL BRAND SYSTEM
+═══════════════════════════════════════════════════════════ */
+
+.mkt-section-header {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: #d97706;
+    border-bottom: 1px solid rgba(217,119,6,0.2);
+    padding-bottom: 4px;
+    margin: 14px 0 10px;
+}
+
+.brand-gauge-wrap {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+.brand-gauge {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+.brand-gauge-label {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.brand-gauge-label.volume-label  { color: #3b82f6; }
+.brand-gauge-label.prestige-label { color: #a855f7; }
+.brand-gauge-value {
+    font-size: 18px;
+    font-weight: 900;
+    margin-bottom: 6px;
+}
+.brand-gauge-value.vol-val  { color: #60a5fa; }
+.brand-gauge-value.pres-val { color: #c084fc; }
+.brand-gauge-track {
+    width: 100%;
+    height: 6px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+.brand-gauge-bar {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+}
+.brand-gauge-bar.volume-bar   { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.brand-gauge-bar.prestige-bar { background: linear-gradient(90deg, #7c3aed, #c084fc); }
+.brand-gauge-effect {
+    font-size: 8px;
+    color: #6b7280;
+    margin-top: 2px;
+}
+.brand-gauge-effect.active { color: #22c55e; }
+
+.mkt-tier-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+}
+.mkt-tier-btn {
+    padding: 4px 10px;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-radius: 4px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    color: #6b7280;
+    background: transparent;
+    transition: all 0.15s;
+}
+.mkt-tier-btn:hover { color: #e5e7eb; background: rgba(255,255,255,0.05); }
+.mkt-tier-btn.active.tier-starter  { color: #22c55e; border-color: rgba(34,197,94,0.3);  background: rgba(34,197,94,0.08); }
+.mkt-tier-btn.active.tier-growth   { color: #3b82f6; border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.08); }
+.mkt-tier-btn.active.tier-empire   { color: #d97706; border-color: rgba(217,119,6,0.3);  background: rgba(217,119,6,0.08); }
+
+.campaign-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    transition: all 0.15s;
+}
+.campaign-card:hover:not(.campaign-locked) { border-color: rgba(255,255,255,0.15); background: rgba(255,255,255,0.04); }
+.campaign-card.campaign-active   { border-color: rgba(34,197,94,0.4); background: rgba(34,197,94,0.06); }
+.campaign-card.campaign-locked   { opacity: 0.5; cursor: not-allowed; }
+.campaign-card.campaign-cooldown { border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.04); }
+.campaign-card.tier-starter  { border-left: 3px solid #22c55e; }
+.campaign-card.tier-growth   { border-left: 3px solid #3b82f6; }
+.campaign-card.tier-empire   { border-left: 3px solid #d97706; }
+
+.campaign-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    gap: 8px;
+}
+.campaign-name {
+    font-size: 11px;
+    font-weight: 700;
+    color: #f3f4f6;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.campaign-axis-badge {
+    font-size: 7px;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+.axis-volume   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+.axis-prestige { background: rgba(168,85,247,0.15); color: #c084fc; }
+.axis-both     { background: rgba(217,119,6,0.15);  color: #fbbf24; }
+
+.campaign-cost {
+    font-size: 10px;
+    font-weight: 700;
+    color: #ef4444;
+    white-space: nowrap;
+}
+.campaign-desc {
+    font-size: 8px;
+    color: #6b7280;
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+.campaign-strat {
+    font-size: 8px;
+    color: #4b5563;
+    line-height: 1.5;
+    margin-bottom: 8px;
+    font-style: italic;
+    padding: 6px 8px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+    border-left: 2px solid rgba(255,255,255,0.06);
+}
+.campaign-stats {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+.campaign-stat {
+    font-size: 8px;
+    padding: 2px 6px;
+    border-radius: 3px;
+    background: rgba(255,255,255,0.04);
+    color: #9ca3af;
+    white-space: nowrap;
+}
+.campaign-stat.stat-positive { color: #22c55e; }
+.campaign-stat.stat-highlight { color: #fbbf24; }
+
+.campaign-progress-wrap {
+    height: 3px;
+    background: rgba(255,255,255,0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+.campaign-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, #22c55e, #4ade80);
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+.campaign-lock-reason {
+    font-size: 8px;
+    color: #6b7280;
+    font-style: italic;
+    margin-top: 4px;
+}
+
+.mkt-roi-box {
+    background: rgba(0,20,0,0.4);
+    border: 1px solid rgba(34,197,94,0.2);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 14px;
+}
+.mkt-roi-title {
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #4b5563;
+    margin-bottom: 8px;
+}
+.mkt-roi-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 9px;
+    margin-bottom: 4px;
+}
+.mkt-roi-label { color: #6b7280; }
+.mkt-roi-value { color: #22c55e; font-weight: 600; font-family: 'Courier New', monospace; }
+.mkt-roi-value.negative { color: #ef4444; }
