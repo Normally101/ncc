@@ -1143,9 +1143,13 @@ window.switchTab = function(tab) {
     const mapLog = document.getElementById('live-map-overlay');
     if (!container || !title) return;
 
-    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.nav-btn, .top-nav-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.querySelector(`[data-tab="${tab}"]`);
-    if(activeBtn) activeBtn.classList.add('active');
+    if (activeBtn) {
+        activeBtn.classList.add('active');
+        const cat = activeBtn.closest('.nav-cat');
+        if (cat) { const catBtn = cat.querySelector('.top-nav-btn'); if (catBtn) catBtn.classList.add('active'); }
+    }
 
     // Update peek tab icon to reflect current section
     const peekIcon = document.getElementById('peek-tab-icon');

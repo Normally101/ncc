@@ -39,7 +39,67 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.25); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,242,255,0.5); }
 
-/* ── Sidebar Nav ─────────────────────────────────────── */
+/* ── Top Navigation Bar ──────────────────────────────── */
+.top-nav-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 0 12px; height: 100%;
+    font-size: 11px; font-weight: 600; color: #7788aa;
+    background: none; border: none; cursor: pointer;
+    position: relative; white-space: nowrap;
+    transition: color 0.15s ease, background 0.15s ease;
+    border-bottom: 2px solid transparent;
+}
+.top-nav-btn:hover { color: #c0d4ff; background: rgba(255,255,255,0.04); }
+.top-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+.nav-cat {
+    position: relative;
+    display: flex; align-items: stretch;
+}
+.nav-cat:hover > .top-nav-btn { color: #c0d4ff; background: rgba(255,255,255,0.04); }
+
+.nav-drop {
+    display: none;
+    position: absolute; top: 100%; left: 0;
+    min-width: 200px;
+    background: rgba(5, 5, 16, 0.99);
+    border: 1px solid rgba(0, 242, 255, 0.18);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 12px 40px rgba(0,0,0,0.85);
+    z-index: 9999;
+    padding: 6px 0;
+}
+.nav-cat:hover .nav-drop { display: block; }
+
+.nav-drop-item {
+    display: flex; align-items: center; gap: 8px;
+    width: 100%; padding: 8px 16px;
+    font-size: 11px; color: #8899bb;
+    background: none; border: none; cursor: pointer;
+    transition: all 0.12s ease; text-align: left;
+}
+.nav-drop-item:hover {
+    background: rgba(0, 242, 255, 0.07);
+    color: #ffffff; padding-left: 22px;
+}
+
+.nav-drop-divider {
+    height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0;
+}
+
+.nav-arrow { font-size: 8px; opacity: 0.45; margin-left: 2px; }
+
+.nav-notif {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 14px; height: 14px;
+    background: #ef4444; color: #fff;
+    border-radius: 50%; font-size: 8px; font-weight: 800;
+    margin-left: 4px; flex-shrink: 0;
+}
+.nav-notif.hidden { display: none !important; }
+
+/* ── Sidebar Nav (legacy, keep for any remaining refs) ── */
 .nav-btn {
     width: 60px; height: 60px;
     background: rgba(6, 6, 18, 0.92);
@@ -1723,14 +1783,12 @@ details[open] .finance-section-title { color: #00f2ff; }
     to   { opacity: 1; transform: scale(1); }
 }
 
-/* ── LOGOUT BUTTON ────────────────────────────────────────────── */
+/* ── LOGOUT BUTTON (now inline in header) ─────────────────────── */
 #logout-btn {
-    position: fixed; top: 12px; right: 14px; z-index: 500;
-    background: rgba(8,8,20,0.85);
-    border: 1px solid rgba(239,68,68,0.3);
-    color: #f87171; font-size: 11px; font-weight: 600;
-    padding: 5px 10px; border-radius: 8px; cursor: pointer;
-    backdrop-filter: blur(8px);
+    background: none;
+    border: 1px solid rgba(239,68,68,0.25);
+    color: #f87171; font-size: 13px;
+    padding: 3px 7px; border-radius: 6px; cursor: pointer;
     transition: background 0.2s, border-color 0.2s;
 }
 #logout-btn:hover { background: rgba(239,68,68,0.15); border-color: rgba(239,68,68,0.6); }
