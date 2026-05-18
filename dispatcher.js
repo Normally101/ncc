@@ -1585,6 +1585,28 @@ async function renderTabRanking() {
 function renderTabFleet() {
     const container = document.getElementById('tab-container');
 
+    // Fleet KPI data
+    const _fl        = gameState.fleet || [];
+    const _active    = _fl.filter(c => !c.outOfService && !c.isSeized).length;
+    const _avgCond   = _fl.length ? Math.round(_fl.reduce((s, c) => s + (c.condition || 0), 0) / _fl.length) : 0;
+    const _condColor = _avgCond < 40 ? 'red' : _avgCond < 70 ? 'gold' : 'green';
+    const _seized    = _fl.filter(c => c.isSeized || c.outOfService).length;
+    const _tierCounts = { standard: 0, business: 0, vip: 0, ultra: 0 };
+    _fl.forEach(c => { if (_tierCounts[c.tier] !== undefined) _tierCounts[c.tier]++; });
+    const _tierSub = Object.entries(_tierCounts).filter(([,v]) => v > 0).map(([k,v]) => `${v} ${k}`).join(' · ');
+
+    const _fleetHeader = DS.header({
+        eyebrow: 'Gestione Flotta',
+        title:   'Veicoli',
+        subtitle: `${_fl.length} veicoli · ${_tierSub}`,
+        actions: _seized > 0 ? DS.pill(`${_seized} fuori servizio`, 'red', true) : DS.pill(`${_active} operativi`, 'green'),
+    }) + DS.kpiStrip([
+        { label: 'Flotta',        val: _fl.length,                         },
+        { label: 'Operativi',     val: _active,          color: _active < _fl.length ? 'gold' : 'green' },
+        { label: 'Cond. media',   val: _avgCond + '%',   color: _condColor },
+        { label: 'Fuori servizio',val: _seized,          color: _seized > 0 ? 'red' : 'green' },
+    ]);
+
     // Depot block (gasolio + gomme)
     const hasDepot = typeof hasInvestment === 'function' && hasInvestment('inv_fuel_depot');
     let fuelDepotHtml = '';
@@ -1735,7 +1757,7 @@ function renderTabFleet() {
         ? `<div class="text-[10px] text-gray-600 text-center py-8">Nessun veicolo corrisponde ai filtri selezionati.</div>`
         : '';
 
-    let html = fuelTickerHtml + fuelDepotHtml + filterBar + `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Tua Flotta <span class="text-gray-600 font-normal">${filteredFleet.length}/${gameState.fleet.length}</span></h3>` + noResults + `<div class="space-y-3 mb-6">`;
+    let html = _fleetHeader + `<div class="p-1">` + fuelTickerHtml + fuelDepotHtml + filterBar + `<div class="ds-eyebrow" style="margin:0 0 10px">Tua Flotta <span style="font-weight:400;color:var(--text-dim)">${filteredFleet.length}/${gameState.fleet.length}</span></div>` + noResults + `<div class="space-y-3 mb-6">`;
 
     filteredFleet.forEach(car => {
         if (!car.upgrades) car.upgrades = [];
@@ -2013,7 +2035,7 @@ function renderTabFleet() {
     }
     html += `</div>`;
 
-    container.innerHTML = html + `</div>`;
+    container.innerHTML = html + `</div></div>`;
 }
 
 function renderTabStaff() {
