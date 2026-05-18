@@ -3041,44 +3041,63 @@ function renderTabRegions() {
 function renderTabInvestments() {
     const container = document.getElementById('tab-container');
     const tierLabels = {
-        1: '🟢 Tier I — Consolidamento',
-        2: '🟡 Tier II — Espansione Business',
-        3: '🔴 Tier III — Lusso Estremo',
-        4: '💎 Tier IV — Dominio del Mercato'
+        1: 'Tier I — Consolidamento',
+        2: 'Tier II — Espansione Business',
+        3: 'Tier III — Lusso Estremo',
+        4: 'Tier IV — Dominio del Mercato'
     };
-    let html = `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Portfolio Asset</h3>`;
+    const tierIcons  = { 1:'🟢', 2:'🟡', 3:'🔴', 4:'💎' };
+    const ownedCount = (gameState.investments||[]).length;
+    const totalInvs  = typeof INVESTMENTS !== 'undefined' ? INVESTMENTS.length : 0;
+    const passiveTotal = (typeof INVESTMENTS !== 'undefined' ? INVESTMENTS : [])
+        .filter(i => gameState.investments.includes(i.id) && i.passive)
+        .reduce((s, i) => s + i.passive, 0);
+    const activeLoansTotal = (gameState.loans||[]).reduce((s,l)=>s+l.amount, 0);
+
+    let html = DS.header({
+        eyebrow: 'Patrimonio & Asset',
+        title:   'Portfolio Investimenti',
+        subtitle:`${ownedCount} / ${totalInvs} asset · Reddito passivo +€${passiveTotal.toLocaleString()}/g`,
+    }) + DS.kpiStrip([
+        { label:'Asset Attivi',    val: ownedCount,                                      color: ownedCount > 0 ? 'green' : '' },
+        { label:'Reddito Passivo', val: '€' + passiveTotal.toLocaleString() + '/g',      color:'green' },
+        { label:'Debito Attivo',   val: '€' + activeLoansTotal.toLocaleString(),         color: activeLoansTotal > 0 ? 'red' : 'green' },
+        { label:'Budget',          val: '€' + ((gameState.cash||0)/1000).toFixed(0)+'k', color:'blue' },
+    ]);
     let currentTier = 0;
 
     INVESTMENTS.forEach(i => {
         const owned = gameState.investments.includes(i.id);
         if (i.tier !== currentTier) {
             if (currentTier > 0) html += `</div>`;
-            html += `<div class="text-[9px] text-gray-500 uppercase tracking-widest mt-4 mb-2 border-b border-white/5 pb-1">${tierLabels[i.tier]}</div><div class="space-y-2">`;
+            html += `<div class="ds-eyebrow" style="margin:${currentTier>0?'20':'0'}px 0 10px">${tierIcons[i.tier]||''} ${tierLabels[i.tier]||'Tier '+i.tier}</div><div style="display:flex;flex-direction:column;gap:8px">`;
             currentTier = i.tier;
         }
         const underConstruction = (gameState.constructions || []).find(c => c.invId === i.id);
         const daysLeft = underConstruction ? Math.max(0, underConstruction.completesDay - gameState.day) : 0;
         const dcCost   = underConstruction ? Math.ceil(daysLeft * 2) : 0;
-        html += `
-        <div class="hud-card flex justify-between items-start gap-2">
-            <div class="flex-1 min-w-0">
-                <div class="text-xs font-bold text-white truncate">${i.name}</div>
-                <div class="text-[9px] text-gray-500 mt-0.5">${i.desc}</div>
-                ${i.passive ? `<div class="text-[9px] text-green-400 font-mono mt-0.5">+€${i.passive.toLocaleString()}/g</div>` : ''}
-                ${i.dailyUpkeep ? `<div class="text-[9px] text-red-400 font-mono mt-0.5">−€${i.dailyUpkeep.toLocaleString()}/g manutenzione</div>` : ''}
-                ${i.buildTime ? `<div class="text-[8px] text-yellow-500/60 mt-0.5">🏗️ ${i.buildTime} giorni costruzione</div>` : ''}
-                ${i.reqRides && !owned ? `<div class="text-[8px] text-${(gameState.questStats?.totalRides||0)>=i.reqRides?'green':'red'}-400 mt-0.5">🔒 Richiede ${i.reqRides} corse (hai ${gameState.questStats?.totalRides||0})</div>` : ''}
+        const reqMet = !i.reqRides || (gameState.questStats?.totalRides||0) >= i.reqRides;
+        html += `<div class="ds-card${owned?' ds-card--gold':''}" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:700;color:${owned?'var(--gold)':'var(--text)'};">${i.name}</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:3px">${i.desc}</div>
+                <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
+                    ${i.passive     ? DS.pill('+€'+i.passive.toLocaleString()+'/g', 'green')  : ''}
+                    ${i.dailyUpkeep ? DS.pill('−€'+i.dailyUpkeep.toLocaleString()+'/g', 'red') : ''}
+                    ${i.buildTime   ? DS.pill('🏗 '+i.buildTime+'g build', 'orange')           : ''}
+                    ${i.reqRides && !owned ? DS.pill('🔒 '+i.reqRides+' corse', reqMet?'green':'red') : ''}
+                </div>
             </div>
-            <div class="flex-shrink-0 flex flex-col items-end gap-1">
+            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
                 ${owned
-                    ? `<span class="text-green-500 text-[9px] font-bold uppercase">✓ Attivo</span>
-                       <button onclick="window.sellInvestment('${i.id}')" class="text-[7px] text-red-400/60 hover:text-red-400 border border-red-900/30 rounded px-1 py-0.5">Vendi 40%</button>`
+                    ? `${DS.pill('✓ ATTIVO', 'green')}
+                       ${DS.btn({ label:'Vendi 40%', color:'red', onclick:`window.sellInvestment('${i.id}')`, size:'sm' })}`
                     : underConstruction
-                        ? `<div class="text-center">
-                             <div class="text-[9px] text-yellow-400 font-bold">🏗️ ${daysLeft}g</div>
-                             <button onclick="window.speedUpConstruction('${i.id}')" class="text-[7px] bg-yellow-600/20 border border-yellow-500/40 text-yellow-300 rounded px-1.5 py-0.5 mt-0.5 hover:bg-yellow-600/40">⚡ ${dcCost} DC</button>
+                        ? `<div style="text-align:center">
+                             <div style="font-size:11px;font-weight:700;color:var(--orange)">🏗️ ${daysLeft}g</div>
+                             ${DS.btn({ label:`⚡ ${dcCost} DC`, color:'gold', onclick:`window.speedUpConstruction('${i.id}')`, size:'sm' })}
                            </div>`
-                        : `<button onclick="buyInvestment('${i.id}')" class="btn-gold !text-[8px] !py-1 !px-2" ${i.reqRides&&(gameState.questStats?.totalRides||0)<i.reqRides?'disabled style="opacity:0.35;cursor:not-allowed"':''}>€${i.price.toLocaleString()}</button>`}
+                        : DS.btn({ label:'€'+i.price.toLocaleString(), color:'gold', onclick:`buyInvestment('${i.id}')`, disabled:!reqMet, size:'sm' })}
             </div>
         </div>`;
     });
@@ -4219,67 +4238,64 @@ function renderTabPolitics() {
     const ratePct   = ((gameState.interestRateBase || 0.045) * 100).toFixed(2);
     const points    = gameState.lobbyingPoints || 0;
     const active    = gameState.activeLobbyLaws || [];
+    const laws      = typeof LOBBY_LAWS !== 'undefined' ? LOBBY_LAWS : [];
+    const activeLaws= laws.filter(l => active.includes(l.id)).length;
+    const inflVal   = parseFloat(inflPct);
+    const rateVal   = parseFloat(ratePct);
 
-    const laws = typeof LOBBY_LAWS !== 'undefined' ? LOBBY_LAWS : [];
-
-    // Macro panel
-    const inflColor = parseFloat(inflPct) > 5 ? '#ff4060' : parseFloat(inflPct) < 2 ? '#22c55e' : '#f59e0b';
-    const rateColor = parseFloat(ratePct) > 7  ? '#ff4060' : parseFloat(ratePct) < 3 ? '#22c55e' : '#d4af37';
+    const inflColor = inflVal > 5 ? 'red' : inflVal < 2 ? 'green' : 'gold';
+    const rateColor = rateVal > 7 ? 'red' : rateVal < 3 ? 'green' : 'gold';
 
     let lawsHtml = laws.map(l => {
         const owned = active.includes(l.id);
         const canAfford = points >= l.pointsCost && (gameState.cash || 0) >= (l.cashCost || 0);
-        return `
-        <div class="hud-card mb-2 ${owned ? '!border-green-500/30 bg-green-950/10' : ''}">
-            <div class="flex justify-between items-start gap-2">
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold ${owned ? 'text-green-400' : 'text-white'}">${l.icon} ${l.name} ${owned ? '✓' : ''}</div>
-                    <div class="text-[9px] text-gray-400 mt-0.5 leading-tight">${l.desc}</div>
-                    <div class="flex gap-3 mt-1 text-[8px]">
-                        <span class="${points >= l.pointsCost ? 'text-gold' : 'text-gray-600'}">${l.pointsCost} pt lobbying</span>
-                        ${l.cashCost ? `<span class="${(gameState.cash||0) >= l.cashCost ? 'text-green-400' : 'text-red-400'}">€${l.cashCost.toLocaleString()}</span>` : ''}
+        return `<div class="ds-card${owned ? ' ds-card--gold' : ''}" style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:11px;font-weight:700;color:${owned?'var(--gold)':'var(--text)'}">${l.icon} ${l.name} ${owned?'✓':''}</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:3px">${l.desc}</div>
+                    <div style="display:flex;gap:12px;margin-top:6px">
+                        ${DS.pill(l.pointsCost + ' pt', points >= l.pointsCost ? 'gold' : 'ghost')}
+                        ${l.cashCost ? DS.pill('€'+l.cashCost.toLocaleString(), (gameState.cash||0)>=l.cashCost?'green':'red') : ''}
                     </div>
                 </div>
-                <div class="shrink-0">
+                <div style="flex-shrink:0">
                     ${owned
-                        ? '<span class="text-green-500 text-[9px] font-bold uppercase">Attiva</span>'
-                        : `<button onclick="passLobbyLaw('${l.id}')" class="btn-gold !py-1 !px-2 !text-[9px] ${!canAfford ? 'opacity-40 pointer-events-none' : ''}">Approva</button>`}
+                        ? DS.pill('ATTIVA', 'green')
+                        : DS.btn({ label:'Approva', color:'gold', onclick:`passLobbyLaw('${l.id}')`, disabled:!canAfford, size:'sm' })}
                 </div>
             </div>
         </div>`;
     }).join('');
 
-    container.innerHTML = `
-    <div class="hud-card mb-4" style="background:linear-gradient(135deg,rgba(26,26,46,0.8),rgba(22,33,62,0.6));border-color:rgba(212,175,55,0.2)">
-        <div class="text-[9px] text-gold font-bold uppercase tracking-widest mb-3">📊 Indicatori Macro-Economici</div>
-        <div class="grid grid-cols-2 gap-3">
-            <div class="text-center p-2 rounded-lg bg-black/30">
-                <div class="text-[8px] text-gray-500 uppercase">📈 Inflazione</div>
-                <div class="text-xl font-bold font-mono mt-1" style="color:${inflColor}">${inflPct}%</div>
-                <div class="text-[8px] text-gray-600 mt-0.5">${parseFloat(inflPct) > 4 ? '⚠ Alta' : parseFloat(inflPct) < 1.5 ? '↘ Bassa' : '✓ Stabile'}</div>
+    container.innerHTML = DS.header({
+        eyebrow: 'Lobbying & Economia',
+        title:   'Politica & Decreti',
+        subtitle:`${activeLaws} leggi attive · ${points} punti lobbying disponibili`,
+        actions: DS.btn({ label:'↻ Decr.', color:'ghost', onclick:"window.decreesRefresh(true).then(()=>window.renderTabPolitics())", size:'sm' }),
+    }) + DS.kpiStrip([
+        { label:'Inflazione',     val: inflPct + '%',                             color: inflColor },
+        { label:'Tasso BCE',      val: ratePct + '%',                             color: rateColor },
+        { label:'Pt Lobbying',    val: points,                                    color: points > 0 ? 'gold' : '' },
+        { label:'Leggi Attive',   val: activeLaws + ' / ' + laws.length,          color: activeLaws > 0 ? 'green' : '' },
+    ]) + `
+    <div class="ds-card" style="margin-bottom:20px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div>
+                <div class="ds-eyebrow">Finanziamento Politico</div>
+                <div style="font-size:11px;color:var(--text-muted)">1.000€ = 1 punto lobbying</div>
             </div>
-            <div class="text-center p-2 rounded-lg bg-black/30">
-                <div class="text-[8px] text-gray-500 uppercase">🏦 Tasso BCE</div>
-                <div class="text-xl font-bold font-mono mt-1" style="color:${rateColor}">${ratePct}%</div>
-                <div class="text-[8px] text-gray-600 mt-0.5">${parseFloat(ratePct) > 6 ? '⚠ Restrittivo' : parseFloat(ratePct) < 2.5 ? '↘ Espansivo' : '✓ Neutro'}</div>
-            </div>
+            <div style="font-size:22px;font-weight:700;font-family:var(--font-mono);color:var(--gold)">${points} pt</div>
         </div>
-        <div class="text-[8px] text-gray-600 mt-2 text-center italic">I tassi influenzano i costi dei prestiti e i rendimenti broker.</div>
-    </div>
-
-    <div class="hud-card mb-4">
-        <div class="flex justify-between items-center mb-2">
-            <div class="text-[9px] text-gold font-bold uppercase tracking-widest">🏛️ Punti Lobbying</div>
-            <div class="text-xl font-bold font-mono text-gold">${points} pt</div>
-        </div>
-        <div class="text-[9px] text-gray-500 mb-3">Guadagna punti donando alla politica. 1.000€ = 1 punto lobbying.</div>
-        <div class="flex gap-2">
-            <input id="lobby-donate-amt" type="number" min="1000" step="5000" value="10000" class="finance-input flex-1 text-[10px]" placeholder="€ donazione">
-            <button onclick="donateToLobby(document.getElementById('lobby-donate-amt').value)" class="btn-gold !text-[9px] !py-1 !px-3">Dona</button>
+        <div style="display:flex;gap:8px;align-items:center">
+            <input id="lobby-donate-amt" type="number" min="1000" step="5000" value="10000"
+                style="flex:1;background:rgba(0,0,0,0.4);border:1px solid var(--border-sub);border-radius:6px;padding:8px 12px;color:var(--text);font-family:var(--font-mono);font-size:11px"
+                placeholder="€ donazione">
+            ${DS.btn({ label:'Dona', color:'gold', onclick:"donateToLobby(document.getElementById('lobby-donate-amt').value)" })}
         </div>
     </div>
 
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">⚖️ Leggi Disponibili</h3>
+    <div class="ds-eyebrow" style="margin:0 0 12px">⚖️ Leggi Disponibili</div>
     <div>${lawsHtml}</div>
 
     ${_renderDecreesSection(points)}`;
@@ -4288,32 +4304,27 @@ window.renderTabPolitics = renderTabPolitics;
 
 function _renderDecreesSection(lobbyPoints) {
     const decrees = window._decreesState?.decrees || [];
-    const passed  = (window._decreesState?.activeDecrees || []);
+    const passed  = window._decreesState?.activeDecrees || [];
 
-    let passedHtml = '';
-    if (passed.length > 0) {
-        passedHtml = `
-          <div class="bg-green-950/20 border border-green-500/20 rounded-lg p-3 mb-3">
-            <div class="text-[9px] text-green-400 font-bold uppercase mb-2">✅ Decreti Attivi</div>
-            ${passed.map(d => `
-              <div class="flex justify-between items-center text-[10px] mb-1">
-                <span class="text-white">${d.icon} ${d.title}</span>
-                <span class="text-gray-400 text-[9px]">${d.ends_at ? 'Scade ' + new Date(d.ends_at).toLocaleDateString('it-IT') : 'Permanente'}</span>
-              </div>`).join('')}
-          </div>`;
-    }
+    const passedHtml = passed.length === 0 ? '' : `
+        <div class="ds-card ds-card--gold" style="margin-bottom:12px">
+            <div class="ds-eyebrow" style="color:var(--green);margin-bottom:8px">✅ Decreti Attivi (${passed.length})</div>
+            ${passed.map(d => `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <span style="font-size:11px;color:var(--text)">${d.icon} ${d.title}</span>
+                <span style="font-size:9px;color:var(--text-muted)">${d.ends_at ? 'Scade '+new Date(d.ends_at).toLocaleDateString('it-IT') : 'Permanente'}</span>
+            </div>`).join('')}
+        </div>`;
 
     let votingHtml = '';
     if (decrees.length === 0) {
-        votingHtml = `<div class="text-[10px] text-gray-500 text-center py-4">Nessun decreto in votazione.<br><span class="text-[9px]">Aggiorna tra poco.</span></div>`;
+        votingHtml = DS.empty({ icon:'📜', title:'Nessun decreto in votazione', body:'Aggiorna tra qualche minuto.' });
     } else {
         votingHtml = decrees.map(d => {
             const isPassed = d.status === 'passed';
             const pct = Math.min(100, Math.round((d.votes_current / d.votes_required) * 100));
             const myVotes = d.my_votes || 0;
             const inputId = `decree-pts-${d.id.substring(0, 8)}`;
-            const expires = new Date(d.expires_at);
-            const daysLeft = Math.max(0, Math.ceil((expires - Date.now()) / 86400000));
+            const daysLeft = Math.max(0, Math.ceil((new Date(d.expires_at) - Date.now()) / 86400000));
             const fxBadges = Object.entries(d.effects || {}).map(([k, v]) => {
                 if (k === 'tipMult')         return `+${Math.round((v-1)*100)}% mance`;
                 if (k === 'xpMult')          return `+${Math.round((v-1)*100)}% XP`;
@@ -4325,51 +4336,41 @@ function _renderDecreesSection(lobbyPoints) {
                 return null;
             }).filter(Boolean);
 
-            return `
-              <div class="hud-card mb-2 ${isPassed ? '!border-green-500/30' : ''}">
-                <div class="flex justify-between items-start gap-2 mb-2">
-                  <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold ${isPassed ? 'text-green-400' : 'text-white'}">${d.icon} ${d.title} ${isPassed ? '✓' : ''}</div>
-                    <div class="text-[9px] text-gray-400 mt-0.5 leading-tight">${d.description || ''}</div>
-                    <div class="flex flex-wrap gap-1 mt-1">
-                      ${fxBadges.map(b => `<span class="text-[8px] bg-white/10 rounded px-1 py-0.5">${b}</span>`).join('')}
+            return `<div class="ds-card${isPassed?' ds-card--gold':''}" style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:11px;font-weight:700;color:${isPassed?'var(--green)':'var(--text)'}">${d.icon} ${d.title} ${isPassed?'✓':''}</div>
+                        <div style="font-size:10px;color:var(--text-muted);margin-top:3px">${d.description||''}</div>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">
+                            ${fxBadges.map(b => DS.pill(b, 'blue')).join('')}
+                        </div>
                     </div>
-                  </div>
-                  <div class="shrink-0 text-right">
-                    ${isPassed
-                        ? '<span class="text-[9px] text-green-400 font-bold">Approvato</span>'
-                        : `<div class="text-[8px] text-gray-500">${daysLeft}g rimasti</div>
-                           ${myVotes > 0 ? `<div class="text-[8px] text-blue-400">Votato: ${myVotes}pt</div>` : ''}`}
-                  </div>
+                    <div style="flex-shrink:0;text-align:right">
+                        ${isPassed
+                            ? DS.pill('APPROVATO', 'green')
+                            : `<div style="font-size:9px;color:var(--text-muted)">${daysLeft}g rimasti</div>
+                               ${myVotes > 0 ? `<div style="font-size:9px;color:var(--blue);margin-top:2px">Votato: ${myVotes}pt</div>` : ''}`}
+                    </div>
                 </div>
-
-                <div class="mb-2">
-                  <div class="flex justify-between text-[8px] text-gray-500 mb-1">
-                    <span>${d.votes_current}/${d.votes_required} voti</span>
-                    <span>${pct}%</span>
-                  </div>
-                  <div class="w-full bg-white/5 rounded-full h-1.5">
-                    <div class="bg-gold h-1.5 rounded-full transition-all" style="width:${pct}%"></div>
-                  </div>
+                <div style="margin-bottom:${isPassed?'0':'10px'}">
+                    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text-muted);margin-bottom:4px">
+                        <span>${d.votes_current}/${d.votes_required} voti</span>
+                        <span>${pct}%</span>
+                    </div>
+                    ${DS.progress(pct, isPassed ? 'green' : 'gold')}
                 </div>
-
-                ${!isPassed ? `
-                  <div class="flex gap-2">
+                ${!isPassed ? `<div style="display:flex;gap:8px;align-items:center">
                     <input id="${inputId}" type="number" min="1" max="${lobbyPoints}" value="1"
-                      class="finance-input flex-1 !text-[9px] !py-1" placeholder="punti">
-                    <button onclick="window.voteServerDecree('${d.id}', document.getElementById('${inputId}').value)"
-                      class="btn-gold !text-[9px] !py-1 !px-2 ${lobbyPoints < 1 ? 'opacity-40 pointer-events-none' : ''}">
-                      Vota
-                    </button>
-                  </div>` : ''}
-              </div>`;
+                        style="flex:1;background:rgba(0,0,0,0.4);border:1px solid var(--border-sub);border-radius:6px;padding:7px 10px;color:var(--text);font-family:var(--font-mono);font-size:11px"
+                        placeholder="punti">
+                    ${DS.btn({ label:'Vota', color:'gold', onclick:`window.voteServerDecree('${d.id}', document.getElementById('${inputId}').value)`, disabled: lobbyPoints < 1, size:'sm' })}
+                </div>` : ''}
+            </div>`;
         }).join('');
     }
 
-    return `
-      <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mt-4 mb-3">📜 Decreti Server</h3>
-      <div class="text-[9px] text-gray-500 mb-3">Vota i decreti collettivi con i tuoi punti lobbying. Una volta raggiunta la soglia, l'effetto si applica a tutti i giocatori.</div>
-      <button onclick="window.decreesRefresh(true).then(()=>window.renderTabPolitics())" class="text-[9px] text-gray-400 hover:text-white mb-3 block">↻ Aggiorna decreti</button>
+    return `<div class="ds-eyebrow" style="margin:24px 0 12px">📜 Decreti Server — Votazione Globale</div>
+      <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Vota con i tuoi punti lobbying. Al raggiungimento della soglia, l'effetto si applica a <strong>tutti</strong> i giocatori.</div>
       ${passedHtml}
       ${votingHtml}`;
 }
@@ -5008,117 +5009,132 @@ window._ecTargaPresidenziale = async function() {
 // ── MERCATO AUTO + ASTE LIVE ──────────────────────────────────────────────────
 function renderTabMarket() {
     const container = document.getElementById('tab-container');
-    let html = '';
+    const npcList     = gameState.npcMarket || [];
+    const myListings  = (gameState.marketplace||[]).map(l => ({...l, car:gameState.fleet.find(c=>c.id===l.carId)})).filter(l=>l.car);
+    const auc         = gameState.activeAuction;
+    const curH        = gameState.day * 24 + gameState.hour;
+    const fleetVal    = gameState.fleet.reduce((s,c)=>{
+        const cond = c.condition||100;
+        return s + Math.round(20000*(cond/100)*(c.tier==='ultra'?5:c.tier==='vip'?3:c.tier==='business'?1.8:1));
+    }, 0);
 
-    // ── ASTA LIVE ──
-    const auc = gameState.activeAuction;
-    const curH = gameState.day * 24 + gameState.hour;
-    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">🔨 Asta Live</h3>`;
+    let html = DS.header({
+        eyebrow: 'Compravendita Veicoli',
+        title:   'Mercato Auto',
+        subtitle:`${npcList.length} disponibili · ${myListings.length} tuoi annunci · Flotta stimata €${Math.round(fleetVal/1000)}k`,
+    }) + DS.kpiStrip([
+        { label:'Usato Disponibile', val: npcList.length,                                  color: npcList.length > 0 ? 'blue' : '' },
+        { label:'Tuoi Annunci',      val: myListings.length,                               color: myListings.length > 0 ? 'gold' : '' },
+        { label:'Asta Live',         val: auc ? 'ATTIVA' : 'Nessuna',                      color: auc ? 'red' : '' },
+        { label:'Budget',            val: '€' + ((gameState.cash||0)/1000).toFixed(0)+'k', color:'green' },
+    ]);
+
+    // ── ASTA LIVE ─────────────────────────────────────────────────
+    html += `<div class="ds-eyebrow" style="margin:0 0 12px">🔨 Asta Live</div>`;
     if (auc) {
         const hoursLeft = Math.max(0, auc.endsHour - curH);
         const isWinning = auc.playerBid && auc.playerBid >= auc.currentBid;
-        html += `
-        <div class="hud-card !border-gold/40 bg-gold/5 mb-5">
-            <div class="flex justify-between items-start mb-2">
+        const urgentColor = hoursLeft < 3 ? 'var(--red)' : 'var(--text)';
+        html += `<div class="ds-card ds-card--gold" style="margin-bottom:20px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
                 <div>
-                    <div class="text-xs font-bold text-white">${auc.name}</div>
-                    <div class="text-[9px] text-gray-400">${auc.tier.toUpperCase()} · Offerta attuale: <span class="text-gold font-bold">€${auc.currentBid.toLocaleString()}</span></div>
-                    ${isWinning ? '<div class="text-[9px] text-green-400 font-bold mt-0.5">✅ Stai vincendo!</div>' : auc.playerBid ? '<div class="text-[9px] text-red-400 mt-0.5">⚠ Sei stato superato!</div>' : ''}
+                    <div style="font-size:13px;font-weight:700;color:var(--text)">${auc.name}</div>
+                    <div style="font-size:11px;color:var(--text-muted);margin-top:3px">${auc.tier.toUpperCase()}</div>
+                    <div style="margin-top:6px">
+                        ${isWinning ? DS.pill('✅ Stai vincendo!', 'green') : auc.playerBid ? DS.pill('⚠ Superato!', 'red', true) : DS.pill('Fai un\'offerta', 'blue')}
+                    </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-[8px] text-gray-500 uppercase">Scade in</div>
-                    <div class="text-[10px] font-bold ${hoursLeft < 3 ? 'text-red-400 animate-pulse' : 'text-white'}">${hoursLeft}h</div>
+                <div style="text-align:right">
+                    <div style="font-size:9px;color:var(--text-muted)">Scade in</div>
+                    <div style="font-size:20px;font-weight:700;font-family:var(--font-mono);color:${urgentColor}">${hoursLeft}h</div>
+                    <div style="font-size:20px;font-weight:700;font-family:var(--font-mono);color:var(--gold)">€${auc.currentBid.toLocaleString()}</div>
                 </div>
             </div>
-            <div class="flex gap-2 mt-2">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px">
                 ${[auc.currentBid + 5000, auc.currentBid + 15000, auc.currentBid + 50000].map(bid =>
-                    `<button onclick="bidOnAuction(${bid})" class="flex-1 text-[8px] py-1 rounded border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">+€${(bid - auc.currentBid).toLocaleString()}<br><span class="opacity-60">€${bid.toLocaleString()}</span></button>`
+                    `<button onclick="bidOnAuction(${bid})" class="ds-btn ds-btn--gold" style="flex-direction:column;gap:2px;padding:10px 6px;justify-content:center;font-size:9px">
+                        <span>+€${(bid - auc.currentBid).toLocaleString()}</span>
+                        <span style="opacity:.6;font-size:8px">tot €${bid.toLocaleString()}</span>
+                    </button>`
                 ).join('')}
             </div>
         </div>`;
     } else {
-        html += `<div class="hud-card text-center mb-5">
-            <div class="text-2xl mb-1">🔨</div>
-            <div class="text-[10px] text-gray-500 italic">Nessuna asta attiva.<br>Le aste rare partono casualmente ogni giorno.</div>
-        </div>`;
+        html += DS.empty({ icon:'🔨', title:'Nessuna asta attiva', body:'Le aste rare partono casualmente ogni giorno di gioco.' });
+        html += '<div style="margin-bottom:20px"></div>';
     }
 
-    // ── VEICOLI NPC DA ACQUISTARE ──
-    const npcList = gameState.npcMarket || [];
-    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">🚗 Usato Disponibile</h3>`;
+    // ── VEICOLI NPC ───────────────────────────────────────────────
+    html += `<div class="ds-eyebrow" style="margin:0 0 12px">🚗 Usato Disponibile (${npcList.length})</div>`;
     if (npcList.length === 0) {
-        html += `<div class="text-[9px] text-gray-600 italic mb-4">Nessun veicolo disponibile. Si aggiorna ogni 3 giorni.</div>`;
+        html += DS.empty({ icon:'🚗', title:'Nessun veicolo', body:'Il mercato si aggiorna ogni 3 giorni di gioco.' });
     } else {
-        html += `<div class="space-y-2 mb-5">`;
+        html += `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">`;
         npcList.forEach(listing => {
-            const condColor = listing.condition < 40 ? '#ef4444' : listing.condition < 70 ? '#f59e0b' : '#22c55e';
-            html += `
-            <div class="hud-card flex justify-between items-center">
-                <div class="flex-1 min-w-0">
-                    <div class="text-xs font-bold text-white">${listing.name}</div>
-                    <div class="text-[9px] text-gray-400">${listing.tier.toUpperCase()} · ${Math.floor(listing.mileage/1000)}k km</div>
-                    <div class="flex items-center gap-1 mt-1">
-                        <div class="fuel-bar-bg" style="width:60px"><div class="fuel-bar-fill" style="width:${listing.condition}%;background:${condColor}"></div></div>
-                        <span class="text-[8px]" style="color:${condColor}">${listing.condition}%</span>
+            const condColor = listing.condition < 40 ? 'red' : listing.condition < 70 ? 'orange' : 'green';
+            const canBuy = (gameState.cash||0) >= listing.price;
+            html += `<div class="ds-card" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">${listing.name}</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${listing.tier.toUpperCase()} · ${Math.floor(listing.mileage/1000)}k km</div>
+                    <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+                        ${DS.pill(listing.condition + '%', condColor)}
+                        ${DS.progress(listing.condition, condColor)}
                     </div>
                 </div>
-                <div class="text-right ml-2 shrink-0">
-                    <div class="text-sm font-bold text-gold">€${listing.price.toLocaleString()}</div>
-                    <button onclick="buyNpcCar('${listing.id}')" class="btn-gold !py-0.5 !text-[8px] mt-1">Acquista</button>
+                <div style="text-align:right;flex-shrink:0">
+                    <div style="font-size:15px;font-weight:700;color:var(--gold);font-family:var(--font-mono)">€${listing.price.toLocaleString()}</div>
+                    ${DS.btn({ label:'Acquista', color: canBuy ? 'gold' : 'ghost', onclick:`buyNpcCar('${listing.id}')`, disabled:!canBuy, size:'sm' })}
                 </div>
             </div>`;
         });
         html += `</div>`;
     }
 
-    // ── LE TUE AUTO IN VENDITA ──
-    const myListings = (gameState.marketplace || []).map(l => ({
-        ...l, car: gameState.fleet.find(c => c.id === l.carId)
-    })).filter(l => l.car);
-    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">📋 Tuoi Annunci</h3>`;
+    // ── TUOI ANNUNCI ──────────────────────────────────────────────
+    html += `<div class="ds-eyebrow" style="margin:0 0 12px">📋 Tuoi Annunci (${myListings.length})</div>`;
     if (myListings.length === 0) {
-        html += `<div class="text-[9px] text-gray-600 italic mb-4">Nessun annuncio attivo.<br>Vai in Flotta → card veicolo → Gestisci → Metti in Vendita.</div>`;
+        html += `<div style="font-size:11px;color:var(--text-muted);margin-bottom:20px">Nessun annuncio attivo. Vai in <strong>Flotta</strong> → card veicolo → Metti in Vendita.</div>`;
     } else {
-        html += `<div class="space-y-2 mb-5">`;
+        html += `<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">`;
         myListings.forEach(l => {
             const daysLeft = Math.max(0, 2 - (gameState.day - l.listedDay));
-            html += `
-            <div class="hud-card flex justify-between items-center">
+            html += `<div class="ds-card" style="display:flex;justify-content:space-between;align-items:center">
                 <div>
-                    <div class="text-xs font-bold text-white">${l.car.name}</div>
-                    <div class="text-[9px] text-gray-400">Prezzo: €${l.askPrice.toLocaleString()} · ${daysLeft > 0 ? `Acquirente in ~${daysLeft}g` : 'Vendita in corso…'}</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">${l.car.name}</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px">€${l.askPrice.toLocaleString()} · ${daysLeft > 0 ? `Acquirente in ~${daysLeft}g` : 'Vendita in corso…'}</div>
                 </div>
-                <button onclick="cancelListing('${l.id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[8px]">Ritira</button>
+                ${DS.btn({ label:'Ritira', color:'red', onclick:`cancelListing('${l.id}')`, size:'sm' })}
             </div>`;
         });
         html += `</div>`;
     }
 
-    // ── VENDI AUTO DALLA FLOTTA ──
+    // ── VENDI DALLA FLOTTA ────────────────────────────────────────
     const sellableCars = gameState.fleet.filter(c =>
         !c.isLease &&
         !(gameState.marketplace||[]).some(l => l.carId === c.id) &&
         !gameState.drivers.some(d => d.assignedCarId === c.id && d.status === 'busy')
     );
     if (sellableCars.length > 0) {
-        html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">💰 Metti in Vendita</h3><div class="space-y-2">`;
+        html += `<div class="ds-eyebrow" style="margin:0 0 12px">💰 Metti in Vendita</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">`;
         sellableCars.forEach(car => {
             const condPct = Math.floor(car.condition || 0);
-            const suggestPrice = Math.round(20000 * (condPct/100) * (car.tier === 'ultra' ? 5 : car.tier === 'vip' ? 3 : car.tier === 'business' ? 1.8 : 1));
-            html += `
-            <div class="hud-card flex justify-between items-center">
+            const suggest = Math.round(20000*(condPct/100)*(car.tier==='ultra'?5:car.tier==='vip'?3:car.tier==='business'?1.8:1));
+            html += `<div class="ds-card" style="display:flex;justify-content:space-between;align-items:center">
                 <div>
-                    <div class="text-xs font-bold text-white">${car.name}</div>
-                    <div class="text-[9px] text-gray-400">${car.tier.toUpperCase()} · Cond. ${condPct}%</div>
-                    <div class="text-[9px] text-green-400">Stima: ~€${suggestPrice.toLocaleString()}</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">${car.name}</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${car.tier.toUpperCase()} · ${condPct}% condizione</div>
+                    <div style="font-size:10px;color:var(--green);margin-top:2px">Stima: ~€${suggest.toLocaleString()}</div>
                 </div>
-                <button onclick="listCarForSale('${car.id}', ${suggestPrice})" class="btn-gold !text-[8px] !py-1">Vendi ~€${(suggestPrice/1000).toFixed(0)}k</button>
+                ${DS.btn({ label:`Vendi ~€${(suggest/1000).toFixed(0)}k`, color:'gold', onclick:`listCarForSale('${car.id}', ${suggest})`, size:'sm' })}
             </div>`;
         });
         html += `</div>`;
     }
 
-    // ── P2P MERCATO REALE ──
+    // ── P2P MERCATO REALE ─────────────────────────────────────────
     if (typeof renderP2PMarketSection === 'function') html += renderP2PMarketSection();
 
     container.innerHTML = html;
