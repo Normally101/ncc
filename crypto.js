@@ -285,33 +285,25 @@ window.renderTabCrypto = function() {
           </div>`;
     }).join('');
 
-    container.innerHTML = `
+    container.innerHTML = DS.header({
+        eyebrow: 'Finanza Alternativa',
+        title:   'Crypto & Offshore',
+        subtitle: `Portfolio €${Math.floor(portfolioValue).toLocaleString()} · Offshore €${offshoreTotal.toLocaleString()}`,
+        actions: DS.btn({ label:'↻ Aggiorna', color:'ghost', onclick:"window.cryptoRefresh(true).then(()=>window.switchTab('crypto'))", size:'sm' }),
+    }) + DS.kpiStrip([
+        { label: 'Portfolio Crypto', val: '€' + Math.floor(portfolioValue/1000) + 'k', color: portfolioValue > 0 ? 'gold' : '' },
+        { label: 'Offshore',         val: offshoreTotal > 0 ? '€' + Math.floor(offshoreTotal/1000) + 'k' : '—', color: offshoreTotal > 0 ? 'green' : '' },
+        { label: 'Coin Detenute',    val: portfolio.length, color: portfolio.length > 0 ? 'blue' : '' },
+        { label: 'Conti Aperti',     val: offshore.filter(o => o.balance > 0).length, color: 'gold' },
+    ]) + `
       <div class="p-1">
-        <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
-          <h3 class="text-[10px] text-gold uppercase tracking-widest">₿ Crypto & Offshore</h3>
-          <button onclick="window.cryptoRefresh(true).then(()=>window.switchTab('crypto'))"
-            class="text-[9px] text-gray-400 hover:text-white">↻ Aggiorna</button>
-        </div>
-
-        <!-- Portfolio summary -->
-        <div class="grid grid-cols-2 gap-2 mb-4">
-          <div class="bg-white/3 border border-white/8 rounded-xl p-3 text-center">
-            <div class="text-[9px] text-gray-400 mb-1">Portfolio Crypto</div>
-            <div class="text-lg font-bold text-gold">€${Math.floor(portfolioValue).toLocaleString()}</div>
-          </div>
-          <div class="bg-white/3 border border-white/8 rounded-xl p-3 text-center">
-            <div class="text-[9px] text-gray-400 mb-1">Offshore Total</div>
-            <div class="text-lg font-bold text-green-400">€${offshoreTotal.toLocaleString()}</div>
-          </div>
-        </div>
-
         <!-- Market -->
-        <h3 class="text-[10px] text-gold uppercase tracking-widest mb-3">📈 Mercato Crypto</h3>
+        <div class="ds-eyebrow" style="margin-bottom:12px">📈 Mercato Crypto</div>
         ${marketHtml}
 
         <!-- Offshore -->
-        <h3 class="text-[10px] text-gold uppercase tracking-widest border-t border-white/10 pt-3 mt-4 mb-3">🏦 Conti Offshore</h3>
-        <div class="text-[9px] text-gray-500 mb-3">Fondi offshore non visibili al fisco. Prelievo soggetto a rischio sequestro GdF.</div>
+        <div class="ds-eyebrow" style="margin-top:16px;margin-bottom:8px">🏦 Conti Offshore</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px">Fondi offshore non visibili al fisco. Prelievo soggetto a rischio sequestro GdF.</div>
         ${offshoreHtml}
       </div>`;
 };

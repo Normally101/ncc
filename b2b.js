@@ -276,7 +276,18 @@ function renderTabB2B() {
     const contracts = window._b2bState.contracts || [];
     const rep      = gameState.reputation || 0;
 
-    let html = `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">💼 Contratti Corporate B2B</h3>`;
+    const monthlyFromActive = active ? (active.daily_payout || 0) * 30 : 0;
+    let html = DS.header({
+        eyebrow: 'Corporate',
+        title:   'Contratti B2B',
+        subtitle: active ? `Contratto attivo: ${active.contract_title} · €${(active.daily_payout||0).toLocaleString()}/g` : `${contracts.length} contratti disponibili · Reputazione ${rep.toFixed(1)}★`,
+        actions: active ? DS.pill('ATTIVO', 'green', true) : '',
+    }) + DS.kpiStrip([
+        { label: 'Contratto',    val: active ? active.contract_icon + ' ' + (active.contract_client || '—') : '—', color: active ? 'gold' : '' },
+        { label: 'Entrate/g',   val: active ? '+€' + (active.daily_payout||0).toLocaleString() : '—', color: active ? 'green' : '' },
+        { label: 'Giorni rimasti', val: active ? active.days_remaining : '—', color: active && active.days_remaining <= 3 ? 'red' : '' },
+        { label: 'SLA Score',    val: active ? Math.round(active.sla_score ?? 100) + '%' : '—', color: active && (active.sla_score ?? 100) >= 90 ? 'green' : 'orange' },
+    ]);
 
     if (!uid) {
         container.innerHTML = html + `<div class="text-[9px] text-gray-500 italic text-center mt-8">Accedi per visualizzare i contratti disponibili.</div>`;

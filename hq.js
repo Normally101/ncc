@@ -300,12 +300,18 @@ window.renderTabHQ = function() {
         .map(([k, v]) => _hqFxLabel(k, v))
         .filter(Boolean);
 
-    container.innerHTML = `
+    container.innerHTML = DS.header({
+        eyebrow: 'Quartier Generale',
+        title:   'HQ Base Builder',
+        subtitle: `${builtRooms.length} stanze costruite · Score ⭐ ${totalScore} · ${unlockedRooms.length} disponibili`,
+        actions: DS.pill('Score ' + totalScore, totalScore >= 50 ? 'gold' : 'blue'),
+    }) + DS.kpiStrip([
+        { label: 'Stanze Costruite', val: builtRooms.length, color: 'gold' },
+        { label: 'Disponibili',      val: unlockedRooms.length, color: unlockedRooms.length > 0 ? 'green' : '' },
+        { label: 'Bloccate',         val: lockedRooms.length,   color: lockedRooms.length > 0 ? 'orange' : '' },
+        { label: 'Effetti Attivi',   val: fxItems.length,       color: fxItems.length > 0 ? 'blue' : '' },
+    ]) + `
       <div class="p-1">
-        <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
-          <h3 class="text-[10px] text-gold uppercase tracking-widest">🏗️ HQ Base Builder</h3>
-          <div class="text-[10px] text-gray-400">⭐ Score: ${totalScore}</div>
-        </div>
 
         <!-- Grid -->
         <div class="mb-4">

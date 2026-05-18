@@ -239,11 +239,12 @@ window.renderTabShadow = function() {
 
     container.innerHTML = `
       <div class="p-1">
-        <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
-          <h3 class="text-[10px] text-gold uppercase tracking-widest">🕵️ Agenzia Ombra</h3>
-          <button onclick="window.shadowRefresh(true).then(()=>window.switchTab('shadow'))"
-            class="text-[9px] text-gray-400 hover:text-white">↻ Aggiorna</button>
-        </div>
+        ${DS.header({
+            eyebrow: 'Operazioni',
+            title:   'Agenzia Ombra',
+            subtitle: `${targets.length} target disponibili · Difesa Lv.${defLevel}/5`,
+            actions: DS.btn({ label:'↻ Aggiorna', color:'ghost', onclick:"window.shadowRefresh(true).then(()=>window.switchTab('shadow'))", size:'sm' }),
+        })}
 
         <!-- Defense panel -->
         <div class="bg-white/3 border border-white/8 rounded-xl p-3 mb-4">

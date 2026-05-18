@@ -15,16 +15,12 @@ window.renderTabInfrastructure = async function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    container.innerHTML = `
-    <div class="p-4 max-w-2xl mx-auto">
-      <div class="flex items-center gap-3 mb-6">
-        <span class="text-3xl">⛽</span>
-        <div>
-          <h2 class="text-xl font-bold text-white">Monopolio Infrastrutture</h2>
-          <p class="text-xs text-gray-400">Acquista depositi carburante nelle province — riscuoti un levy su tutte le corse</p>
-        </div>
-      </div>
-      <div id="infra-loading" class="text-center py-8 text-gray-500 text-sm">Caricamento depositi...</div>
+    container.innerHTML = DS.header({
+        eyebrow: 'Monopoli',
+        title:   'Infrastrutture Carburante',
+        subtitle: 'Acquista depositi carburante nelle province — riscuoti un levy su tutte le corse',
+    }) + `<div class="p-1">
+      <div id="infra-loading" style="text-align:center;padding:32px 0;color:var(--text-dim);font-size:11px">Caricamento depositi…</div>
       <div id="infra-content" class="hidden"></div>
     </div>`;
 

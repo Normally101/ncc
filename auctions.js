@@ -329,14 +329,17 @@ window.renderTabAuctions = function() {
           </div>`;
     }
 
-    container.innerHTML = `
-      <div class="p-1">
-        <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
-          <h3 class="text-[10px] text-gold uppercase tracking-widest">⚖️ Aste Giudiziarie</h3>
-          <button onclick="window.auctionsRefresh(true).then(()=>window.switchTab('auctions'))"
-            class="text-[9px] text-gray-400 hover:text-white">↻ Aggiorna</button>
-        </div>
-
+    container.innerHTML = DS.header({
+        eyebrow: 'Aste',
+        title:   'Aste Giudiziarie',
+        subtitle: `${auctions.length} lotti aperti · ${myBids.length} tue offerte · ${won.length > 0 ? won.length + ' da ritirare' : 'Nessun premio in attesa'}`,
+        actions: DS.btn({ label:'↻ Aggiorna', color:'ghost', onclick:"window.auctionsRefresh(true).then(()=>window.switchTab('auctions'))", size:'sm' })
+               + (won.length > 0 ? DS.pill(won.length + ' Da Ritirare', 'gold', true) : ''),
+    }) + DS.kpiStrip([
+        { label: 'Lotti Aperti', val: auctions.length,  color: auctions.length > 0 ? 'blue' : '' },
+        { label: 'Tue Offerte',  val: myBids.length,    color: myBids.length > 0 ? 'gold' : '' },
+        { label: 'Da Ritirare',  val: won.length,        color: won.length > 0 ? 'green' : '' },
+    ]) + `<div class="p-1">
         ${wonBanner}
         ${auctionsHtml}
         ${myBidsHtml}

@@ -159,22 +159,16 @@ window.renderTabNemesis = function() {
 
     const nemeses = Object.entries(gameState.vipNemeses || {});
 
-    container.innerHTML = `
-    <div class="p-4 max-w-2xl mx-auto">
-      <div class="flex items-center gap-3 mb-6">
-        <span class="text-3xl">🦹</span>
-        <div>
-          <h2 class="text-xl font-bold text-white">Lista Nemici</h2>
-          <p class="text-xs text-gray-400">VIP che hai deluso e ora cospirano contro di te</p>
-        </div>
-      </div>
-
-      ${nemeses.length === 0 ? `
-        <div class="text-center py-12">
-          <div class="text-5xl mb-3">😇</div>
-          <div class="text-gray-400 text-sm">Nessun nemico per ora.<br>Continua a non deludere i VIP.</div>
-        </div>
-      ` : nemeses.map(([vipId, nem]) => _renderNemesisCard(vipId, nem)).join('')}
+    const criticalNem = nemeses.filter(([, n]) => n.level >= 2).length;
+    container.innerHTML = DS.header({
+        eyebrow: 'VIP Relations',
+        title:   'Lista Nemici',
+        subtitle: nemeses.length === 0 ? 'Nessun VIP deluso — ottimo!' : `${nemeses.length} VIP ostili · ${criticalNem > 0 ? criticalNem + ' guerra aperta' : 'Gestibile'}`,
+        actions: criticalNem > 0 ? DS.pill('⚠ GUERRA APERTA', 'red', true) : (nemeses.length > 0 ? DS.pill(nemeses.length + ' Ostili', 'orange') : DS.pill('✓ OK', 'green')),
+    }) + `
+    <div class="p-1">
+      ${nemeses.length === 0 ? DS.empty({ icon:'😇', title:'Nessun nemico', body:'Continua a non deludere i VIP.' })
+        : nemeses.map(([vipId, nem]) => _renderNemesisCard(vipId, nem)).join('')}
 
       <div class="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-xs text-blue-200">
         <strong>Come farsi perdonare:</strong> Paga una corruzione (riduci la rabbia) oppure usa

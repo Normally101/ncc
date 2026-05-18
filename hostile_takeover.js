@@ -7,25 +7,20 @@ window.renderTabOPA = async function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    container.innerHTML = `
-    <div class="p-4 max-w-3xl mx-auto">
-      <div class="flex items-center gap-3 mb-6">
-        <span class="text-3xl">🦅</span>
-        <div>
-          <h2 class="text-xl font-bold text-white">OPA Ostili</h2>
-          <p class="text-xs text-gray-400">Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto</p>
-        </div>
-      </div>
-
-      <div class="bg-yellow-500/10 border border-yellow-500/20 rounded-xl p-4 mb-6 text-sm text-yellow-200">
+    container.innerHTML = DS.header({
+        eyebrow: 'M&A',
+        title:   'OPA Ostili',
+        subtitle: 'Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto',
+        actions: DS.pill('51% → Controllo', 'gold'),
+    }) + `<div class="p-1">
+      <div class="ds-card" style="border-color:rgba(234,179,8,0.3);margin-bottom:16px;font-size:11px;color:#fde68a;line-height:1.5">
         <strong>Come funziona:</strong> Compra azioni di un rivale quotato in borsa dal tab Finance.
         Quando raggiungi il <strong>51%</strong>, scatta l'OPA ostile: il <strong>20%</strong> di ogni sua corsa
-        futura finisce nelle tue tasche come dividendo. Il target può riacquistare la maggioranza
-        pagando il prezzo di buyback.
+        futura finisce nelle tue tasche come dividendo.
       </div>
 
-      <div id="opa-list" class="flex flex-col gap-4">
-        <div class="text-center text-gray-500 py-8 text-sm">Caricamento...</div>
+      <div id="opa-list" style="display:flex;flex-direction:column;gap:12px">
+        <div style="text-align:center;padding:32px 0;color:var(--text-dim);font-size:11px">Caricamento…</div>
       </div>
     </div>`;
 
