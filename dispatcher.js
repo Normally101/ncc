@@ -4346,7 +4346,20 @@ function renderTabCareer() {
     const completed  = gs.completedQuests  || [];
     const claimable  = gs.claimableQuests  || [];
 
-    const chLabels = { 1:'📦 Capitolo I — Il Padroncino', 2:'🏢 Capitolo II — L\'Agenzia', 3:'💎 Capitolo III — Il Lusso', 4:'🏛️ Capitolo IV — L\'Impero' };
+    const chLabels = {
+        1:'🎓 Tutorial — Il Battesimo del Fuoco',
+        2:'📦 Volume I — La Prima Ombra',
+        3:'🏢 Volume II-III — Le Ombre · Il Dominio',
+        4:'⚡ Volume IV — L\'Energia',
+        5:'👑 Volume V — Il Potere Assoluto',
+        6:'🌍 Volume VI — L\'Impero Continentale',
+        7:'⚔️ Volume VII — La Guerra delle Ombre',
+        8:'🌑 Volume VIII — Il Giudizio Finale',
+        9:'🌋 Volume Finale — L\'Apocalisse',
+    };
+
+    const tierColor = { bronze:'#cd7f32', silver:'#c0c0c0', gold:'#d4af37', diamond:'#a8d8ea', legendary:'#ff6b35' };
+    const typeBadge = { tutorial:'🎓', story:'🎯', raid:'⚔️', milestone:'📊' };
 
     let html = `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Missioni & Carriera</h3>`;
 
@@ -4370,30 +4383,49 @@ function renderTabCareer() {
         if (isDone) prog = { cur: prog.tgt || 1, tgt: prog.tgt || 1 };
 
         const pct = Math.min(100, Math.round(((prog.cur || 0) / Math.max(1, prog.tgt || 1)) * 100));
+        const barColor = q.type === 'raid' ? '#ff6b35' : pct >= 100 ? '#22c55e' : '#d4af37';
 
-        const rewardStr = [
-            q.rewards.cash ? `€${q.rewards.cash.toLocaleString()}` : null,
-            q.rewards.tc   ? `${q.rewards.tc} DC` : null,
-            q.rewards.rep  ? `+${q.rewards.rep}★` : null
-        ].filter(Boolean).join(' · ');
+        const descText = q.desc || q.subtitle || q.lore || '';
+        const giverText = q.giver ? `<span class="text-gray-600">${q.giver.name} · ${q.giver.faction}</span>` : '';
+        const rewardParts = [
+            q.rewards.cash       ? `€${q.rewards.cash.toLocaleString()}` : null,
+            q.rewards.tc         ? `+${q.rewards.tc} DC` : null,
+            q.rewards.rep        ? `+${q.rewards.rep}★` : null,
+            q.rewards.shadowCoin ? `+${q.rewards.shadowCoin.toLocaleString()} SC` : null,
+            q.rewards.unlock     ? `🔓 ${q.rewards.unlock}` : null,
+            q.rewards.title      ? `🏅 "${q.rewards.title}"` : null,
+        ].filter(Boolean);
+        const rewardDisplay = rewardParts.length ? rewardParts.join(' · ') : (q.rewards.desc || '');
+        const tColor = tierColor[q.tier] || '#d4af37';
+        const tBadge = typeBadge[q.type] || '';
+        const isRaid = q.type === 'raid';
+        const canDispatch = q.type === 'story' || q.type === 'raid' ||
+            (q.type === 'tutorial' && ['t03','t05','t06'].includes(q.id));
+        const alreadyRun = !!(gs.questStats?.missionRuns?.[q.id]);
+        const showDispatch = canDispatch && !isDone && !isClaim && !isLocked && !alreadyRun;
 
-        html += `<div class="hud-card ${isDone ? 'opacity-50' : ''} ${isLocked ? 'opacity-30' : ''}">
+        html += `<div class="hud-card ${isDone ? 'opacity-50' : ''} ${isLocked ? 'opacity-30' : ''} ${isRaid && !isDone && !isLocked ? 'border border-orange-500/30' : ''}">
             <div class="flex items-start gap-2">
                 <span class="text-lg flex-shrink-0">${isLocked ? '🔒' : isDone ? '✅' : q.icon}</span>
                 <div class="flex-1 min-w-0">
-                    <div class="flex justify-between items-center">
-                        <div class="text-[10px] font-bold text-white">${q.title}</div>
-                        ${isClaim ? `<button onclick="window.claimQuestReward('${q.id}')" class="btn-gold !text-[7px] !py-0.5 !px-2 ml-1 flex-shrink-0 animate-pulse">🎁 Ritira</button>` : ''}
+                    <div class="flex justify-between items-center gap-1">
+                        <div class="text-[10px] font-bold" style="color:${tColor}">${q.title}</div>
+                        <div class="flex items-center gap-1 flex-shrink-0">
+                            <span class="text-[8px] text-gray-600">${tBadge}</span>
+                            ${isClaim ? `<button onclick="window.claimQuestReward('${q.id}')" class="btn-gold !text-[7px] !py-0.5 !px-2 animate-pulse">🎁 Ritira</button>` : ''}
+                            ${showDispatch ? `<button onclick="window.startMissionRun('${q.id}')" class="btn-gold !text-[7px] !py-0.5 !px-2 ml-1 ${isRaid ? 'bg-orange-700/50' : ''}">▶ Avvia</button>` : ''}
+                        </div>
                     </div>
-                    <div class="text-[9px] text-gray-400 mt-0.5">${q.desc}</div>
+                    ${descText ? `<div class="text-[9px] text-gray-400 mt-0.5">${descText}</div>` : ''}
+                    ${giverText && !isLocked ? `<div class="text-[8px] mt-0.5">${giverText}</div>` : ''}
                     ${!isDone && !isLocked ? `
                     <div class="flex items-center gap-2 mt-1.5">
                         <div class="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
-                            <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${pct>=100?'#22c55e':'#d4af37'}"></div>
+                            <div class="h-full rounded-full transition-all" style="width:${pct}%;background:${barColor}"></div>
                         </div>
                         <div class="text-[8px] text-gray-500 font-mono whitespace-nowrap">${prog.cur}/${prog.tgt}</div>
                     </div>` : ''}
-                    <div class="text-[8px] text-yellow-400/70 mt-1">🏅 ${rewardStr}${q.rewards.desc ? ' · '+q.rewards.desc : ''}</div>
+                    ${rewardDisplay ? `<div class="text-[8px] text-yellow-400/70 mt-1">🏅 ${rewardDisplay}</div>` : ''}
                 </div>
             </div>
         </div>`;
@@ -4402,6 +4434,60 @@ function renderTabCareer() {
     container.innerHTML = html;
 }
 window.renderTabCareer = renderTabCareer;
+
+window.startMissionRun = function(questId) {
+    const q = (window.QUEST_DB || []).find(x => x.id === questId);
+    if (!q) return;
+    if (q.bivio) {
+        window._showBivioModal(q);
+    } else {
+        if (typeof window.completeMissionRun === 'function') window.completeMissionRun(questId);
+        if (typeof renderTabCareer === 'function' && typeof _tabIs === 'function' && _tabIs('career')) renderTabCareer();
+    }
+};
+
+window._showBivioModal = function(q) {
+    const existing = document.getElementById('bivio-modal');
+    if (existing) existing.remove();
+
+    const optHtml = q.bivio.options.map(opt => `
+        <button onclick="window._applyBivioChoice('${q.id}','${opt.id}')"
+                class="w-full text-left p-3 rounded-lg border border-white/10 hover:border-gold/40 hover:bg-white/5 transition-all mt-2">
+            <div class="text-[10px] font-bold text-white">${opt.label}</div>
+            <div class="text-[9px] text-gray-400 mt-0.5">${opt.desc}</div>
+        </button>`).join('');
+
+    const giverLine = q.giver ? `<div class="text-[9px] text-gray-500 mb-3">${q.giver.name} · ${q.giver.faction}</div>` : '';
+
+    const modal = document.createElement('div');
+    modal.id = 'bivio-modal';
+    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4';
+    modal.innerHTML = `
+        <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 max-w-sm w-full shadow-2xl">
+            <div class="text-[10px] text-gold uppercase tracking-widest mb-1">${q.icon} ${q.title}</div>
+            ${giverLine}
+            <div class="text-[11px] text-white font-medium mb-1">${q.bivio.prompt}</div>
+            ${optHtml}
+            <button onclick="document.getElementById('bivio-modal').remove()"
+                    class="mt-4 text-[9px] text-gray-600 hover:text-gray-400 w-full text-center">Annulla</button>
+        </div>`;
+    document.body.appendChild(modal);
+
+    window._bivioQuestRef = q;
+};
+
+window._applyBivioChoice = function(questId, optionId) {
+    const q = window._bivioQuestRef;
+    if (!q || q.id !== questId) return;
+    const opt = q.bivio.options.find(o => o.id === optionId);
+    if (!opt) return;
+    document.getElementById('bivio-modal')?.remove();
+    try { opt.effect(gameState); } catch(e) {}
+    if (typeof window.completeMissionRun === 'function') window.completeMissionRun(questId);
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof renderTabCareer === 'function' && typeof _tabIs === 'function' && _tabIs('career')) renderTabCareer();
+    if (typeof saveGame === 'function') saveGame();
+};
 
 let _ecActiveTab = 'acquire';
 window._ecSwitchTab = function(tab) { _ecActiveTab = tab; renderTabPremiumStore(); };

@@ -3804,6 +3804,11 @@ function completeRide(ride, _deferPay = false) {
         if (typeof showNotification === 'function') showNotification(`🪙 +${drop} Driver Coins guadagnati!`, 'success');
     }
 
+    // Story mission completion hook
+    if (ride.missionId && typeof window.completeMissionRun === 'function') {
+        window.completeMissionRun(ride.missionId);
+    }
+
     // Check quest progress after every completed ride
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
 
