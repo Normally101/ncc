@@ -1125,7 +1125,6 @@ window.togglePanel = function() {
 window.openMapOverlay = function() {
     const overlay = document.getElementById('map-overlay');
     if (!overlay) return;
-    overlay.style.display = 'flex';
     overlay.classList.remove('hidden');
     _ensureMap();
     window._mapOverlayOpen = true;
@@ -1133,7 +1132,7 @@ window.openMapOverlay = function() {
 
 window.closeMapOverlay = function() {
     const overlay = document.getElementById('map-overlay');
-    if (overlay) { overlay.style.display = ''; overlay.classList.add('hidden'); }
+    if (overlay) overlay.classList.add('hidden');
     _destroyMap();
     window._mapOverlayOpen = false;
 };
@@ -1204,111 +1203,147 @@ window.switchTab = function(tab) {
 
 function renderTabCorse() {
     const container = document.getElementById('tab-container');
-    // Dirty-check: skip full DOM replacement if nothing relevant changed
     const _sig = (gameState.pendingRides.map(r => r.id).join(',')) + '|' +
                  (gameState.drivers.map(d => d.id + ':' + d.status + ':' + (d.queue?.length || 0) + ':' + (d.restHoursLeft | 0)).join(','));
     if (renderTabCorse._sig === _sig && container.children.length > 0) return;
     renderTabCorse._sig = _sig;
 
+    const gs = gameState;
+    const activeDrivers  = gs.drivers.filter(d => d.status === 'busy').length;
+    const restingDrivers = gs.drivers.filter(d => d.status === 'resting').length;
+    const freeDrivers    = gs.drivers.filter(d => d.status !== 'busy' && d.status !== 'resting').length;
+    const todayEarnings  = gs.todayEarnings || 0;
+    const pendingCount   = gs.pendingRides.length;
+    const fleetActive    = gs.fleet.filter(v => !v.isSequestered).length;
+    const ceoEnergy      = typeof gs.ceoEnergy !== 'undefined' ? gs.ceoEnergy : 100;
+    const stressColor    = ceoEnergy < 25 ? '#ef4444' : ceoEnergy < 50 ? '#f59e0b' : '#22c55e';
+    const urgentAlert    = pendingCount >= 5 ? `<span class="ops-alert-pill">⚠ ${pendingCount} IN ATTESA</span>` : '';
+
+    const typeIcon = { Airport:'✈', 'City-to-City':'⬡', Rail:'◈', Port:'⚓', Boat:'⛵', Transfer:'⊞' };
+
+    // ── KPI STRIP ────────────────────────────────────────────────
     let html = `
-        <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
-            <h3 class="text-[10px] text-gold uppercase tracking-widest">Richieste Pendenti</h3>
-            <div class="flex items-center gap-2">
-                <button onclick="window.openMapOverlay()" class="btn-blue !py-1 !px-2 !text-[9px]">🗺️ Mappa Live</button>
-                <button onclick="assignAllRides()" class="btn-gold !py-1 !px-2 !text-[9px]">⚡ Smista Tutte</button>
-            </div>
+    <div class="ops-kpi-strip">
+        <div class="ops-kpi">
+            <span class="ops-kpi-label">RICHIESTE PENDENTI</span>
+            <span class="ops-kpi-value ${pendingCount > 0 ? 'text-yellow-300' : 'text-gray-500'}">${pendingCount}</span>
         </div>
-        <div class="space-y-2 mb-6 max-h-48 overflow-y-auto">`;
-    
-    if(gameState.pendingRides.length === 0) {
-        html += `<div class="text-[10px] text-gray-600 italic">In attesa di nuove chiamate...</div>`;
+        <div class="ops-kpi-sep"></div>
+        <div class="ops-kpi">
+            <span class="ops-kpi-label">AUTISTI ATTIVI</span>
+            <span class="ops-kpi-value text-blue-400">${activeDrivers}<span class="ops-kpi-sub">/${gs.drivers.length}</span></span>
+        </div>
+        <div class="ops-kpi-sep"></div>
+        <div class="ops-kpi">
+            <span class="ops-kpi-label">FLOTTA OPERATIVA</span>
+            <span class="ops-kpi-value text-cyan-400">${fleetActive}<span class="ops-kpi-sub"> veicoli</span></span>
+        </div>
+        <div class="ops-kpi-sep"></div>
+        <div class="ops-kpi">
+            <span class="ops-kpi-label">INCASSO OGGI</span>
+            <span class="ops-kpi-value text-green-400">€${todayEarnings.toLocaleString('it-IT')}</span>
+        </div>
+        <div class="ops-kpi-sep"></div>
+        <div class="ops-kpi">
+            <span class="ops-kpi-label">ENERGIA CEO</span>
+            <span class="ops-kpi-value" style="color:${stressColor}">${Math.round(ceoEnergy)}%</span>
+        </div>
+        <div class="ml-auto flex items-center gap-2">
+            ${urgentAlert}
+            <button onclick="window.openMapOverlay()" class="ops-action-btn ops-action-btn--blue">🗺 LIVE MAP</button>
+            <button onclick="assignAllRides()" class="ops-action-btn ops-action-btn--gold">⚡ SMISTA TUTTE</button>
+        </div>
+    </div>
+
+    <!-- ── MAIN GRID ── -->
+    <div class="ops-grid">
+
+        <!-- LEFT: INCOMING REQUESTS -->
+        <div class="ops-col">
+            <div class="ops-col-header">
+                <span class="ops-col-title">RICHIESTE IN ARRIVO</span>
+                <span class="ops-col-badge ${pendingCount > 0 ? 'ops-col-badge--active' : ''}">${pendingCount}</span>
+            </div>
+            <div class="ops-ride-list">`;
+
+    if (pendingCount === 0) {
+        html += `<div class="ops-empty-state">
+            <div class="text-2xl mb-2 opacity-30">📡</div>
+            <div class="text-[10px] text-gray-600 uppercase tracking-widest">In attesa di chiamate...</div>
+        </div>`;
     }
 
-    gameState.pendingRides.forEach(ride => {
-        if (ride.isContract) {
-            const typeIcon = { Airport:'✈️', 'City-to-City':'🚗', Rail:'🚂', Port:'⚓', Boat:'⛵', Transfer:'🚐' }[ride.routeType] || '🚗';
-            const vcNames  = { mercedes_e:'E-Class', mercedes_v:'V-Class', mercedes_sprinter:'Sprinter', mercedes_s:'S-Class 👑', water_taxi:'Water Taxi ⛵' };
-            const margin   = (ride.price || 0) - (ride.netCost || 0);
-            const fromName = ride.originName || ride.fromPoi?.name || '?';
-            const toName   = ride.destinationName || ride.toPoi?.name || '?';
-            html += `
-        <div class="hud-card ride-card cursor-grab active:cursor-grabbing !border-amber-500/30 bg-amber-950/10" draggable="true" data-id="${ride.id}">
-            <div class="flex justify-between items-start gap-2">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-1 mb-0.5">
-                        <span class="text-[8px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded font-bold tracking-wider">🏢 CV</span>
-                        <span class="text-[9px] text-gray-500">${typeIcon}</span>
-                        ${ride.vehicleRequired ? `<span class="text-[8px] bg-white/5 text-gray-400 px-1 rounded">${vcNames[ride.vehicleRequired] || ride.vehicleRequired}</span>` : ''}
-                    </div>
-                    <div class="text-xs font-bold text-white truncate">${fromName} ➔ ${toName}</div>
-                    <div class="text-[8px] text-gray-500 uppercase mt-0.5">${ride.tier}</div>
-                </div>
-                <div class="text-right shrink-0">
-                    <div class="text-green-400 font-mono font-bold text-[11px]">€${ride.price.toLocaleString()}</div>
-                    <div class="text-[8px] ${margin >= 0 ? 'text-emerald-500' : 'text-red-400'} font-mono">netto +€${margin.toLocaleString()}</div>
-                </div>
-            </div>
-        </div>`;
-        } else {
-            html += `
-        <div class="hud-card ride-card cursor-grab active:cursor-grabbing" draggable="true" data-id="${ride.id}">
-            <div class="flex justify-between items-start">
-                <div>
-                    <div class="text-xs font-bold text-white">${ride.fromPoi.name} ➔ ${ride.toPoi.name}</div>
-                    <div class="text-[9px] text-gray-400 mt-1 uppercase tracking-tighter">Classe: ${ride.tier}</div>
-                </div>
-                <div class="text-green-400 font-mono font-bold">€${ride.price}</div>
-            </div>
-        </div>`;
-        }
-    });
-    
-    html += `</div>
-        <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-4">Code Autisti</h3>
-        <div class="space-y-3">`;
+    gs.pendingRides.forEach(ride => {
+        const isContract = ride.isContract;
+        const fromName = ride.originName || ride.fromPoi?.name || '?';
+        const toName   = ride.destinationName || ride.toPoi?.name || '?';
+        const tIcon    = typeIcon[ride.routeType] || '⬡';
+        const margin   = (ride.price || 0) - (ride.netCost || 0);
+        const tierColors = { standard:'#6b7280', business:'#00f2ff', first:'#d4af37', ultra:'#f97316', presidential:'#c084ff' };
+        const tColor = tierColors[ride.tier] || '#6b7280';
 
-    const hasHR = gameState.staff.some(s => s.id === 'hr');
-    gameState.drivers.forEach(driver => {
-        const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
+        html += `
+            <div class="ops-ride-card ${isContract ? 'ops-ride-card--contract' : ''}" draggable="true" data-id="${ride.id}">
+                <div class="ops-ride-tier" style="background:${tColor}20;border-color:${tColor}40;color:${tColor}">
+                    ${isContract ? '🏢' : tIcon} ${(ride.tier || 'std').toUpperCase()}
+                </div>
+                <div class="ops-ride-route">${fromName} <span class="ops-ride-arrow">→</span> ${toName}</div>
+                <div class="ops-ride-price">€${(ride.price || 0).toLocaleString('it-IT')}
+                    ${isContract ? `<span class="ops-ride-margin ${margin >= 0 ? 'text-green-400' : 'text-red-400'}">+€${margin.toLocaleString('it-IT')}</span>` : ''}
+                </div>
+            </div>`;
+    });
+
+    html += `</div></div>
+
+        <!-- RIGHT: DRIVER STATUS BOARD -->
+        <div class="ops-col">
+            <div class="ops-col-header">
+                <span class="ops-col-title">STATO AUTISTI</span>
+                <div class="flex items-center gap-2 text-[9px] font-mono">
+                    <span class="text-blue-400">● ${activeDrivers} attivi</span>
+                    <span class="text-orange-400">● ${restingDrivers} riposo</span>
+                    <span class="text-green-400">● ${freeDrivers} liberi</span>
+                </div>
+            </div>
+            <div class="ops-driver-list">`;
+
+    gs.drivers.forEach(driver => {
+        const car       = gs.fleet.find(c => c.id === driver.assignedCarId);
         const isResting = driver.status === 'resting';
         const isBusy    = driver.status === 'busy';
         const fatigue   = driver.fatigue || 0;
-        const fatigueColor = fatigue >= 85 ? '#ef4444' : fatigue >= 60 ? '#f59e0b' : '#8b5cf6';
-        const statusLabel = isResting
-            ? `<span class="text-orange-400 font-bold">RIPOSO (−${driver.restHoursLeft}h)</span>`
-            : isBusy
-                ? `<span class="text-blue-400">In Servizio</span>`
-                : `<span class="text-green-500">Disponibile</span>`;
+        const fatigueColor = fatigue >= 85 ? '#ef4444' : fatigue >= 60 ? '#f59e0b' : '#22c55e';
+        const statusDot = isResting ? '#f97316' : isBusy ? '#3b82f6' : '#22c55e';
+        const statusText = isResting ? `RIPOSO −${driver.restHoursLeft}h` : isBusy ? 'IN SERVIZIO' : 'DISPONIBILE';
         const restBtn = (!isResting && !isBusy && driver.id !== 'ceo' && fatigue >= 40)
-            ? `<button onclick="sendDriverToRest('${driver.id}')" class="text-[8px] border border-orange-500/40 text-orange-400 px-1.5 py-0.5 rounded hover:bg-orange-500/10 ml-1">Riposo</button>`
-            : '';
+            ? `<button onclick="sendDriverToRest('${driver.id}')" class="ops-mini-btn">RIPOSO</button>` : '';
+
         html += `
-        <div class="hud-card driver-card transition-all ${isResting ? 'opacity-60' : ''}" data-id="${driver.id}">
-            <div class="flex justify-between items-center">
-                <div>
-                    <div class="text-xs font-bold text-white">${driver.name}${restBtn}</div>
-                    ${driver.trait ? `<div class="mt-0.5">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(driver) : ''} <span class="text-[8px] text-gray-500">${driver.trait.desc}</span></div>` : ''}
-                    <div class="text-[9px] text-gray-500">${car ? `${car.name}${car.isLease ? ' (Leasing)' : ''}` : 'Nessun veicolo assegnato'}</div>
+            <div class="ops-driver-row ${isResting ? 'opacity-50' : ''}" data-id="${driver.id}">
+                <div class="ops-driver-status-dot" style="background:${statusDot}"></div>
+                <div class="ops-driver-info">
+                    <div class="ops-driver-name">${driver.name} ${restBtn}</div>
+                    <div class="ops-driver-car">${car ? car.name : '— nessun veicolo —'}</div>
                 </div>
-                <div class="text-right">
-                    <div class="text-[9px] font-bold uppercase">${statusLabel}</div>
-                    <div class="text-[9px] text-gray-500 font-mono">${driver.queue.length > 0 ? `Coda: ${driver.queue.length} assegnate` : 'Coda vuota'}</div>
+                <div class="ops-driver-right">
+                    <div class="ops-driver-status-label" style="color:${statusDot}">${statusText}</div>
+                    <div class="ops-driver-queue">${driver.queue.length > 0 ? `coda: ${driver.queue.length}` : ''}</div>
                 </div>
-            </div>
-            <div class="ride-progress-bg mt-1">
-                <div id="prog-${driver.id}" class="ride-progress-fill" style="width: 0%"></div>
-            </div>
-            ${driver.id !== 'ceo' ? `
-            <div class="flex items-center gap-1 mt-1">
-                <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">Fatica</span>
-                <div class="fatigue-bar-bg flex-1">
-                    <div class="fatigue-bar-fill" style="width:${fatigue}%; background:${fatigueColor}"></div>
+                <div class="ops-driver-bars">
+                    <div class="ops-bar-wrap">
+                        <div class="ops-bar-fill" id="prog-${driver.id}" style="background:#00f2ff;width:0%"></div>
+                    </div>
+                    ${driver.id !== 'ceo' ? `
+                    <div class="ops-bar-wrap">
+                        <div class="ops-bar-fill" style="background:${fatigueColor};width:${fatigue}%"></div>
+                    </div>` : ''}
                 </div>
-                <span class="text-[8px] font-mono ml-1" style="color:${fatigueColor}">${Math.floor(fatigue)}%</span>
-            </div>` : ''}
-        </div>`;
+            </div>`;
     });
-    container.innerHTML = html + `</div>`;
+
+    html += `</div></div></div>`;
+    container.innerHTML = html;
 }
 
 async function renderTabRanking() {
