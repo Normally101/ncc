@@ -73,11 +73,21 @@
 </head>
 <body id="app-body" class="app-bg bg-deepBlack text-gray-300 overflow-hidden font-sans select-none" style="font-size:15px">
 
-  <div id="leaflet-map" class="hidden fixed inset-0 z-10">
-    <div id="map-loading" class="flex items-center justify-center h-full bg-gray-950 text-gray-400 text-sm">
-      <div class="flex flex-col items-center gap-3">
-        <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-        <span>Caricamento War Room...</span>
+  <!-- MAP OVERLAY: shown only on demand, never on startup -->
+  <div id="map-overlay" class="fixed inset-0 z-[400] hidden flex-col" style="top:88px">
+    <div id="leaflet-map" class="flex-1 relative">
+      <div id="map-loading" class="flex items-center justify-center h-full bg-gray-950 text-gray-400 text-sm">
+        <div class="flex flex-col items-center gap-3">
+          <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+          <span>Caricamento mappa...</span>
+        </div>
+      </div>
+    </div>
+    <button onclick="window.closeMapOverlay()" class="absolute top-3 right-4 z-10 flex items-center gap-2 bg-black/80 border border-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-red-900/60 hover:border-red-500/50 transition-all" style="backdrop-filter:blur(8px)">✕ Chiudi Mappa</button>
+    <div id="live-map-overlay" class="absolute top-4 left-4 z-10 pointer-events-none flex-col gap-2 hidden">
+      <div class="bg-black/60 backdrop-blur-md border border-white/10 p-3 rounded-xl w-64">
+        <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-2">Live Dispatch Log</h3>
+        <div id="map-log" class="text-[9px] text-gray-300 space-y-1 h-32 overflow-y-hidden flex flex-col justify-end"></div>
       </div>
     </div>
   </div>
@@ -208,6 +218,7 @@
 
       <!-- Right side quick actions -->
       <div class="ml-auto flex items-center gap-1 pr-2">
+        <button onclick="window.openMapOverlay()" class="top-nav-btn" title="Apri mappa live" style="color:#00d4e8">🗺️ Live Map</button>
         <button onclick="window.flyToHQ()" title="Focus HQ" class="top-nav-btn" style="font-size:15px">🎯</button>
         <span id="hub-event-badge" class="hidden"></span>
       </div>
@@ -388,27 +399,13 @@
     </div>
   </div>
 
-  <main id="main-panel" class="fixed right-6 bottom-8 w-[420px] z-40 bg-panel backdrop-blur-2xl border border-white/10 rounded-3xl shadow-2xl flex flex-col overflow-hidden" style="top:88px">
-    <div class="p-5 border-b border-white/5 flex justify-between items-center bg-white/5">
-      <div class="flex items-center gap-3">
-        <button id="panel-back-btn" onclick="window.switchTab('corse')" title="Torna al Dispatch"
-          style="display:none"
-          class="flex items-center gap-1.5 text-xs text-gray-400 hover:text-gold transition-colors px-2 py-1 rounded-lg hover:bg-white/5">
-          ← Dispatch
-        </button>
-        <h2 id="panel-title" class="text-gold uppercase font-display font-bold tracking-widest text-sm" style="text-shadow:0 0 10px rgba(212,175,55,0.4)">Centrale Operativa</h2>
-      </div>
-      <button id="panel-collapse-btn" onclick="window.togglePanel()" title="Riduci pannello">◀</button>
+  <main id="main-panel" class="fixed left-0 right-0 z-40 flex flex-col overflow-hidden" style="top:88px;bottom:26px;background:var(--panel);backdrop-filter:blur(20px) saturate(1.4)">
+    <div class="px-6 py-3 border-b flex items-center gap-4 flex-shrink-0" style="border-color:rgba(255,255,255,0.07);background:rgba(255,255,255,0.03)">
+      <h2 id="panel-title" class="text-gold uppercase font-display font-bold tracking-widest text-sm flex-1" style="text-shadow:0 0 10px rgba(212,175,55,0.4)">Centrale Operativa</h2>
     </div>
-    <div id="tab-container" class="flex-1 overflow-y-auto p-5 space-y-5">
-        </div>
+    <div id="tab-container" class="flex-1 overflow-y-auto p-6" style="max-width:1100px;width:100%;margin:0 auto;align-self:center;box-sizing:border-box">
+    </div>
   </main>
-
-  <!-- Peek tab: visible only when right panel is collapsed -->
-  <div id="panel-peek-tab" onclick="window.togglePanel()" title="Apri pannello">
-    <span class="peek-icon" id="peek-tab-icon">🚕</span>
-    <span class="peek-arrow">▶</span>
-  </div>
 
   <!-- Modal: Gestione Veicolo -->
   <div id="modal-car" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm hidden flex justify-center items-center pointer-events-auto">

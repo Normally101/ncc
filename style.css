@@ -39,6 +39,14 @@ body {
 ::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.25); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: rgba(0,242,255,0.5); }
 
+/* ── Map Overlay ─────────────────────────────────────── */
+#map-overlay {
+    display: none;
+    background: #050510;
+}
+#map-overlay:not(.hidden) { display: flex; flex-direction: column; }
+#leaflet-map { flex: 1; position: relative; min-height: 0; }
+
 /* ── Top Navigation Bar ──────────────────────────────── */
 .top-nav-btn {
     display: inline-flex; align-items: center; gap: 5px;

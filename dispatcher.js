@@ -1122,25 +1122,37 @@ window.togglePanel = function() {
     if (btn)   btn.textContent = collapsed ? '▶' : '◀';
 };
 
+window.openMapOverlay = function() {
+    const overlay = document.getElementById('map-overlay');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+    overlay.classList.remove('hidden');
+    _ensureMap();
+    window._mapOverlayOpen = true;
+};
+
+window.closeMapOverlay = function() {
+    const overlay = document.getElementById('map-overlay');
+    if (overlay) { overlay.style.display = ''; overlay.classList.add('hidden'); }
+    _destroyMap();
+    window._mapOverlayOpen = false;
+};
+
 window.switchTab = function(tab) {
-    // Lifecycle mappa: mostra solo nei tab che la usano
-    const _mapTabs = new Set(['corse', 'provinces']);
-    // showroom/war_room gestiscono i propri overlay full-screen indipendentemente
-    const _selfOverlayTabs = new Set(['showroom']);
     const _prevTab = _activeTab;
     _activeTab = tab;
 
-    if (_mapTabs.has(tab)) {
-        const mapEl = document.getElementById('leaflet-map');
-        if (mapEl) mapEl.classList.remove('hidden');
-        _ensureMap();
-    } else if (!_mapTabs.has(tab) && map) {
-        _destroyMap();
+    // Close map overlay when switching away from provinces (unless it was manually opened)
+    if (_prevTab === 'provinces' && tab !== 'provinces') {
+        window.closeMapOverlay();
+    }
+    // Provinces tab: auto-open map overlay
+    if (tab === 'provinces') {
+        window.openMapOverlay();
     }
 
     const container = document.getElementById('tab-container');
     const title = document.getElementById('panel-title');
-    const mapLog = document.getElementById('live-map-overlay');
     if (!container || !title) return;
 
     document.querySelectorAll('.nav-btn, .top-nav-btn').forEach(b => b.classList.remove('active'));
@@ -1150,49 +1162,6 @@ window.switchTab = function(tab) {
         const cat = activeBtn.closest('.nav-cat');
         if (cat) { const catBtn = cat.querySelector('.top-nav-btn'); if (catBtn) catBtn.classList.add('active'); }
     }
-
-    // Update peek tab icon to reflect current section
-    const peekIcon = document.getElementById('peek-tab-icon');
-    if (peekIcon) peekIcon.textContent = _TAB_ICONS[tab] || '📋';
-
-    // ── Full-screen vs pannello stretto ─────────────────────────────────────
-    // Dispatch/mappa → pannello stretto a destra
-    // Tutti gli altri → pannello a tutto schermo (nasconde mappa e navbar)
-    // showroom → ha il proprio overlay, non tocchiamo il pannello
-    const panel       = document.getElementById('main-panel');
-    const collapseBtn = document.getElementById('panel-collapse-btn');
-    const backBtn     = document.getElementById('panel-back-btn');
-    if (panel) {
-        if (_mapTabs.has(tab)) {
-            // Ripristina pannello stretto
-            panel.style.cssText = '';
-            if (collapseBtn) collapseBtn.style.display = '';
-            if (backBtn)     backBtn.style.display     = 'none';
-            // Rimuovi panel-collapsed se era rimasto
-            const peek = document.getElementById('panel-peek-tab');
-            if (panel.classList.contains('panel-collapsed')) {
-                panel.classList.remove('panel-collapsed');
-                if (peek) peek.classList.remove('visible');
-                if (collapseBtn) collapseBtn.textContent = '◀';
-            }
-        } else if (!_selfOverlayTabs.has(tab)) {
-            // Espandi a tutto schermo
-            panel.style.cssText = 'position:fixed;inset:0;width:auto;border-radius:0;z-index:2000;';
-            if (collapseBtn) collapseBtn.style.display = 'none';
-            if (backBtn)     backBtn.style.display     = '';
-        }
-    } else {
-        // Fallback legacy: auto-expand se collassato
-        const peek = document.getElementById('panel-peek-tab');
-        if (panel && panel.classList.contains('panel-collapsed')) {
-            panel.classList.remove('panel-collapsed');
-            if (peek)  peek.classList.remove('visible');
-            const btn = document.getElementById('panel-collapse-btn');
-            if (btn) btn.textContent = '◀';
-        }
-    }
-
-    if(mapLog) { mapLog.classList.add('hidden'); mapLog.classList.remove('flex'); }
 
     // Clean up any open full-screen overlays before rendering the new tab.
     if (document.getElementById('srm-overlay')) { if (window._srmClose) window._srmClose(); else document.getElementById('srm-overlay')?.remove(); }
@@ -1218,11 +1187,6 @@ window.switchTab = function(tab) {
         case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;
         case 'provinces':
             title.innerText = "🗺️ War Room";
-            {
-                const _mapEl = document.getElementById('leaflet-map');
-                if (_mapEl) _mapEl.classList.remove('hidden');
-                _ensureMap();
-            }
             _safeRender(window.renderTabWarRoom || renderTabProvinces);
             break;
         case 'showroom':   title.innerText = "🚘 Showroom"; _safeRender(renderTabShowroom); break;
@@ -1249,7 +1213,10 @@ function renderTabCorse() {
     let html = `
         <div class="flex justify-between items-center border-b border-white/10 pb-2 mb-4">
             <h3 class="text-[10px] text-gold uppercase tracking-widest">Richieste Pendenti</h3>
-            <button onclick="assignAllRides()" class="btn-gold !py-1 !px-2 !text-[9px]">⚡ Smista Tutte</button>
+            <div class="flex items-center gap-2">
+                <button onclick="window.openMapOverlay()" class="btn-blue !py-1 !px-2 !text-[9px]">🗺️ Mappa Live</button>
+                <button onclick="assignAllRides()" class="btn-gold !py-1 !px-2 !text-[9px]">⚡ Smista Tutte</button>
+            </div>
         </div>
         <div class="space-y-2 mb-6 max-h-48 overflow-y-auto">`;
     
