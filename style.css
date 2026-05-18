@@ -2981,6 +2981,30 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .ops-action-btn--gold:hover { background: #eed575; }
 
+/* Daily Summary Strip */
+.ops-daily-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-family: monospace;
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    background: rgba(255,255,255,0.03);
+    border-top: 1px solid var(--border);
+    padding: 8px 12px;
+    margin-top: 4px;
+}
+.ops-daily-label {
+    font-weight: 700;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.ops-daily-sep { color: var(--text-dim); opacity: 0.4; }
+.ops-daily-item { color: var(--text-muted); }
+
 /* Main 2-column grid */
 .ops-grid {
     display: grid;

@@ -1165,6 +1165,8 @@ window.switchTab = function(tab) {
     // Clean up any open full-screen overlays before rendering the new tab.
     if (document.getElementById('srm-overlay')) { if (window._srmClose) window._srmClose(); else document.getElementById('srm-overlay')?.remove(); }
     if (document.getElementById('wr-overlay'))  { if (window._wrClose)  window._wrClose();  else document.getElementById('wr-overlay')?.remove(); }
+    // Clean up decree countdown ticker when leaving politics tab.
+    if (tab !== 'politics' && window._decreesCountdownTimer) { clearInterval(window._decreesCountdownTimer); window._decreesCountdownTimer = null; }
 
     const _safeRender = (fn) => { try { fn(); } catch(e) { console.error('[switchTab]', e); const _sup = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'; container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}<br><span class="text-gray-500">Se il problema persiste, scrivi a <a href="mailto:${_sup}" class="underline">${_sup}</a></span></div>`; } };
     switch(tab) {
@@ -1215,9 +1217,11 @@ function renderTabCorse() {
     const todayEarnings  = gs.todayEarnings || 0;
     const pendingCount   = gs.pendingRides.length;
     const fleetActive    = gs.fleet.filter(v => !v.isSequestered).length;
-    const ceoEnergy      = typeof gs.ceoEnergy !== 'undefined' ? gs.ceoEnergy : 100;
+    const ceoEnergy      = typeof gs.energy !== 'undefined' ? gs.energy : (typeof gs.ceoEnergy !== 'undefined' ? gs.ceoEnergy : 100);
     const stressColor    = ceoEnergy < 25 ? '#ef4444' : ceoEnergy < 50 ? '#f59e0b' : '#22c55e';
     const urgentAlert    = pendingCount >= 5 ? `<span class="ops-alert-pill">⚠ ${pendingCount} IN ATTESA</span>` : '';
+    const strikingDrivers = gs.drivers.filter(d => d.id !== 'ceo' && d.isOnStrike).length;
+    const burnoutDrivers  = gs.drivers.filter(d => d.id !== 'ceo' && d.burnout_until && (gs.day*24+gs.hour) < d.burnout_until).length;
 
     const typeIcon = { Airport:'✈', 'City-to-City':'⬡', Rail:'◈', Port:'⚓', Boat:'⛵', Transfer:'⊞' };
 
@@ -1244,12 +1248,17 @@ function renderTabCorse() {
             <span class="ops-kpi-value text-green-400">€${todayEarnings.toLocaleString('it-IT')}</span>
         </div>
         <div class="ops-kpi-sep"></div>
-        <div class="ops-kpi">
+        <div class="ops-kpi" style="min-width:100px">
             <span class="ops-kpi-label">ENERGIA CEO</span>
-            <span class="ops-kpi-value" style="color:${stressColor}">${Math.round(ceoEnergy)}%</span>
+            <div style="display:flex;align-items:center;gap:4px;margin-top:3px;width:100%">
+                ${DS.progress(Math.round(ceoEnergy), ceoEnergy < 25 ? 'red' : ceoEnergy < 50 ? 'orange' : 'green')}
+                <span style="font-size:9px;font-family:monospace;color:${stressColor};flex-shrink:0">${Math.round(ceoEnergy)}%</span>
+            </div>
         </div>
         <div class="ml-auto flex items-center gap-2">
             ${urgentAlert}
+            ${strikingDrivers > 0 ? `<span class="ops-alert-pill" style="background:rgba(239,68,68,0.2);border-color:#ef4444;color:#ef4444">🪧 ${strikingDrivers} SCIOPERO</span>` : ''}
+            ${burnoutDrivers  > 0 ? `<span class="ops-alert-pill" style="background:rgba(249,115,22,0.2);border-color:#f97316;color:#f97316">🔥 ${burnoutDrivers} BURNOUT</span>` : ''}
             <button onclick="window.openMapOverlay()" class="ops-action-btn ops-action-btn--blue">🗺 LIVE MAP</button>
             <button onclick="assignAllRides()" class="ops-action-btn ops-action-btn--gold">⚡ SMISTA TUTTE</button>
         </div>
@@ -1343,6 +1352,27 @@ function renderTabCorse() {
     });
 
     html += `</div></div></div>`;
+
+    // Daily summary strip — shows yesterday's P&L (populated by engine.js processDailyRoutines)
+    const _ds = gameState._dailySummary;
+    if (_ds) {
+        const _netColor = _ds.net >= 0 ? '#22c55e' : '#ef4444';
+        const _netSign  = _ds.net >= 0 ? '+' : '';
+        html += `
+        <div class="ops-daily-summary">
+            <span class="ops-daily-label">GIORNO ${_ds.day} — CHIUSURA</span>
+            <span class="ops-daily-sep">·</span>
+            <span style="color:${_netColor};font-weight:700;font-family:monospace">${_netSign}€${_ds.net.toLocaleString('it-IT')} netto</span>
+            <span class="ops-daily-sep">·</span>
+            <span class="ops-daily-item">Entrate <strong style="color:#22c55e">€${_ds.income.toLocaleString('it-IT')}</strong></span>
+            <span class="ops-daily-sep">·</span>
+            <span class="ops-daily-item">Uscite <strong style="color:#ef4444">€${_ds.expenses.toLocaleString('it-IT')}</strong></span>
+            ${_ds.luxuryTax > 0 ? `<span class="ops-daily-sep">·</span><span class="ops-daily-item">Tax <strong style="color:#f59e0b">€${_ds.luxuryTax.toLocaleString('it-IT')}</strong></span>` : ''}
+            <span class="ops-daily-sep">·</span>
+            <span class="ops-daily-item">Cash <strong style="color:#60a5fa">€${_ds.cash.toLocaleString('it-IT')}</strong></span>
+        </div>`;
+    }
+
     container.innerHTML = html;
 }
 
@@ -4325,7 +4355,21 @@ function _renderDecreesSection(lobbyPoints) {
             const pct = Math.min(100, Math.round((d.votes_current / d.votes_required) * 100));
             const myVotes = d.my_votes || 0;
             const inputId = `decree-pts-${d.id.substring(0, 8)}`;
-            const daysLeft = Math.max(0, Math.ceil((new Date(d.expires_at) - Date.now()) / 86400000));
+            const msLeft   = Math.max(0, new Date(d.expires_at) - Date.now());
+            const daysLeft = Math.floor(msLeft / 86400000);
+            const hoursLeft= Math.floor((msLeft % 86400000) / 3600000);
+            const minsLeft = Math.floor((msLeft % 3600000) / 60000);
+            const countdownId = `decree-cd-${d.id.substring(0, 8)}`;
+            const _fmtCountdown = (ms) => {
+                const d2 = Math.floor(ms / 86400000);
+                const h2 = Math.floor((ms % 86400000) / 3600000);
+                const m2 = Math.floor((ms % 3600000) / 60000);
+                if (d2 > 0) return `${d2}g ${h2}h rimasti`;
+                if (h2 > 0) return `${h2}h ${m2}m rimasti`;
+                if (m2 > 0) return `⚠ ${m2}m rimasti`;
+                return `⚠ scade ora`;
+            };
+            const countdownText = _fmtCountdown(msLeft);
             const fxBadges = Object.entries(d.effects || {}).map(([k, v]) => {
                 if (k === 'tipMult')         return `+${Math.round((v-1)*100)}% mance`;
                 if (k === 'xpMult')          return `+${Math.round((v-1)*100)}% XP`;
@@ -4349,7 +4393,7 @@ function _renderDecreesSection(lobbyPoints) {
                     <div style="flex-shrink:0;text-align:right">
                         ${isPassed
                             ? DS.pill('APPROVATO', 'green')
-                            : `<div style="font-size:9px;color:var(--text-muted)">${daysLeft}g rimasti</div>
+                            : `<div id="${countdownId}" style="font-size:9px;color:${msLeft < 3600000 ? 'var(--red)' : msLeft < 86400000 ? 'var(--orange)' : 'var(--text-muted)'}">${countdownText}</div>
                                ${myVotes > 0 ? `<div style="font-size:9px;color:var(--blue);margin-top:2px">Votato: ${myVotes}pt</div>` : ''}`}
                     </div>
                 </div>
@@ -4369,6 +4413,37 @@ function _renderDecreesSection(lobbyPoints) {
             </div>`;
         }).join('');
     }
+
+    // Wire up live countdown tickers after DOM injection (runs once per renderTabPolitics call)
+    requestAnimationFrame(() => {
+        const decreeData = decrees.filter(d => d.status !== 'passed').map(d => ({
+            id: `decree-cd-${d.id.substring(0, 8)}`,
+            expires: new Date(d.expires_at).getTime(),
+        }));
+        if (!decreeData.length) return;
+        if (window._decreesCountdownTimer) clearInterval(window._decreesCountdownTimer);
+        window._decreesCountdownTimer = setInterval(() => {
+            const now = Date.now();
+            let anyAlive = false;
+            decreeData.forEach(({ id, expires }) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                anyAlive = true;
+                const ms = Math.max(0, expires - now);
+                const d2 = Math.floor(ms / 86400000);
+                const h2 = Math.floor((ms % 86400000) / 3600000);
+                const m2 = Math.floor((ms % 3600000) / 60000);
+                let txt, col;
+                if (d2 > 0)      { txt = `${d2}g ${h2}h rimasti`; col = 'var(--text-muted)'; }
+                else if (h2 > 0) { txt = `${h2}h ${m2}m rimasti`; col = 'var(--orange)'; }
+                else if (m2 > 0) { txt = `⚠ ${m2}m rimasti`;      col = 'var(--red)'; }
+                else             { txt = `⚠ scade ora`;            col = 'var(--red)'; }
+                el.textContent = txt;
+                el.style.color = col;
+            });
+            if (!anyAlive) clearInterval(window._decreesCountdownTimer);
+        }, 60000);
+    });
 
     return `<div class="ds-eyebrow" style="margin:24px 0 12px">📜 Decreti Server — Votazione Globale</div>
       <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Vota con i tuoi punti lobbying. Al raggiungimento della soglia, l'effetto si applica a <strong>tutti</strong> i giocatori.</div>

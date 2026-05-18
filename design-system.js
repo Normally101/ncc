@@ -150,3 +150,58 @@ window.DS = {
         if (duration > 0) setTimeout(() => { item.style.opacity = '0'; setTimeout(() => item.remove(), 300); }, duration);
     },
 };
+
+/* ================================================================
+   CE_Alert — Game Tension Engine
+   Lightweight wrapper: deduplicates alerts per event key so the
+   same alert won't fire more than once per game hour.
+   ================================================================ */
+window.CE_Alert = (() => {
+    const _recent = new Map(); // key → gameHour when last shown
+
+    return {
+        fire({ key, text, type = 'warning', tab = null, duration = 9000 }) {
+            if (!window.DS || !window.gameState) return;
+            const now = (window.gameState.day || 0) * 24 + (window.gameState.hour || 0);
+            if (_recent.has(key) && now - _recent.get(key) < 2) return; // debounce 2h
+            _recent.set(key, now);
+            window.DS.alert({ text, type, tab, duration });
+        },
+        // Called each game tick — surveys state and fires contextual alerts
+        tick() {
+            if (!window.gameState) return;
+            const gs = window.gameState;
+            const now = gs.day * 24 + gs.hour;
+
+            // CEO energy critical
+            const energy = typeof gs.energy !== 'undefined' ? gs.energy : 100;
+            if (energy < 15) this.fire({ key:'ceo_energy_crit', text:`Energia CEO critica (${Math.round(energy)}%) — riposa prima di riprendere corse`, type:'danger', tab:'lifestyle' });
+            else if (energy < 35) this.fire({ key:'ceo_energy_low', text:`Energia CEO bassa (${Math.round(energy)}%) — considera un riposo`, type:'warning', tab:'lifestyle' });
+
+            // Cash critical
+            const cash = gs.cash || 0;
+            const payroll = (gs.staff||[]).reduce((s,st) => {
+                const role = typeof STAFF_ROLES !== 'undefined' ? Object.values(STAFF_ROLES).find(r => r.id === st.id) : null;
+                return s + (role ? role.salary : 0);
+            }, 0);
+            if (cash < 5000) this.fire({ key:'cash_crit', text:`Liquidità critica: €${cash.toLocaleString()} — rischio insolvenza imminente`, type:'danger', tab:'finance' });
+            else if (payroll > 0 && cash < payroll * 2) this.fire({ key:'cash_payroll', text:`Liquidità bassa: copertura stipendi insufficiente (€${cash.toLocaleString()})`, type:'warning', tab:'finance' });
+
+            // Striking drivers
+            const striking = gs.drivers.filter(d => d.id !== 'ceo' && d.isOnStrike);
+            if (striking.length > 0) this.fire({ key:'drivers_strike', text:`⚠ ${striking.length} autista in sciopero — intervieni subito`, type:'danger', tab:'staff' });
+
+            // Burnout drivers
+            const burnout = gs.drivers.filter(d => d.id !== 'ceo' && d.burnout_until && now < d.burnout_until);
+            if (burnout.length > 0) this.fire({ key:'driver_burnout', text:`🔥 ${burnout.length} autista in burnout — capacità ridotta`, type:'warning', tab:'staff' });
+
+            // Pending fines
+            const unpaid = (gs.fines||[]).filter(f => f.status === 'pending');
+            if (unpaid.length > 0) this.fire({ key:'fines_pending', text:`${unpaid.length} multa non pagata — scade entro 24h`, type:'warning', tab:'legal' });
+
+            // Fleet seized
+            const seized = (gs.fleet||[]).filter(c => c.isSeized || c.outOfService);
+            if (seized.length > 0) this.fire({ key:'fleet_seized', text:`${seized.length} veicolo fuori servizio — controlla la flotta`, type:'warning', tab:'fleet' });
+        },
+    };
+})();

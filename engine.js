@@ -901,6 +901,7 @@ function gameLoop() {
         _checkPrestige();
         autoNegotiateEmails();
         if (typeof window._nemesisTick === 'function') window._nemesisTick();
+        if (typeof window.CE_Alert !== 'undefined') window.CE_Alert.tick();
         _tickStockMarket();
         _tickBrokerInvestments();
         _payStockDividends();
@@ -1407,6 +1408,7 @@ function _maybeStrike() {
         });
         showBigEvent('✊', 'SCIOPERO AUTISTI!', `Morale medio al ${Math.floor(avgMorale)}%. Gli autisti hanno abbandonato i turni per 4 ore. Aumenta i salari, gestisci il riposo, evita il burnout.`);
         logToMap('✊ SCIOPERO: corse sospese per 4 ore. Morale critico!');
+        if (typeof window.CE_Alert !== 'undefined') window.CE_Alert.fire({ key:'strike_event', text:'✊ SCIOPERO AUTISTI — corse sospese 4h! Vai in Staff → Risolvi', type:'danger', tab:'staff', duration:15000 });
     }
 }
 
@@ -1874,6 +1876,7 @@ function _maybeGenerateFine() {
         if (fineDot) fineDot.classList.remove('hidden');
         showBigEvent('🚔', 'Multa in Arrivo!', `${driver.name} ha ricevuto una sanzione: ${fine.desc}. Importo: €${fine.amount}. Hai 24h per pagare o contestare.`);
         logToMap(`🚔 MULTA: ${driver.name} — ${fine.desc} (€${fine.amount})`);
+        if (typeof window.CE_Alert !== 'undefined') window.CE_Alert.fire({ key:`fine_${fine.id||Date.now()}`, text:`🚔 Multa: ${fine.desc} — €${fine.amount}`, type:'warning', tab:'legal', duration:10000 });
     }
 
     if (_tabIs('legal') && typeof renderTabLegal === 'function') renderTabLegal();
@@ -3055,6 +3058,32 @@ function processDailyRoutines() {
     }
 
     logToMap(`📊 Chiusura Giornaliera: Entrate +€${income} | Uscite -€${Math.floor(expenses)} (Inc. Tasse: €${luxuryTax})`);
+
+    // ── DAILY SUMMARY TOAST ───────────────────────────────────────────────────
+    if (typeof window.DS !== 'undefined') {
+        const _net = income - Math.floor(expenses);
+        const _today = gameState.todayEarnings || 0;
+        const _rideCount = gameState.weeklyRides || 0;
+        const _sumType = _net >= 0 ? 'success' : 'error';
+        const _todayStr = _today > 0 ? ` · Corse: €${_today.toLocaleString()}` : '';
+        window.DS.toast({
+            title: `Giorno ${gameState.day} — Chiusura`,
+            msg: `Passivo: ${_net >= 0 ? '+' : ''}€${_net.toLocaleString()} · Tasse €${luxuryTax.toLocaleString()}${_todayStr}`,
+            type: _sumType,
+            duration: 6000,
+        });
+        // Store daily summary for dispatch center overlay
+        gameState._dailySummary = {
+            day: gameState.day,
+            income: Math.round(income),
+            expenses: Math.round(expenses),
+            net: Math.round(_net),
+            todayEarnings: _today,
+            luxuryTax,
+            cash: gameState.cash,
+            reputation: gameState.reputation,
+        };
+    }
 
     // GdF inspection — fire-and-forget, async (requires user logged in)
     if (typeof window._sindacatoGdfDailyCheck === 'function') window._sindacatoGdfDailyCheck();
