@@ -4,6 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#00f2ff">
+  <!-- Content Security Policy -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://api.mapbox.com;
+    style-src 'self' 'unsafe-inline' https://api.mapbox.com https://fonts.googleapis.com;
+    font-src 'self' https://fonts.gstatic.com;
+    img-src 'self' data: blob: https:;
+    connect-src 'self' https://twstjbykstaioaahfqbe.supabase.co wss://twstjbykstaioaahfqbe.supabase.co https://api.mapbox.com https://events.mapbox.com https://api.openweathermap.org;
+    worker-src blob:;
+    frame-src 'none';
+    object-src 'none';
+    base-uri 'self';
+  ">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -493,6 +506,8 @@
 
 
   <div id="mobile-dispatcher" class="hidden"></div>
+  <script src="security.js"></script>
+  <script src="design-system.js"></script>
   <script src="supabase-config.js"></script>
   <script src="config.js"></script>
   <script src="geoCoords.js"></script>

@@ -374,7 +374,7 @@ function _showAuthOverlay() {
                         <button id="auth-signup-btn" class="lp-btn-secondary"
                                 onclick="window._authSignup()">Crea Account Gratis</button>
                         <p class="auth-hint">Nuovo? Premi "Crea Account" per registrarti con email e password.</p>
-                        <p class="auth-support-link">Problemi di accesso? <a href="mailto:${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}?subject=Problema%20di%20Accesso">Contatta il supporto</a></p>
+                        <p class="auth-support-link"><a href="#" onclick="window._authForgotPassword();return false;" style="color:#60a5fa">Password dimenticata?</a> &nbsp;·&nbsp; <a href="mailto:${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}?subject=Problema%20di%20Accesso">Supporto</a></p>
                     </div>
                 </div>
             </div>
@@ -674,21 +674,38 @@ function _setAuthLoading(loading) {
 }
 
 window._authLogin = async function() {
-    const email    = document.getElementById('auth-email')?.value?.trim();
-    const password = document.getElementById('auth-password')?.value;
+    // Rate limiting: max 5 attempts / 5 min
+    if (window.CE_RateLimit && !window.CE_RateLimit.check('login')) {
+        const wait = window.CE_RateLimit.blockedFor('login');
+        _setAuthError(`Troppi tentativi. Riprova tra ${wait} secondi.`);
+        return;
+    }
+    const rawEmail    = document.getElementById('auth-email')?.value?.trim() || '';
+    const password    = document.getElementById('auth-password')?.value || '';
+    const email       = rawEmail.toLowerCase();
     if (!email || !password) { _setAuthError('Inserisci email e password.'); return; }
+    if (window.CE_Sec && !window.CE_Sec.isEmail(email)) { _setAuthError('Formato email non valido.'); return; }
     _setAuthError(''); _setAuthLoading(true);
     try {
         const { data, error } = await window.supabaseClient.auth.signInWithPassword({ email, password });
         if (error) { _setAuthError(_translateAuthError(error.message)); _setAuthLoading(false); return; }
+        if (window.CE_RateLimit) window.CE_RateLimit.reset('login');
         await _onAuthSuccess(data.user);
     } catch(e) { _setAuthError(`Errore di connessione. Riprova. Se il problema persiste, scrivi a ${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}`); _setAuthLoading(false); }
 };
 
 window._authSignup = async function() {
-    const email    = document.getElementById('auth-email')?.value?.trim();
-    const password = document.getElementById('auth-password')?.value;
+    // Rate limiting: shared with login bucket
+    if (window.CE_RateLimit && !window.CE_RateLimit.check('login')) {
+        const wait = window.CE_RateLimit.blockedFor('login');
+        _setAuthError(`Troppi tentativi. Riprova tra ${wait} secondi.`);
+        return;
+    }
+    const rawEmail = document.getElementById('auth-email')?.value?.trim() || '';
+    const password = document.getElementById('auth-password')?.value || '';
+    const email    = rawEmail.toLowerCase();
     if (!email || !password) { _setAuthError('Inserisci email e password.'); return; }
+    if (window.CE_Sec && !window.CE_Sec.isEmail(email)) { _setAuthError('Formato email non valido.'); return; }
     if (password.length < 6) { _setAuthError('Password troppo corta (minimo 6 caratteri).'); return; }
     _setAuthError(''); _setAuthLoading(true);
     try {
@@ -697,13 +714,40 @@ window._authSignup = async function() {
         if (!data.session) {
             const errEl = document.getElementById('auth-error');
             if (errEl) {
-                errEl.textContent = '✅ Registrazione inviata! Controlla la tua email per confermare, poi accedi.';
+                errEl.textContent = '✅ Registrazione inviata! Controlla la tua email per confermare (link valido 30 minuti), poi accedi.';
                 errEl.style.display = 'block'; errEl.style.color = '#22c55e';
             }
             _setAuthLoading(false); return;
         }
         await _onAuthSuccess(data.user);
     } catch(e) { _setAuthError(`Errore di connessione. Riprova. Se il problema persiste, scrivi a ${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}`); _setAuthLoading(false); }
+};
+
+window._authForgotPassword = async function() {
+    // Rate limiting: max 3 resets / 10 min
+    if (window.CE_RateLimit && !window.CE_RateLimit.check('passwordReset')) {
+        const wait = window.CE_RateLimit.blockedFor('passwordReset');
+        _setAuthError(`Troppe richieste. Riprova tra ${wait} secondi.`);
+        return;
+    }
+    const rawEmail = document.getElementById('auth-email')?.value?.trim() || '';
+    const email    = rawEmail.toLowerCase();
+    if (!email) { _setAuthError('Inserisci la tua email per ricevere il link di reset.'); return; }
+    if (window.CE_Sec && !window.CE_Sec.isEmail(email)) { _setAuthError('Formato email non valido.'); return; }
+    _setAuthLoading(true);
+    try {
+        const { error } = await window.supabaseClient.auth.resetPasswordForEmail(email, {
+            redirectTo: (window.GAME_CONFIG?.GAME_URL || 'https://www.chauffeurempire.com') + '?mode=reset',
+        });
+        _setAuthLoading(false);
+        const errEl = document.getElementById('auth-error');
+        if (error) {
+            _setAuthError(_translateAuthError(error.message));
+        } else if (errEl) {
+            errEl.textContent = '✅ Email di reset inviata! Il link è valido per 30 minuti.';
+            errEl.style.display = 'block'; errEl.style.color = '#22c55e';
+        }
+    } catch(e) { _setAuthError('Errore di connessione.'); _setAuthLoading(false); }
 };
 
 function _translateAuthError(msg) {

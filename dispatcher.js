@@ -1350,19 +1350,21 @@ async function renderTabRanking() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    // Remember which render is current — prevents stale async write on tab switch
     const renderToken = Symbol();
     renderTabRanking._token = renderToken;
 
-    container.innerHTML = `
-    <div class="flex items-center gap-2 mb-4">
-        <div class="text-2xl">&#x1F3C6;</div>
-        <div>
-            <div class="text-[9px] text-gray-500 uppercase">Classifica Globale</div>
-            <div class="font-bold text-lg text-gold">Caricamento...</div>
-        </div>
-    </div>
-    <div class="space-y-2">${Array(5).fill('<div class="hud-card animate-pulse h-12"></div>').join('')}</div>`;
+    // Loading skeleton
+    container.innerHTML = DS.header({
+        eyebrow: 'MULTIPLAYER · LIVE',
+        title:   'Classifica Globale',
+        subtitle:'Caricamento dati in tempo reale...',
+        actions: DS.btn({ label:'⟳ Aggiorna', color:'ghost', onclick:'renderTabRanking()', size:'sm' }),
+    }) + DS.kpiStrip([
+        { label:'La Tua Posizione', val:'—' },
+        { label:'Patrimonio',       val:'—' },
+        { label:'Reputazione',      val:'—' },
+        { label:'Aziende Globali',  val:'—' },
+    ]) + `<div style="display:flex;flex-direction:column;gap:8px">${Array(5).fill(`<div class="ds-skel" style="height:52px;border-radius:10px"></div>`).join('')}</div>`;
 
     // Fetch leaderboard from Supabase — columns match table exactly
     let rows = [];
@@ -1414,138 +1416,134 @@ async function renderTabRanking() {
 
     const myRank  = rows.findIndex(r => r.user_id === myId) + 1;
     const total   = rows.length;
-    const rankIcon  = myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : `#${myRank}`;
-    const rankColor = myRank > 0 && myRank <= 3 ? 'text-gold' : 'text-gray-300';
+    const myRow   = rows.find(r => r.user_id === myId);
+    const rankIcon = myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : myRank > 0 ? `#${myRank}` : '—';
+    const isTop3  = myRank > 0 && myRank <= 3;
 
-    let statusHtml = '';
-    if (myRank > 0 && myRank <= 3) {
-        statusHtml = `
-        <div class="hud-card !border-gold/40 bg-gold/5 mb-4">
-            <div class="text-[9px] text-gold font-bold uppercase tracking-widest mb-1">&#x2728; Bonus Top ${myRank}</div>
-            <ul class="text-[9px] text-gray-300 space-y-1">
-                <li>&#x1F697; Corse Ultra-Luxury accessibili</li>
-                <li>&#x1F6E1; Premi assicurativi &minus;15% su tutta la flotta</li>
-                <li>&#x1F4CD; POI esclusivi visibili (Porto Cervo, Armani Hotel)</li>
-            </ul>
-        </div>`;
-    } else if (myRank > 0) {
-        statusHtml = `
-        <div class="hud-card mb-4">
-            <div class="text-[9px] text-gray-400 uppercase tracking-widest">Posizione #${myRank} / ${total} aziende globali</div>
-            <div class="text-[9px] text-gray-500 mt-1">Scala al Top 3 per sbloccare i bonus Elite.</div>
-        </div>`;
-    }
-
-    let html = `
-    <div class="flex items-center justify-between mb-4">
-        <div class="flex items-center gap-3">
-            <div class="text-3xl">${myRank > 0 ? rankIcon : '🏆'}</div>
-            <div>
-                <div class="text-[9px] text-gray-500 uppercase">La tua posizione</div>
-                <div class="font-bold text-lg ${rankColor}">${myRank > 0 ? `#${myRank} di ${total}` : '&mdash;'}</div>
-            </div>
+    // Top-3 bonus banner
+    const bonusBanner = isTop3 ? `<div class="ds-card ds-card--gold" style="margin-bottom:20px">
+        <div class="ds-eyebrow" style="color:var(--gold);margin-bottom:8px">✨ Bonus Attivo — Top ${myRank}</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+            <span style="font-size:11px;color:var(--text-muted)">🚘 Corse Ultra-Luxury sbloccate</span>
+            <span style="font-size:11px;color:var(--text-muted)">🛡 Premi assicurativi −15%</span>
+            <span style="font-size:11px;color:var(--text-muted)">📍 POI esclusivi visibili</span>
         </div>
-        <button onclick="renderTabRanking()" style="font-size:11px;color:#00f2ff;background:none;border:1px solid #00f2ff33;cursor:pointer;padding:4px 8px;border-radius:6px">&#x21BB; Aggiorna</button>
-    </div>
-    ${fetchError ? `<div class="hud-card !border-red-500/40 bg-red-950/10 mb-3 text-[9px] text-red-400">&#x26A0; ${fetchError}</div>` : ''}
-    ${statusHtml}
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">&#x1F3C6; Top 50 Aziende Globali</h3>
-    <div class="space-y-2">`;
+    </div>` : '';
 
+    // Error banner
+    const errBanner = fetchError ? `<div class="ds-card ds-card--alert" style="margin-bottom:16px">
+        <span style="font-size:11px;color:var(--red)">⚠ ${fetchError}</span>
+    </div>` : '';
+
+    let html = DS.header({
+        eyebrow: 'MULTIPLAYER · LIVE',
+        title:   'Classifica Globale',
+        subtitle:`${total} aziende attive · Aggiornato adesso`,
+        actions: DS.btn({ label:'⟳ Aggiorna', color:'ghost', onclick:'renderTabRanking()', size:'sm' }),
+    }) + DS.kpiStrip([
+        { label:'La Tua Posizione', val: rankIcon,                                          color: isTop3 ? 'gold' : '' },
+        { label:'Patrimonio',       val: '€' + Math.floor(myRow?.liquid_assets||gameState.cash||0).toLocaleString('it-IT'), color:'green' },
+        { label:'Reputazione',      val: '★' + Number(myRow?.reputation||gameState.reputation||0).toFixed(1), color:'blue' },
+        { label:'Aziende Globali',  val: total },
+    ]) + errBanner + bonusBanner;
+
+    // ── Leaderboard table ────────────────────────────────────────
     if (rows.length === 0) {
-        html += `<div class="text-[9px] text-gray-500 text-center py-6">Nessun dato disponibile.<br>Gioca per comparire in classifica!</div>`;
+        html += DS.empty({ icon:'🏆', title:'Classifica vuota', body:'Completa una corsa per comparire nella classifica globale.' });
+    } else {
+        html += `<div class="ds-table-wrap">
+        <table class="ds-table">
+            <thead><tr>
+                <th style="width:50px">#</th>
+                <th>Azienda</th>
+                <th class="col-right">Patrimonio</th>
+                <th class="col-center">⭐ Rep</th>
+                <th class="col-center">🚘</th>
+                <th class="col-center">Status</th>
+            </tr></thead>
+            <tbody>`;
+        rows.forEach((r, i) => {
+            const pos    = i + 1;
+            const isMe   = r.user_id === myId;
+            const tsMs   = r.last_active ? new Date(r.last_active).getTime() : 0;
+            const online = tsMs && (now - tsMs) < ONLINE_MS;
+            const medal  = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
+            const rowStyle = isMe ? 'background:rgba(212,175,55,0.07);' : '';
+            const nameColor = isMe ? 'color:var(--gold);' : '';
+            const onlineDot = online ? `<span style="display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-left:6px;box-shadow:var(--glow-green)"></span>` : '';
+            html += `<tr style="${rowStyle}">
+                <td style="text-align:center;font-size:${pos<=3?'18':'12'}px">${medal}</td>
+                <td>
+                    <div style="font-weight:700;${nameColor}font-size:11px">${r.company_name || 'Chauffeur Empire'}${isMe?`<span style="font-size:9px;color:var(--gold);margin-left:6px">(Tu)</span>`:''}${onlineDot}</div>
+                </td>
+                <td class="col-right" style="font-family:var(--font-mono);font-weight:700;color:var(--blue)">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
+                <td class="col-center" style="font-family:var(--font-mono)">${Number(r.reputation||0).toFixed(1)}</td>
+                <td class="col-center" style="color:var(--text-muted)">${r.fleet_count||0}</td>
+                <td class="col-center">${online ? `<span class="ds-pill ds-pill--green">ONLINE</span>` : `<span style="font-size:9px;color:var(--text-dim)">—</span>`}</td>
+            </tr>`;
+        });
+        html += `</tbody></table></div>`;
     }
 
-    rows.forEach((r, i) => {
-        const pos     = i + 1;
-        const posIcon = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : `#${pos}`;
-        const isMe    = r.user_id === myId;
-        const tsMs    = r.last_active ? new Date(r.last_active).getTime() : 0;
-        const online  = tsMs && (now - tsMs) < ONLINE_MS;
-        const onlineDot = online
-            ? `<span style="display:inline-block;width:6px;height:6px;background:#22c55e;border-radius:50%;margin-left:4px;vertical-align:middle;box-shadow:0 0 4px #22c55e"></span>`
-            : '';
-        html += `
-        <div class="hud-card ${isMe ? '!border-gold/50 bg-gold/5' : ''} flex justify-between items-center py-2">
-            <div class="flex items-center gap-3">
-                <div style="font-size:18px;width:28px;text-align:center;flex-shrink:0">${posIcon}</div>
-                <div>
-                    <div style="font-size:11px;font-weight:700;color:${isMe ? '#d4af37' : '#e8eaf0'}">
-                        ${r.company_name || 'Chauffeur Empire'}${isMe ? ' <span style="color:#d4af37;font-size:9px">(Tu)</span>' : ''}${onlineDot}
-                    </div>
-                    <div style="font-size:9px;color:#6b7280">&euro;${Math.floor(r.liquid_assets || 0).toLocaleString('it-IT')} &middot; &#x2605;${Number(r.reputation || 0).toFixed(1)}</div>
-                    <div style="font-size:8px;color:#4b5563">&#x1F697; ${r.fleet_count || 0} auto</div>
-                </div>
+    // ── Guerra dei Prezzi ────────────────────────────────────────
+    const activePricewars = gameState.pricewars || [];
+    const unlockedRegionIds = (gameState.unlockedRegions||[]).filter(id => REGIONS[id]);
+    html += `<div class="ds-eyebrow" style="margin:24px 0 12px">⚔️ Guerra dei Prezzi</div>`;
+    activePricewars.forEach(pw => {
+        const rname = REGIONS[pw.regionId]?.name || pw.regionId;
+        const isMono = !!pw.monopolyEndsDay;
+        html += `<div class="ds-card ds-card--${isMono?'gold':'alert'}" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+                <div style="font-size:11px;font-weight:700;color:${isMono?'var(--gold)':'var(--red)'}">${isMono?'👑 MONOPOLIO':'⚔️ Guerra'}: ${rname}</div>
+                <div style="font-size:9px;color:var(--text-muted)">${isMono?`Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)`:`Fine giorno ${pw.endsDay} (−30% prezzi)`}</div>
             </div>
-            <div style="font-family:'Roboto Mono',monospace;font-weight:700;color:#00f2ff;font-size:13px;white-space:nowrap">
-                &euro;${(Math.floor(r.liquid_assets || 0) / 1000).toFixed(0)}k
-            </div>
+            ${DS.pill(isMono?'+40%':'−30%', isMono?'gold':'red')}
         </div>`;
     });
 
-    // ── ATTACK TERRITORY ─────────────────────────────────────────
-    const activePricewars = gameState.pricewars || [];
-    const unlockedRegionIds = gameState.unlockedRegions.filter(id => REGIONS[id]);
-    html += `</div>
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">⚔️ Guerra dei Prezzi</h3>`;
-    if (activePricewars.length > 0) {
-        activePricewars.forEach(pw => {
-            const rname = REGIONS[pw.regionId]?.name || pw.regionId;
-            const isMonopoly = !!pw.monopolyEndsDay;
-            html += `<div class="hud-card !border-red-500/40 bg-red-950/10 mb-2 flex justify-between items-center">
-                <div>
-                    <div style="font-size:11px;font-weight:700;color:${isMonopoly?'#d4af37':'#ff4060'}">${isMonopoly?'👑 MONOPOLIO':'⚔️ Guerra'}: ${rname}</div>
-                    <div style="font-size:9px;color:#6b7280">${isMonopoly ? `Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)` : `Fine giorno ${pw.endsDay} (−30% prezzi tuoi)`}</div>
-                </div>
-                <div style="font-size:10px;font-weight:700;color:${isMonopoly?'#d4af37':'#ff4060'}">${isMonopoly?'+40%':'−30%'}</div>
-            </div>`;
-        });
+    if (unlockedRegionIds.length > 0) {
+        html += `<div class="ds-card" style="margin-bottom:16px">
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Attacca una regione: −30% tariffe ai rivali per 3 giorni. Se crollano → <strong style="color:var(--gold)">Monopolio +40% per 7 giorni</strong></div>
+            <div style="display:flex;gap:8px;align-items:center">
+                <select id="attack-region-select" style="flex:1;font-size:11px;background:rgba(0,0,0,0.5);border:1px solid var(--border-sub);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--font-mono)">
+                    ${unlockedRegionIds.map(id => {
+                        const r = REGIONS[id];
+                        const atWar = activePricewars.some(pw => pw.regionId === id);
+                        const warCost = Math.floor(r.price * 0.25 + 15000);
+                        return `<option value="${id}" ${atWar?'disabled':''}>${r.name}${atWar?' (guerra)':''} — €${warCost.toLocaleString()}</option>`;
+                    }).join('')}
+                </select>
+                ${DS.btn({ label:'⚔️ Attacca', color:'red', onclick:"attackTerritory(document.getElementById('attack-region-select').value)" })}
+            </div>
+        </div>`;
     }
-    html += `<div class="hud-card mb-2">
-        <div style="font-size:9px;color:#9ca3af;margin-bottom:6px">Seleziona una regione sbloccata per attaccare i rivali locali (−30% tariffe per 3 giorni). Se crollano → <b style="color:#d4af37">Monopolio +40% per 7 giorni</b>.</div>
-        <div class="flex gap-2">
-            <select id="attack-region-select" class="flex-1 text-[9px] bg-black/50 border border-white/10 rounded px-2 py-1 text-gray-200">
-                ${unlockedRegionIds.map(id => {
-                    const r = REGIONS[id];
-                    const atWar = activePricewars.some(pw => pw.regionId === id);
-                    const warCost = Math.floor(r.price * 0.25 + 15000);
-                    return `<option value="${id}" ${atWar?'disabled':''}>
-                        ${r.name}${atWar?' (guerra attiva)':''} — €${warCost.toLocaleString()}
-                    </option>`;
-                }).join('')}
-            </select>
-            <button onclick="attackTerritory(document.getElementById('attack-region-select').value)" class="btn-gold !text-[9px] !py-1 !bg-red-900/40 !text-red-300 !border !border-red-700/50">⚔️ Attacca</button>
-        </div>
-    </div>`;
 
-    // Achievements section
+    // ── Obiettivi ────────────────────────────────────────────────
     if (typeof ACHIEVEMENTS !== 'undefined' && ACHIEVEMENTS.length > 0) {
         const earned = gameState.achievements || [];
-        html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🏅 Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</h3><div class="grid grid-cols-2 gap-2">`;
+        html += `<div class="ds-eyebrow" style="margin:24px 0 12px">🏅 Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</div>
+        <div class="ds-grid-4">`;
         ACHIEVEMENTS.forEach(ach => {
             const done = earned.includes(ach.id);
-            html += `
-            <div class="hud-card ${done ? '!border-gold/40 bg-gold/5' : 'opacity-40'} text-center py-2">
-                <div class="text-xl mb-1">${ach.icon}</div>
-                <div class="text-[8px] font-bold ${done ? 'text-gold' : 'text-gray-500'} leading-tight">${ach.name}</div>
-                <div class="text-[7px] text-gray-600 mt-0.5 leading-tight">${ach.desc}</div>
+            html += `<div class="ds-card" style="text-align:center;padding:12px;${!done?'opacity:0.35':''}${done?'border-color:var(--gold-border)':''}">
+                <div style="font-size:24px;margin-bottom:6px">${ach.icon}</div>
+                <div style="font-size:9px;font-weight:700;color:${done?'var(--gold)':'var(--text-muted)'}">${ach.name}</div>
+                <div style="font-size:8px;color:var(--text-dim);margin-top:3px">${ach.desc}</div>
             </div>`;
         });
         html += `</div>`;
     }
 
-    // New Game+ (show after reputation >= 4.5)
+    // ── New Game+ ────────────────────────────────────────────────
     if (gameState.reputation >= 4.5) {
-        html += `
-        <div class="hud-card !border-purple-500/40 bg-purple-950/20 mt-4 text-center">
-            <div class="text-xl mb-2">♾️</div>
-            <div class="text-[9px] text-purple-300 font-bold uppercase mb-1">New Game+ Disponibile</div>
-            <div class="text-[8px] text-gray-400 mb-3">Ricomincia da capo con un lascito di reputazione e un bonus iniziale. La tua leggenda continua.</div>
-            <button onclick="newGamePlus()" class="btn-blue !border-purple-500/50 w-full">Inizia New Game+</button>
+        html += `<div class="ds-card" style="margin-top:20px;text-align:center;border-color:rgba(168,85,247,0.4);background:rgba(168,85,247,0.05)">
+            <div style="font-size:32px;margin-bottom:10px">♾️</div>
+            <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:6px;font-family:var(--font-display)">NEW GAME+ DISPONIBILE</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
+            ${DS.btn({ label:'Inizia New Game+', color:'blue', onclick:'newGamePlus()' })}
         </div>`;
     }
 
-    // Preserve dropdown selection across innerHTML replacement
     const _savedRegion = document.getElementById('attack-region-select')?.value;
     container.innerHTML = html;
     const _regionSel = document.getElementById('attack-region-select');
@@ -2972,35 +2970,63 @@ window.leaseCar = async function(carId) {
 function renderTabRegions() {
     const container = document.getElementById('tab-container');
     const GROUPS = [
-        { label:'📍 Centro Italia', ids:['lazio','umbria','marche','abruzzo','molise','toscana'] },
-        { label:'🌶️ Sud Italia',    ids:['campania','puglia','basilicata','calabria'] },
-        { label:'🏝️ Isole',         ids:['sicilia','sardegna'] },
-        { label:'🏔️ Nord Italia',   ids:['emilia','liguria','piemonte','lombardia','veneto','friuli','trentino','valle_aosta'] },
+        { label:'Nord Italia',  icon:'🏔️', ids:['emilia','liguria','piemonte','lombardia','veneto','friuli','trentino','valle_aosta'] },
+        { label:'Centro Italia',icon:'📍', ids:['lazio','umbria','marche','abruzzo','molise','toscana'] },
+        { label:'Sud Italia',   icon:'🌶️', ids:['campania','puglia','basilicata','calabria'] },
+        { label:'Isole',        icon:'🏝️', ids:['sicilia','sardegna'] },
     ];
-    let html = `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Licenze Regionali — Italia Completa</h3>`;
+
+    const allRegions = Object.values(REGIONS || {});
+    const totalOwned = allRegions.filter(r => (gameState.unlockedRegions||[]).includes(r.id)).length;
+    const totalRegions = allRegions.length;
+    const coveragePct = totalRegions > 0 ? Math.round(totalOwned / totalRegions * 100) : 0;
+
+    let html = DS.header({
+        eyebrow: 'Espansione Territoriale',
+        title:   'Licenze Regionali',
+        subtitle:`${totalOwned} / ${totalRegions} regioni attive · Copertura nazionale ${coveragePct}%`,
+    });
+
+    html += DS.kpiStrip([
+        { label:'Regioni Attive',    val: totalOwned,                    color: totalOwned > 0 ? 'green' : '' },
+        { label:'Copertura',         val: coveragePct + '%',             color: coveragePct >= 50 ? 'gold' : '' },
+        { label:'Reputazione CEO',   val: (gameState.reputation||0) + '★' },
+        { label:'Budget Disponibile',val: '€' + ((gameState.cash||0)/1000).toFixed(0) + 'k', color:'green' },
+    ]);
+
     GROUPS.forEach(group => {
-        html += `<div class="text-[9px] text-gray-500 uppercase tracking-widest mt-4 mb-2 border-b border-white/5 pb-1">${group.label}</div><div class="grid grid-cols-2 gap-2">`;
+        html += `<div class="ds-eyebrow" style="margin:20px 0 10px">${group.icon} ${group.label}</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px">`;
+
         group.ids.forEach(rid => {
             const r = REGIONS[rid];
             if (!r) return;
-            const owned    = gameState.unlockedRegions.includes(r.id);
-            const hasRep   = gameState.reputation >= r.repReq;
-            const canAfford= gameState.cash >= r.price;
-            const canBuy   = hasRep && canAfford;
-            html += `
-            <div class="hud-card flex flex-col gap-1 ${owned ? 'border-gold/30 bg-gold/5' : ''}">
-                <div class="text-[10px] font-bold ${owned ? 'text-gold' : 'text-white'} leading-tight">${r.name}</div>
-                <div class="text-[8px] ${hasRep ? 'text-gray-500' : 'text-red-400'}">
+            const owned     = (gameState.unlockedRegions||[]).includes(r.id);
+            const hasRep    = (gameState.reputation||0) >= r.repReq;
+            const canAfford = (gameState.cash||0) >= r.price;
+            const canBuy    = hasRep && canAfford && !owned;
+
+            const borderColor = owned ? 'rgba(212,175,55,0.4)' : hasRep ? 'rgba(255,255,255,0.07)' : 'rgba(239,68,68,0.15)';
+            const bgColor     = owned ? 'rgba(212,175,55,0.06)' : 'rgba(8,8,22,0.8)';
+
+            html += `<div style="background:${bgColor};border:1px solid ${borderColor};border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:11px;font-weight:700;color:${owned ? '#d4af37' : '#e0e0ff'}">${r.name}</div>
+                    ${owned ? `<span class="ds-pill ds-pill--gold">ATTIVA</span>` : ''}
+                </div>
+                <div style="font-size:9px;color:${hasRep ? '#6b7280' : '#ef4444'};font-family:var(--font-mono)">
                     ${r.repReq}★ richiesta
                 </div>
-                <div class="mt-auto pt-1">
+                ${r.bonusDesc ? `<div style="font-size:9px;color:#4b5563">${r.bonusDesc}</div>` : ''}
+                <div style="margin-top:auto">
                     ${owned
-                        ? `<span class="text-gold text-[8px] font-bold">✓ ATTIVA</span>`
+                        ? `<div style="font-size:9px;color:#22c55e;font-weight:700;font-family:var(--font-mono)">✓ Licenza operativa</div>`
                         : r.price === 0 ? ''
                         : `<button onclick="buyRegion('${r.id}')"
-                            class="w-full btn-gold !text-[8px] !py-0.5 !px-1 ${!canBuy ? 'opacity-30 cursor-not-allowed' : ''}"
+                            class="ds-btn ds-btn--${canBuy ? 'gold' : 'ghost'}"
+                            style="width:100%;justify-content:center;padding:6px;font-size:10px"
                             ${!canBuy ? 'disabled' : ''}>
-                            €${(r.price/1000).toFixed(0)}k
+                            ${!hasRep ? '🔒 ' : ''}€${(r.price/1000).toFixed(0)}k
                            </button>`
                     }
                 </div>
@@ -3008,6 +3034,7 @@ function renderTabRegions() {
         });
         html += `</div>`;
     });
+
     container.innerHTML = html;
 }
 
@@ -3483,70 +3510,75 @@ function renderTabMarketing() {
 
 function renderTabLegal() {
     const container = document.getElementById('tab-container');
-    const hasLegal = gameState.staff.some(s => s.id === 'legal');
-    const pending  = (gameState.activeFines || []).filter(f => f.status === 'pending');
-    const resolved = (gameState.activeFines || []).filter(f => f.status !== 'pending');
+    const hasLegal  = (gameState.staff||[]).some(s => s.id === 'legal');
+    const pending   = (gameState.activeFines || []).filter(f => f.status === 'pending');
+    const resolved  = (gameState.activeFines || []).filter(f => f.status !== 'pending');
+    const successRate = hasLegal ? 70 : 35;
+    const totalFines = pending.reduce((s, f) => s + (f.amount||0), 0);
+    const gameHour  = gameState.day * 24 + gameState.hour;
 
-    const successRate = hasLegal ? '70%' : '35%';
+    let html = DS.header({
+        eyebrow: 'Compliance & Diritto',
+        title:   'Ufficio Legale',
+        subtitle:`${pending.length} sanzione${pending.length !== 1 ? 'i' : ''} in attesa · Rischio esposizione €${totalFines.toLocaleString()}`,
+    }) + DS.kpiStrip([
+        { label:'Status Studio',  val: hasLegal ? 'ATTIVO' : 'ASSENTE',       color: hasLegal ? 'green' : 'red' },
+        { label:'Tasso Successo', val: successRate + '%',                       color: successRate >= 70 ? 'green' : 'red' },
+        { label:'Sanzioni Aperte',val: pending.length,                          color: pending.length > 0 ? 'red' : 'green' },
+        { label:'Esposizione',    val: '€' + totalFines.toLocaleString(),       color: totalFines > 0 ? 'red' : 'green' },
+    ]);
 
-    let html = `
-    <div class="hud-card mb-4 flex justify-between items-center">
-        <div>
-            <div class="text-[9px] text-gray-500 uppercase tracking-widest">Studio Legale</div>
-            <div class="text-xs font-bold ${hasLegal ? 'text-blue' : 'text-red-400'} mt-0.5">
-                ${hasLegal ? '⚖️ Avvocato Attivo' : '⚠ Nessun avvocato — auto-contest al 35%'}
-            </div>
-        </div>
-        <div class="text-[9px] text-gray-500">${successRate} successo</div>
-    </div>
-
-    <h3 class="text-[10px] text-blue uppercase tracking-widest border-b border-white/10 pb-1 mb-3">
-        Sanzioni Attive (${pending.length})
-    </h3>`;
-
-    if (pending.length === 0) {
-        html += `<div class="text-center text-gray-600 mt-6 italic text-[11px]">Nessuna multa in sospeso. Ottimo!</div>`;
+    if (!hasLegal) {
+        html += `<div class="ds-card ds-card--alert" style="margin-bottom:20px">
+            <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px">⚠ Nessun Avvocato in Staff</div>
+            <div style="font-size:11px;color:var(--text-muted)">Tasso di contestazione automatica: solo 35%. Assumi un Avvocato nel tab Staff per salire al 70%.</div>
+        </div>`;
     }
 
-    const gameHour = gameState.day * 24 + gameState.hour;
-    pending.forEach(f => {
-        const hoursLeft = Math.max(0, (f.expiresAt || 0) - gameHour);
-        html += `
-        <div class="hud-card fine-card mb-2">
-            <div class="flex justify-between items-start">
-                <div>
-                    <div class="text-xs font-bold text-white">${f.desc}</div>
-                    <div class="text-[9px] text-gray-400">👤 ${f.driverName} · Scade in ${hoursLeft}h</div>
-                </div>
-                <div class="text-red-400 font-mono font-bold text-sm">€${f.amount}</div>
-            </div>
-            <div class="flex gap-2 mt-2">
-                <button onclick="payFine(${f.id})" class="flex-1 btn-gold !text-[8px] !py-1 !bg-red-900/30 !text-red-400">Paga €${f.amount}</button>
-                <button onclick="contestFine(${f.id})" class="flex-1 btn-blue !text-[8px] !py-1">Contesta (${successRate})</button>
-            </div>
-        </div>`;
-    });
+    html += `<div class="ds-eyebrow" style="margin:0 0 12px">⚖️ Sanzioni Attive (${pending.length})</div>`;
 
-    if (resolved.length > 0) {
-        html += `<h3 class="text-[10px] text-gray-600 uppercase tracking-widest border-b border-white/5 pb-1 mt-4 mb-2">Archivio (${resolved.length})</h3>`;
-        resolved.slice(-5).reverse().forEach(f => {
-            const statusLabel = {
-                'paid':'Pagata', 'contested_won':'Annullata ✓', 'contested_lost':'Ricorso Perso',
-                'contested_reduced':'Ridotta', 'expired_paid':'Scaduta (Pagata)'
-            }[f.status] || f.status;
-            const statusColor = f.status === 'contested_won' ? 'text-green-400' : f.status === 'paid' || f.status === 'expired_paid' ? 'text-red-400' : 'text-gray-400';
-            html += `
-            <div class="hud-card mb-1 opacity-60">
-                <div class="flex justify-between text-[9px]">
-                    <span class="text-gray-400">${f.desc} (${f.driverName})</span>
-                    <span class="${statusColor} font-bold">${statusLabel}</span>
+    if (pending.length === 0) {
+        html += DS.empty({ icon:'✅', title:'Nessuna sanzione in sospeso', body:'La tua flotta è in regola. Continua così.' });
+    } else {
+        pending.forEach(f => {
+            const hoursLeft = Math.max(0, (f.expiresAt || 0) - gameHour);
+            html += `<div class="ds-card ds-card--alert" style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                    <div>
+                        <div style="font-size:12px;font-weight:700;color:var(--text)">${f.desc}</div>
+                        <div style="font-size:10px;color:var(--text-muted);margin-top:3px">👤 ${f.driverName} · Scade in ${hoursLeft}h</div>
+                    </div>
+                    <div style="font-size:16px;font-weight:700;font-family:var(--font-mono);color:var(--red)">€${(f.amount||0).toLocaleString()}</div>
+                </div>
+                <div style="display:flex;gap:8px">
+                    ${DS.btn({ label:`Paga €${(f.amount||0).toLocaleString()}`, color:'red',  onclick:`payFine(${f.id})` })}
+                    ${DS.btn({ label:`Contesta (${successRate}%)`,              color:'blue', onclick:`contestFine(${f.id})` })}
                 </div>
             </div>`;
         });
     }
+
+    if (resolved.length > 0) {
+        html += `<div class="ds-eyebrow" style="margin:20px 0 12px">📁 Archivio (${resolved.length})</div>`;
+        html += DS.table(
+            [
+                { label:'Descrizione', key:'desc' },
+                { label:'Autista',     key:'driverName' },
+                { label:'Importo',     key:'amount', align:'right', render: r => `<span style="font-family:var(--font-mono)">€${(r.amount||0).toLocaleString()}</span>` },
+                { label:'Esito',       key:'status',  align:'center', render: r => {
+                    const labels = { paid:'Pagata', contested_won:'Annullata ✓', contested_lost:'Ricorso Perso', contested_reduced:'Ridotta', expired_paid:'Scaduta (Pagata)' };
+                    const colors = { contested_won:'green', paid:'red', expired_paid:'red', contested_lost:'', contested_reduced:'orange' };
+                    const label = labels[r.status] || r.status;
+                    const color = colors[r.status] || '';
+                    return DS.pill(label, color || 'ghost');
+                }},
+            ],
+            resolved.slice(-10).reverse()
+        );
+    }
+
     container.innerHTML = html;
 
-    // Update fine dot
     const fineDot = document.getElementById('fine-dot');
     if (fineDot) fineDot.classList.toggle('hidden', pending.length === 0);
 }
@@ -5100,41 +5132,69 @@ function renderTabHelp() {
     const container = document.getElementById('tab-container');
     const cfg = window.GAME_CONFIG || {};
     const email = cfg.SUPPORT_EMAIL || 'support@chauffeurempire.com';
-    const companyId = window.currentUser?.id || 'N/D';
+    const userId = window.currentUser?.id || 'N/D';
     const companyName = (gameState.companyName || 'La tua azienda');
-    const bugSubject = encodeURIComponent(`Segnalazione Bug - ID Compagnia: ${companyId}`);
-    const generalSubject = encodeURIComponent(`Assistenza - ${companyName}`);
+    const bugSubject = encodeURIComponent(`Bug Report — ID: ${userId}`);
+    const generalSubject = encodeURIComponent(`Supporto — ${companyName}`);
+    const build = new Date().toLocaleDateString('it-IT', { month:'short', year:'numeric' });
 
-    container.innerHTML = `
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">🆘 Aiuto & Supporto</h3>
+    container.innerHTML = DS.header({
+        eyebrow: 'Centro Assistenza',
+        title:   'Supporto & Documentazione',
+        subtitle:`Risposta garantita entro 24h · Build ${build}`,
+    }) + `
 
-    <div class="hud-card mb-3">
-        <div class="text-[10px] font-bold text-white mb-1">📧 Email Ufficiale</div>
-        <div class="text-[9px] text-gray-400 mb-2">Il nostro team risponde entro 24h nei giorni lavorativi.</div>
-        <a href="mailto:${email}" class="text-[9px] text-gold underline underline-offset-2 break-all">${email}</a>
+    <div class="ds-grid-2" style="margin-bottom:20px">
+
+        <div class="ds-card">
+            <div class="ds-eyebrow" style="margin-bottom:10px">Contatto Diretto</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">📧 Email Ufficiale</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:12px">Il team risponde entro 24h nei giorni lavorativi. Includi sempre il tuo ID compagnia.</div>
+            <a href="mailto:${email}" class="ds-btn ds-btn--gold" style="display:inline-flex;text-decoration:none">
+                ✉ ${email}
+            </a>
+        </div>
+
+        <div class="ds-card ds-card--alert">
+            <div class="ds-eyebrow" style="margin-bottom:10px;color:var(--red)">Segnalazione Bug</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">🐛 Report Tecnico</div>
+            <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px">ID Compagnia pre-compilato nell'oggetto. Descrivi il bug nella mail.</div>
+            <div style="font-size:9px;font-family:var(--font-mono);color:var(--text-dim);margin-bottom:12px;word-break:break-all">${userId}</div>
+            <a href="mailto:${email}?subject=${bugSubject}" class="ds-btn ds-btn--red" style="display:inline-flex;text-decoration:none;width:100%;justify-content:center">
+                🐛 Apri Email — Segnala Bug
+            </a>
+        </div>
     </div>
 
-    <div class="hud-card mb-3">
-        <div class="text-[10px] font-bold text-white mb-1">🐛 Segnala un Bug</div>
-        <div class="text-[9px] text-gray-400 mb-2">Il tuo ID Compagnia verrà precompilato nell'oggetto così possiamo rintracciarti subito nel database.</div>
-        <div class="text-[8px] text-gray-600 font-mono mb-2 break-all">ID: ${companyId}</div>
-        <a href="mailto:${email}?subject=${bugSubject}" class="btn-gold !text-[8px] !py-1 inline-block text-center w-full">
-            🐛 Apri Client Email — Segnala Bug
-        </a>
+    <div class="ds-card" style="margin-bottom:20px">
+        <div class="ds-eyebrow" style="margin-bottom:12px">Domande Frequenti</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+            ${[
+                { q:'Come recupero la password?',  a:`Usa il link "Password dimenticata" nella schermata di login. Il link è valido 30 minuti.` },
+                { q:'I miei progressi sono salvati?', a:`Sì. Il gioco usa salvataggio cloud automatico su Supabase. I dati vengono sincronizzati ogni volta che esegui un\'azione.` },
+                { q:'Come funziona la classifica?', a:`Si aggiorna ogni volta che un giocatore completa un\'azione (corsa, acquisto, ecc). Mostra il patrimonio liquido totale.` },
+                { q:'Posso giocare su più dispositivi?', a:`Sì, il salvataggio cloud ti permette di continuare su qualsiasi browser. Usa le stesse credenziali.` },
+                { q:'Problemi con i pagamenti DC?', a:`Scrivi all\'email di supporto con oggetto "Pagamento DC" e il tuo ID compagnia. Verifichiamo entro 4h.` },
+            ].map((faq, i) => `
+            <div style="padding:12px 0;border-bottom:1px solid var(--border-sub);cursor:pointer"
+                 onclick="this.querySelector('.faq-a').style.display=this.querySelector('.faq-a').style.display==='none'?'block':'none'">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div style="font-size:11px;font-weight:600;color:var(--text)">${faq.q}</div>
+                    <span style="color:var(--text-muted);font-size:14px">⌄</span>
+                </div>
+                <div class="faq-a" style="display:none;margin-top:8px;font-size:11px;color:var(--text-muted);line-height:1.5">${faq.a}</div>
+            </div>`).join('')}
+        </div>
     </div>
 
-    <div class="hud-card mb-3">
-        <div class="text-[10px] font-bold text-white mb-1">💬 Assistenza Generale</div>
-        <div class="text-[9px] text-gray-400 mb-2">Domande sul gioco, pagamenti DC, recupero account.</div>
-        <a href="mailto:${email}?subject=${generalSubject}" class="btn-gold !bg-white/5 !text-gray-300 !text-[8px] !py-1 inline-block text-center w-full">
-            ✉️ Contatta il Supporto
-        </a>
-    </div>
-
-    <div class="hud-card !border-white/5 bg-white/2">
-        <div class="text-[9px] text-gray-600 text-center leading-relaxed">
-            Chauffeur Empire · ${cfg.GAME_URL || 'chauffeurempire.com'}<br>
-            <span class="text-[8px]">Versione build ${new Date().toLocaleDateString('it-IT', {month:'short', year:'numeric'})}</span>
+    <div style="text-align:center;padding:16px;background:rgba(255,255,255,0.02);border-radius:10px;border:1px solid var(--border-sub)">
+        <div style="font-size:9px;color:var(--text-dim);font-family:var(--font-mono)">
+            CHAUFFEUR EMPIRE · ${cfg.GAME_URL || 'chauffeurempire.com'} · Build ${build}
+        </div>
+        <div style="margin-top:8px;display:flex;gap:12px;justify-content:center">
+            <a href="terms.html" target="_blank" style="font-size:9px;color:var(--text-muted);text-decoration:none">Termini</a>
+            <a href="privacy.html" target="_blank" style="font-size:9px;color:var(--text-muted);text-decoration:none">Privacy</a>
+            <a href="rules.html" target="_blank" style="font-size:9px;color:var(--text-muted);text-decoration:none">Regole</a>
         </div>
     </div>`;
 }
