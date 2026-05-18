@@ -1988,39 +1988,44 @@ function renderTabFleet() {
 
 function renderTabStaff() {
     const container = document.getElementById('tab-container');
-    const hqLvl = typeof HQ_LEVELS !== 'undefined' ? HQ_LEVELS.find(l => l.level === (gameState.hqLevel || 0)) : null;
-    const maxStaff = hqLvl ? hqLvl.maxStaff : 2;
-    const currentStaff = gameState.staff.length + gameState.drivers.filter(d => d.id !== 'ceo').length;
-    const hqName = hqLvl ? hqLvl.name : 'Garage Condiviso';
-    let html = `
-    <div class="hud-card mb-4 flex justify-between items-center">
-        <div>
-            <div class="text-[9px] text-gray-500 uppercase tracking-widest">Sede Operativa</div>
-            <div class="text-xs font-bold text-gold">${hqName}</div>
-        </div>
-        <div class="text-right">
-            <div class="text-[9px] text-gray-500">Staff</div>
-            <div class="text-sm font-bold ${currentStaff >= maxStaff ? 'text-red-400' : 'text-white'}">${currentStaff}/${maxStaff === 99 ? '∞' : maxStaff}</div>
-        </div>
-    </div>
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Ufficio Centralizzato</h3><div class="space-y-2 mb-6">`;
+    const hqLvl      = typeof HQ_LEVELS !== 'undefined' ? HQ_LEVELS.find(l => l.level === (gameState.hqLevel || 0)) : null;
+    const maxStaff   = hqLvl ? hqLvl.maxStaff : 2;
+    const officeStaff= gameState.staff.length;
+    const driverCount= gameState.drivers.filter(d => d.id !== 'ceo').length;
+    const currentStaff = officeStaff + driverCount;
+    const hqName     = hqLvl ? hqLvl.name : 'Garage Condiviso';
+    const staffFull  = currentStaff >= maxStaff && maxStaff !== 99;
+    const monthlyPayroll = gameState.staff.reduce((s, st) => {
+        const role = typeof STAFF_ROLES !== 'undefined' ? Object.values(STAFF_ROLES).find(r => r.id === st.id) : null;
+        return s + (role ? role.salary : 0);
+    }, 0);
+
+    let html = DS.header({
+        eyebrow: 'Risorse Umane',
+        title:   'Gestione Staff',
+        subtitle:`${hqName} · ${currentStaff} / ${maxStaff === 99 ? '∞' : maxStaff} posizioni · Stipendi €${monthlyPayroll.toLocaleString()}/mese`,
+    }) + DS.kpiStrip([
+        { label:'Staff Ufficio',   val: officeStaff,                                       color: officeStaff > 0 ? 'green' : '' },
+        { label:'Autisti',         val: driverCount,                                        color: driverCount > 0 ? 'blue' : '' },
+        { label:'Capacità',        val: currentStaff + '/' + (maxStaff===99?'∞':maxStaff), color: staffFull ? 'red' : 'green' },
+        { label:'Stipendi/mese',   val: '€' + monthlyPayroll.toLocaleString(),             color: monthlyPayroll > 0 ? 'red' : 'green' },
+    ]);
+
+    html += `<div class="ds-eyebrow" style="margin:0 0 12px">🏢 Ufficio Centralizzato</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">`;
     for(let k in STAFF_ROLES) {
         let s = STAFF_ROLES[k]; let owned = gameState.staff.some(x => x.id === s.id);
-        html += `
-        <div class="hud-card flex justify-between items-start gap-2">
-            <div class="flex-1 min-w-0">
-                <div class="text-xs font-bold text-white">${s.name}</div>
-                <div class="text-[9px] text-gray-500">€${s.salary}/mese</div>
-                <div class="text-[9px] text-gray-400 mt-0.5 leading-tight">${s.desc}</div>
+        html += `<div class="ds-card${owned?' ds-card--gold':''}" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+            <div style="flex:1;min-width:0">
+                <div style="font-size:12px;font-weight:700;color:${owned?'var(--gold)':'var(--text)'}">${s.name}</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:2px">€${s.salary.toLocaleString()}/mese</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4">${s.desc}</div>
             </div>
-            <div class="flex-shrink-0 pt-0.5 flex flex-col items-end gap-1">
+            <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
                 ${owned
-                    ? `<span class="text-green-500 text-[9px] font-bold uppercase">✓ Attivo</span>
-                       <button onclick="window.fireStaff('${s.id}')"
-                         class="text-[8px] text-red-400 border border-red-500/30 hover:bg-red-500/10 px-1.5 py-0.5 rounded transition-colors cursor-pointer">
-                         Licenzia
-                       </button>`
-                    : `<button onclick="hireOfficeStaff('${s.id}')" class="btn-gold !py-1 !px-2">Assumi</button>`
+                    ? `${DS.pill('✓ ATTIVO', 'green')}
+                       ${DS.btn({ label:'Licenzia', color:'red', onclick:`window.fireStaff('${s.id}')`, size:'sm' })}`
+                    : DS.btn({ label:'Assumi', color:'gold', onclick:`hireOfficeStaff('${s.id}')`, disabled:staffFull, size:'sm' })
                 }
             </div>
         </div>`;
@@ -2036,123 +2041,124 @@ function renderTabStaff() {
         const h  = Math.floor((ms % 86400000) / 3600000);
         return d > 0 ? `${d}g ${h}h` : `${h}h`;
     })() : null;
-    html += `</div>
-    <div class="hud-card mb-4 ${hrActive ? '!border-purple-500/50 bg-purple-950/10' : '!border-white/10'}">
-        <div class="flex justify-between items-start">
+    html += `</div>`;
+
+    // ── HR Automation ───────────────────────────────────────────────────────
+    html += `<div class="ds-card${hrActive ? ' ds-card--gold' : ''}" style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
             <div>
-                <div class="text-[9px] text-purple-400 uppercase tracking-widest font-bold mb-0.5">🤝 Gestione Sindacale HR</div>
-                <div class="text-[9px] text-gray-400 leading-snug max-w-[220px]">Gli scioperi vengono risolti automaticamente senza popup bloccanti. L'HR applica un accordo immediato.</div>
-                ${hrActive ? `<div class="text-[9px] text-green-400 mt-1 font-bold">✅ Attivo — scade tra ${hrTimeLeft}</div>` : `<div class="text-[9px] text-gray-500 mt-1">7 giorni · 5 DC</div>`}
-            </div>
-            <div class="shrink-0 ml-2">
+                <div class="ds-eyebrow" style="color:#a855f7;margin-bottom:4px">🤝 Gestione Sindacale HR</div>
+                <div style="font-size:10px;color:var(--text-muted);line-height:1.4;max-width:220px">Gli scioperi vengono risolti automaticamente senza popup bloccanti.</div>
                 ${hrActive
-                    ? `<span class="text-green-400 text-[9px] font-bold">ATTIVO</span>`
-                    : `<button onclick="window.buyHRAutomation()" class="btn-gold !py-1 !px-2 !text-[8px]">🪙 5 DC<br><span class="opacity-60">7 giorni</span></button>`}
+                    ? `<div style="font-size:10px;color:var(--green);margin-top:4px;font-weight:700">✅ Attivo — scade tra ${hrTimeLeft}</div>`
+                    : `<div style="font-size:10px;color:var(--text-dim);margin-top:4px">7 giorni · 5 DC</div>`}
+            </div>
+            <div>
+                ${hrActive
+                    ? DS.pill('ATTIVO', 'green')
+                    : DS.btn({ label:'🪙 5 DC · 7g', color:'gold', onclick:'window.buyHRAutomation()', size:'sm' })}
             </div>
         </div>
-    </div>
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">I Tuoi Autisti</h3><div class="space-y-2">`;
+    </div>`;
+
+    // ── I Tuoi Autisti ──────────────────────────────────────────────────────
+    html += `<div class="ds-eyebrow" style="margin:0 0 12px">🚗 I Tuoi Autisti</div>
+    <div style="display:flex;flex-direction:column;gap:8px">`;
     gameState.drivers.filter(d => d.id !== 'ceo').forEach(d => {
-        const fatigue = d.fatigue || 0;
-        const fatigueColor = fatigue >= 85 ? '#ef4444' : fatigue >= 60 ? '#f59e0b' : '#8b5cf6';
-        const isResting = d.status === 'resting';
-        const levelData = (DRIVER_LEVELS || [])[d.level || 0] || { name:'Rookie', xpMin:0, xpMax:200, badge:'lvl-rookie' };
-        const nextLvl   = (DRIVER_LEVELS || [])[Math.min((d.level||0)+1, DRIVER_LEVELS.length-1)];
-        const _xpDenom = nextLvl ? (nextLvl.xpMin - levelData.xpMin) : 0;
-        const xpPct = (!nextLvl || nextLvl === levelData || _xpDenom <= 0) ? 100 : Math.max(0, Math.min(100, Math.round(((d.xp||0) - levelData.xpMin) / _xpDenom * 100)));
-        const stress      = d.stress_level !== undefined ? d.stress_level : 0;
-        const isBurnout   = d.burnout_until && (gameState.day * 24 + gameState.hour) < d.burnout_until;
-        const stressColor = stress >= 100 ? '#ff4060' : stress >= 80 ? '#ef4444' : stress >= 50 ? '#f59e0b' : '#22c55e';
-        const statusLabel = isBurnout
-            ? `<span class="text-red-400 font-bold text-[9px]">🔥 BURNOUT — Recupero ${d.restHoursLeft}h</span>`
+        const fatigue      = d.fatigue || 0;
+        const fatigueLevel = fatigue >= 85 ? 'red' : fatigue >= 60 ? 'orange' : 'green';
+        const isResting    = d.status === 'resting';
+        const levelData    = (DRIVER_LEVELS || [])[d.level || 0] || { name:'Rookie', xpMin:0, xpMax:200, badge:'lvl-rookie' };
+        const nextLvl      = (DRIVER_LEVELS || [])[Math.min((d.level||0)+1, DRIVER_LEVELS.length-1)];
+        const _xpDenom     = nextLvl ? (nextLvl.xpMin - levelData.xpMin) : 0;
+        const xpPct        = (!nextLvl || nextLvl === levelData || _xpDenom <= 0) ? 100 : Math.max(0, Math.min(100, Math.round(((d.xp||0) - levelData.xpMin) / _xpDenom * 100)));
+        const stress       = d.stress_level !== undefined ? d.stress_level : 0;
+        const isBurnout    = d.burnout_until && (gameState.day * 24 + gameState.hour) < d.burnout_until;
+        const stressLevel  = stress >= 80 ? 'red' : stress >= 50 ? 'orange' : 'green';
+        const morale       = d.morale !== undefined ? d.morale : 100;
+        const moraleLevel  = morale < 25 ? 'red' : morale < 60 ? 'orange' : 'green';
+        const sat          = d.satisfaction !== undefined ? d.satisfaction : 70;
+        const satLevel     = sat < 30 ? 'red' : sat < 60 ? 'orange' : 'green';
+        const statusPill   = isBurnout
+            ? DS.pill(`🔥 BURNOUT — Recupero ${d.restHoursLeft}h`, 'red', true)
             : isResting
-                ? `<span class="text-orange-400 font-bold text-[9px]">☕ Riposo (${d.restHoursLeft}h rimaste)</span>`
+                ? DS.pill(`☕ Riposo (${d.restHoursLeft}h rimaste)`, 'orange')
                 : fatigue >= 85
-                    ? `<span class="text-red-400 text-[9px] font-bold">⚠ ESAUSTO${!hasHR ? ' — Mandalo a riposo!' : ''}</span>`
+                    ? DS.pill('⚠ ESAUSTO', 'red', true)
                     : stress >= 80
-                        ? `<span class="text-orange-300 text-[9px] font-bold">😰 Sotto stress — velocità −33%</span>`
+                        ? DS.pill('😰 Sotto stress', 'orange')
                         : '';
         const avatarHtml = d.avatarBase64
-            ? `<img src="${d.avatarBase64}" class="driver-avatar" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Clicca per cambiare foto">`
-            : `<div class="driver-avatar-placeholder" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Aggiungi foto">👤</div>`;
-        html += `
-        <div class="hud-card">
+            ? `<img src="${d.avatarBase64}" class="driver-avatar" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Clicca per cambiare foto" style="cursor:pointer">`
+            : `<div class="driver-avatar-placeholder" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Aggiungi foto" style="cursor:pointer">👤</div>`;
+        const specs   = typeof DRIVER_SPECIALTIES !== 'undefined' ? DRIVER_SPECIALTIES : [];
+        const curSpec = specs.find(s => s.id === d.specialty);
+        const opts    = specs.map(s => `<option value="${s.id}" ${d.specialty === s.id ? 'selected' : ''}>${s.name}</option>`).join('');
+        html += `<div class="ds-card">
             <input type="file" id="avatar-upload-${d.id}" accept="image/*" style="display:none" onchange="window.setDriverAvatar('${d.id}', this)">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center gap-2 flex-1 min-w-0">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
                     ${avatarHtml}
-                    <div class="flex-1 min-w-0">
-                        <div class="text-xs font-bold text-white">${d.name} <span class="lvl-badge ${levelData.badge} ml-1">${levelData.name}</span>${d.isOnStrike ? '<span class="ml-2 text-[8px] bg-red-900/60 text-red-400 px-1 rounded font-bold">🪧 SCIOPERO</span>' : ''}</div>
-                        ${d.trait ? `<div class="text-[8px] text-purple-400 mt-0.5">${d.trait.name} — ${d.trait.desc}</div>` : ''}
-                        <div class="text-[9px] text-gray-500">€${d.salary}/mese · XP: ${d.xp||0}</div>
-                        ${statusLabel ? `<div class="mt-0.5">${statusLabel}</div>` : ''}
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:12px;font-weight:700;color:var(--text)">${d.name}
+                            <span class="lvl-badge ${levelData.badge}" style="margin-left:4px">${levelData.name}</span>
+                            ${d.isOnStrike ? DS.pill('🪧 SCIOPERO', 'red', true) : ''}
+                        </div>
+                        ${d.trait ? `<div style="font-size:10px;color:#a855f7;margin-top:2px">${d.trait.name} — ${d.trait.desc}</div>` : ''}
+                        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">€${d.salary}/mese · XP: ${d.xp||0}</div>
+                        ${statusPill ? `<div style="margin-top:4px">${statusPill}</div>` : ''}
                     </div>
                 </div>
-                <div class="flex gap-1 items-center shrink-0">
+                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
                     ${d.isOnStrike
-                        ? `<button onclick="resolveStrike('${d.id}')" class="btn-gold !bg-yellow-900/30 !text-yellow-400 !text-[8px]">🤝 Accordo</button>`
+                        ? DS.btn({ label:'🤝 Accordo', color:'gold', onclick:`resolveStrike('${d.id}')`, size:'sm' })
                         : (!isResting && !isBurnout && d.status !== 'busy' && (fatigue >= 40 || stress >= 50))
-                            ? `<button onclick="putDriverOnBreak('${d.id}')" class="btn-gold !bg-orange-900/30 !text-orange-400 !text-[8px]" title="Pausa 4h: riduce stress del 40%">☕ Pausa</button>`
+                            ? DS.btn({ label:'☕ Pausa', color:'ghost', onclick:`putDriverOnBreak('${d.id}')`, size:'sm' })
                             : ''}
-                    <button onclick="window.renderDriverSkillModal('${d.id}')" class="btn-gold !bg-blue-900/30 !text-blue-300 !text-[8px]" title="Albero Abilità">⭐ Skills</button>
-                    <button onclick="fireDriver('${d.id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[8px]">Licenzia</button>
+                    ${DS.btn({ label:'⭐ Skills', color:'blue', onclick:`window.renderDriverSkillModal('${d.id}')`, size:'sm' })}
+                    ${DS.btn({ label:'Licenzia', color:'red', onclick:`fireDriver('${d.id}')`, size:'sm' })}
                 </div>
             </div>
-            <div class="flex items-center gap-1 mt-1.5">
-                <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">Fatica</span>
-                <div class="fatigue-bar-bg flex-1">
-                    <div class="fatigue-bar-fill" style="width:${fatigue}%; background:${fatigueColor}"></div>
+            <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Fatica</span>
+                    <div style="flex:1">${DS.progress(fatigue, fatigueLevel)}</div>
+                    <span style="font-size:9px;font-family:monospace;color:var(--${fatigueLevel})">${Math.floor(fatigue)}%</span>
                 </div>
-                <span class="text-[8px] font-mono ml-1" style="color:${fatigueColor}">${Math.floor(fatigue)}%</span>
-            </div>
-            <div class="flex items-center gap-1 mt-1">
-                <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">XP</span>
-                <div class="xp-bar-bg flex-1"><div class="xp-bar-fill" style="width:${xpPct}%"></div></div>
-                <span class="text-[8px] font-mono ml-1 text-blue">${xpPct}%</span>
-            </div>
-            ${(() => {
-                const morale = d.morale !== undefined ? d.morale : 100;
-                const moraleColor = morale < 25 ? '#ff4060' : morale < 60 ? '#f59e0b' : '#22c55e';
-                return `<div class="flex items-center gap-1 mt-1">
-                    <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">Morale</span>
-                    <div class="fatigue-bar-bg flex-1"><div class="fatigue-bar-fill" style="width:${morale}%; background:${moraleColor}"></div></div>
-                    <span class="text-[8px] font-mono ml-1" style="color:${moraleColor}">${Math.floor(morale)}%</span>
-                </div>`;
-            })()}
-            ${(() => {
-                const sat = d.satisfaction !== undefined ? d.satisfaction : 70;
-                const satColor = sat < 30 ? '#ff4060' : sat < 60 ? '#f59e0b' : '#22c55e';
-                return `<div class="flex items-center gap-1 mt-1">
-                    <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">Soddi.</span>
-                    <div class="fatigue-bar-bg flex-1"><div class="fatigue-bar-fill" style="width:${sat}%; background:${satColor}"></div></div>
-                    <span class="text-[8px] font-mono ml-1" style="color:${satColor}">${Math.floor(sat)}%</span>
-                    <button onclick="payDriverBonus('${d.id}', 500)" class="ml-1 text-[7px] bg-green-900/40 text-green-400 px-1 rounded hover:bg-green-800/50">+€500</button>
-                </div>`;
-            })()}
-            <div class="flex items-center gap-1 mt-1">
-                <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">Stress</span>
-                <div class="fatigue-bar-bg flex-1">
-                    <div class="fatigue-bar-fill" style="width:${stress}%; background:${stressColor}"></div>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">XP</span>
+                    <div style="flex:1">${DS.progress(xpPct, 'blue')}</div>
+                    <span style="font-size:9px;font-family:monospace;color:var(--blue)">${xpPct}%</span>
                 </div>
-                <span class="text-[8px] font-mono ml-1" style="color:${stressColor}">${Math.floor(stress)}%</span>
-                ${stress >= 50 && !isResting && !isBurnout && d.status !== 'busy'
-                    ? `<button onclick="putDriverOnBreak('${d.id}')" class="ml-1 text-[7px] bg-orange-900/40 text-orange-400 px-1 rounded hover:bg-orange-800/50" title="Pausa 4h — stress −40%">☕ −40%</button>
-                       <button onclick="payStressClear('${d.id}')" class="ml-1 text-[7px] bg-green-900/40 text-green-400 px-1 rounded hover:bg-green-800/50" title="Paga €1.000 — azzera stress istantaneamente">💊 €1k</button>`
-                    : ''}
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Morale</span>
+                    <div style="flex:1">${DS.progress(morale, moraleLevel)}</div>
+                    <span style="font-size:9px;font-family:monospace;color:var(--${moraleLevel})">${Math.floor(morale)}%</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Soddi.</span>
+                    <div style="flex:1">${DS.progress(sat, satLevel)}</div>
+                    <span style="font-size:9px;font-family:monospace;color:var(--${satLevel})">${Math.floor(sat)}%</span>
+                    ${DS.btn({ label:'+€500', color:'green', onclick:`payDriverBonus('${d.id}', 500)`, size:'sm' })}
+                </div>
+                <div style="display:flex;align-items:center;gap:6px">
+                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Stress</span>
+                    <div style="flex:1">${DS.progress(stress, stressLevel)}</div>
+                    <span style="font-size:9px;font-family:monospace;color:var(--${stressLevel})">${Math.floor(stress)}%</span>
+                    ${stress >= 50 && !isResting && !isBurnout && d.status !== 'busy'
+                        ? DS.btn({ label:'☕ −40%', color:'ghost', onclick:`putDriverOnBreak('${d.id}')`, size:'sm' }) +
+                          DS.btn({ label:'💊 €1k', color:'green', onclick:`payStressClear('${d.id}')`, size:'sm' })
+                        : ''}
+                </div>
             </div>
-            ${(() => {
-                const specs = typeof DRIVER_SPECIALTIES !== 'undefined' ? DRIVER_SPECIALTIES : [];
-                const curSpec = specs.find(s => s.id === d.specialty);
-                const opts = specs.map(s => `<option value="${s.id}" ${d.specialty === s.id ? 'selected' : ''}>${s.name}</option>`).join('');
-                return `<div class="flex items-center gap-1 mt-1.5">
-                    <span class="text-[8px] text-gray-600 uppercase w-10 shrink-0">Spec.</span>
-                    <select onchange="assignSpecialty('${d.id}', this.value)" class="flex-1 text-[8px] bg-black/40 border border-white/10 rounded px-1 py-0.5 text-gray-300 cursor-pointer">
-                        <option value="">— Nessuna —</option>${opts}
-                    </select>
-                    ${curSpec ? `<span class="text-[8px] text-blue-400 ml-1">${curSpec.name.split(' ')[0]}</span>` : ''}
-                </div>`;
-            })()}
-            <div class="driver-skills-row mt-2">
+            <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
+                <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Spec.</span>
+                <select onchange="assignSpecialty('${d.id}', this.value)" style="flex:1;font-size:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px 6px;color:var(--text);cursor:pointer">
+                    <option value="">— Nessuna —</option>${opts}
+                </select>
+                ${curSpec ? `<span style="font-size:9px;color:var(--blue)">${curSpec.name.split(' ')[0]}</span>` : ''}
+            </div>
+            <div class="driver-skills-row" style="margin-top:8px">
                 ${[
                     ['⚡ Vel.', d.skill_speed      ?? 50, '#00f2ff'],
                     ['🔧 Eff.', d.skill_efficiency ?? 50, '#22c55e'],
@@ -2160,86 +2166,86 @@ function renderTabStaff() {
                 ].map(([label, val, color]) => `
                 <div class="driver-skill-chip">
                     <span class="driver-skill-label">${label}</span>
-                    <div class="driver-skill-bar-bg">
-                        <div class="driver-skill-bar-fill" style="width:${val}%;background:${color}"></div>
-                    </div>
+                    <div class="driver-skill-bar-bg"><div class="driver-skill-bar-fill" style="width:${val}%;background:${color}"></div></div>
                     <span class="driver-skill-val" style="color:${color}">${val}</span>
                 </div>`).join('')}
             </div>
         </div>`;
     });
-    // Meet & Greet status section
+
+    // ── Meet & Greet ─────────────────────────────────────────────────────────
     const _mgStaff = (gameState.staff || []).filter(s => s.skill === 'meetgreet');
     if (_mgStaff.length > 0) {
         const _mgIncome = gameState._lastMgIncome || 0;
-        html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🤝 Meet &amp; Greet Aeroportuale</h3><div class="space-y-2 mb-6">`;
+        html += `</div><div class="ds-eyebrow" style="margin:16px 0 12px">🤝 Meet &amp; Greet Aeroportuale</div>
+        <div style="display:flex;flex-direction:column;gap:8px">`;
         _mgStaff.forEach(asst => {
-            html += `<div class="hud-card flex justify-between items-center">
+            html += `<div class="ds-card" style="display:flex;justify-content:space-between;align-items:center">
                 <div>
-                    <div class="text-xs font-bold text-white">${asst.name}</div>
-                    <div class="text-[9px] text-gray-400">Aeroporto: ${asst.airport || '—'} · Missioni passive: attive · Carburante: €0</div>
-                    <div class="text-[9px] text-green-400 mt-0.5">Entrate ultima sessione: +€${(_mgIncome / _mgStaff.length).toFixed(0)}/g</div>
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">${asst.name}</div>
+                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Aeroporto: ${asst.airport || '—'} · Missioni passive: attive</div>
+                    <div style="font-size:10px;color:var(--green);margin-top:2px">Entrate ultima sessione: +€${(_mgIncome / _mgStaff.length).toFixed(0)}/g</div>
                 </div>
-                <span class="text-green-500 text-[9px] font-bold">✓ ON DUTY</span>
+                ${DS.pill('✓ ON DUTY', 'green')}
             </div>`;
         });
     }
+
+    // ── Mercato Reclutamento ──────────────────────────────────────────────────
     const tierIcon = { standard:'🟢', business:'🔵', vip:'🟣', ultra:'⚫' };
-    html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">Mercato Reclutamento</h3>
-    <p class="text-[9px] text-gray-600 mb-3 italic">I candidati si aggiornano dopo ogni assunzione.</p>
-    <div class="space-y-2">`;
+    html += `</div><div class="ds-eyebrow" style="margin:16px 0 4px">Mercato Reclutamento</div>
+    <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;font-style:italic">I candidati si aggiornano dopo ogni assunzione.</div>
+    <div style="display:flex;flex-direction:column;gap:8px">`;
     (gameState.availableRecruits || []).forEach(p => {
-        html += `
-        <div class="hud-card flex justify-between items-center">
+        html += `<div class="ds-card" style="display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div class="text-xs font-bold text-white">${p.name} <span class="text-[9px] ml-1">${tierIcon[p.tier] || ''} ${p.tier.toUpperCase()}</span></div>
-                ${p.trait ? `<div class="mt-0.5">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span class="text-[8px] text-gray-500">${p.trait.desc}</span></div>` : ''}
-                <div class="text-[9px] text-gray-500 mt-0.5">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">${p.name} <span style="font-size:10px;color:var(--text-muted)">${tierIcon[p.tier] || ''} ${p.tier.toUpperCase()}</span></div>
+                ${p.trait ? `<div style="margin-top:4px">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span style="font-size:9px;color:var(--text-dim)">${p.trait.desc}</span></div>` : ''}
+                <div style="font-size:10px;color:var(--text-dim);margin-top:4px">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
             </div>
-            <button onclick="hireDriver('${p.name}', ${p.salary})" class="btn-gold !py-1">Assumi</button>
+            ${DS.btn({ label:'Assumi', color:'gold', onclick:`hireDriver('${p.name}', ${p.salary})`, size:'sm' })}
         </div>`;
     });
     if ((gameState.availableRecruits || []).length === 0) {
-        html += `<div class="text-[10px] text-gray-600 italic">Nessun candidato disponibile al momento.</div>`;
+        html += DS.empty({ icon:'👤', title:'Nessun candidato', body:'Il mercato si aggiorna ad ogni assunzione' });
     }
 
-    // ── DRIVER ACADEMY ─────────────────────────────────────────────────────
-    const _academyDrivers = gameState.drivers.filter(d => d.id !== 'ceo');
+    // ── Driver Academy ────────────────────────────────────────────────────────
+    const _academyDrivers  = gameState.drivers.filter(d => d.id !== 'ceo');
     const _inTrainingCount = (gameState.driverAcademy||[]).length;
-    html += `</div><div class="flex items-center justify-between border-b border-white/10 pb-1 mb-3 mt-5">
-        <h3 class="text-[10px] text-gold uppercase tracking-widest">🎓 Accademia Autisti</h3>
-        ${_inTrainingCount > 0 ? `<span class="text-[9px] text-yellow-400 font-bold">📚 ${_inTrainingCount} in formazione</span>` : ''}
+    html += `</div><div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 12px">
+        <div class="ds-eyebrow">🎓 Accademia Autisti</div>
+        ${_inTrainingCount > 0 ? DS.pill(`📚 ${_inTrainingCount} in formazione`, 'gold') : ''}
     </div>`;
     if (_academyDrivers.length === 0) {
-        html += `<div class="text-[9px] text-gray-600 italic mb-4">Assumi almeno un autista per accedere all'Accademia.</div>`;
+        html += DS.empty({ icon:'🎓', title:'Nessun autista', body:"Assumi almeno un autista per accedere all'Accademia" });
     } else {
-        html += `
-        <div class="hud-card mb-3 flex items-center justify-between gap-3">
+        html += `<div class="ds-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
             <div>
-                <div class="text-xs font-bold text-white">Gestione Corsi</div>
-                <div class="text-[9px] text-gray-500 mt-0.5">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">Gestione Corsi</div>
+                <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
             </div>
-            <button onclick="window.openAcademyModal()" class="btn-gold !text-[9px] !py-1.5 !px-3 shrink-0">Apri Accademia →</button>
+            ${DS.btn({ label:'Apri Accademia →', color:'gold', onclick:'window.openAcademyModal()', size:'sm' })}
         </div>`;
     }
 
-    // ── CEO DELLA SETTIMANA ────────────────────────────────────────────────
-    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🏆 CEO della Settimana</h3>
-    <div class="hud-card">
-        <div class="flex justify-between items-center">
+    // ── CEO della Settimana ───────────────────────────────────────────────────
+    html += `<div class="ds-eyebrow" style="margin:16px 0 12px">🏆 CEO della Settimana</div>
+    <div class="ds-card">
+        <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div class="text-xs font-bold text-white">Settimana in Corso</div>
-                <div class="text-[9px] text-gray-400">Reset domenica · Premio: Driver Coins</div>
+                <div style="font-size:12px;font-weight:700;color:var(--text)">Settimana in Corso</div>
+                <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Reset domenica · Premio: Driver Coins</div>
             </div>
-            <div class="text-right">
-                <div class="text-[10px] font-bold text-gold">€${(gameState.weeklyEarnings||0).toLocaleString()}</div>
-                <div class="text-[8px] text-gray-500">${gameState.weeklyRides||0} corse</div>
+            <div style="text-align:right">
+                <div style="font-size:14px;font-weight:700;color:var(--gold)">€${(gameState.weeklyEarnings||0).toLocaleString()}</div>
+                <div style="font-size:10px;color:var(--text-dim)">${gameState.weeklyRides||0} corse</div>
             </div>
         </div>
-        <div class="text-[8px] text-gray-600 mt-1 italic">Il vincitore riceve fino a 50 DC domenica sera.</div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:8px;font-style:italic">Il vincitore riceve fino a 50 DC domenica sera.</div>
     </div>`;
 
-    container.innerHTML = html + `</div>`;
+    container.innerHTML = html;
 }
 
 function renderTabEmails() {
@@ -2258,7 +2264,13 @@ function renderTabEmails() {
     const countComm    = unreadAll.filter(e => TAB_TYPES.comunicazioni.includes(e.type)).length;
 
     // ── Header ────────────────────────────────────────────────────────────────
-    let html = `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3">Comunicazioni Riservate</h3>`;
+    const totalUnread = countUrgenti + countVip + countComm;
+    let html = DS.header({
+        eyebrow: 'Inbox CEO',
+        title:   'Comunicazioni Riservate',
+        subtitle: totalUnread > 0 ? `${totalUnread} messaggi non letti` : 'Nessun nuovo messaggio',
+        actions: totalUnread > 0 ? DS.pill(String(totalUnread), 'red', true) : '',
+    });
 
     // ── 3-Tab bar ─────────────────────────────────────────────────────────────
     html += `<div class="inbox-tabs">`;
@@ -2272,8 +2284,8 @@ function renderTabEmails() {
     const activeBuffs = (gameState.activeBuffs || []).filter(b => b.until > now);
     const polTokens = gameState.politicalTokens || 0;
     if (activeBuffs.length || polTokens) {
-        html += `<div class="hud-card mb-3 !border-green-500/30 bg-green-950/10 text-[9px] text-green-300">`;
-        if (polTokens) html += `<span class="mr-3">🏛️ Gettoni Politici: <b>${polTokens}</b></span>`;
+        let buffItems = [];
+        if (polTokens) buffItems.push(`🏛️ Gettoni Politici: <b>${polTokens}</b>`);
         activeBuffs.forEach(b => {
             const hoursLeft = Math.max(0, b.until - now);
             const label = b.type === 'earnings_pct' ? `+${b.value}% guadagni`
@@ -2282,13 +2294,15 @@ function renderTabEmails() {
                         : b.type === 'speed_boost'  ? `+${b.value}% velocità`
                         : b.type === 'vip_queue'    ? `+${b.value}% clienti VIP`
                         : b.type;
-            html += `<span class="mr-3">✨ ${label} <span class="text-gray-400">(${hoursLeft}h)</span></span>`;
+            buffItems.push(`✨ ${label} <span style="color:var(--text-dim)">(${hoursLeft}h)</span>`);
         });
         if (gameState.fuelPriceLock && gameState.fuelPriceLockUntil > now) {
             const h = Math.max(0, gameState.fuelPriceLockUntil - now);
-            html += `<span class="mr-3">⛽ Prezzo carburante bloccato €${gameState.fuelPriceLock.toFixed(2)} <span class="text-gray-400">(${h}h)</span></span>`;
+            buffItems.push(`⛽ Carburante bloccato €${gameState.fuelPriceLock.toFixed(2)} <span style="color:var(--text-dim)">(${h}h)</span>`);
         }
-        html += `</div>`;
+        html += `<div class="ds-card" style="border-color:rgba(34,197,94,0.3);margin-bottom:12px;font-size:10px;color:var(--green);display:flex;flex-wrap:wrap;gap:8px">
+            ${buffItems.map(i => `<span>${i}</span>`).join('')}
+        </div>`;
     }
 
     // ── Filter by tab ─────────────────────────────────────────────────────────
@@ -2303,10 +2317,11 @@ function renderTabEmails() {
 
     // ── Empty state ───────────────────────────────────────────────────────────
     if (tabEmails.length === 0) {
-        const emptyMsg = window._inboxTab === 'urgenti'   ? 'Nessun messaggio urgente.'
-                       : window._inboxTab === 'vip'       ? 'Nessuna richiesta VIP.'
-                       : 'Nessuna comunicazione.';
-        html += `<div class="text-center text-gray-600 mt-10 italic text-[11px]">${emptyMsg}</div>`;
+        const emptyIcon = window._inboxTab === 'vip' ? '👑' : '📭';
+        const emptyTitle = window._inboxTab === 'urgenti' ? 'Nessun messaggio urgente'
+                         : window._inboxTab === 'vip'     ? 'Nessuna richiesta VIP'
+                         : 'Nessuna comunicazione';
+        html += DS.empty({ icon: emptyIcon, title: emptyTitle });
         container.innerHTML = html;
         return;
     }
@@ -3284,7 +3299,17 @@ function renderTabMarketing() {
     // ─────────────────────────────────────────────────────────────
     // BUILD HTML
     // ─────────────────────────────────────────────────────────────
-    let html = '';
+    let html = DS.header({
+        eyebrow: 'Marketing & Brand',
+        title:   'Brand Intelligence',
+        subtitle: `Volume ${bv}/100 · Prestige ${bp}/100 · Campagne attive: ${activeCampaigns.length}/${maxSlots}`,
+        actions: hasMarkDir ? DS.pill('Marketing Dir.', 'gold') : '',
+    }) + DS.kpiStrip([
+        { label: 'Brand Volume',  val: bv,  color: bv >= 75 ? 'green' : bv >= 25 ? 'gold' : '' },
+        { label: 'Prestige',      val: bp,  color: bp >= 75 ? 'gold'  : bp >= 25 ? 'blue' : '' },
+        { label: 'Surge',         val: surgeLabel },
+        { label: 'Campagne',      val: `${activeCampaigns.length}/${maxSlots}`, color: activeCampaigns.length >= maxSlots ? 'red' : 'green' },
+    ]);
 
     // ── 1. BRAND AWARENESS ────────────────────────────────────────
     html += `<div class="mkt-section-header">Brand Awareness</div>
@@ -3645,21 +3670,29 @@ function renderTabFinance() {
     const hasWM = typeof _hasWealthManager === 'function' && _hasWealthManager();
 
     if (!hasWM) {
-        container.innerHTML = `
-            <div class="text-center mt-10 px-4">
-                <div class="text-4xl mb-4">💼</div>
-                <h3 class="text-gold font-bold uppercase tracking-widest text-sm mb-2">Finance Hub Bloccato</h3>
-                <p class="text-[10px] text-gray-400 mb-4">Assumi un <span class="text-gold font-bold">Elite Wealth Manager</span> nel tab Staff per sbloccare il mercato azionario, il broker personale e la leva finanziaria avanzata.</p>
-                <div class="finance-lock-card p-4 rounded-xl mt-4 text-left">
-                    <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-2">Include:</div>
-                    <div class="space-y-1 text-[10px] text-gray-400">
-                        <div>📈 Mercato Azionario $WALL-ST (5 ticker live)</div>
-                        <div>💼 Broker Personale — ROI fino al +55%</div>
-                        <div>🏦 Credit Score & Leva Finanziaria</div>
-                        <div>🔶 Sblocco Diamond Contracts</div>
-                    </div>
+        container.innerHTML = DS.header({
+            eyebrow: '$WALL-ST · Finance Hub',
+            title:   'Mercati Finanziari',
+            subtitle:'Sblocca il Wealth Manager nello Staff per accedere',
+        }) + DS.card({ mod:'gold', content:`
+            <div style="text-align:center;padding:16px 0">
+                <div style="font-size:48px;margin-bottom:16px">💼</div>
+                <div style="font-size:14px;font-weight:700;color:var(--gold);font-family:var(--font-display);margin-bottom:8px">Finance Hub Bloccato</div>
+                <div style="font-size:11px;color:var(--text-muted);margin-bottom:20px">Assumi un <strong>Elite Wealth Manager</strong> nello Staff per sbloccare il mercato azionario, il broker personale e la leva finanziaria avanzata.</div>
+                <div style="display:flex;flex-direction:column;gap:8px;text-align:left;max-width:300px;margin:0 auto">
+                    ${[
+                        { icon:'📈', text:'Mercato Azionario $WALL-ST (5 ticker live)' },
+                        { icon:'💼', text:'Broker Personale — ROI fino al +55%' },
+                        { icon:'🏦', text:'Credit Score & Leva Finanziaria' },
+                        { icon:'🔶', text:'Sblocco Diamond Contracts' },
+                    ].map(f => `<div style="display:flex;gap:10px;align-items:center">
+                        <span>${f.icon}</span>
+                        <span style="font-size:11px;color:var(--text-muted)">${f.text}</span>
+                    </div>`).join('')}
                 </div>
-            </div>`;
+                <div style="margin-top:20px">${DS.btn({ label:'Vai allo Staff →', color:'gold', onclick:"switchTab('staff')" })}</div>
+            </div>
+        ` });
         return;
     }
 
@@ -3881,34 +3914,16 @@ function renderTabFinance() {
     const totalDiv = gameState.totalDividendsEarned || 0;
     const totalPlStock = gameState.totalStockProfit || 0;
 
-    container.innerHTML = `
-        <div class="finance-header mb-4">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h3 class="text-sm font-bold font-mono" style="color:#00f2ff">$WALL-ST · Finance Hub</h3>
-                    <div class="text-[9px] text-gray-500">Elite Wealth Manager Attivo</div>
-                </div>
-                <div class="text-right">
-                    <div class="text-[9px] text-gray-500">Dividendi tot.</div>
-                    <div class="text-sm font-bold text-green-400 font-mono">+€${totalDiv.toLocaleString()}</div>
-                </div>
-            </div>
-            <div class="flex gap-3 mt-2">
-                <div class="text-center flex-1">
-                    <div class="text-[8px] text-gray-600 uppercase">P&L Azioni</div>
-                    <div class="text-[11px] font-bold font-mono ${totalPlStock >= 0 ? 'text-green-400' : 'text-red-400'}">${totalPlStock >= 0 ? '+' : ''}€${totalPlStock.toLocaleString()}</div>
-                </div>
-                <div class="text-center flex-1">
-                    <div class="text-[8px] text-gray-600 uppercase">Diamond Contracts</div>
-                    <div class="text-[11px] font-bold font-mono" style="color:#d4af37">${gameState.diamondContractsCompleted || 0}</div>
-                </div>
-                <div class="text-center flex-1">
-                    <div class="text-[8px] text-gray-600 uppercase">Inv. Broker</div>
-                    <div class="text-[11px] font-bold font-mono text-white">${brokerActive.length}/3</div>
-                </div>
-            </div>
-        </div>
-
+    container.innerHTML = DS.header({
+        eyebrow: '$WALL-ST · Finance Hub',
+        title:   'Mercati Finanziari',
+        subtitle:`P&L oggi: ${plPositive?'+':''}€${Math.round(Math.abs(dailyPL)).toLocaleString()} ${plPositive?'▲':'▼'} ${Math.abs(dailyPct).toFixed(2)}%`,
+    }) + DS.kpiStrip([
+        { label:'Portfolio Totale',    val:'€'+Math.round(totalPortfolio).toLocaleString(),         color: totalPortfolio > 0 ? 'blue' : '' },
+        { label:'P&L Azioni',          val:(totalPlStock>=0?'+':'')+'€'+totalPlStock.toLocaleString(), color: totalPlStock >= 0 ? 'green' : 'red' },
+        { label:'Dividendi Totali',    val:'+€'+totalDiv.toLocaleString(),                          color:'green' },
+        { label:'Diamond Contracts',   val: gameState.diamondContractsCompleted || 0,               color:'gold' },
+    ]) + `
         ${portfolioDashHtml}
 
         <h3 class="finance-section-header">── MERCATO AZIONARIO ────────────────────</h3>
@@ -4057,39 +4072,25 @@ window.renderTabFinance = renderTabFinance;
 // ══════════════════════════════════════════════════════════════════
 function renderTabLifestyle() {
     const container = document.getElementById('tab-container');
-    const owned = gameState.lifestyleAssets || [];
+    const owned  = gameState.lifestyleAssets || [];
     const assets = typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : [];
 
-    // Portfolio value summary
-    const portfolioValue = owned.reduce((s, id) => {
-        const a = assets.find(x => x.id === id);
-        return s + (a ? a.price : 0);
-    }, 0);
-    const dailyPassive = owned.reduce((s, id) => {
-        const a = assets.find(x => x.id === id);
-        return s + (a && a.passive ? a.passive : 0);
-    }, 0);
-    const intlUnlocked = owned.includes('jet_privato');
+    const portfolioValue = owned.reduce((s, id) => { const a = assets.find(x => x.id === id); return s + (a ? a.price : 0); }, 0);
+    const dailyPassive   = owned.reduce((s, id) => { const a = assets.find(x => x.id === id); return s + (a && a.passive ? a.passive : 0); }, 0);
+    const intlUnlocked   = owned.includes('jet_privato');
+    const statusLabel    = owned.length >= 4 ? 'MOGUL' : owned.length >= 2 ? 'ELITE' : owned.length >= 1 ? 'RISING' : 'NASCENT';
+    const statusColor    = owned.length >= 4 ? 'gold' : owned.length >= 2 ? 'blue' : owned.length >= 1 ? 'green' : '';
 
-    let html = `
-    <div class="lifestyle-header mb-4">
-        <h3 class="text-[10px] uppercase tracking-widest mb-1" style="color:#d4af37">Empire Portfolio</h3>
-        <div class="flex gap-3">
-            <div class="flex-1 text-center">
-                <div class="text-[8px] text-gray-600 uppercase">Asset Totali</div>
-                <div class="text-sm font-bold font-mono text-white">€${portfolioValue.toLocaleString()}</div>
-            </div>
-            <div class="flex-1 text-center">
-                <div class="text-[8px] text-gray-600 uppercase">Rendita/g</div>
-                <div class="text-sm font-bold font-mono text-green-400">€${dailyPassive.toLocaleString()}</div>
-            </div>
-            <div class="flex-1 text-center">
-                <div class="text-[8px] text-gray-600 uppercase">Status</div>
-                <div class="text-[11px] font-bold" style="color:#d4af37">${owned.length >= 4 ? 'MOGUL' : owned.length >= 2 ? 'ELITE' : owned.length >= 1 ? 'RISING' : 'NASCENT'}</div>
-            </div>
-        </div>
-        ${intlUnlocked ? `<div class="mt-2 text-[9px] text-center" style="color:#00f2ff">✈️ Tratte internazionali attive — Ginevra · Montecarlo · Cannes</div>` : ''}
-    </div>`;
+    let html = DS.header({
+        eyebrow: 'Lifestyle & Status',
+        title:   'Empire Portfolio',
+        subtitle:`${owned.length} asset · Rendita +€${dailyPassive.toLocaleString()}/g ${intlUnlocked?'· ✈️ Tratte internazionali attive':''}`,
+    }) + DS.kpiStrip([
+        { label:'Status CEO',       val: statusLabel,                                        color: statusColor },
+        { label:'Valore Portfolio', val: '€' + portfolioValue.toLocaleString(),              color:'gold' },
+        { label:'Rendita Passiva',  val: '+€' + dailyPassive.toLocaleString() + '/g',        color:'green' },
+        { label:'Asset Posseduti',  val: owned.length + ' / ' + assets.length },
+    ]);
 
     // Mappa asset → immagine
     const _LIFESTYLE_IMG = {
@@ -5554,20 +5555,25 @@ async function renderTabRealEstate() {
         .filter(l => ownedIds.has(l.id))
         .reduce((s, l) => s + (l.cost || 0), 0);
 
-    let html = `
-    <div class="mb-5 ls-card !border-yellow-800/40">
-      <div class="px-4 py-3">
-        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-2">🏛 Real Estate Portfolio</div>
-        <div class="flex gap-4">
-          <div><div class="text-[8px] text-gray-500 uppercase">Proprietà</div><div class="text-sm font-bold text-white">${ownedIds.size}</div></div>
-          <div><div class="text-[8px] text-gray-500 uppercase">Valore</div><div class="text-sm font-bold font-mono text-gold">€${portfolioValue.toLocaleString('it-IT')}</div></div>
-          <div><div class="text-[8px] text-gray-500 uppercase">Rendita/g</div><div class="text-sm font-bold font-mono text-green-400">${totalDailyRent > 0 ? '€' + totalDailyRent.toLocaleString('it-IT') : '—'}</div></div>
-        </div>
-        <div class="text-[9px] text-gray-500 mt-2">Le rendite vengono accreditate automaticamente dal server ogni 24h.</div>
-      </div>
-    </div>
-    <div class="space-y-4">`;
+    let html = DS.header({
+        eyebrow: 'Real Estate',
+        title:   'Portafoglio Immobiliare',
+        subtitle: `${ownedIds.size} proprietà · Valore €${portfolioValue.toLocaleString('it-IT')} · Rendita €${totalDailyRent > 0 ? totalDailyRent.toLocaleString('it-IT') : '0'}/g`,
+        actions: ownedIds.size > 0 ? DS.pill(`🏛 ${ownedIds.size} Proprietà`, 'gold') : '',
+    }) + DS.kpiStrip([
+        { label: 'Proprietà',    val: ownedIds.size,  color: ownedIds.size > 0 ? 'gold' : '' },
+        { label: 'Valore Port.', val: portfolioValue > 0 ? '€' + Math.round(portfolioValue/1000) + 'k' : '—', color: portfolioValue > 0 ? 'gold' : '' },
+        { label: 'Rendita/g',   val: totalDailyRent > 0 ? '+€' + totalDailyRent.toLocaleString('it-IT') : '—', color: totalDailyRent > 0 ? 'green' : '' },
+        { label: 'Budget',       val: '€' + Math.round((gameState.cash||0)/1000) + 'k', color: 'blue' },
+    ]);
 
+    if (ownedIds.size > 0) {
+        html += `<div class="ds-card" style="border-color:rgba(34,197,94,0.3);margin-bottom:16px;font-size:10px;color:var(--text-muted)">
+            Le rendite vengono accreditate automaticamente dal server ogni 24h.
+        </div>`;
+    }
+
+    html += `<div style="display:flex;flex-direction:column;gap:12px">`;
     listings.forEach(l => {
         const isOwned   = ownedIds.has(l.id);
         const canAfford = gameState.cash >= (l.cost || 0);
@@ -5578,52 +5584,55 @@ async function renderTabRealEstate() {
             const diffMs = new Date(ownedRow.last_rent_at).getTime() + 86400000 - Date.now();
             if (diffMs > 0) {
                 const hrs = Math.floor(diffMs / 3600000), mins = Math.floor((diffMs % 3600000) / 60000);
-                nextRentStr = `🕐 Prossima rendita tra ${hrs}h ${mins}m`;
+                nextRentStr = `🕐 ${hrs}h ${mins}m alla prossima rendita`;
             } else {
                 nextRentStr = '🕐 Rendita in arrivo…';
             }
         }
 
-        html += `
-        <div class="ls-card ${isOwned ? 'ls-card-owned' : !canAfford ? 'opacity-60' : ''}">
-          ${l.image_url ? `
-          <div class="ls-card-img-wrap">
-            <img src="${l.image_url}" alt="${l.name}" class="ls-card-img" loading="lazy">
-            ${isOwned ? '<div class="ls-card-owned-badge">✓ Tuo</div>' : ''}
-            <div class="ls-card-img-overlay"></div>
-            <div class="ls-card-img-title">
-              <div class="ls-card-name">${l.name}</div>
-              <div class="ls-card-location" style="color:#d4af37">${l.city}</div>
-            </div>
-          </div>` : `
-          <div class="ls-card-no-img px-4 pt-3 flex justify-between">
-            <div><div class="ls-card-name">${l.name}</div><div class="ls-card-location" style="color:#d4af37">${l.city}</div></div>
-            ${isOwned ? '<div class="ls-card-owned-badge" style="position:static;margin-top:4px">✓ Tuo</div>' : ''}
-          </div>`}
-          <div class="px-4 py-3">
-            ${l.description ? `<div class="text-[9px] text-gray-400 leading-relaxed mb-2">${l.description}</div>` : ''}
-            <div class="flex flex-wrap gap-1 mb-3">
-              <span class="ls-badge ls-badge-green">+€${(l.daily_rent||0).toLocaleString('it-IT')}/g</span>
-              ${l.bonus_type === 'driver_stress_recovery' ? `<span class="ls-badge ls-badge-purple">✨ Recupero stress autisti</span>` : ''}
-              ${isOwned && nextRentStr ? `<span class="ls-badge ls-badge-cyan">${nextRentStr}</span>` : ''}
-            </div>
-            <div class="flex justify-between items-center">
-              <div class="text-xs font-bold font-mono text-gold">€${(l.cost||0).toLocaleString('it-IT')}</div>
-              ${isOwned
-                ? `<span class="text-[9px] font-bold text-green-400">✓ Rendita attiva</span>`
-                : `<button onclick="window.doBuyRealEstate('${l.id}')"
-                     class="btn-gold !text-[9px] !py-1.5 !px-3 ${canAfford ? '' : 'opacity-40 cursor-not-allowed'}"
-                     ${canAfford ? '' : 'disabled'}>
-                     Acquista
-                   </button>`
-              }
-            </div>
-            ${!isOwned && !canAfford ? `<div class="text-[8px] text-red-400 text-right mt-1">Mancano €${((l.cost||0) - gameState.cash).toLocaleString('it-IT')}</div>` : ''}
-          </div>
-        </div>`;
+        html += `<div class="ds-card${isOwned ? ' ds-card--gold' : !canAfford ? '' : ''}${!canAfford && !isOwned ? '' : ''}">`;
+
+        if (l.image_url) {
+            html += `<div style="position:relative;border-radius:var(--radius-sm);overflow:hidden;margin:-16px -16px 12px">
+                <img src="${l.image_url}" alt="${l.name}" style="width:100%;height:120px;object-fit:cover;display:block" loading="lazy">
+                <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%)"></div>
+                ${isOwned ? `<div style="position:absolute;top:8px;right:8px">${DS.pill('✓ Tuo', 'gold')}</div>` : ''}
+                <div style="position:absolute;bottom:8px;left:12px">
+                    <div style="font-size:14px;font-weight:700;color:#fff">${l.name}</div>
+                    <div style="font-size:11px;color:var(--gold)">${l.city}</div>
+                </div>
+            </div>`;
+        } else {
+            html += `<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                <div>
+                    <div style="font-size:14px;font-weight:700;color:var(--text)">${l.name}</div>
+                    <div style="font-size:11px;color:var(--gold)">${l.city}</div>
+                </div>
+                ${isOwned ? DS.pill('✓ Tuo', 'gold') : ''}
+            </div>`;
+        }
+
+        html += `<div>`;
+        if (l.description) {
+            html += `<div style="font-size:10px;color:var(--text-muted);line-height:1.5;margin-bottom:8px">${l.description}</div>`;
+        }
+        html += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">
+            ${DS.pill('+€' + (l.daily_rent||0).toLocaleString('it-IT') + '/g', 'green')}
+            ${l.bonus_type === 'driver_stress_recovery' ? DS.pill('✨ Recupero stress', 'purple') : ''}
+            ${isOwned && nextRentStr ? DS.pill(nextRentStr, 'blue') : ''}
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-size:15px;font-weight:700;color:var(--gold);font-family:var(--font-mono)">€${(l.cost||0).toLocaleString('it-IT')}</div>
+            ${isOwned
+                ? DS.pill('✓ Rendita attiva', 'green')
+                : DS.btn({ label: canAfford ? 'Acquista' : `Mancano €${((l.cost||0) - gameState.cash).toLocaleString('it-IT')}`, color: canAfford ? 'gold' : 'ghost', onclick:`window.doBuyRealEstate('${l.id}')`, disabled: !canAfford, size:'sm' })}
+        </div></div></div>`;
     });
 
     html += `</div>`;
+    if (listings.length === 0) {
+        html += DS.empty({ icon: '🏛', title: 'Nessun immobile disponibile', body: 'Il mercato immobiliare si espanderà nelle prossime stagioni.' });
+    }
     container.innerHTML = html;
 }
 

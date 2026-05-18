@@ -3311,6 +3311,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 .ds-progress-fill--green  { background: linear-gradient(90deg, var(--green), #16a34a); }
 .ds-progress-fill--red    { background: linear-gradient(90deg, var(--red),  #dc2626); }
 .ds-progress-fill--orange { background: linear-gradient(90deg, var(--orange), #ea580c); }
+.ds-progress-fill--blue   { background: linear-gradient(90deg, var(--blue), var(--blue2)); }
 
 /* ── DS: Empty State ────────────────────────────────────────── */
 .ds-empty {
