@@ -2629,8 +2629,10 @@ function processDailyRoutines() {
                 if(typeof showNotification==='function') showNotification(`Multa scaduta! −€${penalty}`, 'error');
             }
         });
-        // Clean resolved fines older than 3 days
-        gameState.activeFines = gameState.activeFines.filter(f => f.status === 'pending' || f.status === 'contested_reduced');
+        // Keep all pending/contested_reduced, keep last 10 resolved for archive
+        const _pendingFines  = gameState.activeFines.filter(f => f.status === 'pending' || f.status === 'contested_reduced');
+        const _resolvedFines = gameState.activeFines.filter(f => f.status !== 'pending' && f.status !== 'contested_reduced').slice(-10);
+        gameState.activeFines = [..._pendingFines, ..._resolvedFines];
         const fineDot = document.getElementById('fine-dot');
         const hasPending = (gameState.activeFines || []).some(f => f.status === 'pending');
         if (fineDot) fineDot.classList.toggle('hidden', !hasPending);
@@ -3916,7 +3918,7 @@ function autoNegotiateEmails() {
             let counterOffer = Math.floor(email.offer * 1.15);
             logToMap(`L'Event Manager ha chiuso un Appalto B2B a €${counterOffer}`);
             gameState.cash += counterOffer;
-            gameState.reputation += 0.05;
+            gameState.reputation = Math.min(5.0, gameState.reputation + 0.05);
             email.status = 'resolved';
 
             let numRides = Math.floor(Math.random() * 3) + 3;
@@ -3940,18 +3942,18 @@ function negotiateEmail(emailId, action, choiceIdx = null) {
         const choice = email.eventData.choices[choiceIdx];
         if (gameState.cash >= Math.max(0, choice.cost)) {
             gameState.cash -= choice.cost;
-            gameState.reputation += choice.repBonus;
+            gameState.reputation = Math.min(5.0, Math.max(0, gameState.reputation + choice.repBonus));
             logToMap(`Evento: Hai scelto "${choice.text}".`);
         } else { return; } // Fondi insufficienti
     } else if (email.type === 'b2b') {
         let successChance = 100 - (((action / email.offer) - 1) * 100) + (gameState.reputation * 15);
         if (Math.random() * 100 <= successChance) {
             logToMap(`✅ Appalto B2B chiuso: €${action}`);
-            gameState.cash += action; gameState.reputation += 0.05;
+            gameState.cash += action; gameState.reputation = Math.min(5.0, gameState.reputation + 0.05);
             let numRides = Math.floor(Math.random() * 3) + 3;
             for(let i=0; i<numRides; i++) generatePOIRide(Math.random()>0.5?'business':'vip');
         } else {
-            logToMap(`❌ Trattativa fallita.`); gameState.reputation -= 0.02;
+            logToMap(`❌ Trattativa fallita.`); gameState.reputation = Math.max(0, gameState.reputation - 0.02);
         }
     }
 

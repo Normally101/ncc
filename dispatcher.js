@@ -3028,8 +3028,9 @@ window.leaseCar = async function(carId) {
         id: 'l_' + Date.now(), _serverId: result.id,
         name: c.name, tier: c.tier, condition: 100,
         isLease: true, dailyCost: Math.floor(c.price / 300),
+        leaseDuration: 12, leaseElapsedDays: 0,
         vehicleClass: c.vehicleClass || 'mercedes_e',
-        fuel: 100, mileage: 0, tirePressure: 100, upgrades: [],
+        fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [],
     });
     updateUI(); renderTabFleet();
     showNotification('Contratto Leasing approvato!', 'success');
@@ -3503,7 +3504,7 @@ function renderTabMarketing() {
 
         // Region lock check
         if (camp.regionLock === 'lombardia') {
-            const hasLombardia = (gameState.licenses || []).some(l => l.id === 'lombardia' || l.region === 'lombardia');
+            const hasLombardia = (gameState.unlockedRegions || []).includes('lombardia');
             if (!hasLombardia) {
                 isLocked = true;
                 lockReason = 'Richiede Licenza Lombardia attiva';

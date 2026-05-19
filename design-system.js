@@ -203,7 +203,7 @@ window.CE_Alert = (() => {
             if (burnout.length > 0) this.fire({ key:'driver_burnout', text:`🔥 ${burnout.length} autista in burnout — capacità ridotta`, type:'warning', tab:'staff' });
 
             // Pending fines
-            const unpaid = (gs.fines||[]).filter(f => f.status === 'pending');
+            const unpaid = (gs.activeFines||[]).filter(f => f.status === 'pending');
             if (unpaid.length > 0) this.fire({ key:'fines_pending', text:`${unpaid.length} multa non pagata — scade entro 24h`, type:'warning', tab:'legal' });
 
             // Fleet seized
