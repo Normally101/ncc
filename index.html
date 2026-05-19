@@ -97,10 +97,10 @@
       </div>
     </div>
     <button onclick="window.closeMapOverlay()" class="absolute top-3 right-4 z-10 flex items-center gap-2 bg-black/80 border border-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-red-900/60 hover:border-red-500/50 transition-all" style="backdrop-filter:blur(8px)">✕ Chiudi Mappa</button>
-    <div id="live-map-overlay" class="absolute top-4 left-4 z-10 pointer-events-none flex-col gap-2 hidden">
+    <div id="live-map-overlay-modal" class="absolute top-4 left-4 z-10 pointer-events-none flex-col gap-2 hidden">
       <div class="bg-black/60 backdrop-blur-md border border-white/10 p-3 rounded-xl w-64">
         <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-2">Live Dispatch Log</h3>
-        <div id="map-log" class="text-[9px] text-gray-300 space-y-1 h-32 overflow-y-hidden flex flex-col justify-end"></div>
+        <div id="map-log-modal" class="text-[9px] text-gray-300 space-y-1 h-32 overflow-y-hidden flex flex-col justify-end"></div>
       </div>
     </div>
   </div>
@@ -441,16 +441,16 @@
           <h2 class="text-gold font-bold uppercase mb-4">Dove vuoi riposare?</h2>
           <div class="space-y-3">
               <button onclick="rest(3)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
-                  <div class="font-bold text-white">Motel 3 Stelle <span class="text-yellow-500">★★★</span></div>
-                  <div class="text-[10px] text-gray-400">Recupera 50% Energia. Costo: €80</div>
+                  <span class="block font-bold text-white">Motel 3 Stelle <span class="text-yellow-500">★★★</span></span>
+                  <span class="block text-[10px] text-gray-400">Recupera 50% Energia. Costo: €80</span>
               </button>
               <button onclick="rest(4)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
-                  <div class="font-bold text-white">Business Hotel <span class="text-yellow-500">★★★★</span></div>
-                  <div class="text-[10px] text-gray-400">Recupera 75% Energia. Costo: €200</div>
+                  <span class="block font-bold text-white">Business Hotel <span class="text-yellow-500">★★★★</span></span>
+                  <span class="block text-[10px] text-gray-400">Recupera 75% Energia. Costo: €200</span>
               </button>
               <button onclick="rest(5)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
-                  <div class="font-bold text-white">Resort Luxury <span class="text-yellow-500">★★★★★</span></div>
-                  <div class="text-[10px] text-gray-400">Recupera 100% Energia + 0.1 Reputazione. Costo: €600</div>
+                  <span class="block font-bold text-white">Resort Luxury <span class="text-yellow-500">★★★★★</span></span>
+                  <span class="block text-[10px] text-gray-400">Recupera 100% Energia + 0.1 Reputazione. Costo: €600</span>
               </button>
           </div>
           <button onclick="closeModals()" class="mt-4 w-full p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
