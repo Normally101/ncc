@@ -87,15 +87,15 @@ function _renderMyDepotCard(d) {
           <div class="text-white font-bold">⛽ ${d.province_name}</div>
           <div class="text-xs text-green-400 mt-0.5">Il tuo deposito · Incassato: €${(d.total_earned||0).toLocaleString('it-IT')}</div>
         </div>
-        <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-bold">${d.markup_pct}% markup</span>
+        <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-bold">${Math.round(d.markup_pct)}% markup</span>
       </div>
       <div class="flex items-center gap-3 mt-3">
         <label class="text-xs text-gray-400 flex-shrink-0">Markup:</label>
-        <input type="range" min="0" max="50" step="1" value="${d.markup_pct}"
+        <input type="range" min="0" max="50" step="1" value="${Math.round(d.markup_pct)}"
                id="markup-slider-${d.province_id}"
                oninput="document.getElementById('markup-val-${d.province_id}').textContent=this.value+'%'"
                class="flex-1 accent-green-500">
-        <span id="markup-val-${d.province_id}" class="text-xs text-green-400 w-10 text-right">${d.markup_pct}%</span>
+        <span id="markup-val-${d.province_id}" class="text-xs text-green-400 w-10 text-right">${Math.round(d.markup_pct)}%</span>
         <button onclick="_infraSetMarkup('${d.province_id}')"
           class="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-500/20 border border-green-500/30 text-green-300 hover:bg-green-500/30 transition-colors cursor-pointer">
           Salva

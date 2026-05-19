@@ -5,15 +5,22 @@
    Loaded early — before dispatcher.js
    ================================================================ */
 
+// Safe escape — uses CE_Sec when available, falls back to manual HTML entity encoding
+const _dsEsc = s => {
+    const str = String(s ?? '');
+    if (window.CE_Sec?.escHtml) return window.CE_Sec.escHtml(str);
+    return str.replace(/[&<>"']/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m]));
+};
+
 window.DS = {
 
     // ── Section Header ──────────────────────────────────────────
     header({ eyebrow = '', title = '', subtitle = '', actions = '' } = {}) {
         return `<div class="ds-header">
             <div class="ds-header-left">
-                ${eyebrow ? `<div class="ds-eyebrow">${window.CE_Sec?.escHtml(eyebrow) ?? eyebrow}</div>` : ''}
-                <div class="ds-title">${window.CE_Sec?.escHtml(title) ?? title}</div>
-                ${subtitle ? `<div class="ds-subtitle">${window.CE_Sec?.escHtml(subtitle) ?? subtitle}</div>` : ''}
+                ${eyebrow ? `<div class="ds-eyebrow">${_dsEsc(eyebrow)}</div>` : ''}
+                <div class="ds-title">${_dsEsc(title)}</div>
+                ${subtitle ? `<div class="ds-subtitle">${_dsEsc(subtitle)}</div>` : ''}
             </div>
             ${actions ? `<div class="ds-header-actions">${actions}</div>` : ''}
         </div>`;
@@ -24,9 +31,9 @@ window.DS = {
     kpiStrip(items = []) {
         const cells = items.map(k => `
             <div class="ds-kpi">
-                <div class="ds-kpi-label">${window.CE_Sec?.escHtml(k.label) ?? k.label}</div>
+                <div class="ds-kpi-label">${_dsEsc(k.label)}</div>
                 <div class="ds-kpi-val${k.color ? ` ds-kpi-val--${k.color}` : ''}">${k.val ?? '—'}</div>
-                ${k.sub   ? `<div class="ds-kpi-sub">${window.CE_Sec?.escHtml(String(k.sub)) ?? k.sub}</div>` : ''}
+                ${k.sub   ? `<div class="ds-kpi-sub">${_dsEsc(String(k.sub))}</div>` : ''}
                 ${k.delta !== undefined ? `<div class="ds-kpi-delta ${k.delta >= 0 ? 'up' : 'down'}">${k.delta >= 0 ? '▲' : '▼'} ${Math.abs(k.delta)}%</div>` : ''}
             </div>
         `).join('');
@@ -42,14 +49,14 @@ window.DS = {
     // ── Alert Pill / Badge ────────────────────────────────────────
     pill(text, color = 'blue', blink = false) {
         const blinkClass = blink ? ' blink' : '';
-        return `<span class="ds-pill ds-pill--${color}${blinkClass}">${window.CE_Sec?.escHtml(String(text)) ?? text}</span>`;
+        return `<span class="ds-pill ds-pill--${color}${blinkClass}">${_dsEsc(String(text))}</span>`;
     },
 
     // ── Button ────────────────────────────────────────────────────
     btn({ label = 'OK', color = 'blue', onclick = '', icon = '', disabled = false, size = '' } = {}) {
         const disAttr = disabled ? ' disabled' : '';
         const sizeStyle = size === 'sm' ? ' style="padding:5px 10px;font-size:9px"' : '';
-        return `<button class="ds-btn ds-btn--${color}"${disAttr}${sizeStyle}${onclick ? ` onclick="${onclick}"` : ''}>${icon ? `${icon} ` : ''}${window.CE_Sec?.escHtml(label) ?? label}</button>`;
+        return `<button class="ds-btn ds-btn--${color}"${disAttr}${sizeStyle}${onclick ? ` onclick="${onclick}"` : ''}>${icon ? `${icon} ` : ''}${_dsEsc(label)}</button>`;
     },
 
     // ── Progress Bar ──────────────────────────────────────────────
@@ -63,8 +70,8 @@ window.DS = {
     empty({ icon = '📭', title = 'Nessun dato', body = '' } = {}) {
         return `<div class="ds-empty">
             <div class="ds-empty-icon">${icon}</div>
-            <div class="ds-empty-title">${window.CE_Sec?.escHtml(title) ?? title}</div>
-            ${body ? `<div class="ds-empty-body">${window.CE_Sec?.escHtml(body) ?? body}</div>` : ''}
+            <div class="ds-empty-title">${_dsEsc(title)}</div>
+            ${body ? `<div class="ds-empty-body">${_dsEsc(body)}</div>` : ''}
         </div>`;
     },
 
@@ -72,7 +79,7 @@ window.DS = {
     // cols: [{ label, key, align?, render? }]
     // rows: array of objects
     table(cols = [], rows = []) {
-        const esc = (s) => window.CE_Sec?.escHtml(String(s ?? '')) ?? String(s ?? '');
+        const esc = _dsEsc;
         const head = cols.map(c => `<th${c.align ? ` class="col-${c.align}"` : ''}>${esc(c.label)}</th>`).join('');
         const body = rows.length === 0
             ? `<tr><td colspan="${cols.length}" style="text-align:center;color:var(--text-muted);padding:24px">Nessun dato</td></tr>`
@@ -122,8 +129,8 @@ window.DS = {
         el.innerHTML = `
             <div class="ds-toast-icon">${icons[type] || icons.info}</div>
             <div class="ds-toast-body">
-                ${title ? `<div class="ds-toast-title">${window.CE_Sec?.escHtml(title) ?? title}</div>` : ''}
-                ${msg   ? `<div class="ds-toast-msg">${window.CE_Sec?.escHtml(msg) ?? msg}</div>` : ''}
+                ${title ? `<div class="ds-toast-title">${_dsEsc(title)}</div>` : ''}
+                ${msg   ? `<div class="ds-toast-msg">${_dsEsc(msg)}</div>` : ''}
             </div>`;
         document.body.appendChild(el);
         el.addEventListener('click', () => el.remove());
@@ -144,7 +151,7 @@ window.DS = {
         const icons = { danger: '🚨', warning: '⚠', info: '◉', success: '✓' };
         const item = document.createElement('div');
         item.className = `ds-alert-item type-${type}`;
-        item.innerHTML = `${icons[type] || icons.info} <span class="ds-alert-text">${window.CE_Sec?.escHtml(text) ?? text}</span>`;
+        item.innerHTML = `${icons[type] || icons.info} <span class="ds-alert-text">${_dsEsc(text)}</span>`;
         if (tab) item.onclick = () => { if (typeof switchTab === 'function') switchTab(tab); item.remove(); };
         panel.prepend(item);
         if (duration > 0) setTimeout(() => { item.style.opacity = '0'; setTimeout(() => item.remove(), 300); }, duration);

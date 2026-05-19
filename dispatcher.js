@@ -1206,7 +1206,8 @@ window.switchTab = function(tab) {
 function renderTabCorse() {
     const container = document.getElementById('tab-container');
     const _sig = (gameState.pendingRides.map(r => r.id).join(',')) + '|' +
-                 (gameState.drivers.map(d => d.id + ':' + d.status + ':' + (d.queue?.length || 0) + ':' + (d.restHoursLeft | 0)).join(','));
+                 (gameState.drivers.map(d => d.id + ':' + d.status + ':' + (d.queue?.length || 0) + ':' + (d.restHoursLeft | 0)).join(',')) + '|' +
+                 (gameState._dailySummary ? gameState._dailySummary.day : 0);
     if (renderTabCorse._sig === _sig && container.children.length > 0) return;
     renderTabCorse._sig = _sig;
 
@@ -4438,12 +4439,12 @@ function _renderDecreesSection(lobbyPoints) {
 
     // Wire up live countdown tickers after DOM injection (runs once per renderTabPolitics call)
     requestAnimationFrame(() => {
+        if (window._decreesCountdownTimer) { clearInterval(window._decreesCountdownTimer); window._decreesCountdownTimer = null; }
         const decreeData = decrees.filter(d => d.status !== 'passed').map(d => ({
             id: `decree-cd-${d.id.substring(0, 8)}`,
             expires: new Date(d.expires_at).getTime(),
         }));
         if (!decreeData.length) return;
-        if (window._decreesCountdownTimer) clearInterval(window._decreesCountdownTimer);
         window._decreesCountdownTimer = setInterval(() => {
             const now = Date.now();
             let anyAlive = false;

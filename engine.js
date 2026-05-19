@@ -176,6 +176,7 @@ let tempLeaseTier = null;
 let gameState = {
     cash: 5000, reputation: 0.0, energy: 100,
     day: 1, month: 1, hour: 8, minute: 0, paused: false,
+    todayEarnings: 0,
     fleet: [], drivers: [], staff: [], investments: [],
     pendingRides: [], activeRides: [], activeTrips: [], emails: [],
     unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
@@ -561,8 +562,9 @@ function loadGame() {
         if (!save.constructions)   save.constructions   = [];
         if (!save.claimableQuests) save.claimableQuests = [];
         if (!save.completedQuests) save.completedQuests = [];
-        if (!save.activeTrips)     save.activeTrips     = [];
-        if (!save.npcMarket)       save.npcMarket       = [];
+        if (!save.activeTrips)       save.activeTrips     = [];
+        if (!save.npcMarket)         save.npcMarket       = [];
+        if (save.todayEarnings === undefined) save.todayEarnings = 0;
         if (save.loginStreak    === undefined) save.loginStreak    = 0;
         if (save.lastDailyClaim === undefined) save.lastDailyClaim = 0;
         // Driver satisfaction migration
@@ -944,8 +946,12 @@ function gameLoop() {
     _kickstartIdleDrivers(); // safety net: riavvia driver idle con coda non vuota
 
     if (gameState.hour >= 24) {
-        gameState.hour = 0; gameState.day++;
-        if (gameState.day > 30) { gameState.day = 1; gameState.month = (gameState.month % 12) + 1; }
+        gameState.hour = 0;
+        gameState.day++;
+        if (gameState.day > 30) {
+            gameState.day = 1;
+            gameState.month = (gameState.month % 12) + 1;
+        }
         processDailyRoutines();
     }
 
@@ -1358,8 +1364,10 @@ function _triggerVIPMidRideEvent(ride) {
         updateUI(); saveGame();
     };
 
-    document.getElementById('vip-toast-a').onclick = () => resolve('A');
-    document.getElementById('vip-toast-b').onclick = () => resolve('B');
+    const _btnA = document.getElementById('vip-toast-a');
+    const _btnB = document.getElementById('vip-toast-b');
+    if (_btnA) _btnA.onclick = () => resolve('A');
+    if (_btnB) _btnB.onclick = () => resolve('B');
 
     let secsLeft = Math.round(AUTO_MS / 1000);
     const _ticker = setInterval(() => {
@@ -2449,6 +2457,7 @@ window.respondPoaching = function(emailId, accept) {
 };
 
 function processDailyRoutines() {
+    const _closingDay = gameState.day - 1 || 30; // day that just ended (day was already incremented)
     let income = 0; let expenses = 0;
 
     gameState.investments.forEach(invId => {
@@ -3067,14 +3076,14 @@ function processDailyRoutines() {
         const _sumType = _net >= 0 ? 'success' : 'error';
         const _todayStr = _today > 0 ? ` · Corse: €${_today.toLocaleString()}` : '';
         window.DS.toast({
-            title: `Giorno ${gameState.day} — Chiusura`,
+            title: `Giorno ${_closingDay} — Chiusura`,
             msg: `Passivo: ${_net >= 0 ? '+' : ''}€${_net.toLocaleString()} · Tasse €${luxuryTax.toLocaleString()}${_todayStr}`,
             type: _sumType,
             duration: 6000,
         });
         // Store daily summary for dispatch center overlay
         gameState._dailySummary = {
-            day: gameState.day,
+            day: _closingDay,
             income: Math.round(income),
             expenses: Math.round(expenses),
             net: Math.round(_net),
@@ -3083,6 +3092,7 @@ function processDailyRoutines() {
             cash: gameState.cash,
             reputation: gameState.reputation,
         };
+        gameState.todayEarnings = 0; // reset for the new day
     }
 
     // GdF inspection — fire-and-forget, async (requires user logged in)
@@ -3727,6 +3737,7 @@ function completeRide(ride, _deferPay = false) {
         if (_trip) _trip.earnings = earned;
     } else {
         gameState.cash += earned;
+        gameState.todayEarnings = (gameState.todayEarnings || 0) + earned;
         // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
         if (window.supabaseClient && window.currentUser) {
             window.supabaseClient.rpc('rpc_pay_majority_dividend', {
@@ -5288,6 +5299,7 @@ function checkActiveTrips() {
         // Pay earnings
         if (trip.earnings != null) {
             gameState.cash += trip.earnings;
+            gameState.todayEarnings = (gameState.todayEarnings || 0) + trip.earnings;
             // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
             if (window.supabaseClient && window.currentUser) {
                 window.supabaseClient.rpc('rpc_pay_majority_dividend', {
