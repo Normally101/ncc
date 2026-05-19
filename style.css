@@ -29,7 +29,7 @@
     /* ── Text ────────────────────────────── */
     --text:       #e0e0ff;
     --text-muted: #6b7280;
-    --text-dim:   #374151;
+    --text-dim:   #4b5563;
 
     /* ── Text shadows ────────────────────── */
     --ts-cyan:    0 0 8px rgba(0,242,255,0.45);
@@ -3447,4 +3447,310 @@ details[open] .finance-section-title { color: #00f2ff; }
     margin: var(--sp-xl) 0;
 }
 .ds-divider--gold { background: var(--border-gold); }
+
+/* ════════════════════════════════════════════════════════════════
+   AESTHETIC UPGRADE v3
+   Refactoring UI · UX Heuristics · iOS HIG · Hooked UX · UI/UX Pro Max
+   ════════════════════════════════════════════════════════════════ */
+
+/* ── 1. Selection highlight (cyberpunk theme) ───────────────────── */
+::selection { background: rgba(0,242,255,0.18); color: #ffffff; }
+
+/* ── 2. DS Header: gradient border accent + title glow ──────────── */
+.ds-header {
+    position: relative;
+    padding-top: var(--sp-md);
+    border-bottom-color: transparent;
+}
+.ds-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, rgba(0,242,255,0.45) 0%, rgba(0,242,255,0.1) 35%, transparent 70%);
+    pointer-events: none;
+}
+.ds-eyebrow {
+    text-shadow: 0 0 10px rgba(0,242,255,0.55);
+}
+.ds-title {
+    background: linear-gradient(130deg, #ffffff 25%, #b0f0ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    filter: drop-shadow(0 0 18px rgba(0,242,255,0.12));
+}
+.ds-subtitle { color: #6b7280; }
+
+/* ── 3. KPI Strip: elevation + colored glow on values ──────────── */
+.ds-kpi-strip {
+    background: linear-gradient(135deg, rgba(8,8,24,0.97), rgba(6,6,18,0.99));
+    box-shadow: 0 4px 28px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.ds-kpi { transition: background var(--ease-std); cursor: default; }
+.ds-kpi:hover { background: rgba(255,255,255,0.02); }
+.ds-kpi-val--blue  { text-shadow: 0 0 14px rgba(0,242,255,0.5); }
+.ds-kpi-val--gold  { text-shadow: 0 0 14px rgba(212,175,55,0.5); }
+.ds-kpi-val--green { text-shadow: 0 0 14px rgba(34,197,94,0.5); }
+.ds-kpi-val--red   { text-shadow: 0 0 14px rgba(239,68,68,0.5); }
+
+/* ── 4. DS Card: glass elevation + hover lift ───────────────────── */
+.ds-card {
+    box-shadow: 0 2px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: border-color var(--ease-std), box-shadow var(--ease-std), transform var(--ease-std);
+}
+.ds-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 0 0 1px rgba(0,242,255,0.08), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.ds-card--gold:hover {
+    box-shadow: 0 8px 36px rgba(0,0,0,0.55), 0 0 24px rgba(212,175,55,0.1), inset 0 1px 0 rgba(212,175,55,0.05);
+}
+.ds-card--alert { box-shadow: 0 2px 20px rgba(239,68,68,0.08), inset 0 1px 0 rgba(255,255,255,0.03); }
+
+/* ── 5. DS Buttons: gradient bg + press effect ──────────────────── */
+.ds-btn {
+    border-radius: var(--r-md);
+    position: relative; overflow: hidden;
+    transition: all var(--ease-std);
+}
+.ds-btn:active:not(:disabled) { transform: translateY(1px) scale(0.98); }
+.ds-btn--blue  { background: linear-gradient(135deg, rgba(0,242,255,0.14), rgba(0,242,255,0.05)); }
+.ds-btn--gold  { background: linear-gradient(135deg, rgba(212,175,55,0.16), rgba(212,175,55,0.05)); }
+.ds-btn--green { background: linear-gradient(135deg, rgba(34,197,94,0.14), rgba(34,197,94,0.05)); }
+.ds-btn--red   { background: linear-gradient(135deg, rgba(239,68,68,0.14), rgba(239,68,68,0.05)); }
+.ds-btn--blue:hover  { background: linear-gradient(135deg, rgba(0,242,255,0.22), rgba(0,242,255,0.1)); }
+.ds-btn--gold:hover  { background: linear-gradient(135deg, rgba(212,175,55,0.24), rgba(212,175,55,0.1)); }
+.ds-btn--green:hover { background: linear-gradient(135deg, rgba(34,197,94,0.22), rgba(34,197,94,0.1)); }
+.ds-btn--red:hover   { background: linear-gradient(135deg, rgba(239,68,68,0.22), rgba(239,68,68,0.1)); }
+
+/* ── 6. Progress bars: taller + glow fills ──────────────────────── */
+.ds-progress { height: 7px; }
+.ds-progress-fill          { box-shadow: 0 0 8px rgba(0,242,255,0.45); }
+.ds-progress-fill--gold    { box-shadow: 0 0 8px rgba(212,175,55,0.5); }
+.ds-progress-fill--green   { box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+.ds-progress-fill--red     { box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+.ds-progress-fill--orange  { box-shadow: 0 0 8px rgba(249,115,22,0.5); }
+.ds-progress-fill--blue    { box-shadow: 0 0 8px rgba(0,242,255,0.45); }
+
+/* ── 7. Alert items: improved glass panel ──────────────────────── */
+.ds-alert-item {
+    background: rgba(4,4,16,0.97);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 4px 28px rgba(0,0,0,0.75), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+/* ── 8. Toast: glass + glow + richer animation ──────────────────── */
+.ds-toast {
+    background: rgba(4,4,18,0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 48px rgba(0,0,0,0.85), 0 0 0 1px rgba(255,255,255,0.06);
+}
+.ds-toast--success { box-shadow: 0 8px 48px rgba(0,0,0,0.85), 0 0 24px rgba(34,197,94,0.12); }
+.ds-toast--error   { box-shadow: 0 8px 48px rgba(0,0,0,0.85), 0 0 24px rgba(239,68,68,0.12); }
+@keyframes ds-toast-in {
+    from { opacity: 0; transform: translateX(24px) scale(0.97); }
+    to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ── 9. Table: cyan header labels + row hover ───────────────────── */
+.ds-table th { color: var(--blue); opacity: 0.75; }
+.ds-table thead tr { border-bottom-color: rgba(0,242,255,0.12); }
+.ds-table tbody tr:hover td { background: rgba(0,242,255,0.025); }
+.ds-table-wrap { box-shadow: 0 4px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.03); }
+
+/* ── 10. Skeleton shimmer: cyan-tinted, richer ──────────────────── */
+.ds-skel {
+    background: linear-gradient(90deg,
+        rgba(255,255,255,0.03) 0%,
+        rgba(0,242,255,0.055) 40%,
+        rgba(255,255,255,0.08) 50%,
+        rgba(0,242,255,0.055) 60%,
+        rgba(255,255,255,0.03) 100%
+    );
+    background-size: 300% 100%;
+}
+
+/* ── 11. Pill refinements: more padding + depth ─────────────────── */
+.ds-pill { padding: 3px 10px; letter-spacing: 0.08em; }
+
+/* ── 12. Top nav: gold text-shadow on active ────────────────────── */
+.top-nav-btn.active { text-shadow: 0 0 10px rgba(212,175,55,0.55); }
+
+/* ── 13. Dropdown: entrance animation ──────────────────────────── */
+.nav-cat:hover .nav-drop { animation: navDropIn 0.14s ease-out; }
+@keyframes navDropIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── 14. HUD cards: elevation ───────────────────────────────────── */
+.hud-card {
+    box-shadow: 0 2px 14px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.03);
+}
+.hud-card:hover {
+    box-shadow: 0 6px 28px rgba(0,0,0,0.5), 0 0 16px rgba(0,242,255,0.09), inset 0 1px 0 rgba(0,242,255,0.04);
+}
+
+/* ── 15. Hub module: depth ──────────────────────────────────────── */
+.hub-module { box-shadow: 0 2px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
+.hub-module:hover {
+    box-shadow: 0 10px 28px rgba(0,0,0,0.45), 0 0 20px rgba(212,175,55,0.07), inset 0 1px 0 rgba(212,175,55,0.05);
+}
+.hub-inner {
+    box-shadow: 0 40px 100px rgba(0,0,0,0.82), 0 0 60px rgba(212,175,55,0.04), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+
+/* ── 16. Fleet luxury cards: lift on hover ──────────────────────── */
+.fleet-card-luxury {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+.fleet-card-luxury:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 20px rgba(212,175,55,0.07);
+}
+
+/* ── 17. Market listings: lift + gold hover ─────────────────────── */
+.market-listing {
+    box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.market-listing:hover {
+    border-color: rgba(212,175,55,0.28);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    transform: translateY(-1px);
+}
+.auction-card { box-shadow: 0 4px 24px rgba(212,175,55,0.07), inset 0 1px 0 rgba(212,175,55,0.05); }
+
+/* ── 18. Email cards: depth ─────────────────────────────────────── */
+.email-card {
+    box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.email-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.45); }
+
+/* ── 19. Notification toast: glass ─────────────────────────────── */
+.notif {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7), 0 0 16px rgba(0,242,255,0.07);
+}
+
+/* ── 20. Ops daily summary: cyan gradient accent ────────────────── */
+.ops-daily-summary {
+    background: linear-gradient(90deg, rgba(0,242,255,0.04) 0%, transparent 100%);
+    border-top-color: rgba(0,242,255,0.12);
+}
+.ops-daily-label {
+    color: rgba(0,242,255,0.75);
+    text-shadow: 0 0 8px rgba(0,242,255,0.4);
+}
+
+/* ── 21. Ride progress bar: glow ────────────────────────────────── */
+.ride-progress-fill { box-shadow: 0 0 8px var(--blue), 0 0 2px rgba(0,242,255,0.9); }
+
+/* ── 22. XP bar: glow ───────────────────────────────────────────── */
+.xp-bar-fill { box-shadow: 0 0 6px rgba(0,242,255,0.55); }
+
+/* ── 23. Driver skill bars: glow ────────────────────────────────── */
+.driver-skill-bar-fill { box-shadow: 0 0 4px currentColor; }
+
+/* ── 24. Level badges: glow by tier ────────────────────────────── */
+.lvl-pro    { box-shadow: 0 0 6px rgba(0,242,255,0.25); }
+.lvl-expert { box-shadow: 0 0 6px rgba(180,100,255,0.28); }
+.lvl-elite  { box-shadow: 0 0 8px rgba(212,175,55,0.35); }
+
+/* ── 25. Daily reward modal: depth ─────────────────────────────── */
+.dr-inner {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 0 80px rgba(212,175,55,0.16), 0 32px 64px rgba(0,0,0,0.7);
+}
+.dr-day-today { box-shadow: 0 0 14px rgba(212,175,55,0.22); }
+
+/* ── 26. btn-blue / btn-gold legacy: press effect ──────────────── */
+.btn-blue:active, .btn-gold:active { transform: translateY(1px) scale(0.98) !important; }
+
+/* ── 27. Scrollbar: thinner + dimmer ────────────────────────────── */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.16); }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,242,255,0.38); }
+
+/* ── 28. Finance stock cards: depth ────────────────────────────── */
+.finance-stock-card {
+    box-shadow: 0 2px 12px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03);
+    transition: border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.finance-stock-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(0,0,0,0.45), 0 0 12px rgba(0,242,255,0.06);
+}
+
+/* ── 29. Lifestyle cards: gold depth ────────────────────────────── */
+.ls-card {
+    box-shadow: 0 4px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+.ls-card-owned { box-shadow: 0 0 28px rgba(212,175,55,0.1), inset 0 1px 0 rgba(212,175,55,0.06); }
+
+/* ── 30. Save slot cards: hover glow ────────────────────────────── */
+.ss-slot:hover {
+    box-shadow: 0 10px 32px rgba(0,0,0,0.45), 0 0 20px rgba(212,175,55,0.08);
+}
+.ss-setup-card {
+    box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 40px rgba(212,175,55,0.06), inset 0 1px 0 rgba(255,255,255,0.04);
+}
+
+/* ── 31. Pricing buttons: active depth ──────────────────────────── */
+.pricing-btn:active { transform: translateY(0) scale(0.97); }
+.pricing-btn-active { box-shadow: 0 0 16px rgba(212,175,55,0.12); }
+
+/* ── 32. Booster buttons: purple glow on hover ──────────────────── */
+.booster-btn:hover { box-shadow: 0 4px 18px rgba(168,85,247,0.15); }
+
+/* ── 33. Subsidiary/territory cards: owned state polish ─────────── */
+.subsidiary-card.owned { box-shadow: 0 2px 16px rgba(34,197,94,0.08); }
+.hub-territory-card.owned { box-shadow: 0 2px 16px rgba(212,175,55,0.08); }
+
+/* ── 34. Hub glass card (login/company setup): elevated ─────────── */
+.lp-glass-card {
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04) inset,
+        0 0 80px rgba(212,175,55,0.07),
+        0 48px 96px rgba(0,0,0,0.7);
+}
+
+/* ── 35. Feature cards landing page: glow top border on hover ───── */
+.lp-feat-card:hover { box-shadow: 0 10px 40px rgba(212,175,55,0.14), 0 2px 8px rgba(0,0,0,0.4); }
+
+/* ── 36. Ceo week banner: ambient ───────────────────────────────── */
+.ceo-week-banner { box-shadow: 0 0 24px rgba(212,175,55,0.06), inset 0 1px 0 rgba(212,175,55,0.05); }
+
+/* ── 37. Mapbox popup: deeper glass ────────────────────────────── */
+.mapboxgl-popup-content {
+    box-shadow: 0 4px 28px rgba(0,0,0,0.9), 0 0 12px rgba(0,242,255,0.1) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* ── 38. Academic course buttons: glow ──────────────────────────── */
+.academy-course-btn:hover { box-shadow: 0 4px 16px rgba(168,85,247,0.12); }
+
+/* ── 39. Cantiere marker: brighter ──────────────────────────────── */
+.cantiere-marker { box-shadow: 0 0 10px rgba(245,158,11,0.8); }
+
+/* ── 40. Ambient page scanline (ultra-subtle) ────────────────────── */
+#main-panel::before {
+    content: '';
+    position: absolute; inset: 0; z-index: 0;
+    background-image: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.025) 2px,
+        rgba(0,0,0,0.025) 4px
+    );
+    pointer-events: none; border-radius: inherit;
+}
 
