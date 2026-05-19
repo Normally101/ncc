@@ -206,7 +206,7 @@ window.renderTabShadow = function() {
                   <div class="text-sm font-bold text-white">${t.name || 'Anonimo'}</div>
                   <div class="text-[10px] text-gray-400">⭐ ${(t.reputation || 0).toFixed(1)} · Difesa Lv.${t.defense_lvl || 0}</div>
                 </div>
-                <div class="text-[9px] text-gray-500">${t.region || ''}</div>
+                <div class="text-[9px] text-gray-500">${t.hq_city || ''}</div>
               </div>
               <div class="flex flex-wrap gap-1">
                 ${window.SHADOW_OPS.map(op => `

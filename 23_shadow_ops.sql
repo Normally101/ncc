@@ -206,7 +206,7 @@ RETURNS TABLE (
     company_id  UUID,
     name        TEXT,
     reputation  NUMERIC,
-    region      TEXT,
+    hq_city     TEXT,
     defense_lvl INT
 )
 LANGUAGE plpgsql
@@ -222,7 +222,7 @@ BEGIN
         c.id AS company_id,
         c.name,
         c.reputation,
-        c.region,
+        c.hq_city,
         COALESCE(sd.defense_level, 0) AS defense_lvl
     FROM public.companies c
     LEFT JOIN public.shadow_defense sd ON sd.user_id = c.user_id
