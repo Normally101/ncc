@@ -3106,6 +3106,8 @@ function processDailyRoutines() {
     if (typeof window._sindacatoGdfDailyCheck === 'function') window._sindacatoGdfDailyCheck();
     // B2B corporate contract daily payout
     if (typeof window._b2bDailyTick === 'function') window._b2bDailyTick();
+    // Tourism B2B tender daily payout
+    if (typeof window._tourismDailyTick === 'function') window._tourismDailyTick();
     // HQ daily effects (auto-repair, morale, EV recharge)
     if (typeof window._hqDailyTick === 'function') window._hqDailyTick();
 }
