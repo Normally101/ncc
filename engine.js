@@ -3344,6 +3344,8 @@ function _driverCanTakeRide(driver, ride) {
     if (driver.status === 'striking') return false;
     const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
     if (!car) return false;
+    if (car.outOfService) return false;
+    if (car.condition <= 10) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
     if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
     const _epSlots = (gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0)) ? 12 : 10;
@@ -3394,7 +3396,7 @@ function assignAllRides() {
 }
 
 function autoDispatchRides() {
-    if (gameState.staff.length === 0 || gameState.pendingRides.length === 0) return;
+    if (gameState.pendingRides.length === 0) return;
     const canHandleVIP = gameState.staff.some(s => s.id === 'sr_disp');
     for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
         const ride = gameState.pendingRides[i];
