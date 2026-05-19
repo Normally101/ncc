@@ -220,7 +220,7 @@ BEGIN
     SELECT
         c.user_id,
         c.id AS company_id,
-        c.name,
+        c.company_name AS name,
         c.reputation,
         c.hq_city,
         COALESCE(sd.defense_level, 0) AS defense_lvl
