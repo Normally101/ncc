@@ -589,6 +589,10 @@ function loadGame() {
         if (!save.hqRooms) save.hqRooms = ['garage_main'];
         if (!save.hqGrid)  save.hqGrid  = { 7: 'garage_main' };
         if (!save.vipNemeses) save.vipNemeses = {};
+        if (!save.corporateTenders)   save.corporateTenders   = [];
+        if (!save.corporateContracts) save.corporateContracts = [];
+        if (!save.tenderHistory)      save.tenderHistory      = [];
+        if (save.nextTenderDay === undefined) save.nextTenderDay = (save.day || 1) + 2;
         // Migrate fleet: add fuel/mileage/tirePressure if missing
         (save.fleet || []).forEach(c => {
             if (c.fuel         === undefined) c.fuel         = 100;
@@ -2458,6 +2462,7 @@ window.respondPoaching = function(emailId, accept) {
 
 function processDailyRoutines() {
     const _closingDay = gameState.day - 1 || 30; // day that just ended (day was already incremented)
+    if (typeof window.CE_Contracts !== 'undefined') window.CE_Contracts.dailyTick();
     let income = 0; let expenses = 0;
 
     gameState.investments.forEach(invId => {

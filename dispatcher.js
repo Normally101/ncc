@@ -1200,6 +1200,7 @@ window.switchTab = function(tab) {
         case 'opa': title.innerText = "🦅 OPA Ostili"; _safeRender(window.renderTabOPA); break;
         case 'nemesis': title.innerText = "🦹 Nemici VIP"; _safeRender(window.renderTabNemesis); break;
         case 'infrastructure': title.innerText = "⛽ Monopolio Infrastrutture"; _safeRender(window.renderTabInfrastructure); break;
+        case 'contracts':      title.innerText = "🤝 Corporate Contracts";       _safeRender(window.renderTabContracts);      break;
     }
 }
 
