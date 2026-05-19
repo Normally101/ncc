@@ -3,9 +3,9 @@
     --blue:       #00f2ff;
     --blue2:      #0099bb;
     --blue-dim:   rgba(0,242,255,0.12);
-    --gold:       #d4af37;
-    --gold-dim:   rgba(212,175,55,0.12);
-    --gold-border:rgba(212,175,55,0.30);
+    --gold:       #c9a227;
+    --gold-dim:   rgba(201,162,39,0.12);
+    --gold-border:rgba(201,162,39,0.30);
     --red:        #ef4444;
     --red-dim:    rgba(239,68,68,0.12);
     --green:      #22c55e;
@@ -14,9 +14,9 @@
     --purple:     #a855f7;
 
     /* ── Surface Palette ─────────────────── */
-    --bg:         #080810;
-    --bg2:        #0c0c1a;
-    --bg3:        #101022;
+    --bg:         #050810;
+    --bg2:        #080d18;
+    --bg3:        #0c1020;
     --panel:      rgba(6, 6, 18, 0.93);
     --surface:    rgba(255,255,255,0.03);
     --surface2:   rgba(255,255,255,0.06);
@@ -52,7 +52,7 @@
 
     /* ── Font ────────────────────────────── */
     --font-mono:    'Roboto Mono', monospace;
-    --font-display: 'Orbitron', sans-serif;
+    --font-display: 'Cinzel', serif;
     --font-body:    'Inter', system-ui, sans-serif;
 
     /* ── Animation ───────────────────────── */

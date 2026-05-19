@@ -39,6 +39,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Orbitron:wght@500;700;900&family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="premium-ui.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     @keyframes moneyFly {
@@ -70,7 +71,7 @@
   <script>
     tailwind.config = { theme: { extend: {
       colors: {
-        gold:     '#d4af37',
+        gold:     '#c9a227',
         blue:     '#00f2ff',
         deepBlack:'#080810',
         panel:    'rgba(8, 8, 20, 0.92)',
@@ -79,7 +80,7 @@
       fontFamily: {
         sans:    ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
         mono:    ['Roboto Mono', 'monospace'],
-        display: ['Orbitron', 'sans-serif']
+        display: ['Cinzel', 'serif']
       }
     } } }
   </script>
@@ -239,6 +240,66 @@
       </div>
     </nav>
   </header>
+
+  <!-- ── SIDEBAR PLAYER CARD ─────────────────────────────────── -->
+  <aside id="sidebar-player" class="fixed z-40 flex flex-col" style="top:88px;left:0;width:220px;bottom:26px;background:rgba(8,8,20,0.96);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;">
+
+    <!-- Avatar + Identity -->
+    <div class="flex flex-col items-center pt-5 pb-4 px-4 border-b" style="border-color:rgba(255,255,255,0.06)">
+      <div id="sidebar-avatar" class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-2 select-none" style="background:rgba(201,162,39,0.18);border:2px solid rgba(201,162,39,0.35);color:#c9a227;font-family:'Cinzel',serif"></div>
+      <div id="sidebar-company" class="text-white text-xs font-bold text-center leading-tight" style="font-family:'Cinzel',serif">Chauffeur Empire</div>
+      <div class="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">CEO</div>
+      <div class="w-full mt-3">
+        <div class="flex justify-between text-[8px] text-gray-500 mb-1">
+          <span>Esperienza</span>
+          <span id="sidebar-xp-pct">0%</span>
+        </div>
+        <div class="w-full h-1 rounded-full" style="background:rgba(255,255,255,0.07)">
+          <div id="sidebar-xp-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#c9a227,#f0d060)"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="flex flex-col gap-0 py-2 px-1 border-b" style="border-color:rgba(255,255,255,0.06)">
+      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg" style="transition:background 0.12s">
+        <span class="text-[10px] text-gray-400">⭐ Reputazione</span>
+        <span id="sidebar-rep" class="text-[11px] font-bold" style="color:#c9a227">0.0</span>
+      </div>
+      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
+        <span class="text-[10px] text-gray-400">💰 Cash</span>
+        <span id="sidebar-cash" class="text-[11px] font-bold text-green-400">€0</span>
+      </div>
+      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
+        <span class="text-[10px] text-gray-400">🚗 Flotta</span>
+        <span id="sidebar-fleet" class="text-[11px] font-bold text-white">0</span>
+      </div>
+      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
+        <span class="text-[10px] text-gray-400">👥 Dipendenti</span>
+        <span id="sidebar-staff" class="text-[11px] font-bold text-white">0</span>
+      </div>
+    </div>
+
+    <!-- Time + Advance -->
+    <div class="flex flex-col gap-2 px-4 py-4">
+      <div class="flex justify-between text-[10px]">
+        <span class="text-gray-500">📅 Giorno</span>
+        <span id="sidebar-day" class="text-white font-bold">1</span>
+      </div>
+      <div class="flex justify-between text-[10px]">
+        <span class="text-gray-500">🕐 Ora</span>
+        <span id="sidebar-time" class="text-white font-bold">08:00</span>
+      </div>
+      <button onclick="window.advanceTime && window.advanceTime()" class="btn-gold w-full mt-2 text-[10px] py-2 uppercase tracking-widest">
+        ▶ Avanza Turno
+      </button>
+    </div>
+
+    <button id="sidebar-close-btn" onclick="window.toggleSidebar && window.toggleSidebar(false)" class="absolute top-2 right-2 text-gray-500 hover:text-white text-xs hidden">✕</button>
+  </aside>
+
+  <!-- Mobile sidebar toggle (visible only on small screens via CSS) -->
+  <button id="sidebar-toggle-btn" onclick="window.toggleSidebar && window.toggleSidebar(true)" class="fixed z-50 hidden" style="top:96px;left:8px;background:rgba(8,8,20,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 8px;color:#c9a227;font-size:14px">☰</button>
 
   <!-- SMART HUB MODAL -->
   <div id="hub-modal" class="hub-modal hidden" onclick="if(event.target===this)window.closeHub()">
@@ -547,6 +608,7 @@
   <script src="contracts.js"></script>
   <script src="tourism.js"></script>
   <script src="tutorial.js"></script>
+  <script src="premium-ui.js"></script>
   <script>
     (function initTicker() {
       const track = document.getElementById('news-ticker-track');

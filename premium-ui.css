@@ -1,0 +1,242 @@
+/* ================================================================
+   premium-ui.css — Chauffeur Empire
+   AAA dark-premium visual layer. Loaded AFTER style.css.
+   Never modifies renderTab* output directly — only elevates
+   existing Tailwind utility classes and shell elements.
+   ================================================================ */
+
+/* ── 1. BODY BACKGROUND ──────────────────────────────────────── */
+
+body {
+  background:
+    radial-gradient(ellipse 60% 40% at 8% 15%, rgba(0,180,255,0.10) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 35% at 92% 85%, rgba(120,0,255,0.09) 0%, transparent 60%),
+    linear-gradient(165deg, #050810 0%, #0a0d1a 55%, #070512 100%);
+  background-attachment: fixed;
+}
+
+/* SVG noise texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.032;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+}
+
+/* ── 2. TOPBAR ELEVATION ─────────────────────────────────────── */
+
+#top-bar {
+  background: rgba(5,8,16,0.97) !important;
+  border-bottom: 1px solid rgba(201,162,39,0.18) !important;
+  box-shadow: 0 2px 32px rgba(0,0,0,0.8), 0 1px 0 rgba(201,162,39,0.08) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* Row 1 separator */
+#top-bar > div:first-child {
+  border-bottom: 1px solid rgba(255,255,255,0.045) !important;
+}
+
+/* Row 1 stat labels */
+#top-bar .text-gray-500.uppercase {
+  color: rgba(180,180,200,0.45);
+  font-size: 7px;
+  letter-spacing: 0.08em;
+}
+
+/* Cash in topbar */
+#tb-cash {
+  color: #4ade80 !important;
+  text-shadow: 0 0 12px rgba(74,222,128,0.4);
+}
+
+/* Reputation in topbar */
+#tb-rep {
+  color: #c9a227 !important;
+  text-shadow: 0 0 10px rgba(201,162,39,0.35);
+}
+
+/* Brand name Cinzel */
+#top-bar .font-display {
+  font-family: 'Cinzel', serif !important;
+  letter-spacing: 0.18em;
+}
+
+/* Row 2 nav tab active */
+.top-nav-btn.active {
+  color: #ffffff !important;
+  border-bottom: 2px solid #c9a227 !important;
+  text-shadow: none;
+}
+
+/* Row 2 nav tab base */
+.top-nav-btn {
+  font-size: 10px !important;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: rgba(200,200,208,0.55) !important;
+  transition: color 0.15s ease;
+}
+
+.top-nav-btn:hover {
+  color: rgba(200,200,208,0.92) !important;
+}
+
+/* Dropdown elevation */
+.nav-drop {
+  background: rgba(5,8,18,0.98) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.7) !important;
+  backdrop-filter: blur(16px);
+}
+
+.nav-drop-item:hover {
+  background: rgba(201,162,39,0.08) !important;
+  color: #ffffff !important;
+}
+
+/* ── 3. MAIN PANEL SHIFT (sidebar = 220px) ───────────────────── */
+
+#main-panel {
+  left: 220px !important;
+}
+
+#main-panel > div:first-child {
+  background: rgba(255,255,255,0.02) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+#panel-title {
+  font-family: 'Cinzel', serif !important;
+  font-size: 11px !important;
+  letter-spacing: 0.22em;
+}
+
+/* ── 4. CARD ELEVATION ───────────────────────────────────────── */
+
+.bg-white\/3,
+.bg-white\/5 {
+  background: rgba(255,255,255,0.028) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04) !important;
+  backdrop-filter: blur(6px);
+  transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.bg-white\/3:hover,
+.bg-white\/5:hover {
+  border-color: rgba(255,255,255,0.13) !important;
+}
+
+/* ── 5. TYPOGRAPHY REFINEMENTS ───────────────────────────────── */
+
+.text-gray-400 { color: #b8b8c8 !important; }
+.text-gray-500 { color: rgba(160,160,180,0.65) !important; }
+
+/* Section eyebrows */
+.text-gold.uppercase.tracking-widest {
+  font-family: 'Cinzel', serif !important;
+  letter-spacing: 0.22em !important;
+  font-size: 8.5px !important;
+}
+
+/* Positive/negative values */
+.text-green-400 { color: #4ade80 !important; text-shadow: 0 0 8px rgba(74,222,128,0.22); }
+.text-red-400   { color: #f87171 !important; }
+
+/* btn-secondary */
+.btn-secondary {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: rgba(200,200,208,0.85);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(255,255,255,0.09);
+  border-color: rgba(255,255,255,0.28);
+  color: #fff;
+}
+
+/* ── 6. SCROLLBAR ─────────────────────────────────────────────── */
+
+#tab-container::-webkit-scrollbar,
+#sidebar-player::-webkit-scrollbar {
+  width: 4px;
+}
+
+#tab-container::-webkit-scrollbar-track,
+#sidebar-player::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#tab-container::-webkit-scrollbar-thumb,
+#sidebar-player::-webkit-scrollbar-thumb {
+  background: rgba(201,162,39,0.28);
+  border-radius: 2px;
+}
+
+#tab-container::-webkit-scrollbar-thumb:hover,
+#sidebar-player::-webkit-scrollbar-thumb:hover {
+  background: rgba(201,162,39,0.48);
+}
+
+/* ── 7. SIDEBAR STYLES ────────────────────────────────────────── */
+
+#sidebar-player .btn-gold {
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.12em;
+}
+
+/* ── 8. SIDEBAR-AWARE ELEMENT OFFSETS ────────────────────────── */
+
+#news-ticker-wrap {
+  left: 220px !important;
+}
+
+#live-map-overlay {
+  left: 236px !important;
+}
+
+#map-overlay {
+  left: 220px !important;
+}
+
+/* ── 9. MOBILE (< 768px) ─────────────────────────────────────── */
+
+@media (max-width: 767px) {
+  #sidebar-player {
+    transform: translateX(-220px);
+    transition: transform 0.25s ease;
+    z-index: 55;
+  }
+
+  #main-panel {
+    left: 0 !important;
+  }
+
+  #sidebar-toggle-btn {
+    display: block !important;
+  }
+
+  #top-bar nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  #top-bar nav::-webkit-scrollbar { display: none; }
+
+  #news-ticker-wrap  { left: 0 !important; }
+  #live-map-overlay  { left: 16px !important; }
+  #map-overlay       { left: 0 !important; }
+}
