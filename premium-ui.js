@@ -10,8 +10,9 @@
 // why rides can't be assigned to drivers.
 
 window.diagDispatch = function() {
-    const gs = window.gameState;
-    if (!gs) { console.error('gameState not found'); return; }
+    /* gameState is a top-level `let` in engine.js — not on window */
+    const gs = (typeof gameState !== 'undefined') ? gameState : null;
+    if (!gs) { console.error('gameState not found — try typing `gameState` directly in console'); return; }
 
     const TIER_COMPAT = {
         'ultra':    ['ultra'],
