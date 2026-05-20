@@ -2977,24 +2977,25 @@ details[open] .finance-section-title { color: #00f2ff; }
    OPS ROOM — Dispatch Center Bloomberg Layout
    ================================================================ */
 
-/* KPI Strip */
+/* KPI Strip — light theme */
 .ops-kpi-strip {
     display: flex;
     align-items: center;
     gap: 0;
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(0,242,255,0.12);
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.10);
     border-radius: 10px;
     padding: 12px 16px;
     margin-bottom: 16px;
     font-family: 'Roboto Mono', monospace;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 .ops-kpi { display: flex; flex-direction: column; gap: 2px; padding: 0 20px; }
 .ops-kpi:first-child { padding-left: 0; }
-.ops-kpi-label { font-size: 8px; color: #4b5563; text-transform: uppercase; letter-spacing: 0.1em; }
+.ops-kpi-label { font-size: 8px; color: #6b8096; text-transform: uppercase; letter-spacing: 0.1em; }
 .ops-kpi-value { font-size: 20px; font-weight: 700; line-height: 1; }
-.ops-kpi-sub { font-size: 11px; color: #6b7280; font-weight: 400; }
-.ops-kpi-sep { width: 1px; align-self: stretch; background: rgba(255,255,255,0.06); margin: 0 4px; }
+.ops-kpi-sub { font-size: 11px; color: #7a90a4; font-weight: 400; }
+.ops-kpi-sep { width: 1px; align-self: stretch; background: rgba(0,0,0,0.10); margin: 0 4px; }
 
 .ops-alert-pill {
     background: rgba(239,68,68,0.15);
@@ -3014,10 +3015,10 @@ details[open] .finance-section-title { color: #00f2ff; }
     transition: all 0.15s ease;
 }
 .ops-action-btn--blue {
-    background: rgba(0,242,255,0.1); color: #00f2ff;
-    border: 1px solid rgba(0,242,255,0.3);
+    background: rgba(29,111,168,0.10); color: #1d6fa8;
+    border: 1px solid rgba(29,111,168,0.30);
 }
-.ops-action-btn--blue:hover { background: rgba(0,242,255,0.2); }
+.ops-action-btn--blue:hover { background: rgba(29,111,168,0.20); }
 .ops-action-btn--gold {
     background: var(--gold); color: #000;
 }
@@ -3033,7 +3034,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     font-size: 9px;
     color: var(--text-muted);
     letter-spacing: 0.05em;
-    background: rgba(255,255,255,0.03);
+    background: rgba(0,0,0,0.04);
     border-top: 1px solid var(--border);
     padding: 8px 12px;
     margin-top: 4px;
@@ -3057,38 +3058,39 @@ details[open] .finance-section-title { color: #00f2ff; }
 @media (max-width: 800px) { .ops-grid { grid-template-columns: 1fr; } }
 
 .ops-col {
-    background: rgba(0,0,0,0.25);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.10);
     border-radius: 10px;
     display: flex; flex-direction: column;
     overflow: hidden;
     min-height: 400px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
 
 .ops-col-header {
     display: flex; align-items: center; justify-content: space-between;
     padding: 10px 14px;
-    background: rgba(0,0,0,0.3);
-    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(0,0,0,0.04);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
     flex-shrink: 0;
 }
 .ops-col-title {
     font-size: 9px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.12em;
-    color: #4b5563;
+    color: #5a7090;
     font-family: 'Roboto Mono', monospace;
 }
 .ops-col-badge {
     font-size: 9px; font-weight: 700;
-    background: rgba(255,255,255,0.06);
-    color: #4b5563;
+    background: rgba(0,0,0,0.07);
+    color: #5a7090;
     padding: 2px 8px; border-radius: 10px;
     font-family: 'Roboto Mono', monospace;
 }
 .ops-col-badge--active {
-    background: rgba(234,179,8,0.15);
-    color: #fbbf24;
-    border: 1px solid rgba(234,179,8,0.3);
+    background: rgba(184,134,11,0.12);
+    color: #b8860b;
+    border: 1px solid rgba(184,134,11,0.30);
 }
 
 /* Ride list */
@@ -3106,18 +3108,19 @@ details[open] .finance-section-title { color: #00f2ff; }
     grid-template-columns: auto 1fr auto;
     align-items: center; gap: 10px;
     padding: 10px 12px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.07);
+    background: #f8fafb;
+    border: 1px solid rgba(0,0,0,0.08);
     border-radius: 8px;
     cursor: grab; transition: all 0.15s ease;
 }
 .ops-ride-card:hover {
-    background: rgba(0,242,255,0.05);
-    border-color: rgba(0,242,255,0.25);
+    background: #eef5fb;
+    border-color: rgba(29,111,168,0.30);
+    box-shadow: 0 2px 8px rgba(29,111,168,0.08);
 }
 .ops-ride-card--contract {
-    border-color: rgba(245,158,11,0.25);
-    background: rgba(245,158,11,0.04);
+    border-color: rgba(184,134,11,0.25);
+    background: #fdfaf2;
 }
 .ops-ride-tier {
     font-size: 8px; font-weight: 700;
@@ -3127,10 +3130,10 @@ details[open] .finance-section-title { color: #00f2ff; }
     white-space: nowrap;
 }
 .ops-ride-route {
-    font-size: 11px; font-weight: 600; color: #e0e0ff;
+    font-size: 11px; font-weight: 600; color: #1a2744;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ops-ride-arrow { color: #4b5563; margin: 0 4px; }
+.ops-ride-arrow { color: #8a9db0; margin: 0 4px; }
 .ops-ride-price {
     font-size: 12px; font-weight: 700; color: #22c55e;
     font-family: 'Roboto Mono', monospace;
@@ -3150,12 +3153,12 @@ details[open] .finance-section-title { color: #00f2ff; }
     grid-template-columns: 10px 1fr auto auto;
     align-items: center; gap: 10px;
     padding: 10px 12px;
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.06);
+    background: #f8fafb;
+    border: 1px solid rgba(0,0,0,0.08);
     border-radius: 8px;
     transition: background 0.15s ease;
 }
-.ops-driver-row:hover { background: rgba(255,255,255,0.05); }
+.ops-driver-row:hover { background: #eef3f8; }
 .ops-driver-status-dot {
     width: 8px; height: 8px; border-radius: 50%;
     flex-shrink: 0;
@@ -3163,23 +3166,23 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .ops-driver-info { min-width: 0; }
 .ops-driver-name {
-    font-size: 11px; font-weight: 600; color: #e0e0ff;
+    font-size: 11px; font-weight: 600; color: #1a2744;
     display: flex; align-items: center; gap: 6px;
 }
-.ops-driver-car { font-size: 9px; color: #4b5563; margin-top: 1px; }
+.ops-driver-car { font-size: 9px; color: #6b8096; margin-top: 1px; }
 .ops-driver-right { text-align: right; min-width: 80px; }
 .ops-driver-status-label {
     font-size: 9px; font-weight: 700;
     font-family: 'Roboto Mono', monospace;
     text-transform: uppercase; letter-spacing: 0.05em;
 }
-.ops-driver-queue { font-size: 8px; color: #374151; font-family: 'Roboto Mono', monospace; }
+.ops-driver-queue { font-size: 8px; color: #8a9db0; font-family: 'Roboto Mono', monospace; }
 .ops-driver-bars {
     display: flex; flex-direction: column; gap: 3px;
     width: 80px; flex-shrink: 0;
 }
 .ops-bar-wrap {
-    height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden;
+    height: 3px; background: rgba(0,0,0,0.12); border-radius: 2px; overflow: hidden;
 }
 .ops-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
 .ops-mini-btn {
@@ -3788,9 +3791,9 @@ details[open] .finance-section-title { color: #00f2ff; }
    sidebar so they read correctly on the new light backgrounds.
    ════════════════════════════════════════════════════════════════ */
 
-/* Top-bar: steel-blue metallic */
-#top-bar { background: linear-gradient(180deg, #2a4d6a 0%, #345f7e 100%) !important; border-bottom-color: rgba(0,0,0,0.25) !important; }
-#top-bar nav { background: rgba(0,0,0,0.12); }
+/* Top-bar: steel-blue metallic — eRepublik-style */
+#top-bar { background: linear-gradient(180deg, #3d6d8e 0%, #4a7fa8 100%) !important; border-bottom-color: rgba(0,0,0,0.28) !important; }
+#top-bar nav { background: rgba(0,0,0,0.14); border-top: 1px solid rgba(255,255,255,0.08); }
 
 /* Sidebar: white card */
 #sidebar-player { background: #ffffff !important; border-right-color: #cfd8e3 !important; }
