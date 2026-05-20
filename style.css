@@ -3835,3 +3835,63 @@ body > .fixed.bg-gradient-to-b { opacity: 0 !important; }
 /* XP bar track on light sidebar */
 #sidebar-player [style*="background:rgba(255,255,255,0.1)"] { background: rgba(0,0,0,0.10) !important; }
 
+/* ================================================================
+   SIDEBAR ACCORDION — dark nav
+   ================================================================ */
+
+#sidebar-player {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201,162,39,0.25) transparent;
+}
+#sidebar-player::-webkit-scrollbar { width: 3px; }
+#sidebar-player::-webkit-scrollbar-track { background: transparent; }
+#sidebar-player::-webkit-scrollbar-thumb { background: rgba(201,162,39,0.25); border-radius: 2px; }
+
+.sidebar-group-head {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.sidebar-group-head:hover { background: rgba(255,255,255,0.05); }
+.sidebar-group-head.open   { background: rgba(255,255,255,0.04); }
+.sidebar-group-head.open .sidebar-chev { transform: rotate(90deg); transition: transform 0.2s ease; color: rgba(201,162,39,0.7); }
+.sidebar-chev { transition: transform 0.2s ease; }
+
+.sidebar-item {
+  display: block;
+  padding: 5px 12px 5px 28px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.55);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sidebar-item:hover {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.85);
+}
+.sidebar-item.active {
+  background: rgba(201,162,39,0.12);
+  color: #c9a227;
+  border-left: 2px solid #c9a227;
+  padding-left: 26px;
+}
+
+@media (max-width: 767px) {
+  #sidebar-player {
+    transform: translateX(-160px);
+    transition: transform 0.25s ease;
+    z-index: 55;
+  }
+  #main-panel {
+    left: 0 !important;
+  }
+  #news-ticker-wrap  { left: 0 !important; }
+  #live-map-overlay  { left: 16px !important; }
+  #map-overlay       { left: 0 !important; }
+}
+
