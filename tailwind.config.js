@@ -8,11 +8,13 @@ module.exports = {
     extend: {
       colors: {
         gold:       '#c9a227',
-        blue:       '#00f2ff',
         deepBlack:  '#0b1628',
         navy:       '#1a2c45',
         'navy-dark':'#111d2e',
-        panel:      'rgba(11,22,40,0.97)',
+        nav:        '#1e2d45',
+        navDark:    '#162030',
+        topbar:     '#1e3a5f',
+        panel:      '#f0f4f8',
         accent:     '#27ae60',
         cegreen:    '#27ae60',
       },
