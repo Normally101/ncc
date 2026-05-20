@@ -93,7 +93,7 @@ window.b2bAcceptContract = async function(contractId, vehicleIds, driverIds) {
         sla_score:      100,
         status:         'active',
     };
-    await saveGame();
+    saveGame();
 
     showNotification(`✅ Contratto "${data.title}" accettato! +€${data.daily_payout.toLocaleString()}/giorno.`, 'success');
     logToMap(`💼 Appalto corporate firmato: "${data.title}" — €${data.daily_payout.toLocaleString()}/g per ${data.days_remaining} giorni.`);
@@ -118,7 +118,7 @@ window.b2bTerminateContract = async function(activeId) {
         gameState.cash = Math.max(0, (gameState.cash||0) - data.penalty);
         gameState.reputation = Math.max(0, (gameState.reputation||0) - data.rep_penalty);
     }
-    await saveGame();
+    saveGame();
     window._b2bState.activeContract = null;
 
     showBigEvent('⚠️', 'Contratto Rescisso',
@@ -155,8 +155,8 @@ window._b2bDailyTick = async function() {
         }
     }
 
-    await saveGame();
-    updateUI();
+    saveGame();
+    if (typeof updateUI === 'function') updateUI();
     if (typeof renderTabB2B === 'function') renderTabB2B();
 };
 

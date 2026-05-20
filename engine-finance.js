@@ -127,7 +127,7 @@ function _tickBrokerInvestments() {
         _brokerEmail.brokerRisk = inv.riskName;
         gameState.emails.push(_brokerEmail);
         if (typeof renderTabEmails === 'function') renderTabEmails();
-        updateUI();
+        if (typeof updateUI === 'function') updateUI();
     });
     // Remove old resolved investments (keep last 5)
     const resolved = gameState.brokerInvestments.filter(i => i.resolved);

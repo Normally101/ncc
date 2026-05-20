@@ -52,10 +52,11 @@ window.cryptoRefresh = async function(force = false) {
     const sb = window.supabaseClient;
     if (!sb) return;
 
+    const uid = window.currentUser?.id;
     const [mRes, pRes, oRes] = await Promise.all([
         sb.from('crypto_market').select('*').order('id'),
         sb.rpc('rpc_get_crypto_portfolio'),
-        sb.from('offshore_accounts').select('*').eq('user_id', (await sb.auth.getUser()).data?.user?.id),
+        sb.from('offshore_accounts').select('*').eq('user_id', uid),
     ]);
 
     if (!mRes.error) window._cryptoState.market    = mRes.data || [];

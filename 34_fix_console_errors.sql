@@ -14,8 +14,10 @@
 DROP POLICY IF EXISTS "hm_select_own_holding" ON public.holding_members;
 DROP POLICY IF EXISTS "hm_select_all"         ON public.holding_members;
 
-CREATE POLICY "hm_select_all" ON public.holding_members
-    FOR SELECT USING (true);
+DO $$ BEGIN
+  CREATE POLICY "hm_select_all" ON public.holding_members
+      FOR SELECT USING (true);
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- ══════════════════════════════════════════════════════════════
 -- FIX 2: rpc_tourism_daily_tick 404 — deploy completo 33_tourism_tenders

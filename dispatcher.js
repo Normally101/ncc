@@ -2418,7 +2418,7 @@ window.hireOfficeStaff = async function(id) {
         return;
     }
 
-    const result = await ServerState.hireDriver(s.name, s.salary, 'STAFF');
+    const result = await window.ServerState?.hireDriver(s.name, s.salary, 'STAFF');
     if (!result) return;
 
     gameState.staff.push(s);
@@ -2572,7 +2572,7 @@ window.openCarConfigurator = function(carId, type) {
         const upTotal = ups.reduce((s, uid) => { const u = CAR_UPGRADES.find(x => x.id === uid); return s + (u ? u.price : 0); }, 0);
         const total   = car.price + upTotal;
 
-        const result = await ServerState.buyVehicle(
+        const result = await window.ServerState?.buyVehicle(
             car.vehicleClass || car.id,
             total,
             ServerState.getCompany()?.hq_city || 'roma'
@@ -2610,7 +2610,7 @@ window.leaseCar = async function(carId) {
     if (!c) return;
     const upFront = Math.floor(c.price * 0.1);
 
-    const result = await ServerState.buyVehicle(
+    const result = await window.ServerState?.buyVehicle(
         c.vehicleClass || c.id,
         upFront,
         ServerState.getCompany()?.hq_city || 'roma'
@@ -3161,7 +3161,7 @@ window.voteServerDecree = async function(decreeId, points) {
     if (error) { if(typeof showNotification==='function') showNotification('Voto fallito: ' + error.message, 'error'); return; }
 
     gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) - pts;
-    if (typeof saveGameState === 'function') saveGameState();
+    if (typeof saveGame === 'function') saveGame();
     if (data.passed) {
         if(typeof showNotification==='function') showNotification(`🎉 Decreto approvato: ${data.title}!`, 'success');
     } else {
@@ -4470,7 +4470,7 @@ window.buyHRAutomation = async function() {
         showNotification(`Driver Coins insufficienti (servono ${cost} DC)`, 'error');
         return;
     }
-    const result = await ServerState.buyHRAutomation(cost, days);
+    const result = await window.ServerState?.buyHRAutomation(cost, days);
     if (!result?.success) return;
 
     gameState.hrAutomationExpiresAt = result.expires_at;
@@ -4504,7 +4504,7 @@ window.doAcquireProvince = async function(provinceId) {
     const offer = parseInt(input?.value, 10);
     if (!offer || offer <= 0) { showNotification('Inserisci un\'offerta valida', 'error'); return; }
     if (gameState.cash < offer) { showNotification('Fondi insufficienti', 'error'); return; }
-    const result = await ServerState.acquireProvince(provinceId, offer);
+    const result = await window.ServerState?.acquireProvince(provinceId, offer);
     if (result?.success) {
         showBigEvent('🏴', `${result.province_name} Conquistata!`, `Investimento: €${offer.toLocaleString()}`);
         renderTabProvinces();
@@ -4620,7 +4620,7 @@ async function renderTabRealEstate() {
 }
 
 window.doBuyRealEstate = async function(listingId) {
-    const result = await ServerState.buyRealEstate(listingId);
+    const result = await window.ServerState?.buyRealEstate(listingId);
     if (result?.success) {
         showBigEvent('🏛', `${result.name} Acquistata!`, `Rendita: €${(result.daily_rent||0).toLocaleString()}/giorno`);
         renderTabRealEstate();

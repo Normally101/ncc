@@ -298,6 +298,8 @@ window.CE_updateBidPreview = function(tenderId, pledgeAmt) {
     if (pEl) pEl.textContent = '€' + (parseInt(pledgeAmt) || 0).toLocaleString('it-IT');
 };
 
+const OPEN_DAYS_LABEL = 2;
+
 /* ─── UI renderer ─────────────────────────────────────────────────────── */
 window.renderTabContracts = function() {
     const container = document.getElementById('tab-container');
@@ -377,8 +379,6 @@ window.renderTabContracts = function() {
 
     </div>`;
 };
-
-const OPEN_DAYS_LABEL = 2;
 
 function _tierBgClass(tier) {
     return ['', 'border-gray-500/20 bg-gray-500/5','border-green-500/20 bg-green-500/5','border-blue-500/20 bg-blue-500/5','border-purple-500/20 bg-purple-500/5','border-yellow-500/20 bg-yellow-500/5'][tier] || 'border-white/10 bg-white/3';

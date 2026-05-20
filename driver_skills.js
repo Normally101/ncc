@@ -149,7 +149,7 @@ window.driverSelectBranch = function(driverId, branch) {
     }
     if (!window.DRIVER_SKILL_TREE[branch]) return;
     st.branch = branch;
-    if (typeof saveGameState === 'function') saveGameState();
+    if (typeof saveGame === 'function') saveGame();
     if (typeof showNotification === 'function')
         showNotification(`✅ ${driver.name} segue il percorso ${window.DRIVER_SKILL_TREE[branch].label}!`, 'success');
     window.renderDriverSkillModal(driverId);
@@ -187,7 +187,7 @@ window.driverUnlockSkill = function(driverId, skillId) {
 
     st.skill_points -= skill.cost;
     st.unlocked.push(skillId);
-    if (typeof saveGameState === 'function') saveGameState();
+    if (typeof saveGame === 'function') saveGame();
     if (typeof showNotification === 'function') showNotification(`⭐ ${driver.name}: "${skill.name}" sbloccata!`, 'success');
     window.renderDriverSkillModal(driverId);
 };
@@ -227,7 +227,7 @@ window.driverPermadeathRoll = function(driver, car) {
             if (gameState.driverObituaries.length > 10) gameState.driverObituaries.shift();
             gameState.drivers.splice(idx, 1);
         }
-        if (typeof saveGameState === 'function') saveGameState();
+        if (typeof saveGame === 'function') saveGame();
     }, 5000);
 
     return true;

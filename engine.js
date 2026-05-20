@@ -345,7 +345,7 @@ window.superchargeVehicle = async function(carId) {
     if (charge >= 100) { showNotification('Batteria già al 100%!', 'error'); return; }
     const cost = 80; // Supercharger flat fee €80
 
-    const result = await ServerState.refuelVehicle(car._serverId, 0, cost);
+    const result = await window.ServerState?.refuelVehicle(car._serverId, 0, cost);
     if (!result) return;
 
     car.chargeLevel = 100;
@@ -878,7 +878,7 @@ function initGame(fresh = true) {
         setInterval(_maybeShadowMission, 150000),
         setInterval(_maybeGenerateDynamicEvent, 180000),
         setInterval(_maybeDiamondContract, 240000),
-        setInterval(checkActiveTrips, 5000),
+        setInterval(() => { if (typeof checkActiveTrips === 'function') checkActiveTrips(); }, 5000),
         // VIP Clients
         setInterval(() => { if (typeof window._maybeVipGrigori  === 'function') window._maybeVipGrigori();  }, 180000),
         setInterval(() => { if (typeof window._maybeVipStrata   === 'function') window._maybeVipStrata();   }, 90000),
@@ -1242,7 +1242,7 @@ window.refillTires = async function(carId) {
     if (missing <= 0) { showNotification('Pressione gomme ottimale!', 'error'); return; }
     const cost = Math.ceil(missing * 0.8);
 
-    const result = await ServerState.refillCarTires(car._serverId, cost);
+    const result = await window.ServerState?.refillCarTires(car._serverId, cost);
     if (!result) return;
 
     car.tirePressure = 100;
@@ -1543,7 +1543,7 @@ window.buyBlackMarketFuel = async function(carId) {
     const price  = (gameState.fuelPrice || 1.85) * 0.60;
     const cost   = Math.floor(litres * price);
 
-    const result = await ServerState.refuelVehicle(car._serverId, Math.ceil(litres), cost);
+    const result = await window.ServerState?.refuelVehicle(car._serverId, Math.ceil(litres), cost);
     if (!result) return;
 
     car.fuel = 100;
@@ -1574,7 +1574,7 @@ window.buyStandardFuel = async function(carId) {
     const price  = gameState.fuelPrice || 1.85;
     const cost   = Math.floor(litres * price);
 
-    const result = await ServerState.refuelVehicle(car._serverId, Math.ceil(litres), cost);
+    const result = await window.ServerState?.refuelVehicle(car._serverId, Math.ceil(litres), cost);
     if (!result) return;
 
     car.fuel = 100;
@@ -1593,7 +1593,7 @@ window.repairEngine = async function(carId) {
     const damage     = 100 - (car.engineHealth || 100);
     const repairCost = Math.max(800, damage * 180);
 
-    const result = await ServerState.repairVehicle(car._serverId, repairCost);
+    const result = await window.ServerState?.repairVehicle(car._serverId, repairCost);
     if (!result) return;
 
     car.engineHealth = 100;
@@ -3475,7 +3475,7 @@ async function payToRepairCar(carId) {
     if (gameState.staff.some(s => s.id === 'mech')) cost = Math.floor(cost * 0.5);
     if (hasInvestment('inv_mobile_workshop')) cost = Math.floor(cost * 0.8);
 
-    const result = await ServerState.repairVehicle(car._serverId, cost);
+    const result = await window.ServerState?.repairVehicle(car._serverId, cost);
     if (!result) return;
 
     car.condition = 100;
@@ -3495,7 +3495,7 @@ async function sellCar(carId) {
     let baseValue = car.tier === 'ultra' ? 180000 : (car.tier === 'vip' ? 70000 : 35000);
     let sellPrice = Math.floor(baseValue * (car.condition / 100) * 0.7);
 
-    const result = await ServerState.sellVehicle(car._serverId, sellPrice);
+    const result = await window.ServerState?.sellVehicle(car._serverId, sellPrice);
     if (!result) return;
 
     let driver = gameState.drivers.find(d => d.assignedCarId === car.id);
@@ -3600,7 +3600,7 @@ async function rest(stars) {
     const energyGain = stars === 3 ? 50  : (stars === 4 ? 75   : 100);
     const repGain    = stars === 5 ? 0.1 : 0;
 
-    const result = await ServerState.restCeo(stars, cost);
+    const result = await window.ServerState?.restCeo(stars, cost);
     if (!result) return;
 
     gameState.energy     = Math.min(100, gameState.energy + energyGain);
@@ -3644,7 +3644,7 @@ async function buyRegion(regionId) {
         return;
     }
 
-    const result = await ServerState.unlockRegion(regionId, region.price);
+    const result = await window.ServerState?.unlockRegion(regionId, region.price);
     if (!result) return;
 
     gameState.unlockedRegions.push(regionId);
@@ -3671,7 +3671,7 @@ async function buyInvestment(invId) {
         }
     }
 
-    const result = await ServerState.buyInvestment(invId, item.price);
+    const result = await window.ServerState?.buyInvestment(invId, item.price);
     if (!result) return;
 
     if (item.buildTime) {

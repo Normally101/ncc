@@ -141,8 +141,8 @@ window.tourismTerminate = async function(tenderId) {
     showBigEvent('⚠️', 'Contratto Rescisso',
         `Penale reputazione: −${(data.rep_penalty || 0).toFixed(2)}★\n\nIl bando tornerà disponibile dopo un periodo di cooldown.`);
     logToMap(`⚠️ Contratto turismo rescisso — penale −${(data.rep_penalty || 0).toFixed(2)}★`);
-    await saveGame();
-    updateUI();
+    saveGame();
+    if (typeof updateUI === 'function') updateUI();
     await window.tourismRefresh(true);
     window.renderTabTourism();
 };
@@ -172,8 +172,8 @@ window._tourismDailyTick = async function() {
         showNotification(`⏳ ${data.expiring_soon} contratto/i turismo in scadenza entro domani!`, 'warning');
     }
 
-    await saveGame();
-    updateUI();
+    saveGame();
+    if (typeof updateUI === 'function') updateUI();
 };
 
 // ── LIVE SCORE PREVIEW ────────────────────────────────────────────────────────

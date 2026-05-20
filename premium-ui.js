@@ -166,7 +166,7 @@ window.updateSidebarStats = function() {
 (function() {
     // Wait until switchTab is defined (it's in dispatcher.js, already loaded)
     const _origSwitch = window.switchTab;
-    if (!_origSwitch) return;
+    if (!_origSwitch) { console.warn('[premium-ui] switchTab not yet defined — hash routing disabled'); return; }
 
     window.switchTab = function(tab) {
         _origSwitch.apply(this, arguments);

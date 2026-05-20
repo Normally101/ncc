@@ -179,7 +179,7 @@ window.shadowUpgradeDefense = async function() {
 
     gameState.cash -= tier.cost;
     gameState._shadowDefenseLevel = data.new_level;
-    if (typeof saveGameState === 'function') saveGameState();
+    if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`🛡️ Difesa aggiornata a Livello ${data.new_level}: ${_DEFENSE_TIERS[data.new_level - 1]?.name}!`, 'success');
     if (typeof window.switchTab === 'function') window.switchTab('shadow');

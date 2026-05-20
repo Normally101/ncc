@@ -210,7 +210,7 @@ window.hqBuildRoom = async function(roomId, slotIndex) {
         gameState._shadowDefenseLevel = Math.min(5, (gameState._shadowDefenseLevel || 0) + fx.shadowDefenseBonus);
     }
 
-    if (typeof saveGameState === 'function') saveGameState();
+    if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();
 
     // Update leaderboard

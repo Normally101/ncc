@@ -695,7 +695,7 @@ window._srmPurchase = async function() {
     const btn = document.getElementById('srm-buy-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Elaborazione acquisto…'; }
 
-    const result = await ServerState.buyVehicle(v.id, total, ServerState.getCompany()?.hq_city || 'roma');
+    const result = await window.ServerState?.buyVehicle(v.id, total, ServerState.getCompany()?.hq_city || 'roma');
     if (!result) {
         if (btn) { btn.disabled = false; btn.textContent = `Acquista ${v.name}`; }
         return;

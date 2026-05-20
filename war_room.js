@@ -479,7 +479,7 @@ window._wrAcquire = async function (provinceId) {
     if (!offer || offer <= 0) { showNotification("Inserisci un'offerta valida", 'error'); return; }
     if (gameState.cash < offer) { showNotification('Fondi insufficienti', 'error'); return; }
     try {
-        const result = await ServerState.acquireProvince(provinceId, offer);
+        const result = await window.ServerState?.acquireProvince(provinceId, offer);
         if (result?.success) {
             showBigEvent('🏴', `${result.province_name} Conquistata!`, `Investimento: €${offer.toLocaleString()}`);
             _wrCache = null;
