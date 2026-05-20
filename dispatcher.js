@@ -1168,7 +1168,18 @@ window.switchTab = function(tab) {
     // Clean up decree countdown ticker when leaving politics tab.
     if (tab !== 'politics' && window._decreesCountdownTimer) { clearInterval(window._decreesCountdownTimer); window._decreesCountdownTimer = null; }
 
-    const _safeRender = (fn) => { try { fn(); } catch(e) { console.error('[switchTab]', e); const _sup = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'; container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}<br><span class="text-gray-500">Se il problema persiste, scrivi a <a href="mailto:${_sup}" class="underline">${_sup}</a></span></div>`; } };
+    const _safeRender = (fn) => {
+        try {
+            fn();
+            container.classList.remove('tab-fade-in');
+            void container.offsetWidth; // force reflow to restart animation
+            container.classList.add('tab-fade-in');
+        } catch(e) {
+            console.error('[switchTab]', e);
+            const _sup = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com';
+            container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}<br><span class="text-gray-500">Se il problema persiste, scrivi a <a href="mailto:${_sup}" class="underline">${_sup}</a></span></div>`;
+        }
+    };
     switch(tab) {
         case 'corse': title.innerText = "Dispatch Center"; _safeRender(renderTabCorse); break;
         case 'ranking': title.innerText = "Global Ranking"; _safeRender(renderTabRanking); break;
