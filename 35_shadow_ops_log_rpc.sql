@@ -4,6 +4,8 @@
 -- IDEMPOTENTE: sicuro da rieseguire.
 -- ============================================================
 
+DROP FUNCTION IF EXISTS public.rpc_get_shadow_ops_log();
+
 CREATE OR REPLACE FUNCTION public.rpc_get_shadow_ops_log()
 RETURNS TABLE (
     id            UUID,
