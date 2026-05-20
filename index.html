@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#00f2ff">
+  <meta name="theme-color" content="#1a2c45">
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
@@ -73,9 +73,12 @@
       colors: {
         gold:     '#c9a227',
         blue:     '#00f2ff',
-        deepBlack:'#080810',
-        panel:    'rgba(8, 8, 20, 0.92)',
-        accent:   '#00f2ff'
+        deepBlack:'#0b1628',
+        navy:     '#1a2c45',
+        'navy-dark': '#111d2e',
+        panel:    'rgba(11, 22, 40, 0.97)',
+        accent:   '#27ae60',
+        cegreen:  '#27ae60'
       },
       fontFamily: {
         sans:    ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
@@ -85,7 +88,7 @@
     } } }
   </script>
 </head>
-<body id="app-body" class="app-bg bg-deepBlack text-gray-300 overflow-hidden font-sans select-none" style="font-size:15px">
+<body id="app-body" class="app-bg bg-deepBlack text-gray-200 overflow-hidden font-sans select-none" style="font-size:15px">
 
   <!-- MAP OVERLAY: shown only on demand, never on startup -->
   <div id="map-overlay" class="fixed inset-0 z-[400] hidden flex-col" style="top:88px">
@@ -117,10 +120,10 @@
   </div>
 
   <!-- TOP BAR -->
-  <header id="top-bar" class="fixed top-0 left-0 right-0 z-50 pointer-events-auto" style="background:rgba(6,6,18,0.97);border-bottom:1px solid rgba(0,242,255,0.13);box-shadow:0 2px 24px rgba(0,0,0,0.7)">
+  <header id="top-bar" class="fixed top-0 left-0 right-0 z-50 pointer-events-auto" style="background:#1a2c45;border-bottom:1px solid rgba(255,255,255,0.08);box-shadow:0 2px 24px rgba(0,0,0,0.5)">
 
     <!-- Row 1: Logo + stats + right actions -->
-    <div class="flex items-center justify-between px-5 py-2" style="border-bottom:1px solid rgba(255,255,255,0.05)">
+    <div class="flex items-center justify-between px-5 py-2" style="border-bottom:1px solid rgba(255,255,255,0.08)">
       <div class="flex items-center gap-4">
         <div class="flex items-center gap-2">
           <img src="assets/ce-favicon.png" alt="CE" class="w-7 h-7 rounded-lg object-contain" onerror="this.style.display='none'">
@@ -242,11 +245,11 @@
   </header>
 
   <!-- ── SIDEBAR PLAYER CARD ─────────────────────────────────── -->
-  <aside id="sidebar-player" class="fixed z-40 flex flex-col" style="top:88px;left:0;width:220px;bottom:26px;background:rgba(8,8,20,0.96);border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto;">
+  <aside id="sidebar-player" class="fixed z-40 flex flex-col" style="top:88px;left:0;width:220px;bottom:26px;background:#162035;border-right:1px solid rgba(255,255,255,0.08);overflow-y:auto;">
 
     <!-- Avatar + Identity -->
-    <div class="flex flex-col items-center pt-5 pb-4 px-4 border-b" style="border-color:rgba(255,255,255,0.06)">
-      <div id="sidebar-avatar" class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-2 select-none" style="background:rgba(201,162,39,0.18);border:2px solid rgba(201,162,39,0.35);color:#c9a227;font-family:'Cinzel',serif"></div>
+    <div class="flex flex-col items-center pt-5 pb-4 px-4 border-b" style="border-color:rgba(255,255,255,0.1)">
+      <div id="sidebar-avatar" class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-2 select-none" style="background:rgba(39,174,96,0.18);border:2px solid rgba(39,174,96,0.4);color:#7ee8a2;font-family:'Cinzel',serif"></div>
       <div id="sidebar-company" class="text-white text-xs font-bold text-center leading-tight" style="font-family:'Cinzel',serif">Chauffeur Empire</div>
       <div class="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">CEO</div>
       <div class="w-full mt-3">
@@ -254,14 +257,14 @@
           <span>Esperienza</span>
           <span id="sidebar-xp-pct">0%</span>
         </div>
-        <div class="w-full h-1 rounded-full" style="background:rgba(255,255,255,0.07)">
-          <div id="sidebar-xp-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#c9a227,#f0d060)"></div>
+        <div class="w-full h-1 rounded-full" style="background:rgba(255,255,255,0.1)">
+          <div id="sidebar-xp-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#27ae60,#7ee8a2)"></div>
         </div>
       </div>
     </div>
 
     <!-- Stats -->
-    <div class="flex flex-col gap-0 py-2 px-1 border-b" style="border-color:rgba(255,255,255,0.06)">
+    <div class="flex flex-col gap-0 py-2 px-1 border-b" style="border-color:rgba(255,255,255,0.1)">
       <div class="flex justify-between items-center px-3 py-1.5 rounded-lg" style="transition:background 0.12s">
         <span class="text-[10px] text-gray-400">⭐ Reputazione</span>
         <span id="sidebar-rep" class="text-[11px] font-bold" style="color:#c9a227">0.0</span>
@@ -290,7 +293,7 @@
         <span class="text-gray-500">🕐 Ora</span>
         <span id="sidebar-time" class="text-white font-bold">08:00</span>
       </div>
-      <button onclick="window.advanceTime && window.advanceTime()" class="btn-gold w-full mt-2 text-[10px] py-2 uppercase tracking-widest">
+      <button onclick="window.advanceTime && window.advanceTime()" class="btn-green w-full mt-2 text-[10px] py-2 uppercase tracking-widest">
         ▶ Avanza Turno
       </button>
     </div>
@@ -475,9 +478,9 @@
     </div>
   </div>
 
-  <main id="main-panel" class="fixed left-0 right-0 z-40 flex flex-col overflow-hidden" style="top:88px;bottom:26px;background:var(--panel);backdrop-filter:blur(20px) saturate(1.4)">
-    <div class="px-6 py-3 border-b flex items-center gap-4 flex-shrink-0" style="border-color:rgba(255,255,255,0.07);background:rgba(255,255,255,0.03)">
-      <h2 id="panel-title" class="text-gold uppercase font-display font-bold tracking-widest text-sm flex-1" style="text-shadow:0 0 10px rgba(212,175,55,0.4)">Centrale Operativa</h2>
+  <main id="main-panel" class="fixed left-0 right-0 z-40 flex flex-col overflow-hidden" style="top:88px;bottom:26px;background:var(--panel)">
+    <div class="px-6 py-3 border-b flex items-center gap-4 flex-shrink-0" style="border-color:rgba(255,255,255,0.08);background:rgba(255,255,255,0.03)">
+      <h2 id="panel-title" class="text-white uppercase font-display font-bold tracking-widest text-sm flex-1">Centrale Operativa</h2>
     </div>
     <div id="tab-container" class="flex-1 overflow-y-auto p-6" style="max-width:1100px;width:100%;margin:0 auto;align-self:center;box-sizing:border-box">
     </div>

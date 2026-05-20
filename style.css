@@ -14,15 +14,15 @@
     --purple:     #a855f7;
 
     /* ── Surface Palette ─────────────────── */
-    --bg:         #050810;
-    --bg2:        #080d18;
-    --bg3:        #0c1020;
-    --panel:      rgba(6, 6, 18, 0.93);
-    --surface:    rgba(255,255,255,0.03);
-    --surface2:   rgba(255,255,255,0.06);
+    --bg:         #0b1628;
+    --bg2:        #0f1d34;
+    --bg3:        #132240;
+    --panel:      rgba(11, 22, 40, 0.97);
+    --surface:    rgba(255,255,255,0.04);
+    --surface2:   rgba(255,255,255,0.07);
 
     /* ── Border ──────────────────────────── */
-    --border:     rgba(0, 242, 255, 0.15);
+    --border:     rgba(255, 255, 255, 0.10);
     --border-sub: rgba(255,255,255,0.07);
     --border-gold:rgba(212,175,55,0.25);
 
@@ -93,8 +93,8 @@ body {
 /* ── Scrollbar ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(0,242,255,0.25); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(0,242,255,0.5); }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
 
 /* ── Map Overlay ─────────────────────────────────────── */
 #map-overlay {
@@ -108,30 +108,30 @@ body {
 .top-nav-btn {
     display: inline-flex; align-items: center; gap: 5px;
     padding: 0 12px; height: 100%;
-    font-size: 11px; font-weight: 600; color: #7788aa;
+    font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.65);
     background: none; border: none; cursor: pointer;
     position: relative; white-space: nowrap;
     transition: color 0.15s ease, background 0.15s ease;
     border-bottom: 2px solid transparent;
 }
-.top-nav-btn:hover { color: #c0d4ff; background: rgba(255,255,255,0.04); }
-.top-nav-btn.active { color: var(--gold); border-bottom-color: var(--gold); }
+.top-nav-btn:hover { color: #ffffff; background: rgba(255,255,255,0.08); }
+.top-nav-btn.active { color: #7ee8a2; border-bottom-color: #27ae60; }
 
 .nav-cat {
     position: relative;
     display: flex; align-items: stretch;
 }
-.nav-cat:hover > .top-nav-btn { color: #c0d4ff; background: rgba(255,255,255,0.04); }
+.nav-cat:hover > .top-nav-btn { color: #ffffff; background: rgba(255,255,255,0.08); }
 
 .nav-drop {
     display: none;
     position: absolute; top: 100%; left: 0;
     min-width: 200px;
-    background: rgba(5, 5, 16, 0.99);
-    border: 1px solid rgba(0, 242, 255, 0.18);
+    background: #162235;
+    border: 1px solid rgba(255,255,255,0.1);
     border-top: none;
     border-radius: 0 0 10px 10px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.85);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
     z-index: 9999;
     padding: 6px 0;
 }
@@ -140,17 +140,17 @@ body {
 .nav-drop-item {
     display: flex; align-items: center; gap: 8px;
     width: 100%; padding: 8px 16px;
-    font-size: 11px; color: #8899bb;
+    font-size: 11px; color: rgba(255,255,255,0.65);
     background: none; border: none; cursor: pointer;
     transition: all 0.12s ease; text-align: left;
 }
 .nav-drop-item:hover {
-    background: rgba(0, 242, 255, 0.07);
+    background: rgba(255,255,255,0.06);
     color: #ffffff; padding-left: 22px;
 }
 
 .nav-drop-divider {
-    height: 1px; background: rgba(255,255,255,0.06); margin: 4px 0;
+    height: 1px; background: rgba(255,255,255,0.08); margin: 4px 0;
 }
 
 .nav-arrow { font-size: 8px; opacity: 0.45; margin-left: 2px; }
@@ -368,6 +368,12 @@ body {
     text-transform: uppercase; font-size: 10px; transition: 0.18s; border: none;
 }
 .btn-gold:hover { background: #eed575; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(212,175,55,0.2); }
+.btn-green {
+    background: #27ae60; color: #fff; font-weight: 700;
+    padding: 7px 13px; border-radius: 8px; cursor: pointer;
+    text-transform: uppercase; font-size: 10px; transition: 0.18s; border: none;
+}
+.btn-green:hover { background: #219a52; transform: translateY(-1px); box-shadow: 0 4px 10px rgba(39,174,96,0.3); }
 
 /* ── Driver Store ────────────────────────────────────────── */
 .store-item-title       { font-size: 1.05rem !important; font-weight: 700; color: #ffffff; line-height: 1.2; }
@@ -384,16 +390,16 @@ body {
 /* ── News Ticker ─────────────────────────────────────── */
 #news-ticker-wrap {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-    background: rgba(5,5,15,0.95); border-top: 1px solid rgba(0,242,255,0.12);
+    background: #111d2e; border-top: 1px solid rgba(255,255,255,0.08);
     padding: 5px 0; overflow: hidden; pointer-events: none;
 }
 #news-ticker-track {
     display: flex; gap: 80px; white-space: nowrap;
     animation: tickerScroll 70s linear infinite;
-    font-size: 10px; color: rgba(0,200,230,0.7); font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; color: rgba(255,255,255,0.5); font-family: 'JetBrains Mono', monospace;
 }
 #news-ticker-track span { flex-shrink: 0; }
-#news-ticker-track span::before { content: '◆  '; color: var(--blue); }
+#news-ticker-track span::before { content: '◆  '; color: #27ae60; }
 
 /* ── Fine / Legal badges ─────────────────────────────── */
 .fine-card { border-left: 3px solid #ff4060; }
@@ -1140,32 +1146,12 @@ details[open] .finance-section-title { color: #00f2ff; }
     position: fixed; inset: 0; z-index: 10000;
     overflow-y: auto;
     font-family: 'Montserrat', 'Inter', sans-serif;
-    /* Foto metropoli notturna con overlay scuro pesante */
     background-image:
-        linear-gradient(rgba(10,14,23,0.88) 0%, rgba(10,14,23,0.97) 100%),
+        linear-gradient(rgba(8,15,30,0.58) 0%, rgba(10,18,32,0.72) 55%, rgba(8,14,26,0.88) 100%),
         url('https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?q=80&w=2000&auto=format&fit=crop');
     background-size: cover;
     background-position: center top;
     background-attachment: fixed;
-}
-
-/* Vignetta dorata angolare — city lights effect */
-#auth-overlay::before {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background:
-        radial-gradient(ellipse 50% 40% at 8% 92%, rgba(212,175,55,0.10) 0%, transparent 55%),
-        radial-gradient(ellipse 40% 30% at 92% 8%,  rgba(212,175,55,0.07) 0%, transparent 55%);
-}
-
-/* Griglia cyber sottile */
-#auth-overlay::after {
-    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
-    background-image:
-        linear-gradient(rgba(212,175,55,0.018) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(212,175,55,0.018) 1px, transparent 1px);
-    background-size: 72px 72px;
-    -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 35%, black 0%, transparent 80%);
-    mask-image: radial-gradient(ellipse 75% 55% at 50% 35%, black 0%, transparent 80%);
 }
 
 /* ── Page wrapper ── */
@@ -1204,17 +1190,17 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 
 .lp-headline {
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Cinzel', 'Orbitron', sans-serif;
     font-size: clamp(26px, 4.5vw, 54px);
     font-weight: 900; line-height: 1.08; letter-spacing: -0.02em; margin: 0;
-    background: linear-gradient(140deg, #ffffff 20%, #e8d080 55%, #d4af37 80%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff;
+    text-shadow: 0 2px 16px rgba(0,0,0,0.55), 0 0 40px rgba(255,255,255,0.08);
 }
 
 .lp-tagline {
     font-size: clamp(13px, 1.6vw, 16px);
-    color: #9ca3af; line-height: 1.75; margin: 0; max-width: 500px;
+    color: rgba(255,255,255,0.82); line-height: 1.75; margin: 0; max-width: 500px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
 .lp-badges {
@@ -1223,14 +1209,15 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 .lp-badge {
     display: inline-flex; align-items: center; gap: 5px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(255,255,255,0.09);
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.28);
     border-radius: 20px; padding: 5px 13px;
-    font-size: 11px; color: #9ca3af;
-    transition: border-color .25s, color .25s;
+    font-size: 11px; color: rgba(255,255,255,0.85);
+    transition: border-color .25s, color .25s, background .25s;
+    backdrop-filter: blur(4px);
 }
-.lp-badge span { color: var(--gold); font-weight: 700; }
-.lp-badge:hover { border-color: rgba(212,175,55,0.3); color: #d1d5db; }
+.lp-badge span { color: #7ee8a2; font-weight: 700; }
+.lp-badge:hover { border-color: rgba(255,255,255,0.5); color: #ffffff; background: rgba(255,255,255,0.22); }
 
 /* Right: login form column */
 .lp-form-col {
@@ -1240,57 +1227,54 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 .lp-glass-card {
     width: 100%;
-    background: rgba(6, 6, 22, 0.78);
-    backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
-    border: 1px solid rgba(212,175,55,0.2);
-    border-radius: 24px; padding: 36px 30px 28px;
-    box-shadow:
-        0 0 0 1px rgba(255,255,255,0.03) inset,
-        0 0 60px rgba(212,175,55,0.06),
-        0 40px 80px rgba(0,0,0,0.65);
+    background: #ffffff;
+    border: none;
+    border-radius: 10px; padding: 28px 24px;
+    box-shadow: 0 12px 48px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .lp-card-eyebrow {
     font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: rgba(212,175,55,0.65); font-family: 'Orbitron', sans-serif;
+    color: #9ca3af; font-family: 'Montserrat', sans-serif;
     margin-bottom: 6px;
 }
 
 .lp-card-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 17px; font-weight: 700; color: #f0f0f8;
-    letter-spacing: 0.04em; margin-bottom: 22px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 17px; font-weight: 800; color: #1a2c45;
+    letter-spacing: 0.01em; margin-bottom: 20px;
 }
 
 .lp-btn-primary {
-    display: block; width: 100%; padding: 12px 20px;
-    background: linear-gradient(135deg, rgba(212,175,55,0.18), rgba(212,175,55,0.08));
-    border: 1px solid rgba(212,175,55,0.45); border-radius: 10px;
-    color: #d4af37; font-family: 'Orbitron', sans-serif;
-    font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-    cursor: pointer; transition: background .2s, border-color .2s, box-shadow .2s;
-    box-shadow: 0 0 0 0 rgba(212,175,55,0);
+    display: block; width: 100%; padding: 13px 20px;
+    background: #27ae60;
+    border: none; border-radius: 8px;
+    color: #ffffff; font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    cursor: pointer; transition: background .18s, box-shadow .18s, transform .12s;
+    box-shadow: 0 3px 10px rgba(39,174,96,0.35);
 }
 .lp-btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(212,175,55,0.3), rgba(212,175,55,0.15));
-    border-color: rgba(212,175,55,0.7); box-shadow: 0 0 18px rgba(212,175,55,0.2);
+    background: #219a52;
+    box-shadow: 0 5px 18px rgba(39,174,96,0.45); transform: translateY(-1px);
 }
+.lp-btn-primary:active:not(:disabled) { transform: translateY(0); }
 .lp-btn-primary:disabled { opacity: .5; cursor: not-allowed; }
 
 .lp-btn-secondary {
-    display: block; width: 100%; padding: 11px 20px;
-    background: transparent;
-    border: 1px solid rgba(212,175,55,0.5); border-radius: 10px;
-    color: rgba(212,175,55,0.75); font-family: 'Orbitron', sans-serif;
-    font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
-    cursor: pointer; transition: border-color .25s, color .25s, box-shadow .25s, background .25s;
+    display: block; width: 100%; padding: 12px 20px;
+    background: #2980b9;
+    border: none; border-radius: 8px;
+    color: #ffffff; font-family: 'Montserrat', sans-serif;
+    font-size: 12px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase;
+    cursor: pointer; transition: background .18s, box-shadow .18s, transform .12s;
+    box-shadow: 0 3px 10px rgba(41,128,185,0.35);
 }
 .lp-btn-secondary:hover:not(:disabled) {
-    border-color: rgba(212,175,55,0.85);
-    color: #d4af37;
-    background: rgba(212,175,55,0.06);
-    box-shadow: 0 0 14px rgba(212,175,55,0.15);
+    background: #2471a3;
+    box-shadow: 0 5px 18px rgba(41,128,185,0.45); transform: translateY(-1px);
 }
+.lp-btn-secondary:active:not(:disabled) { transform: translateY(0); }
 .lp-btn-secondary:disabled { opacity: .5; cursor: not-allowed; }
 
 /* shared form utils (used by landing page form AND sync overlay) */
@@ -1306,25 +1290,35 @@ details[open] .finance-section-title { color: #00f2ff; }
     text-align: left; line-height: 1.5;
 }
 .auth-hint {
-    font-size: 11px; color: #4b5563; text-align: center; margin-top: 2px;
+    font-size: 11px; color: #9ca3af; text-align: center; margin-top: 2px;
 }
 .auth-support-link {
     text-align: center;
     font-size: 10px;
-    color: #6b7280;
+    color: #9ca3af;
     margin-top: 8px;
 }
 .auth-support-link a {
-    color: #d4af37;
+    color: #2980b9;
     text-decoration: underline;
     text-underline-offset: 2px;
 }
 
+/* Light inputs inside white card */
+.lp-glass-card .ss-input {
+    background: #f3f4f6;
+    border: 1px solid #d1d5db;
+    color: #1f2937;
+}
+.lp-glass-card .ss-input:focus { border-color: #27ae60; outline: none; box-shadow: 0 0 0 3px rgba(39,174,96,0.12); }
+.lp-glass-card .ss-input::placeholder { color: #9ca3af; }
+.lp-glass-card .auth-error { background: #fef2f2; border-color: #fca5a5; color: #dc2626; display: none; }
+.lp-glass-card .auth-error[style*="block"] { display: block !important; }
+
 /* ── STATS BAR ── */
 .lp-stats {
-    background: rgba(0,0,6,0.85);
-    border-top:    1px solid rgba(0,242,255,0.07);
-    border-bottom: 1px solid rgba(0,242,255,0.07);
+    background: #1a1f2e;
+    border: none;
     padding: 0 clamp(24px, 7vw, 100px);
     display: flex; justify-content: center; align-items: stretch;
 }
@@ -1333,7 +1327,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     flex: 1; min-width: 140px; max-width: 260px;
     display: flex; flex-direction: column; align-items: center; justify-content: center;
     padding: 24px 16px;
-    border-right: 1px solid rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255,255,255,0.08);
 }
 .lp-stat:last-child { border-right: none; }
 
@@ -1342,14 +1336,13 @@ details[open] .finance-section-title { color: #00f2ff; }
 .lp-stat-val {
     font-family: 'Orbitron', sans-serif;
     font-size: clamp(18px, 2.8vw, 28px); font-weight: 900;
-    color: var(--gold);
-    text-shadow: 0 0 14px rgba(212,175,55,0.35);
+    color: #ffffff;
     letter-spacing: -0.02em;
 }
 
 .lp-stat-label {
     font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em;
-    color: #4b5563; margin-top: 4px;
+    color: rgba(255,255,255,0.45); margin-top: 4px;
 }
 
 /* ── FEATURES ── */
@@ -1361,65 +1354,66 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 
 .lp-feat-card {
-    background: rgba(6,6,22,0.72);
-    border: 1px solid rgba(255,255,255,0.07);
-    border-top: 2px solid var(--gold);
-    border-radius: 20px; padding: 28px 22px;
+    background: rgba(15,25,45,0.70);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-top: 2px solid #27ae60;
+    border-radius: 14px; padding: 28px 22px;
     position: relative; overflow: hidden;
     transition: border-color .3s ease, transform .3s ease, box-shadow .3s ease;
+    backdrop-filter: blur(8px);
     cursor: default;
 }
 .lp-feat-card::before {
     content: ''; position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% -10%, rgba(212,175,55,0.09), transparent 65%);
+    background: radial-gradient(circle at 50% -10%, rgba(39,174,96,0.07), transparent 65%);
     opacity: 0; transition: opacity .35s;
 }
 .lp-feat-card:hover {
-    border-color: rgba(212,175,55,0.6);
-    border-top-color: var(--gold);
+    border-color: rgba(39,174,96,0.45);
+    border-top-color: #27ae60;
     transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(212,175,55,0.15), 0 2px 8px rgba(0,0,0,0.4);
+    box-shadow: 0 10px 30px rgba(39,174,96,0.12), 0 2px 8px rgba(0,0,0,0.4);
 }
 .lp-feat-card:hover::before { opacity: 1; }
 
 /* SVG icon wrapper inside feature cards */
 .lp-feat-icon-wrap {
-    width: 52px; height: 52px;
-    background: rgba(212,175,55,0.07);
-    border: 1px solid rgba(212,175,55,0.18);
-    border-radius: 14px;
+    width: 48px; height: 48px;
+    background: rgba(39,174,96,0.12);
+    border: 1px solid rgba(39,174,96,0.25);
+    border-radius: 12px;
     display: flex; align-items: center; justify-content: center;
     margin-bottom: 18px;
     transition: background .3s, border-color .3s;
 }
 .lp-feat-card:hover .lp-feat-icon-wrap {
-    background: rgba(212,175,55,0.12);
-    border-color: rgba(212,175,55,0.35);
+    background: rgba(39,174,96,0.2);
+    border-color: rgba(39,174,96,0.45);
 }
 
 .lp-feat-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 13px; font-weight: 700; letter-spacing: 0.05em;
-    color: var(--gold); margin-bottom: 10px;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.03em;
+    color: #ffffff; margin-bottom: 10px;
 }
 
-.lp-feat-desc { font-size: 13px; color: #6b7280; line-height: 1.7; }
+.lp-feat-desc { font-size: 13px; color: rgba(255,255,255,0.55); line-height: 1.7; }
 
 /* ── SVG Icon Classes ── */
 .lp-icon-xs {
     width: 13px; height: 13px; flex-shrink: 0;
-    fill: none; stroke: var(--gold);
+    fill: none; stroke: rgba(255,255,255,0.7);
     stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round;
 }
 .lp-icon-stat {
     width: 28px; height: 28px; margin-bottom: 10px;
-    fill: none; stroke: var(--gold);
+    fill: none; stroke: rgba(255,255,255,0.6);
     stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
     opacity: .85;
 }
 .lp-icon-lg {
     width: 24px; height: 24px;
-    fill: none; stroke: var(--gold);
+    fill: none; stroke: #27ae60;
     stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round;
 }
 
@@ -1435,14 +1429,13 @@ details[open] .finance-section-title { color: #00f2ff; }
 /* ── NAVBAR ── */
 .lp-navbar {
     position: sticky; top: 0; z-index: 100;
+    background: #1a2c45;
     padding: 0 clamp(24px, 7vw, 100px);
-    transition: background .3s ease, border-color .3s ease, backdrop-filter .3s ease;
-    border-bottom: 1px solid transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .lp-navbar.lp-navbar-solid {
-    background: rgba(10, 14, 23, 0.96);
-    backdrop-filter: blur(22px); -webkit-backdrop-filter: blur(22px);
-    border-color: rgba(212,175,55,0.10);
+    background: #1a2c45;
+    border-color: rgba(255,255,255,0.08);
 }
 .lp-navbar-inner {
     display: flex; align-items: center; justify-content: space-between;
@@ -1460,84 +1453,83 @@ details[open] .finance-section-title { color: #00f2ff; }
     overflow: hidden; padding: 0;
 }
 .lp-nav-brand {
-    font-size: 13px; font-weight: 700; color: #c9cdd4; letter-spacing: 0.06em;
+    font-size: 13px; font-weight: 700; color: #ffffff; letter-spacing: 0.06em;
 }
 .lp-nav-links { display: flex; align-items: center; gap: 4px; }
 .lp-nav-link {
     display: inline-flex; align-items: center; gap: 5px;
-    font-size: 12px; font-weight: 500; color: #9ca3af;
-    padding: 6px 12px; border-radius: 8px;
+    font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.72);
+    padding: 6px 12px; border-radius: 6px;
     text-decoration: none; letter-spacing: 0.02em;
     transition: color .2s, background .2s;
 }
-.lp-nav-link:hover { color: #e5e7eb; background: rgba(255,255,255,0.05); }
+.lp-nav-link:hover { color: #ffffff; background: rgba(255,255,255,0.1); }
 .lp-nav-discord-link { color: #7289da !important; }
-.lp-nav-discord-link:hover { background: rgba(114,137,218,0.08) !important; }
+.lp-nav-discord-link:hover { background: rgba(114,137,218,0.15) !important; }
 .lp-icon-discord { width: 14px; height: 14px; flex-shrink: 0; }
 .lp-nav-cta {
     display: inline-flex; align-items: center; margin-left: 8px;
-    font-size: 10px; font-weight: 700; color: #d4af37;
-    padding: 7px 16px; border-radius: 8px; text-decoration: none;
-    background: rgba(212,175,55,0.1);
-    border: 1px solid rgba(212,175,55,0.32);
-    font-family: 'Orbitron', sans-serif;
-    letter-spacing: 0.07em; text-transform: uppercase;
-    transition: background .2s, border-color .2s, box-shadow .2s;
+    font-size: 11px; font-weight: 700; color: #ffffff;
+    padding: 8px 18px; border-radius: 6px; text-decoration: none;
+    background: #27ae60;
+    border: none;
+    font-family: 'Montserrat', sans-serif;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    transition: background .18s, box-shadow .18s, transform .12s;
+    box-shadow: 0 2px 8px rgba(39,174,96,0.35);
 }
 .lp-nav-cta:hover {
-    background: rgba(212,175,55,0.2); border-color: rgba(212,175,55,0.6);
-    box-shadow: 0 0 14px rgba(212,175,55,0.15);
+    background: #219a52;
+    box-shadow: 0 4px 14px rgba(39,174,96,0.45); transform: translateY(-1px);
 }
 
 /* ── SECTION HEADERS (shared) ── */
 .lp-section-header { text-align: center; margin-bottom: 44px; }
 .lp-section-eyebrow {
     font-size: 9px; letter-spacing: 0.22em; text-transform: uppercase;
-    color: rgba(212,175,55,0.55); font-family: 'Orbitron', sans-serif; margin-bottom: 10px;
+    color: rgba(255,255,255,0.45); font-family: 'Montserrat', sans-serif; margin-bottom: 10px;
 }
 .lp-section-title {
     font-size: clamp(24px, 3.5vw, 38px); font-weight: 700;
-    color: #f0f0f8; margin: 0; letter-spacing: 0.01em;
-    background: linear-gradient(140deg, #ffffff 30%, #d4af37 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff; margin: 0; letter-spacing: 0.01em;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
 }
 
 /* ── NEWS & PATCH NOTES ── */
 .lp-news-section {
     padding: 80px clamp(24px, 7vw, 100px);
-    background: rgba(0,0,6,0.55);
-    border-top: 1px solid rgba(255,255,255,0.04);
+    background: rgba(0,0,8,0.45);
+    border-top: 1px solid rgba(255,255,255,0.05);
 }
 .lp-news-grid {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;
 }
 .lp-news-card {
-    background: rgba(8,8,22,0.85); border: 1px solid rgba(255,255,255,0.07);
-    border-left: 3px solid rgba(255,255,255,0.08);
-    border-radius: 16px; padding: 24px 20px; position: relative;
+    background: rgba(15,22,40,0.80); border: 1px solid rgba(255,255,255,0.08);
+    border-left: 3px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 24px 20px; position: relative;
     transition: border-color .25s, box-shadow .25s, transform .25s;
-    cursor: pointer; color: inherit;
+    cursor: pointer; color: inherit; backdrop-filter: blur(4px);
 }
 .lp-news-card:hover {
-    border-color: rgba(212,175,55,0.18); transform: translateY(-2px);
+    border-color: rgba(39,174,96,0.25); transform: translateY(-2px);
     box-shadow: 0 8px 24px rgba(0,0,0,0.3);
 }
-.lp-news-hot { border-left-color: var(--gold); }
+.lp-news-hot { border-left-color: #27ae60; }
 .lp-news-badge {
     display: inline-block; font-size: 8px; font-weight: 800; letter-spacing: 0.14em;
-    background: rgba(212,175,55,0.12); color: #d4af37;
-    border: 1px solid rgba(212,175,55,0.28);
+    background: rgba(39,174,96,0.12); color: #27ae60;
+    border: 1px solid rgba(39,174,96,0.28);
     border-radius: 4px; padding: 2px 7px; margin-bottom: 12px;
     text-transform: uppercase;
 }
 .lp-news-date {
-    font-size: 9px; color: #4b5563; text-transform: uppercase;
+    font-size: 9px; color: rgba(255,255,255,0.35); text-transform: uppercase;
     letter-spacing: 0.1em; margin-bottom: 7px;
 }
 .lp-news-title {
-    font-family: 'Orbitron', sans-serif; font-size: 12px; font-weight: 700;
-    color: #e5e7eb; letter-spacing: 0.03em; margin-bottom: 10px; line-height: 1.45;
+    font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700;
+    color: #ffffff; letter-spacing: 0.02em; margin-bottom: 10px; line-height: 1.45;
 }
 .lp-news-body { font-size: 12px; color: #6b7280; line-height: 1.75; }
 
@@ -1560,7 +1552,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 .lp-showcase-slot:hover .lp-showcase-thumb {
     transform: translateY(-5px);
     box-shadow: 0 14px 36px rgba(0,0,0,0.55);
-    border-color: rgba(212,175,55,0.22);
+    border-color: rgba(39,174,96,0.3);
 }
 .lp-st-map  { background: linear-gradient(135deg, #03091c 0%, #071630 60%, #04102a 100%); }
 .lp-st-fleet{ background: linear-gradient(135deg, #130700 0%, #221100 60%, #160800 100%); }
@@ -1582,10 +1574,10 @@ details[open] .finance-section-title { color: #00f2ff; }
     background-size: 28px 28px;
 }
 .lp-showcase-label {
-    font-family: 'Orbitron', sans-serif; font-size: 11px; font-weight: 700;
-    color: #d4af37; letter-spacing: 0.06em; margin-bottom: 5px;
+    font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700;
+    color: #ffffff; letter-spacing: 0.04em; margin-bottom: 5px;
 }
-.lp-showcase-sub { font-size: 11px; color: #6b7280; line-height: 1.65; }
+.lp-showcase-sub { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.65; }
 
 /* ── SHOWCASE EXPAND HINT ── */
 .lp-sc-expand {
@@ -1650,17 +1642,16 @@ details[open] .finance-section-title { color: #00f2ff; }
 /* ── COMMUNITY BOX ── */
 .lp-community {
     padding: 80px clamp(24px, 7vw, 100px);
-    background: rgba(0,0,6,0.55);
-    border-top: 1px solid rgba(255,255,255,0.04);
+    background: #1a1f2e;
+    border-top: 1px solid rgba(255,255,255,0.06);
 }
 .lp-community-inner {
     max-width: 680px; margin: 0 auto;
-    background: rgba(6,6,20,0.88);
-    border: 1px solid rgba(114,137,218,0.18);
-    border-radius: 24px; padding: 52px 40px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 52px 40px;
     text-align: center;
-    backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
-    box-shadow: 0 0 60px rgba(114,137,218,0.04), 0 40px 80px rgba(0,0,0,0.5);
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
     position: relative; overflow: hidden;
 }
 .lp-community-inner::before {
@@ -1696,8 +1687,8 @@ details[open] .finance-section-title { color: #00f2ff; }
 /* ── FOOTER (professional) ── */
 .lp-footer {
     padding: 28px clamp(24px, 7vw, 100px);
-    border-top: 1px solid rgba(255,255,255,0.05);
-    background: rgba(0,0,4,0.75);
+    border-top: 1px solid rgba(255,255,255,0.07);
+    background: #121722;
 }
 .lp-footer-inner {
     display: flex; align-items: center; justify-content: space-between;
@@ -1748,7 +1739,57 @@ details[open] .finance-section-title { color: #00f2ff; }
 
     /* Footer */
     .lp-footer-inner { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .lp-dark-info { grid-template-columns: 1fr; }
 }
+
+/* ── DARK INFO SECTION (3-col, eRepublik style) ──────────────────── */
+.lp-dark-info {
+    background: #1a1f2e;
+    padding: 48px clamp(24px, 7vw, 100px);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 40px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+}
+.lp-dark-info-col h3 {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(255,255,255,0.45); margin: 0 0 20px;
+    font-family: 'Montserrat', sans-serif; font-weight: 700;
+    border-bottom: 1px solid rgba(255,255,255,0.07); padding-bottom: 12px;
+}
+.lp-dark-info-feature {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 16px;
+}
+.lp-dark-info-feature-icon {
+    font-size: 22px; flex-shrink: 0; margin-top: 1px; line-height: 1;
+}
+.lp-dark-info-feature-text { font-size: 12px; color: rgba(255,255,255,0.62); line-height: 1.55; }
+.lp-dark-info-feature-title {
+    font-weight: 700; color: #ffffff; display: block;
+    margin-bottom: 3px; font-size: 13px;
+}
+.lp-rank-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 12px; color: rgba(255,255,255,0.7);
+}
+.lp-rank-row:last-child { border-bottom: none; }
+.lp-rank-num { font-weight: 700; color: rgba(255,255,255,0.35); width: 22px; font-size: 11px; text-align: right; }
+.lp-rank-avatar { width: 22px; height: 22px; border-radius: 50%; background: rgba(39,174,96,0.2); border: 1px solid rgba(39,174,96,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; flex-shrink: 0; }
+.lp-rank-name { flex: 1; font-weight: 600; color: #ffffff; font-size: 12px; }
+.lp-rank-val { color: #27ae60; font-family: 'Roboto Mono', monospace; font-size: 11px; font-weight: 700; }
+.lp-rank-loading { color: rgba(255,255,255,0.3); font-size: 11px; text-align: center; padding: 16px 0; }
+.lp-dark-news-item {
+    padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.lp-dark-news-item:last-child { border-bottom: none; }
+.lp-dark-news-date { font-size: 9px; color: rgba(255,255,255,0.3); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
+.lp-dark-news-title { font-size: 12px; font-weight: 700; color: #ffffff; margin-bottom: 4px; line-height: 1.4; }
+.lp-dark-news-body { font-size: 11px; color: rgba(255,255,255,0.5); line-height: 1.6; }
+
+/* ── Override lightbox close btn gold → green ── */
+.lp-lb-close:hover { background: rgba(39,174,96,0.18); color: #7ee8a2; }
 
 /* ── Daily Reward Modal ──────────────────────────────────────── */
 #daily-reward-modal {
@@ -3159,13 +3200,13 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 /* ── DS: Terminal Card ──────────────────────────────────────── */
 .ds-card {
-    background: rgba(8,8,22,0.85);
+    background: var(--bg2);
     border: 1px solid var(--border-sub);
     border-radius: var(--r-lg);
     padding: var(--sp-xl);
     transition: border-color var(--ease-std), box-shadow var(--ease-std);
 }
-.ds-card:hover { border-color: rgba(0,242,255,0.25); }
+.ds-card:hover { border-color: rgba(255,255,255,0.18); }
 .ds-card--gold  { border-color: var(--border-gold); }
 .ds-card--gold:hover { box-shadow: var(--glow-gold); }
 .ds-card--alert { border-color: rgba(239,68,68,0.35); }
@@ -3181,7 +3222,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 .ds-header-left {}
 .ds-eyebrow {
     font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
-    text-transform: uppercase; color: var(--blue); margin-bottom: 4px;
+    text-transform: uppercase; color: #27ae60; margin-bottom: 4px;
     font-family: var(--font-mono);
 }
 .ds-title {
@@ -3197,7 +3238,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 /* ── DS: KPI Strip ───────────────────────────────────────────── */
 .ds-kpi-strip {
     display: flex; gap: 0;
-    background: rgba(8,8,22,0.9);
+    background: var(--bg2);
     border: 1px solid var(--border-sub);
     border-radius: var(--r-lg);
     overflow: hidden;
@@ -3234,7 +3275,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 /* ── DS: Data Table ─────────────────────────────────────────── */
 .ds-table-wrap {
-    background: rgba(8,8,22,0.85);
+    background: var(--bg2);
     border: 1px solid var(--border-sub);
     border-radius: var(--r-lg);
     overflow: hidden;
@@ -3244,7 +3285,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     font-family: var(--font-mono); font-size: 11px;
 }
 .ds-table thead tr {
-    background: rgba(0,0,0,0.4);
+    background: rgba(0,0,0,0.3);
     border-bottom: 1px solid var(--border-sub);
 }
 .ds-table th {
@@ -3715,10 +3756,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 /* ── 34. Hub glass card (login/company setup): elevated ─────────── */
 .lp-glass-card {
-    box-shadow:
-        0 0 0 1px rgba(255,255,255,0.04) inset,
-        0 0 80px rgba(212,175,55,0.07),
-        0 48px 96px rgba(0,0,0,0.7);
+    box-shadow: 0 12px 48px rgba(0,0,0,0.35), 0 2px 8px rgba(0,0,0,0.15);
 }
 
 /* ── 35. Feature cards landing page: glow top border on hover ───── */

@@ -362,7 +362,7 @@ function _showAuthOverlay() {
             <!-- Destra: Login glassmorphism -->
             <div class="lp-form-col">
                 <div class="lp-glass-card">
-                    <div class="lp-card-eyebrow">Olga Vision Agency</div>
+                    <div class="lp-card-eyebrow">Chauffeur Empire — MMO</div>
                     <div class="lp-card-title">Accedi al tuo Impero</div>
                     <div class="auth-form">
                         <input id="auth-email"    type="email"    placeholder="Email"
@@ -374,8 +374,8 @@ function _showAuthOverlay() {
                                 onclick="window._authLogin()">Accedi →</button>
                         <button id="auth-signup-btn" class="lp-btn-secondary"
                                 onclick="window._authSignup()">Crea Account Gratis</button>
-                        <p class="auth-hint">Nuovo? Premi "Crea Account" per registrarti con email e password.</p>
-                        <p class="auth-support-link"><a href="#" onclick="window._authForgotPassword();return false;" style="color:#60a5fa">Password dimenticata?</a> &nbsp;·&nbsp; <a href="mailto:${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}?subject=Problema%20di%20Accesso">Supporto</a></p>
+                        <p class="auth-hint">Nuovo qui? Crea un account gratis in 30 secondi.</p>
+                        <p class="auth-support-link"><a href="#" onclick="window._authForgotPassword();return false;">Password dimenticata?</a> &nbsp;·&nbsp; <a href="mailto:${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}?subject=Problema%20di%20Accesso">Supporto</a></p>
                     </div>
                 </div>
             </div>
@@ -409,6 +409,63 @@ function _showAuthOverlay() {
             </div>
         </section>
 
+        <!-- ══ DARK INFO — eRepublik 3-col ════════════════════════ -->
+        <section class="lp-dark-info">
+            <div class="lp-dark-info-col">
+                <h3>Come funziona il gioco</h3>
+                <div class="lp-dark-info-feature">
+                    <div class="lp-dark-info-feature-icon">🚗</div>
+                    <div class="lp-dark-info-feature-text">
+                        <span class="lp-dark-info-feature-title">Costruisci la Flotta</span>
+                        Da berline executive a Rolls-Royce presidenziali. Ogni veicolo sblocca contratti VIP e mercati premium.
+                    </div>
+                </div>
+                <div class="lp-dark-info-feature">
+                    <div class="lp-dark-info-feature-icon">👔</div>
+                    <div class="lp-dark-info-feature-text">
+                        <span class="lp-dark-info-feature-title">Gestisci lo Staff</span>
+                        Recluta autisti con abilità uniche. Monitora umore e rendimento, ottimizza le commissioni.
+                    </div>
+                </div>
+                <div class="lp-dark-info-feature">
+                    <div class="lp-dark-info-feature-icon">💹</div>
+                    <div class="lp-dark-info-feature-text">
+                        <span class="lp-dark-info-feature-title">Investi nei Mercati</span>
+                        Borsa valori, crypto, real estate. Moltiplica i profitti del tuo impero con investimenti strategici.
+                    </div>
+                </div>
+                <div class="lp-dark-info-feature">
+                    <div class="lp-dark-info-feature-icon">🗺️</div>
+                    <div class="lp-dark-info-feature-text">
+                        <span class="lp-dark-info-feature-title">Conquista i Territori</span>
+                        Acquisisci licenze regionali, lancia OPA ostili sui competitor e domina le rotte premium.
+                    </div>
+                </div>
+            </div>
+            <div class="lp-dark-info-col">
+                <h3>Top CEO Globali</h3>
+                <div id="lp-ranking-list"><div class="lp-rank-loading">Caricamento classifica...</div></div>
+            </div>
+            <div class="lp-dark-info-col">
+                <h3>Ultimi Aggiornamenti</h3>
+                <div class="lp-dark-news-item">
+                    <div class="lp-dark-news-date">Maggio 2026</div>
+                    <div class="lp-dark-news-title">Update 2.1 — Driver Skills & Daily Rewards</div>
+                    <div class="lp-dark-news-body">Tre nuovi attributi per autista: Velocità, Efficienza e Carisma. Sistema di ricompense giornaliere con streak progressivo.</div>
+                </div>
+                <div class="lp-dark-news-item">
+                    <div class="lp-dark-news-date">Aprile 2026</div>
+                    <div class="lp-dark-news-title">Update 2.0 — Mercati Finanziari & Broker</div>
+                    <div class="lp-dark-news-body">Borsa valori in tempo reale, tre broker a rischio crescente, portafoglio personale multi-asset.</div>
+                </div>
+                <div class="lp-dark-news-item">
+                    <div class="lp-dark-news-date">Marzo 2026</div>
+                    <div class="lp-dark-news-title">Update 1.9 — Classifica Globale Live</div>
+                    <div class="lp-dark-news-body">Infrastruttura server-authoritative su Supabase. Guadagni offline calcolati lato server con protezione anti-cheat.</div>
+                </div>
+            </div>
+        </section>
+
         <!-- ══ NEWS & PATCH NOTES ══════════════════════════════════ -->
         <section class="lp-news-section" id="lp-news">
             <div class="lp-section-header">
@@ -421,19 +478,19 @@ function _showAuthOverlay() {
                     <div class="lp-news-date">Maggio 2026</div>
                     <div class="lp-news-title">Update 2.1 — Driver Skills & Daily Rewards</div>
                     <div class="lp-news-body">Tre nuovi attributi per ogni autista: Velocità, Efficienza e Carisma influenzano guadagni, fatica e velocità delle corse. Aggiunto sistema di ricompense giornaliere con streak progressivo e modal dedicata.</div>
-                    <div style="margin-top:14px;font-size:11px;color:#d4af37;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
+                    <div style="margin-top:14px;font-size:11px;color:#27ae60;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
                 </a>
                 <a href="news.html#v2-0" target="_blank" class="lp-news-card" style="text-decoration:none;display:block">
                     <div class="lp-news-date">Aprile 2026</div>
                     <div class="lp-news-title">Update 2.0 — Mercati Finanziari & Broker</div>
                     <div class="lp-news-body">Borsa valori in tempo reale con azioni volatili e portafoglio personale. Tre broker a rischio crescente: Mutual Fund, Bull Broker, Algo Trader. Investi i profitti del tuo impero per moltiplicare il patrimonio.</div>
-                    <div style="margin-top:14px;font-size:11px;color:#d4af37;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
+                    <div style="margin-top:14px;font-size:11px;color:#27ae60;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
                 </a>
                 <a href="news.html#v1-9" target="_blank" class="lp-news-card" style="text-decoration:none;display:block">
                     <div class="lp-news-date">Marzo 2026</div>
                     <div class="lp-news-title">Update 1.9 — Classifica Globale Live & MMO</div>
                     <div class="lp-news-body">Infrastruttura server-authoritative completamente riscritta su Supabase. Classifiche globali aggiornate in tempo reale. Guadagni offline calcolati lato server con protezione anti-cheat avanzata.</div>
-                    <div style="margin-top:14px;font-size:11px;color:#d4af37;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
+                    <div style="margin-top:14px;font-size:11px;color:#27ae60;font-weight:700;letter-spacing:.04em">Leggi tutto →</div>
                 </a>
             </div>
         </section>
@@ -660,6 +717,31 @@ function _animateLpCounters() {
         };
         requestAnimationFrame(tick);
     });
+    _fetchLpRankings();
+}
+
+async function _fetchLpRankings() {
+    const el = document.getElementById('lp-ranking-list');
+    if (!el || !window.supabaseClient) return;
+    try {
+        const { data } = await window.supabaseClient
+            .from('companies')
+            .select('company_name, cash, reputation')
+            .order('reputation', { ascending: false })
+            .limit(8);
+        if (!data || !data.length) { el.innerHTML = '<div class="lp-rank-loading">Nessun dato disponibile</div>'; return; }
+        const esc = s => String(s || '').replace(/[&<>"']/g, m => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+        const emojis = ['🏆','🥈','🥉','4️⃣','5️⃣','6️⃣','7️⃣','8️⃣'];
+        el.innerHTML = data.map((c, i) => `
+            <div class="lp-rank-row">
+                <div class="lp-rank-num">${emojis[i] || (i+1)}</div>
+                <div class="lp-rank-avatar">🚗</div>
+                <div class="lp-rank-name">${esc(c.company_name || 'CEO')}</div>
+                <div class="lp-rank-val">★${parseFloat(c.reputation || 0).toFixed(1)}</div>
+            </div>`).join('');
+    } catch(e) {
+        el.innerHTML = '<div class="lp-rank-loading">Classifica non disponibile</div>';
+    }
 }
 
 function _setAuthError(msg) {
