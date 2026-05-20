@@ -5,6 +5,66 @@
    Loaded LAST — after all other scripts are defined.
    ================================================================ */
 
+// ── DISPATCH DIAGNOSTICS ─────────────────────────────────────────
+// Run window.diagDispatch() in the browser console to diagnose
+// why rides can't be assigned to drivers.
+
+window.diagDispatch = function() {
+    const gs = window.gameState;
+    if (!gs) { console.error('gameState not found'); return; }
+
+    const TIER_COMPAT = {
+        'ultra':    ['ultra'],
+        'vip':      ['vip', 'ultra', 'group'],
+        'business': ['business', 'vip', 'ultra', 'group'],
+        'standard': ['standard', 'business', 'vip', 'ultra', 'group']
+    };
+
+    console.group('🔍 Dispatch Diagnostics');
+    console.log(`Pending rides: ${gs.pendingRides.length}`);
+    console.log(`Drivers: ${gs.drivers.length}`);
+    console.log(`Fleet: ${gs.fleet.length}`);
+
+    // Sample first ride
+    const ride = gs.pendingRides[0];
+    if (!ride) { console.warn('No pending rides'); console.groupEnd(); return; }
+    console.log('Sample ride:', { id: ride.id, tier: ride.tier, fromPoi: ride.fromPoi?.id, toPoi: ride.toPoi?.id });
+
+    // Check each driver against the sample ride
+    let counts = { ok:0, striking:0, noCar:0, outOfService:0, condition:0, tier:0, queueFull:0, resting:0, b2b:0, intercity:0 };
+    gs.drivers.forEach(d => {
+        if (d.status === 'striking')       { counts.striking++; return; }
+        const car = gs.fleet.find(c => c.id === d.assignedCarId);
+        if (!car)                           { counts.noCar++; return; }
+        if (car.outOfService)              { counts.outOfService++; return; }
+        if (car.condition <= 10)           { counts.condition++; return; }
+        if (!TIER_COMPAT[ride.tier]?.includes(car.tier)) { counts.tier++; return; }
+        if (d.queue.length >= 10)          { counts.queueFull++; return; }
+        if (d.status === 'resting')        { counts.resting++; return; }
+        counts.ok++;
+    });
+    console.table(counts);
+
+    // Show first 3 drivers in detail
+    console.group('First 3 drivers detail');
+    gs.drivers.slice(0, 3).forEach(d => {
+        const car = gs.fleet.find(c => c.id === d.assignedCarId);
+        console.log(`${d.name}:`, {
+            status: d.status,
+            assignedCarId: d.assignedCarId,
+            carFound: !!car,
+            carTier: car?.tier,
+            carCondition: car?.condition,
+            carOutOfService: car?.outOfService,
+            queue: d.queue.length,
+            rideTier: ride.tier,
+            tierCompatible: car ? !!TIER_COMPAT[ride.tier]?.includes(car.tier) : 'N/A'
+        });
+    });
+    console.groupEnd();
+    console.groupEnd();
+};
+
 // ── AVATAR INITIALS COLOR ─────────────────────────────────────────
 
 function _avatarColor(str) {
