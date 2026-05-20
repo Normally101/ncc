@@ -100,129 +100,64 @@
     </div>
   </div>
 
-  <!-- TOP BAR -->
-  <header id="top-bar" class="fixed top-0 left-0 right-0 z-50 pointer-events-auto" style="background:linear-gradient(180deg,#3d6d8e 0%,#4a7fa8 100%);border-bottom:1px solid rgba(0,0,0,0.28);box-shadow:0 2px 12px rgba(0,0,0,0.30)">
+  <!-- TOP BAR: 1 slim row, 42px -->
+  <header id="top-bar" class="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-4 pointer-events-auto"
+          style="height:42px;background:#1e3a5f;border-bottom:1px solid rgba(0,0,0,0.25);box-shadow:0 2px 8px rgba(0,0,0,0.25)">
 
-    <!-- Row 1: Logo + stats + right actions -->
-    <div class="flex items-center justify-between px-5 py-2" style="border-bottom:1px solid rgba(255,255,255,0.08)">
-      <div class="flex items-center gap-4">
-        <div class="flex items-center gap-2">
-          <img src="assets/ce-favicon.png" alt="CE" class="w-7 h-7 rounded-lg object-contain" onerror="this.style.display='none'">
-          <div>
-            <div class="text-gold font-display font-bold tracking-widest text-[10px] uppercase" style="text-shadow:0 0 8px rgba(212,175,55,0.6)">Chauffeur Empire</div>
-            <div class="text-[8px] text-gray-500 uppercase tracking-tighter font-mono">Tycoon Edition</div>
-          </div>
-        </div>
-        <div class="w-px h-6 bg-white/10"></div>
-        <div class="flex items-center gap-5">
-          <div class="flex flex-col">
-            <span class="text-[8px] text-gray-500 uppercase">Liquidità</span>
-            <span id="tb-cash" class="text-green-400 font-mono font-bold text-sm leading-none mt-0.5">€0</span>
-          </div>
-          <div class="flex flex-col">
-            <span class="text-[8px] text-gray-500 uppercase">Reputazione</span>
-            <span id="tb-rep" class="text-gold font-mono font-bold text-sm leading-none mt-0.5">0.0 ★</span>
-          </div>
-          <div class="flex flex-col w-28">
-            <span class="text-[8px] text-gray-500 uppercase flex justify-between"><span>Energia CEO</span><span id="tb-energy-text">100%</span></span>
-            <div class="w-full h-1.5 bg-gray-800 rounded-full mt-1 overflow-hidden cursor-pointer" onclick="openHotelModal()">
-              <div id="tb-energy-bar" class="h-full bg-blue-500 transition-all duration-300" style="width:100%"></div>
-            </div>
-          </div>
-          <div class="flex items-center gap-2">
-            <span id="tb-weather-icon" class="text-lg">☀️</span>
-            <div>
-              <span id="tb-weather-label" class="text-[8px] text-gray-400 uppercase block">Sereno</span>
-              <span id="tb-surge" class="text-[8px] font-bold text-orange-400 hidden">⚡ SURGE</span>
-            </div>
-          </div>
-        </div>
+    <!-- Logo -->
+    <img src="assets/ce-favicon.png" alt="CE" class="w-6 h-6 rounded-md object-contain flex-shrink-0" onerror="this.style.display='none'">
+    <span class="font-display font-bold text-white tracking-widest text-[11px] uppercase flex-shrink-0" style="text-shadow:0 0 8px rgba(201,162,39,0.5)">Chauffeur Empire</span>
+
+    <div class="w-px h-5 bg-white/15 flex-shrink-0"></div>
+
+    <!-- Stat pills -->
+    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0">
+      <span class="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
+      <span id="tb-cash" class="text-white font-mono font-bold text-xs">€0</span>
+    </div>
+    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0">
+      <span class="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0"></span>
+      <span id="tb-rep" class="text-white font-mono font-bold text-xs">0.0★</span>
+    </div>
+    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 cursor-pointer flex-shrink-0" onclick="openHotelModal && openHotelModal()">
+      <span class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
+      <div class="w-16 h-1.5 bg-white/20 rounded-full overflow-hidden">
+        <div id="tb-energy-bar" class="h-full bg-blue-400 transition-all duration-300" style="width:100%"></div>
       </div>
-      <div class="flex items-center gap-3">
-        <div class="flex items-center gap-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded-lg px-2 py-1 cursor-pointer" onclick="switchTab('store')" title="Driver Store">
-          <span class="text-yellow-400 text-xs">🪙</span>
-          <span id="tb-tc" class="text-yellow-300 font-mono font-bold text-sm">50</span>
-        </div>
-        <span id="cloud-sync-dot" title="Cloud sync" onclick="window.forceCloudSave && window.forceCloudSave(); window.forceLeaderboardUpdate && window.forceLeaderboardUpdate()">☁</span>
-        <button id="logout-btn" onclick="window.authLogout()" title="Esci">⏻</button>
-        <div class="w-px h-5 bg-white/10"></div>
-        <div class="text-right">
-          <span id="tb-time" class="text-white font-mono text-lg block leading-none">08:00</span>
-          <span id="tb-date" class="text-[8px] text-gray-400 uppercase">1 Gen</span>
-        </div>
-      </div>
+      <span id="tb-energy-text" class="text-white/70 font-mono text-[10px]">100%</span>
+    </div>
+    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0 cursor-pointer" onclick="switchTab('store')" title="TruckCoin">
+      <span class="text-yellow-400 text-[10px]">🪙</span>
+      <span id="tb-tc" class="text-yellow-300 font-mono font-bold text-xs">50</span>
     </div>
 
-    <!-- Row 2: Navigation -->
-    <nav class="flex items-stretch h-10 px-2">
+    <!-- Weather -->
+    <div class="flex items-center gap-1.5 flex-shrink-0">
+      <span id="tb-weather-icon" class="text-sm">☀️</span>
+      <span id="tb-surge" class="text-[9px] font-bold text-orange-400 hidden">⚡ SURGE</span>
+    </div>
 
-      <button onclick="switchTab('corse')" data-tab="corse" class="top-nav-btn active">🚕 Dispatch</button>
+    <div class="flex-1"></div>
 
-      <div class="nav-cat">
-        <button class="top-nav-btn" data-tab-group="company">🏢 My Company <span class="nav-arrow">▾</span></button>
-        <div class="nav-drop">
-          <button onclick="switchTab('fleet')" data-tab="fleet" class="nav-drop-item">🚘 Garage &amp; Flotta</button>
-          <button onclick="switchTab('showroom')" data-tab="showroom" class="nav-drop-item">✨ Showroom</button>
-          <button onclick="switchTab('staff')" data-tab="staff" class="nav-drop-item">👔 Staff &amp; HR</button>
-          <button onclick="switchTab('hq')" data-tab="hq" class="nav-drop-item">🏗️ HQ Builder</button>
-          <div class="nav-drop-divider"></div>
-          <button onclick="switchTab('emails')" data-tab="emails" class="nav-drop-item">📩 Inbox CEO <span id="mail-dot" class="nav-notif hidden">!</span></button>
-        </div>
-      </div>
+    <!-- Breadcrumb -->
+    <span id="tb-breadcrumb" class="text-white/50 text-[10px] uppercase tracking-widest flex-shrink-0">Dispatch</span>
 
-      <div class="nav-cat">
-        <button class="top-nav-btn" data-tab-group="ops">⚔️ Operations <span class="nav-arrow">▾</span></button>
-        <div class="nav-drop">
-          <button onclick="switchTab('provinces')" data-tab="provinces" class="nav-drop-item">🗺️ War Room</button>
-          <button onclick="switchTab('opa')" data-tab="opa" class="nav-drop-item">🦅 OPA Ostili</button>
-          <button onclick="switchTab('shadow')" data-tab="shadow" class="nav-drop-item">🕵️ Agenzia Ombra</button>
-          <button onclick="switchTab('nemesis')" data-tab="nemesis" class="nav-drop-item">🦹 Nemici VIP</button>
-          <button onclick="switchTab('auctions')" data-tab="auctions" class="nav-drop-item">⚖️ Aste Giudiziarie</button>
-        </div>
-      </div>
+    <div class="w-px h-5 bg-white/15 flex-shrink-0"></div>
 
-      <div class="nav-cat">
-        <button class="top-nav-btn" data-tab-group="market">🛒 Market <span class="nav-arrow">▾</span></button>
-        <div class="nav-drop">
-          <button onclick="switchTab('market')" data-tab="market" class="nav-drop-item">🚗 Mercato Auto</button>
-          <button onclick="switchTab('b2b')" data-tab="b2b" class="nav-drop-item">💼 Contratti B2B</button>
-          <button onclick="switchTab('contracts')" data-tab="contracts" class="nav-drop-item">🤝 Corporate Deals</button>
-          <button onclick="switchTab('tourism')" data-tab="tourism" class="nav-drop-item">🌍 Bandi Turismo</button>
-          <button onclick="switchTab('infrastructure')" data-tab="infrastructure" class="nav-drop-item">⛽ Carburante</button>
-          <button onclick="switchTab('store')" data-tab="store" class="nav-drop-item">💎 Executive Club</button>
-        </div>
-      </div>
+    <!-- Time -->
+    <div class="text-right flex-shrink-0">
+      <span id="tb-time" class="text-white font-mono font-bold text-sm block leading-none">08:00</span>
+      <span id="tb-date" class="text-[8px] text-white/50 uppercase">1 Gen</span>
+    </div>
 
-      <div class="nav-cat">
-        <button class="top-nav-btn" data-tab-group="finance">💹 Finance <span class="nav-arrow">▾</span></button>
-        <div class="nav-drop">
-          <button onclick="switchTab('finance')" data-tab="finance" class="nav-drop-item">💹 Finanza</button>
-          <button onclick="switchTab('realestate')" data-tab="realestate" class="nav-drop-item">🏛️ Real Estate</button>
-          <button onclick="switchTab('crypto')" data-tab="crypto" class="nav-drop-item">₿ Crypto &amp; Offshore</button>
-          <button onclick="switchTab('invest')" data-tab="invest" class="nav-drop-item">📈 Investimenti</button>
-          <button onclick="switchTab('marketing')" data-tab="marketing" class="nav-drop-item">📣 Marketing</button>
-        </div>
-      </div>
+    <!-- Actions -->
+    <span id="cloud-sync-dot" class="text-white/60 text-sm cursor-pointer flex-shrink-0" title="Cloud sync"
+          onclick="window.forceCloudSave && window.forceCloudSave(); window.forceLeaderboardUpdate && window.forceLeaderboardUpdate()">☁</span>
+    <button id="logout-btn" onclick="window.authLogout && window.authLogout()" title="Esci" class="text-white/60 hover:text-white text-sm flex-shrink-0">⏻</button>
+    <button id="sidebar-toggle-btn" onclick="window.toggleSidebar && window.toggleSidebar(true)"
+            class="text-white/60 hover:text-white text-sm flex-shrink-0 hidden lg:hidden">☰</button>
 
-      <div class="nav-cat">
-        <button class="top-nav-btn" data-tab-group="community">👥 Community <span class="nav-arrow">▾</span></button>
-        <div class="nav-drop">
-          <button onclick="switchTab('ranking')" data-tab="ranking" class="nav-drop-item">🏆 Classifica</button>
-          <button onclick="switchTab('career')" data-tab="career" class="nav-drop-item">🎯 Missioni <span id="career-dot" class="nav-notif hidden">!</span></button>
-          <button onclick="switchTab('legal')" data-tab="legal" class="nav-drop-item">⚖️ Ufficio Legale <span id="fine-dot" class="nav-notif hidden">!</span></button>
-          <button onclick="switchTab('regions')" data-tab="regions" class="nav-drop-item">🗺️ Regioni</button>
-          <button onclick="switchTab('politics')" data-tab="politics" class="nav-drop-item">🏛️ Politica</button>
-          <button onclick="switchTab('help')" data-tab="help" class="nav-drop-item">🆘 Supporto</button>
-        </div>
-      </div>
-
-      <!-- Right side quick actions -->
-      <div class="ml-auto flex items-center gap-1 pr-2">
-        <button onclick="window.openMapOverlay()" class="top-nav-btn" title="Apri mappa live" style="color:#00d4e8">🗺️ Live Map</button>
-        <button onclick="window.flyToHQ()" title="Focus HQ" class="top-nav-btn" style="font-size:15px">🎯</button>
-        <span id="hub-event-badge" class="hidden"></span>
-      </div>
-    </nav>
+    <span id="hub-event-badge" class="hidden"></span>
   </header>
 
   <!-- ── SIDEBAR PLAYER CARD ─────────────────────────────────── -->
