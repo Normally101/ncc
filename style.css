@@ -3802,6 +3802,21 @@ details[open] .finance-section-title { color: #00f2ff; }
 /* Border overrides */
 #main-panel .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
 #main-panel .border-white\/20 { border-color: rgba(0,0,0,0.15) !important; }
+#main-panel .border-white\/5  { border-color: rgba(0,0,0,0.06) !important; }
+
+/* bg-white/* → dark-tinted equivalents on light panel */
+#main-panel .bg-white\/3  { background-color: rgba(0,0,0,0.02) !important; }
+#main-panel .bg-white\/5  { background-color: rgba(0,0,0,0.04) !important; }
+#main-panel .bg-white\/10 { background-color: rgba(0,0,0,0.06) !important; }
+
+/* Restore white text inside explicitly-dark Tailwind bg sections (career/quest cards) */
+#main-panel .bg-\[\#111120\] .text-white,
+#main-panel .bg-\[\#0e0e1c\]  .text-white { color: #ffffff !important; }
+#main-panel .bg-\[\#111120\] .text-gray-400 { color: rgba(156,163,175,1) !important; }
+
+/* Finance tab dark-ambience: keep dark bg classes */
+#main-panel .bg-\[\#111120\] { background-color: #111120 !important; }
+#main-panel .bg-\[\#0e0e1c\]  { background-color: #0e0e1c  !important; }
 
 /* Gradient overlay on body — remove on light theme */
 body > .fixed.bg-gradient-to-b { opacity: 0 !important; }

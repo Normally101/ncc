@@ -119,7 +119,7 @@ function renderTabFleet() {
         'Volt':     { color:'#22c55e', bg:'rgba(34,197,94,0.12)',   border:'rgba(34,197,94,0.35)',   icon:'⚡' },
         'Majestic': { color:'#d4af37', bg:'rgba(212,175,55,0.12)',  border:'rgba(212,175,55,0.35)',  icon:'♛' },
     };
-    const _bm = b => _brandMeta[b] || { color:'#9ca3af', bg:'rgba(255,255,255,0.04)', border:'rgba(255,255,255,0.12)', icon:b.charAt(0).toUpperCase() };
+    const _bm = b => _brandMeta[b] || { color:'#9ca3af', bg:'rgba(0,0,0,0.05)', border:'rgba(0,0,0,0.15)', icon:b.charAt(0).toUpperCase() };
 
     const filterBar = (allBrands.length > 1 || allTiers.length > 1) ? `
     <div class="mb-4">
@@ -127,7 +127,7 @@ function renderTabFleet() {
         <div class="text-[8px] text-gray-500 uppercase tracking-widest mb-2">Produttore</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:12px">
             <button onclick="window._fleetFilter.brand=null;renderTabFleet()"
-                style="padding:12px 6px;border-radius:12px;border:1px solid ${!activeBrand ? 'rgba(212,175,55,0.55)' : 'rgba(255,255,255,0.1)'};background:${!activeBrand ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.03)'};text-align:center;cursor:pointer;transition:all .15s">
+                style="padding:12px 6px;border-radius:12px;border:1px solid ${!activeBrand ? 'rgba(212,175,55,0.55)' : 'rgba(0,0,0,0.10)'};background:${!activeBrand ? 'rgba(212,175,55,0.12)' : 'rgba(0,0,0,0.04)'};text-align:center;cursor:pointer;transition:all .15s">
                 <div style="font-size:16px;margin-bottom:4px">🚗</div>
                 <div style="font-size:10px;font-weight:800;color:${!activeBrand ? '#d4af37' : '#9ca3af'}">Tutti</div>
                 <div style="font-size:9px;color:#4b5563;margin-top:2px">${gameState.fleet.length} auto</div>
@@ -150,7 +150,7 @@ function renderTabFleet() {
         <div class="flex flex-wrap gap-1.5">
             <button onclick="window._fleetFilter.tier=null;renderTabFleet()"
                 class="text-[8px] px-2 py-1 rounded-full border transition-colors"
-                style="${!activeTier ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.5);color:#d4af37;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#6b7280'}">
+                style="${!activeTier ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.5);color:#d4af37;font-weight:700' : 'background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.12);color:#6b7280'}">
                 Tutte
             </button>
             ${allTiers.map(t => {
@@ -159,26 +159,57 @@ function renderTabFleet() {
                 const tierVal = isActive ? 'null' : `'${t}'`;
                 return `<button onclick="window._fleetFilter.tier=${tierVal};renderTabFleet()"
                     class="text-[8px] px-2 py-1 rounded-full border transition-colors"
-                    style="${isActive ? 'background:' + tierColors[t] + ';border-color:' + tierBorder[t] + ';color:#e5e7eb;font-weight:700' : 'background:rgba(255,255,255,0.04);border-color:rgba(255,255,255,0.12);color:#9ca3af'}">
+                    style="${isActive ? 'background:' + tierColors[t] + ';border-color:' + tierBorder[t] + ';color:#e5e7eb;font-weight:700' : 'background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.12);color:#9ca3af'}">
                     ${tierLabels[t]||t} <span style="opacity:0.6">${cnt}</span>
                 </button>`;
             }).join('')}
         </div>` : ''}
     </div>` : '';
 
-    const filteredFleet = (gameState.fleet || []).filter(car => {
-        if (window._fleetFilter.brand && _getBrand(car) !== window._fleetFilter.brand) return false;
-        if (window._fleetFilter.tier  && car.tier !== window._fleetFilter.tier) return false;
-        return true;
-    });
+    const filteredFleet = (gameState.fleet || [])
+        .filter(car => {
+            if (window._fleetFilter.brand && _getBrand(car) !== window._fleetFilter.brand) return false;
+            if (window._fleetFilter.tier  && car.tier !== window._fleetFilter.tier) return false;
+            return true;
+        })
+        .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
     const noResults = filteredFleet.length === 0
         ? `<div class="text-[10px] text-gray-600 text-center py-8">Nessun veicolo corrisponde ai filtri selezionati.</div>`
         : '';
 
+    // Pre-compute model groups for headers and bulk actions
+    const _modelGroups = {};
+    filteredFleet.forEach(c => {
+        const m = c.name || 'Altro';
+        if (!_modelGroups[m]) _modelGroups[m] = [];
+        _modelGroups[m].push(c);
+    });
+    const _showModelHeaders = filteredFleet.length >= 3;
+    let _curModelHeader = null;
+
     let html = _fleetHeader + `<div class="p-1">` + fuelTickerHtml + fuelDepotHtml + filterBar + `<div class="ds-eyebrow" style="margin:0 0 10px">Tua Flotta <span style="font-weight:400;color:var(--text-dim)">${filteredFleet.length}/${gameState.fleet.length}</span></div>` + noResults + `<div class="space-y-3 mb-6">`;
 
     filteredFleet.forEach(car => {
+        // Model group header
+        const _carModel = car.name || 'Altro';
+        if (_showModelHeaders && _carModel !== _curModelHeader) {
+            _curModelHeader = _carModel;
+            const _mg = _modelGroups[_carModel];
+            const _mgAvgCond = Math.round(_mg.reduce((s, c) => s + (c.condition || 0), 0) / _mg.length);
+            const _mgCondColor = _mgAvgCond < 40 ? '#ef4444' : _mgAvgCond < 70 ? '#f59e0b' : '#22c55e';
+            const _mgNeedsRepair = _mg.some(c => (c.condition || 0) < 90);
+            const _mgRepairIds = JSON.stringify(_mg.filter(c => (c.condition || 0) < 100).map(c => c.id));
+            html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin:14px -2px 6px;background:rgba(0,0,0,0.04);border-radius:10px;border:1px solid rgba(0,0,0,0.08)">
+                <div>
+                    <span style="font-size:13px;font-weight:800;color:var(--text)">${_carModel}</span>
+                    <span style="font-size:11px;font-weight:600;color:var(--text-muted);margin-left:8px">${_mg.length}×</span>
+                    <span style="font-size:9px;color:#6b7280;margin-left:8px">Cond. media: <span style="color:${_mgCondColor};font-weight:700">${_mgAvgCond}%</span></span>
+                </div>
+                ${_mgNeedsRepair ? `<button onclick="window.bulkRepairFleet(${_mgRepairIds})" style="font-size:8px;padding:5px 10px;border-radius:7px;border:1px solid rgba(212,175,55,0.4);background:rgba(212,175,55,0.10);color:#c9a227;cursor:pointer;white-space:nowrap">🔧 Ripara gruppo</button>` : ''}
+            </div>`;
+        }
+
         if (!car.upgrades) car.upgrades = [];
 
         // Catalog lookup for image + electric type (remap legacy vehicleClass on the fly)
@@ -271,6 +302,9 @@ function renderTabFleet() {
                         ${isReturning    ? `<div class="text-[9px] text-cyan-400 mt-0.5">🏠 In rientro all'Hub…</div>`
                           : poiName && !isAtHub ? `<div class="text-[9px] text-yellow-400 mt-0.5">📍 ${poiName}</div>`
                           : `<div class="text-[9px] text-green-400/60 mt-0.5">🏠 Hub Roma</div>`}
+                        <div style="font-size:9px;margin-top:2px;${assignedDriver ? 'color:#4d6480' : 'color:#ef4444;font-weight:700'}">
+                            ${assignedDriver ? `👤 ${assignedDriver.name}` : '👤 Nessun autista assegnato'}
+                        </div>
                         ${condWarn  ? `<div class="text-[9px] font-bold mt-0.5" style="color:${condColor}">${condWarn}</div>` : ''}
                         ${outLabel  ? `<div class="text-[9px] text-red-400 font-bold mt-0.5">${outLabel}</div>` : ''}
                     </div>
@@ -457,5 +491,18 @@ function renderTabFleet() {
     container.innerHTML = html + `</div></div>`;
 }
 
+
+window.bulkRepairFleet = function(ids) {
+    if (!Array.isArray(ids) || !ids.length) return;
+    let count = 0;
+    ids.forEach(id => {
+        const car = (gameState.fleet || []).find(c => c.id === id);
+        if (car && (car.condition || 0) < 100 && typeof repairVehicle === 'function') {
+            repairVehicle(id);
+            count++;
+        }
+    });
+    if (count > 0) renderTabFleet();
+};
 
 window.renderTabFleet = renderTabFleet;

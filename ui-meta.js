@@ -799,6 +799,12 @@ function renderTabCareer() {
                 <div class="text-[9px] text-gray-400 italic leading-relaxed">"${activeQ.lore}"</div>
             </div>` : ''}
 
+            <!-- How to complete -->
+            <div class="px-4 py-3 border-t border-white/5" style="background:rgba(212,175,55,0.06)">
+                <div class="text-[8px] font-bold uppercase tracking-widest mb-1" style="color:#c9a227">📋 Come completarla</div>
+                <div class="text-[10px] leading-relaxed" style="color:#1a2744">${activeQ.howTo || activeQ.subtitle || 'Segui le indicazioni del tuo mentore per avanzare.'}</div>
+            </div>
+
             <!-- Task box -->
             <div class="px-4 py-3 bg-[#111120] border-t border-white/5">
                 <div class="flex items-center justify-between mb-2">

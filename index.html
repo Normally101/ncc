@@ -612,5 +612,32 @@
     };
     if (typeof window.switchTab === 'function') window.switchTab('corse');
   </script>
+
+  <script>
+  /* ESC key: close overlays / modals, or return to main dispatch tab */
+  document.addEventListener('keydown', function(e) {
+    if (e.key !== 'Escape') return;
+
+    const mapOverlay = document.getElementById('map-overlay');
+    if (mapOverlay && !mapOverlay.classList.contains('hidden')) {
+      if (typeof window.closeMapOverlay === 'function') window.closeMapOverlay();
+      return;
+    }
+
+    const hubModal = document.getElementById('hub-modal');
+    if (hubModal && !hubModal.classList.contains('hidden')) {
+      if (typeof window.closeHub === 'function') window.closeHub();
+      return;
+    }
+
+    const dynModal = document.getElementById('modal-configurator');
+    if (dynModal) { dynModal.remove(); return; }
+
+    const activeItem = document.querySelector('.sidebar-item.active');
+    if (activeItem && activeItem.getAttribute('data-tab') !== 'corse') {
+      if (typeof window.switchTab === 'function') window.switchTab('corse');
+    }
+  });
+  </script>
 </body>
 </html>
