@@ -452,7 +452,11 @@ function _deserializeRide(r) {
         to   = POIS[r.toPoi];
     }
     if (!from || !to) return null;
-    return { ...r, fromPoi: from, toPoi: to };
+    // Normalize legacy vehicleRequired short-IDs saved before fleet renaming
+    const _VC_LEGACY_NORM = { 'mercedes_e': 'stellar_e_exec', 'mercedes_v': 'stellar_v_carr', 'mercedes_sprinter': 'stellar_v_carr', 'mercedes_s': 'stellar_s_imp' };
+    const vr = r.vehicleRequired;
+    const vehicleRequired = vr ? (_VC_LEGACY_NORM[vr] || vr) : vr;
+    return { ...r, fromPoi: from, toPoi: to, vehicleRequired };
 }
 
 function saveGame() {
