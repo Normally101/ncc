@@ -7,11 +7,11 @@
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
-    script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net https://api.mapbox.com;
+    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://api.mapbox.com;
     style-src 'self' 'unsafe-inline' https://api.mapbox.com https://fonts.googleapis.com;
     font-src 'self' https://fonts.gstatic.com;
     img-src 'self' data: blob: https:;
-    connect-src 'self' https://twstjbykstaioaahfqbe.supabase.co wss://twstjbykstaioaahfqbe.supabase.co https://api.mapbox.com https://events.mapbox.com https://api.openweathermap.org;
+    connect-src 'self' https://twstjbykstaioaahfqbe.supabase.co wss://twstjbykstaioaahfqbe.supabase.co https://api.mapbox.com https://events.mapbox.com https://api.openweathermap.org https://cdn.jsdelivr.net;
     worker-src blob:;
     frame-src 'none';
     object-src 'none';
@@ -34,7 +34,7 @@
   <meta property="og:site_name" content="Chauffeur Empire">
 
   <link href='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css' rel='stylesheet' />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="tailwind.min.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Orbitron:wght@500;700;900&family=Roboto+Mono:wght@400;500;700&family=Inter:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -68,25 +68,6 @@
     }
   </style>
 
-  <script>
-    tailwind.config = { theme: { extend: {
-      colors: {
-        gold:     '#c9a227',
-        blue:     '#00f2ff',
-        deepBlack:'#0b1628',
-        navy:     '#1a2c45',
-        'navy-dark': '#111d2e',
-        panel:    'rgba(11, 22, 40, 0.97)',
-        accent:   '#27ae60',
-        cegreen:  '#27ae60'
-      },
-      fontFamily: {
-        sans:    ['Montserrat', 'Inter', 'system-ui', 'sans-serif'],
-        mono:    ['Roboto Mono', 'monospace'],
-        display: ['Cinzel', 'serif']
-      }
-    } } }
-  </script>
 </head>
 <body id="app-body" class="app-bg bg-deepBlack text-gray-200 overflow-hidden font-sans select-none" style="font-size:15px">
 
