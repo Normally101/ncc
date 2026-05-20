@@ -1,101 +1,90 @@
 /* ================================================================
    premium-ui.css — Chauffeur Empire
-   AAA dark-premium visual layer. Loaded AFTER style.css.
-   Never modifies renderTab* output directly — only elevates
-   existing Tailwind utility classes and shell elements.
+   Light-theme premium visual layer. Loaded AFTER style.css.
    ================================================================ */
 
-/* ── 1. BODY BACKGROUND ──────────────────────────────────────── */
+/* ── 1. BODY BACKGROUND — eRepublik-style light ────────────────── */
 
 body {
-  background:
-    radial-gradient(ellipse 60% 40% at 8% 15%, rgba(0,180,255,0.10) 0%, transparent 65%),
-    radial-gradient(ellipse 50% 35% at 92% 85%, rgba(120,0,255,0.09) 0%, transparent 60%),
-    linear-gradient(165deg, #050810 0%, #0a0d1a 55%, #070512 100%);
+  background: #dde3ea;
   background-attachment: fixed;
 }
 
-/* SVG noise texture overlay */
+/* Subtle noise texture (very faint) */
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
-  opacity: 0.032;
+  opacity: 0.012;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
 }
 
-/* ── 2. TOPBAR ELEVATION ─────────────────────────────────────── */
+/* ── 2. TOPBAR — steel-blue eRepublik style ────────────────────── */
 
 #top-bar {
-  background: rgba(5,8,16,0.97) !important;
-  border-bottom: 1px solid rgba(201,162,39,0.18) !important;
-  box-shadow: 0 2px 32px rgba(0,0,0,0.8), 0 1px 0 rgba(201,162,39,0.08) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: linear-gradient(180deg, #3d6d8e 0%, #4a7fa8 100%) !important;
+  border-bottom: 1px solid rgba(0,0,0,0.28) !important;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.28) !important;
+  backdrop-filter: none;
 }
 
 /* Row 1 separator */
 #top-bar > div:first-child {
-  border-bottom: 1px solid rgba(255,255,255,0.045) !important;
+  border-bottom: 1px solid rgba(0,0,0,0.18) !important;
 }
 
 /* Row 1 stat labels */
 #top-bar .text-gray-500.uppercase {
-  color: rgba(180,180,200,0.45);
+  color: rgba(255,255,255,0.55) !important;
   font-size: 7px;
   letter-spacing: 0.08em;
 }
 
-/* Cash in topbar */
-#tb-cash {
-  color: #4ade80 !important;
-  text-shadow: 0 0 12px rgba(74,222,128,0.4);
-}
+/* Cash / rep / values in topbar stay bright on steel-blue */
+#tb-cash { color: #7ee8a2 !important; text-shadow: none; }
+#tb-rep  { color: #ffd875 !important; text-shadow: none; }
 
-/* Reputation in topbar */
-#tb-rep {
-  color: #c9a227 !important;
-  text-shadow: 0 0 10px rgba(201,162,39,0.35);
-}
-
-/* Brand name Cinzel */
+/* Brand name */
 #top-bar .font-display {
   font-family: 'Cinzel', serif !important;
   letter-spacing: 0.18em;
 }
 
-/* Row 2 nav tab active */
+/* Row 2 nav tab active — white + light-blue underline */
 .top-nav-btn.active {
   color: #ffffff !important;
-  border-bottom: 2px solid #c9a227 !important;
+  border-bottom: 3px solid #7fc8e8 !important;
+  background: rgba(0,0,0,0.14) !important;
   text-shadow: none;
 }
 
-/* Row 2 nav tab base */
+/* Row 2 nav tab base — white/70 on steel-blue */
 .top-nav-btn {
   font-size: 10px !important;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgba(200,200,208,0.55) !important;
-  transition: color 0.15s ease;
+  color: rgba(255,255,255,0.70) !important;
+  transition: color 0.15s ease, background 0.15s ease;
 }
 
 .top-nav-btn:hover {
-  color: rgba(200,200,208,0.92) !important;
+  color: #ffffff !important;
+  background: rgba(0,0,0,0.16) !important;
 }
 
-/* Dropdown elevation */
+/* Dropdown — dark steel-blue */
 .nav-drop {
-  background: rgba(5,8,18,0.98) !important;
-  border: 1px solid rgba(255,255,255,0.08) !important;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.7) !important;
-  backdrop-filter: blur(16px);
+  background: #1e3d55 !important;
+  border: 1px solid rgba(0,0,0,0.30) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45) !important;
+  backdrop-filter: none;
 }
 
+.nav-drop-item { color: rgba(255,255,255,0.70) !important; }
 .nav-drop-item:hover {
-  background: rgba(201,162,39,0.08) !important;
+  background: rgba(255,255,255,0.08) !important;
   color: #ffffff !important;
 }
 
@@ -106,110 +95,99 @@ body::before {
 }
 
 #main-panel > div:first-child {
-  background: rgba(255,255,255,0.02) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.05) !important;
+  background: #dde5ef !important;
+  border-bottom: 1px solid #c8d4e0 !important;
 }
 
 #panel-title {
-  font-family: 'Cinzel', serif !important;
+  font-family: 'Montserrat', sans-serif !important;
   font-size: 11px !important;
-  letter-spacing: 0.22em;
+  font-weight: 700 !important;
+  letter-spacing: 0.14em;
+  color: #1a2744 !important;
 }
 
-/* ── 4. CARD ELEVATION ───────────────────────────────────────── */
+/* ── 4. TYPOGRAPHY — light-bg readable ───────────────────────── */
 
-.bg-white\/3,
-.bg-white\/5 {
-  background: rgba(255,255,255,0.028) !important;
-  border: 1px solid rgba(255,255,255,0.07) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04) !important;
-  backdrop-filter: blur(6px);
-  transition: border-color 0.15s ease, transform 0.15s ease;
-}
+.text-gray-400 { color: #5a7090 !important; }
+.text-gray-500 { color: #7a90a4 !important; }
+.text-gray-300 { color: #4a6480 !important; }
 
-.bg-white\/3:hover,
-.bg-white\/5:hover {
-  border-color: rgba(255,255,255,0.13) !important;
-}
-
-/* ── 5. TYPOGRAPHY REFINEMENTS ───────────────────────────────── */
-
-.text-gray-400 { color: #b8b8c8 !important; }
-.text-gray-500 { color: rgba(160,160,180,0.65) !important; }
+/* Status colors — readable on light bg */
+.text-green-400 { color: #16a34a !important; text-shadow: none; }
+.text-red-400   { color: #dc2626 !important; }
+.text-yellow-300, .text-yellow-400 { color: #b8860b !important; }
+.text-orange-400 { color: #d97706 !important; }
 
 /* Section eyebrows */
 .text-gold.uppercase.tracking-widest {
-  font-family: 'Cinzel', serif !important;
-  letter-spacing: 0.22em !important;
+  font-family: 'Montserrat', sans-serif !important;
+  letter-spacing: 0.14em !important;
   font-size: 8.5px !important;
 }
 
-/* Positive/negative values */
-.text-green-400 { color: #4ade80 !important; text-shadow: 0 0 8px rgba(74,222,128,0.22); }
-.text-red-400   { color: #f87171 !important; }
-
-/* btn-secondary */
+/* btn-secondary on light bg */
 .btn-secondary {
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.15);
-  color: rgba(200,200,208,0.85);
+  background: rgba(0,0,0,0.05);
+  border: 1px solid rgba(0,0,0,0.15);
+  color: #4d6480;
   border-radius: 8px;
   padding: 6px 14px;
   font-size: 10px;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
 }
-
 .btn-secondary:hover {
-  background: rgba(255,255,255,0.09);
-  border-color: rgba(255,255,255,0.28);
-  color: #fff;
+  background: rgba(0,0,0,0.09);
+  border-color: rgba(0,0,0,0.25);
+  color: #1a2744;
 }
 
-/* ── 6. SCROLLBAR ─────────────────────────────────────────────── */
+/* ── 5. CARD ELEVATION — light theme ──────────────────────────── */
+
+.bg-white\/3,
+.bg-white\/5 {
+  background: #ffffff !important;
+  border: 1px solid rgba(0,0,0,0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.08) !important;
+  backdrop-filter: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.bg-white\/3:hover,
+.bg-white\/5:hover {
+  border-color: rgba(0,0,0,0.14) !important;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.10) !important;
+}
+
+/* ── 6. SCROLLBAR — dark on light ─────────────────────────────── */
 
 #tab-container::-webkit-scrollbar,
-#sidebar-player::-webkit-scrollbar {
-  width: 4px;
-}
+#sidebar-player::-webkit-scrollbar { width: 4px; }
 
 #tab-container::-webkit-scrollbar-track,
-#sidebar-player::-webkit-scrollbar-track {
-  background: transparent;
-}
+#sidebar-player::-webkit-scrollbar-track { background: rgba(0,0,0,0.04); }
 
 #tab-container::-webkit-scrollbar-thumb,
 #sidebar-player::-webkit-scrollbar-thumb {
-  background: rgba(201,162,39,0.28);
+  background: rgba(0,0,0,0.22);
   border-radius: 2px;
 }
-
 #tab-container::-webkit-scrollbar-thumb:hover,
 #sidebar-player::-webkit-scrollbar-thumb:hover {
-  background: rgba(201,162,39,0.48);
+  background: rgba(0,0,0,0.38);
 }
 
 /* ── 7. SIDEBAR STYLES ────────────────────────────────────────── */
 
-#sidebar-player .btn-gold {
-  font-family: 'Cinzel', serif;
-  letter-spacing: 0.12em;
-}
+/* sidebar is white — keep btn-green readable */
+#sidebar-player .btn-green { font-family: 'Montserrat', sans-serif; letter-spacing: 0.08em; }
 
 /* ── 8. SIDEBAR-AWARE ELEMENT OFFSETS ────────────────────────── */
 
-#news-ticker-wrap {
-  left: 220px !important;
-}
-
-#live-map-overlay {
-  left: 236px !important;
-}
-
-#map-overlay {
-  left: 220px !important;
-}
+#news-ticker-wrap  { left: 220px !important; }
+#live-map-overlay  { left: 236px !important; }
+#map-overlay       { left: 220px !important; }
 
 /* ── 9. MOBILE (< 768px) ─────────────────────────────────────── */
 
@@ -219,23 +197,14 @@ body::before {
     transition: transform 0.25s ease;
     z-index: 55;
   }
-
-  #main-panel {
-    left: 0 !important;
-  }
-
-  #sidebar-toggle-btn {
-    display: block !important;
-  }
-
+  #main-panel        { left: 0 !important; }
+  #sidebar-toggle-btn { display: block !important; }
   #top-bar nav {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-
   #top-bar nav::-webkit-scrollbar { display: none; }
-
   #news-ticker-wrap  { left: 0 !important; }
   #live-map-overlay  { left: 16px !important; }
   #map-overlay       { left: 0 !important; }
