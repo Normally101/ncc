@@ -26,13 +26,28 @@ window.diagDispatch = function() {
     console.log(`Drivers: ${gs.drivers.length}`);
     console.log(`Fleet: ${gs.fleet.length}`);
 
-    // Sample first ride
-    const ride = gs.pendingRides[0];
-    if (!ride) { console.warn('No pending rides'); console.groupEnd(); return; }
-    console.log('Sample ride:', { id: ride.id, tier: ride.tier, fromPoi: ride.fromPoi?.id, toPoi: ride.toPoi?.id });
+    // Ride breakdown
+    const contractRides   = gs.pendingRides.filter(r => r.isContract || r.vehicleRequired);
+    const regularRides    = gs.pendingRides.filter(r => !r.isContract && !r.vehicleRequired);
+    console.log(`Contract/vehicleRequired rides: ${contractRides.length}, Regular rides: ${regularRides.length}`);
+    if (contractRides.length > 0) {
+        const vreqs = [...new Set(contractRides.map(r => r.vehicleRequired))];
+        console.log('vehicleRequired values in pending:', vreqs);
+    }
 
-    // Check each driver against the sample ride
-    let counts = { ok:0, striking:0, noCar:0, outOfService:0, condition:0, tier:0, queueFull:0, resting:0, b2b:0, intercity:0 };
+    // Fleet vehicleClass summary
+    const fleetClasses = gs.fleet.map(c => c.vehicleClass || '(none)');
+    const classCounts = {};
+    fleetClasses.forEach(c => { classCounts[c] = (classCounts[c]||0)+1; });
+    console.log('Fleet vehicleClass breakdown:', classCounts);
+
+    // Sample first regular ride (if any), else first contract
+    const ride = regularRides[0] || gs.pendingRides[0];
+    if (!ride) { console.warn('No pending rides'); console.groupEnd(); return; }
+    console.log('Sample ride:', { id: ride.id, tier: ride.tier, vehicleRequired: ride.vehicleRequired, fromPoi: ride.fromPoi?.id, toPoi: ride.toPoi?.id });
+
+    // Full _driverCanTakeRide mirror (including vehicleRequired)
+    let counts = { ok:0, striking:0, noCar:0, outOfService:0, condition:0, tier:0, vehicleRequired:0, queueFull:0, resting:0 };
     gs.drivers.forEach(d => {
         if (d.status === 'striking')       { counts.striking++; return; }
         const car = gs.fleet.find(c => c.id === d.assignedCarId);
@@ -40,6 +55,7 @@ window.diagDispatch = function() {
         if (car.outOfService)              { counts.outOfService++; return; }
         if (car.condition <= 10)           { counts.condition++; return; }
         if (!TIER_COMPAT[ride.tier]?.includes(car.tier)) { counts.tier++; return; }
+        if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) { counts.vehicleRequired++; return; }
         if (d.queue.length >= 10)          { counts.queueFull++; return; }
         if (d.status === 'resting')        { counts.resting++; return; }
         counts.ok++;
@@ -52,14 +68,15 @@ window.diagDispatch = function() {
         const car = gs.fleet.find(c => c.id === d.assignedCarId);
         console.log(`${d.name}:`, {
             status: d.status,
-            assignedCarId: d.assignedCarId,
-            carFound: !!car,
             carTier: car?.tier,
+            carVehicleClass: car?.vehicleClass,
             carCondition: car?.condition,
             carOutOfService: car?.outOfService,
             queue: d.queue.length,
             rideTier: ride.tier,
-            tierCompatible: car ? !!TIER_COMPAT[ride.tier]?.includes(car.tier) : 'N/A'
+            rideVehicleRequired: ride.vehicleRequired,
+            tierOK: car ? !!TIER_COMPAT[ride.tier]?.includes(car.tier) : false,
+            vehicleClassOK: !ride.vehicleRequired || car?.vehicleClass === ride.vehicleRequired
         });
     });
     console.groupEnd();
