@@ -1,35 +1,35 @@
 :root {
-    /* ── Brand Palette ───────────────────── */
-    --blue:       #38bdf8;
-    --blue2:      #0ea5e9;
-    --blue-dim:   rgba(56,189,248,0.14);
-    --gold:       #f59e0b;
-    --gold-dim:   rgba(245,158,11,0.14);
-    --gold-border:rgba(245,158,11,0.35);
-    --red:        #f87171;
-    --red-dim:    rgba(248,113,113,0.14);
-    --green:      #4ade80;
-    --green-dim:  rgba(74,222,128,0.14);
-    --orange:     #fb923c;
-    --purple:     #c084fc;
+    /* ── Brand Palette — darker for light-bg readability ─── */
+    --blue:       #1d6fa8;
+    --blue2:      #155d91;
+    --blue-dim:   rgba(29,111,168,0.10);
+    --gold:       #b8860b;
+    --gold-dim:   rgba(184,134,11,0.10);
+    --gold-border:rgba(184,134,11,0.30);
+    --red:        #dc2626;
+    --red-dim:    rgba(220,38,38,0.10);
+    --green:      #16a34a;
+    --green-dim:  rgba(22,163,74,0.10);
+    --orange:     #d97706;
+    --purple:     #7c3aed;
 
-    /* ── Surface Palette ─────────────────── */
-    --bg:         #162033;
-    --bg2:        #1c2d44;
-    --bg3:        #223454;
-    --panel:      rgba(22, 32, 51, 0.98);
-    --surface:    rgba(255,255,255,0.06);
-    --surface2:   rgba(255,255,255,0.10);
+    /* ── Surface Palette — eRepublik-style LIGHT ─────────── */
+    --bg:         #e2e8ef;
+    --bg2:        #edf1f6;
+    --bg3:        #f5f7fa;
+    --panel:      #f0f3f7;
+    --surface:    rgba(0,0,0,0.04);
+    --surface2:   rgba(0,0,0,0.08);
 
-    /* ── Border ──────────────────────────── */
-    --border:     rgba(255, 255, 255, 0.13);
-    --border-sub: rgba(255,255,255,0.09);
-    --border-gold:rgba(245,158,11,0.30);
+    /* ── Border — dark-on-light ──────────────────────────── */
+    --border:     rgba(0,0,0,0.13);
+    --border-sub: rgba(0,0,0,0.09);
+    --border-gold:rgba(184,134,11,0.30);
 
-    /* ── Text ────────────────────────────── */
-    --text:       #f1f5f9;
-    --text-muted: #94a3b8;
-    --text-dim:   #64748b;
+    /* ── Text — dark for light bg ────────────────────────── */
+    --text:       #1a2744;
+    --text-muted: #4d6480;
+    --text-dim:   #7a92a8;
 
     /* ── Text shadows ────────────────────── */
     --ts-cyan:    0 0 8px rgba(0,242,255,0.45);
@@ -60,16 +60,16 @@
     --ease-std:   0.18s ease;
     --ease-slow:  0.35s ease;
 
-    /* ── Glow effects ────────────────────── */
-    --glow-blue:  0 0 20px rgba(56,189,248,0.30);
-    --glow-gold:  0 0 20px rgba(245,158,11,0.30);
-    --glow-red:   0 0 20px rgba(248,113,113,0.35);
-    --glow-green: 0 0 20px rgba(74,222,128,0.30);
+    /* ── Glow effects — toned for light bg ─ */
+    --glow-blue:  0 0 14px rgba(29,111,168,0.22);
+    --glow-gold:  0 0 14px rgba(184,134,11,0.22);
+    --glow-red:   0 0 14px rgba(220,38,38,0.22);
+    --glow-green: 0 0 14px rgba(22,163,74,0.22);
 }
 
 body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: var(--bg);
+    background: #e2e8ef;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -91,8 +91,8 @@ body {
 /* ── Scrollbar ────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.18); border-radius: 10px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.35); }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.22); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.38); }
 
 /* ── Map Overlay ─────────────────────────────────────── */
 #map-overlay {
@@ -102,18 +102,19 @@ body {
 #map-overlay:not(.hidden) { display: flex; flex-direction: column; }
 #leaflet-map { flex: 1; position: relative; min-height: 0; }
 
-/* ── Top Navigation Bar ──────────────────────────────── */
+/* ── Top Navigation Bar — steel-blue eRepublik style ─── */
 .top-nav-btn {
     display: inline-flex; align-items: center; gap: 5px;
-    padding: 0 12px; height: 100%;
-    font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.65);
+    padding: 0 14px; height: 100%;
+    font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.75);
     background: none; border: none; cursor: pointer;
     position: relative; white-space: nowrap;
     transition: color 0.15s ease, background 0.15s ease;
-    border-bottom: 2px solid transparent;
+    border-bottom: 3px solid transparent;
+    letter-spacing: 0.02em;
 }
-.top-nav-btn:hover { color: #ffffff; background: rgba(255,255,255,0.08); }
-.top-nav-btn.active { color: #7ee8a2; border-bottom-color: #27ae60; }
+.top-nav-btn:hover { color: #ffffff; background: rgba(0,0,0,0.15); }
+.top-nav-btn.active { color: #ffffff; border-bottom-color: #7fc8e8; background: rgba(0,0,0,0.12); }
 
 .nav-cat {
     position: relative;
@@ -125,11 +126,11 @@ body {
     display: none;
     position: absolute; top: 100%; left: 0;
     min-width: 200px;
-    background: #162235;
-    border: 1px solid rgba(255,255,255,0.1);
+    background: #1e3d55;
+    border: 1px solid rgba(0,0,0,0.25);
     border-top: none;
     border-radius: 0 0 10px 10px;
-    box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.45);
     z-index: 9999;
     padding: 6px 0;
 }
@@ -3206,7 +3207,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     padding: var(--sp-xl);
     transition: border-color var(--ease-std), box-shadow var(--ease-std);
 }
-.ds-card:hover { border-color: rgba(255,255,255,0.18); }
+.ds-card:hover { border-color: rgba(0,0,0,0.22); box-shadow: 0 4px 16px rgba(0,0,0,0.10); }
 .ds-card--gold  { border-color: var(--border-gold); }
 .ds-card--gold:hover { box-shadow: var(--glow-gold); }
 .ds-card--alert { border-color: rgba(239,68,68,0.35); }
@@ -3285,7 +3286,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     font-family: var(--font-mono); font-size: 11px;
 }
 .ds-table thead tr {
-    background: rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.06);
     border-bottom: 1px solid var(--border-sub);
 }
 .ds-table th {
@@ -3297,11 +3298,11 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .ds-table td {
     padding: 10px 12px; color: var(--text);
-    border-bottom: 1px solid rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
     vertical-align: middle;
 }
 .ds-table tbody tr:last-child td { border-bottom: none; }
-.ds-table tbody tr:hover td { background: rgba(255,255,255,0.03); }
+.ds-table tbody tr:hover td { background: rgba(0,0,0,0.04); }
 .ds-table .col-right { text-align: right; }
 .ds-table .col-center { text-align: center; }
 
@@ -3359,12 +3360,12 @@ details[open] .finance-section-title { color: #00f2ff; }
     background: transparent; color: var(--text-muted);
     border-color: var(--border-sub);
 }
-.ds-btn--ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.25); background: var(--surface); }
+.ds-btn--ghost:hover { color: var(--text); border-color: rgba(0,0,0,0.25); background: var(--surface); }
 .ds-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
 /* ── DS: Progress Bar ───────────────────────────────────────── */
 .ds-progress {
-    height: 6px; background: rgba(255,255,255,0.08);
+    height: 6px; background: rgba(0,0,0,0.12);
     border-radius: 4px; overflow: hidden;
 }
 .ds-progress-fill {
@@ -3778,17 +3779,77 @@ details[open] .finance-section-title { color: #00f2ff; }
 /* ── 39. Cantiere marker: brighter ──────────────────────────────── */
 .cantiere-marker { box-shadow: 0 0 10px rgba(245,158,11,0.8); }
 
-/* ── 40. Ambient page scanline (ultra-subtle) ────────────────────── */
-#main-panel::before {
-    content: '';
-    position: absolute; inset: 0; z-index: 0;
-    background-image: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,0.025) 2px,
-        rgba(0,0,0,0.025) 4px
-    );
-    pointer-events: none; border-radius: inherit;
-}
+/* ── 40. Remove scanline on light bg ─────────────────────────────── */
+#main-panel::before { display: none; }
+
+/* ════════════════════════════════════════════════════════════════
+   LIGHT THEME — eRepublik-style chrome overrides
+   Override hardcoded Tailwind dark classes inside main content +
+   sidebar so they read correctly on the new light backgrounds.
+   ════════════════════════════════════════════════════════════════ */
+
+/* Top-bar: steel-blue metallic */
+#top-bar { background: linear-gradient(180deg, #2a4d6a 0%, #345f7e 100%) !important; border-bottom-color: rgba(0,0,0,0.25) !important; }
+#top-bar nav { background: rgba(0,0,0,0.12); }
+
+/* Sidebar: white card */
+#sidebar-player { background: #ffffff !important; border-right-color: #cfd8e3 !important; }
+#sidebar-player .text-white    { color: #1a2744 !important; }
+#sidebar-player .text-gray-400 { color: #5a7090 !important; }
+#sidebar-player .text-gray-500 { color: #7a90a4 !important; }
+#sidebar-player .text-green-400 { color: #16a34a !important; }
+#sidebar-player .text-gold, #sidebar-player [style*="color:#c9a227"] { color: #b8860b !important; }
+
+/* Main panel header strip */
+#main-panel > div:first-child { background: #e0e8f0 !important; border-bottom-color: rgba(0,0,0,0.10) !important; }
+#main-panel #panel-title { color: #1a2744 !important; }
+
+/* Override hardcoded Tailwind dark text inside main-panel content */
+#main-panel .text-white:not(button):not(.ds-btn):not([class*="btn-"]) { color: #1a2744 !important; }
+#main-panel .text-gray-200 { color: #2a3e58 !important; }
+/* text-gray-300/400/500 stay as-is — readable on light bg naturally */
+
+/* Override hardcoded dark bg classes inside main-panel */
+#main-panel .bg-black\/50  { background: rgba(0,0,0,0.05) !important; }
+#main-panel .bg-black\/60  { background: rgba(0,0,0,0.07) !important; }
+#main-panel .bg-black\/80  { background: rgba(0,0,0,0.09) !important; }
+#main-panel .bg-gray-950   { background: #eaecf0 !important; }
+#main-panel .bg-gray-900   { background: #e8ecf1 !important; }
+#main-panel .bg-gray-800   { background: #e0e6ec !important; }
+
+/* Border overrides */
+#main-panel .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
+#main-panel .border-white\/20 { border-color: rgba(0,0,0,0.15) !important; }
+
+/* Gradient overlay on body — remove on light theme */
+body > .fixed.bg-gradient-to-b { opacity: 0 !important; }
+
+/* ds-card shadow on light bg */
+.ds-card { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.ds-kpi-strip { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.ds-table-wrap { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+/* Finance card variables — keep as dark "terminal" aesthetic inside finance tab */
+/* Lifestyle, Finance remain with their own dark ambience (intentional contrast) */
+
+/* HQ / hud-card light bg adaptation */
+.hud-card { background: #ffffff; border-color: rgba(0,0,0,0.10); }
+.hud-card:hover { background: #f0f8f3; border-color: rgba(22,163,74,0.30); box-shadow: 0 2px 8px rgba(22,163,74,0.10); }
+
+/* Notification light bg */
+.notif { background: rgba(255,255,255,0.96) !important; color: #1a2744 !important; border-left-color: #16a34a; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+.notif.error-notif { border-left-color: #dc2626; }
+
+/* News ticker light */
+#news-ticker-wrap { background: #dce4ec; border-top-color: rgba(0,0,0,0.12); }
+#news-ticker-track { color: #4d6480; }
+#news-ticker-track span::before { color: #16a34a; }
+
+/* Top bar stats text adaptation */
+#top-bar .text-gold, #top-bar [style*="color:#c9a227"] { color: #ffd875 !important; }
+#top-bar .text-gray-500, #top-bar .text-gray-400 { color: rgba(255,255,255,0.55) !important; }
+#top-bar .text-green-400 { color: #7ee8a2 !important; }
+
+/* XP bar track on light sidebar */
+#sidebar-player [style*="background:rgba(255,255,255,0.1)"] { background: rgba(0,0,0,0.10) !important; }
 

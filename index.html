@@ -120,7 +120,7 @@
   </div>
 
   <!-- TOP BAR -->
-  <header id="top-bar" class="fixed top-0 left-0 right-0 z-50 pointer-events-auto" style="background:#1e3354;border-bottom:1px solid rgba(255,255,255,0.12);box-shadow:0 2px 20px rgba(0,0,0,0.4)">
+  <header id="top-bar" class="fixed top-0 left-0 right-0 z-50 pointer-events-auto" style="background:linear-gradient(180deg,#2a4d6a 0%,#345f7e 100%);border-bottom:1px solid rgba(0,0,0,0.30);box-shadow:0 2px 16px rgba(0,0,0,0.35)">
 
     <!-- Row 1: Logo + stats + right actions -->
     <div class="flex items-center justify-between px-5 py-2" style="border-bottom:1px solid rgba(255,255,255,0.08)">
@@ -245,60 +245,60 @@
   </header>
 
   <!-- ── SIDEBAR PLAYER CARD ─────────────────────────────────── -->
-  <aside id="sidebar-player" class="fixed z-40 flex flex-col" style="top:88px;left:0;width:220px;bottom:26px;background:#1c2f4a;border-right:1px solid rgba(255,255,255,0.12);overflow-y:auto;">
+  <aside id="sidebar-player" class="fixed z-40 flex flex-col" style="top:88px;left:0;width:220px;bottom:26px;background:#ffffff;border-right:1px solid #cfd8e3;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,0.08);">
 
     <!-- Avatar + Identity -->
-    <div class="flex flex-col items-center pt-5 pb-4 px-4 border-b" style="border-color:rgba(255,255,255,0.1)">
-      <div id="sidebar-avatar" class="w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold mb-2 select-none" style="background:rgba(39,174,96,0.18);border:2px solid rgba(39,174,96,0.4);color:#7ee8a2;font-family:'Cinzel',serif"></div>
-      <div id="sidebar-company" class="text-white text-xs font-bold text-center leading-tight" style="font-family:'Cinzel',serif">Chauffeur Empire</div>
-      <div class="text-[9px] text-gray-500 mt-0.5 uppercase tracking-wider">CEO</div>
+    <div class="flex flex-col items-center pt-5 pb-4 px-4 border-b" style="border-color:#cfd8e3">
+      <div id="sidebar-avatar" class="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mb-2 select-none" style="background:#e8f5ef;border:2px solid #a7d9bb;color:#16a34a;font-family:'Cinzel',serif"></div>
+      <div id="sidebar-company" class="text-xs font-bold text-center leading-tight mt-1" style="color:#1a2744;font-family:'Montserrat',sans-serif">Chauffeur Empire</div>
+      <div class="text-[9px] mt-0.5 uppercase tracking-wider" style="color:#7a90a4">CEO</div>
       <div class="w-full mt-3">
-        <div class="flex justify-between text-[8px] text-gray-500 mb-1">
+        <div class="flex justify-between text-[8px] mb-1" style="color:#7a90a4">
           <span>Esperienza</span>
           <span id="sidebar-xp-pct">0%</span>
         </div>
-        <div class="w-full h-1 rounded-full" style="background:rgba(255,255,255,0.1)">
-          <div id="sidebar-xp-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#27ae60,#7ee8a2)"></div>
+        <div class="w-full h-1.5 rounded-full" style="background:rgba(0,0,0,0.10)">
+          <div id="sidebar-xp-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
         </div>
       </div>
     </div>
 
     <!-- Stats -->
-    <div class="flex flex-col gap-0 py-2 px-1 border-b" style="border-color:rgba(255,255,255,0.1)">
+    <div class="flex flex-col gap-0 py-2 px-1 border-b" style="border-color:#cfd8e3">
       <div class="flex justify-between items-center px-3 py-1.5 rounded-lg" style="transition:background 0.12s">
-        <span class="text-[10px] text-gray-400">⭐ Reputazione</span>
-        <span id="sidebar-rep" class="text-[11px] font-bold" style="color:#c9a227">0.0</span>
+        <span class="text-[10px]" style="color:#5a7090">⭐ Reputazione</span>
+        <span id="sidebar-rep" class="text-[11px] font-bold" style="color:#b8860b">0.0</span>
       </div>
       <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
-        <span class="text-[10px] text-gray-400">💰 Cash</span>
-        <span id="sidebar-cash" class="text-[11px] font-bold text-green-400">€0</span>
+        <span class="text-[10px]" style="color:#5a7090">💰 Cash</span>
+        <span id="sidebar-cash" class="text-[11px] font-bold" style="color:#16a34a">€0</span>
       </div>
       <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
-        <span class="text-[10px] text-gray-400">🚗 Flotta</span>
-        <span id="sidebar-fleet" class="text-[11px] font-bold text-white">0</span>
+        <span class="text-[10px]" style="color:#5a7090">🚗 Flotta</span>
+        <span id="sidebar-fleet" class="text-[11px] font-bold" style="color:#1a2744">0</span>
       </div>
       <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
-        <span class="text-[10px] text-gray-400">👥 Dipendenti</span>
-        <span id="sidebar-staff" class="text-[11px] font-bold text-white">0</span>
+        <span class="text-[10px]" style="color:#5a7090">👥 Dipendenti</span>
+        <span id="sidebar-staff" class="text-[11px] font-bold" style="color:#1a2744">0</span>
       </div>
     </div>
 
     <!-- Time + Advance -->
     <div class="flex flex-col gap-2 px-4 py-4">
       <div class="flex justify-between text-[10px]">
-        <span class="text-gray-500">📅 Giorno</span>
-        <span id="sidebar-day" class="text-white font-bold">1</span>
+        <span style="color:#7a90a4">📅 Giorno</span>
+        <span id="sidebar-day" class="font-bold" style="color:#1a2744">1</span>
       </div>
       <div class="flex justify-between text-[10px]">
-        <span class="text-gray-500">🕐 Ora</span>
-        <span id="sidebar-time" class="text-white font-bold">08:00</span>
+        <span style="color:#7a90a4">🕐 Ora</span>
+        <span id="sidebar-time" class="font-bold" style="color:#1a2744">08:00</span>
       </div>
       <button onclick="window.advanceTime && window.advanceTime()" class="btn-green w-full mt-2 text-[10px] py-2 uppercase tracking-widest">
         ▶ Avanza Turno
       </button>
     </div>
 
-    <button id="sidebar-close-btn" onclick="window.toggleSidebar && window.toggleSidebar(false)" class="absolute top-2 right-2 text-gray-500 hover:text-white text-xs hidden">✕</button>
+    <button id="sidebar-close-btn" onclick="window.toggleSidebar && window.toggleSidebar(false)" class="absolute top-2 right-2 text-xs hidden" style="color:#7a90a4">✕</button>
   </aside>
 
   <!-- Mobile sidebar toggle (visible only on small screens via CSS) -->
@@ -479,8 +479,8 @@
   </div>
 
   <main id="main-panel" class="fixed left-0 right-0 z-40 flex flex-col overflow-hidden" style="top:88px;bottom:26px;background:var(--panel)">
-    <div class="px-6 py-3 border-b flex items-center gap-4 flex-shrink-0" style="border-color:rgba(255,255,255,0.08);background:rgba(255,255,255,0.03)">
-      <h2 id="panel-title" class="text-white uppercase font-display font-bold tracking-widest text-sm flex-1">Centrale Operativa</h2>
+    <div class="px-6 py-3 border-b flex items-center gap-4 flex-shrink-0" style="border-color:#cdd6e0;background:#e8eef5">
+      <h2 id="panel-title" class="uppercase font-display font-bold tracking-widest text-sm flex-1" style="color:#1a2744">Centrale Operativa</h2>
     </div>
     <div id="tab-container" class="flex-1 overflow-y-auto p-6" style="max-width:1100px;width:100%;margin:0 auto;align-self:center;box-sizing:border-box">
     </div>
