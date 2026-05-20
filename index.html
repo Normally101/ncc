@@ -160,65 +160,119 @@
     <span id="hub-event-badge" class="hidden"></span>
   </header>
 
-  <!-- ── SIDEBAR PLAYER CARD ─────────────────────────────────── -->
-  <aside id="sidebar-player" class="fixed z-40 flex flex-col" style="top:88px;left:0;width:220px;bottom:26px;background:#ffffff;border-right:1px solid #cfd8e3;overflow-y:auto;box-shadow:2px 0 8px rgba(0,0,0,0.08);">
+  <!-- SIDEBAR: dark accordion navigation, 160px -->
+  <aside id="sidebar-player" class="fixed z-40 flex flex-col overflow-hidden"
+         style="top:42px;left:0;width:160px;bottom:0;background:#1e2d45;border-right:1px solid rgba(255,255,255,0.06);overflow-y:auto">
 
-    <!-- Avatar + Identity -->
-    <div class="flex flex-col items-center pt-5 pb-4 px-4 border-b" style="border-color:#cfd8e3">
-      <div id="sidebar-avatar" class="w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mb-2 select-none" style="background:#e8f5ef;border:2px solid #a7d9bb;color:#16a34a;font-family:'Cinzel',serif"></div>
-      <div id="sidebar-company" class="text-xs font-bold text-center leading-tight mt-1" style="color:#1a2744;font-family:'Montserrat',sans-serif">Chauffeur Empire</div>
-      <div class="text-[9px] mt-0.5 uppercase tracking-wider" style="color:#7a90a4">CEO</div>
-      <div class="w-full mt-3">
-        <div class="flex justify-between text-[8px] mb-1" style="color:#7a90a4">
-          <span>Esperienza</span>
-          <span id="sidebar-xp-pct">0%</span>
+    <!-- Logo strip -->
+    <div class="flex items-center gap-2 px-3 py-3 flex-shrink-0" style="background:#162030;border-bottom:1px solid rgba(255,255,255,0.06)">
+      <div id="sidebar-avatar" class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 select-none"
+           style="background:rgba(201,162,39,0.2);border:1px solid rgba(201,162,39,0.4);color:#c9a227;font-family:'Cinzel',serif">CE</div>
+      <div class="min-w-0">
+        <div id="sidebar-company" class="text-[10px] font-bold text-white truncate leading-tight" style="font-family:'Montserrat',sans-serif">Chauffeur Empire</div>
+        <div class="text-[8px] text-white/40 uppercase tracking-wider">CEO</div>
+      </div>
+    </div>
+
+    <!-- Accordion nav -->
+    <nav id="sidebar-nav" class="flex-1 overflow-y-auto py-1">
+
+      <!-- OPERATIVO -->
+      <div class="sidebar-group" data-group="operativo">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('operativo')">
+          <span class="text-sm">🚕</span>
+          <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Operativo</span>
+          <span class="sidebar-chev text-[8px] text-white/30">▶</span>
+        </button>
+        <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
+          <a class="sidebar-item" data-tab="corse"     onclick="switchTab('corse')"     href="#">🚕 Dispatch</a>
+          <a class="sidebar-item" data-tab="fleet"     onclick="switchTab('fleet')"     href="#">🚘 Flotta</a>
+          <a class="sidebar-item" data-tab="staff"     onclick="switchTab('staff')"     href="#">👔 Staff & HR</a>
+          <a class="sidebar-item" data-tab="hq"        onclick="switchTab('hq')"        href="#">🏗️ HQ Builder</a>
+          <a class="sidebar-item" data-tab="showroom"  onclick="switchTab('showroom')"  href="#">✨ Showroom</a>
+          <a class="sidebar-item" data-tab="emails"    onclick="switchTab('emails')"    href="#">📩 Inbox <span id="mail-dot" class="nav-notif hidden">!</span></a>
         </div>
-        <div class="w-full h-1.5 rounded-full" style="background:rgba(0,0,0,0.10)">
-          <div id="sidebar-xp-bar" class="h-full rounded-full transition-all duration-500" style="width:0%;background:linear-gradient(90deg,#16a34a,#4ade80)"></div>
+      </div>
+
+      <!-- BUSINESS -->
+      <div class="sidebar-group" data-group="business">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('business')">
+          <span class="text-sm">💼</span>
+          <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Business</span>
+          <span class="sidebar-chev text-[8px] text-white/30">▶</span>
+        </button>
+        <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
+          <a class="sidebar-item" data-tab="b2b"            onclick="switchTab('b2b')"            href="#">💼 Contratti B2B</a>
+          <a class="sidebar-item" data-tab="contracts"      onclick="switchTab('contracts')"      href="#">🤝 Corporate Deals</a>
+          <a class="sidebar-item" data-tab="tourism"        onclick="switchTab('tourism')"        href="#">🌍 Bandi Turismo</a>
+          <a class="sidebar-item" data-tab="infrastructure" onclick="switchTab('infrastructure')" href="#">⛽ Carburante</a>
+          <a class="sidebar-item" data-tab="store"          onclick="switchTab('store')"          href="#">💎 Executive Club</a>
+          <a class="sidebar-item" data-tab="auctions"       onclick="switchTab('auctions')"       href="#">⚖️ Aste Giudiziarie</a>
+          <a class="sidebar-item" data-tab="market"         onclick="switchTab('market')"         href="#">🚗 Mercato Auto</a>
         </div>
       </div>
-    </div>
 
-    <!-- Stats -->
-    <div class="flex flex-col gap-0 py-2 px-1 border-b" style="border-color:#cfd8e3">
-      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg" style="transition:background 0.12s">
-        <span class="text-[10px]" style="color:#5a7090">⭐ Reputazione</span>
-        <span id="sidebar-rep" class="text-[11px] font-bold" style="color:#b8860b">0.0</span>
+      <!-- FINANZA -->
+      <div class="sidebar-group" data-group="finanza">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('finanza')">
+          <span class="text-sm">💹</span>
+          <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Finanza</span>
+          <span class="sidebar-chev text-[8px] text-white/30">▶</span>
+        </button>
+        <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
+          <a class="sidebar-item" data-tab="finance"    onclick="switchTab('finance')"    href="#">💹 Finanza</a>
+          <a class="sidebar-item" data-tab="realestate" onclick="switchTab('realestate')" href="#">🏛️ Real Estate</a>
+          <a class="sidebar-item" data-tab="crypto"     onclick="switchTab('crypto')"     href="#">₿ Crypto & Offshore</a>
+          <a class="sidebar-item" data-tab="invest"     onclick="switchTab('invest')"     href="#">📈 Investimenti</a>
+          <a class="sidebar-item" data-tab="marketing"  onclick="switchTab('marketing')"  href="#">📣 Marketing</a>
+        </div>
       </div>
-      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
-        <span class="text-[10px]" style="color:#5a7090">💰 Cash</span>
-        <span id="sidebar-cash" class="text-[11px] font-bold" style="color:#16a34a">€0</span>
-      </div>
-      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
-        <span class="text-[10px]" style="color:#5a7090">🚗 Flotta</span>
-        <span id="sidebar-fleet" class="text-[11px] font-bold" style="color:#1a2744">0</span>
-      </div>
-      <div class="flex justify-between items-center px-3 py-1.5 rounded-lg">
-        <span class="text-[10px]" style="color:#5a7090">👥 Dipendenti</span>
-        <span id="sidebar-staff" class="text-[11px] font-bold" style="color:#1a2744">0</span>
-      </div>
-    </div>
 
-    <!-- Time + Advance -->
-    <div class="flex flex-col gap-2 px-4 py-4">
-      <div class="flex justify-between text-[10px]">
-        <span style="color:#7a90a4">📅 Giorno</span>
-        <span id="sidebar-day" class="font-bold" style="color:#1a2744">1</span>
+      <!-- POTERE -->
+      <div class="sidebar-group" data-group="potere">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('potere')">
+          <span class="text-sm">🕵️</span>
+          <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Potere</span>
+          <span class="sidebar-chev text-[8px] text-white/30">▶</span>
+        </button>
+        <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
+          <a class="sidebar-item" data-tab="provinces" onclick="switchTab('provinces')" href="#">🗺️ War Room</a>
+          <a class="sidebar-item" data-tab="regions"   onclick="switchTab('regions')"   href="#">🗺️ Regioni</a>
+          <a class="sidebar-item" data-tab="politics"  onclick="switchTab('politics')"  href="#">🏛️ Politica</a>
+          <a class="sidebar-item" data-tab="shadow"    onclick="switchTab('shadow')"    href="#">🕵️ Agenzia Ombra</a>
+          <a class="sidebar-item" data-tab="nemesis"   onclick="switchTab('nemesis')"   href="#">🦹 Nemici VIP</a>
+          <a class="sidebar-item" data-tab="opa"       onclick="switchTab('opa')"       href="#">🦅 OPA Ostili</a>
+        </div>
       </div>
-      <div class="flex justify-between text-[10px]">
-        <span style="color:#7a90a4">🕐 Ora</span>
-        <span id="sidebar-time" class="font-bold" style="color:#1a2744">08:00</span>
-      </div>
-      <button onclick="window.advanceTime && window.advanceTime()" class="btn-green w-full mt-2 text-[10px] py-2 uppercase tracking-widest">
-        ▶ Avanza Turno
-      </button>
-    </div>
 
-    <button id="sidebar-close-btn" onclick="window.toggleSidebar && window.toggleSidebar(false)" class="absolute top-2 right-2 text-xs hidden" style="color:#7a90a4">✕</button>
+      <!-- INFO -->
+      <div class="sidebar-group" data-group="info">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('info')">
+          <span class="text-sm">🏆</span>
+          <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Info</span>
+          <span class="sidebar-chev text-[8px] text-white/30">▶</span>
+        </button>
+        <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
+          <a class="sidebar-item" data-tab="ranking" onclick="switchTab('ranking')" href="#">🏆 Classifica</a>
+          <a class="sidebar-item" data-tab="career"  onclick="switchTab('career')"  href="#">🎯 Missioni <span id="career-dot" class="nav-notif hidden">!</span></a>
+          <a class="sidebar-item" data-tab="legal"   onclick="switchTab('legal')"   href="#">⚖️ Ufficio Legale <span id="fine-dot" class="nav-notif hidden">!</span></a>
+          <a class="sidebar-item" data-tab="help"    onclick="switchTab('help')"    href="#">🆘 Supporto</a>
+        </div>
+      </div>
+
+      <!-- Advance turn at bottom -->
+      <div class="px-3 py-3 mt-2 border-t" style="border-color:rgba(255,255,255,0.06)">
+        <button onclick="window.advanceTime && window.advanceTime()"
+                class="w-full text-[9px] font-bold uppercase tracking-widest py-2 rounded-lg transition-all active:scale-95"
+                style="background:rgba(201,162,39,0.15);border:1px solid rgba(201,162,39,0.35);color:#c9a227">
+          ▶ Avanza Turno
+        </button>
+      </div>
+    </nav>
+
+    <button id="sidebar-close-btn" onclick="window.toggleSidebar && window.toggleSidebar(false)"
+            class="absolute top-2 right-2 text-xs text-white/40 hidden">✕</button>
   </aside>
-
-  <!-- Mobile sidebar toggle (visible only on small screens via CSS) -->
-  <button id="sidebar-toggle-btn" onclick="window.toggleSidebar && window.toggleSidebar(true)" class="fixed z-50 hidden" style="top:96px;left:8px;background:rgba(8,8,20,0.9);border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:6px 8px;color:#c9a227;font-size:14px">☰</button>
 
   <!-- SMART HUB MODAL -->
   <div id="hub-modal" class="hub-modal hidden" onclick="if(event.target===this)window.closeHub()">
@@ -394,7 +448,7 @@
     </div>
   </div>
 
-  <main id="main-panel" class="fixed left-0 right-0 z-40 flex flex-col overflow-hidden" style="top:88px;bottom:26px;background:var(--panel)">
+  <main id="main-panel" class="fixed right-0 z-40 flex flex-col overflow-hidden" style="top:42px;bottom:0;left:160px;background:var(--panel)">
     <div class="px-6 py-3 border-b flex items-center gap-4 flex-shrink-0" style="border-color:#cdd6e0;background:#e8eef5">
       <h2 id="panel-title" class="uppercase font-display font-bold tracking-widest text-sm flex-1" style="color:#1a2744">Centrale Operativa</h2>
     </div>
