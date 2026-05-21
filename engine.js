@@ -461,8 +461,23 @@ function _deserializeRide(r) {
 
 function saveGame() {
     if (typeof window.saveCurrentSlot === 'function' && window.currentSlotIndex !== null) {
+        gameState.lastOnlineTimestamp = Date.now();
         window.saveCurrentSlot();
         _showSaveIndicator();
+    }
+}
+
+function _processOfflineCatchup() {
+    const lastOnline = gameState.lastOnlineTimestamp || 0;
+    if (!lastOnline) return;
+    const elapsedMs   = Date.now() - lastOnline;
+    const elapsedDays = Math.min(7, Math.floor(elapsedMs / (24 * 60 * 60 * 1000)));
+    if (elapsedDays < 1) return;
+    for (let i = 0; i < elapsedDays; i++) {
+        processDailyRoutines();
+    }
+    if (typeof showNotification === 'function') {
+        showNotification(`💤 Offline per ${elapsedDays} giorno${elapsedDays > 1 ? 'i' : ''} — redditi processati.`, 'info');
     }
 }
 
@@ -4895,6 +4910,7 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     if (!fresh) {
         const loaded = loadGame();
         initGame(!loaded);
+        setTimeout(_processOfflineCatchup, 800); // run after initGame fully wires up UI
     } else {
         initGame(true);
     }
