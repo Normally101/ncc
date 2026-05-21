@@ -866,8 +866,8 @@ function initGame(fresh = true) {
 
     _gameIntervals.push(
         setInterval(gameLoop, 600),
-        setInterval(generatePOIRide, 6000),
-        setInterval(generateContractRide, 9000),  // 40% mix: 1 contract every 9s vs POI every 6s
+        setInterval(generatePOIRide, 5 * 60 * 1000),      // every 5 min real time
+        setInterval(generateContractRide, 8 * 60 * 1000),  // every 8 min real time
         setInterval(generateEmailEvent, 40000),
         setInterval(generateWorldNews, 60000),
         setInterval(_maybeGenerateFine, 90000),
@@ -2624,7 +2624,7 @@ function processDailyRoutines() {
 
 // ─── GENERAZIONE CORSE ───
 function generatePOIRide(tierOverride = null) {
-    if (gameState.pendingRides.length > 20) return null;
+    if ((gameState.pendingRides || []).length >= 15) return null;
     // Pricing strategy: premium = 30% fewer rides available; discount = 30% chance of an extra ride
     const _pStrat = gameState.pricingStrategy || 'standard';
     if (_pStrat === 'premium' && Math.random() < 0.30) return null;
