@@ -40,12 +40,12 @@ function renderTabRegions() {
             const canAfford = (gameState.cash||0) >= r.price;
             const canBuy    = hasRep && canAfford && !owned;
 
-            const borderColor = owned ? 'rgba(212,175,55,0.4)' : hasRep ? 'rgba(255,255,255,0.07)' : 'rgba(239,68,68,0.15)';
-            const bgColor     = owned ? 'rgba(212,175,55,0.06)' : 'rgba(8,8,22,0.8)';
+            const borderColor = owned ? 'rgba(212,175,55,0.4)' : hasRep ? 'rgba(0,0,0,0.08)' : 'rgba(239,68,68,0.35)';
+            const bgColor     = owned ? 'rgba(212,175,55,0.06)' : 'rgba(255,255,255,0.92)';
 
             html += `<div style="background:${bgColor};border:1px solid ${borderColor};border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
-                    <div style="font-size:11px;font-weight:700;color:${owned ? '#d4af37' : '#e0e0ff'}">${r.name}</div>
+                    <div style="font-size:11px;font-weight:700;color:${owned ? '#d4af37' : 'var(--text)'}">${r.name}</div>
                     ${owned ? `<span class="ds-pill ds-pill--gold">ATTIVA</span>` : ''}
                 </div>
                 <div style="font-size:9px;color:${hasRep ? '#6b7280' : '#ef4444'};font-family:var(--font-mono)">
