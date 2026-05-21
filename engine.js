@@ -2810,6 +2810,18 @@ const TIER_COMPATIBILITY = {
     'standard': ['standard', 'business', 'vip', 'ultra', 'group']
 };
 
+function _getRideDurationMs(ride) {
+    const price = ride.sellingPrice || ride.basePrice || ride.price || 150;
+    let minutes = Math.max(10, Math.min(360, price * 0.4));
+    const type = (ride.type || '').toLowerCase();
+    if (type === 'airport' || type === 'rail' || type === 'port') minutes *= 0.7;
+    else if (type === 'boat') minutes *= 1.3;
+    const fromRegion = ride.fromPoi?.region || '';
+    const toRegion   = ride.toPoi?.region   || '';
+    if (fromRegion && toRegion && fromRegion !== toRegion) minutes *= 1.5;
+    return Math.round(minutes) * 60 * 1000;
+}
+
 function assignRideToDriver(rideId, driverId) {
     const rideIdx = gameState.pendingRides.findIndex(r => r.id == rideId);
     const driver = gameState.drivers.find(d => d.id == driverId);
@@ -3067,9 +3079,9 @@ function startNextRide(driver) {
 
     gameState.activeRides.push(ride);
 
-    // Real-time trip entry: 2 min city, 10 min intercity (accelerated for testing)
+    // Real-time trip duration derived from route price (€1 ≈ 0.4 min, capped 10–360 min)
     const _isIntercity = ride.fromPoi.region !== ride.toPoi.region;
-    const _realMs      = _isIntercity ? 10 * 60 * 1000 : 2 * 60 * 1000;
+    const _realMs      = _getRideDurationMs(ride);
     gameState.activeTrips.push({
         id:         ride.id,
         driverId:   driver.id,
