@@ -919,11 +919,21 @@ function _getItalyTime() {
 
 function gameLoop() {
     if (gameState.paused) return;
-    gameState.minute += 5;
 
-    if (gameState.minute >= 60) {
-        gameState.minute = 0; gameState.hour++;
-        gameState.energy = Math.max(0, gameState.energy - 0.5);
+    const _ita      = _getItalyTime();
+    const _prevHour = gameState.hour;
+    const _prevDay  = gameState.day;
+    const _prevMin  = gameState.minute;
+
+    // Sync game time to Italian real time
+    gameState.hour   = _ita.hour;
+    gameState.minute = _ita.minute;
+    gameState.month  = _ita.month;
+    gameState.day    = _ita.gameDay;   // monotonically increasing day counter
+
+    // Hourly mechanics — fire only when real Italian hour changes
+    if (gameState.hour !== _prevHour) {
+        gameState.energy = Math.max(0, gameState.energy - 5);   // 5% per real hour
         _tickFatigue();
         _tickWeather();
         _tickEmails();
@@ -940,8 +950,8 @@ function gameLoop() {
         _updateCreditScore();
         if (hasInvestment('inv_app')) { generatePOIRide(); generatePOIRide(); }
         if (hasInvestment('inv_hangar')) generatePOIRide('ultra');
-        // Talent Scout: aggiorna pool ogni 3 ore di gioco
-        if (gameState.staff.some(s => s.id === 'talent_scout') && gameState.hour % 3 === 0) {
+        // Talent Scout: refresh pool every 3 real hours
+        if (gameState.staff.some(s => s.id === 'talent_scout') && _ita.hour % 3 === 0) {
             _refreshRecruits();
         }
         // Stagionalità: genera corse extra nelle alte stagioni
@@ -952,9 +962,7 @@ function gameLoop() {
         _acList.forEach(ac => {
             const _camp = MARKETING_CAMPAIGNS.find(c => c.id === ac.id);
             if (!_camp) return;
-            // Volume bonus → extra standard rides
             if (_camp.volumeBonus > 0 && Math.random() < _camp.volumeBonus) generatePOIRide();
-            // Prestige bonus → extra VIP rides
             if (_camp.prestigeBonus > 0 && Math.random() < _camp.prestigeBonus * 0.5) generatePOIRide('vip');
         });
         // Brand Volume threshold → extra standard rides
@@ -969,22 +977,18 @@ function gameLoop() {
         else if (_bp >= 25 && Math.random() < 0.10) generatePOIRide('vip');
     }
 
-    // Rival AI tick ogni 15 minuti di gioco
-    if (gameState.minute % 15 === 0) _tickRivalsActive();
+    // Rival AI tick — only when minute changes to a 15-min boundary (prevents multi-fire)
+    if (gameState.minute !== _prevMin && gameState.minute % 15 === 0) _tickRivalsActive();
 
-    autoDispatchRides();
-    _kickstartIdleDrivers(); // safety net: riavvia driver idle con coda non vuota
-
-    if (gameState.hour >= 24) {
-        gameState.hour = 0;
-        gameState.day++;
-        if (gameState.day > 30) {
-            gameState.day = 1;
-            gameState.month = (gameState.month % 12) + 1;
-        }
+    // Daily mechanics — fire only when game day counter increments
+    if (gameState.day !== _prevDay) {
         processDailyRoutines();
     }
 
+    autoDispatchRides();
+    _kickstartIdleDrivers();
+
+    // Visual trip simulation loop (also triggers VIP events and deferred-pay earnings)
     for (let i = gameState.activeRides.length - 1; i >= 0; i--) {
         let ride = gameState.activeRides[i];
 
@@ -992,7 +996,7 @@ function gameLoop() {
         if (!ride._trafficChecked && Math.random() < 0.05) {
             ride._trafficChecked = true;
             ride.inTraffic = true;
-            ride._trafficClearsAt = ride.elapsed + Math.floor(ride.duration * 0.4); // traffic for 40% of remaining
+            ride._trafficClearsAt = ride.elapsed + Math.floor(ride.duration * 0.4);
             if (typeof showNotification === 'function') showNotification(`🚦 Traffico intenso verso ${ride.toPoi?.name || '?'}! Rallentamento previsto.`, 'error');
             logToMap(`🚦 Traffico: ${ride.toPoi?.name || ''} — velocità dimezzata.`);
         }
@@ -1005,21 +1009,20 @@ function gameLoop() {
         // VIP/Ultra mid-ride event (10% chance, once per ride, only when not paused)
         if (!ride._vipEventChecked && (ride.tier === 'vip' || ride.tier === 'ultra') && Math.random() < 0.10 && !gameState.paused) {
             ride._vipEventChecked = true;
-            if (ride.elapsed > ride.duration * 0.15) { // only after 15% of ride
+            if (ride.elapsed > ride.duration * 0.15) {
                 _triggerVIPMidRideEvent(ride);
             }
         }
 
         ride.elapsed += ride.inTraffic ? 2500 : 5000;
         if (ride.elapsed >= ride.duration) {
-            completeRide(ride, true); // cash deferred to checkActiveTrips
+            completeRide(ride, true); // earnings deferred to checkActiveTrips
             gameState.activeRides.splice(i, 1);
         }
     }
 
     // Day/night cycle update
     if (typeof _updateDayNight === 'function') _updateDayNight();
-    // Il visual update è gestito nel dispatcher tramite requestAnimationFrame
     updateUI();
 }
 
