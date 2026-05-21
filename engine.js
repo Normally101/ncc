@@ -4671,7 +4671,8 @@ function updateUI() {
     const elEText = document.getElementById('tb-energy-text'); if(elEText) elEText.innerText = `${Math.round(gameState.energy)}%`;
     const elTime = document.getElementById('tb-time'); if(elTime) elTime.innerText = `${String(gameState.hour).padStart(2, '0')}:${String(gameState.minute).padStart(2, '0')}`;
     const MONTHS = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-    const elDate = document.getElementById('tb-date'); if(elDate) elDate.innerText = `${gameState.day} ${MONTHS[gameState.month-1]}`;
+    const _itaNow = _getItalyTime();
+    const elDate = document.getElementById('tb-date'); if(elDate) elDate.innerText = `Giorno ${gameState.day} · ${_itaNow.day} ${MONTHS[_itaNow.month-1]}`;
     // Meteo
     const ws = WEATHER_STATES.find(w => w.id === gameState.weather);
     const elWIcon  = document.getElementById('tb-weather-icon');  if(elWIcon)  elWIcon.innerText  = ws?.icon  || '☀️';
