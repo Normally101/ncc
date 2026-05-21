@@ -3789,7 +3789,8 @@ details[open] .finance-section-title { color: #00f2ff; }
 /* Override hardcoded Tailwind dark text inside main-panel content */
 #main-panel .text-white:not(button):not(.ds-btn):not([class*="btn-"]) { color: #1a2744 !important; }
 #main-panel .text-gray-200 { color: #2a3e58 !important; }
-/* text-gray-300/400/500 stay as-is — readable on light bg naturally */
+#main-panel .text-gray-300 { color: #2a3e58 !important; }
+#main-panel .text-gray-400 { color: #4d6480 !important; }
 
 /* Override hardcoded dark bg classes inside main-panel */
 #main-panel .bg-black\/50  { background: rgba(0,0,0,0.05) !important; }
@@ -3798,6 +3799,9 @@ details[open] .finance-section-title { color: #00f2ff; }
 #main-panel .bg-gray-950   { background: #eaecf0 !important; }
 #main-panel .bg-gray-900   { background: #e8ecf1 !important; }
 #main-panel .bg-gray-800   { background: #e0e6ec !important; }
+#main-panel .bg-gray-700   { background: #d8e2ed !important; }
+#main-panel .bg-gray-600   { background: #dce6ef !important; }
+#main-panel .bg-gray-700\/50 { background: rgba(30,45,69,0.05) !important; }
 
 /* Border overrides */
 #main-panel .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
@@ -3825,6 +3829,8 @@ body > .fixed.bg-gradient-to-b { opacity: 0 !important; }
 .ds-card { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .ds-kpi-strip { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
 .ds-table-wrap { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+
+#tab-container { color: var(--text); }
 
 /* Finance card variables — keep as dark "terminal" aesthetic inside finance tab */
 /* Lifestyle, Finance remain with their own dark ambience (intentional contrast) */
