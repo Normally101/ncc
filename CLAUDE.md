@@ -673,11 +673,57 @@ Completato in precedente sessione.
 
 Completato: `engine-finance.js`, `engine-rivals.js`, `engine-events.js`, `ui-emails.js`, `ui-finance-mkt.js` creati.
 
-### Prossimi step suggeriti (non pianificati)
-- [ ] Splittare `ui-meta.js` (2057 righe) in moduli più piccoli
+### Sicurezza ✅ COMPLETATO (Maggio 2026)
+- ✅ RLS attivo su tutte le tabelle Supabase
+- ✅ Trigger `validate_game_save` su `game_saves`: blocca cash > 500M, fleet > 100
+- ✅ Trigger `validate_leaderboard` su `leaderboard`: blocca liquid_assets > 500M, fleet_count > 100
+- ✅ Console.log con dati utente rimossi da produzione
+- ✅ Nessuna `service_role key` esposta nel frontend
+
+### Prossimi step tecnici (non pianificati)
+- [ ] Rimuovere bottone "▶ Avanza Turno" dal sidebar HTML (obsoleto con real-time clock)
+- [ ] Splittare `ui-meta.js` (2057 righe) in `ui-investments.js`, `ui-career.js`, `ui-store.js`
 - [ ] Splittare `engine.js` ulteriormente (5252 righe)
-- [ ] Implementare Avanza Turno removal da sidebar (bottone ancora in HTML, con real-time è obsoleto)
-- [ ] Type-check / linting base (JSDoc minimo per le funzioni pubbliche chiave)
+- [ ] Rate limiting server-side sulle RPC (province attacks, shadow ops) — configurabile da Supabase dashboard
+
+---
+
+## Visione espansione futura (roadmap contenuti)
+
+> Confermato dall'utente — Maggio 2026
+
+**Filosofia:** "Chauffeur Empire" è un nome intenzionalmente ampio. "Chauffeur" copre TUTTE le forme di guida/trasporto. Il gioco deve evolversi fino a contenerle tutte.
+
+**Obiettivo core:** Gioco "povero → ricco" (poor to rich). Il giocatore deve poter iniziare con letteralmente niente e costruire un impero. Il Premium Shop accelera il progresso ma NON deve essere obbligatorio per giocare bene.
+
+### Lane di gioco future (in ordine di priorità indicativa)
+
+| Lane | Descrizione | Note architetturali |
+|---|---|---|
+| 🧑‍✈️ **Private Chauffeur** | Job di partenza — solo tu + 1 auto, niente shop richiesto | Entry point per nuovi giocatori |
+| 🚖 **Taxi** | Trasporto urbano di massa, alto volume basso margine, dominio griglia città | Pricing model diverso da NCC |
+| 🚛 **Truck / Logistics** | Merci, rotte lunghe, gestione depositi, contratti B2B logistica | Nuova categoria `fleet[]` |
+| ✈️ / 🚢 | Jet privati, barche — espansione ultra-premium | Lungo termine |
+
+### Impatto architetturale quando si aggiungono taxi/truck
+
+```js
+// Oggi: fleet[] assume sempre auto NCC di lusso
+{ id: 'v1', brand: 'Mercedes', tier: 'premium', ... }
+
+// Futuro: aggiungere vehicleClass a ogni veicolo
+{ id: 'v1', vehicleClass: 'ncc' | 'taxi' | 'truck' | 'logistics', ... }
+
+// pendingRides[] dovrà avere requiredClass per matchare il veicolo giusto
+{ id: 'r1', requiredClass: 'taxi', price: 12, ... }
+```
+
+### Progressione "poor to rich"
+- **Inizio:** 1 auto, tu guidi, niente staff, sopravvivenza pura
+- **Early mid:** assumi 1 autista, seconda auto, contratti locali
+- **Mid:** automazione parziale, sede, marketing
+- **Late:** guerra finanziaria, province, politica, sabotaggio competitor
+- **Endgame:** dominio assoluto — economia, leggi, infrastrutture, dati, politica del server
 
 ---
 
