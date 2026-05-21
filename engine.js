@@ -467,20 +467,6 @@ function saveGame() {
     }
 }
 
-function _processOfflineCatchup() {
-    const lastOnline = gameState.lastOnlineTimestamp || 0;
-    if (!lastOnline) return;
-    const elapsedMs   = Date.now() - lastOnline;
-    const elapsedDays = Math.min(7, Math.floor(elapsedMs / (24 * 60 * 60 * 1000)));
-    if (elapsedDays < 1) return;
-    for (let i = 0; i < elapsedDays; i++) {
-        gameState.day++;  // advance day so processDailyRoutines sees the correct _closingDay and % modulo triggers
-        processDailyRoutines();
-    }
-    if (typeof showNotification === 'function') {
-        showNotification(`💤 Offline per ${elapsedDays} giorno${elapsedDays > 1 ? 'i' : ''} — redditi processati.`, 'info');
-    }
-}
 
 function loadGame() {
     try {
@@ -857,11 +843,20 @@ function initGame(fresh = true) {
         gameState.fleet.push({ id: 'c_loaner', name: 'Stellar E-Executive', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'stellar_e_exec' });
         _refreshRecruits();
     } else {
-        // Pre-sync clock so first gameLoop tick doesn't see a stale hour and fire hourly mechanics
+        // Pre-sync clock and process offline income before intervals start (prevents false hourly/daily triggers)
         const _itaInit = _getItalyTime();
         gameState.hour   = _itaInit.hour;
         gameState.minute = _itaInit.minute;
         gameState.month  = _itaInit.month;
+        // Offline catchup: advance day counter toward today, process daily routines for each missed day (capped at 7)
+        const _offlineDays = Math.min(7, Math.max(0, _itaInit.gameDay - (gameState.day || _itaInit.gameDay)));
+        for (let i = 0; i < _offlineDays; i++) { gameState.day++; processDailyRoutines(); }
+        gameState.day = _itaInit.gameDay; // final snap to canonical real day
+        if (_offlineDays >= 1) {
+            setTimeout(() => {
+                if (typeof showNotification === 'function') showNotification(`💤 Offline per ${_offlineDays} giorno${_offlineDays > 1 ? 'i' : ''} — redditi processati.`, 'info');
+            }, 1200);
+        }
         _refreshRecruits();
         setTimeout(_kickstartIdleDrivers, 500);
         setTimeout(_applyWeatherOverlay, 800);
@@ -4917,7 +4912,6 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     if (!fresh) {
         const loaded = loadGame();
         initGame(!loaded);
-        setTimeout(_processOfflineCatchup, 800); // run after initGame fully wires up UI
     } else {
         initGame(true);
     }
