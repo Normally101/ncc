@@ -197,19 +197,13 @@ async function _upsertLeaderboard(saveData) {
         fleet_count:  (saveData.fleet || []).length,
         last_active:  new Date().toISOString(),
     };
-    console.log('MULTIPLAYER: Tentativo invio dati per utente:', userId, payload);
     try {
-        const { data, error } = await window.supabaseClient
+        const { error } = await window.supabaseClient
             .from('leaderboard')
-            .upsert(payload, { onConflict: 'user_id' })
-            .select();
-        if (error) {
-            console.error('ERRORE MULTIPLAYER:', error.message, '| codice:', error.code, '| dettagli:', error.details, error);
-        } else {
-            console.log('MULTIPLAYER: Dati inviati con successo! —', payload.company_name, '€' + payload.liquid_assets.toLocaleString('it-IT'), '| risposta DB:', data);
-        }
+            .upsert(payload, { onConflict: 'user_id' });
+        if (error) console.warn('[Leaderboard] upsert error:', error.code);
     } catch(e) {
-        console.error('ERRORE MULTIPLAYER (eccezione di rete):', e.message, e);
+        console.warn('[Leaderboard] network error:', e.message);
     }
 }
 
