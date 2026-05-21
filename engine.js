@@ -474,6 +474,7 @@ function _processOfflineCatchup() {
     const elapsedDays = Math.min(7, Math.floor(elapsedMs / (24 * 60 * 60 * 1000)));
     if (elapsedDays < 1) return;
     for (let i = 0; i < elapsedDays; i++) {
+        gameState.day++;  // advance day so processDailyRoutines sees the correct _closingDay and % modulo triggers
         processDailyRoutines();
     }
     if (typeof showNotification === 'function') {
@@ -856,6 +857,11 @@ function initGame(fresh = true) {
         gameState.fleet.push({ id: 'c_loaner', name: 'Stellar E-Executive', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'stellar_e_exec' });
         _refreshRecruits();
     } else {
+        // Pre-sync clock so first gameLoop tick doesn't see a stale hour and fire hourly mechanics
+        const _itaInit = _getItalyTime();
+        gameState.hour   = _itaInit.hour;
+        gameState.minute = _itaInit.minute;
+        gameState.month  = _itaInit.month;
         _refreshRecruits();
         setTimeout(_kickstartIdleDrivers, 500);
         setTimeout(_applyWeatherOverlay, 800);
@@ -2828,9 +2834,10 @@ const TIER_COMPATIBILITY = {
 function _getRideDurationMs(ride) {
     const price = ride.sellingPrice || ride.basePrice || ride.price || 150;
     let minutes = Math.max(10, Math.min(360, price * 0.4));
-    const type = (ride.type || '').toLowerCase();
-    if (type === 'airport' || type === 'rail' || type === 'port') minutes *= 0.7;
-    else if (type === 'boat') minutes *= 1.3;
+    // routeType is set by generateContractRide from routesDB route.type ('Airport','Rail','Transfer','Boat','Port','City-to-City')
+    const rType = ride.routeType || '';
+    if (rType === 'Airport' || rType === 'Rail' || rType === 'Transfer') minutes *= 0.7;
+    else if (rType === 'Boat' || rType === 'Port') minutes *= 1.3;
     const fromRegion = ride.fromPoi?.region || '';
     const toRegion   = ride.toPoi?.region   || '';
     if (fromRegion && toRegion && fromRegion !== toRegion) minutes *= 1.5;
