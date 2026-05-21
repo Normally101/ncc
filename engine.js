@@ -895,6 +895,28 @@ function initGame(fresh = true) {
     updateUI();
 }
 
+// ─── REAL-TIME ITALY CLOCK ────────────────────────────────────────
+const GAME_EPOCH_MS = new Date('2025-11-01T00:00:00+01:00').getTime();
+
+function _getItalyTime() {
+    const now = new Date();
+    const fmt = new Intl.DateTimeFormat('it-IT', {
+        timeZone: 'Europe/Rome',
+        hour: '2-digit', minute: '2-digit', second: '2-digit',
+        day: '2-digit', month: '2-digit', year: 'numeric',
+        hour12: false
+    });
+    const parts = Object.fromEntries(fmt.formatToParts(now).map(p => [p.type, p.value]));
+    return {
+        hour:    parseInt(parts.hour,   10),
+        minute:  parseInt(parts.minute, 10),
+        day:     parseInt(parts.day,    10),
+        month:   parseInt(parts.month,  10),
+        year:    parseInt(parts.year,   10),
+        gameDay: Math.max(1, Math.floor((Date.now() - GAME_EPOCH_MS) / 86400000) + 1),
+    };
+}
+
 function gameLoop() {
     if (gameState.paused) return;
     gameState.minute += 5;
