@@ -18,6 +18,15 @@ function _isoToScreen(col, row) {
     };
 }
 
+// ── STAGE CALCULATOR ─────────────────────────────────────────────────────────
+// 0=Start (1-3), 1=Growing (4-7), 2=Established (8-11), 3=Empire (12+)
+function _getHQStage(builtCount) {
+    if (builtCount >= 12) return 3;
+    if (builtCount >= 8)  return 2;
+    if (builtCount >= 4)  return 1;
+    return 0;
+}
+
 // ── COLOR ADJUSTER HELPER ────────────────────────────────────────────────────
 function _adjustColorBrightness(hex, percent) {
     hex = hex.replace(/^\s*#|\s*$/g, '');
