@@ -101,7 +101,7 @@ Ogni tab di gioco ha una funzione `renderTab*()` nel suo file UI. `window.switch
 ```js
 window.switchTab('fleet');   // → chiama renderTabFleet() da ui-fleet.js
 window.switchTab('corse');   // → chiama renderTabCorse() da ui-dispatch.js
-window.switchTab('finance'); // → chiama renderTabFinance() da ui-finance-mkt.js
+window.switchTab('finance'); // → chiama renderTabFinance() da ui-finance.js
 ```
 
 La funzione `_safeRender(fn)` in `dispatcher.js` wrappa ogni chiamata con try/catch e anima con `.tab-fade-in` (CSS keyframe `tabFadeIn` in `style.css`).
@@ -124,48 +124,71 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 9.  syncManager.js       — sync multi-tab browser
 10. saveSystem.js        — slot salvataggio, leaderboard, ServerState wrapper
 11. serverState.js       — sync Supabase Realtime (companies, drivers, vehicles)
-12. auth.js              — autenticazione + landing page
-13. quests.js            — sistema missioni, QUEST_DB
-14. engine.js            — CORE: gameLoop, saveGame, loadGame, tutte le azioni (5252 righe)
-15. engine-finance.js    — stocks, broker, credit score (200 righe)
-16. engine-rivals.js     — sistema rivali/NPC AI (148 righe)
-17. engine-events.js     — eventi casuali, incidenti, strike, fines (386 righe)
-18. vip_clients.js       — clienti VIP, buffs
-19. war_room.js          — province War Room, renderTabWarRoom
-20. dispatcher.js        — switchTab, mappa Mapbox, notifiche, _safeRender (1237 righe)
-21. ui-emails.js         — renderTabEmails
-22. ui-finance-mkt.js    — renderTabFinance, renderTabMarketing, _flashTicker
-23. ui-dispatch.js       — renderTabCorse (195 righe)
-24. ui-fleet.js          — renderTabFleet, bulkRepairFleet (508 righe)
-25. ui-staff.js          — renderTabStaff, renderTabLifestyle, openCarModal,
-                            openCarConfigurator, buyCar, leaseCar, hireOfficeStaff,
-                            fireStaff, closeModals, decreesRefresh (758 righe)
-26. ui-ops.js            — renderTabRegions, renderTabProvinces,
-                            buyHRAutomation, doAcquireProvince (256 righe)
-27. ui-meta.js           — renderTabRanking, renderTabInvestments, renderTabLegal,
-                            renderTabPolitics, renderTabCareer, renderTabPremiumStore,
-                            renderTabMarket, renderTabHelp, renderTabRealEstate,
-                            hub functions, doBuyRealEstate, _dcSpend, _ecActions (2057 righe)
-28. ui-sidebar.js        — accordion nav, _sidebarToggle, updateSidebarStats,
-                            toggleSidebar (120 righe)
-29. showroom.js          — showroom auto, renderTabShowroom, SRM functions
-30. p2p_market.js        — mercato P2P, holding, consorzi
-31. b2b.js               — contratti B2B
-32. auctions.js          — aste giudiziarie
-33. driver_skills.js     — albero skill autisti
-34. global_events.js     — eventi globali MMO
-35. black_ops.js         — agenzia ombra, SHADOW_OPS, shadowRefresh, shadowExecuteOp
-36. crypto.js            — crypto/offshore
-37. weather_real.js      — meteo reale (OpenWeather API)
-38. hq.js                — costruzioni HQ, HQ_ROOMS, hqBuildRoom, hqHasRoom
-39. mobile_dispatcher.js — UI mobile
-40. hostile_takeover.js  — acquisizioni ostili, renderTabOPA
-41. nemesis.js           — nemici VIP, renderTabNemesis
-42. infrastructure.js    — carburante/depositi, renderTabInfrastructure
-43. contracts.js         — gare d'appalto, renderTabContracts (496 righe)
-44. tourism.js           — bandi turismo, renderTabTourism (485 righe)
-45. tutorial.js          — onboarding
-46. premium-ui.js        — hash routing (#tab → switchTab on load)
+12. ui-landing.js        — landing page HTML + form auth UI (_showAuthOverlay, _authLogin, ecc.)
+13. auth.js              — core autenticazione: _mmoBootSequence, _onAuthSuccess, bootstrap
+14. quests-data.js       — QUEST_DB array statico (1509 righe, NON leggere mai intero), VG const
+15. quests.js            — logica quest: checkQuestProgress, claimQuestReward, completeMissionRun
+16. engine.js            — CORE: gameLoop, saveGame, loadGame, generazione corse (~3908 righe)
+17. engine-finance.js    — tick mercato + AZIONI PLAYER: buyStocks, takeLoan, shortSell, ecc.
+18. engine-drivers.js    — azioni autisti: hireDriver, sendDriverToRest, startAcademyCourse, ecc.
+19. engine-fleet.js      — azioni flotta: repairVehicle, buyHub, buyStandardFuel, ecc.
+20. engine-store.js      — DC boosters: fuelBoostDC, wakeDriverDC, activateExecutivePass, ecc.
+21. engine-holding.js    — holding, sussidiarie, $CEMP, IPO NPC fallback
+22. engine-rivals.js     — sistema rivali/NPC AI (148 righe)
+23. engine-events.js     — eventi casuali, incidenti, strike, fines (386 righe)
+24. vip-buffs.js         — buff system (_applyBuff, _getBuffValue) + helper VIP privati
+25. vip-clients.js       — 9 handler clienti VIP + _vipOnComplete dispatcher
+26. war_room.js          — province War Room, renderTabWarRoom
+27. dispatcher.js        — switchTab routing, showNotification, togglePanel (~247 righe)
+28. map.js               — Mapbox initMap, visual loop, garage 3D SVG, highway router (~992 righe)
+29. ui-emails.js         — renderTabEmails
+30. ui-marketing.js      — renderTabMarketing: Dual Brand, campagne, ROI tracker
+31. ui-finance.js        — renderTabFinance: Bloomberg dashboard, stocks, broker, _flashTicker
+32. ui-dispatch.js       — renderTabCorse (195 righe)
+33. ui-fleet.js          — renderTabFleet, bulkRepairFleet (508 righe)
+34. ui-staff.js          — renderTabStaff, openCarModal, openCarConfigurator, buyCar, leaseCar
+35. ui-lifestyle.js      — renderTabLifestyle + Server Decrees (decreesRefresh, voteServerDecree)
+36. ui-ops.js            — renderTabRegions, renderTabProvinces, buyHRAutomation, doAcquireProvince
+37. ui-ranking.js        — renderTabRanking: classifica globale Supabase
+38. ui-investments.js    — renderTabInvestments: infrastrutture, holding, finanza
+39. ui-legal.js          — renderTabLegal: gestione multe e contenzioso
+40. ui-politics.js       — renderTabPolitics: lobbying, decreti, macroeconomia
+41. ui-career.js         — renderTabCareer, startMissionRun, _showBivioModal
+42. ui-store.js          — renderTabPremiumStore, _dcSpend, EC action handlers
+43. ui-market.js         — renderTabMarket: mercato P2P auto + aste live
+44. ui-help.js           — renderTabHelp, renderCurrentTab
+45. ui-hub.js            — Smart Hub: toggleHub, openHub, hubNavigate
+46. ui-realestate.js     — renderTabRealEstate, doBuyRealEstate (Supabase)
+47. ui-map-utils.js      — spawnMoneyParticles, day/night, HQ marker, founding overlay,
+                            openAcademyModal, _traitBadgeHTML, traffic route colors
+48. ui-sidebar.js        — accordion nav, _sidebarToggle, updateSidebarStats, toggleSidebar
+49. showroom.js          — showroom auto, renderTabShowroom, SRM functions
+50. p2p-market.js        — P2P backend: listCarForSale, buyP2PCar, createHolding, listCompanyIPO
+51. p2p-render.js        — P2P UI: renderP2PMarketSection, renderP2PSharesSection, p2pInit
+52. b2b.js               — contratti B2B
+53. auctions.js          — aste giudiziarie
+54. driver_skills.js     — albero skill autisti
+55. global_events.js     — eventi globali MMO
+56. black_ops.js         — agenzia ombra, SHADOW_OPS, shadowRefresh, shadowExecuteOp
+57. crypto.js            — crypto/offshore
+58. weather_real.js      — meteo reale (OpenWeather API)
+59. hq.js                — costruzioni HQ, HQ_ROOMS, hqBuildRoom, hqHasRoom
+60. mobile_dispatcher.js — UI mobile
+61. hostile_takeover.js  — acquisizioni ostili, renderTabOPA
+62. nemesis.js           — nemici VIP, renderTabNemesis
+63. infrastructure.js    — carburante/depositi, renderTabInfrastructure
+64. contracts.js         — gare d'appalto, renderTabContracts (496 righe)
+65. tourism.js           — bandi turismo, renderTabTourism (485 righe)
+66. tutorial.js          — onboarding
+67. premium-ui.js        — hash routing (#tab → switchTab on load)
+```
+
+### File da NON caricare (obsoleti, tenuti come backup)
+```
+ui-meta.js        — SOSTITUITO da ui-ranking/investments/legal/politics/career/store/market/help/hub/realestate/map-utils.js
+ui-finance-mkt.js — SOSTITUITO da ui-marketing.js + ui-finance.js
+vip_clients.js    — SOSTITUITO da vip-buffs.js + vip-clients.js
+p2p_market.js     — SOSTITUITO da p2p-market.js + p2p-render.js
 ```
 
 ---
@@ -434,40 +457,43 @@ window.ACADEMY_COURSES                    // array corsi accademia
 
 ---
 
-## dispatcher.js — Tab routing e mappa (1237 righe)
+## dispatcher.js — Tab routing (~247 righe) + map.js — Mapbox (~992 righe)
+
+`dispatcher.js` ora contiene solo: stato startup, `switchTab`, `showNotification`, `togglePanel`, `openMapOverlay`, `closeMapOverlay`.  
+`map.js` contiene tutto il codice Mapbox: `initMap`, `visualLoop`, garage 3D SVG, highway router.
 
 ### switchTab routing completo
 
 ```js
-switchTab('corse')        → renderTabCorse()        // ui-dispatch.js
-switchTab('ranking')      → renderTabRanking()       // ui-meta.js
-switchTab('staff')        → renderTabStaff()         // ui-staff.js
-switchTab('fleet')        → renderTabFleet()         // ui-fleet.js
-switchTab('emails')       → renderTabEmails()        // ui-emails.js
-switchTab('regions')      → renderTabRegions()       // ui-ops.js
-switchTab('invest')       → renderTabInvestments()   // ui-meta.js
-switchTab('marketing')    → renderTabMarketing()     // ui-finance-mkt.js
-switchTab('legal')        → renderTabLegal()         // ui-meta.js
-switchTab('finance')      → renderTabFinance()       // ui-finance-mkt.js
-switchTab('lifestyle')    → renderTabLifestyle()     // ui-staff.js
-switchTab('politics')     → renderTabPolitics()      // ui-meta.js
-switchTab('career')       → renderTabCareer()        // ui-meta.js
-switchTab('store')        → renderTabPremiumStore()  // ui-meta.js
-switchTab('market')       → renderTabMarket()        // ui-meta.js
-switchTab('help')         → renderTabHelp()          // ui-meta.js
-switchTab('provinces')    → renderTabWarRoom()       // war_room.js
-switchTab('showroom')     → renderTabShowroom()      // showroom.js
-switchTab('realestate')   → renderTabRealEstate()    // ui-meta.js
-switchTab('b2b')          → renderTabB2B()           // b2b.js
-switchTab('auctions')     → renderTabAuctions()      // auctions.js
-switchTab('shadow')       → renderTabShadow()        // black_ops.js
-switchTab('crypto')       → renderTabCrypto()        // crypto.js
-switchTab('hq')           → renderTabHQ()            // hq.js
-switchTab('opa')          → renderTabOPA()           // hostile_takeover.js
-switchTab('nemesis')      → renderTabNemesis()       // nemesis.js
+switchTab('corse')        → renderTabCorse()           // ui-dispatch.js
+switchTab('ranking')      → renderTabRanking()         // ui-ranking.js
+switchTab('staff')        → renderTabStaff()           // ui-staff.js
+switchTab('fleet')        → renderTabFleet()           // ui-fleet.js
+switchTab('emails')       → renderTabEmails()          // ui-emails.js
+switchTab('regions')      → renderTabRegions()         // ui-ops.js
+switchTab('invest')       → renderTabInvestments()     // ui-investments.js
+switchTab('marketing')    → renderTabMarketing()       // ui-marketing.js
+switchTab('legal')        → renderTabLegal()           // ui-legal.js
+switchTab('finance')      → renderTabFinance()         // ui-finance.js
+switchTab('lifestyle')    → renderTabLifestyle()       // ui-lifestyle.js
+switchTab('politics')     → renderTabPolitics()        // ui-politics.js
+switchTab('career')       → renderTabCareer()          // ui-career.js
+switchTab('store')        → renderTabPremiumStore()    // ui-store.js
+switchTab('market')       → renderTabMarket()          // ui-market.js
+switchTab('help')         → renderTabHelp()            // ui-help.js
+switchTab('provinces')    → renderTabWarRoom()         // war_room.js
+switchTab('showroom')     → renderTabShowroom()        // showroom.js
+switchTab('realestate')   → renderTabRealEstate()      // ui-realestate.js
+switchTab('b2b')          → renderTabB2B()             // b2b.js
+switchTab('auctions')     → renderTabAuctions()        // auctions.js
+switchTab('shadow')       → renderTabShadow()          // black_ops.js
+switchTab('crypto')       → renderTabCrypto()          // crypto.js
+switchTab('hq')           → renderTabHQ()              // hq.js
+switchTab('opa')          → renderTabOPA()             // hostile_takeover.js
+switchTab('nemesis')      → renderTabNemesis()         // nemesis.js
 switchTab('infrastructure') → renderTabInfrastructure() // infrastructure.js
-switchTab('contracts')    → renderTabContracts()     // contracts.js
-switchTab('tourism')      → renderTabTourism()       // tourism.js
+switchTab('contracts')    → renderTabContracts()       // contracts.js
+switchTab('tourism')      → renderTabTourism()         // tourism.js
 ```
 
 ### Funzioni mappa
@@ -617,9 +643,9 @@ Se usi classi Tailwind hardcoded in template JS (es. `text-white`, `bg-gray-800`
 
 ## Note architetturali — Problemi noti
 
-1. **`engine.js` ancora grande** (5252 righe, 89 funzioni) — già splittato in `engine-finance.js`, `engine-events.js`, `engine-rivals.js`. Ulteriore splitting pianificato.
+1. **`engine.js` ridotto** da 5252 a ~3908 righe — azioni player estratte in engine-drivers.js, engine-fleet.js, engine-store.js, engine-holding.js, engine-finance.js (actions).
 
-2. **`ui-meta.js` molto grande** (2057 righe) — contiene troppe funzioni eterogenee. Da splittare in `ui-investments.js`, `ui-career.js`, `ui-store.js`.
+2. **`ui-meta.js` splittato** in 11 file: ui-ranking, ui-investments, ui-legal, ui-politics, ui-career, ui-store, ui-market, ui-help, ui-hub, ui-realestate, ui-map-utils.
 
 3. **Coupling tramite `window.*`** — 43/47 file espongono globals. Cambiare una funzione può rompere silenziosamente altri file. Non c'è type checking, niente linting.
 
@@ -680,11 +706,23 @@ Completato: `engine-finance.js`, `engine-rivals.js`, `engine-events.js`, `ui-ema
 - ✅ Console.log con dati utente rimossi da produzione
 - ✅ Nessuna `service_role key` esposta nel frontend
 
+### Piano: Full Codebase Split ✅ COMPLETATO (Maggio 2026)
+
+Tutti i file grandi sono stati spaccati in moduli più piccoli:
+- ✅ `engine.js` 5253→3908 righe — actions estratte in engine-drivers/fleet/store/holding.js + engine-finance.js (actions)
+- ✅ `ui-meta.js` 2057 righe → 11 file: ui-ranking/investments/legal/politics/career/store/market/help/hub/realestate/map-utils.js
+- ✅ `dispatcher.js` 1237 righe → dispatcher.js (247) + map.js (992)
+- ✅ `quests.js` 1579 righe → quests-data.js (data) + quests.js (logic, 81 righe)
+- ✅ `p2p_market.js` 1029 righe → p2p-market.js (backend) + p2p-render.js (UI)
+- ✅ `auth.js` 870 righe → ui-landing.js (HTML overlay) + auth.js (core boot)
+- ✅ `vip_clients.js` 867 righe → vip-buffs.js (buff system) + vip-clients.js (handlers)
+- ✅ `ui-finance-mkt.js` 716 righe → ui-marketing.js + ui-finance.js
+- ✅ `ui-staff.js` 758 righe → ui-staff.js + ui-lifestyle.js
+
 ### Prossimi step tecnici (non pianificati)
 - [ ] Rimuovere bottone "▶ Avanza Turno" dal sidebar HTML (obsoleto con real-time clock)
-- [ ] Splittare `ui-meta.js` (2057 righe) in `ui-investments.js`, `ui-career.js`, `ui-store.js`
-- [ ] Splittare `engine.js` ulteriormente (5252 righe)
 - [ ] Rate limiting server-side sulle RPC (province attacks, shadow ops) — configurabile da Supabase dashboard
+- [ ] Considerare split ulteriore di `map.js` (992 righe) in map-visual.js + map-garage.js + map-router.js
 
 ---
 
@@ -731,10 +769,16 @@ Completato: `engine-finance.js`, `engine-rivals.js`, `engine-events.js`, `ui-ema
 
 | File | Cosa contiene | Righe |
 |---|---|---|
-| `engine.js` | `gameLoop()`, `saveGame()`, `loadGame()`, tutte le action functions | 5252 |
-| `dispatcher.js` | `switchTab()`, mappa Mapbox, `showNotification()` | 1237 |
-| `ui-meta.js` | renderTabRanking/Investments/Legal/Politics/Career/Store/Market/Help/RealEstate + hub | 2057 |
-| `ui-staff.js` | renderTabStaff/Lifestyle, openCarModal, configurator, decrees | 758 |
+| `engine.js` | `gameLoop()`, `saveGame()`, `loadGame()`, core ride generation | ~3908 |
+| `engine-finance.js` | tick mercato + buyStocks, takeLoan, shortSell, acquireVentureStake, ecc. | ~465 |
+| `engine-drivers.js` | hireDriver, sendDriverToRest, startAcademyCourse, ecc. | ~194 |
+| `engine-fleet.js` | repairVehicle, buyHub, buyStandardFuel, buyPrototypeCar, ecc. | ~507 |
+| `engine-store.js` | DC boosters, activateExecutivePass, fullBundleDC, ecc. | ~214 |
+| `engine-holding.js` | incorporateHolding, buyCempShares, _listCompanyIPO_NPC, ecc. | ~127 |
+| `dispatcher.js` | `switchTab()`, `showNotification()`, `togglePanel()` | ~247 |
+| `map.js` | Mapbox initMap, visualLoop, garage 3D SVG, highway router | ~992 |
+| `ui-staff.js` | renderTabStaff, openCarModal, openCarConfigurator, buyCar, leaseCar | ~602 |
+| `ui-lifestyle.js` | renderTabLifestyle + decreesRefresh, voteServerDecree | ~175 |
 | `serverState.js` | Sync Supabase Realtime, ServerState | 609 |
 | `style.css` | Tutto il CSS — tema, layout, componenti, overrides Tailwind | ~3900 |
 | `premium-ui.css` | Override critici layout | 60 |

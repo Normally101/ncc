@@ -198,3 +198,268 @@ function _tickStockHistory() {
         if (gameState.stockHistory[t.id].length > 24) gameState.stockHistory[t.id].shift();
     });
 }
+
+// ══════════════════════════════════════════════════════════════
+// AZIONI FINANZIARIE PLAYER
+// ══════════════════════════════════════════════════════════════
+
+// ── PRESTITI ─────────────────────────────────────────────────────
+window.repayLoan = function(loanId) {
+    const loan = (gameState.loans || []).find(l => l.id === loanId);
+    if (!loan) return;
+    if (gameState.cash < loan.amount) {
+        showNotification(`Fondi insufficienti — servono €${loan.amount.toLocaleString()} per saldare questo prestito.`, 'error');
+        return;
+    }
+    gameState.cash -= loan.amount;
+    gameState.loans = gameState.loans.filter(l => l.id !== loanId);
+    gameState.creditScore = Math.min(900, (gameState.creditScore || 300) + 20);
+    logToMap(`✅ Prestito #${loanId} saldato — €${loan.amount.toLocaleString()} rimborsati. Credit Score +20`);
+    showNotification(`✅ Prestito saldato! +20 Credit Score`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+window.takeLoan = function(amount) {
+    if (!gameState.loans) gameState.loans = [];
+    const creditTier = _getCreditTier(gameState.creditScore || 300);
+    const activeLoanTotal = gameState.loans.reduce((s, l) => s + l.amount, 0);
+    if (activeLoanTotal >= creditTier.loanLimit) {
+        if (typeof showNotification === 'function') showNotification(`Limite massimo di credito raggiunto (€${creditTier.loanLimit.toLocaleString()})!`, 'error');
+        return;
+    }
+    if (amount > creditTier.loanLimit) {
+        if (typeof showNotification === 'function') showNotification(`Credit Score troppo basso per questo importo. Score attuale: ${gameState.creditScore} (${creditTier.label})`, 'error');
+        return;
+    }
+    const rate = creditTier.rate;
+    gameState.cash += amount;
+    gameState.loans.push({ id: gameState.nextId++, original: amount, amount: amount, remaining: amount, rate });
+    logToMap(`🏦 Prestito €${amount.toLocaleString()} — tasso ${(rate*100).toFixed(1)}%/mese (Score: ${gameState.creditScore} ${creditTier.label})`);
+    if (typeof showNotification === 'function') showNotification(`💰 Prestito €${amount.toLocaleString()} approvato!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ── AZIONI: COMPRA / VENDI ───────────────────────────────────────
+window.buyStocks = function(tickerId, shares) {
+    if (!_hasWealthManager()) { showNotification('Assumi un Elite Wealth Manager prima!', 'error'); return; }
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const totalCost = Math.round(price * shares);
+    if (totalCost <= 0) { showNotification('Quantità non valida.', 'error'); return; }
+    if (gameState.cash < totalCost) { showNotification(`Fondi insufficienti! Servono €${totalCost.toLocaleString()}`, 'error'); return; }
+    gameState.cash -= totalCost;
+    const holding = gameState.stockHoldings[tickerId];
+    const prevTotal = holding.shares * holding.avgCost;
+    holding.avgCost = +((prevTotal + totalCost) / (holding.shares + shares)).toFixed(2);
+    holding.shares += shares;
+    logToMap(`📊 Comprato ${shares} quote ${ticker.name} @ €${price.toFixed(2)} — Totale: €${totalCost.toLocaleString()}`);
+    showNotification(`${shares}x ${ticker.name} acquistate!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+window.sellStocks = function(tickerId, shares) {
+    if (!_hasWealthManager()) return;
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    const holding = gameState.stockHoldings[tickerId];
+    if (!holding || holding.shares < shares) { showNotification('Quote insufficienti!', 'error'); return; }
+    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const proceeds = Math.round(price * shares);
+    const costBasis = Math.round(holding.avgCost * shares);
+    const profit = proceeds - costBasis;
+    gameState.cash += proceeds;
+    holding.shares -= shares;
+    if (holding.shares === 0) holding.avgCost = 0;
+    gameState.totalStockProfit = (gameState.totalStockProfit || 0) + profit;
+    const pl = profit >= 0 ? `+€${profit.toLocaleString()}` : `−€${Math.abs(profit).toLocaleString()}`;
+    logToMap(`📊 Venduto ${shares} quote ${ticker.name} @ €${price.toFixed(2)} — P&L: ${pl}`);
+    showNotification(`${shares}x ${ticker.name} vendute — ${pl}`, profit >= 0 ? 'success' : 'error');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ── BROKER: PIAZZA INVESTIMENTO ──────────────────────────────────
+window.placeBrokerInvestment = function(capital, riskId, durationHours) {
+    if (!_hasWealthManager()) { showNotification('Assumi un Elite Wealth Manager prima!', 'error'); return; }
+    if (gameState.brokerInvestments.filter(i => !i.resolved).length >= 3) {
+        showNotification('Massimo 3 investimenti broker simultanei!', 'error'); return;
+    }
+    const profile = (typeof BROKER_RISK_PROFILES !== 'undefined' ? BROKER_RISK_PROFILES : []).find(p => p.id === riskId);
+    if (!profile) return;
+    capital = Math.round(Number(capital));
+    if (capital < 1000) { showNotification('Capitale minimo: €1.000', 'error'); return; }
+    if (gameState.cash < capital) { showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= capital;
+    const currentHour = gameState.day * 24 + gameState.hour;
+    gameState.brokerInvestments.push({
+        id: gameState.nextId++,
+        capital, risk: riskId, riskName: profile.name,
+        startHour: currentHour, endsHour: currentHour + durationHours,
+        minReturn: profile.minReturn, maxReturn: profile.maxReturn,
+        resolved: false, actualGain: null
+    });
+    const dLabel = durationHours < 24 ? `${durationHours}h` : `${durationHours / 24}gg`;
+    logToMap(`💼 Broker: €${capital.toLocaleString()} → ${profile.name} × ${dLabel}`);
+    showNotification(`Investimento piazzato: €${capital.toLocaleString()} (${profile.name})`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ── LIFESTYLE ASSETS ─────────────────────────────────────────────
+window.buyLifestyleAsset = function(assetId) {
+    const asset = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(a => a.id === assetId);
+    if (!asset) return;
+    if ((gameState.lifestyleAssets || []).includes(assetId)) { showNotification('Asset già posseduto!', 'error'); return; }
+    if (gameState.cash < asset.price) { showNotification(`Fondi insufficienti! Servono €${asset.price.toLocaleString()}`, 'error'); return; }
+    if (!gameState.lifestyleAssets) gameState.lifestyleAssets = [];
+    gameState.cash -= asset.price;
+    gameState.lifestyleAssets.push(assetId);
+    if (asset.repBonus) gameState.reputation = Math.min(10.0, gameState.reputation + asset.repBonus);
+    logToMap(`🏰 Acquisito: ${asset.name} (${asset.location}) — €${asset.price.toLocaleString()}`);
+    showBigEvent(asset.icon, `Acquisito: ${asset.name}!`,
+        `${asset.desc}\n\n${asset.repBonus > 0 ? `+${asset.repBonus}★ Reputazione immediata. ` : ''}${asset.passive > 0 ? `+€${asset.passive.toLocaleString()}/g entrate passive. ` : ''}${asset.intlUnlock ? 'Tratte internazionali sbloccate!' : ''}`
+    );
+    if (asset.intlUnlock && typeof FUTURE_POIS !== 'undefined') {
+        ['svizzera', 'costa_azzurra'].forEach(r => {
+            if (!gameState.unlockedRegions.includes(r)) gameState.unlockedRegions.push(r);
+        });
+        if (typeof drawHighways === 'function') drawHighways();
+        if (typeof drawPOIs === 'function') drawPOIs();
+        logToMap('✈️ Tratte internazionali sbloccate: Ginevra, Montecarlo, Nizza, Cannes!');
+    }
+    updateUI(); saveGame();
+    if (typeof renderTabLifestyle === 'function' && _tabIs('lifestyle')) renderTabLifestyle();
+};
+
+// ── SHORT SELLING ────────────────────────────────────────────────
+window.shortSell = function(tickerId, shares) {
+    if (!_hasWealthManager()) { showNotification('Serve un Elite Wealth Manager per vendite allo scoperto!', 'error'); return; }
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    shares = Math.round(Number(shares));
+    if (shares <= 0) { showNotification('Quantità non valida.', 'error'); return; }
+    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const margin = Math.round(price * shares * 0.20);
+    if (gameState.cash < margin) { showNotification(`Margine richiesto: €${margin.toLocaleString()} (20% del valore)`, 'error'); return; }
+    if (!gameState.shortPositions) gameState.shortPositions = {};
+    const existing = gameState.shortPositions[tickerId];
+    if (existing) {
+        existing.shares += shares;
+        existing.openPrice = +((existing.openPrice * (existing.shares - shares) + price * shares) / existing.shares).toFixed(2);
+    } else {
+        gameState.shortPositions[tickerId] = { shares, openPrice: +price.toFixed(2) };
+    }
+    gameState.cash -= margin;
+    gameState.shortMarginHeld = (gameState.shortMarginHeld || 0) + margin;
+    logToMap(`📉 Short: ${shares} quote ${ticker.name} @ €${price.toFixed(2)} — margine bloccato €${margin.toLocaleString()}`);
+    showNotification(`Short ${shares}x ${ticker.name} aperto!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+window.coverShort = function(tickerId, shares) {
+    if (!_hasWealthManager()) return;
+    const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
+    if (!ticker) return;
+    const pos = (gameState.shortPositions || {})[tickerId];
+    if (!pos || pos.shares <= 0) { showNotification('Nessuna posizione short su questo titolo!', 'error'); return; }
+    shares = Math.min(Math.round(Number(shares)), pos.shares);
+    if (shares <= 0) return;
+    const currentPrice = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const priceDiff = pos.openPrice - currentPrice;
+    const profit = Math.round(priceDiff * shares);
+    const marginReturn = Math.round(pos.openPrice * shares * 0.20);
+    gameState.cash += marginReturn + profit;
+    gameState.shortMarginHeld = Math.max(0, (gameState.shortMarginHeld || 0) - marginReturn);
+    pos.shares -= shares;
+    if (pos.shares <= 0) delete gameState.shortPositions[tickerId];
+    gameState.totalStockProfit = (gameState.totalStockProfit || 0) + profit;
+    const pl = profit >= 0 ? `+€${profit.toLocaleString()}` : `−€${Math.abs(profit).toLocaleString()}`;
+    logToMap(`📉 Short chiuso: ${shares}x ${ticker.name} @ €${currentPrice.toFixed(2)} — P&L: ${pl}`);
+    showNotification(`Short chiuso — ${pl}`, profit >= 0 ? 'success' : 'error');
+    updateUI(); saveGame();
+    if (typeof renderTabFinance === 'function' && _tabIs('finance')) renderTabFinance();
+};
+
+// ── LOBBYING ────────────────────────────────────────────────────
+window.donateToLobby = function(amount) {
+    amount = Math.round(Number(amount));
+    if (amount < 1000) { showNotification('Donazione minima: €1.000', 'error'); return; }
+    if (gameState.cash < amount) { showNotification('Fondi insufficienti!', 'error'); return; }
+    gameState.cash -= amount;
+    const points = Math.floor(amount / 1000);
+    gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) + points;
+    logToMap(`🏛️ Lobbying: €${amount.toLocaleString()} donati — +${points} punti lobbying`);
+    showNotification(`+${points} Punti Lobbying acquisiti!`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabPolitics === 'function' && _tabIs('politics')) renderTabPolitics();
+};
+
+window.passLobbyLaw = function(lawId) {
+    if (typeof LOBBY_LAWS === 'undefined') return;
+    const law = LOBBY_LAWS.find(l => l.id === lawId);
+    if (!law) return;
+    if ((gameState.activeLobbyLaws || []).includes(lawId)) { showNotification('Legge già approvata!', 'error'); return; }
+    if ((gameState.lobbyingPoints || 0) < law.pointsCost) { showNotification(`Servono ${law.pointsCost} punti lobbying!`, 'error'); return; }
+    if (gameState.cash < (law.cashCost || 0)) { showNotification(`Servono €${(law.cashCost||0).toLocaleString()} in cassa!`, 'error'); return; }
+    gameState.lobbyingPoints -= law.pointsCost;
+    if (law.cashCost) gameState.cash -= law.cashCost;
+    if (!gameState.activeLobbyLaws) gameState.activeLobbyLaws = [];
+    gameState.activeLobbyLaws.push(lawId);
+    logToMap(`⚖️ Legge approvata: ${law.name} — Costo: ${law.pointsCost}pt + €${(law.cashCost||0).toLocaleString()}`);
+    showBigEvent('⚖️', `Legge Approvata: ${law.name}`, law.desc);
+    updateUI(); saveGame();
+    if (typeof renderTabPolitics === 'function' && _tabIs('politics')) renderTabPolitics();
+};
+
+// ─── VENTURE CAPITAL ─────────────────────────────────────────────
+window.acquireVentureStake = function(agencyId, stakePercent) {
+    if (typeof VENTURE_AGENCIES === 'undefined') return;
+    const agency = VENTURE_AGENCIES.find(a => a.id === agencyId);
+    if (!agency) return;
+    if (gameState.reputation < agency.minRep) {
+        showNotification(`Reputazione insufficiente! Servono ${agency.minRep}★`, 'error'); return;
+    }
+    stakePercent = Math.min(agency.maxStake, Math.max(1, Math.round(Number(stakePercent))));
+    const cost = Math.floor(agency.valuation * stakePercent / 100);
+    if (gameState.cash < cost) {
+        showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return;
+    }
+    const existing = (gameState.ventureCapital || []).find(s => s.agencyId === agencyId);
+    if (existing) {
+        const newStake = existing.stakePercent + stakePercent;
+        if (newStake > agency.maxStake) {
+            showNotification(`Quota massima acquisibile: ${agency.maxStake}%`, 'error'); return;
+        }
+        existing.stakePercent = newStake;
+    } else {
+        if (!gameState.ventureCapital) gameState.ventureCapital = [];
+        gameState.ventureCapital.push({ agencyId, stakePercent });
+    }
+    gameState.cash -= cost;
+    const dailyReturn = Math.floor(agency.dailyIncome * stakePercent / 100);
+    logToMap(`💼 M&A: Acquisita quota ${stakePercent}% di ${agency.name} per €${cost.toLocaleString()}. Rendita: +€${dailyReturn}/g`);
+    showBigEvent('💼', `Acquisita: ${agency.name}`, `Quota: ${stakePercent}%\nInvestimento: €${cost.toLocaleString()}\nRendita giornaliera: +€${dailyReturn}\nRischio: ${agency.riskLevel.toUpperCase()}`);
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function' && _tabIs('invest')) renderTabInvestments();
+};
+
+window.divestVentureStake = function(agencyId) {
+    const idx = (gameState.ventureCapital || []).findIndex(s => s.agencyId === agencyId);
+    if (idx === -1) return;
+    const agency = (typeof VENTURE_AGENCIES !== 'undefined' ? VENTURE_AGENCIES : []).find(a => a.id === agencyId);
+    const stake  = gameState.ventureCapital[idx];
+    const refund = Math.floor((agency ? agency.valuation : 100000) * stake.stakePercent / 100 * 0.75);
+    gameState.ventureCapital.splice(idx, 1);
+    gameState.cash += refund;
+    logToMap(`💼 Disinvestito ${agency?.name || agencyId}: +€${refund.toLocaleString()} (75% valutazione)`);
+    showNotification(`📤 Quota ceduta: +€${refund.toLocaleString()}`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabInvestments === 'function' && _tabIs('invest')) renderTabInvestments();
+};
