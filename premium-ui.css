@@ -1,17 +1,17 @@
 /* ================================================================
-   premium-ui.css — Chauffeur Empire
+   premium-ui.css — Chauffeur Empire · Midnight Empire theme
    Minimal overrides layer. Loaded AFTER style.css.
    ================================================================ */
 
-/* ── 1. TOPBAR ELEVATION ─────────────────────────────────────── */
+/* ── 1. TOPBAR ───────────────────────────────────────────────── */
 
 #top-bar {
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-#tb-cash  { text-shadow: 0 0 8px rgba(74,222,128,0.35); }
-#tb-rep   { text-shadow: 0 0 8px rgba(201,162,39,0.35); }
+#tb-cash  { text-shadow: 0 0 10px rgba(34,197,94,0.5); }
+#tb-rep   { text-shadow: 0 0 10px rgba(212,175,55,0.45); }
 
 /* ── 2. MAIN PANEL SHIFT ─────────────────────────────────────── */
 
@@ -20,15 +20,15 @@
 }
 
 #main-panel > div:first-child {
-  background: #e8eef5 !important;
-  border-bottom: 1px solid #cdd6e0 !important;
+  background: rgba(255,255,255,0.03) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
 }
 
 #panel-title {
-  font-family: 'Cinzel', serif !important;
-  font-size: 11px !important;
+  font-family: 'Orbitron', sans-serif !important;
+  font-size: 10px !important;
   letter-spacing: 0.20em;
-  color: #1a2744 !important;
+  color: rgba(240,244,255,0.70) !important;
 }
 
 /* ── 3. SIDEBAR-AWARE OFFSETS ────────────────────────────────── */

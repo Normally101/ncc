@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Underground — Design Preview</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Inter:wght@300;400;500;600&family=Roboto+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --void: #000000;
+  --bg-panel: #080808;
+  --bg-card: #0d0d0d;
+  --bg-hover: #131313;
+  --border: #1a1a1a;
+  --border-cyan: rgba(0,255,247,0.2);
+  --border-gold: rgba(255,200,0,0.2);
+  --border-purple: rgba(168,85,247,0.2);
+  --cyan: #00fff7;
+  --cyan-dim: rgba(0,255,247,0.08);
+  --cyan-mid: rgba(0,255,247,0.15);
+  --gold: #ffc800;
+  --gold-dim: rgba(255,200,0,0.08);
+  --purple: #a855f7;
+  --purple-dim: rgba(168,85,247,0.08);
+  --text-primary: #f0f0f0;
+  --text-secondary: rgba(240,240,240,0.5);
+  --text-muted: rgba(240,240,240,0.25);
+  --green: #00ff88;
+  --red: #ff3b3b;
+  --sidebar-w: 210px;
+  --topbar-h: 56px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--void);
+  color: var(--text-primary);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── TOPBAR ── */
+.topbar {
+  height: var(--topbar-h);
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+.topbar::before {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--cyan) 20%,
+    var(--gold) 50%,
+    var(--purple) 80%,
+    transparent 100%);
+  opacity: 0.6;
+}
+
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: 5px;
+  color: var(--void);
+  background: linear-gradient(135deg, var(--cyan), var(--gold));
+  padding: 4px 14px;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.kpi-bar {
+  display: flex;
+  gap: 6px;
+  flex: 1;
+}
+
+.kpi-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: default;
+  transition: all 0.2s;
+  position: relative;
+  clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  flex: 1;
+  min-width: 0;
+}
+.kpi-chip:hover { border-color: var(--cyan); background: var(--cyan-dim); }
+.kpi-chip:hover::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+.kpi-chip .label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.kpi-chip .value {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.kpi-chip .value.cyan { color: var(--cyan); text-shadow: 0 0 10px var(--cyan); }
+.kpi-chip .value.gold { color: var(--gold); text-shadow: 0 0 10px var(--gold); }
+.kpi-chip .value.purple { color: var(--purple); text-shadow: 0 0 10px var(--purple); }
+.kpi-chip .value.green { color: var(--green); text-shadow: 0 0 10px var(--green); }
+.kpi-chip .value.white { color: var(--text-primary); }
+
+.topbar-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.btn-neon {
+  width: 34px; height: 34px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-cyan);
+  color: var(--cyan);
+  font-size: 14px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+}
+.btn-neon:hover { background: var(--cyan-dim); box-shadow: 0 0 12px rgba(0,255,247,0.2); }
+
+/* ── BODY ── */
+.body { display: flex; flex: 1; overflow: hidden; }
+
+/* ── SIDEBAR ── */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.nav-section { padding: 10px 0 4px; }
+.nav-section-label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: 4px 14px 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.2s;
+  position: relative;
+  border-left: 2px solid transparent;
+}
+.nav-item:hover {
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border-left-color: var(--cyan);
+}
+.nav-item.active {
+  color: var(--cyan);
+  background: var(--cyan-mid);
+  border-left-color: var(--cyan);
+}
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  right: 0; top: 0; bottom: 0; width: 1px;
+  background: var(--cyan);
+  box-shadow: 0 0 8px var(--cyan);
+}
+.nav-item .icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+.nav-badge {
+  margin-left: auto;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--void);
+  background: var(--cyan);
+  padding: 1px 6px;
+  clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+}
+.nav-badge.gold-b { background: var(--gold); }
+.nav-badge.purple-b { background: var(--purple); }
+
+/* ── MAIN ── */
+.main {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── SECTION TITLE ── */
+.section-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-title::before {
+  content: '';
+  width: 12px; height: 2px;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+}
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── STAT CARDS ── */
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  cursor: default;
+  transition: all 0.25s;
+  clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 12px 100%, 0 calc(100% - 12px));
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 12px; height: 12px;
+  background: var(--border);
+  clip-path: polygon(0 0, 100% 100%, 100% 0);
+}
+.stat-card.c-cyan { border-color: var(--border-cyan); }
+.stat-card.c-gold { border-color: var(--border-gold); }
+.stat-card.c-purple { border-color: var(--border-purple); }
+.stat-card.c-green { border-color: rgba(0,255,136,0.2); }
+
+.stat-card:hover { transform: translateY(-2px); }
+.stat-card.c-cyan:hover { box-shadow: 0 0 20px rgba(0,255,247,0.1), inset 0 0 20px rgba(0,255,247,0.03); }
+.stat-card.c-gold:hover { box-shadow: 0 0 20px rgba(255,200,0,0.1), inset 0 0 20px rgba(255,200,0,0.03); }
+.stat-card.c-purple:hover { box-shadow: 0 0 20px rgba(168,85,247,0.1), inset 0 0 20px rgba(168,85,247,0.03); }
+.stat-card.c-green:hover { box-shadow: 0 0 20px rgba(0,255,136,0.1), inset 0 0 20px rgba(0,255,136,0.03); }
+
+.stat-card .accent-line {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+}
+.c-cyan .accent-line { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.c-gold .accent-line { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.c-purple .accent-line { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+.c-green .accent-line { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+.stat-card .card-label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.stat-card .card-value {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.c-cyan .card-value { color: var(--cyan); text-shadow: 0 0 20px rgba(0,255,247,0.5); }
+.c-gold .card-value { color: var(--gold); text-shadow: 0 0 20px rgba(255,200,0,0.5); }
+.c-purple .card-value { color: var(--purple); text-shadow: 0 0 20px rgba(168,85,247,0.5); }
+.c-green .card-value { color: var(--green); text-shadow: 0 0 20px rgba(0,255,136,0.5); }
+.stat-card .card-sub { font-size: 11px; color: var(--text-muted); }
+
+/* ── RIDES ── */
+.rides-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+
+.panel-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0,255,247,0.02);
+}
+.panel-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  text-shadow: 0 0 10px rgba(0,255,247,0.3);
+}
+
+.live-neon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: var(--green);
+  text-shadow: 0 0 8px var(--green);
+}
+.live-neon::before {
+  content: '';
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green), 0 0 16px var(--green);
+  animation: neonPulse 1s infinite;
+}
+@keyframes neonPulse { 0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)} }
+
+.ride-row {
+  display: grid;
+  grid-template-columns: 1.8fr 2fr 1fr 1fr 90px;
+  gap: 12px;
+  align-items: center;
+  padding: 11px 16px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s;
+  font-size: 12px;
+}
+.ride-row:last-child { border-bottom: none; }
+.ride-row:hover { background: rgba(0,255,247,0.02); }
+.ride-row.header {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.driver-nname { font-weight: 600; color: var(--text-primary); }
+.driver-nsub { font-family: 'Roboto Mono', monospace; font-size: 10px; color: var(--text-muted); }
+
+.route-nfrom { font-size: 10px; color: var(--text-muted); font-family: 'Roboto Mono', monospace; }
+.route-nto { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+
+.tier-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 9px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  clip-path: polygon(5px 0%, 100% 0%, calc(100% - 5px) 100%, 0% 100%);
+}
+.tier-chip.ultra { background: rgba(255,200,0,0.15); color: var(--gold); border: 1px solid rgba(255,200,0,0.3); }
+.tier-chip.vip { background: rgba(168,85,247,0.15); color: var(--purple); border: 1px solid rgba(168,85,247,0.3); }
+.tier-chip.business { background: rgba(0,255,247,0.1); color: var(--cyan); border: 1px solid rgba(0,255,247,0.2); }
+.tier-chip.standard { background: rgba(255,255,255,0.04); color: #666; border: 1px solid #222; }
+
+.earn { font-family: 'Roboto Mono', monospace; font-size: 13px; font-weight: 700; }
+.earn.gold { color: var(--gold); text-shadow: 0 0 8px rgba(255,200,0,0.4); }
+.earn.purple { color: var(--purple); }
+.earn.cyan { color: var(--cyan); }
+.earn.gray { color: #555; }
+
+.prog-neon { display: flex; flex-direction: column; gap: 4px; }
+.prog-bar-neon {
+  height: 3px;
+  background: var(--border);
+  position: relative;
+  overflow: visible;
+}
+.prog-fill-neon {
+  height: 100%;
+  position: relative;
+  transition: width 0.4s;
+}
+.prog-fill-neon::after {
+  content: '';
+  position: absolute;
+  right: -2px; top: -2px; bottom: -2px;
+  width: 4px;
+  border-radius: 50%;
+}
+.prog-fill-neon.gold { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.prog-fill-neon.gold::after { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+.prog-fill-neon.purple { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+.prog-fill-neon.purple::after { background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+.prog-fill-neon.cyan { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.prog-fill-neon.cyan::after { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+.prog-fill-neon.gray { background: #333; }
+.prog-pct-neon { font-family: 'Roboto Mono', monospace; font-size: 9px; color: var(--text-muted); }
+
+/* ── BOTTOM ── */
+.bottom-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.bottom-panel-n {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.bp-hdr {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.bp-ttl {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 2.5px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.driver-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  font-size: 12px;
+  cursor: default;
+}
+.driver-line:last-child { border-bottom: none; }
+.driver-line:hover { background: rgba(0,255,247,0.02); }
+
+.dl-avatar {
+  width: 28px; height: 28px;
+  border: 1px solid;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  flex-shrink: 0;
+  clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+}
+.dl-avatar.cyan { border-color: var(--cyan); color: var(--cyan); }
+.dl-avatar.gold { border-color: var(--gold); color: var(--gold); }
+.dl-avatar.purple { border-color: var(--purple); color: var(--purple); }
+.dl-avatar.green { border-color: var(--green); color: var(--green); }
+
+.dl-name { font-weight: 500; color: var(--text-primary); }
+.dl-sub { font-family: 'Roboto Mono', monospace; font-size: 9px; color: var(--text-muted); }
+.dl-status {
+  margin-left: auto;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  clip-path: polygon(4px 0%, 100% 0%, calc(100% - 4px) 100%, 0% 100%);
+}
+.dl-status.active { background: rgba(0,255,136,0.15); color: var(--green); }
+.dl-status.rest { background: rgba(255,255,255,0.05); color: #444; }
+
+.notif-line {
+  display: flex;
+  gap: 10px;
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  transition: background 0.15s;
+  cursor: default;
+}
+.notif-line:last-child { border-bottom: none; }
+.notif-line:hover { background: rgba(255,200,0,0.02); }
+.nl-dot {
+  width: 4px; height: 4px; border-radius: 50%;
+  margin-top: 5px; flex-shrink: 0;
+}
+.nl-dot.gold { background: var(--gold); box-shadow: 0 0 6px var(--gold); }
+.nl-dot.cyan { background: var(--cyan); box-shadow: 0 0 6px var(--cyan); }
+.nl-dot.purple { background: var(--purple); box-shadow: 0 0 6px var(--purple); }
+.nl-dot.gray { background: #333; }
+.nl-text { color: var(--text-secondary); line-height: 1.4; }
+.nl-text strong { color: var(--text-primary); font-weight: 600; }
+.nl-time { margin-left: auto; font-family: 'Roboto Mono', monospace; font-size: 9px; color: var(--text-muted); flex-shrink: 0; }
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1a1a1a; }
+
+/* scanline effect */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0,0,0,0.03) 2px,
+    rgba(0,0,0,0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 9998;
+}
+
+.design-badge {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background: rgba(0,255,247,0.1);
+  border: 1px solid var(--cyan);
+  padding: 4px 14px;
+  font-family: 'Orbitron', monospace;
+  font-size: 8px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  text-shadow: 0 0 8px var(--cyan);
+  z-index: 9999;
+  clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+}
+</style>
+</head>
+<body>
+
+<div class="design-badge">Neon Underground</div>
+
+<!-- TOPBAR -->
+<div class="topbar">
+  <div class="logo">NCC</div>
+  <div class="kpi-bar">
+    <div class="kpi-chip">
+      <div>
+        <div class="label">Cassa</div>
+        <div class="value gold">€4.87M</div>
+      </div>
+    </div>
+    <div class="kpi-chip">
+      <div>
+        <div class="label">Reputazione</div>
+        <div class="value cyan">94.2</div>
+      </div>
+    </div>
+    <div class="kpi-chip">
+      <div>
+        <div class="label">Corse</div>
+        <div class="value white">12 live</div>
+      </div>
+    </div>
+    <div class="kpi-chip">
+      <div>
+        <div class="label">Ricavi</div>
+        <div class="value green">+€28K</div>
+      </div>
+    </div>
+    <div class="kpi-chip">
+      <div>
+        <div class="label">Province</div>
+        <div class="value purple">7/12</div>
+      </div>
+    </div>
+    <div class="kpi-chip">
+      <div>
+        <div class="label">Giorno</div>
+        <div class="value white">D15</div>
+      </div>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <div class="btn-neon">⚙️</div>
+    <div class="btn-neon">🔔</div>
+  </div>
+</div>
+
+<!-- BODY -->
+<div class="body">
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="nav-section">
+      <div class="nav-section-label">Core</div>
+      <div class="nav-item active"><span class="icon">◈</span> Dashboard</div>
+      <div class="nav-item"><span class="icon">⬡</span> Mappa <span class="nav-badge">12</span></div>
+      <div class="nav-item"><span class="icon">◷</span> Corse</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Ops</div>
+      <div class="nav-item"><span class="icon">◎</span> Autisti</div>
+      <div class="nav-item"><span class="icon">◻</span> Garage</div>
+      <div class="nav-item"><span class="icon">◆</span> Contratti <span class="nav-badge gold-b">3</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Expand</div>
+      <div class="nav-item"><span class="icon">⬜</span> Province</div>
+      <div class="nav-item"><span class="icon">◉</span> Immobili</div>
+      <div class="nav-item"><span class="icon">▦</span> Finanza</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Premium</div>
+      <div class="nav-item"><span class="icon">◈</span> VIP <span class="nav-badge purple-b">VIP</span></div>
+      <div class="nav-item"><span class="icon">◎</span> Quest</div>
+      <div class="nav-item"><span class="icon">◷</span> Email <span class="nav-badge">2</span></div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- STAT CARDS -->
+    <div>
+      <div class="section-title">Stato Live</div>
+      <div class="stat-cards">
+        <div class="stat-card c-gold">
+          <div class="accent-line"></div>
+          <div class="card-label">💰 Guadagno</div>
+          <div class="card-value">28K</div>
+          <div class="card-sub">+12.4% vs ieri</div>
+        </div>
+        <div class="stat-card c-cyan">
+          <div class="accent-line"></div>
+          <div class="card-label">🚀 Corse live</div>
+          <div class="card-value">12</div>
+          <div class="card-sub">4 standby · 2 eta</div>
+        </div>
+        <div class="stat-card c-green">
+          <div class="accent-line"></div>
+          <div class="card-label">⭐ Rating</div>
+          <div class="card-value">4.87</div>
+          <div class="card-sub">eccellente · stabile</div>
+        </div>
+        <div class="stat-card c-purple">
+          <div class="accent-line"></div>
+          <div class="card-label">👑 Rank</div>
+          <div class="card-value" style="font-size:16px">MAGNATE</div>
+          <div class="card-sub">→ TYCOON</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIDES -->
+    <div>
+      <div class="section-title">Corse Attive</div>
+      <div class="rides-panel">
+        <div class="panel-header">
+          <div class="panel-title">[ LIVE DISPATCH ]</div>
+          <div class="live-neon">TRANSMITTING</div>
+        </div>
+        <div class="ride-row header">
+          <div>Autista</div>
+          <div>Percorso</div>
+          <div>Tier</div>
+          <div>Valore</div>
+          <div>Progress</div>
+        </div>
+        <div class="ride-row">
+          <div>
+            <div class="driver-nname">Marco Rossi</div>
+            <div class="driver-nsub">TESLA_MODEL_S</div>
+          </div>
+          <div>
+            <div class="route-nfrom">MXP_T1 →</div>
+            <div class="route-nto">Grand Hotel Duomo</div>
+          </div>
+          <div><span class="tier-chip ultra">💎 ULTRA</span></div>
+          <div class="earn gold">€680</div>
+          <div class="prog-neon">
+            <div class="prog-bar-neon"><div class="prog-fill-neon gold" style="width:73%"></div></div>
+            <div class="prog-pct-neon">73% · 8:00</div>
+          </div>
+        </div>
+        <div class="ride-row">
+          <div>
+            <div class="driver-nname">Giulia Bianchi</div>
+            <div class="driver-nsub">BMW_7_SERIES</div>
+          </div>
+          <div>
+            <div class="route-nfrom">CENTRALE →</div>
+            <div class="route-nto">Teatro alla Scala</div>
+          </div>
+          <div><span class="tier-chip vip">👑 VIP</span></div>
+          <div class="earn purple">€210</div>
+          <div class="prog-neon">
+            <div class="prog-bar-neon"><div class="prog-fill-neon purple" style="width:45%"></div></div>
+            <div class="prog-pct-neon">45% · 14:00</div>
+          </div>
+        </div>
+        <div class="ride-row">
+          <div>
+            <div class="driver-nname">Antonio Verde</div>
+            <div class="driver-nsub">MERCEDES_E</div>
+          </div>
+          <div>
+            <div class="route-nfrom">NAVIGLI →</div>
+            <div class="route-nto">Porta Nuova</div>
+          </div>
+          <div><span class="tier-chip business">🏢 BIZ</span></div>
+          <div class="earn cyan">€95</div>
+          <div class="prog-neon">
+            <div class="prog-bar-neon"><div class="prog-fill-neon cyan" style="width:88%"></div></div>
+            <div class="prog-pct-neon">88% · 2:00</div>
+          </div>
+        </div>
+        <div class="ride-row">
+          <div>
+            <div class="driver-nname">Luca Ferrari</div>
+            <div class="driver-nsub">AUDI_A8</div>
+          </div>
+          <div>
+            <div class="route-nfrom">BRERA →</div>
+            <div class="route-nto">Linate Airport</div>
+          </div>
+          <div><span class="tier-chip standard">STD</span></div>
+          <div class="earn gray">€62</div>
+          <div class="prog-neon">
+            <div class="prog-bar-neon"><div class="prog-fill-neon gray" style="width:20%"></div></div>
+            <div class="prog-pct-neon">20% · 22:00</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM -->
+    <div class="bottom-row">
+      <div class="bottom-panel-n">
+        <div class="bp-hdr">
+          <span class="bp-ttl">[ Autisti ]</span>
+          <span style="font-family:'Roboto Mono',monospace;font-size:9px;color:var(--green);text-shadow:0 0 8px var(--green)">8 ONLINE</span>
+        </div>
+        <div class="driver-line">
+          <div class="dl-avatar cyan">MR</div>
+          <div>
+            <div class="dl-name">Marco Rossi</div>
+            <div class="dl-sub">FAT:32% · MOOD:OK</div>
+          </div>
+          <span class="dl-status active">ACTIVE</span>
+        </div>
+        <div class="driver-line">
+          <div class="dl-avatar gold">GB</div>
+          <div>
+            <div class="dl-name">Giulia Bianchi</div>
+            <div class="dl-sub">FAT:18% · MOOD:HIGH</div>
+          </div>
+          <span class="dl-status active">ACTIVE</span>
+        </div>
+        <div class="driver-line">
+          <div class="dl-avatar purple">LF</div>
+          <div>
+            <div class="dl-name">Luca Ferrari</div>
+            <div class="dl-sub">FAT:78% · MOOD:LOW</div>
+          </div>
+          <span class="dl-status rest">REST</span>
+        </div>
+        <div class="driver-line">
+          <div class="dl-avatar green">AV</div>
+          <div>
+            <div class="dl-name">Antonio Verde</div>
+            <div class="dl-sub">FAT:45% · MOOD:OK</div>
+          </div>
+          <span class="dl-status active">ACTIVE</span>
+        </div>
+      </div>
+
+      <div class="bottom-panel-n">
+        <div class="bp-hdr">
+          <span class="bp-ttl">[ System Log ]</span>
+          <span style="font-family:'Roboto Mono',monospace;font-size:9px;color:var(--gold);text-shadow:0 0 6px var(--gold)">2 ALERTS</span>
+        </div>
+        <div class="notif-line">
+          <div class="nl-dot gold"></div>
+          <div class="nl-text"><strong>RIDE_COMPLETE</strong> — Rossi/Sheikh €680 Ultra VIP corsa completata</div>
+          <div class="nl-time">14:32</div>
+        </div>
+        <div class="notif-line">
+          <div class="nl-dot gold"></div>
+          <div class="nl-text"><strong>CONTRACT_IN</strong> — Fontana Corp proposta €12K/mo in attesa approvazione</div>
+          <div class="nl-time">13:15</div>
+        </div>
+        <div class="notif-line">
+          <div class="nl-dot cyan"></div>
+          <div class="nl-text"><strong>PROVINCE_UNLOCK</strong> — Bergamo disponibile per acquisizione</div>
+          <div class="nl-time">11:08</div>
+        </div>
+        <div class="notif-line">
+          <div class="nl-dot gray"></div>
+          <div class="nl-text"><strong>MAINTENANCE</strong> — Tesla Model S revisione fra 420 km</div>
+          <div class="nl-time">09:44</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>

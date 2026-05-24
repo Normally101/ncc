@@ -1,42 +1,51 @@
 :root {
-    --gold:        #c9a227;
-    --gold-dim:    rgba(201,162,39,0.12);
-    --gold-border: rgba(201,162,39,0.30);
-    --topbar:      #1e3a5f;
-    --nav:         #1e2d45;
-    --nav-dark:    #162030;
-    --bg:          #e8eef5;
-    --bg2:         #edf2f7;
-    --bg3:         #f5f7fa;
-    --panel:       #f0f4f8;
-    --card:        #ffffff;
-    --card-border: #e2e8f0;
+    /* ── MIDNIGHT EMPIRE THEME ── */
+    --gold:        #d4af37;
+    --gold-light:  #f0d060;
+    --gold-dim:    rgba(212,175,55,0.12);
+    --gold-border: rgba(212,175,55,0.28);
+    --topbar:      #080b12;
+    --nav:         #080b12;
+    --nav-dark:    #060810;
+    --bg:          #0a0c12;
+    --bg2:         #0e111a;
+    --bg3:         #0c0f18;
+    --panel:       #0a0c12;
+    --card:        rgba(255,255,255,0.05);
+    --card-border: rgba(255,255,255,0.08);
     --sidebar-w:   160px;
     --topbar-h:    42px;
-    --border:      rgba(0,0,0,0.10);
-    --border-sub:  rgba(0,0,0,0.07);
-    --border-gold: rgba(201,162,39,0.30);
-    --shadow-sm:   0 1px 4px rgba(0,0,0,0.08);
-    --shadow-md:   0 4px 16px rgba(0,0,0,0.12);
-    --text:        #1a2744;
-    --text-muted:  #4d6480;
-    --text-dim:    #7a92a8;
-    /* ── kept for compat ─ */
-    --blue:        #1d6fa8;
-    --red:         #dc2626;
-    --green:       #16a34a;
-    --orange:      #d97706;
-    --purple:      #7c3aed;
-    --surface:     rgba(0,0,0,0.04);
-    --surface2:    rgba(0,0,0,0.08);
+    --border:      rgba(255,255,255,0.08);
+    --border-sub:  rgba(255,255,255,0.06);
+    --border-gold: rgba(212,175,55,0.28);
+    --shadow-sm:   0 1px 4px rgba(0,0,0,0.4);
+    --shadow-md:   0 4px 16px rgba(0,0,0,0.5);
+    --text:        #f0f4ff;
+    --text-muted:  rgba(240,244,255,0.50);
+    --text-dim:    rgba(240,244,255,0.28);
+    /* ── accent colors ─ */
+    --blue:        #00f2ff;
+    --blue-dim:    rgba(0,242,255,0.12);
+    --red:         #ef4444;
+    --red-dim:     rgba(239,68,68,0.12);
+    --green:       #22c55e;
+    --green-dim:   rgba(34,197,94,0.12);
+    --orange:      #f59e0b;
+    --purple:      #a78bfa;
+    --surface:     rgba(255,255,255,0.04);
+    --surface2:    rgba(255,255,255,0.07);
+    --glow-gold:   0 0 20px rgba(212,175,55,0.18);
+    --glow-blue:   0 0 20px rgba(0,242,255,0.15);
+    --glow-green:  0 0 16px rgba(34,197,94,0.15);
+    --glow-red:    0 0 16px rgba(239,68,68,0.18);
     --sp-xs:  4px; --sp-sm: 8px; --sp-md: 12px;
     --sp-lg: 16px; --sp-xl: 24px; --sp-2xl: 32px;
     --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
     --font-mono:    'Roboto Mono', monospace;
-    --font-display: 'Cinzel', serif;
+    --font-display: 'Orbitron', sans-serif;
     --font-body:    'Inter', system-ui, sans-serif;
     --ease-fast:  0.12s ease;
-    --ease-std:   0.18s ease;
+    --ease-std:   0.20s ease;
     --ease-slow:  0.35s ease;
 }
 
@@ -48,7 +57,7 @@
 
 body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: #e2e8ef;
+    background: #0a0c12;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -3765,96 +3774,153 @@ details[open] .finance-section-title { color: #00f2ff; }
 #main-panel::before { display: none; }
 
 /* ════════════════════════════════════════════════════════════════
-   LIGHT THEME — eRepublik-style chrome overrides
-   Override hardcoded Tailwind dark classes inside main content +
-   sidebar so they read correctly on the new light backgrounds.
+   MIDNIGHT EMPIRE THEME — dark glassmorphism
    ════════════════════════════════════════════════════════════════ */
 
-/* Top-bar: steel-blue metallic — eRepublik-style */
-#top-bar { background: linear-gradient(180deg, #3d6d8e 0%, #4a7fa8 100%) !important; border-bottom-color: rgba(0,0,0,0.28) !important; }
-#top-bar nav { background: rgba(0,0,0,0.14); border-top: 1px solid rgba(255,255,255,0.08); }
+/* ── Body & background ── */
+body { background: #0a0c12 !important; }
+body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
 
-/* Sidebar: white card */
-#sidebar-player { background: #ffffff !important; border-right-color: #cfd8e3 !important; }
-#sidebar-player .text-white    { color: #1a2744 !important; }
-#sidebar-player .text-gray-400 { color: #5a7090 !important; }
-#sidebar-player .text-gray-500 { color: #7a90a4 !important; }
-#sidebar-player .text-green-400 { color: #16a34a !important; }
-#sidebar-player .text-gold, #sidebar-player [style*="color:#c9a227"] { color: #b8860b !important; }
+/* ── Top-bar: dark glass with gold accent line ── */
+#top-bar {
+    background: rgba(8,11,18,0.92) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+    backdrop-filter: blur(20px);
+    position: relative;
+    box-shadow: none !important;
+}
+#top-bar::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0; height: 1px;
+    background: linear-gradient(90deg, transparent 0%, var(--gold) 30%, var(--gold) 70%, transparent 100%);
+    opacity: 0.3;
+}
+#top-bar nav { background: rgba(0,0,0,0.25); border-top: 1px solid rgba(255,255,255,0.06); }
 
-/* Main panel header strip */
-#main-panel > div:first-child { background: #e0e8f0 !important; border-bottom-color: rgba(0,0,0,0.10) !important; }
-#main-panel #panel-title { color: #1a2744 !important; }
+/* Top-bar stat pills */
+#top-bar .bg-white\/10 { background: rgba(255,255,255,0.07) !important; }
+#top-bar .text-gold, #top-bar [style*="color:#c9a227"] { color: var(--gold) !important; }
+#top-bar .text-green-400 { color: #4ade80 !important; }
 
-/* Override hardcoded Tailwind dark text inside main-panel content */
-#main-panel .text-white:not(button):not(.ds-btn):not([class*="btn-"]) { color: #1a2744 !important; }
-#main-panel .text-gray-200 { color: #2a3e58 !important; }
-#main-panel .text-gray-300 { color: #2a3e58 !important; }
-#main-panel .text-gray-400 { color: #4d6480 !important; }
+/* ── Sidebar: dark glass ── */
+#sidebar-player {
+    background: rgba(8,11,18,0.85) !important;
+    border-right: 1px solid rgba(255,255,255,0.06) !important;
+}
+#sidebar-player .sidebar-group-head:hover { background: rgba(255,255,255,0.04) !important; }
+#sidebar-player .text-white    { color: rgba(240,244,255,0.90) !important; }
+#sidebar-player .text-gray-400 { color: rgba(240,244,255,0.40) !important; }
+#sidebar-player .text-gray-500 { color: rgba(240,244,255,0.30) !important; }
+#sidebar-player .text-green-400 { color: #4ade80 !important; }
 
-/* Override hardcoded dark bg classes inside main-panel */
-#main-panel .bg-black\/50  { background: rgba(0,0,0,0.05) !important; }
-#main-panel .bg-black\/60  { background: rgba(0,0,0,0.07) !important; }
-#main-panel .bg-black\/80  { background: rgba(0,0,0,0.09) !important; }
-#main-panel .bg-gray-950   { background: #eaecf0 !important; }
-#main-panel .bg-gray-900   { background: #e8ecf1 !important; }
-#main-panel .bg-gray-800   { background: #e0e6ec !important; }
-#main-panel .bg-gray-700   { background: #d8e2ed !important; }
-#main-panel .bg-gray-600   { background: #dce6ef !important; }
-#main-panel .bg-gray-700\/50 { background: rgba(30,45,69,0.05) !important; }
+/* Logo strip in sidebar */
+#sidebar-player > div:first-child {
+    background: rgba(0,0,0,0.3) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
 
-/* Border overrides */
-#main-panel .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
-#main-panel .border-white\/20 { border-color: rgba(0,0,0,0.15) !important; }
-#main-panel .border-white\/5  { border-color: rgba(0,0,0,0.06) !important; }
-
-/* bg-white/* → dark-tinted equivalents on light panel */
-#main-panel .bg-white\/3  { background-color: rgba(0,0,0,0.02) !important; }
-#main-panel .bg-white\/5  { background-color: rgba(0,0,0,0.04) !important; }
-#main-panel .bg-white\/10 { background-color: rgba(0,0,0,0.06) !important; }
-
-/* Restore white text inside explicitly-dark Tailwind bg sections (career/quest cards) */
-#main-panel .bg-\[\#111120\] .text-white,
-#main-panel .bg-\[\#0e0e1c\]  .text-white { color: #ffffff !important; }
-#main-panel .bg-\[\#111120\] .text-gray-400 { color: rgba(156,163,175,1) !important; }
-
-/* Finance tab dark-ambience: keep dark bg classes */
-#main-panel .bg-\[\#111120\] { background-color: #111120 !important; }
-#main-panel .bg-\[\#0e0e1c\]  { background-color: #0e0e1c  !important; }
-
-/* Gradient overlay on body — remove on light theme */
-body > .fixed.bg-gradient-to-b { opacity: 0 !important; }
-
-/* ds-card shadow on light bg */
-.ds-card { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.ds-kpi-strip { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-.ds-table-wrap { box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-
+/* ── Main panel: dark base ── */
+#main-panel { background: #0a0c12 !important; }
+#main-panel > div:first-child {
+    background: rgba(255,255,255,0.03) !important;
+    border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+#main-panel #panel-title { color: var(--text) !important; }
 #tab-container { color: var(--text); }
 
-/* Finance card variables — keep as dark "terminal" aesthetic inside finance tab */
-/* Lifestyle, Finance remain with their own dark ambience (intentional contrast) */
+/* ── DS Components: dark glassmorphism ── */
+.ds-card {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    box-shadow: none;
+}
+.ds-card:hover {
+    background: rgba(255,255,255,0.07) !important;
+    border-color: rgba(212,175,55,0.22) !important;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4) !important;
+}
+.ds-card--gold  { border-color: rgba(212,175,55,0.22) !important; }
+.ds-card--gold:hover { box-shadow: var(--glow-gold) !important; }
+.ds-card--alert { border-color: rgba(239,68,68,0.28) !important; }
+.ds-card--alert:hover { box-shadow: var(--glow-red) !important; }
 
-/* HQ / hud-card light bg adaptation */
-.hud-card { background: #ffffff; border-color: rgba(0,0,0,0.10); }
-.hud-card:hover { background: #f0f8f3; border-color: rgba(22,163,74,0.30); box-shadow: 0 2px 8px rgba(22,163,74,0.10); }
+.ds-header { border-bottom-color: rgba(255,255,255,0.08) !important; }
+.ds-title { color: var(--text) !important; }
+.ds-subtitle { color: var(--text-muted) !important; }
+.ds-eyebrow { color: var(--green) !important; }
 
-/* Notification light bg */
-.notif { background: rgba(255,255,255,0.96) !important; color: #1a2744 !important; border-left-color: #16a34a; box-shadow: 0 4px 20px rgba(0,0,0,0.15); }
-.notif.error-notif { border-left-color: #dc2626; }
+.ds-kpi-strip {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    box-shadow: none;
+}
+.ds-kpi { border-right-color: rgba(255,255,255,0.06) !important; }
+.ds-kpi-label { color: var(--text-muted) !important; }
+.ds-kpi-val { color: var(--text) !important; }
+.ds-kpi-sub { color: var(--text-dim) !important; }
 
-/* News ticker light */
-#news-ticker-wrap { background: #dce4ec; border-top-color: rgba(0,0,0,0.12); }
-#news-ticker-track { color: #4d6480; }
-#news-ticker-track span::before { color: #16a34a; }
+.ds-table-wrap {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    box-shadow: none;
+}
+.ds-table thead tr { background: rgba(255,255,255,0.03) !important; border-bottom-color: rgba(255,255,255,0.08) !important; }
+.ds-table th { color: var(--text-muted) !important; }
+.ds-table td { color: var(--text) !important; border-bottom-color: rgba(255,255,255,0.05) !important; }
+.ds-table tbody tr:hover td { background: rgba(255,255,255,0.03) !important; }
 
-/* Top bar stats text adaptation */
-#top-bar .text-gold, #top-bar [style*="color:#c9a227"] { color: #ffd875 !important; }
-#top-bar .text-gray-500, #top-bar .text-gray-400 { color: rgba(255,255,255,0.55) !important; }
-#top-bar .text-green-400 { color: #7ee8a2 !important; }
+/* ── HUD Cards: dark ── */
+.hud-card {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+.hud-card:hover {
+    background: rgba(255,255,255,0.07) !important;
+    border-color: rgba(34,197,94,0.25) !important;
+    box-shadow: 0 0 16px rgba(34,197,94,0.08) !important;
+}
+.hud-card.active-card {
+    border-color: rgba(34,197,94,0.35) !important;
+    background: rgba(34,197,94,0.06) !important;
+}
 
-/* XP bar track on light sidebar */
-#sidebar-player [style*="background:rgba(255,255,255,0.1)"] { background: rgba(0,0,0,0.10) !important; }
+/* ── Notifications: dark ── */
+.notif {
+    background: rgba(14,17,26,0.97) !important;
+    color: var(--text) !important;
+    border-left-color: var(--green);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+}
+.notif.error-notif { border-left-color: var(--red); }
+
+/* ── News ticker: dark ── */
+#news-ticker-wrap {
+    background: rgba(8,11,18,0.95) !important;
+    border-top-color: rgba(255,255,255,0.08) !important;
+}
+#news-ticker-track { color: rgba(240,244,255,0.55) !important; }
+#news-ticker-track span::before { color: var(--green) !important; }
+
+/* ── Nav top buttons ── */
+.top-nav-btn { color: rgba(240,244,255,0.60); }
+.top-nav-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+.top-nav-btn.active { color: var(--text); border-bottom-color: var(--gold); background: rgba(212,175,55,0.08); }
+
+.nav-drop {
+    background: rgba(10,12,18,0.98);
+    border-color: rgba(255,255,255,0.10);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.7);
+}
+.nav-drop-item { color: rgba(240,244,255,0.55); }
+.nav-drop-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+
+/* ── Logo/brand text ── */
+.font-display { font-family: 'Orbitron', sans-serif !important; }
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar-thumb { background: rgba(212,175,55,0.2) !important; }
+::-webkit-scrollbar-thumb:hover { background: rgba(212,175,55,0.35) !important; }
 
 /* ================================================================
    SIDEBAR ACCORDION — dark nav
@@ -3883,23 +3949,25 @@ body > .fixed.bg-gradient-to-b { opacity: 0 !important; }
   display: block;
   padding: 5px 12px 5px 28px;
   font-size: 10px;
-  color: rgba(255,255,255,0.55);
+  color: rgba(240,244,255,0.50);
   text-decoration: none;
   cursor: pointer;
-  transition: background 0.12s ease, color 0.12s ease;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-left: 2px solid transparent;
 }
 .sidebar-item:hover {
-  background: rgba(255,255,255,0.06);
-  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.05);
+  color: rgba(240,244,255,0.85);
 }
 .sidebar-item.active {
-  background: rgba(201,162,39,0.12);
-  color: #c9a227;
-  border-left: 2px solid #c9a227;
+  background: rgba(212,175,55,0.10);
+  color: var(--gold);
+  border-left: 2px solid var(--gold);
   padding-left: 26px;
+  text-shadow: 0 0 12px rgba(212,175,55,0.3);
 }
 
 @media (max-width: 767px) {
