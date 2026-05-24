@@ -4213,14 +4213,14 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
     position: absolute;
     width: 90px; height: 90px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(212,175,55,0.28) 0%, transparent 70%);
-    filter: blur(24px);
+    background: radial-gradient(circle, rgba(212,175,55,0.30) 0%, transparent 70%);
+    filter: blur(26px);
     pointer-events: none;
     z-index: 0;
-    top: 50%; left: 50%;
+    top: 0; left: 0;
     opacity: 0;
-    transition: top 0.07s ease, left 0.07s ease, opacity 0.2s ease;
-    will-change: top, left, opacity;
+    transition: opacity 0.22s ease;
+    will-change: transform, opacity;
 }
 
 /* KPI value underline accent ───────────────────────────────── */

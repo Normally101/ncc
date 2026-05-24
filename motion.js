@@ -65,10 +65,28 @@ window._ceKpiOrbit = function() {
     });
 };
 
-// KPI card: orbit glow follows mouse, visible only on hover ──────
+// KPI card: smooth mouse-following glow via rAF lerp ─────────────
 function _ceCardOf(e) {
     const t = e.target;
     return (t && t.nodeType === 1) ? t.closest('.ce-kpi-card') : null;
+}
+
+// Per-card lerp state: { tx, ty, cx, cy, raf }
+var _ceOrbitState = new WeakMap();
+
+function _ceOrbitTick(card, orbit) {
+    var s = _ceOrbitState.get(card);
+    if (!s) return;
+    // Lerp factor — higher = snappier, lower = smoother (0.12 feels like liquid)
+    s.cx += (s.tx - s.cx) * 0.12;
+    s.cy += (s.ty - s.cy) * 0.12;
+    orbit.style.transform = 'translate(' + (s.cx - 45) + 'px,' + (s.cy - 45) + 'px)';
+    var dx = s.tx - s.cx, dy = s.ty - s.cy;
+    if (dx * dx + dy * dy > 0.1) {
+        s.raf = requestAnimationFrame(function() { _ceOrbitTick(card, orbit); });
+    } else {
+        s.raf = null;
+    }
 }
 
 document.addEventListener('mousemove', function(e) {
@@ -76,26 +94,33 @@ document.addEventListener('mousemove', function(e) {
     if (!card) return;
     const orbit = card.querySelector('.ce-orbit');
     if (!orbit) return;
-    const r = card.getBoundingClientRect();
-    orbit.style.left    = (e.clientX - r.left - 45) + 'px';
-    orbit.style.top     = (e.clientY - r.top  - 45) + 'px';
+    const r  = card.getBoundingClientRect();
+    const tx = e.clientX - r.left;
+    const ty = e.clientY - r.top;
+    var s = _ceOrbitState.get(card);
+    if (!s) {
+        // First entry: snap to cursor, no lerp lag
+        s = { tx: tx, ty: ty, cx: tx, cy: ty, raf: null };
+        _ceOrbitState.set(card, s);
+    } else {
+        s.tx = tx;
+        s.ty = ty;
+    }
     orbit.style.opacity = '1';
-}, true);
-
-document.addEventListener('mouseover', function(e) {
-    const card = _ceCardOf(e);
-    if (!card) return;
-    const orbit = card.querySelector('.ce-orbit');
-    if (orbit) orbit.style.opacity = '1';
+    if (!s.raf) {
+        s.raf = requestAnimationFrame(function() { _ceOrbitTick(card, orbit); });
+    }
 }, true);
 
 document.addEventListener('mouseout', function(e) {
     const card = _ceCardOf(e);
     if (!card) return;
-    // Only hide if leaving the card itself (not moving to a child)
     if (card.contains(e.relatedTarget)) return;
     const orbit = card.querySelector('.ce-orbit');
     if (orbit) orbit.style.opacity = '0';
+    var s = _ceOrbitState.get(card);
+    if (s && s.raf) { cancelAnimationFrame(s.raf); s.raf = null; }
+    _ceOrbitState.delete(card);
 }, true);
 
 // ── 4. Stagger entrance ──────────────────────────────────────────
