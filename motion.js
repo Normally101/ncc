@@ -55,7 +55,7 @@ window._ceTriggerCountUps = function() {
     });
 };
 
-// ── 3. KPI card orbit glow ───────────────────────────────────────
+// ── 3. KPI card: mouse-following glow ───────────────────────────
 window._ceKpiOrbit = function() {
     document.querySelectorAll('.ce-kpi-card').forEach(card => {
         if (card.querySelector('.ce-orbit')) return;
@@ -64,6 +64,26 @@ window._ceKpiOrbit = function() {
         card.appendChild(o);
     });
 };
+
+// Delegate mousemove on the KPI strip container ──────────────────
+document.addEventListener('mousemove', function(e) {
+    const card = e.target.closest('.ce-kpi-card');
+    if (!card) return;
+    const orbit = card.querySelector('.ce-orbit');
+    if (!orbit) return;
+    const r = card.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    orbit.style.left = (x - 45) + 'px';
+    orbit.style.top  = (y - 45) + 'px';
+}, true);
+
+document.addEventListener('mouseleave', function(e) {
+    const card = e.target.closest('.ce-kpi-card');
+    if (!card) return;
+    const orbit = card.querySelector('.ce-orbit');
+    if (orbit) { orbit.style.left = '50%'; orbit.style.top = '50%'; }
+}, true);
 
 // ── 4. Stagger entrance ──────────────────────────────────────────
 window._ceStagger = function(container, selector, delay) {
