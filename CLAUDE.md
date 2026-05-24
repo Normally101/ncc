@@ -245,14 +245,15 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 57. crypto.js            — crypto/offshore
 58. weather_real.js      — meteo reale (OpenWeather API)
 59. hq.js                — costruzioni HQ, HQ_ROOMS, hqBuildRoom, hqHasRoom
-60. mobile_dispatcher.js — UI mobile
-61. hostile_takeover.js  — acquisizioni ostili, renderTabOPA
-62. nemesis.js           — nemici VIP, renderTabNemesis
-63. infrastructure.js    — carburante/depositi, renderTabInfrastructure
-64. contracts.js         — gare d'appalto, renderTabContracts (496 righe)
-65. tourism.js           — bandi turismo, renderTabTourism (485 righe)
-66. tutorial.js          — onboarding
-67. premium-ui.js        — hash routing (#tab → switchTab on load)
+60. hq-visual.js         — rendering visuale campus isometrico HQ, window.renderHQCampus
+61. mobile_dispatcher.js — UI mobile
+62. hostile_takeover.js  — acquisizioni ostili, renderTabOPA
+63. nemesis.js           — nemici VIP, renderTabNemesis
+64. infrastructure.js    — carburante/depositi, renderTabInfrastructure
+65. contracts.js         — gare d'appalto, renderTabContracts (496 righe)
+66. tourism.js           — bandi turismo, renderTabTourism (485 righe)
+67. tutorial.js          — onboarding
+68. premium-ui.js        — hash routing (#tab → switchTab on load)
 ```
 
 ### File da NON caricare (obsoleti — presenti nel repo ma non referenziati in index.html)

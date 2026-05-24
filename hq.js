@@ -225,6 +225,7 @@ window.hqBuildRoom = async function(roomId, slotIndex) {
 
     if(typeof showNotification==='function') showNotification(`🏗️ ${room.icon} ${room.name} costruita!`, 'success');
     if(typeof logToMap==='function') logToMap(`🏗️ HQ: costruita ${room.name}. Effetto: ${room.desc}`);
+    window._hqJustBuiltRoom = roomId; // For visual campus animation
     window.renderTabHQ();
 };
 
@@ -235,24 +236,8 @@ window.renderTabHQ = function() {
     if (!container) return;
 
     const builtRooms = _hqRooms();
-    if (!gameState.hqGrid) gameState.hqGrid = { 7: 'garage_main' }; // center slot
-
     const totalScore = builtRooms.reduce((s, id) => s + (window.HQ_ROOMS.find(r=>r.id===id)?.score || 0), 0);
     const fx = window.hqAllEffects();
-
-    // Grid visualization
-    const gridHtml = Array.from({ length: HQ_GRID_SIZE }, (_, i) => {
-        const roomId = gameState.hqGrid[i];
-        const room   = roomId ? window.HQ_ROOMS.find(r => r.id === roomId) : null;
-        return room
-            ? `<div class="hq-tile hq-tile-built" title="${room.name}: ${room.desc}">
-                 <div class="text-xl">${room.icon}</div>
-                 <div class="text-[7px] text-center leading-tight text-gray-300 mt-0.5">${room.name.split(' ')[0]}</div>
-               </div>`
-            : `<div class="hq-tile hq-tile-empty" onclick="window.hqOpenBuildModal(${i})" title="Slot vuoto — clicca per costruire">
-                 <div class="text-gray-700 text-lg">+</div>
-               </div>`;
-    }).join('');
 
     // Available rooms
     const availableRooms = window.HQ_ROOMS.filter(r => !builtRooms.includes(r.id));
@@ -277,7 +262,6 @@ window.renderTabHQ = function() {
         </div>
       </div>`).join('');
 
-    // Active effects summary — use switch to avoid eager toFixed() on boolean values
     const _hqFxLabel = (k, v) => {
         if (typeof v !== 'number') return (k === 'freeEVRecharge' && v) ? 'Ricarica EV gratuita' : null;
         switch (k) {
@@ -313,13 +297,8 @@ window.renderTabHQ = function() {
     ]) + `
       <div class="p-1">
 
-        <!-- Grid -->
-        <div class="mb-4">
-          <div class="text-[9px] text-gray-500 mb-2">Mappa HQ — Clicca su uno slot + per costruire</div>
-          <div class="hq-grid" style="display:grid;grid-template-columns:repeat(${HQ_GRID_COLS},1fr);gap:4px;">
-            ${gridHtml}
-          </div>
-        </div>
+        <!-- Visual Isometric Campus Placeholder -->
+        <div id="hq-visual-placeholder" class="mb-4"></div>
 
         <!-- Active effects -->
         ${fxItems.length > 0 ? `
@@ -337,14 +316,12 @@ window.renderTabHQ = function() {
         ${lockedRooms.length > 0 ? `
           <h3 class="text-[10px] text-gray-600 uppercase tracking-widest mb-2 mt-3">🔒 Stanze Bloccate</h3>
           ${roomListHtml(lockedRooms, true)}` : ''}
-      </div>
+      </div>`;
 
-      <style>
-        .hq-tile { border-radius:8px; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; transition:all 0.15s; }
-        .hq-tile-built { background:rgba(212,175,55,0.08); border:1px solid rgba(212,175,55,0.25); }
-        .hq-tile-empty { background:rgba(255,255,255,0.02); border:1px dashed rgba(255,255,255,0.08); }
-        .hq-tile-empty:hover { background:rgba(255,255,255,0.05); border-color:rgba(255,255,255,0.2); }
-      </style>`;
+    // Render visual diorama campus
+    if (typeof window.renderHQCampus === 'function') {
+        window.renderHQCampus();
+    }
 };
 
 window.hqOpenBuildModal = function(slotIndex) {
