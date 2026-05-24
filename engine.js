@@ -3889,7 +3889,7 @@ window._startGameWithSlot = function(slotIndex, fresh) {
         if (typeof window.forceLeaderboardUpdate === 'function') window.forceLeaderboardUpdate();
     }, 1500);
     // Daily reward (async, non-blocking)
-    setTimeout(_checkDailyReward, 1500);
+    if (typeof _checkDailyReward === 'function') setTimeout(_checkDailyReward, 1500);
 };
 
 // ════════════════════════════════════════════════════════════════════

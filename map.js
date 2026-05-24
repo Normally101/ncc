@@ -9,6 +9,7 @@
 
 // ─── MAPBOX GL JS MAP ────────────────────────────────────────────
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiZm9yZWlzYmFieSIsImEiOiJjbW9ocG14djEwN29tMnFzOTMzMDZjcjBtIn0.0SOq8l2z-w9M22v1s-fYKw';
+var map = null; // var so window.map is accessible from all scripts (ui-meta.js etc.)
 let _mapReady = false;
 let _cantiereMarkers = {};
 
