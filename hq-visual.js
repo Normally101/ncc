@@ -1,16 +1,15 @@
 'use strict';
 /* ================================================================
    hq-visual.js — Chauffeur Empire
-   Visual Isometric Campus (SVG + Vanilla JS)
+   Visual Isometric Campus (SVG + Vanilla JS) — v2 REALISTIC
    ================================================================ */
 
 // ── ISOMETRIC CONFIGURATION ──────────────────────────────────────────────────
-const ISO_TILE_W  = 64;   // Tile screen width
-const ISO_TILE_H  = 32;   // Tile screen height
-const ISO_ORIGIN_X = 450; // Screen X of tile [0,0]
-const ISO_ORIGIN_Y = 110; // Screen Y of tile [0,0]
+const ISO_TILE_W   = 72;
+const ISO_TILE_H   = 36;
+const ISO_ORIGIN_X = 460;
+const ISO_ORIGIN_Y = 130;
 
-// Conversion: grid -> screen pixels
 function _isoToScreen(col, row) {
     return {
         x: ISO_ORIGIN_X + (col - row) * ISO_TILE_W / 2,
@@ -19,7 +18,6 @@ function _isoToScreen(col, row) {
 }
 
 // ── STAGE CALCULATOR ─────────────────────────────────────────────────────────
-// 0=Start (1-3), 1=Growing (4-7), 2=Established (8-11), 3=Empire (12+)
 function _getHQStage(builtCount) {
     if (builtCount >= 12) return 3;
     if (builtCount >= 8)  return 2;
@@ -27,20 +25,101 @@ function _getHQStage(builtCount) {
     return 0;
 }
 
-// ── COLOR ADJUSTER HELPER ────────────────────────────────────────────────────
-function _adjustColorBrightness(hex, percent) {
-    hex = hex.replace(/^\s*#|\s*$/g, '');
+// ── COLOR HELPERS ─────────────────────────────────────────────────────────────
+function _hex(r, g, b) {
+    return '#' + [r, g, b].map(v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, '0')).join('');
+}
+function _shade(hex, pct) { // pct: 0=black, 1=original, >1=lighter
+    hex = hex.replace('#', '');
     if (hex.length === 3) hex = hex.replace(/(.)/g, '$1$1');
-    let r = parseInt(hex.substr(0, 2), 16),
-        g = parseInt(hex.substr(2, 2), 16),
-        b = parseInt(hex.substr(4, 2), 16);
-    r = Math.max(0, Math.min(255, r + percent));
-    g = Math.max(0, Math.min(255, g + percent));
-    b = Math.max(0, Math.min(255, b + percent));
-    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    return _hex(r * pct, g * pct, b * pct);
 }
 
-// ── ROOM SIZE UTILITY ────────────────────────────────────────────────────────
+// ── ISOMETRIC 3D BOX — Realistic face shading ────────────────────────────────
+// topColor: the material color. Left face = 75%, right face = 55%
+function _isoBox(x, y, w, d, h, topHex, topBrightness = 1.0) {
+    const left  = _shade(topHex, topBrightness * 0.72);
+    const right = _shade(topHex, topBrightness * 0.52);
+    const top   = _shade(topHex, topBrightness);
+
+    // Isometric diamond top face
+    const tx = [x, x + w/2, x, x - w/2].join(',');
+    const ty = [y - h, y - h + d/4, y - h + d/2, y - h + d/4].join(',');
+    const topPts = `${x},${y - h} ${x + w/2},${y - h + d/4} ${x},${y - h + d/2} ${x - w/2},${y - h + d/4}`;
+    const leftPts  = `${x - w/2},${y - h + d/4} ${x},${y - h + d/2} ${x},${y + d/2} ${x - w/2},${y + d/4}`;
+    const rightPts = `${x + w/2},${y - h + d/4} ${x},${y - h + d/2} ${x},${y + d/2} ${x + w/2},${y + d/4}`;
+
+    return `<polygon points="${topPts}" fill="${top}" />
+            <polygon points="${leftPts}" fill="${left}" />
+            <polygon points="${rightPts}" fill="${right}" />`;
+}
+
+// ── WINDOW GRID GENERATOR ─────────────────────────────────────────────────────
+// Draws a grid of windows on the left or right face of an isometric building
+// face: 'left' | 'right'
+function _windowGrid(bx, by, w, d, h, face, cols, rows, winColor, skipMask = []) {
+    const out = [];
+    const cellW = (face === 'left') ? (w / 2) / cols : (w / 2) / cols;
+    const cellH = h / rows;
+    const stepX = face === 'left' ? -(w / 2) / cols : (w / 2) / cols;
+    const baseY = by + d / 4; // bottom of top edge on that face
+
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            if (skipMask.includes(r * cols + c)) continue;
+            // Random window lit/unlit — deterministic via seed
+            const seed = (bx * 7 + by * 3 + r * 11 + c * 5) % 17;
+            const lit = seed > 3; // ~76% lit
+            const alpha = lit ? (0.75 + (seed % 4) * 0.06) : 0.12;
+
+            // Position on the iso face
+            // For left face: origin at bottom-left of top (x - w/2, y - h + d/4)
+            // shift right by c cells, down by r cells
+            let ox, oy;
+            if (face === 'left') {
+                const colRatio = (c + 0.15) / cols;
+                const rowRatio = (r + 0.12) / rows;
+                const colRatio2 = (c + 0.85) / cols;
+                const rowRatio2 = (r + 0.88) / rows;
+                // 4 corners of this window on the left face
+                const face_tl_x = bx - w/2 + colRatio * w/2;
+                const face_tl_y = (by - h + d/4) + colRatio * d/8 + rowRatio * h;
+                const face_tr_x = bx - w/2 + colRatio2 * w/2;
+                const face_tr_y = (by - h + d/4) + colRatio2 * d/8 + rowRatio * h;
+                const face_br_x = bx - w/2 + colRatio2 * w/2;
+                const face_br_y = (by - h + d/4) + colRatio2 * d/8 + rowRatio2 * h;
+                const face_bl_x = bx - w/2 + colRatio * w/2;
+                const face_bl_y = (by - h + d/4) + colRatio * d/8 + rowRatio2 * h;
+                const pts = `${face_tl_x.toFixed(1)},${face_tl_y.toFixed(1)} ${face_tr_x.toFixed(1)},${face_tr_y.toFixed(1)} ${face_br_x.toFixed(1)},${face_br_y.toFixed(1)} ${face_bl_x.toFixed(1)},${face_bl_y.toFixed(1)}`;
+                const glow = lit ? `filter="url(#winGlow)"` : '';
+                out.push(`<polygon points="${pts}" fill="${winColor}" opacity="${alpha.toFixed(2)}" ${glow}/>`);
+            } else {
+                // Right face: origin at bottom-right of top (x + w/2, y - h + d/4)
+                const colRatio  = (c + 0.15) / cols;
+                const rowRatio  = (r + 0.12) / rows;
+                const colRatio2 = (c + 0.85) / cols;
+                const rowRatio2 = (r + 0.88) / rows;
+                const face_tl_x = bx + w/2 - colRatio2 * w/2;
+                const face_tl_y = (by - h + d/4) + colRatio2 * d/8 + rowRatio * h;
+                const face_tr_x = bx + w/2 - colRatio * w/2;
+                const face_tr_y = (by - h + d/4) + colRatio * d/8 + rowRatio * h;
+                const face_br_x = bx + w/2 - colRatio * w/2;
+                const face_br_y = (by - h + d/4) + colRatio * d/8 + rowRatio2 * h;
+                const face_bl_x = bx + w/2 - colRatio2 * w/2;
+                const face_bl_y = (by - h + d/4) + colRatio2 * d/8 + rowRatio2 * h;
+                const pts = `${face_tl_x.toFixed(1)},${face_tl_y.toFixed(1)} ${face_tr_x.toFixed(1)},${face_tr_y.toFixed(1)} ${face_br_x.toFixed(1)},${face_br_y.toFixed(1)} ${face_bl_x.toFixed(1)},${face_bl_y.toFixed(1)}`;
+                const glow = lit ? `filter="url(#winGlow)"` : '';
+                out.push(`<polygon points="${pts}" fill="${winColor}" opacity="${alpha.toFixed(2)}" ${glow}/>`);
+            }
+        }
+    }
+    return out.join('');
+}
+
+// ── ROOM SIZE UTILITY ─────────────────────────────────────────────────────────
 function _getRoomGridSize(roomId) {
     if (roomId === 'penthouse') return 3;
     if (roomId === 'garage_main') return 2;
@@ -48,7 +127,7 @@ function _getRoomGridSize(roomId) {
     return 1;
 }
 
-// Room mappings to exact col/row coordinates
+// ── ROOM COORDS ───────────────────────────────────────────────────────────────
 const HQ_ROOM_COORDS = {
     garage_main:     { col: 4.5, row: 4.5 },
     workshop:        { col: 6.5, row: 4.5 },
@@ -64,613 +143,558 @@ const HQ_ROOM_COORDS = {
     vip_lounge:      { col: 6.0, row: 1.0 },
     helipad:         { col: 5.0, row: 0.0 },
     crypto_vault:    { col: 3.0, row: 0.0 },
-    penthouse:       { col: 5.0, row: -1.3 }
+    penthouse:       { col: 4.8, row: -1.0 }
 };
 
-// ── FIXED PARKING SLOTS FOR VISUAL FLEET ──────────────────────────────────────
 const PARKING_SLOTS = [
-    { col: 4.0, row: 6.0 },
-    { col: 4.8, row: 6.0 },
-    { col: 4.0, row: 6.8 },
-    { col: 4.8, row: 6.8 },
-    { col: 3.8, row: 4.2 },
-    { col: 3.8, row: 4.8 }
+    { col: 3.8, row: 6.0 }, { col: 4.5, row: 6.1 },
+    { col: 3.8, row: 6.8 }, { col: 4.5, row: 6.9 },
+    { col: 3.5, row: 4.2 }, { col: 3.5, row: 4.8 }
 ];
 
-// ── ISOMETRIC 3D BOX GENERATOR ───────────────────────────────────────────────
-function _isoBox(x, y, w, d, h, colorTop, colorLeft, colorRight) {
-    const topPts = [
-        `${x},${y - h}`,
-        `${x + w / 2},${y - h + d / 4}`,
-        `${x},${y - h + d / 2}`,
-        `${x - w / 2},${y - h + d / 4}`
-    ].join(' ');
+// ── SVG DEFS (filters, patterns) ─────────────────────────────────────────────
+const SVG_DEFS = `
+<defs>
+  <filter id="winGlow" x="-50%" y="-50%" width="200%" height="200%">
+    <feGaussianBlur stdDeviation="1.5" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="lampGlow">
+    <feGaussianBlur stdDeviation="3" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <radialGradient id="groundGrad" cx="50%" cy="50%" r="60%">
+    <stop offset="0%" stop-color="#1c2a22"/>
+    <stop offset="100%" stop-color="#0d1510"/>
+  </radialGradient>
+  <pattern id="gridPat" width="36" height="18" patternUnits="userSpaceOnUse" patternTransform="skewX(-26.57) scale(1)">
+    <rect width="36" height="18" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
+  </pattern>
+</defs>`;
 
-    const leftPts = [
-        `${x - w / 2},${y - h + d / 4}`,
-        `${x},${y - h + d / 2}`,
-        `${x},${y + d / 2}`,
-        `${x - w / 2},${y + d / 4}`
-    ].join(' ');
-
-    const rightPts = [
-        `${x + w / 2},${y - h + d / 4}`,
-        `${x},${y - h + d / 2}`,
-        `${x},${y + d / 2}`,
-        `${x + w / 2},${y + d / 4}`
-    ].join(' ');
-
-    return `
-        <polygon points="${topPts}"   fill="${colorTop}"   />
-        <polygon points="${leftPts}"  fill="${colorLeft}"  />
-        <polygon points="${rightPts}" fill="${colorRight}" />
-    `;
-}
-
-// ── EMPTY SLOT RENDERER ──────────────────────────────────────────────────────
+// ── EMPTY SLOT ───────────────────────────────────────────────────────────────
 function _emptySlot(cx, cy, roomId, state) {
-    const room = window.HQ_ROOMS.find(r => r.id === roomId);
-    const name = room ? room.name : '';
+    const room  = window.HQ_ROOMS ? window.HQ_ROOMS.find(r => r.id === roomId) : null;
+    const name  = room ? room.name : roomId;
     const scale = _getRoomGridSize(roomId);
-    
-    const hW = (ISO_TILE_W / 2) * scale;
-    const hH = (ISO_TILE_H / 2) * scale;
-    
-    const pts = [
-        `${cx},${cy - hH}`,
-        `${cx + hW},${cy}`,
-        `${cx},${cy + hH}`,
-        `${cx - hW},${cy}`
-    ].join(' ');
+    const hW    = (ISO_TILE_W / 2) * scale;
+    const hH    = (ISO_TILE_H / 2) * scale;
+    const pts   = `${cx},${cy - hH} ${cx + hW},${cy} ${cx},${cy + hH} ${cx - hW},${cy}`;
 
-    const color = state === 'available' ? 'rgba(212,175,55,0.12)' : 'rgba(255,255,255,0.02)';
-    const stroke = state === 'available' ? 'rgba(212,175,55,0.5)' : 'rgba(255,255,255,0.15)';
-    const dash = state === 'available' ? '4,4' : '2,2';
-    
-    const pulseClass = state === 'available' ? 'hq-slot-pulse hq-slot-available' : 'hq-building-locked';
-    const clickAction = state === 'available'
-        ? `onclick="window.hqOpenBuildModalFromMap('${roomId}')"`
-        : `onclick="window.hqShowLockedTooltip('${roomId}')"`;
-
-    return `
-        <g class="${pulseClass}" ${clickAction} style="cursor: pointer;">
-            <polygon points="${pts}" fill="${color}" stroke="${stroke}" stroke-dasharray="${dash}" stroke-width="1.5" class="hq-tile-shape" />
-            <text x="${cx}" y="${cy + 4}" fill="${state === 'available' ? '#d4af37' : '#4d6480'}" font-size="10" font-family="'Roboto Mono', monospace" text-anchor="middle" font-weight="bold">${state === 'available' ? '+' : '🔒'}</text>
-            <text x="${cx}" y="${cy + 15}" fill="${state === 'available' ? '#cdd6e0' : '#4d6480'}" font-size="8" font-family="'Montserrat', sans-serif" text-anchor="middle">${name.split(' ')[0]}</text>
-        </g>
-    `;
+    if (state === 'available') {
+        return `<g class="hq-slot-available hq-slot-pulse" onclick="window.hqOpenBuildModalFromMap('${roomId}')" style="cursor:pointer">
+            <polygon points="${pts}" fill="rgba(212,175,55,0.07)" stroke="rgba(212,175,55,0.6)" stroke-dasharray="5,4" stroke-width="1.5"/>
+            <text x="${cx}" y="${cy + 4}" fill="#d4af37" font-size="14" font-family="sans-serif" text-anchor="middle" font-weight="bold">+</text>
+            <text x="${cx}" y="${cy + 16}" fill="rgba(212,175,55,0.8)" font-size="7.5" font-family="'Montserrat',sans-serif" text-anchor="middle">${name}</text>
+        </g>`;
+    }
+    return `<g class="hq-building-locked" onclick="window.hqShowLockedTooltip('${roomId}')" style="cursor:pointer">
+        <polygon points="${pts}" fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,4" stroke-width="1"/>
+        <text x="${cx}" y="${cy + 5}" fill="#334155" font-size="11" font-family="sans-serif" text-anchor="middle">🔒</text>
+    </g>`;
 }
 
-// ── SPECIFIC BUILDING GENERATORS ─────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+//  BUILDING RENDERERS — each returns SVG string
+// ═══════════════════════════════════════════════════════════════════════════════
 
 function _bld_garage_main(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'garage_main', state);
-    const box = _isoBox(cx, cy, 96, 96, 45, '#544633', '#3d3225', '#2c241a');
-    // Garage doors (gray)
-    const doorL = `<polygon points="${cx - 35},${cy + 18} ${cx - 10},${cy + 30} ${cx - 10},${cy + 10} ${cx - 35},${cy - 2}" fill="#2e353d" stroke="#1c2024" />`;
-    const doorR = `<polygon points="${cx + 10},${cy + 30} ${cx + 35},${cy + 18} ${cx + 35},${cy - 2} ${cx + 10},${cy + 10}" fill="#2e353d" stroke="#1c2024" />`;
-    // Stripes
-    const stripe = `<polygon points="${cx - 48},${cy - 45} ${cx + 48},${cy - 45} ${cx},${cy - 40}" fill="#d4af37" opacity="0.6"/>`;
-    return `
-        <g class="hq-building" id="bld-garage_main" onclick="window.hqShowInfoPanel('garage_main')">
-            ${box}
-            ${doorL}
-            ${doorR}
-            ${stripe}
-            <text x="${cx}" y="${cy - 50}" fill="#ffffff" font-size="8" font-family="'Cinzel', serif" text-anchor="middle" font-weight="bold" letter-spacing="1">GARAGE</text>
-        </g>
-    `;
+    const W = 100, D = 100, H = 52;
+    // Main concrete structure — warm grey
+    const body = _isoBox(cx, cy, W, D, H, '#8c8070');
+    // Roof details: AC unit
+    const ac1 = _isoBox(cx - 22, cy - H - 2, 18, 18, 8, '#6b7280');
+    const ac2 = _isoBox(cx + 18, cy - H - 2, 14, 14, 6, '#6b7280');
+    // Garage doors (dark steel panels with highlight stripe)
+    const doorL = `<polygon points="${cx-38},${cy+20} ${cx-8},${cy+36} ${cx-8},${cy+8} ${cx-38},${cy-8}" fill="#2a2f36" stroke="#1a1f24" stroke-width="0.5"/>
+                   <polygon points="${cx-38},${cy+20} ${cx-8},${cy+36} ${cx-8},${cy+34} ${cx-38},${cy+18}" fill="#3a4149" opacity="0.7"/>
+                   <line x1="${cx-30}" y1="${cy+14}" x2="${cx-12}" y2="${cy+22}" stroke="#4b5563" stroke-width="1.5"/>
+                   <line x1="${cx-30}" y1="${cy+18}" x2="${cx-12}" y2="${cy+26}" stroke="#4b5563" stroke-width="1"/>`;
+    const doorR = `<polygon points="${cx+8},${cy+36} ${cx+38},${cy+20} ${cx+38},${cy-8} ${cx+8},${cy+8}" fill="#1f2429" stroke="#14181c" stroke-width="0.5"/>
+                   <polygon points="${cx+8},${cy+36} ${cx+38},${cy+20} ${cx+38},${cy+18} ${cx+8},${cy+34}" fill="#2e343b" opacity="0.7"/>
+                   <line x1="${cx+12}" y1="${cy+22}" x2="${cx+30}" y2="${cy+14}" stroke="#374151" stroke-width="1.5"/>
+                   <line x1="${cx+12}" y1="${cy+26}" x2="${cx+30}" y2="${cy+18}" stroke="#374151" stroke-width="1"/>`;
+    // Logo stripe on facade
+    const stripe = `<polygon points="${cx-38},${cy-4} ${cx+38},${cy-4} ${cx+38},${cy-10} ${cx-38},${cy-10}" fill="#d4af37" opacity="0.85"/>`;
+    // Amber work-lamp glow above doors
+    const lamp = `<ellipse cx="${cx}" cy="${cy+2}" rx="28" ry="6" fill="rgba(245,158,11,0.08)"/>`;
+    const label = `<text x="${cx}" y="${cy - H - 12}" fill="#f1f5f9" font-size="8" font-family="'Rajdhani','Roboto Mono',monospace" text-anchor="middle" font-weight="700" letter-spacing="3">GARAGE</text>`;
+    return `<g class="hq-building" id="bld-garage_main" onclick="window.hqShowInfoPanel('garage_main')">${body}${ac1}${ac2}${doorL}${doorR}${stripe}${lamp}${label}</g>`;
 }
 
 function _bld_workshop(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'workshop', state);
-    const box = _isoBox(cx, cy, 54, 54, 35, '#2e3d52', '#202b3a', '#171f2a');
-    const window = `<polygon points="${cx - 18},${cy + 10} ${cx - 6},${cy + 16} ${cx - 6},${cy + 4} ${cx - 18},${cy - 2}" fill="#f59e0b" opacity="0.85" />`;
-    const chimney = _isoBox(cx + 12, cy - 35, 8, 8, 12, '#1e293b', '#0f172a', '#020617');
-    return `
-        <g class="hq-building" id="bld-workshop" onclick="window.hqShowInfoPanel('workshop')">
-            ${box}
-            ${window}
-            ${chimney}
-        </g>
-    `;
+    const W = 58, D = 58, H = 42;
+    const body = _isoBox(cx, cy, W, D, H, '#7c6d5e');
+    // Chimney
+    const ch1 = _isoBox(cx + 14, cy - H + 2, 9, 9, 18, '#52443a');
+    const smoke = `<ellipse cx="${cx+14}" cy="${cy - H - 14}" rx="5" ry="3" fill="rgba(200,200,200,0.15)"/>
+                   <ellipse cx="${cx+16}" cy="${cy - H - 20}" rx="4" ry="2.5" fill="rgba(200,200,200,0.1)"/>`;
+    // Windows — amber workshop light
+    const wins = _windowGrid(cx, cy, W, D, H, 'left', 2, 3, '#f59e0b');
+    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 3, '#f59e0b');
+    // Tool chest on roof
+    const toolbox = _isoBox(cx - 16, cy - H, 12, 10, 6, '#ef4444', 0.9);
+    return `<g class="hq-building" id="bld-workshop" onclick="window.hqShowInfoPanel('workshop')">${body}${wins}${winsR}${ch1}${smoke}${toolbox}</g>`;
 }
 
 function _bld_ev_parking(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'ev_parking', state);
-    const pad = _isoBox(cx, cy, 70, 70, 8, '#1e382b', '#13241c', '#0d1813');
-    // Green charger lines
-    const lineL = `<line x1="${cx - 20}" y1="${cy + 5}" x2="${cx}" y2="${cy + 15}" stroke="#10b981" stroke-width="2" />`;
-    const lineR = `<line x1="${cx}" y1="${cy + 15}" x2="${cx + 20}" y2="${cy + 5}" stroke="#10b981" stroke-width="2" />`;
-    // Charger posts
-    const post1 = _isoBox(cx - 15, cy - 2, 6, 6, 16, '#10b981', '#065f46', '#047857');
-    const post2 = _isoBox(cx + 15, cy - 2, 6, 6, 16, '#10b981', '#065f46', '#047857');
-    return `
-        <g class="hq-building" id="bld-ev_parking" onclick="window.hqShowInfoPanel('ev_parking')">
-            ${pad}
-            ${lineL}
-            ${lineR}
-            ${post1}
-            ${post2}
-        </g>
-    `;
+    const W = 76, D = 76, H = 10;
+    const pad = _isoBox(cx, cy, W, D, H, '#1e3a2f');
+    // Charging station pillars (green LED)
+    const post1 = _isoBox(cx - 20, cy - H + 2, 7, 7, 20, '#10b981', 1.1);
+    const post2 = _isoBox(cx + 12, cy - H + 2, 7, 7, 20, '#10b981', 1.1);
+    // EV symbol on ground
+    const evSym = `<text x="${cx}" y="${cy + 2}" fill="rgba(16,185,129,0.7)" font-size="14" font-family="sans-serif" text-anchor="middle" font-weight="bold">⚡</text>`;
+    // Cable lines
+    const cable = `<path d="M ${cx-20} ${cy-H-8} C ${cx-10} ${cy-H-4} ${cx+2} ${cy-H-4} ${cx+12} ${cy-H-8}" fill="none" stroke="#065f46" stroke-width="2"/>`;
+    // Green glow halos on chargers
+    const glow1 = `<ellipse cx="${cx-20}" cy="${cy-H-18}" rx="6" ry="3" fill="rgba(16,185,129,0.3)" filter="url(#lampGlow)"/>`;
+    const glow2 = `<ellipse cx="${cx+12}" cy="${cy-H-18}" rx="6" ry="3" fill="rgba(16,185,129,0.3)" filter="url(#lampGlow)"/>`;
+    return `<g class="hq-building" id="bld-ev_parking" onclick="window.hqShowInfoPanel('ev_parking')">${pad}${post1}${post2}${cable}${evSym}${glow1}${glow2}</g>`;
 }
 
 function _bld_gym(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'gym', state);
-    const box = _isoBox(cx, cy, 54, 54, 40, '#42324f', '#2f2438', '#211927');
-    // Glass front
-    const glass = `<polygon points="${cx - 20},${cy + 12} ${cx},${cy + 22} ${cx},${cy - 18} ${cx - 20},${cy - 28}" fill="rgba(100, 200, 255, 0.4)" stroke="rgba(255, 255, 255, 0.2)" />`;
-    return `
-        <g class="hq-building" id="bld-gym" onclick="window.hqShowInfoPanel('gym')">
-            ${box}
-            ${glass}
-            <text x="${cx}" y="${cy - 45}" fill="#ffffff" font-size="12" text-anchor="middle">🏋️</text>
-        </g>
-    `;
+    const W = 58, D = 58, H = 46;
+    const body = _isoBox(cx, cy, W, D, H, '#4a3a5e');
+    // Glass curtain wall on left face — blue-tinted
+    const glass = `<polygon points="${cx-W/2},${cy-H+D/4} ${cx},${cy-H+D/2} ${cx},${cy+D/2} ${cx-W/2},${cy+D/4}" fill="rgba(96,165,250,0.18)" stroke="rgba(147,197,253,0.3)" stroke-width="0.5"/>`;
+    const wins = _windowGrid(cx, cy, W, D, H, 'right', 2, 4, '#93c5fd');
+    // Pull-up bar silhouette on roof
+    const bar = `<line x1="${cx-16}" y1="${cy-H-2}" x2="${cx+16}" y2="${cy-H-2}" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/>
+                 <line x1="${cx-16}" y1="${cy-H-8}" x2="${cx-16}" y2="${cy-H-2}" stroke="#6d28d9" stroke-width="2"/>
+                 <line x1="${cx+16}" y1="${cy-H-8}" x2="${cx+16}" y2="${cy-H-2}" stroke="#6d28d9" stroke-width="2"/>`;
+    return `<g class="hq-building" id="bld-gym" onclick="window.hqShowInfoPanel('gym')">${body}${glass}${wins}${bar}</g>`;
 }
 
 function _bld_canteen(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'canteen', state);
-    const box = _isoBox(cx, cy, 54, 54, 30, '#4a3525', '#332419', '#241a12');
-    const windowL = `<polygon points="${cx - 18},${cy + 6} ${cx - 10},${cy + 10} ${cx - 10},${cy + 2} ${cx - 18},${cy - 2}" fill="#f97316" opacity="0.8" />`;
-    const windowR = `<polygon points="${cx + 10},${cy + 10} ${cx + 18},${cy + 6} ${cx + 18},${cy - 2} ${cx + 10},${cy + 2}" fill="#f97316" opacity="0.8" />`;
-    return `
-        <g class="hq-building" id="bld-canteen" onclick="window.hqShowInfoPanel('canteen')">
-            ${box}
-            ${windowL}
-            ${windowR}
-        </g>
-    `;
+    const W = 58, D = 58, H = 36;
+    const body = _isoBox(cx, cy, W, D, H, '#7a5c3e');
+    // Warm window light
+    const winsL = _windowGrid(cx, cy, W, D, H, 'left', 2, 2, '#fbbf24');
+    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 2, '#fbbf24');
+    // Awning on left face
+    const awning = `<polygon points="${cx-W/2-4},${cy-H+D/4+H*0.3} ${cx+2},${cy-H+D/2+H*0.3} ${cx+2},${cy-H+D/2+H*0.3-8} ${cx-W/2-4},${cy-H+D/4+H*0.3-8}" fill="#d97706" opacity="0.9"/>
+                    <line x1="${cx-W/2-4}" y1="${cy-H+D/4+H*0.3}" x2="${cx+2}" y2="${cy-H+D/2+H*0.3}" stroke="#b45309" stroke-width="1"/>`;
+    // Rooftop exhaust fan
+    const fan = _isoBox(cx - 8, cy - H - 2, 10, 10, 5, '#92400e');
+    // Warm light ambient
+    const ambient = `<ellipse cx="${cx}" cy="${cy+D/4}" rx="30" ry="8" fill="rgba(251,191,36,0.06)"/>`;
+    return `<g class="hq-building" id="bld-canteen" onclick="window.hqShowInfoPanel('canteen')">${body}${winsL}${winsR}${awning}${fan}${ambient}</g>`;
 }
 
 function _bld_infirmary(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'infirmary', state);
-    const box = _isoBox(cx, cy, 54, 54, 30, '#2d4a4a', '#1e3333', '#152424');
-    // Red Cross Sign
-    const sign = _isoBox(cx, cy - 30, 10, 10, 10, '#ffffff', '#e2e8f0', '#cbd5e1');
-    const crossH = `<line x1="${cx - 3}" y1="${cy - 35}" x2="${cx + 3}" y2="${cy - 35}" stroke="#ef4444" stroke-width="2" />`;
-    const crossV = `<line x1="${cx}" y1="${cy - 38}" x2="${cx}" y2="${cy - 32}" stroke="#ef4444" stroke-width="2" />`;
-    return `
-        <g class="hq-building" id="bld-infirmary" onclick="window.hqShowInfoPanel('infirmary')">
-            ${box}
-            ${sign}
-            ${crossH}
-            ${crossV}
-        </g>
-    `;
+    const W = 58, D = 58, H = 36;
+    const body = _isoBox(cx, cy, W, D, H, '#e2e8f0', 0.55);
+    // Clean white windows
+    const winsL = _windowGrid(cx, cy, W, D, H, 'left', 2, 2, '#bfdbfe');
+    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 2, '#bfdbfe');
+    // Red cross sign (box on wall)
+    const signBox = `<polygon points="${cx-2},${cy-H+D/2+H*0.2} ${cx+18},${cy-H+D/2+H*0.2+5} ${cx+18},${cy-H+D/2+H*0.2-12} ${cx-2},${cy-H+D/2+H*0.2-17}" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.5"/>`;
+    const crossH  = `<line x1="${cx+2}" y1="${cy-H+D/2+H*0.2-8}" x2="${cx+14}" y2="${cy-H+D/2+H*0.2-2}" stroke="#ef4444" stroke-width="3"/>`;
+    const crossV  = `<line x1="${cx+8}" y1="${cy-H+D/2+H*0.2-12}" x2="${cx+8}" y2="${cy-H+D/2+H*0.2+2}" stroke="#ef4444" stroke-width="3"/>`;
+    // Rooftop helical antenna (med beacon)
+    const beacon = `<line x1="${cx}" y1="${cy-H-2}" x2="${cx}" y2="${cy-H-14}" stroke="#94a3b8" stroke-width="1.5"/>
+                    <circle cx="${cx}" cy="${cy-H-14}" r="3" fill="#ef4444" class="hq-sparkle"/>`;
+    return `<g class="hq-building" id="bld-infirmary" onclick="window.hqShowInfoPanel('infirmary')">${body}${winsL}${winsR}${signBox}${crossH}${crossV}${beacon}</g>`;
 }
 
 function _bld_mission_room(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'mission_room', state);
-    const box = _isoBox(cx, cy, 54, 54, 50, '#1b2c45', '#121f30', '#0d1724');
-    const screenGlow = `<polygon points="${cx - 18},${cy + 5} ${cx - 2},${cy + 13} ${cx - 2},${cy - 12} ${cx - 18},${cy - 20}" fill="rgba(0, 242, 255, 0.35)" />`;
-    const border = `<polygon points="${cx - 18},${cy + 5} ${cx - 2},${cy + 13} ${cx - 2},${cy - 12} ${cx - 18},${cy - 20}" fill="none" stroke="#00f2ff" stroke-width="0.5" />`;
-    return `
-        <g class="hq-building" id="bld-mission_room" onclick="window.hqShowInfoPanel('mission_room')">
-            ${box}
-            ${screenGlow}
-            ${border}
-        </g>
-    `;
+    const W = 58, D = 58, H = 56;
+    const body = _isoBox(cx, cy, W, D, H, '#1e3a5f', 1.15);
+    // Tactical screen glow on left face
+    const screen = `<polygon points="${cx-W/2+4},${cy-H+D/4+12} ${cx-4},${cy-H+D/2+8} ${cx-4},${cy-H+D/2-18} ${cx-W/2+4},${cy-H+D/4-14}" fill="rgba(0,242,255,0.28)" stroke="#00f2ff" stroke-width="0.8"/>
+                    <polygon points="${cx-W/2+6},${cy-H+D/4+8} ${cx-6},${cy-H+D/2+5} ${cx-6},${cy-H+D/2-14} ${cx-W/2+6},${cy-H+D/4-10}" fill="rgba(0,242,255,0.08)"/>`;
+    // Scanline
+    const scan = `<line x1="${cx-W/2+4}" y1="${cy-H+D/4}" x2="${cx-4}" y2="${cy-H+D/2}" stroke="rgba(0,242,255,0.5)" stroke-width="1.5" class="hq-sparkle"/>`;
+    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 4, '#00f2ff');
+    // Satellite dish
+    const mast  = `<line x1="${cx+8}" y1="${cy-H-2}" x2="${cx+8}" y2="${cy-H-18}" stroke="#475569" stroke-width="2"/>`;
+    const dish  = `<path d="M ${cx} ${cy-H-22} Q ${cx+8} ${cy-H-14} ${cx+16} ${cy-H-22}" fill="rgba(148,163,184,0.6)" stroke="#94a3b8" stroke-width="1.5"/>`;
+    return `<g class="hq-building" id="bld-mission_room" onclick="window.hqShowInfoPanel('mission_room')">${body}${screen}${scan}${winsR}${mast}${dish}</g>`;
 }
 
 function _bld_it_center(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'it_center', state);
-    const box = _isoBox(cx, cy, 54, 54, 40, '#2d1e3d', '#20152b', '#160e1f');
-    // Satellite dish
-    const base = `<line x1="${cx}" y1="${cy - 40}" x2="${cx}" y2="${cy - 48}" stroke="#94a3b8" stroke-width="2" />`;
-    const dish = `<path d="M ${cx - 10} ${cy - 54} Q ${cx} ${cy - 48} ${cx + 10} ${cy - 54}" fill="none" stroke="#e2e8f0" stroke-width="3" />`;
-    return `
-        <g class="hq-building" id="bld-it_center" onclick="window.hqShowInfoPanel('it_center')">
-            ${box}
-            ${base}
-            ${dish}
-        </g>
-    `;
+    const W = 58, D = 58, H = 46;
+    const body = _isoBox(cx, cy, W, D, H, '#312e81', 1.1);
+    const winsL = _windowGrid(cx, cy, W, D, H, 'left', 3, 4, '#a78bfa');
+    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 3, 4, '#a78bfa');
+    // Server rack vents on right face
+    const vents = `<line x1="${cx+4}" y1="${cy-H+D/4+20}" x2="${cx+W/2-4}" y2="${cy-H+D/4+12}" stroke="#4c1d95" stroke-width="1.5"/>
+                   <line x1="${cx+4}" y1="${cy-H+D/4+26}" x2="${cx+W/2-4}" y2="${cy-H+D/4+18}" stroke="#4c1d95" stroke-width="1.5"/>
+                   <line x1="${cx+4}" y1="${cy-H+D/4+32}" x2="${cx+W/2-4}" y2="${cy-H+D/4+24}" stroke="#4c1d95" stroke-width="1.5"/>`;
+    // Large dish array on roof
+    const mast  = `<line x1="${cx-6}" y1="${cy-H-2}" x2="${cx-6}" y2="${cy-H-16}" stroke="#64748b" stroke-width="2"/>
+                   <line x1="${cx+6}" y1="${cy-H-2}" x2="${cx+6}" y2="${cy-H-12}" stroke="#64748b" stroke-width="1.5"/>`;
+    const dish1 = `<path d="M ${cx-16} ${cy-H-22} Q ${cx-6} ${cy-H-12} ${cx+4} ${cy-H-22}" fill="rgba(148,163,184,0.5)" stroke="#94a3b8" stroke-width="1.5"/>`;
+    return `<g class="hq-building" id="bld-it_center" onclick="window.hqShowInfoPanel('it_center')">${body}${winsL}${winsR}${vents}${mast}${dish1}</g>`;
 }
 
 function _bld_rd_lab(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'rd_lab', state);
-    const box = _isoBox(cx, cy, 54, 54, 45, '#1e3b33', '#142923', '#0e1d19');
-    // Glowing green dome
-    const dome = `<path d="M ${cx - 14} ${cy - 45} A 14 14 0 0 1 ${cx + 14} ${cy - 45}" fill="rgba(16, 185, 129, 0.4)" stroke="#10b981" stroke-width="1" />`;
-    return `
-        <g class="hq-building" id="bld-rd_lab" onclick="window.hqShowInfoPanel('rd_lab')">
-            ${box}
-            ${dome}
-        </g>
-    `;
+    const W = 58, D = 58, H = 52;
+    const body = _isoBox(cx, cy, W, D, H, '#14532d', 1.1);
+    const winsL = _windowGrid(cx, cy, W, D, H, 'left', 2, 4, '#6ee7b7');
+    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 4, '#6ee7b7');
+    // Glass dome
+    const dome  = `<path d="M ${cx-18} ${cy-H-2} A 18 10 0 0 1 ${cx+18} ${cy-H-2}" fill="rgba(16,185,129,0.22)" stroke="#10b981" stroke-width="1.5"/>
+                   <path d="M ${cx-10} ${cy-H-8} A 10 6 0 0 1 ${cx+10} ${cy-H-8}" fill="rgba(16,185,129,0.15)" stroke="#34d399" stroke-width="1"/>`;
+    // Dome glow
+    const dGlow = `<ellipse cx="${cx}" cy="${cy-H-2}" rx="20" ry="6" fill="rgba(16,185,129,0.12)" filter="url(#lampGlow)"/>`;
+    return `<g class="hq-building" id="bld-rd_lab" onclick="window.hqShowInfoPanel('rd_lab')">${body}${winsL}${winsR}${dome}${dGlow}</g>`;
 }
 
 function _bld_control_tower(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'control_tower', state);
     // Shaft
-    const shaft = _isoBox(cx, cy, 30, 30, 75, '#2e3a4e', '#202937', '#171e28');
+    const shaft = _isoBox(cx, cy, 32, 32, 90, '#334155', 1.1);
     // Cabin
-    const cabin = _isoBox(cx, cy - 75, 46, 46, 18, '#3b4d66', '#293647', '#1e2733');
-    // Cabin glass
-    const glassL = `<polygon points="${cx - 18},${cy - 68} ${cx},${cy - 59} ${cx},${cy - 71} ${cx - 18},${cy - 80}" fill="rgba(0, 242, 255, 0.3)" />`;
-    const glassR = `<polygon points="${cx + 18},${cy - 68} ${cx},${cy - 59} ${cx},${cy - 71} ${cx + 18},${cy - 80}" fill="rgba(0, 242, 255, 0.3)" />`;
-    // Blinker light at the top
-    const antenna = `<line x1="${cx}" y1="${cy - 93}" x2="${cx}" y2="${cy - 105}" stroke="#94a3b8" stroke-width="1.5" />`;
-    const light = `<circle cx="${cx}" cy="${cy - 106}" r="3" fill="#ef4444" class="hq-sparkle" />`;
-    return `
-        <g class="hq-building" id="bld-control_tower" onclick="window.hqShowInfoPanel('control_tower')">
-            ${shaft}
-            ${cabin}
-            ${glassL}
-            ${glassR}
-            ${antenna}
-            ${light}
-        </g>
-    `;
+    const cabin = _isoBox(cx, cy - 90, 52, 52, 20, '#1e3a5f', 1.2);
+    // Cabin glass — both faces
+    const glL = `<polygon points="${cx-26},${cy-90+52/4} ${cx},${cy-90+52/2} ${cx},${cy-90+52/2+20} ${cx-26},${cy-90+52/4+20}" fill="rgba(56,189,248,0.32)" stroke="rgba(125,211,252,0.5)" stroke-width="0.8"/>`;
+    const glR = `<polygon points="${cx+26},${cy-90+52/4} ${cx},${cy-90+52/2} ${cx},${cy-90+52/2+20} ${cx+26},${cy-90+52/4+20}" fill="rgba(56,189,248,0.22)" stroke="rgba(125,211,252,0.4)" stroke-width="0.8"/>`;
+    // Interior glow
+    const intGlow = `<ellipse cx="${cx}" cy="${cy-90+52/2+10}" rx="16" ry="6" fill="rgba(56,189,248,0.2)" filter="url(#winGlow)"/>`;
+    // Antenna
+    const ant    = `<line x1="${cx}" y1="${cy-110}" x2="${cx}" y2="${cy-136}" stroke="#94a3b8" stroke-width="2"/>
+                    <line x1="${cx-6}" y1="${cy-124}" x2="${cx+6}" y2="${cy-124}" stroke="#94a3b8" stroke-width="1.5"/>
+                    <line x1="${cx-4}" y1="${cy-130}" x2="${cx+4}" y2="${cy-130}" stroke="#94a3b8" stroke-width="1"/>`;
+    const beacon = `<circle cx="${cx}" cy="${cy-136}" r="3.5" fill="#ef4444" class="hq-sparkle" filter="url(#lampGlow)"/>`;
+    return `<g class="hq-building" id="bld-control_tower" onclick="window.hqShowInfoPanel('control_tower')">${shaft}${cabin}${glL}${glR}${intGlow}${ant}${beacon}</g>`;
 }
 
 function _bld_security_bunker(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'security_bunker', state);
-    const box = _isoBox(cx, cy, 54, 54, 25, '#262626', '#1a1a1a', '#121212');
-    // Steel doors & slits
-    const door = `<polygon points="${cx - 8},${cy + 13} ${cx + 8},${cy + 9} ${cx + 8},${cy - 3} ${cx - 8},${cy + 1}" fill="#404040" stroke="#171717" />`;
-    const slit1 = `<line x1="${cx - 20}" y1="${cy - 6}" x2="${cx - 12}" y2="${cy - 10}" stroke="#f59e0b" stroke-width="1" />`;
-    const slit2 = `<line x1="${cx + 20}" y1="${cy - 6}" x2="${cx + 12}" y2="${cy - 10}" stroke="#f59e0b" stroke-width="1" />`;
-    return `
-        <g class="hq-building" id="bld-security_bunker" onclick="window.hqShowInfoPanel('security_bunker')">
-            ${box}
-            ${door}
-            ${slit1}
-            ${slit2}
-        </g>
-    `;
+    const W = 58, D = 58, H = 28;
+    const body = _isoBox(cx, cy, W, D, H, '#374151', 0.9);
+    // Blast door (heavy steel)
+    const door  = `<polygon points="${cx-10},${cy+D/4+12} ${cx+10},${cy+D/4+8} ${cx+10},${cy+D/4-4} ${cx-10},${cy+D/4}" fill="#1f2937" stroke="#111827" stroke-width="1"/>
+                   <line x1="${cx-10}" y1="${cy+D/4+6}" x2="${cx+10}" y2="${cy+D/4+2}" stroke="#374151" stroke-width="1.5"/>`;
+    // Slit windows (gun ports)
+    const slit1 = `<polygon points="${cx-W/2+4},${cy-H+D/4+H*0.35} ${cx-W/2+14},${cy-H+D/4+H*0.35+3} ${cx-W/2+14},${cy-H+D/4+H*0.35+1} ${cx-W/2+4},${cy-H+D/4+H*0.35-2}" fill="#f59e0b" opacity="0.8"/>`;
+    const slit2 = `<polygon points="${cx-W/2+4},${cy-H+D/4+H*0.55} ${cx-W/2+14},${cy-H+D/4+H*0.55+3} ${cx-W/2+14},${cy-H+D/4+H*0.55+1} ${cx-W/2+4},${cy-H+D/4+H*0.55-2}" fill="#f59e0b" opacity="0.8"/>`;
+    // Camera mount
+    const cam   = `<circle cx="${cx+W/2-6}" cy="${cy-H+D/4+8}" r="3" fill="#111827" stroke="#374151"/>
+                   <line x1="${cx+W/2-6}" y1="${cy-H+D/4+8}" x2="${cx+W/2+2}" y2="${cy-H+D/4+4}" stroke="#374151" stroke-width="1.5"/>`;
+    // Barbed wire on roof
+    const wire  = `<path d="M ${cx-W/2} ${cy-H} L ${cx+W/2} ${cy-H}" stroke="#6b7280" stroke-width="1" stroke-dasharray="3,2"/>`;
+    return `<g class="hq-building" id="bld-security_bunker" onclick="window.hqShowInfoPanel('security_bunker')">${body}${door}${slit1}${slit2}${cam}${wire}</g>`;
 }
 
 function _bld_vip_lounge(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'vip_lounge', state);
-    const box = _isoBox(cx, cy, 54, 54, 45, '#42331d', '#2e2314', '#21190e');
-    const goldPillar1 = `<line x1="${cx - 24}" y1="${cy + 10}" x2="${cx - 24}" y2="${cy - 35}" stroke="#d4af37" stroke-width="2" />`;
-    const goldPillar2 = `<line x1="${cx + 24}" y1="${cy + 10}" x2="${cx + 24}" y2="${cy - 35}" stroke="#d4af37" stroke-width="2" />`;
-    const glass = `<polygon points="${cx - 20},${cy + 10} ${cx + 20},${cy + 10} ${cx + 20},${cy - 30} ${cx - 20},${cy - 30}" fill="rgba(212, 175, 55, 0.15)" stroke="rgba(212, 175, 55, 0.3)" />`;
-    return `
-        <g class="hq-building" id="bld-vip_lounge" onclick="window.hqShowInfoPanel('vip_lounge')">
-            ${box}
-            ${glass}
-            ${goldPillar1}
-            ${goldPillar2}
-        </g>
-    `;
+    const W = 62, D = 62, H = 50;
+    const body = _isoBox(cx, cy, W, D, H, '#78502a', 1.05);
+    // Gold curtain-wall on both faces
+    const cwL = `<polygon points="${cx-W/2},${cy-H+D/4} ${cx},${cy-H+D/2} ${cx},${cy+D/2} ${cx-W/2},${cy+D/4}" fill="rgba(212,175,55,0.10)" stroke="rgba(212,175,55,0.35)" stroke-width="0.8"/>`;
+    const cwR = `<polygon points="${cx+W/2},${cy-H+D/4} ${cx},${cy-H+D/2} ${cx},${cy+D/2} ${cx+W/2},${cy+D/4}" fill="rgba(212,175,55,0.07)" stroke="rgba(212,175,55,0.25)" stroke-width="0.8"/>`;
+    const winsL = _windowGrid(cx, cy, W, D, H, 'left', 3, 4, '#fbbf24');
+    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 3, 4, '#fbbf24');
+    // Gold columns
+    const colL = `<line x1="${cx-W/2}" y1="${cy-H+D/4}" x2="${cx-W/2}" y2="${cy+D/4}" stroke="#d4af37" stroke-width="2.5"/>`;
+    const colR = `<line x1="${cx+W/2}" y1="${cy-H+D/4}" x2="${cx+W/2}" y2="${cy+D/4}" stroke="#b8922e" stroke-width="2.5"/>`;
+    // Rooftop terrace railing
+    const rail  = `<path d="M ${cx-W/2} ${cy-H} L ${cx} ${cy-H+D/2} L ${cx+W/2} ${cy-H}" fill="none" stroke="rgba(212,175,55,0.6)" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    // Gold ambient glow
+    const amb   = `<ellipse cx="${cx}" cy="${cy+D/4+4}" rx="32" ry="8" fill="rgba(212,175,55,0.06)" filter="url(#lampGlow)"/>`;
+    return `<g class="hq-building" id="bld-vip_lounge" onclick="window.hqShowInfoPanel('vip_lounge')">${body}${cwL}${cwR}${winsL}${winsR}${colL}${colR}${rail}${amb}</g>`;
 }
 
 function _bld_helipad(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'helipad', state);
-    const pad = _isoBox(cx, cy, 80, 80, 5, '#2e2e2e', '#212121', '#181818');
-    // H marking
+    const W = 88, D = 88, H = 6;
+    const pad = _isoBox(cx, cy, W, D, H, '#1a1a1a', 1.1);
+    // Yellow safety ring
+    const ring = `<ellipse cx="${cx}" cy="${cy-H+D/4+3}" rx="${W*0.38}" ry="${D/4*0.38}" fill="none" stroke="#eab308" stroke-width="2.5" stroke-dasharray="8,5"/>`;
+    // H marking on top face
     const hMark = `
-        <path d="M ${cx - 10} ${cy - 12} L ${cx - 10} ${cy + 2} M ${cx + 10} ${cy - 12} L ${cx + 10} ${cy + 2} M ${cx - 10} ${cy - 5} L ${cx + 10} ${cy - 5}"
-              fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round" />
-        <circle cx="${cx}" cy="${cy - 5}" r="22" fill="none" stroke="#d4af37" stroke-width="2" stroke-dasharray="6,4" />
-    `;
-    // Red beacon lights at corners
-    const light1 = `<circle cx="${cx - 36}" cy="${cy - 5}" r="2" fill="#ef4444" class="hq-sparkle" />`;
-    const light2 = `<circle cx="${cx + 36}" cy="${cy - 5}" r="2" fill="#ef4444" class="hq-sparkle" />`;
-    const light3 = `<circle cx="${cx}" cy="${cy - 23}" r="2" fill="#ef4444" class="hq-sparkle" />`;
-    const light4 = `<circle cx="${cx}" cy="${cy + 13}" r="2" fill="#ef4444" class="hq-sparkle" />`;
-    return `
-        <g class="hq-building" id="bld-helipad" onclick="window.hqShowInfoPanel('helipad')">
-            ${pad}
-            ${hMark}
-            ${light1}
-            ${light2}
-            ${light3}
-            ${light4}
-        </g>
-    `;
+        <line x1="${cx-12}" y1="${cy-H-6}" x2="${cx-12}" y2="${cy-H+8}" stroke="#d4af37" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="${cx+12}" y1="${cy-H-6}" x2="${cx+12}" y2="${cy-H+8}" stroke="#d4af37" stroke-width="3.5" stroke-linecap="round"/>
+        <line x1="${cx-12}" y1="${cy-H+1}" x2="${cx+12}" y2="${cy-H+1}" stroke="#d4af37" stroke-width="3.5" stroke-linecap="round"/>`;
+    // Corner beacons
+    const b = (bx, by) => `<circle cx="${bx}" cy="${by}" r="2.5" fill="#ef4444" class="hq-sparkle" filter="url(#lampGlow)"/>`;
+    const beacons = b(cx-38, cy-H+D/4-8) + b(cx+38, cy-H+D/4-8) + b(cx-38, cy-H+D/4+D/4+8) + b(cx+38, cy-H+D/4+D/4+8);
+    return `<g class="hq-building" id="bld-helipad" onclick="window.hqShowInfoPanel('helipad')">${pad}${ring}${hMark}${beacons}</g>`;
 }
 
 function _bld_crypto_vault(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'crypto_vault', state);
-    const box = _isoBox(cx, cy, 54, 54, 35, '#1e293b', '#0f172a', '#020617');
-    // Gold safe dial
-    const dial = `<circle cx="${cx - 10}" cy="${cy + 8}" r="8" fill="#d4af37" stroke="#9a3412" />`;
-    const handle = `<line x1="${cx - 10}" y1="${cy + 8}" x2="${cx - 4}" y2="${cy + 14}" stroke="#1e293b" stroke-width="2.5" />`;
-    return `
-        <g class="hq-building" id="bld-crypto_vault" onclick="window.hqShowInfoPanel('crypto_vault')">
-            ${box}
-            ${dial}
-            ${handle}
-        </g>
-    `;
+    const W = 58, D = 58, H = 40;
+    const body = _isoBox(cx, cy, W, D, H, '#0f172a', 1.3);
+    // Gold cladding stripes on top
+    const cl1 = `<polygon points="${cx-W/2},${cy-H} ${cx},${cy-H+D/2} ${cx+W/2},${cy-H}" fill="none" stroke="rgba(212,175,55,0.5)" stroke-width="1"/>`;
+    const cl2 = `<polygon points="${cx-W/4},${cy-H+D/4} ${cx},${cy-H+D/2} ${cx+W/4},${cy-H+D/4}" fill="rgba(212,175,55,0.08)"/>`;
+    // Vault door on right face
+    const vaultDoor = `<circle cx="${cx+W/4+2}" cy="${cy-H+D/4+H*0.5+4}" r="12" fill="#1e293b" stroke="#d4af37" stroke-width="2"/>
+                       <circle cx="${cx+W/4+2}" cy="${cy-H+D/4+H*0.5+4}" r="8" fill="#0f172a" stroke="#b8922e" stroke-width="1.5"/>
+                       <line x1="${cx+W/4+2}" y1="${cy-H+D/4+H*0.5+4}" x2="${cx+W/4+10}" y2="${cy-H+D/4+H*0.5-2}" stroke="#d4af37" stroke-width="2"/>`;
+    // BTC symbol on left face
+    const btc = `<text x="${cx-W/4-2}" y="${cy-H+D/4+H*0.55}" fill="rgba(212,175,55,0.5)" font-size="14" font-family="sans-serif" text-anchor="middle">₿</text>`;
+    return `<g class="hq-building" id="bld-crypto_vault" onclick="window.hqShowInfoPanel('crypto_vault')">${body}${cl1}${cl2}${vaultDoor}${btc}</g>`;
 }
 
 function _bld_penthouse(cx, cy, built, state) {
     if (!built) return _emptySlot(cx, cy, 'penthouse', state);
-    // Floor 1 (base)
-    const base = _isoBox(cx, cy, 110, 110, 35, '#1d273a', '#141b28', '#0e131d');
-    // Floor 2 (setback)
-    const mid = _isoBox(cx, cy - 35, 84, 84, 30, '#222f47', '#172133', '#101724');
-    // Floor 3 (top lounge)
-    const top = _isoBox(cx, cy - 65, 58, 58, 25, '#3b4d66', '#293647', '#1e2733');
-    // Gold spires
-    const spireL = `<line x1="${cx - 20}" y1="${cy - 90}" x2="${cx - 20}" y2="${cy - 120}" stroke="#d4af37" stroke-width="2" />`;
-    const spireR = `<line x1="${cx + 20}" y1="${cy - 90}" x2="${cx + 20}" y2="${cy - 120}" stroke="#d4af37" stroke-width="2" />`;
-    const lightL = `<circle cx="${cx - 20}" cy="${cy - 120}" r="3.5" fill="#f59e0b" class="hq-sparkle" />`;
-    const lightR = `<circle cx="${cx + 20}" cy="${cy - 120}" r="3.5" fill="#f59e0b" class="hq-sparkle" />`;
-
-    // Penthouse vertical spotlight lines (only in Stage 3 "Empire")
-    let searchlights = '';
-    const totalBuilt = gameState.hqRooms ? gameState.hqRooms.length : 1;
+    // Base podium
+    const base = _isoBox(cx, cy, 118, 118, 32, '#1e293b', 1.05);
+    // Mid floor setback
+    const mid  = _isoBox(cx, cy - 32, 90, 90, 28, '#243048', 1.1);
+    // Upper penthouse floor
+    const top  = _isoBox(cx, cy - 60, 64, 64, 30, '#2d3e5c', 1.2);
+    // Floor-to-ceiling glass on both floors
+    const gwL1 = `<polygon points="${cx-45},${cy-32+90/4} ${cx},${cy-32+90/2} ${cx},${cy-32+90/2+28} ${cx-45},${cy-32+90/4+28}" fill="rgba(186,230,253,0.13)" stroke="rgba(186,230,253,0.3)" stroke-width="0.8"/>`;
+    const gwR1 = `<polygon points="${cx+45},${cy-32+90/4} ${cx},${cy-32+90/2} ${cx},${cy-32+90/2+28} ${cx+45},${cy-32+90/4+28}" fill="rgba(186,230,253,0.09)" stroke="rgba(186,230,253,0.22)" stroke-width="0.8"/>`;
+    const gwL2 = `<polygon points="${cx-32},${cy-60+64/4} ${cx},${cy-60+64/2} ${cx},${cy-60+64/2+30} ${cx-32},${cy-60+64/4+30}" fill="rgba(212,175,55,0.12)" stroke="rgba(212,175,55,0.4)" stroke-width="0.8"/>`;
+    const gwR2 = `<polygon points="${cx+32},${cy-60+64/4} ${cx},${cy-60+64/2} ${cx},${cy-60+64/2+30} ${cx+32},${cy-60+64/4+30}" fill="rgba(212,175,55,0.09)" stroke="rgba(212,175,55,0.3)" stroke-width="0.8"/>`;
+    const winsB = _windowGrid(cx, cy - 32, 90, 90, 28, 'left', 4, 3, '#bae6fd');
+    const winsBR = _windowGrid(cx, cy - 32, 90, 90, 28, 'right', 4, 3, '#bae6fd');
+    const winsT = _windowGrid(cx, cy - 60, 64, 64, 30, 'left', 3, 3, '#fde68a');
+    const winsTR = _windowGrid(cx, cy - 60, 64, 64, 30, 'right', 3, 3, '#fde68a');
+    // Gold spires with globe tops
+    const spL = `<line x1="${cx-22}" y1="${cy-90}" x2="${cx-22}" y2="${cy-128}" stroke="#d4af37" stroke-width="2.5"/>
+                 <circle cx="${cx-22}" cy="${cy-128}" r="4" fill="#f59e0b" filter="url(#lampGlow)"/>`;
+    const spR = `<line x1="${cx+22}" y1="${cy-90}" x2="${cx+22}" y2="${cy-122}" stroke="#d4af37" stroke-width="2.5"/>
+                 <circle cx="${cx+22}" cy="${cy-122}" r="4" fill="#f59e0b" filter="url(#lampGlow)"/>`;
+    // Rooftop terrace pool (light teal rectangle on top face)
+    const pool = `<polygon points="${cx-12},${cy-93} ${cx+6},${cy-89} ${cx+6},${cy-83} ${cx-12},${cy-87}" fill="rgba(34,211,238,0.4)" stroke="#06b6d4" stroke-width="1"/>`;
+    // Spotlights for Stage 3
+    const totalBuilt = (gameState && gameState.hqRooms) ? gameState.hqRooms.length : 1;
+    let spots = '';
     if (totalBuilt >= 11) {
-        searchlights = `
-            <line x1="${cx - 30}" y1="${cy - 90}" x2="${cx - 150}" y2="${cy - 400}" stroke="rgba(212, 175, 55, 0.4)" stroke-width="4" filter="blur(3px)" class="hq-spotlight" />
-            <line x1="${cx + 30}" y1="${cy - 90}" x2="${cx + 150}" y2="${cy - 400}" stroke="rgba(212, 175, 55, 0.4)" stroke-width="4" filter="blur(3px)" class="hq-spotlight" />
-        `;
+        spots = `<line x1="${cx-28}" y1="${cy-90}" x2="${cx-180}" y2="${cy-520}" stroke="rgba(212,175,55,0.25)" stroke-width="8" class="hq-spotlight"/>
+                 <line x1="${cx+28}" y1="${cy-90}" x2="${cx+180}" y2="${cy-520}" stroke="rgba(212,175,55,0.25)" stroke-width="8" class="hq-spotlight"/>`;
     }
-
-    return `
-        <g class="hq-building" id="bld-penthouse" onclick="window.hqShowInfoPanel('penthouse')">
-            ${base}
-            ${mid}
-            ${top}
-            ${spireL}
-            ${spireR}
-            ${lightL}
-            ${lightR}
-            ${searchlights}
-        </g>
-    `;
+    // Ambient gold glow at base
+    const amb = `<ellipse cx="${cx}" cy="${cy+32/2}" rx="60" ry="14" fill="rgba(212,175,55,0.05)" filter="url(#lampGlow)"/>`;
+    return `<g class="hq-building" id="bld-penthouse" onclick="window.hqShowInfoPanel('penthouse')">${spots}${base}${mid}${top}${gwL1}${gwR1}${gwL2}${gwR2}${winsB}${winsBR}${winsT}${winsTR}${spL}${spR}${pool}${amb}</g>`;
 }
 
-// ── GET PARKED VEHICLES RETRIEVAL ────────────────────────────────────────────
+// ── PARKED CARS ───────────────────────────────────────────────────────────────
 function _getParkedCars() {
-    if (!gameState.fleet) return [];
+    if (!gameState || !gameState.fleet) return [];
     return gameState.fleet.filter(car => {
         const driver = gameState.drivers ? gameState.drivers.find(d => d.assignedCar === car.id) : null;
-        // Car is parked if there is no driver, or the driver is idle, resting, or offline
         return !driver || driver.status === 'idle' || driver.status === 'resting' || driver.status === 'offline';
-    }).slice(0, 6); // Cap at 6 visual cars
+    }).slice(0, 6);
 }
 
-// Draw a small 3D isometric car sprite
 function _hqCarSVG(car, cx, cy) {
-    const color = car.color || '#d4af37';
-    const colTop = color;
-    const colLeft = _adjustColorBrightness(color, -25);
-    const colRight = _adjustColorBrightness(color, -45);
-    
-    // Scale down dimensions for car: w = 20, d = 36, h = 6
-    const baseBox = _isoBox(cx, cy, 20, 36, 6, colTop, colLeft, colRight);
-    // Cabin: w = 14, d = 20, h = 5 (at height offset 6)
-    const cabinBox = _isoBox(cx, cy - 6, 14, 20, 5, '#1e293b', '#0f172a', '#020617');
-    
-    // Headlights (glowing yellow points on front face, bottom corner)
-    // Left headlight: bottom-left face.
-    const hlLeft = `<circle cx="${cx - 5}" cy="${cy + 6}" r="1.5" fill="#fef08a" class="hq-sparkle" />`;
-    const hlRight = `<circle cx="${cx + 5}" cy="${cy + 6}" r="1.5" fill="#fef08a" class="hq-sparkle" />`;
-    
-    return `
-        <g class="hq-car" data-car-id="${car.id}" title="${CE_Sec.escHtml(car.brand)} ${CE_Sec.escHtml(car.model)}" onclick="event.stopPropagation(); window.hqShowCarDetails('${car.id}')">
-            ${baseBox}
-            ${cabinBox}
-            ${hlLeft}
-            ${hlRight}
-        </g>
-    `;
+    const col = car.color || '#c0a020';
+    // Body
+    const bodyTop   = col;
+    const bodyLeft  = _shade(col, 0.72);
+    const bodyRight = _shade(col, 0.52);
+    // Chassis (flat dark base)
+    const chassis = _isoBox(cx, cy + 2, 26, 40, 4, '#18181b', 0.9);
+    // Main body
+    const body    = _isoBox(cx, cy, 26, 40, 8, col, 1.0);
+    // Cabin setback
+    const cabin   = _isoBox(cx, cy - 8, 18, 24, 7, '#0f172a', 1.05);
+    // Windshield tint
+    const wshield = `<polygon points="${cx-9},${cy-11} ${cx},${cy-7} ${cx},${cy-15} ${cx-9},${cy-19}" fill="rgba(147,210,255,0.35)" stroke="rgba(147,210,255,0.4)" stroke-width="0.5"/>`;
+    // Headlights
+    const hl1 = `<circle cx="${cx-8}" cy="${cy+10}" r="2" fill="#fef9c3" class="hq-sparkle"/>`;
+    const hl2 = `<circle cx="${cx+8}" cy="${cy+10}" r="2" fill="#fef9c3" class="hq-sparkle"/>`;
+    const brand = CE_Sec.escHtml((car.brand || '').slice(0, 12));
+    return `<g class="hq-car" data-car-id="${car.id}" title="${brand}" onclick="event.stopPropagation(); window.hqShowCarDetails('${car.id}')">${chassis}${body}${cabin}${wshield}${hl1}${hl2}</g>`;
 }
 
-// ── RENDER MAP GROUND TILES ──────────────────────────────────────────────────
+// ── GROUND TILES ──────────────────────────────────────────────────────────────
 function _hqGroundTile(col, row, type) {
-    const screen = _isoToScreen(col, row);
-    const cx = screen.x;
-    const cy = screen.y;
-    
-    const pts = [
-        `${cx},${cy - ISO_TILE_H / 2}`,
-        `${cx + ISO_TILE_W / 2},${cy}`,
-        `${cx},${cy + ISO_TILE_H / 2}`,
-        `${cx - ISO_TILE_W / 2},${cy}`
-    ].join(' ');
+    const s = _isoToScreen(col, row);
+    const cx = s.x, cy = s.y;
+    const hw = ISO_TILE_W / 2, hh = ISO_TILE_H / 2;
+    const pts = `${cx},${cy - hh} ${cx + hw},${cy} ${cx},${cy + hh} ${cx - hw},${cy}`;
 
-    let fill = '#16231d'; // grass base
-    let stroke = 'rgba(255,255,255,0.015)';
-    
-    if (type === 'road') {
-        fill = '#1a1d24'; // asphalt
-        stroke = 'rgba(255,255,255,0.03)';
-    } else if (type === 'concrete') {
-        fill = '#2a2f3a'; // light grey concrete
-        stroke = 'rgba(255,255,255,0.04)';
-    } else if (type === 'parking') {
-        fill = '#1e3025'; // dark green solar-electric tarmac
-        stroke = '#10b981'; // green perimeter
-    } else if (type === 'marble') {
-        fill = '#111827'; // luxury marble
-        stroke = 'rgba(212,175,55,0.12)';
+    let fill = '#162118', stroke = 'rgba(255,255,255,0.015)', sw = '0.5';
+    if (type === 'road')     { fill = '#1c1f28'; stroke = 'rgba(255,255,255,0.04)'; }
+    if (type === 'concrete') { fill = '#252b36'; stroke = 'rgba(255,255,255,0.05)'; }
+    if (type === 'parking')  { fill = '#162520'; stroke = '#10b98155'; }
+    if (type === 'marble')   { fill = '#0e1320'; stroke = 'rgba(212,175,55,0.14)'; }
+
+    let extras = '';
+    // Road markings
+    if (type === 'road' && (col % 2 === 0)) {
+        extras = `<line x1="${cx-4}" y1="${cy}" x2="${cx+4}" y2="${cy}" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>`;
     }
-    
-    return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="0.5" class="hq-tile-shape" />`;
+    // Parking lot lines
+    if (type === 'parking') {
+        extras = `<line x1="${cx-hw+6}" y1="${cy}" x2="${cx}" y2="${cy+hh-4}" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>
+                  <line x1="${cx}" y1="${cy-hh+4}" x2="${cx+hw-6}" y2="${cy}" stroke="rgba(16,185,129,0.3)" stroke-width="1"/>`;
+    }
+
+    return `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}"/>${extras}`;
 }
 
-// ── MAIN CAMPUS GENERATOR ────────────────────────────────────────────────────
-function _hqCampusHTML() {
-    const builtCount = gameState.hqRooms ? gameState.hqRooms.length : 1;
-    const stage = _getHQStage(builtCount);
-
-    // 1. Build background stars if stage 3
-    let starsHtml = '';
-    if (stage === 3) {
-        // Draw 30 static stars
-        for (let i = 0; i < 30; i++) {
-            const sx = (i * 37 + 43) % 900;
-            const sy = (i * 19 + 23) % 180;
-            const size = (i % 2 === 0) ? 1.5 : 1;
-            starsHtml += `<circle cx="${sx}" cy="${sy}" r="${size}" fill="#ffffff" opacity="${0.2 + (i % 5) * 0.15}" class="hq-sparkle" />`;
-        }
-    }
-
-    // 2. Render ground tiles (from back to front)
-    let groundHtml = '';
-    for (let r = -2; r <= 8; r++) {
-        for (let c = 0; c <= 8; c++) {
+// ── GROUND GRID ───────────────────────────────────────────────────────────────
+function _hqGroundGrid() {
+    let html = '';
+    const evBuilt = window.hqHasRoom ? window.hqHasRoom('ev_parking') : false;
+    const pBuilt  = window.hqHasRoom ? window.hqHasRoom('penthouse') : false;
+    for (let r = -2; r <= 9; r++) {
+        for (let c = -1; c <= 10; c++) {
             let type = 'grass';
-            if (r < 0 || (c >= 4 && c <= 6 && r === 0 && window.hqHasRoom('penthouse'))) {
-                type = 'marble';
-            } else if (c === 5 && r === 0) {
-                type = 'concrete';
-            } else if (c === 4 && r === 6) {
-                type = 'parking';
-            } else if ((c === 4 || c === 5) && (r === 4 || r === 5)) {
-                type = 'concrete';
-            } else if (c === 5 || r === 5) {
-                type = 'road';
-            }
-            groundHtml += _hqGroundTile(c, r, type);
+            if (r < 0)                                   type = pBuilt ? 'marble' : 'concrete';
+            else if (c === 5 || r === 5)                 type = 'road';
+            else if ((c === 4 || c === 5) && r >= 4 && r <= 5) type = 'concrete';
+            else if (c >= 4 && c <= 5 && r >= 6 && evBuilt) type = 'parking';
+            html += _hqGroundTile(c, r, type);
         }
     }
+    return html;
+}
 
-    // 3. Compile all buildings and parked cars for sorting (Painter's Algorithm)
-    const renderItems = [];
+// ── ROOM STATE ────────────────────────────────────────────────────────────────
+function _getRoomState(roomId) {
+    if (window.hqHasRoom && window.hqHasRoom(roomId)) return 'built';
+    const room = window.HQ_ROOMS ? window.HQ_ROOMS.find(r => r.id === roomId) : null;
+    if (!room) return 'locked';
+    const builtRooms = (gameState && gameState.hqRooms) || ['garage_main'];
+    return room.prereqs.every(p => builtRooms.includes(p)) ? 'available' : 'locked';
+}
 
-    // Add building slots
+// ── STREET LAMPS ──────────────────────────────────────────────────────────────
+function _streetLamps() {
+    const positions = [
+        { col: 2.5, row: 5.5 }, { col: 5.5, row: 2.5 },
+        { col: 5.5, row: 5.5 }, { col: 7.5, row: 5.5 }
+    ];
+    return positions.map(p => {
+        const s = _isoToScreen(p.col, p.row);
+        const x = s.x, y = s.y;
+        return `<g>
+            <line x1="${x}" y1="${y}" x2="${x}" y2="${y-32}" stroke="#64748b" stroke-width="1.5"/>
+            <line x1="${x}" y1="${y-32}" x2="${x+10}" y2="${y-28}" stroke="#64748b" stroke-width="1.5"/>
+            <circle cx="${x+10}" cy="${y-28}" r="2.5" fill="#fde68a"/>
+            <ellipse cx="${x+10}" cy="${y-24}" rx="10" ry="6" fill="rgba(253,230,138,0.12)" filter="url(#lampGlow)"/>
+        </g>`;
+    }).join('');
+}
+
+// ── BACKGROUND STARS ─────────────────────────────────────────────────────────
+function _stars(stage) {
+    if (stage < 2) return '';
+    let out = '';
+    for (let i = 0; i < 40; i++) {
+        const sx  = (i * 43 + 71) % 900;
+        const sy  = (i * 17 + 29) % 160;
+        const sz  = 0.8 + (i % 3) * 0.6;
+        const op  = 0.15 + (i % 6) * 0.1;
+        out += `<circle cx="${sx}" cy="${sy}" r="${sz}" fill="#ffffff" opacity="${op.toFixed(2)}" class="hq-sparkle"/>`;
+    }
+    return out;
+}
+
+// ── MAIN CAMPUS HTML ──────────────────────────────────────────────────────────
+function _hqCampusHTML() {
+    const builtCount = (gameState && gameState.hqRooms) ? gameState.hqRooms.length : 1;
+    const stage      = _getHQStage(builtCount);
+
+    const ground  = _hqGroundGrid();
+    const lamps   = _streetLamps();
+    const starBg  = _stars(stage);
+
+    // Collect & sort by painter's algorithm
+    const items = [];
     Object.keys(HQ_ROOM_COORDS).forEach(roomId => {
         const coords = HQ_ROOM_COORDS[roomId];
         const screen = _isoToScreen(coords.col, coords.row);
-        const built = window.hqHasRoom(roomId);
-        const state = _getRoomState(roomId);
-        
-        renderItems.push({
-            type: 'building',
-            id: roomId,
-            col: coords.col,
-            row: coords.row,
-            x: screen.x,
-            y: screen.y,
-            built: built,
-            state: state,
+        items.push({
+            type: 'building', id: roomId,
+            x: screen.x, y: screen.y,
+            built: window.hqHasRoom ? window.hqHasRoom(roomId) : false,
+            state: _getRoomState(roomId),
             sortKey: coords.col + coords.row
         });
     });
-
-    // Add parked cars
     const parkedCars = _getParkedCars();
-    parkedCars.forEach((car, index) => {
-        const slot = PARKING_SLOTS[index];
-        if (slot) {
-            const screen = _isoToScreen(slot.col, slot.row);
-            renderItems.push({
-                type: 'car',
-                id: car.id,
-                col: slot.col,
-                row: slot.row,
-                x: screen.x,
-                y: screen.y,
-                car: car,
-                sortKey: slot.col + slot.row
-            });
-        }
+    parkedCars.forEach((car, i) => {
+        const slot   = PARKING_SLOTS[i];
+        if (!slot) return;
+        const screen = _isoToScreen(slot.col, slot.row);
+        items.push({ type: 'car', car, x: screen.x, y: screen.y, sortKey: slot.col + slot.row });
     });
+    items.sort((a, b) => a.sortKey - b.sortKey);
 
-    // Sort items by sortKey (col + row) ascending
-    renderItems.sort((a, b) => a.sortKey - b.sortKey);
-
-    // Render sorted items
-    let objectsHtml = '';
-    renderItems.forEach(item => {
+    let objects = '';
+    const bldFns = {
+        garage_main: _bld_garage_main, workshop: _bld_workshop, ev_parking: _bld_ev_parking,
+        gym: _bld_gym, canteen: _bld_canteen, infirmary: _bld_infirmary,
+        mission_room: _bld_mission_room, it_center: _bld_it_center, rd_lab: _bld_rd_lab,
+        control_tower: _bld_control_tower, security_bunker: _bld_security_bunker,
+        vip_lounge: _bld_vip_lounge, helipad: _bld_helipad,
+        crypto_vault: _bld_crypto_vault, penthouse: _bld_penthouse
+    };
+    items.forEach(item => {
         if (item.type === 'building') {
-            const fn = window[`_bld_${item.id}`] || _bld_fallback;
-            // Generate building markup
-            let bldSvg = fn(item.x, item.y, item.built, item.state);
-            // Apply bounce animation class on newly constructed building if built
-            const isNew = window._hqJustBuiltRoom === item.id;
-            if (isNew && item.built) {
-                bldSvg = `<g class="hq-build-anim">${bldSvg}</g>`;
+            const fn  = bldFns[item.id] || (() => '');
+            let svg   = fn(item.x, item.y, item.built, item.state);
+            if (window._hqJustBuiltRoom === item.id && item.built) {
+                svg = `<g class="hq-build-anim">${svg}</g>`;
             }
-            objectsHtml += bldSvg;
-        } else if (item.type === 'car') {
-            objectsHtml += _hqCarSVG(item.car, item.x, item.y);
+            objects += svg;
+        } else {
+            objects += _hqCarSVG(item.car, item.x, item.y);
         }
     });
 
-    // Check if we should inject construction dust animation
-    let dustHtml = '';
-    if (window._hqJustBuiltRoom) {
-        const coords = HQ_ROOM_COORDS[window._hqJustBuiltRoom];
-        if (coords) {
-            const screen = _isoToScreen(coords.col, coords.row);
-            dustHtml = `
-                <g class="hq-dust" transform="translate(${screen.x}, ${screen.y})">
-                    <circle cx="-15" cy="0" r="10" fill="rgba(212,175,55,0.4)" />
-                    <circle cx="15" cy="0" r="12" fill="rgba(212,175,55,0.4)" />
-                    <circle cx="0" cy="-10" r="8" fill="rgba(212,175,55,0.3)" />
-                    <circle cx="0" cy="10" r="14" fill="rgba(212,175,55,0.4)" />
-                </g>
-            `;
-            // Reset state after rendering once
-            setTimeout(() => {
-                window._hqJustBuiltRoom = null;
-            }, 800);
-        }
+    // Dust for newly built
+    let dust = '';
+    if (window._hqJustBuiltRoom && HQ_ROOM_COORDS[window._hqJustBuiltRoom]) {
+        const sc = _isoToScreen(HQ_ROOM_COORDS[window._hqJustBuiltRoom].col, HQ_ROOM_COORDS[window._hqJustBuiltRoom].row);
+        dust = `<g class="hq-dust" transform="translate(${sc.x},${sc.y})">
+            <circle cx="-18" cy="0" r="12" fill="rgba(212,175,55,0.35)"/>
+            <circle cx="18" cy="0" r="14" fill="rgba(212,175,55,0.35)"/>
+            <circle cx="0" cy="-12" r="10" fill="rgba(212,175,55,0.25)"/>
+        </g>`;
+        setTimeout(() => { window._hqJustBuiltRoom = null; }, 800);
     }
 
-    return `
-        <svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
-            <!-- Background stars -->
-            ${starsHtml}
-            
-            <!-- Ground Layout -->
-            <g id="hq-ground-layer">
-                ${groundHtml}
-            </g>
-            
-            <!-- Buildings & Cars Layer (Sorted) -->
-            <g id="hq-objects-layer">
-                ${objectsHtml}
-            </g>
-            
-            <!-- Construction dust overlay -->
-            ${dustHtml}
-        </svg>
-    `;
+    return `<svg viewBox="0 0 900 560" xmlns="http://www.w3.org/2000/svg">
+        ${SVG_DEFS}
+        <!-- Sky -->
+        <rect width="900" height="560" fill="transparent"/>
+        ${starBg}
+        <!-- Ground -->
+        <g id="hq-ground-layer">${ground}</g>
+        <!-- Street lamps -->
+        ${lamps}
+        <!-- Buildings & Cars -->
+        <g id="hq-objects-layer">${objects}</g>
+        <!-- Dust FX -->
+        ${dust}
+    </svg>`;
 }
 
-// Fallback building renderer
-function _bld_fallback(cx, cy, built, state) {
-    if (!built) return _emptySlot(cx, cy, 'workshop', state);
-    return _isoBox(cx, cy, 54, 54, 30, '#64748b', '#475569', '#334155');
-}
-
-// ── GET ROOM STATE HELPER ────────────────────────────────────────────────────
-function _getRoomState(roomId) {
-    if (window.hqHasRoom(roomId)) return 'built';
-    const room = window.HQ_ROOMS.find(r => r.id === roomId);
-    if (!room) return 'locked';
-    const builtRooms = gameState.hqRooms || ['garage_main'];
-    const unlocked = room.prereqs.every(p => builtRooms.includes(p));
-    return unlocked ? 'available' : 'locked';
-}
-
-// ── STAGE BACKGROUND UPDATER ──────────────────────────────────────────────────
+// ── STAGE BACKGROUND ──────────────────────────────────────────────────────────
 function _hqStageBackground(stage) {
-    const campusDiv = document.getElementById('hq-campus');
-    if (!campusDiv) return;
-    
-    let gradient = 'radial-gradient(ellipse at 50% 30%, #1a1f2e 0%, #0a0c12 100%)';
-    if (stage === 0) {
-        gradient = 'radial-gradient(ellipse at 50% 30%, #202b25 0%, #0b100d 100%)'; // dark earthy green
-    } else if (stage === 1) {
-        gradient = 'radial-gradient(ellipse at 50% 30%, #1a2230 0%, #0a0e14 100%)'; // deep blue slate
-    } else if (stage === 2) {
-        gradient = 'radial-gradient(ellipse at 50% 30%, #121622 0%, #06080d 100%)'; // mid night
-    } else if (stage === 3) {
-        gradient = 'radial-gradient(ellipse at 50% 30%, #0a0c12 0%, #020305 100%)'; // pitch black night
-    }
-    campusDiv.style.background = gradient;
+    const el = document.getElementById('hq-campus');
+    if (!el) return;
+    const gradients = [
+        'radial-gradient(ellipse at 50% 20%, #1a2e20 0%, #0a120c 100%)',
+        'radial-gradient(ellipse at 50% 20%, #162035 0%, #080e18 100%)',
+        'radial-gradient(ellipse at 50% 20%, #0e1422 0%, #040608 100%)',
+        'radial-gradient(ellipse at 50% 15%, #08090f 0%, #020204 100%)',
+    ];
+    el.style.background = gradients[stage] || gradients[0];
 }
 
-// ── EXPORTED MAIN RENDER FUNCTION ────────────────────────────────────────────
+// ── MAIN EXPORT ───────────────────────────────────────────────────────────────
 window.renderHQCampus = function() {
     const parent = document.getElementById('hq-visual-placeholder');
     if (!parent) return;
 
-    // Create container
     let container = document.getElementById('hq-campus-container');
     if (!container) {
         container = document.createElement('div');
@@ -678,155 +702,69 @@ window.renderHQCampus = function() {
         parent.appendChild(container);
     }
 
-    const builtCount = gameState.hqRooms ? gameState.hqRooms.length : 1;
-    const stage = _getHQStage(builtCount);
+    const builtCount = (gameState && gameState.hqRooms) ? gameState.hqRooms.length : 1;
+    const stage      = _getHQStage(builtCount);
 
-    // Injected HTML structure
-    container.innerHTML = `
-        <div id="hq-campus">
-            ${_hqCampusHTML()}
-            
-            <!-- Side slide-in panel -->
-            <div id="hq-info-panel"></div>
-        </div>
-    `;
-
-    // Apply specific stage background
+    container.innerHTML = `<div id="hq-campus">${_hqCampusHTML()}<div id="hq-info-panel"></div></div>`;
     _hqStageBackground(stage);
-    
-    // Close panel on clicking empty area
+
     const campusDiv = document.getElementById('hq-campus');
     if (campusDiv) {
-        campusDiv.addEventListener('click', function(e) {
-            if (e.target.id === 'hq-campus' || e.target.tagName === 'svg' || e.target.id === 'hq-ground-layer') {
+        campusDiv.addEventListener('click', e => {
+            if (['hq-campus', 'hq-ground-layer'].includes(e.target.id) || e.target.tagName === 'svg') {
                 window.hqHideInfoPanel();
             }
         });
     }
 };
 
-// ── EVENT ACTIONS ─────────────────────────────────────────────────────────────
-
-// Open the existing build modal
+// ── EVENT HANDLERS ────────────────────────────────────────────────────────────
 window.hqOpenBuildModalFromMap = function(roomId) {
-    // In our map-based coordinates, the grid position doesn't limit where the building displays.
-    // However, to maintain compatibility with hq.js hqBuildRoom/hqGrid system, we need to map
-    // the room ID to a grid slot index.
-    // Let's find an empty slot index in gameState.hqGrid
     if (!gameState.hqGrid) gameState.hqGrid = { 7: 'garage_main' };
-    
-    // We map roomId to a reasonable slot index or find the next available free index
     let freeSlot = -1;
-    for (let i = 0; i < 15; i++) {
-        if (!gameState.hqGrid[i]) {
-            freeSlot = i;
-            break;
-        }
-    }
-    
-    if (freeSlot !== -1) {
-        // Trigger hqOpenBuildModal from hq.js
-        window.hqOpenBuildModal(freeSlot);
-        // Force the chosen build modal button to focus on this room, or directly purchase it
-        // by wrapping it: we can override hqOpenBuildModal to render only this room,
-        // or just let them choose since they clicked this slot!
-        // The most user-friendly approach is to open the build modal for this slot.
-    } else {
-        if (typeof showNotification === 'function') showNotification('Tutti gli slot dell\'HQ sono occupati!', 'error');
-    }
+    for (let i = 0; i < 15; i++) { if (!gameState.hqGrid[i]) { freeSlot = i; break; } }
+    if (freeSlot !== -1) window.hqOpenBuildModal(freeSlot);
+    else if (typeof showNotification === 'function') showNotification('Tutti gli slot sono occupati!', 'error');
 };
 
-// Locked slots tooltip
 window.hqShowLockedTooltip = function(roomId) {
-    const room = window.HQ_ROOMS.find(r => r.id === roomId);
+    const room = window.HQ_ROOMS ? window.HQ_ROOMS.find(r => r.id === roomId) : null;
     if (!room) return;
-    const reqNames = room.prereqs.map(p => {
-        const pr = window.HQ_ROOMS.find(x => x.id === p);
-        return pr ? pr.name : p;
-    }).join(', ');
-    
-    if (typeof showNotification === 'function') {
-        showNotification(`Stanza bloccata! Richiede: ${reqNames}`, 'orange');
-    }
+    const reqs = room.prereqs.map(p => window.HQ_ROOMS.find(x => x.id === p)?.name || p).join(', ');
+    if (typeof showNotification === 'function') showNotification(`🔒 Richiede: ${reqs || 'prerequisiti'}`, 'orange');
 };
 
-// Open info panel on built building click
 window.hqShowInfoPanel = function(roomId) {
-    const room = window.HQ_ROOMS.find(r => r.id === roomId);
-    if (!room) return;
-
+    const room  = window.HQ_ROOMS ? window.HQ_ROOMS.find(r => r.id === roomId) : null;
     const panel = document.getElementById('hq-info-panel');
-    if (!panel) return;
-
-    // Active effect conversion
-    const fx = room.effect;
-    let effectText = room.desc;
-    
+    if (!room || !panel) return;
+    const fx = room.effect || {};
+    const fxLines = Object.entries(fx).map(([k, v]) => {
+        if (typeof v === 'boolean') return v ? `<div class="hq-info-stat-row"><span class="text-gray-400">${k}</span><span class="text-green-400">Attivo</span></div>` : '';
+        const label = k.endsWith('Mult') ? `×${v.toFixed(2)}` : `+${v}`;
+        return `<div class="hq-info-stat-row"><span class="text-gray-400">${k.replace(/([A-Z])/g,' $1').trim()}</span><span class="text-gold font-mono font-bold">${label}</span></div>`;
+    }).join('');
     panel.innerHTML = `
-        <div class="flex justify-between items-center mb-4 border-b border-white/10 pb-2">
+        <div class="flex justify-between items-center mb-3 border-b border-white/10 pb-2">
             <div class="text-sm font-bold text-white">${room.icon} ${room.name}</div>
-            <button onclick="window.hqHideInfoPanel()" class="text-gray-400 hover:text-white text-md">✕</button>
+            <button onclick="window.hqHideInfoPanel()" class="text-gray-500 hover:text-white text-lg leading-none">✕</button>
         </div>
-        <div class="text-[10px] text-gray-400 mb-4">${room.desc}</div>
-        
-        <div class="bg-white/5 border border-white/5 rounded-lg p-3 mb-4">
-            <div class="text-[9px] text-gold font-bold uppercase mb-2">⚡ Effetto Attivo</div>
-            <div class="text-xs text-white font-semibold">${Object.entries(fx).map(([k, v]) => {
-                if (typeof v === 'boolean') return v ? 'Attivo' : 'Non attivo';
-                if (k.endsWith('Mult')) return `×${v.toFixed(2)}`;
-                return `+${v}`;
-            }).join(', ')}</div>
+        <div class="text-[10px] text-gray-400 mb-4 leading-relaxed">${room.desc}</div>
+        <div class="bg-white/4 rounded-lg p-3 mb-3">
+            <div class="text-[9px] text-gold font-bold uppercase tracking-widest mb-2">⚡ Effetti</div>
+            ${fxLines}
         </div>
-        
-        <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-2 font-mono">Dettagli Edificio</div>
-        <div class="space-y-1">
-            <div class="hq-info-stat-row">
-                <span class="text-gray-400">Score Prestigio:</span>
-                <span class="text-gold font-bold font-mono">⭐ ${room.score}</span>
-            </div>
-            <div class="hq-info-stat-row">
-                <span class="text-gray-400">Prerequisiti:</span>
-                <span class="text-gray-200">${room.prereqs.length === 0 ? 'Nessuno' : room.prereqs.map(p => window.HQ_ROOMS.find(x => x.id === p)?.name.split(' ')[0]).join(', ')}</span>
-            </div>
-            <div class="hq-info-stat-row">
-                <span class="text-gray-400">Stato:</span>
-                <span class="text-green-400 font-semibold">Operativo</span>
-            </div>
-        </div>
-    `;
-
+        <div class="hq-info-stat-row"><span class="text-gray-400">Prestigio</span><span class="text-gold font-mono font-bold">⭐ ${room.score}</span></div>
+        <div class="hq-info-stat-row"><span class="text-gray-400">Stato</span><span class="text-green-400 font-semibold">Operativo ✓</span></div>`;
     panel.classList.add('open');
 };
 
-// Close info panel
 window.hqHideInfoPanel = function() {
-    const panel = document.getElementById('hq-info-panel');
-    if (panel) {
-        panel.classList.remove('open');
-    }
+    const p = document.getElementById('hq-info-panel');
+    if (p) p.classList.remove('open');
 };
 
-// Show details of a parked car
 window.hqShowCarDetails = function(carId) {
-    if (typeof openCarModal === 'function') {
-        const car = gameState.fleet ? gameState.fleet.find(c => c.id === carId) : null;
-        if (car) openCarModal(car);
-    }
+    const car = gameState.fleet ? gameState.fleet.find(c => c.id === carId) : null;
+    if (car && typeof openCarModal === 'function') openCarModal(car);
 };
-
-// Assign dynamic functions to draw building primitives
-window._bld_garage_main = _bld_garage_main;
-window._bld_workshop = _bld_workshop;
-window._bld_ev_parking = _bld_ev_parking;
-window._bld_gym = _bld_gym;
-window._bld_canteen = _bld_canteen;
-window._bld_infirmary = _bld_infirmary;
-window._bld_mission_room = _bld_mission_room;
-window._bld_it_center = _bld_it_center;
-window._bld_rd_lab = _bld_rd_lab;
-window._bld_control_tower = _bld_control_tower;
-window._bld_security_bunker = _bld_security_bunker;
-window._bld_vip_lounge = _bld_vip_lounge;
-window._bld_helipad = _bld_helipad;
-window._bld_crypto_vault = _bld_crypto_vault;
-window._bld_penthouse = _bld_penthouse;
