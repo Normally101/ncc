@@ -1,6 +1,8 @@
-# Chauffeur Empire — Codebase Guide for Claude
+# Chauffeur Empire — Codebase Guide for Claude / Gemini
 
 Browser MMO gestionale di auto di lusso. Vanilla HTML/CSS/JS puro. Nessun framework, nessun bundler tranne Tailwind CLI. Backend Supabase (PostgreSQL + Realtime). Mappa Mapbox GL JS.
+
+> **Nota per l'AI:** Questo file è la fonte di verità del progetto. Aggiornarlo dopo ogni sessione di lavoro significativa. Leggilo sempre per intero prima di fare modifiche.
 
 ---
 
@@ -13,7 +15,70 @@ Browser MMO gestionale di auto di lusso. Vanilla HTML/CSS/JS puro. Nessun framew
 | Backend | Supabase (Postgres + Auth + Realtime + RPC) |
 | Mappa | Mapbox GL JS v3.6 |
 | Font | Montserrat (UI), Roboto Mono (numeri), Cinzel (titoli) |
-| Deploy | GitHub Pages (`gh-pages` branch) |
+| Deploy | GitHub Pages (`gh-pages` branch) → `https://normally101.github.io/ncc/` |
+| Repo | `https://github.com/Normally101/ncc` (branch `main`) |
+
+---
+
+## REGOLE CRITICHE — Leggi prima di scrivere qualsiasi codice
+
+### 1. `var` vs `let`/`const` per le shared globals
+
+In browser script (non-module), `var` al top-level diventa `window.X`. `let`/`const` NO.
+
+```js
+// ✅ CORRETTO — accessibile da tutti i file
+var map = null;           // → window.map accessibile da ui-meta.js, engine.js, ecc.
+
+// ❌ SBAGLIATO — rimane privato al file dove è dichiarato
+let map = null;           // → NON è window.map, altri file non lo vedono
+const QUEST_DB = [...];   // → NON è window.QUEST_DB se dichiarato localmente
+```
+
+**Regola:** ogni variabile che deve essere condivisa tra file deve essere:
+- `var` al top-level, oppure
+- `window.X = value` esplicitamente
+
+### 2. Niente `const`/`let` globale duplicati tra file
+
+Se `quests-data.js` dichiara `const QUEST_DB = [...]`, e `quests.js` (caricato dopo) tenta di ridichiarare `const QUEST_DB`, in strict mode si ottiene `SyntaxError` → il secondo file non esegue affatto.
+
+**Regola:** ogni costante/variabile dichiarata in un file è locale a quel file (a meno che non sia `var`). Se un altro file la vuole, deve leggere `window.NOME`.
+
+### 3. Cache-busting — versioni `?v=N` in index.html
+
+Ogni script ha `?v=N` nella tag `<script>`. Quando cambi un file JS:
+- Se il file è cambiato significativamente, bumpa il suo `?v=` (es. `?v=4` → `?v=5`)
+- Se la CDN/GitHub Pages sembra servire vecchio contenuto, bumpa TUTTI a `?v=N+1`
+
+```bash
+# Bumpa tutte le versioni a v=6 (esempio):
+python3 -c "
+import re
+with open('index.html') as f: c = f.read()
+with open('index.html', 'w') as f: f.write(re.sub(r'\?v=\d+', '?v=6', c))
+"
+```
+
+**Versione attuale:** `?v=5` (bumped in sessione Maggio 2026)
+
+### 4. Funzioni tra file — sempre `window.X`
+
+```js
+// Esportare da qualsiasi file:
+window.myFunction = function(args) { ... };
+
+// Chiamare da qualsiasi altro file:
+if (typeof window.myFunction === 'function') window.myFunction(args);
+// oppure semplicemente:
+window.myFunction(args);
+```
+
+**Regola difensiva:** prima di chiamare una funzione di un altro file, wrappa con `typeof ... === 'function'` se c'è rischio che il file non sia caricato.
+
+### 5. Ordine di caricamento script — non spostare tag senza verificare dipendenze
+
+Vedi sezione "Ordine di caricamento script" più avanti.
 
 ---
 
@@ -110,7 +175,7 @@ La funzione `_safeRender(fn)` in `dispatcher.js` wrappa ogni chiamata con try/ca
 
 ## Ordine di caricamento script (CRITICO)
 
-L'ordine in `index.html` definisce le dipendenze. Non spostare script senza verificare le dipendenze:
+L'ordine in `index.html` definisce le dipendenze. Non spostare script senza verificare.
 
 ```
 1.  security.js          — CE_Sec: escapeHTML, sanitize, escHtml()
@@ -126,7 +191,7 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 11. serverState.js       — sync Supabase Realtime (companies, drivers, vehicles)
 12. ui-landing.js        — landing page HTML + form auth UI (_showAuthOverlay, _authLogin, ecc.)
 13. auth.js              — core autenticazione: _mmoBootSequence, _onAuthSuccess, bootstrap
-14. quests-data.js       — QUEST_DB array statico (1509 righe, NON leggere mai intero), VG const
+14. quests-data.js       — QUEST_DB array statico (1509 righe), VG const, window.QUEST_DB
 15. quests.js            — logica quest: checkQuestProgress, claimQuestReward, completeMissionRun
 16. engine.js            — CORE: gameLoop, saveGame, loadGame, generazione corse (~3908 righe)
 17. engine-finance.js    — tick mercato + AZIONI PLAYER: buyStocks, takeLoan, shortSell, ecc.
@@ -140,7 +205,7 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 25. vip-clients.js       — 9 handler clienti VIP + _vipOnComplete dispatcher
 26. war_room.js          — province War Room, renderTabWarRoom
 27. dispatcher.js        — switchTab routing, showNotification, togglePanel (~247 righe)
-28. map.js               — Mapbox initMap, visual loop, garage 3D SVG, highway router (~992 righe)
+28. map.js               — Mapbox: var map (GLOBALE), initMap, visual loop, markers (~993 righe)
 29. ui-emails.js         — renderTabEmails
 30. ui-marketing.js      — renderTabMarketing: Dual Brand, campagne, ROI tracker
 31. ui-finance.js        — renderTabFinance: Bloomberg dashboard, stocks, broker, _flashTicker
@@ -160,7 +225,7 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 45. ui-hub.js            — Smart Hub: toggleHub, openHub, hubNavigate
 46. ui-realestate.js     — renderTabRealEstate, doBuyRealEstate (Supabase)
 47. ui-map-utils.js      — spawnMoneyParticles, day/night, HQ marker, founding overlay,
-                            openAcademyModal, _traitBadgeHTML, traffic route colors
+                           openAcademyModal, _traitBadgeHTML, traffic route colors
 48. ui-sidebar.js        — accordion nav, _sidebarToggle, updateSidebarStats, toggleSidebar
 49. showroom.js          — showroom auto, renderTabShowroom, SRM functions
 50. p2p-market.js        — P2P backend: listCarForSale, buyP2PCar, createHolding, listCompanyIPO
@@ -183,13 +248,147 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 67. premium-ui.js        — hash routing (#tab → switchTab on load)
 ```
 
-### File da NON caricare (obsoleti, tenuti come backup)
+### File da NON caricare (obsoleti — presenti nel repo ma non referenziati in index.html)
+
 ```
 ui-meta.js        — SOSTITUITO da ui-ranking/investments/legal/politics/career/store/market/help/hub/realestate/map-utils.js
 ui-finance-mkt.js — SOSTITUITO da ui-marketing.js + ui-finance.js
-vip_clients.js    — SOSTITUITO da vip-buffs.js + vip-clients.js
+vip_clients.js    — SOSTITUITO da vip-buffs.js + vip-clients.js (nuovo)
 p2p_market.js     — SOSTITUITO da p2p-market.js + p2p-render.js
 ```
+
+> **TODO:** Eliminare questi 4 file dal repo — sono confusi e inutili. Un `git rm` è sufficiente.
+
+---
+
+## Globals chiave tra file
+
+```js
+window.gameState          // stato completo gioco (engine.js) — accesso da tutti i file
+window.supabaseClient     // client Supabase (supabase-config.js)
+window.GAME_CONFIG        // costanti configurazione (config.js)
+window.DS                 // Design System components (design-system.js)
+window.CE_Sec             // security helpers: escHtml(), sanitize() (security.js)
+window.CE_Alert           // sistema alert in-game (design-system.js)
+window.switchTab(name)    // navigazione tab (dispatcher.js)
+window.showNotification(msg, type)  // toast notifica (dispatcher.js)
+window.saveGame()         // salva su localStorage + cloud (engine.js)
+window.ServerState        // oggetto con metodi cloud (saveSystem.js)
+window.QUEST_DB           // array quests statiche (quests-data.js) — NON ridichiarare
+var map                   // istanza Mapbox GL JS (map.js) — var per essere window.map
+```
+
+**GAME_CONFIG (config.js):**
+```js
+window.GAME_CONFIG = {
+    SUPPORT_EMAIL:          'support@chauffeurempire.com',
+    SUPPORT_SUBJECT_ACCESS: 'Problema%20di%20Accesso',
+    SUPPORT_SUBJECT_BUG:    'Segnalazione%20Bug%20-%20ID%20Compagnia%3A%20',
+    GAME_NAME:              'Chauffeur Empire',
+    GAME_URL:               'https://www.chauffeurempire.com',
+};
+```
+
+---
+
+## engine.js — Struttura interna (3908 righe)
+
+### Sezioni principali (per navigare il file)
+
+| Righe | Sezione | Contenuto |
+|---|---|---|
+| 1–80 | POI/Province mapping | `POI_TO_PROVINCE`, `_awardTerritoryInfluence` |
+| 81–291 | Helpers/Config | email template, marketing helpers, `STELLAR_VOLT_CATALOG`, `gameState` |
+| 292–401 | Helpers UI | `showBigEvent`, `_applyBrandColor`, `_tabIs`, `_getSeasonalMult`, `_checkAchievements` |
+| 402–682 | Save/Load | `_serializeRide`, `_deserializeRide`, `saveGame`, `loadGame` |
+| 683–917 | Boot/Init | `_getTrafficMult`, recruits, auction, `initGame`, `_getItalyTime` |
+| 918–1177 | Game Loop | `gameLoop` (600ms), fatigue tick, weather tick |
+| 1178–1703 | Business Logic | email log, driver XP, reputation, VIP events, fuel, grey market, shadow, territory |
+| 1704–2355 | Daily Routines | `processDailyRoutines` — redditi, manutenzione, interessi, contratti |
+| 2356–2836 | Ride Cycle | `generatePOIRide`, `generateContractRide`, `assignRideToDriver`, `autoDispatchRides`, `startNextRide`, `completeRide` |
+| 2837–3148 | Email Events | `generateEmailEvent`, `autoNegotiateEmails`, `negotiateEmail`, car mgmt, leasing |
+| 3149–3908 | Misc/Bootstrap | `foundCompany`, NGP, diamond contracts, `checkActiveTrips`, `updateUI`, `_startGameWithSlot` |
+
+### Funzioni window.* esportate da engine.js
+
+```js
+// Core
+window.saveGame(), window.loadGame(), window.startGame(fresh), window.initGame(isNew)
+window.updateUI(), window.generatePOIRide(), window.generateContractRide()
+window.autoDispatchRides(), window.completeRide(ride, deferred)
+window.processDailyRoutines(), window.showBigEvent(icon, title, body)
+
+// Azioni autisti — ora in engine-drivers.js
+window.hireDriver(d), window.fireDriver(id), window.sendDriverToRest(id)
+window.putDriverOnBreak(id), window.payDriverBonus(id), window.payStressClear(id)
+window.startAcademyCourse(id, courseId), window.skipAcademyTraining(id)
+
+// Azioni flotta — ora in engine-fleet.js
+window.repairVehicle(id), window.repairEngine(id), window.refillTires(id)
+window.buyHub(id), window.sellHub(id), window.buyStandardFuel(liters)
+window.buyBlackMarketFuel(), window.instantRepairDC(id), window.buyCARUpgrade(id)
+
+// Finanza — ora in engine-finance.js
+window.takeLoan(tier), window.repayLoan(id), window.buyStocks(ticker, qty)
+window.sellStocks(ticker, qty), window.shortSell(ticker, qty), window.coverShort(ticker)
+window.buyLifestyleAsset(id), window.acquireVentureStake(id), window.donateToLobby(amt)
+
+// Holding — ora in engine-holding.js
+window.incorporateHolding(), window.buyCempShares(qty), window.sellCempShares(qty)
+
+// Misc
+window.setPricingStrategy(s), window.foundCompany(lng, lat, name)
+window.newGamePlus(), window.toggleBlacklist(poiId), window.resolveStrike()
+window.acceptDiamondContract(emailId), window.payFine(id), window.contestFine(id)
+window.attackTerritory(regionId), window.respondPoaching(emailId, accept)
+window.activateCampaign(id), window.deactivateCampaign()
+window._startGameWithSlot(slotIndex, fresh)
+```
+
+---
+
+## map.js — Struttura interna (993 righe)
+
+```
+Righe 1–30:    Config, MAPBOX_TOKEN, var map (GLOBALE!), _mapReady, _cantiereMarkers
+Righe 31–267:  initMap() — setup Mapbox, tutti i addSource/addLayer
+Righe 268–460: Update functions — vehicle layer, region labels, contract destinations,
+               route lines, highways, POIs, cantiere markers, incident/checkpoint markers
+Righe 461–635: visualLoop() — animazione veicoli sulla mappa (setInterval 100ms)
+Righe 636–854: openGarage3D / closeGarage3D / _generateVehicleSVG — ispezione veicolo 3D
+Righe 855–993: Highway Router — _getHWGraph, _findHWPath (BFS), _buildRideWaypoints,
+               calculateInterpolatedPosition
+```
+
+**IMPORTANTE:** `var map = null;` è a riga 12 di map.js. Deve essere `var` (non `let`/`const`) perché `ui-meta.js` e altri file accedono a `map` direttamente come global.
+
+---
+
+## Architettura Quest System
+
+Il quest system usa due file distinti (CRITICO — non unirli):
+
+```
+quests-data.js (1509 righe)          quests.js (79 righe)
+─────────────────────────            ────────────────────
+'use strict';                        'use strict';
+const VG = { ... }                   // Solo logica engine
+const QUEST_DB = [                   window.completeMissionRun(id)
+  { id:'t01', ... },                 window.checkQuestProgress()
+  { id:'m01', ... },                 window.claimQuestReward(id)
+  ...156 quests...                   window.getMissionRequires(id)
+];
+window.QUEST_DB = QUEST_DB;          // usa window.QUEST_DB, mai const locale
+```
+
+**Perché due file:** `const QUEST_DB` in quests-data.js è locale a quel file. Se quests.js ridichiarasse `const QUEST_DB`, in strict mode sarebbe `SyntaxError`. Quindi quests.js usa sempre `window.QUEST_DB`.
+
+**156 quest:**
+- `t01`–`t06`: Tutorial (onboarding)
+- `m01`–`m100`: Story / Raids (completate via `completeMissionRun(missionId)`)
+- `q01`–`q50`: Milestone (check su gameState continuo)
+
+**Bivio (decision fork):** alcune story missions hanno `q.bivio = [{ id, label, effect(gs) }]`. Prima che la missione sia marcata completa, si mostra il modal bivio → player sceglie → `effect(gs)` applicato → `completeMissionRun(id)` chiamato.
 
 ---
 
@@ -215,29 +414,24 @@ premium-ui.css     ← overrides minimi: topbar blur, #main-panel left offset, s
     --topbar:      #1e3a5f;
     --nav:         #1e2d45;
     --nav-dark:    #162030;
-    --bg:          #e8eef5;      /* sfondo principale */
+    --bg:          #e8eef5;
     --bg2:         #edf2f7;
     --bg3:         #f5f7fa;
-    --panel:       #f0f4f8;      /* sfondo main-panel */
+    --panel:       #f0f4f8;
     --card:        #ffffff;
     --card-border: #e2e8f0;
     --sidebar-w:   160px;
     --topbar-h:    42px;
-    --border:      rgba(0,0,0,0.10);
-    --border-sub:  rgba(0,0,0,0.07);
-    --border-gold: rgba(201,162,39,0.30);
-    --shadow-sm:   0 1px 4px rgba(0,0,0,0.08);
-    --shadow-md:   0 4px 16px rgba(0,0,0,0.12);
-    --text:        #1a2744;      /* testo principale */
+    --text:        #1a2744;
     --text-muted:  #4d6480;
     --text-dim:    #7a92a8;
 }
 ```
 
 **Layout fisso:**
-- `#top-bar`: `height:42px`, `position:fixed top-0`, background `#1e3a5f` (navy steel-blue)
-- `#sidebar-player`: `width:160px`, `position:fixed left-0 top:42px`, background `#1e2d45` (dark navy)
-- `#main-panel`: `position:fixed left:160px top:42px` (impostato da `premium-ui.css`)
+- `#top-bar`: `height:42px`, `position:fixed top-0`, background `#1e3a5f`
+- `#sidebar-player`: `width:160px`, `position:fixed left-0 top:42px`, background `#1e2d45`
+- `#main-panel`: `position:fixed left:160px top:42px` (da `premium-ui.css`)
 - `#news-ticker-wrap`: fixed bottom, `left:160px`
 
 **Classi CSS importanti:**
@@ -251,218 +445,64 @@ premium-ui.css     ← overrides minimi: topbar blur, #main-panel left offset, s
 **Overrides Tailwind in `#main-panel` (light theme):**
 ```css
 #main-panel .text-white:not(button):not(.ds-btn) { color: #1a2744 !important; }
-#main-panel .text-gray-200  { color: #2a3e58 !important; }
-#main-panel .text-gray-300  { color: #2a3e58 !important; }
-#main-panel .text-gray-400  { color: #4d6480 !important; }
 #main-panel .bg-gray-900    { background: #e8ecf0 !important; }
 #main-panel .bg-gray-800    { background: #e0e6ec !important; }
-#main-panel .bg-gray-700    { background: #d8e2ed !important; }
-#main-panel .bg-gray-600    { background: #dce6ef !important; }
-#main-panel .bg-black\/50   { background: rgba(0,0,0,0.05) !important; }
-#tab-container { color: var(--text); }
 ```
-Le sezioni "career dark" (`bg-[#111120]`, `bg-[#0e0e1c]`) sono INTENZIONALMENTE scure — non sovrascrivere.
+Le sezioni "career dark" (`bg-[#111120]`) sono INTENZIONALMENTE scure — non sovrascrivere.
 
 ---
 
-## File da NON leggere a meno che strettamente necessario
+## Supabase — Tabelle principali
 
-| File | Perché | Dimensione |
-|---|---|---|
-| `routesDB.js` | Array/oggetti statici di rotte pure | 17750 righe |
-| `data.js` | Dati veicoli/staff/config statici | 2270 righe |
-| `tailwind.min.css` | CSS compilato — non editare mai | ~500KB minificato |
+| Tabella | Contenuto |
+|---|---|
+| `companies` | Dati azienda per utente (cash, reputation, fleet_count, prestige) |
+| `drivers` | Autisti (legati a user_id) |
+| `vehicles` | Veicoli |
+| `active_trips` | Corse in corso (Realtime) |
+| `provinces` | Territori, owner, transit_tax_pct, current_value |
+| `market_listings` | Annunci mercato P2P |
+| `shadow_ops` | Log operazioni ombra |
+| `real_estate_listings` | Immobili disponibili |
+| `leaderboard` | Classifica globale |
 
----
+**RPC functions** prefissate `rpc_*`:
+- `rpc_init_company` — crea record company per nuovo utente
+- `rpc_get_shadow_ops_log` — log operazioni ombra
+- `rpc_acquire_province` — acquisisce provincia (server-authoritative)
+- `rpc_buy_real_estate` — acquisto immobile
 
-## Globals chiave tra file
-
-```js
-window.gameState          // stato completo gioco (engine.js) — accesso da tutti i file
-window.supabaseClient     // client Supabase (supabase-config.js)
-window.GAME_CONFIG        // costanti configurazione (config.js)
-window.DS                 // Design System components (design-system.js)
-window.CE_Sec             // security helpers: escHtml(), sanitize() (security.js)
-window.CE_Alert           // sistema alert in-game (design-system.js)
-window.switchTab(name)    // navigazione tab (dispatcher.js)
-window.showNotification(msg, type)  // toast notifica (dispatcher.js)
-window.saveGame()         // salva su localStorage + cloud (engine.js)
-window.serverState        // stato sync cloud (serverState.js) — deprecato, usa ServerState.*
-window.ServerState        // oggetto con metodi cloud (saveSystem.js)
-```
-
-**GAME_CONFIG (config.js):**
-```js
-window.GAME_CONFIG = {
-    SUPPORT_EMAIL:          'support@chauffeurempire.com',
-    SUPPORT_SUBJECT_ACCESS: 'Problema%20di%20Accesso',
-    SUPPORT_SUBJECT_BUG:    'Segnalazione%20Bug%20-%20ID%20Compagnia%3A%20',
-    GAME_NAME:              'Chauffeur Empire',
-    GAME_URL:               'https://www.chauffeurempire.com',
-};
-```
+**Regola critica:** Il client legge `gameState` localmente. Le mutazioni di cash importanti (acquisto province, real estate) devono passare via RPC Supabase → Realtime callback → aggiorna gameState. **Non mutare `gameState.cash` direttamente per operazioni server-authoritative.**
 
 ---
 
-## engine.js — Funzioni e window.* exports (5252 righe, 89+ funzioni)
+## Real-time engine — Come funziona il tempo
 
-### Core gameplay
-```js
-window.saveGame()              // salva localStorage + cloud
-window.loadGame()              // carica da localStorage
-window.startGame(fresh)        // avvia partita (fresh=true = nuova)
-window.initGame(isNew)         // inizializza stato dopo load
-window.updateUI()              // aggiorna tutti gli elementi UI del topbar/sidebar
-window.advanceTime()           // avanza tempo manualmente (deprecato con real-time)
-window.generatePOIRide()       // genera corsa casuale
-window.generateContractRide()  // genera corsa contrattuale
-window.autoDispatchRides()     // assegna auto corse pending → driver disponibili
-window.completeRide(ride, deferred) // completa corsa, calcola earnings
-window.processDailyRoutines()  // routine giornaliere (investimenti, manutenzione, etc.)
-```
+**Epoch:** Day 1 = 1 Novembre 2025 (lancio gioco).
 
-### Real-time clock (engine.js:915)
+`gameState.day` è un **contatore monotono** (non si resetta). `gameState.month` e `gameState.hour/minute` rispecchiano l'ora reale italiana.
+
 ```js
 const GAME_EPOCH_MS = new Date('2025-11-01T00:00:00+01:00').getTime();
-// Day 1 = 1 Nov 2025 (lancio gioco)
 
 function _getItalyTime()  // → { hour, minute, day, month, year, gameDay }
-// gameDay = giorni monotoni da epoch (non si resetta a 1 ogni mese)
-
 function gameLoop()       // setInterval ogni 600ms — sync da _getItalyTime()
-// hourly mechanics su real Italian hour boundary
-// daily mechanics su game-day increment
-// visual ride loop: elapsed += 5000ms, completes at ride.duration
 ```
 
-### Azioni autisti
-```js
-window.hireDriver(driverData)
-window.fireDriver(driverId)
-window.setDriverAvatar(driverId, avatar)
-window.assignSpecialty(driverId, specialty)
-window.sendDriverToRest(driverId)
-window.putDriverOnBreak(driverId)
-window.payDriverBonus(driverId)
-window.payStressClear(driverId)
-window.startAcademyCourse(driverId, courseId)
-window.skipAcademyTraining(driverId)
-```
+**`gameLoop()` (ogni 600ms):**
+1. `_getItalyTime()` → sync `hour`, `minute`, `month`, `day`
+2. Se `hour !== _prevHour` → meccaniche orarie (energia, meteo, stock, campagne)
+3. Se `minute % 15 === 0` → tick AI rivali
+4. Se `day !== _prevDay` → `processDailyRoutines()` (redditi, manutenzione, interessi)
+5. Loop visual `activeRides`: elapsed += 5000ms, completa a `ride.duration`
 
-### Azioni flotta
-```js
-window.repairVehicle(vehicleId)
-window.repairEngine(vehicleId)
-window.refillTires(vehicleId)
-window.superchargeVehicle(vehicleId)
-window.applyVehicleSkin(vehicleId, skinId)
-window.buyPrototypeCar(catalogId)
-window.returnToHub(vehicleId)
-window.emergencyRefuel(vehicleId)
-window.buyBlackMarketFuel()
-window.buyStandardFuel(liters)
-window.instantRepairDC(vehicleId)        // usa DiamonCoin
-window.buyCARUpgrade(vehicleId)
-window.acceptGreyMarket(vehicleId)
-```
+**Generazione corse:** ogni 5 min reali (POI), ogni 8 min (contratto). Queue cap: 15 pending.
 
-### Finanza / investimenti
-```js
-window.takeLoan(tierId)
-window.repayLoan(loanId)
-window.buyStocks(ticker, qty)
-window.sellStocks(ticker, qty)
-window.placeBrokerInvestment(brokerId, amount)
-window.shortSell(ticker, qty)
-window.coverShort(ticker)
-window.buyLifestyleAsset(assetId)
-window.sellInvestment(invId)
-window.acquireVentureStake(vcId)
-window.divestVentureStake(vcId)
-window.donateToLobby(amount)
-window.passLobbyLaw(lawId)
-```
-
-### Holding / IPO / CEMP
-```js
-window.incorporateHolding()
-window.acquireSubsidiary(subId)
-window.divestSubsidiary(subId)
-window.buyCempShares(qty)
-window.sellCempShares(qty)
-window._listCompanyIPO_NPC()
-window.HOLDING_SUBSIDIARIES   // array catalogo sussidiarie
-```
-
-### Infrastructure / Hub / HQ
-```js
-window.buyHub(hubId)
-window.sellHub(hubId)
-window.buyFuelForDepot(liters)
-window.upgradeFuelDepot()
-window.buyTiresForDepot(qty)
-window.getDepotLevelData()
-window.speedUpConstruction(constructionId)
-window.skipAllConstructionsDC()
-```
-
-### Marketing
-```js
-window.activateCampaign(campaignId)
-window.deactivateCampaign(campaignId)
-window._applyMarketingCampaign(campaignId)
-window._stopMarketingCampaign(campaignId)
-```
-
-### Fines / Police
-```js
-window.payFine(fineId)
-window.contestFine(fineId)
-window.acceptShadowMission(missionId)
-window.attackTerritory(provinceId)
-window.respondPoaching(accept)
-```
-
-### Store / DiamonCoin
-```js
-window.fuelBoostDC()
-window.wakeDriverDC(driverId)
-window.energyBoostDC()
-window.instaHealDC(driverId)
-window.wakeAllDriversDC()
-window.healAllDriversDC()
-window.skipAllAcademyDC()
-window.skipAllConstructionsDC()
-window.opsBundleDC()
-window.fullBundleDC()
-```
-
-### Misc
-```js
-window.setPricingStrategy(strategy)       // 'standard' | 'premium' | 'budget'
-window.buyMaintenanceContract()
-window.foundCompany(name, logo, color)
-window.newGamePlus()
-window.toggleBlacklist(clientId)
-window.resolveStrike()
-window.acceptDiamondContract()
-window.setDriverAvatar(driverId, avatar)
-window._claimDailyUI()
-window._startGameWithSlot(slotIndex, fresh)
-window.showBigEvent(eventData)
-window.STELLAR_VOLT_CATALOG               // array veicoli Stellar/Volt
-window.VEHICLE_SKINS                      // array skin disponibili
-window.ACADEMY_COURSES                    // array corsi accademia
-```
+**Offline catchup:** `saveGame()` salva `lastOnlineTimestamp`. Al reload, se offline > 1 giorno, chiama `processDailyRoutines()` per ogni giorno perso (max 7).
 
 ---
 
-## dispatcher.js — Tab routing (~247 righe) + map.js — Mapbox (~992 righe)
-
-`dispatcher.js` ora contiene solo: stato startup, `switchTab`, `showNotification`, `togglePanel`, `openMapOverlay`, `closeMapOverlay`.  
-`map.js` contiene tutto il codice Mapbox: `initMap`, `visualLoop`, garage 3D SVG, highway router.
-
-### switchTab routing completo
+## switchTab — Routing completo
 
 ```js
 switchTab('corse')        → renderTabCorse()           // ui-dispatch.js
@@ -496,251 +536,233 @@ switchTab('contracts')    → renderTabContracts()       // contracts.js
 switchTab('tourism')      → renderTabTourism()         // tourism.js
 ```
 
-### Funzioni mappa
-```js
-window._fetchRoadGeom(fromLngLat, toLngLat)  // geometry Mapbox API
-window.addIncidentMarker(lat, lng, driverName)
-window.addCheckpointMarker(lat, lng, rideId)
-window.removeCheckpointMarker(rideId)
-window.openGarage3D(carId)
-window.closeGarage3D()
-window.openMapOverlay()
-window.closeMapOverlay()
-window.togglePanel()
-window.showNotification(msg, type)  // type: 'success'|'error'|'info'|'warning'
-```
+---
+
+## File da NON leggere a meno che strettamente necessario
+
+| File | Perché | Dimensione |
+|---|---|---|
+| `routesDB.js` | Array/oggetti statici di rotte pure | ~17750 righe |
+| `data.js` | Dati veicoli/staff/config statici | ~2270 righe |
+| `quests-data.js` | 156 quest statiche | 1509 righe |
+| `tailwind.min.css` | CSS compilato — non editare mai | ~minificato |
+
+Per routesDB.js e data.js usa sempre `grep` per trovare sezioni specifiche.
 
 ---
 
-## ui-sidebar.js — Accordion nav (120 righe)
+## Bug Fixes Log — Registro permanente
 
-```js
-window._sidebarToggle(group)       // apre/chiude gruppo accordion
-// groups: 'operativo' | 'business' | 'finanza' | 'potere' | 'info'
-
-window._sidebarActivateTab(tab)    // evidenzia item attivo + aggiorna breadcrumb
-window.updateSidebarStats()        // aggiorna avatar + company name nel sidebar
-window.toggleSidebar(open)         // mobile: mostra/nasconde sidebar
-
-// switchTab è patchato per chiamare _sidebarActivateTab automaticamente
-// updateUI è patchato per chiamare updateSidebarStats automaticamente
-```
-
-**Tab → gruppo mapping:**
-```js
-const _SIDEBAR_GROUP = {
-    corse:'operativo', fleet:'operativo', staff:'operativo',
-    hq:'operativo', showroom:'operativo', emails:'operativo',
-    b2b:'business', contracts:'business', tourism:'business',
-    infrastructure:'business', store:'business', auctions:'business', market:'business',
-    finance:'finanza', realestate:'finanza', crypto:'finanza', invest:'finanza', marketing:'finanza',
-    provinces:'potere', regions:'potere', politics:'potere',
-    shadow:'potere', nemesis:'potere', opa:'potere',
-    ranking:'info', career:'info', legal:'info', help:'info',
-};
-```
+Ogni fix significativo va documentato qui con: **cosa è andato storto → perché → come risolto**.
 
 ---
 
-## saveSystem.js — Salvataggio e Leaderboard
+### [2026-05-24] `map is not defined` in ui-meta.js:1818
 
-```js
-window.currentSlotIndex       // sempre 0 (single save per account)
-window.saveCurrentSlot()      // salva localStorage + sets lastOnlineTimestamp
-window.pushLeaderboardNow(saveData)
-window.forceLeaderboardUpdate()
-window.forceCloudSave()
-window.deleteSlot(index)
-window.showNewGameSetup()
-window.resetGame()
-window.ServerState            // oggetto con metodi cloud sync
+**Errore:** `ReferenceError: map is not defined` in `_updateDayNight()` di `ui-meta.js`
+
+**Causa:** `map.js` usava `map = new mapboxgl.Map(...)` senza dichiarazione. In strict mode, leggere una variabile non dichiarata è `ReferenceError`. `let`/`const` non creano `window.X`, quindi `map` non era accessibile da `ui-meta.js`.
+
+**Fix:** Aggiunto `var map = null;` all'inizio di `map.js:12`. Con `var` al top-level di un browser script, `map` diventa `window.map` e tutti gli altri file possono accedervi.
+
+**File:** `map.js:12`
+
+---
+
+### [2026-05-24] `_checkDailyReward is not defined` in engine.js:3892
+
+**Errore:** `ReferenceError: _checkDailyReward is not defined` all'avvio del gioco.
+
+**Causa:** `_startGameWithSlot` in engine.js chiama `setTimeout(_checkDailyReward, 1500)` ma `_checkDailyReward` non è implementata in nessun file.
+
+**Fix:** Wrappato con `typeof`: `if (typeof _checkDailyReward === 'function') setTimeout(_checkDailyReward, 1500);`
+
+**Nota:** La funzione non è ancora implementata. Quando la implementerai, rimuovi il typeof check.
+
+**File:** `engine.js:3892`
+
+---
+
+### [2026-05-24] Browser caricava `quests.js?v=3` ignorando `?v=4` in index.html
+
+**Errore:** Console mostrava errori da `quests.js?v=3` anche dopo hard refresh.
+
+**Causa:** GitHub Pages / CDN aveva in cache la versione precedente di `index.html` che aveva ancora `?v=3`. L'hard refresh del browser bypassa il cache del browser, ma non il cache CDN del server.
+
+**Fix:** Bumped tutti i `?v=` in `index.html` da 3/4 → 5 (67 occorrenze), forzando il CDN a servire il nuovo `index.html`.
+
+**File:** `index.html`
+
+---
+
+### [2026-05-22] `QUEST_DB is not defined` — spam in console
+
+**Errore:** `ReferenceError: QUEST_DB is not defined` ripetuto ogni tick.
+
+**Causa:** Il rewrite aveva unificato tutto in `quests.js` che ridichiarava `const QUEST_DB` — già dichiarato in `quests-data.js`. Re-dichiarare `const` in strict mode nel global scope → `SyntaxError` → `quests.js` non eseguiva → `window.QUEST_DB` mai settato → engine chiamava `window.checkQuestProgress` che cercava `QUEST_DB` e falliva.
+
+**Fix:** Riscritto `quests.js` a soli 79 righe (solo engine functions), usando `window.QUEST_DB` invece di `const QUEST_DB` locale.
+
+**File:** `quests.js` (rewrite), `quests-data.js` (unica fonte di QUEST_DB)
+
+---
+
+## Prossimi step tecnici — Piano split file
+
+### Contesto
+
+I file seguenti sono ancora troppo grandi per lavorarci facilmente in sessioni AI. L'obiettivo è ridurre ogni file a < 600 righe con una responsabilità chiara.
+
+### Dimensioni attuali (Maggio 2026)
+
+| File | Righe | Stato |
+|---|---|---|
+| `engine.js` | ~3908 | Da splittare ulteriormente |
+| `quests-data.js` | 1509 | OK — dati statici, non splittare |
+| `map.js` | 993 | Da splittare |
+| `showroom.js` | 729 | Da splittare |
+| `ui-staff.js` | 602 | OK |
+| `war_room.js` | 494 | OK |
+| `contracts.js` | 496 | OK |
+
+### Split proposto per engine.js (3908 → 4 file)
+
+```
+engine.js (~900 righe) ← mantieni solo:
+  - gameState definition (righe 176–291)
+  - constants e helpers (righe 1–175)
+  - save/load system (righe 402–682)
+  - initGame, gameLoop (righe 819–1177)
+  - updateUI, _startGameWithSlot (righe 3772–3908)
+
+engine-rides.js (NUOVO, ~700 righe) ← estrai:
+  - generatePOIRide (riga 2357)
+  - generateContractRide (riga 2471)
+  - _getRideDurationMs (riga 2544)
+  - assignRideToDriver, assignAllRides, autoDispatchRides (righe 2557–2669)
+  - startNextRide (riga 2670)
+  - completeRide (riga 2837)
+  - _findEmptyLegRide (riga 1520)
+
+engine-daily.js (NUOVO, ~700 righe) ← estrai:
+  - processDailyRoutines (riga 1704)
+  - _tickFatigue (riga 1034)
+  - _tickWeather (riga 1125)
+  - _tickEmails (riga 1196)
+  - _tickFuelPrice (riga 1392)
+  - _tickDriverSatisfaction (riga 3663)
+
+engine-business.js (NUOVO, ~600 righe) ← estrai:
+  - shadow missions (righe 1574–1638)
+  - attackTerritory, respondPoaching (righe 1638–1703)
+  - diamond contracts (righe 3606–3661)
+  - checkActiveTrips (riga 3707)
+  - generateEmailEvent, autoNegotiateEmails, negotiateEmail (righe 3150–3226)
 ```
 
----
+**ATTENZIONE:** Queste funzioni si chiamano tra loro. Ogni split richiede di:
+1. Esporre le funzioni interne necessarie su `window.*`
+2. Testare che il gameLoop non si rompa
+3. Verificare che `processDailyRoutines` possa ancora chiamare `generateEmailEvent`, ecc.
 
-## serverState.js — Supabase Realtime (609 righe)
+### Split proposto per map.js (993 → 3 file)
 
-Gestisce la sync bidirezionale con Supabase. Tabelle sottoscritte: `companies`, `drivers`, `vehicles`, `active_trips`, `provinces`.
+```
+map.js (~400 righe) ← mantieni solo:
+  - var map, config, MAPBOX_TOKEN
+  - initMap() (setup layers, sources, terrain)
+  - _ensureMap(), _destroyMap()
+  - _updateVehicleLayer, _updateRegionLabels, _updateContractDestinations
+  - _updateActiveRouteLines, drawHighways, drawPOIs
+  - markers (incident, checkpoint, cantiere)
 
-```js
-window.serverState            // stato cloud locale (deprecato — usa window.ServerState)
-window.forceSyncFromCloud()   // forza sync manuale da cloud
+map-visual.js (NUOVO, ~200 righe) ← estrai:
+  - visualLoop() (righe 482–635) — animazione veicoli + trail scia
+
+map-router.js (NUOVO, ~150 righe) ← estrai:
+  - _getHWGraph (riga 857)
+  - _findHWPath (riga 871, BFS algorithm)
+  - _buildRideWaypoints (riga 892)
+  - calculateInterpolatedPosition (riga 957)
+  - _fetchRoadGeom (riga 17, Mapbox Directions API)
+
+map-garage.js (NUOVO, ~220 righe) ← estrai:
+  - openGarage3D, closeGarage3D (righe 637–762)
+  - _generateVehicleSVG (riga 763)
 ```
 
-**Regola critica:** Il client legge `gameState` localmente. Le mutazioni di cash importanti (acquisto province, real estate, RPC) devono passare via RPC Supabase → Realtime callback → aggiorna gameState. **Non mutare `gameState.cash` direttamente per operazioni server-authoritative.**
+### Split proposto per showroom.js (729 → 2 file)
 
----
+```
+showroom-data.js (NUOVO, ~150 righe) ← costanti/catalogo auto
+showroom.js (~580 righe) ← renderTabShowroom + SRM functions
+```
 
-## Supabase — Tabelle principali
+### Cleanup immediato (facile, zero rischi)
 
-| Tabella | Contenuto |
-|---|---|
-| `companies` | Dati azienda per utente (cash, reputation, fleet_count, prestige) |
-| `drivers` | Autisti (legati a user_id) |
-| `vehicles` | Veicoli |
-| `active_trips` | Corse in corso (Realtime) |
-| `provinces` | Territori, owner, transit_tax_pct, current_value |
-| `market_listings` | Annunci mercato P2P |
-| `shadow_ops` | Log operazioni ombra |
-| `real_estate_listings` | Immobili disponibili |
-| `leaderboard` | Classifica globale |
-
-**RPC functions** prefissate `rpc_*`:
-- `rpc_init_company` — crea record company per nuovo utente
-- `rpc_get_shadow_ops_log` — log operazioni ombra
-- `rpc_acquire_province` — acquisisce provincia (server-authoritative)
-- `rpc_buy_real_estate` — acquisto immobile
-
----
-
-## Real-time engine — Come funziona il tempo
-
-**Epoch:** Day 1 = 1 Novembre 2025 (lancio gioco).
-
-`gameState.day` è un **contatore monotono** (non si resetta a 1 ogni mese). `gameState.month` e `gameState.hour/minute` rispecchiano l'ora reale italiana.
-
-**`gameLoop()` (ogni 600ms):**
-1. Chiama `_getItalyTime()` → sync `hour`, `minute`, `month`, `day`
-2. Se `hour !== _prevHour` → esegue meccaniche orarie (energia, meteo, stock, campagne)
-3. Se `minute !== _prevMin && minute % 15 === 0` → tick AI rivali
-4. Se `day !== _prevDay` → `processDailyRoutines()` (redditi, manutenzione, interessi)
-5. Loop visual `activeRides`: elapsed += 5000ms (o 2500ms in traffic), completa a `ride.duration`
-
-**Generazione corse:** ogni 5 min reali (POI), ogni 8 min (contratto). Queue cap: 15 pending.
-
-**`_getRideDurationMs(ride)`:** durata reale trip = prezzo × 0.4 min (cap 10–360 min), con moltiplicatori per tipo e cross-region ×1.5.
-
-**Offline catchup:** `saveGame()` salva `lastOnlineTimestamp`. Al reload, se offline > 1 giorno, chiama `processDailyRoutines()` una volta per ogni giorno perso (max 7).
+```bash
+# Elimina file obsoleti — NON sono in index.html
+git rm ui-meta.js ui-finance-mkt.js vip_clients.js p2p_market.js
+git commit -m "cleanup: rimuovi file obsoleti sostituiti da moduli split"
+```
 
 ---
 
 ## Pattern comuni
 
 ### Aggiungere una nuova azione di gioco
-1. Aggiungere la funzione in `engine.js` (o nel sotto-engine appropriato)
+
+1. Aggiungere la funzione nel sotto-engine appropriato (engine-drivers.js, engine-fleet.js, ecc.)
 2. Esportare con `window.myAction = function(...) { ... }`
 3. Chiamare `saveGame()` alla fine se muta `gameState`
 4. Se interagisce con Supabase per operazioni cash, usa `window.supabaseClient.rpc('rpc_name', args)`
 
 ### Aggiungere un nuovo tab UI
+
 1. Creare `ui-newtab.js` con `window.renderTabNewTab = function() { ... }`
-2. Aggiungere `<script src="ui-newtab.js?v=X">` in `index.html` dopo gli altri `ui-*.js`
+2. Aggiungere `<script src="ui-newtab.js?v=5">` in `index.html` dopo gli altri `ui-*.js`
 3. Aggiungere case in `dispatcher.js` → `switchTab()` switch
 4. Aggiungere `<a class="sidebar-item" data-tab="newtab" onclick="switchTab('newtab')">` nel sidebar HTML di `index.html`
 5. Aggiungere mapping `newtab: 'grupponome'` in `_SIDEBAR_GROUP` di `ui-sidebar.js`
 
 ### Modificare il CSS
+
 - Variabili tema → `:root` in `style.css` (prime ~35 righe)
 - Componenti DS → `style.css` dopo riga ~3200
 - Layout nav/sidebar/panel → `premium-ui.css`
-- Sidebar accordion → `style.css` ultime righe (sezione `SIDEBAR ACCORDION`)
 - **Non toccare** `tailwind.min.css` — ricompilare con: `npx tailwindcss -i tailwind.input.css -o tailwind.min.css --minify`
 
 ### Aggiungere CSS per una nuova feature
-Se usi classi Tailwind hardcoded in template JS (es. `text-white`, `bg-gray-800`) che appaiono dentro `#main-panel`, devi aggiungere override in `style.css` nella sezione "Override hardcoded Tailwind dark" (~riga 3789).
+
+Se usi classi Tailwind hardcoded in template JS (es. `text-white`, `bg-gray-800`) che appaiono dentro `#main-panel`, aggiungi override in `style.css` nella sezione "Override hardcoded Tailwind dark" (~riga 3789).
 
 ---
 
-## Note architetturali — Problemi noti
+## Sicurezza (completato Maggio 2026)
 
-1. **`engine.js` ridotto** da 5252 a ~3908 righe — azioni player estratte in engine-drivers.js, engine-fleet.js, engine-store.js, engine-holding.js, engine-finance.js (actions).
-
-2. **`ui-meta.js` splittato** in 11 file: ui-ranking, ui-investments, ui-legal, ui-politics, ui-career, ui-store, ui-market, ui-help, ui-hub, ui-realestate, ui-map-utils.
-
-3. **Coupling tramite `window.*`** — 43/47 file espongono globals. Cambiare una funzione può rompere silenziosamente altri file. Non c'è type checking, niente linting.
-
-4. **`gameState` mutato direttamente** — nessuna immutabilità, nessun observer. Bug di stato difficili da tracciare.
-
-5. **CSS Tailwind hardcoded nei template JS** — `text-white`, `bg-black/50` etc. dentro template literal. Gli override in `style.css` coprono i casi principali ma non sono esaustivi. Ogni nuova feature che usa Tailwind dentro `#main-panel` richiede override manuale.
-
-6. **`premium-ui.css` è l'ultimo layer** — caricato dopo `style.css`, ha `!important`. Se aggiungi regole qui che contraddicono il light theme, romperanno tutto. Usare con parsimonia.
-
-7. **`dispatcher.js` ora slim** (1237 righe) — contiene solo: `switchTab`, mappa Mapbox, `showNotification`, alcune helper map functions. Tutti i `renderTab*` sono stati estratti in `ui-*.js`.
-
----
-
-## Roadmap — Stato implementazione
-
-### Piano: UI Overhaul + Modularizzazione dispatcher.js ✅ COMPLETATO
-**File:** `docs/superpowers/plans/2026-05-21-ui-overhaul-modular.md`
-
-Tutti i task completati (commits visibili in git log):
-- ✅ CSS tokens aggiornati (`:root` variabili, `tabFadeIn` keyframe)
-- ✅ Topbar 1-row slim (42px, steel-blue `#1e3a5f`)
-- ✅ Sidebar accordion dark nav (160px, `#1e2d45`)
-- ✅ `ui-sidebar.js` creato (accordion state machine)
-- ✅ `premium-ui.css` ridotto a overrides minimi
-- ✅ `premium-ui.js` ridotto a hash routing
-- ✅ Tab fade-in animation (`_safeRender` patchato)
-- ✅ `ui-dispatch.js`, `ui-fleet.js`, `ui-staff.js`, `ui-ops.js`, `ui-meta.js` creati
-- ✅ `dispatcher.js` passato da ~4900 a 1237 righe
-
-### Piano: Real-Time Engine + Light Theme Overhaul ✅ COMPLETATO
-**File:** `docs/superpowers/plans/2026-05-21-realtime-theme-overhaul.md`
-
-Tutti i task completati:
-- ✅ `style.css` override `text-gray-300/400`, `bg-gray-700/600`, `#tab-container { color: var(--text) }`
-- ✅ `ui-ops.js` region card fix (light bg `rgba(255,255,255,0.92)`)
-- ✅ `index.html` topbar e sidebar riscritti
-- ✅ `engine.js` `GAME_EPOCH_MS` + `_getItalyTime()`
-- ✅ `engine.js` `gameLoop` riscritto (real-time Italian clock sync)
-- ✅ `engine.js` `updateUI()` topbar date "Giorno N · DD Mmm"
-- ✅ `engine.js` `_getRideDurationMs()` + sostituzione `_realMs` hardcoded
-- ✅ `engine.js` ride generation 5/8 min reali, queue cap 15
-- ✅ `engine.js` offline catchup (`lastOnlineTimestamp`, max 7 giorni)
-
-### Piano: Province War + Real Estate + Features Pro ✅ COMPLETATO
-**File:** `docs/superpowers/plans/2026-05-07-chauffeur-empire-upgrade.md`
-
-Completato in precedente sessione.
-
-### Piano: Engine + Dispatcher Modularization ✅ COMPLETATO
-**File:** `docs/superpowers/plans/2026-05-19-modularize-engine-dispatcher.md`
-
-Completato: `engine-finance.js`, `engine-rivals.js`, `engine-events.js`, `ui-emails.js`, `ui-finance-mkt.js` creati.
-
-### Sicurezza ✅ COMPLETATO (Maggio 2026)
 - ✅ RLS attivo su tutte le tabelle Supabase
 - ✅ Trigger `validate_game_save` su `game_saves`: blocca cash > 500M, fleet > 100
 - ✅ Trigger `validate_leaderboard` su `leaderboard`: blocca liquid_assets > 500M, fleet_count > 100
 - ✅ Console.log con dati utente rimossi da produzione
 - ✅ Nessuna `service_role key` esposta nel frontend
 
-### Piano: Full Codebase Split ✅ COMPLETATO (Maggio 2026)
-
-Tutti i file grandi sono stati spaccati in moduli più piccoli:
-- ✅ `engine.js` 5253→3908 righe — actions estratte in engine-drivers/fleet/store/holding.js + engine-finance.js (actions)
-- ✅ `ui-meta.js` 2057 righe → 11 file: ui-ranking/investments/legal/politics/career/store/market/help/hub/realestate/map-utils.js
-- ✅ `dispatcher.js` 1237 righe → dispatcher.js (247) + map.js (992)
-- ✅ `quests.js` 1579 righe → quests-data.js (data) + quests.js (logic, 81 righe)
-- ✅ `p2p_market.js` 1029 righe → p2p-market.js (backend) + p2p-render.js (UI)
-- ✅ `auth.js` 870 righe → ui-landing.js (HTML overlay) + auth.js (core boot)
-- ✅ `vip_clients.js` 867 righe → vip-buffs.js (buff system) + vip-clients.js (handlers)
-- ✅ `ui-finance-mkt.js` 716 righe → ui-marketing.js + ui-finance.js
-- ✅ `ui-staff.js` 758 righe → ui-staff.js + ui-lifestyle.js
-
-### Prossimi step tecnici (non pianificati)
-- [ ] Rimuovere bottone "▶ Avanza Turno" dal sidebar HTML (obsoleto con real-time clock)
-- [ ] Rate limiting server-side sulle RPC (province attacks, shadow ops) — configurabile da Supabase dashboard
-- [ ] Considerare split ulteriore di `map.js` (992 righe) in map-visual.js + map-garage.js + map-router.js
-
 ---
 
-## Visione espansione futura (roadmap contenuti)
+## Visione espansione futura
 
 > Confermato dall'utente — Maggio 2026
 
-**Filosofia:** "Chauffeur Empire" è un nome intenzionalmente ampio. "Chauffeur" copre TUTTE le forme di guida/trasporto. Il gioco deve evolversi fino a contenerle tutte.
+**Filosofia:** "Chauffeur Empire" è un nome intenzionalmente ampio. Il gioco deve evolversi fino a contenere tutte le forme di guida/trasporto.
 
-**Obiettivo core:** Gioco "povero → ricco" (poor to rich). Il giocatore deve poter iniziare con letteralmente niente e costruire un impero. Il Premium Shop accelera il progresso ma NON deve essere obbligatorio per giocare bene.
+**Obiettivo core:** Gioco "povero → ricco". Il giocatore deve poter iniziare con letteralmente niente. Il Premium Shop accelera ma NON è obbligatorio.
 
-### Lane di gioco future (in ordine di priorità indicativa)
+### Lane di gioco future
 
 | Lane | Descrizione | Note architetturali |
 |---|---|---|
-| 🧑‍✈️ **Private Chauffeur** | Job di partenza — solo tu + 1 auto, niente shop richiesto | Entry point per nuovi giocatori |
-| 🚖 **Taxi** | Trasporto urbano di massa, alto volume basso margine, dominio griglia città | Pricing model diverso da NCC |
-| 🚛 **Truck / Logistics** | Merci, rotte lunghe, gestione depositi, contratti B2B logistica | Nuova categoria `fleet[]` |
+| 🧑‍✈️ **Private Chauffeur** | Job di partenza — solo tu + 1 auto | Entry point nuovi giocatori |
+| 🚖 **Taxi** | Trasporto urbano di massa, alto volume basso margine | Pricing model diverso da NCC |
+| 🚛 **Truck / Logistics** | Merci, rotte lunghe, gestione depositi | Nuova categoria fleet[] |
 | ✈️ / 🚢 | Jet privati, barche — espansione ultra-premium | Lungo termine |
 
 ### Impatto architetturale quando si aggiungono taxi/truck
@@ -749,14 +771,15 @@ Tutti i file grandi sono stati spaccati in moduli più piccoli:
 // Oggi: fleet[] assume sempre auto NCC di lusso
 { id: 'v1', brand: 'Mercedes', tier: 'premium', ... }
 
-// Futuro: aggiungere vehicleClass a ogni veicolo
-{ id: 'v1', vehicleClass: 'ncc' | 'taxi' | 'truck' | 'logistics', ... }
+// Futuro: aggiungere vehicleClass
+{ id: 'v1', vehicleClass: 'ncc' | 'taxi' | 'truck', ... }
 
-// pendingRides[] dovrà avere requiredClass per matchare il veicolo giusto
+// pendingRides[] dovrà avere requiredClass
 { id: 'r1', requiredClass: 'taxi', price: 12, ... }
 ```
 
 ### Progressione "poor to rich"
+
 - **Inizio:** 1 auto, tu guidi, niente staff, sopravvivenza pura
 - **Early mid:** assumi 1 autista, seconda auto, contratti locali
 - **Mid:** automazione parziale, sede, marketing
@@ -770,16 +793,15 @@ Tutti i file grandi sono stati spaccati in moduli più piccoli:
 | File | Cosa contiene | Righe |
 |---|---|---|
 | `engine.js` | `gameLoop()`, `saveGame()`, `loadGame()`, core ride generation | ~3908 |
-| `engine-finance.js` | tick mercato + buyStocks, takeLoan, shortSell, acquireVentureStake, ecc. | ~465 |
-| `engine-drivers.js` | hireDriver, sendDriverToRest, startAcademyCourse, ecc. | ~194 |
-| `engine-fleet.js` | repairVehicle, buyHub, buyStandardFuel, buyPrototypeCar, ecc. | ~507 |
-| `engine-store.js` | DC boosters, activateExecutivePass, fullBundleDC, ecc. | ~214 |
-| `engine-holding.js` | incorporateHolding, buyCempShares, _listCompanyIPO_NPC, ecc. | ~127 |
+| `engine-finance.js` | tick mercato + buyStocks, takeLoan, shortSell, acquireVentureStake | ~465 |
+| `engine-drivers.js` | hireDriver, sendDriverToRest, startAcademyCourse | ~194 |
+| `engine-fleet.js` | repairVehicle, buyHub, buyStandardFuel, buyPrototypeCar | ~507 |
+| `engine-store.js` | DC boosters, activateExecutivePass, fullBundleDC | ~214 |
+| `engine-holding.js` | incorporateHolding, buyCempShares, _listCompanyIPO_NPC | ~127 |
 | `dispatcher.js` | `switchTab()`, `showNotification()`, `togglePanel()` | ~247 |
-| `map.js` | Mapbox initMap, visualLoop, garage 3D SVG, highway router | ~992 |
-| `ui-staff.js` | renderTabStaff, openCarModal, openCarConfigurator, buyCar, leaseCar | ~602 |
-| `ui-lifestyle.js` | renderTabLifestyle + decreesRefresh, voteServerDecree | ~175 |
+| `map.js` | Mapbox initMap, visualLoop, garage 3D SVG, highway router | ~993 |
+| `quests-data.js` | 156 quest statiche (data only) | 1509 |
+| `quests.js` | Quest engine (logic only) | 79 |
 | `serverState.js` | Sync Supabase Realtime, ServerState | 609 |
 | `style.css` | Tutto il CSS — tema, layout, componenti, overrides Tailwind | ~3900 |
-| `premium-ui.css` | Override critici layout | 60 |
 | `ui-sidebar.js` | Accordion nav, patch switchTab + updateUI | 120 |
