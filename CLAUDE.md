@@ -126,6 +126,7 @@ let gameState = {
     companyName: 'Chauffeur Empire', companyLogo: '👁️', companyColor: '#d4af37',
     loginStreak: 0, lastDailyClaim: null,
     lastOnlineTimestamp: 0,  // Unix ms — per offline catchup
+    yesterdayEarnings: 0,    // salvato da engine-daily.js prima del reset di todayEarnings
     ventureCapital: [], annualProfitTracker: 0,
     cvWeeklyTarget: 8, cvWeeklyCompleted: 0, cvWeeklyStreak: 0,
     hq: { lng: null, lat: null, name: 'Garage Periferico', level: 0, region: null },
@@ -226,9 +227,10 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 41. ui-career.js         — renderTabCareer, startMissionRun, _showBivioModal
 42. ui-store.js          — renderTabPremiumStore, _dcSpend, EC action handlers
 43. ui-market.js         — renderTabMarket: mercato P2P auto + aste live
-44. ui-help.js           — renderTabHelp, renderCurrentTab
-45. ui-hub.js            — Smart Hub: toggleHub, openHub, hubNavigate
-46. ui-realestate.js     — renderTabRealEstate, doBuyRealEstate (Supabase)
+44. ui-home.js           — renderTabHome, home KPI/rides/drivers/notifiche, _homeTimer (auto-refresh 5s)
+45. ui-help.js           — renderTabHelp, renderCurrentTab
+46. ui-hub.js            — Smart Hub: toggleHub, openHub, hubNavigate
+47. ui-realestate.js     — renderTabRealEstate, doBuyRealEstate (Supabase)
 47. ui-map-utils.js      — spawnMoneyParticles, day/night, HQ marker, founding overlay,
                            openAcademyModal, _traitBadgeHTML, traffic route colors
 48. ui-sidebar.js        — accordion nav, _sidebarToggle, updateSidebarStats, toggleSidebar
@@ -510,6 +512,7 @@ function gameLoop()       // setInterval ogni 600ms — sync da _getItalyTime()
 ## switchTab — Routing completo
 
 ```js
+switchTab('home')         → renderTabHome()            // ui-home.js
 switchTab('corse')        → renderTabCorse()           // ui-dispatch.js
 switchTab('ranking')      → renderTabRanking()         // ui-ranking.js
 switchTab('staff')        → renderTabStaff()           // ui-staff.js
@@ -613,6 +616,36 @@ Ogni fix significativo va documentato qui con: **cosa è andato storto → perch
 **Fix:** Riscritto `quests.js` a soli 79 righe (solo engine functions), usando `window.QUEST_DB` invece di `const QUEST_DB` locale.
 
 **File:** `quests.js` (rewrite), `quests-data.js` (unica fonte di QUEST_DB)
+
+---
+
+### [2026-05-24] `window.gameState` vs bare `gameState` — crash in contracts.js
+
+**Errore:** `Cannot read properties of undefined (reading 'corporateTenders')` aprendo il tab Contratti.
+
+**Causa:** `gameState` è dichiarato con `let` dentro `engine.js` — non è `var`, quindi NON è `window.gameState`. `contracts.js` usava `window.gameState` ovunque → `undefined` → crash.
+
+**Fix:** Sostituiti tutti i `window.gameState` con bare `gameState` in `contracts.js` (3 occorrenze: `_cCountQualifying`, `_cPlayerScore`, `renderTabContracts`).
+
+**Regola:** Usare sempre `gameState` direttamente (bare variable). `window.gameState` non esiste. Stessa regola vale per tutti i file UI/engine.
+
+**File:** `contracts.js`
+
+---
+
+### [2026-05-24] Home tab, sidebar gradient, auto-refresh — implementati
+
+**Funzionalità aggiunte:**
+
+1. **Home tab (`ui-home.js`, NUOVO):** Dashboard con 4 KPI (Guadagno Oggi, Corse Attive, Rating, Livello), tabella corse live, lista autisti con avatar colorati, feed notifiche. Avvio gioco reindirizza a `home` invece di `corse`.
+
+2. **Gradient sidebar (`ui-sidebar.js` + `style.css`):** Ogni `.sidebar-item` ha un `::before` con `radial-gradient` centrato su `--rx`/`--ry`. DOMContentLoaded mousemove su `#sidebar-nav` aggiorna le var CSS in real-time → effetto glow gold che segue il mouse.
+
+3. **Auto-refresh home (`ui-home.js`):** `window._homeTimer = setInterval(5000)` controlla se il panel title contiene "Command Center" e chiama `renderTabHome()`. Timestamp live nel header.
+
+4. **Yesterday earnings (`engine-daily.js`):** Salva `gameState.yesterdayEarnings = gameState.todayEarnings` prima del reset giornaliero. Home KPI mostra delta `▲/▼ +X% vs ieri (€Yk)`.
+
+**File:** `ui-home.js` (new), `ui-sidebar.js`, `style.css`, `engine-daily.js`, `dispatcher.js`, `engine.js`, `index.html`
 
 ---
 
