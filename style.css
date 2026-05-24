@@ -4159,3 +4159,296 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
 .home-streak-day.done { background: var(--gold); }
 .home-streak-day.today { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
 
+
+/* ══════════════════════════════════════════════════════════════
+   CE MOTION SYSTEM
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Tab transition: cinematic blur + slide ─────────────────── */
+@keyframes tabCinemaIn {
+    from { opacity: 0; transform: translateY(8px); filter: blur(3px); }
+    to   { opacity: 1; transform: translateY(0);   filter: blur(0);   }
+}
+.tab-fade-in { animation: tabCinemaIn 0.24s cubic-bezier(0.22,1,0.36,1) forwards; }
+
+/* ── Button: ripple ─────────────────────────────────────────── */
+.ds-btn, .ops-action-btn, .ce-ripple-target { position: relative; overflow: hidden; }
+.ce-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.16);
+    transform: scale(0);
+    animation: ce-ripple-anim 0.55s cubic-bezier(0.36,0.07,0.19,0.97) forwards;
+    pointer-events: none;
+    z-index: 10;
+}
+@keyframes ce-ripple-anim {
+    to { transform: scale(1); opacity: 0; }
+}
+
+/* ── Button: shimmer sweep on hover ─────────────────────────── */
+.ds-btn::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -120%;
+    width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent);
+    transform: skewX(-18deg);
+    transition: left 0.5s ease;
+    pointer-events: none;
+}
+.ds-btn:hover::after { left: 160%; }
+
+/* ── KPI card: orbit glow dot ───────────────────────────────── */
+.ce-kpi-card {
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.28s cubic-bezier(0.22,1,0.36,1), box-shadow 0.28s ease;
+}
+.ce-kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(212,175,55,0.18) !important;
+}
+.ce-orbit {
+    position: absolute;
+    width: 90px; height: 90px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(212,175,55,0.22) 0%, transparent 70%);
+    filter: blur(22px);
+    animation: ce-orbit-path 10s linear infinite;
+    pointer-events: none;
+    z-index: 0;
+}
+@keyframes ce-orbit-path {
+    0%   { top:  5%; left:  5%; }
+    25%  { top:  5%; left: 68%; }
+    50%  { top: 68%; left: 68%; }
+    75%  { top: 68%; left:  5%; }
+    100% { top:  5%; left:  5%; }
+}
+
+/* KPI value underline accent ───────────────────────────────── */
+.ce-kpi-value {
+    position: relative;
+    display: inline-block;
+}
+.ce-kpi-value::after {
+    content: '';
+    display: block;
+    margin-top: 4px;
+    width: 50%;
+    height: 2px;
+    border-radius: 1px;
+    background: linear-gradient(90deg, currentColor, transparent);
+    opacity: 0.45;
+}
+
+/* ── Progress bar with shimmer ──────────────────────────────── */
+.ce-progress-bar {
+    position: relative;
+    height: 5px;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.08);
+    overflow: hidden;
+}
+.ce-progress-fill {
+    height: 100%;
+    border-radius: 4px;
+    position: relative;
+    overflow: hidden;
+    transition: width 0.9s cubic-bezier(0.22,1,0.36,1);
+}
+.ce-progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; bottom: 0;
+    width: 100%;
+    background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.38) 50%, transparent 100%);
+    animation: ce-shimmer 2.2s ease-in-out infinite;
+    border-radius: 4px;
+}
+@keyframes ce-shimmer {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(200%); }
+}
+
+/* ── Count-up flash ─────────────────────────────────────────── */
+.ce-count-flash { animation: ce-num-flash 0.5s ease-out forwards; }
+@keyframes ce-num-flash {
+    0%   { filter: brightness(2.2) drop-shadow(0 0 8px currentColor); }
+    100% { filter: none; }
+}
+
+/* ── Card glass: glassmorphism ──────────────────────────────── */
+.ce-glass {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s cubic-bezier(0.22,1,0.36,1);
+}
+.ce-glass:hover {
+    border-color: rgba(212,175,55,0.22);
+    box-shadow: 0 10px 36px rgba(0,0,0,0.55);
+    transform: translateY(-1px);
+}
+
+/* ── Animated gradient border (conic) ───────────────────────── */
+@property --ce-angle {
+    syntax: '<angle>';
+    initial-value: 0deg;
+    inherits: false;
+}
+.ce-border-glow {
+    position: relative;
+    border-radius: 13px;
+}
+.ce-border-glow::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 14px;
+    background: conic-gradient(from var(--ce-angle), transparent 60%, rgba(212,175,55,0.55) 72%, transparent 84%);
+    animation: ce-border-spin 3.5s linear infinite;
+    z-index: 0;
+    pointer-events: none;
+}
+@keyframes ce-border-spin { to { --ce-angle: 360deg; } }
+
+/* ── Scroll-reveal ──────────────────────────────────────────── */
+.ce-reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22,1,0.36,1);
+}
+.ce-reveal.ce-revealed { opacity: 1; transform: translateY(0); }
+
+/* ── Panel header: gold scan line ───────────────────────────── */
+.ce-panel-header {
+    position: relative;
+    overflow: hidden;
+}
+.ce-panel-header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: -60%;
+    width: 55%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.45), transparent);
+    animation: ce-scan 3.5s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes ce-scan { 0% { left: -60%; } 100% { left: 110%; } }
+
+/* ── Topbar: ambient scan line ──────────────────────────────── */
+#top-bar::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -30%;
+    width: 25%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(212,175,55,0.25), transparent);
+    animation: ce-scan 8s linear infinite;
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ── Live badge: ring pulse ─────────────────────────────────── */
+.ce-badge-live {
+    animation: ce-live-ring 2.2s ease-in-out infinite;
+}
+@keyframes ce-live-ring {
+    0%,100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.5); }
+    50%      { box-shadow: 0 0 0 5px rgba(34,197,94,0); }
+}
+
+/* ── Cloud sync dot: breathing glow ────────────────────────── */
+#cloud-sync-dot {
+    animation: ce-dot-breathe 2.8s ease-in-out infinite !important;
+}
+@keyframes ce-dot-breathe {
+    0%,100% { box-shadow: 0 0 4px rgba(34,197,94,0.35); opacity: 0.7; }
+    50%      { box-shadow: 0 0 14px rgba(34,197,94,0.85), 0 0 28px rgba(34,197,94,0.2); opacity: 1; }
+}
+
+/* ── Sidebar active dot ─────────────────────────────────────── */
+.sidebar-item.active {
+    position: relative;
+}
+.sidebar-item.active::after {
+    content: '';
+    position: absolute;
+    right: 10px; top: 50%;
+    transform: translateY(-50%);
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 7px rgba(212,175,55,0.9);
+    animation: ce-dot-breathe 2s ease-in-out infinite;
+}
+
+/* ── Sidebar group head: hover glow ─────────────────────────── */
+.sidebar-group-head {
+    transition: background 0.18s ease, color 0.18s ease !important;
+}
+.sidebar-group-head:hover {
+    background: rgba(212,175,55,0.07) !important;
+    color: rgba(240,244,255,0.9) !important;
+}
+.sidebar-group-head.open {
+    color: var(--gold) !important;
+    background: rgba(212,175,55,0.09) !important;
+}
+
+/* ── Table row hover ────────────────────────────────────────── */
+.ce-table-row { transition: background 0.12s ease; }
+.ce-table-row:hover { background: rgba(212,175,55,0.04) !important; }
+
+/* ── Section stagger fade (animation-delay set inline) ──────── */
+.ce-section-fade {
+    animation: ce-section-in 0.32s cubic-bezier(0.22,1,0.36,1) backwards;
+}
+@keyframes ce-section-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Driver avatar: hover scale ─────────────────────────────── */
+.ce-avatar {
+    transition: transform 0.2s cubic-bezier(0.22,1,0.36,1), box-shadow 0.2s ease;
+}
+.ce-avatar:hover {
+    transform: scale(1.12);
+    box-shadow: 0 0 12px rgba(212,175,55,0.35);
+}
+
+/* ── Notification row: slide-in on appear ───────────────────── */
+.ce-notif-row {
+    animation: ce-notif-in 0.22s ease-out backwards;
+}
+@keyframes ce-notif-in {
+    from { opacity: 0; transform: translateX(-8px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Card: ambient glow on gold cards ───────────────────────── */
+.ds-card--gold {
+    transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.25s cubic-bezier(0.22,1,0.36,1) !important;
+}
+.ds-card--gold:hover {
+    box-shadow: 0 0 32px rgba(212,175,55,0.12), 0 8px 32px rgba(0,0,0,0.5) !important;
+    transform: translateY(-2px) !important;
+}
+
+/* ── DS toast: spring entrance ──────────────────────────────── */
+@keyframes ds-toast-in {
+    0%   { opacity: 0; transform: translateX(32px) scale(0.94); }
+    60%  { transform: translateX(-4px) scale(1.01); }
+    100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+/* ── Topbar stats: subtle pulse on value change ─────────────── */
+.topbar-val-flash { animation: topbar-flash 0.35s ease-out; }
+@keyframes topbar-flash {
+    0%   { color: var(--gold); }
+    100% { }
+}

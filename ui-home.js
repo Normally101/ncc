@@ -106,7 +106,7 @@ window.renderTabHome = function() {
         const progressColor = ride.tier === 'ultra' ? '#f59e0b' : (ride.tier === 'vip' ? '#a78bfa' : '#22d3ee');
 
         return `
-<tr style="border-bottom:1px solid rgba(255,255,255,0.05)">
+<tr class="ce-table-row" style="border-bottom:1px solid rgba(255,255,255,0.05)">
   <td style="padding:10px 14px">
     <div style="font-size:12px;font-weight:600;color:var(--text)">${dname}</div>
     <div style="font-size:10px;color:var(--text-dim);margin-top:1px">${carLabel}</div>
@@ -120,10 +120,10 @@ window.renderTabHome = function() {
   </td>
   <td style="padding:10px 14px">${tierBadge}</td>
   <td style="padding:10px 14px;font-family:'Roboto Mono',monospace;font-size:12px;font-weight:700;color:#4ade80">${priceFmt}</td>
-  <td style="padding:10px 20px 10px 14px;min-width:120px">
+  <td style="padding:10px 20px 10px 14px;min-width:130px">
     <div style="display:flex;align-items:center;gap:8px">
-      <div style="flex:1;height:4px;background:rgba(255,255,255,0.10);border-radius:2px;overflow:hidden">
-        <div style="height:100%;width:${pct}%;background:${progressColor};border-radius:2px;transition:width 1s ease"></div>
+      <div class="ce-progress-bar" style="flex:1">
+        <div class="ce-progress-fill" style="width:${pct}%;background:${progressColor}"></div>
       </div>
       <span style="font-size:9px;color:var(--text-dim);white-space:nowrap;font-family:'Roboto Mono',monospace">${pct}% · ${etaLabel}</span>
     </div>
@@ -154,8 +154,8 @@ window.renderTabHome = function() {
         else { statusLabel = 'Libero'; statusColor = '#60a5fa'; }
 
         return `
-<div style="display:grid;grid-template-columns:36px 1fr auto auto;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
-  <div style="width:34px;height:34px;border-radius:50%;background:${avatarColor};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
+<div class="ce-table-row" style="display:grid;grid-template-columns:36px 1fr auto auto;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
+  <div class="ce-avatar" style="width:34px;height:34px;border-radius:50%;background:${avatarColor};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff;flex-shrink:0">${initials}</div>
   <div style="min-width:0">
     <div style="font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_homeEsc(d.name)}</div>
     <div style="font-size:10px;color:var(--text-dim);margin-top:1px">Stanchezza: <span style="color:${fatigueColor}">${fatigue}%</span></div>
@@ -184,7 +184,7 @@ window.renderTabHome = function() {
         const mm = String(e.minute ?? '').padStart(2,'0');
         const timeLabel = (e.hour != null) ? `${hh}:${mm}` : '';
         return `
-<div style="display:grid;grid-template-columns:28px 1fr auto;align-items:start;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
+<div class="ce-notif-row" style="display:grid;grid-template-columns:28px 1fr auto;align-items:start;gap:10px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,0.05);animation-delay:${emails.indexOf(e)*40}ms">
   <span style="font-size:16px">${icon}</span>
   <div>
     <span style="font-size:11px;font-weight:700;color:var(--text)">${eventType}</span>
@@ -203,7 +203,7 @@ window.renderTabHome = function() {
 <div style="height:100%;overflow-y:auto;overflow-x:hidden;padding-bottom:60px;background:var(--bg)">
 
   <!-- Section header -->
-  <div style="padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06)">
+  <div class="ce-panel-header" style="padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06)">
     <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted);font-family:'Roboto Mono',monospace">📊 Panoramica Live</span>
     <span id="home-ts" style="font-size:9px;color:var(--text-dim);font-family:'Roboto Mono',monospace">🔄 ${tsNow}</span>
   </div>
@@ -212,44 +212,44 @@ window.renderTabHome = function() {
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:0;border-bottom:1px solid rgba(255,255,255,0.06)">
 
     <!-- Guadagno Oggi -->
-    <div style="padding:20px 22px;border-right:1px solid rgba(255,255,255,0.06)">
-      <div style="font-size:22px;margin-bottom:8px">💰</div>
-      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px">Guadagno Oggi</div>
-      <div style="font-size:28px;font-weight:700;color:#4ade80;font-family:'Roboto Mono',monospace;line-height:1">${earnFmt}</div>
-      <div style="margin-top:6px">${earnDeltaHTML}</div>
+    <div class="ce-kpi-card" style="padding:20px 22px;border-right:1px solid rgba(255,255,255,0.06)">
+      <div style="font-size:22px;margin-bottom:8px;position:relative;z-index:1">💰</div>
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px;position:relative;z-index:1">Guadagno Oggi</div>
+      <div class="ce-kpi-value" style="font-size:28px;font-weight:700;color:#4ade80;font-family:'Roboto Mono',monospace;line-height:1;position:relative;z-index:1" data-countup="${todayEarn}" data-fmt="eur">${earnFmt}</div>
+      <div style="margin-top:8px;position:relative;z-index:1">${earnDeltaHTML}</div>
     </div>
 
     <!-- Corse Attive -->
-    <div style="padding:20px 22px;border-right:1px solid rgba(255,255,255,0.06)">
-      <div style="font-size:22px;margin-bottom:8px">🚀</div>
-      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px">Corse Attive</div>
-      <div style="font-size:28px;font-weight:700;color:var(--text);font-family:'Roboto Mono',monospace;line-height:1">${totalActive}</div>
-      <div style="margin-top:6px;font-size:11px;color:var(--text-dim)">${totalPending} in attesa</div>
+    <div class="ce-kpi-card" style="padding:20px 22px;border-right:1px solid rgba(255,255,255,0.06)">
+      <div style="font-size:22px;margin-bottom:8px;position:relative;z-index:1">🚀</div>
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px;position:relative;z-index:1">Corse Attive</div>
+      <div class="ce-kpi-value" style="font-size:28px;font-weight:700;color:var(--text);font-family:'Roboto Mono',monospace;line-height:1;position:relative;z-index:1" data-countup="${totalActive}" data-fmt="int">${totalActive}</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text-dim);position:relative;z-index:1">${totalPending} in attesa</div>
     </div>
 
     <!-- Rating Medio -->
-    <div style="padding:20px 22px;border-right:1px solid rgba(255,255,255,0.06)">
-      <div style="font-size:22px;margin-bottom:8px">⭐</div>
-      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px">Rating Medio</div>
-      <div style="font-size:28px;font-weight:700;color:${repColor};font-family:'Roboto Mono',monospace;line-height:1">${rep}</div>
-      <div style="margin-top:6px;font-size:11px;color:var(--text-dim)">▲ ${repTrend}</div>
+    <div class="ce-kpi-card" style="padding:20px 22px;border-right:1px solid rgba(255,255,255,0.06)">
+      <div style="font-size:22px;margin-bottom:8px;position:relative;z-index:1">⭐</div>
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px;position:relative;z-index:1">Rating Medio</div>
+      <div class="ce-kpi-value" style="font-size:28px;font-weight:700;color:${repColor};font-family:'Roboto Mono',monospace;line-height:1;position:relative;z-index:1" data-countup="${gs.reputation||0}" data-fmt="float2">${rep}</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text-dim);position:relative;z-index:1">▲ ${repTrend}</div>
     </div>
 
     <!-- Livello -->
-    <div style="padding:20px 22px">
-      <div style="font-size:22px;margin-bottom:8px">🏆</div>
-      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px">Livello</div>
-      <div style="font-size:24px;font-weight:700;color:${levelColor};line-height:1">${_homeEsc(level.label)}</div>
-      <div style="margin-top:6px;font-size:11px;color:var(--text-dim)">${level.next ? 'Prossimo: ' + level.next : '🌟 Massimo raggiunto'}</div>
+    <div class="ce-kpi-card" style="padding:20px 22px">
+      <div style="font-size:22px;margin-bottom:8px;position:relative;z-index:1">🏆</div>
+      <div style="font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace;margin-bottom:6px;position:relative;z-index:1">Livello</div>
+      <div style="font-size:24px;font-weight:700;color:${levelColor};line-height:1;position:relative;z-index:1">${_homeEsc(level.label)}</div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text-dim);position:relative;z-index:1">${level.next ? 'Prossimo: ' + level.next : '🌟 Massimo raggiunto'}</div>
     </div>
 
   </div>
 
   <!-- Active rides table -->
-  <div style="margin:16px 16px 0;border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden">
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,0.30);border-bottom:1px solid rgba(255,255,255,0.06)">
+  <div class="ce-glass" style="margin:16px 16px 0;overflow:hidden">
+    <div class="ce-panel-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,0.28);border-bottom:1px solid rgba(255,255,255,0.06)">
       <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace">Corse in Corso</span>
-      <span style="font-size:8px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)">● LIVE</span>
+      <span class="ce-badge-live" style="font-size:8px;font-weight:700;padding:2px 8px;border-radius:10px;background:rgba(34,197,94,0.15);color:#4ade80;border:1px solid rgba(34,197,94,0.3)">● LIVE</span>
     </div>
     <table style="width:100%;border-collapse:collapse">
       <thead>
@@ -272,8 +272,8 @@ window.renderTabHome = function() {
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;padding:16px">
 
     <!-- Drivers -->
-    <div style="border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,0.30);border-bottom:1px solid rgba(255,255,255,0.06)">
+    <div class="ce-glass ce-section-fade" style="overflow:hidden;animation-delay:80ms">
+      <div class="ce-panel-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,0.28);border-bottom:1px solid rgba(255,255,255,0.06)">
         <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace">Autisti</span>
         <span style="font-size:9px;font-weight:700;color:#4ade80">${driversOnDuty.length} ATTIVI</span>
       </div>
@@ -281,8 +281,8 @@ window.renderTabHome = function() {
     </div>
 
     <!-- Notifications -->
-    <div style="border:1px solid rgba(255,255,255,0.07);border-radius:12px;overflow:hidden">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,0.30);border-bottom:1px solid rgba(255,255,255,0.06)">
+    <div class="ce-glass ce-section-fade" style="overflow:hidden;animation-delay:140ms">
+      <div class="ce-panel-header" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,0.28);border-bottom:1px solid rgba(255,255,255,0.06)">
         <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace">Notifiche</span>
         <span style="font-size:9px;color:var(--text-dim)">Oggi</span>
       </div>
