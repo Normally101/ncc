@@ -4218,8 +4218,9 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
     pointer-events: none;
     z-index: 0;
     top: 50%; left: 50%;
-    transition: top 0.08s ease, left 0.08s ease;
-    will-change: top, left;
+    opacity: 0;
+    transition: top 0.07s ease, left 0.07s ease, opacity 0.2s ease;
+    will-change: top, left, opacity;
 }
 
 /* KPI value underline accent ───────────────────────────────── */

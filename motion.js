@@ -65,24 +65,37 @@ window._ceKpiOrbit = function() {
     });
 };
 
-// Delegate mousemove on the KPI strip container ──────────────────
+// KPI card: orbit glow follows mouse, visible only on hover ──────
+function _ceCardOf(e) {
+    const t = e.target;
+    return (t && t.nodeType === 1) ? t.closest('.ce-kpi-card') : null;
+}
+
 document.addEventListener('mousemove', function(e) {
-    const card = e.target.closest('.ce-kpi-card');
+    const card = _ceCardOf(e);
     if (!card) return;
     const orbit = card.querySelector('.ce-orbit');
     if (!orbit) return;
     const r = card.getBoundingClientRect();
-    const x = e.clientX - r.left;
-    const y = e.clientY - r.top;
-    orbit.style.left = (x - 45) + 'px';
-    orbit.style.top  = (y - 45) + 'px';
+    orbit.style.left    = (e.clientX - r.left - 45) + 'px';
+    orbit.style.top     = (e.clientY - r.top  - 45) + 'px';
+    orbit.style.opacity = '1';
 }, true);
 
-document.addEventListener('mouseleave', function(e) {
-    const card = e.target.closest('.ce-kpi-card');
+document.addEventListener('mouseover', function(e) {
+    const card = _ceCardOf(e);
     if (!card) return;
     const orbit = card.querySelector('.ce-orbit');
-    if (orbit) { orbit.style.left = '50%'; orbit.style.top = '50%'; }
+    if (orbit) orbit.style.opacity = '1';
+}, true);
+
+document.addEventListener('mouseout', function(e) {
+    const card = _ceCardOf(e);
+    if (!card) return;
+    // Only hide if leaving the card itself (not moving to a child)
+    if (card.contains(e.relatedTarget)) return;
+    const orbit = card.querySelector('.ce-orbit');
+    if (orbit) orbit.style.opacity = '0';
 }, true);
 
 // ── 4. Stagger entrance ──────────────────────────────────────────
