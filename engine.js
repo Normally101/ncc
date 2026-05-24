@@ -1931,7 +1931,7 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     if (typeof window._injectLangToggle === 'function') {
         setTimeout(window._injectLangToggle, 200);
     }
-    if (typeof window.switchTab === 'function') window.switchTab('corse');
+    if (typeof window.switchTab === 'function') window.switchTab('home');
     // Push leaderboard as soon as the game is live (fresh or loaded save)
     setTimeout(() => {
         if (typeof window.forceLeaderboardUpdate === 'function') window.forceLeaderboardUpdate();

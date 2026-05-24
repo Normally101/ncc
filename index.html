@@ -105,8 +105,8 @@
           style="height:42px;background:#1e3a5f;border-bottom:1px solid rgba(0,0,0,0.25);box-shadow:0 2px 8px rgba(0,0,0,0.25)">
 
     <!-- Logo -->
-    <img src="assets/ce-favicon.png" alt="CE" class="w-6 h-6 rounded-md object-contain flex-shrink-0" onerror="this.style.display='none'">
-    <span class="font-display font-bold text-white tracking-widest text-[11px] uppercase flex-shrink-0" style="text-shadow:0 0 8px rgba(201,162,39,0.5)">Chauffeur Empire</span>
+    <img src="assets/ce-favicon.png" alt="CE" class="w-6 h-6 rounded-md object-contain flex-shrink-0" onclick="if(typeof switchTab==='function')switchTab('home')" style="cursor:pointer" onerror="this.style.display='none'">
+    <span class="font-display font-bold text-white tracking-widest text-[11px] uppercase flex-shrink-0" style="text-shadow:0 0 8px rgba(201,162,39,0.5);cursor:pointer" onclick="if(typeof switchTab==='function')switchTab('home')">Chauffeur Empire</span>
 
     <div class="w-px h-5 bg-white/15 flex-shrink-0"></div>
 
@@ -176,6 +176,9 @@
 
     <!-- Accordion nav -->
     <nav id="sidebar-nav" class="flex-1 overflow-y-auto py-1">
+
+      <!-- HOME -->
+      <a class="sidebar-item" data-tab="home" onclick="switchTab('home')" href="#" style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-weight:700;color:rgba(212,175,55,0.85)">🏠 Home</a>
 
       <!-- OPERATIVO -->
       <div class="sidebar-group" data-group="operativo">
@@ -581,6 +584,7 @@
   <script src="ui-career.js?v=5"></script>
   <script src="ui-store.js?v=5"></script>
   <script src="ui-market.js?v=5"></script>
+  <script src="ui-home.js?v=5"></script>
   <script src="ui-help.js?v=5"></script>
   <script src="ui-hub.js?v=5"></script>
   <script src="ui-realestate.js?v=5"></script>

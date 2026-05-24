@@ -191,6 +191,7 @@ window.switchTab = function(tab) {
         }
     };
     switch(tab) {
+        case 'home':  title.innerText = "🏠 Command Center"; _safeRender(window.renderTabHome); break;
         case 'corse': title.innerText = "Dispatch Center"; _safeRender(renderTabCorse); break;
         case 'ranking': title.innerText = "Global Ranking"; _safeRender(renderTabRanking); break;
         case 'staff': title.innerText = "Risorse Umane"; _safeRender(renderTabStaff); break;

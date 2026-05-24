@@ -3984,3 +3984,167 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
   #map-overlay       { left: 0 !important; }
 }
 
+/* ================================================================
+   OPS (DISPATCH) TAB — dark theme overrides
+   ================================================================ */
+.ops-kpi-strip {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+.ops-kpi-label { color: var(--text-muted) !important; }
+.ops-kpi-sub   { color: var(--text-dim)   !important; }
+.ops-kpi-sep   { background: rgba(255,255,255,0.08) !important; }
+.ops-col {
+    background: rgba(255,255,255,0.03) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+    box-shadow: none !important;
+}
+.ops-col-header {
+    background: rgba(0,0,0,0.30) !important;
+    border-bottom-color: rgba(255,255,255,0.08) !important;
+}
+.ops-col-title  { color: var(--text-muted) !important; }
+.ops-col-badge  { background: rgba(255,255,255,0.06) !important; color: var(--text-muted) !important; }
+.ops-col-badge--active { background: rgba(212,175,55,0.12) !important; color: var(--gold) !important; border-color: rgba(212,175,55,0.30) !important; }
+.ops-ride-card {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+.ops-ride-card:hover {
+    background: rgba(255,255,255,0.07) !important;
+    border-color: rgba(0,242,255,0.20) !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+.ops-ride-card--contract {
+    background: rgba(212,175,55,0.05) !important;
+    border-color: rgba(212,175,55,0.20) !important;
+}
+.ops-ride-route  { color: var(--text)      !important; }
+.ops-ride-arrow  { color: var(--text-dim)  !important; }
+.ops-driver-row {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+.ops-driver-row:hover { background: rgba(255,255,255,0.07) !important; }
+.ops-driver-name  { color: var(--text)      !important; }
+.ops-driver-car   { color: var(--text-dim)  !important; }
+.ops-driver-queue { color: var(--text-dim)  !important; }
+.ops-bar-wrap     { background: rgba(255,255,255,0.10) !important; }
+.ops-alert-pill   { background: rgba(239,68,68,0.12) !important; border-color: rgba(239,68,68,0.25) !important; }
+.ops-daily-summary {
+    background: rgba(255,255,255,0.04) !important;
+    border-color: rgba(255,255,255,0.08) !important;
+}
+.ops-daily-label { color: var(--text-muted) !important; }
+
+/* ================================================================
+   HOME TAB
+   ================================================================ */
+.home-hero {
+    display: flex; align-items: center; gap: 16px;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: linear-gradient(135deg, rgba(212,175,55,0.07) 0%, transparent 60%);
+}
+.home-company-logo {
+    width: 52px; height: 52px; border-radius: 12px;
+    background: rgba(212,175,55,0.12);
+    border: 1px solid rgba(212,175,55,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 26px; flex-shrink: 0;
+}
+.home-company-name {
+    font-size: 20px; font-weight: 700;
+    color: var(--text);
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+}
+.home-company-sub {
+    font-size: 11px; color: var(--text-muted);
+    margin-top: 3px; display: flex; align-items: center; gap: 8px;
+}
+.home-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.06);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.home-kpi {
+    background: var(--bg);
+    padding: 14px 16px;
+    display: flex; flex-direction: column; gap: 4px;
+}
+.home-kpi-label {
+    font-size: 8px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-muted);
+    font-family: var(--font-mono);
+}
+.home-kpi-val {
+    font-size: 20px; font-weight: 700;
+    font-family: var(--font-mono);
+    line-height: 1;
+}
+.home-kpi-sub {
+    font-size: 10px; color: var(--text-dim);
+}
+.home-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding: 16px;
+}
+.home-section {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 12px;
+    overflow: hidden;
+}
+.home-section-head {
+    padding: 10px 14px;
+    font-size: 9px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.12em; color: var(--text-muted);
+    font-family: var(--font-mono);
+    background: rgba(0,0,0,0.25);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex; align-items: center; gap: 6px;
+}
+.home-section-body { padding: 12px 14px; }
+.home-quick-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.03);
+    margin-bottom: 6px;
+    text-decoration: none; color: var(--text);
+}
+.home-quick-btn:hover {
+    background: rgba(255,255,255,0.07);
+    border-color: rgba(212,175,55,0.25);
+    transform: translateX(3px);
+}
+.home-quick-btn-icon { font-size: 18px; width: 28px; text-align: center; flex-shrink: 0; }
+.home-quick-btn-label { font-size: 12px; font-weight: 600; }
+.home-quick-btn-sub   { font-size: 10px; color: var(--text-muted); }
+.home-alert-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    font-size: 11px; color: var(--text-muted);
+}
+.home-alert-row:last-child { border-bottom: none; }
+.home-alert-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.home-streak-bar {
+    display: flex; gap: 4px; margin-top: 8px;
+}
+.home-streak-day {
+    flex: 1; height: 6px; border-radius: 3px;
+    background: rgba(255,255,255,0.08);
+}
+.home-streak-day.done { background: var(--gold); }
+.home-streak-day.today { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,0.4); }
+
