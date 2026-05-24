@@ -447,7 +447,7 @@ function _hqCarSVG(car, cx, cy) {
     const hlRight = `<circle cx="${cx + 5}" cy="${cy + 6}" r="1.5" fill="#fef08a" class="hq-sparkle" />`;
     
     return `
-        <g class="hq-car" data-car-id="${car.id}" title="${CE_Sec.escapeHTML(car.brand)} ${CE_Sec.escapeHTML(car.model)}" onclick="event.stopPropagation(); window.hqShowCarDetails('${car.id}')">
+        <g class="hq-car" data-car-id="${car.id}" title="${CE_Sec.escHtml(car.brand)} ${CE_Sec.escHtml(car.model)}" onclick="event.stopPropagation(); window.hqShowCarDetails('${car.id}')">
             ${baseBox}
             ${cabinBox}
             ${hlLeft}
