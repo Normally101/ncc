@@ -193,19 +193,24 @@ L'ordine in `index.html` definisce le dipendenze. Non spostare script senza veri
 13. auth.js              — core autenticazione: _mmoBootSequence, _onAuthSuccess, bootstrap
 14. quests-data.js       — QUEST_DB array statico (1509 righe), VG const, window.QUEST_DB
 15. quests.js            — logica quest: checkQuestProgress, claimQuestReward, completeMissionRun
-16. engine.js            — CORE: gameLoop, saveGame, loadGame, generazione corse (~3908 righe)
-17. engine-finance.js    — tick mercato + AZIONI PLAYER: buyStocks, takeLoan, shortSell, ecc.
-18. engine-drivers.js    — azioni autisti: hireDriver, sendDriverToRest, startAcademyCourse, ecc.
-19. engine-fleet.js      — azioni flotta: repairVehicle, buyHub, buyStandardFuel, ecc.
-20. engine-store.js      — DC boosters: fuelBoostDC, wakeDriverDC, activateExecutivePass, ecc.
-21. engine-holding.js    — holding, sussidiarie, $CEMP, IPO NPC fallback
-22. engine-rivals.js     — sistema rivali/NPC AI (148 righe)
-23. engine-events.js     — eventi casuali, incidenti, strike, fines (386 righe)
-24. vip-buffs.js         — buff system (_applyBuff, _getBuffValue) + helper VIP privati
-25. vip-clients.js       — 9 handler clienti VIP + _vipOnComplete dispatcher
-26. war_room.js          — province War Room, renderTabWarRoom
-27. dispatcher.js        — switchTab routing, showNotification, togglePanel (~247 righe)
-28. map.js               — Mapbox: var map (GLOBALE), initMap, visual loop, markers (~993 righe)
+16. engine.js            — CORE: gameLoop, saveGame, loadGame, helpers (~1956 righe)
+17. engine-daily.js      — tick giornalieri + processDailyRoutines + _checkDailyReward (~1093 righe)
+18. engine-rides.js      — generazione corse, completeRide, checkActiveTrips (~904 righe)
+19. engine-finance.js    — tick mercato + AZIONI PLAYER: buyStocks, takeLoan, shortSell, ecc.
+20. engine-drivers.js    — azioni autisti: hireDriver, sendDriverToRest, startAcademyCourse, ecc.
+21. engine-fleet.js      — azioni flotta: repairVehicle, buyHub, buyStandardFuel, ecc.
+22. engine-store.js      — DC boosters: fuelBoostDC, wakeDriverDC, activateExecutivePass, ecc.
+23. engine-holding.js    — holding, sussidiarie, $CEMP, IPO NPC fallback
+24. engine-rivals.js     — sistema rivali/NPC AI (148 righe)
+25. engine-events.js     — eventi casuali, incidenti, strike, fines (386 righe)
+26. vip-buffs.js         — buff system (_applyBuff, _getBuffValue) + helper VIP privati
+27. vip-clients.js       — 9 handler clienti VIP + _vipOnComplete dispatcher
+28. war_room.js          — province War Room, renderTabWarRoom
+29. dispatcher.js        — switchTab routing, showNotification, togglePanel (~247 righe)
+30. map.js               — Mapbox: var map (GLOBALE), initMap, layer setup (~461 righe)
+31. map-router.js        — BFS highway router, calculateInterpolatedPosition (~143 righe)
+32. map-garage.js        — openGarage3D, closeGarage3D, _generateVehicleSVG (~227 righe)
+33. map-visual.js        — visualLoop, vehicle markers, trail scia (~170 righe)
 29. ui-emails.js         — renderTabEmails
 30. ui-marketing.js      — renderTabMarketing: Dual Brand, campagne, ROI tracker
 31. ui-finance.js        — renderTabFinance: Bloomberg dashboard, stocks, broker, _flashTicker
@@ -569,17 +574,21 @@ Ogni fix significativo va documentato qui con: **cosa è andato storto → perch
 
 ---
 
-### [2026-05-24] `_checkDailyReward is not defined` in engine.js:3892
+### [2026-05-24] `_checkDailyReward is not defined` in engine.js:3892 → implementata
 
 **Errore:** `ReferenceError: _checkDailyReward is not defined` all'avvio del gioco.
 
-**Causa:** `_startGameWithSlot` in engine.js chiama `setTimeout(_checkDailyReward, 1500)` ma `_checkDailyReward` non è implementata in nessun file.
+**Causa:** `_startGameWithSlot` chiamava `setTimeout(_checkDailyReward, 1500)` ma la funzione non era mai stata implementata.
 
-**Fix:** Wrappato con `typeof`: `if (typeof _checkDailyReward === 'function') setTimeout(_checkDailyReward, 1500);`
+**Fix in due fasi:**
+1. Workaround: wrappato con `typeof` check in `engine.js`
+2. Implementazione completa in `engine-daily.js` — sistema login streak con ricompense progressive:
+   - 20h cooldown (non 24h per tollerare timezone)
+   - Streak reset se > 48h dall'ultima claim
+   - Reward table: Giorno 1 (€500), 3 (€1500+1DC), 7 (€5000+5DC), 14 (€10k+10DC), 30 (€25k+25DC)
+   - Bonus moltiplicatore +10% ogni 7 giorni oltre il 7
 
-**Nota:** La funzione non è ancora implementata. Quando la implementerai, rimuovi il typeof check.
-
-**File:** `engine.js:3892`
+**File:** `engine-daily.js` → `window._checkDailyReward`
 
 ---
 
@@ -625,45 +634,29 @@ I file seguenti sono ancora troppo grandi per lavorarci facilmente in sessioni A
 | `war_room.js` | 494 | OK |
 | `contracts.js` | 496 | OK |
 
-### Split proposto per engine.js (3908 → 4 file)
+### Split engine.js ✅ COMPLETATO (Maggio 2026)
+
+engine.js (3908 → 1956 righe) + 2 nuovi file:
 
 ```
-engine.js (~900 righe) ← mantieni solo:
-  - gameState definition (righe 176–291)
-  - constants e helpers (righe 1–175)
-  - save/load system (righe 402–682)
-  - initGame, gameLoop (righe 819–1177)
-  - updateUI, _startGameWithSlot (righe 3772–3908)
+engine.js          ~1956 righe — gameState, helpers, save/load, initGame,
+                                  gameLoop, updateUI, _startGameWithSlot,
+                                  shadow/territory/business logic, VIP events
 
-engine-rides.js (NUOVO, ~700 righe) ← estrai:
-  - generatePOIRide (riga 2357)
-  - generateContractRide (riga 2471)
-  - _getRideDurationMs (riga 2544)
-  - assignRideToDriver, assignAllRides, autoDispatchRides (righe 2557–2669)
-  - startNextRide (riga 2670)
-  - completeRide (riga 2837)
-  - _findEmptyLegRide (riga 1520)
+engine-daily.js    ~1093 righe — _tickFatigue, _tickWeather, _tickEmails,
+                                  _tickFuelPrice, refillVehicle, processDailyRoutines,
+                                  generateEmailEvent, negotiateEmail,
+                                  _tickDriverSatisfaction, _checkDailyReward (NEW)
 
-engine-daily.js (NUOVO, ~700 righe) ← estrai:
-  - processDailyRoutines (riga 1704)
-  - _tickFatigue (riga 1034)
-  - _tickWeather (riga 1125)
-  - _tickEmails (riga 1196)
-  - _tickFuelPrice (riga 1392)
-  - _tickDriverSatisfaction (riga 3663)
-
-engine-business.js (NUOVO, ~600 righe) ← estrai:
-  - shadow missions (righe 1574–1638)
-  - attackTerritory, respondPoaching (righe 1638–1703)
-  - diamond contracts (righe 3606–3661)
-  - checkActiveTrips (riga 3707)
-  - generateEmailEvent, autoNegotiateEmails, negotiateEmail (righe 3150–3226)
+engine-rides.js    ~904 righe  — _findEmptyLegRide, generatePOIRide,
+                                  generateContractRide, _getRideDurationMs,
+                                  assignRideToDriver, autoDispatchRides,
+                                  startNextRide, completeRide, checkActiveTrips
 ```
 
-**ATTENZIONE:** Queste funzioni si chiamano tra loro. Ogni split richiede di:
-1. Esporre le funzioni interne necessarie su `window.*`
-2. Testare che il gameLoop non si rompa
-3. Verificare che `processDailyRoutines` possa ancora chiamare `generateEmailEvent`, ecc.
+**Pattern di accesso cross-file:** Tutti i file condividono il global scope HTML.
+Le funzioni private (es. `_sendDriverToRest` in engine.js) sono accessibili da engine-daily.js
+e engine-rides.js come bare variables a runtime (non serve window.*). ✓
 
 ### Split proposto per map.js (993 → 3 file)
 
@@ -792,14 +785,19 @@ Se usi classi Tailwind hardcoded in template JS (es. `text-white`, `bg-gray-800`
 
 | File | Cosa contiene | Righe |
 |---|---|---|
-| `engine.js` | `gameLoop()`, `saveGame()`, `loadGame()`, core ride generation | ~3908 |
+| `engine.js` | `gameLoop()`, `saveGame()`, `loadGame()`, helpers, business logic | ~1956 |
+| `engine-daily.js` | `processDailyRoutines()`, tick functions, `_checkDailyReward` | ~1093 |
+| `engine-rides.js` | `generatePOIRide()`, `completeRide()`, `checkActiveTrips()` | ~904 |
 | `engine-finance.js` | tick mercato + buyStocks, takeLoan, shortSell, acquireVentureStake | ~465 |
 | `engine-drivers.js` | hireDriver, sendDriverToRest, startAcademyCourse | ~194 |
 | `engine-fleet.js` | repairVehicle, buyHub, buyStandardFuel, buyPrototypeCar | ~507 |
 | `engine-store.js` | DC boosters, activateExecutivePass, fullBundleDC | ~214 |
 | `engine-holding.js` | incorporateHolding, buyCempShares, _listCompanyIPO_NPC | ~127 |
 | `dispatcher.js` | `switchTab()`, `showNotification()`, `togglePanel()` | ~247 |
-| `map.js` | Mapbox initMap, visualLoop, garage 3D SVG, highway router | ~993 |
+| `map.js` | Mapbox initMap, layer setup, markers | ~461 |
+| `map-router.js` | BFS highway router, calculateInterpolatedPosition | ~143 |
+| `map-garage.js` | openGarage3D, closeGarage3D, _generateVehicleSVG | ~227 |
+| `map-visual.js` | visualLoop, vehicle markers, trail scia | ~170 |
 | `quests-data.js` | 156 quest statiche (data only) | 1509 |
 | `quests.js` | Quest engine (logic only) | 79 |
 | `serverState.js` | Sync Supabase Realtime, ServerState | 609 |
