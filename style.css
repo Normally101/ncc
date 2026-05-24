@@ -3957,11 +3957,22 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
   overflow: hidden;
   text-overflow: ellipsis;
   border-left: 2px solid transparent;
+  position: relative;
+}
+.sidebar-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at var(--rx, 50%) var(--ry, 50%), rgba(212,175,55,0.18) 0%, transparent 70%);
+  opacity: 0;
+  transition: opacity 0.2s ease;
 }
 .sidebar-item:hover {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.04);
   color: rgba(240,244,255,0.85);
 }
+.sidebar-item:hover::before { opacity: 1; }
 .sidebar-item.active {
   background: rgba(212,175,55,0.10);
   color: var(--gold);

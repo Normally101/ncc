@@ -60,14 +60,16 @@ window.renderTabHome = function() {
     const todayEarn = gs.todayEarnings || 0;
     const earnFmt   = _homeCashFmt(todayEarn);
 
-    // yesterday comparison (rough estimate via weeklyEarnings / weeklyRides)
-    const weeklyAvg = gs.weeklyRides > 0 ? (gs.weeklyEarnings / Math.max(gs.weeklyRides, 1)) : 0;
-    const earnDelta = weeklyAvg > 0 ? Math.round(((todayEarn - weeklyAvg) / weeklyAvg) * 100) : null;
-    const earnDeltaHTML = earnDelta !== null
-        ? `<span style="color:${earnDelta>=0?'#4ade80':'#f87171'};font-size:11px">
-               ${earnDelta>=0?'▲':'▼'} ${Math.abs(earnDelta)}% vs media
-           </span>`
-        : `<span style="color:var(--text-dim);font-size:11px">nessun dato precedente</span>`;
+    // yesterday comparison
+    const yesterdayEarn = gs.yesterdayEarnings || 0;
+    let earnDeltaHTML;
+    if (yesterdayEarn > 0) {
+        const delta = Math.round(((todayEarn - yesterdayEarn) / yesterdayEarn) * 100);
+        const sign  = delta >= 0 ? '+' : '';
+        earnDeltaHTML = `<span style="color:${delta>=0?'#4ade80':'#f87171'};font-size:11px">${delta>=0?'▲':'▼'} ${sign}${delta}% vs ieri (${_homeCashFmt(yesterdayEarn)})</span>`;
+    } else {
+        earnDeltaHTML = `<span style="color:var(--text-dim);font-size:11px">nessun dato precedente</span>`;
+    }
 
     const activeRides  = gs.activeRides  || [];
     const pendingRides = gs.pendingRides || [];
@@ -193,13 +195,17 @@ window.renderTabHome = function() {
     }).join('') : `<div style="padding:28px;text-align:center;font-size:12px;color:var(--text-dim)">Nessuna notifica recente</div>`;
 
     // ── Render ────────────────────────────────────────────────────────
+    // Update last-refresh timestamp in header (if already rendered, patch live)
+    const existingTs = c.querySelector('#home-ts');
+    const tsNow = new Date().toLocaleTimeString('it-IT', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+
     c.innerHTML = `
 <div style="height:100%;overflow-y:auto;overflow-x:hidden;padding-bottom:60px;background:var(--bg)">
 
   <!-- Section header -->
   <div style="padding:16px 20px 12px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06)">
     <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.14em;color:var(--text-muted);font-family:'Roboto Mono',monospace">📊 Panoramica Live</span>
-    <span style="font-size:9px;color:var(--text-dim);font-family:'Roboto Mono',monospace">aggiornato ogni tick</span>
+    <span id="home-ts" style="font-size:9px;color:var(--text-dim);font-family:'Roboto Mono',monospace">🔄 ${tsNow}</span>
   </div>
 
   <!-- 4 KPI cards -->
@@ -287,3 +293,15 @@ window.renderTabHome = function() {
 
 </div>`;
 };
+
+// Live auto-refresh — single persistent interval
+if (!window._homeTimer) {
+    window._homeTimer = setInterval(function() {
+        try {
+            const title = document.getElementById('panel-title');
+            if (title && title.innerText.includes('Command Center')) {
+                window.renderTabHome();
+            }
+        } catch(e) {}
+    }, 5000);
+}

@@ -947,6 +947,7 @@ function processDailyRoutines() {
             cash: gameState.cash,
             reputation: gameState.reputation,
         };
+        gameState.yesterdayEarnings = _today; // save before reset
         gameState.todayEarnings = 0; // reset for the new day
     }
 

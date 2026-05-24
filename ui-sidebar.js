@@ -107,6 +107,19 @@ window.toggleSidebar = function(open) {
     }
 };
 
+// ── Mouse-following gold gradient on nav items ────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+    const nav = document.getElementById('sidebar-nav');
+    if (!nav) return;
+    nav.addEventListener('mousemove', function(e) {
+        const item = e.target.closest('.sidebar-item');
+        if (!item) return;
+        const r = item.getBoundingClientRect();
+        item.style.setProperty('--rx', ((e.clientX - r.left) / r.width  * 100) + '%');
+        item.style.setProperty('--ry', ((e.clientY - r.top)  / r.height * 100) + '%');
+    });
+});
+
 // ── Init: open group for current tab + initial stats ─────────────
 window.addEventListener('load', function() {
     window.updateSidebarStats();
