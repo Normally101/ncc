@@ -126,13 +126,13 @@ const _C_RANK = { standard:1, business:2, vip:3, group:3, ultra:4 };
 
 function _cCountQualifying(vehType) {
     const minRank = _C_RANK[_CONTRACT_VEH_TIER[vehType] || 'standard'] || 1;
-    return (window.gameState?.fleet || []).filter(c =>
+    return (gameState?.fleet || []).filter(c =>
         !c.outOfService && (c.condition || 0) > 10 && (_C_RANK[c.tier] || 1) >= minRank
     ).length;
 }
 
 function _cPlayerScore(company, pledgeAmt) {
-    const gs = window.gameState; if (!gs) return 0;
+    const gs = gameState; if (!gs) return 0;
     const req = company.tender_requirements;
     const repPct   = (gs.reputation || 0) / 5.0 * 100;
     const fleetPct = Math.min(100, _cCountQualifying(req.required_vehicle_type) / req.min_fleet_size * 100);
@@ -306,7 +306,7 @@ window.renderTabContracts = function() {
     if (!container) return;
     CE_Contracts.initState();
 
-    const gs        = window.gameState;
+    const gs        = gameState;
     const tenders   = gs.corporateTenders   || [];
     const contracts = gs.corporateContracts || [];
     const history   = gs.tenderHistory      || [];

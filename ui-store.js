@@ -12,62 +12,82 @@ function renderTabPremiumStore() {
     const offLimit = gameState.offlineLimit || 2;
     const autoRest = gameState.autoRestEnabled || false;
 
-    // ── INJECT EXECUTIVE CLUB STYLES ─────────────────────────────────────────
+    // ── INJECT STYLES ────────────────────────────────────────────────────────
     if (!document.getElementById('ec-style')) {
         const st = document.createElement('style');
         st.id = 'ec-style';
         st.textContent = `
-            .ec-card {
-                background: linear-gradient(135deg, rgba(10,10,25,0.95), rgba(20,20,45,0.9));
-                border: 1px solid rgba(212,175,55,0.25);
-                border-radius: 12px; padding: 14px; position: relative;
-                transition: box-shadow .2s, border-color .2s;
+            .ec-tab { padding:8px 20px;font-size:11px;font-weight:700;letter-spacing:.08em;
+                border-bottom:2px solid transparent;color:rgba(240,244,255,0.4);cursor:pointer;
+                transition:color .15s,border-color .15s;user-select:none;text-transform:uppercase; }
+            .ec-tab.active { color:#d4af37;border-bottom-color:#d4af37; }
+            .ec-tab:hover:not(.active) { color:rgba(240,244,255,0.8); }
+
+            .ec-pack-card {
+                border-radius:14px;padding:0;overflow:hidden;position:relative;
+                transition:transform .18s ease,box-shadow .18s ease;cursor:pointer;
+                display:flex;flex-direction:column;
             }
-            .ec-card:hover { border-color: rgba(212,175,55,0.5); box-shadow: 0 0 18px rgba(212,175,55,0.12); }
-            .ec-tab {
-                padding: 7px 18px; font-size: 0.72rem; font-weight: 700; letter-spacing: .08em;
-                border-bottom: 2px solid transparent; color: #6b7280; cursor: pointer;
-                transition: color .15s, border-color .15s; user-select: none;
+            .ec-pack-card:hover { transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,0.5); }
+            .ec-pack-card.featured { grid-column:span 2; }
+
+            .ec-pack-art {
+                display:flex;align-items:center;justify-content:center;flex-direction:column;
+                gap:4px;padding:24px 16px 16px;position:relative;min-height:120px;
             }
-            .ec-tab.active { color: #d4af37; border-bottom-color: #d4af37; }
-            .ec-yield-ribbon {
-                position: absolute; top: -1px; right: 10px;
-                background: linear-gradient(90deg, #c9a227, #f0d060);
-                color: #000; font-size: 7.5px; font-weight: 900; letter-spacing: .05em;
-                padding: 2px 8px 3px; border-radius: 0 0 6px 6px;
+            .ec-pack-body { padding:14px 16px 16px;flex:1;display:flex;flex-direction:column; }
+
+            .ec-badge {
+                position:absolute;top:10px;left:10px;font-size:8px;font-weight:900;
+                padding:3px 9px;border-radius:20px;letter-spacing:.06em;text-transform:uppercase;
             }
-            .ec-section-label {
-                font-size: 0.62rem; font-weight: 700; letter-spacing: .14em;
-                color: rgba(212,175,55,0.65); text-transform: uppercase;
-                border-bottom: 1px solid rgba(212,175,55,0.15);
-                padding-bottom: 5px; margin-bottom: 10px; margin-top: 16px;
+            .ec-badge-popular { background:linear-gradient(90deg,#f97316,#ef4444);color:#fff; }
+            .ec-badge-value   { background:linear-gradient(90deg,#16a34a,#15803d);color:#fff; }
+            .ec-badge-new     { background:linear-gradient(90deg,#6366f1,#8b5cf6);color:#fff; }
+            .ec-badge-limited { background:linear-gradient(90deg,#c9a227,#f0d060);color:#000; }
+
+            .ec-buy-btn {
+                width:100%;padding:11px;border:none;border-radius:8px;font-weight:800;
+                font-size:12px;letter-spacing:.04em;cursor:pointer;
+                transition:all .15s ease;margin-top:auto;
             }
-            .ec-section-label:first-child { margin-top: 0; }
-            .ec-btn {
-                display: inline-flex; align-items: center; justify-content: center;
-                background: linear-gradient(135deg, #c9a227, #d4af37); color: #000;
-                font-weight: 800; font-size: 0.72rem; padding: 7px 12px;
-                border-radius: 6px; border: none; cursor: pointer; transition: all .15s;
+            .ec-buy-btn:hover:not(:disabled) { filter:brightness(1.12);transform:translateY(-1px); }
+            .ec-buy-btn:disabled { opacity:.35;cursor:not-allowed;background:#374151!important;color:#9ca3af!important; }
+
+            .ec-service-card {
+                background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);
+                border-radius:12px;padding:14px 16px;display:flex;align-items:center;
+                gap:14px;transition:background .15s,border-color .15s;
             }
-            .ec-btn:hover:not(:disabled) { background: linear-gradient(135deg, #d4af37, #edd97a); box-shadow: 0 4px 12px rgba(212,175,55,0.3); }
-            .ec-btn:disabled { opacity: 0.35; cursor: not-allowed; background: #374151; color: #9ca3af; }
-            .ec-coin {
-                border-radius: 50%;
-                background: radial-gradient(circle at 35% 35%, #f0d060 0%, #c9a227 55%, #8b6914 100%);
-                display: inline-flex; align-items: center; justify-content: center;
-                font-weight: 900; color: #000; flex-shrink: 0;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.5), inset 0 1px 2px rgba(255,255,255,0.3);
+            .ec-service-card:hover:not(.ec-disabled) { background:rgba(255,255,255,0.06);border-color:rgba(212,175,55,0.2); }
+            .ec-service-card.ec-disabled { opacity:.45; }
+            .ec-service-icon {
+                width:44px;height:44px;border-radius:10px;display:flex;align-items:center;
+                justify-content:center;font-size:20px;flex-shrink:0;
             }
+            .ec-svc-btn {
+                padding:7px 14px;border:none;border-radius:7px;font-weight:800;font-size:11px;
+                cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all .15s;
+                background:linear-gradient(135deg,#c9a227,#d4af37);color:#000;
+            }
+            .ec-svc-btn:hover:not(:disabled) { background:linear-gradient(135deg,#d4af37,#edd97a);box-shadow:0 4px 12px rgba(212,175,55,0.3); }
+            .ec-svc-btn:disabled { opacity:.4;cursor:not-allowed;background:#374151!important;color:#9ca3af!important; }
+            .ec-cat-head {
+                font-size:9px;font-weight:700;letter-spacing:.14em;color:rgba(212,175,55,0.65);
+                text-transform:uppercase;padding-bottom:8px;margin-bottom:10px;margin-top:20px;
+                border-bottom:1px solid rgba(212,175,55,0.15);display:flex;align-items:center;gap:8px;
+            }
+            .ec-cat-head:first-child { margin-top:0; }
         `;
         document.head.appendChild(st);
     }
 
-    const kaskoActive = typeof hasInvestment === 'function' && hasInvestment('inv_kasko');
-    const tempKaskoDay = gameState.tempKaskoExpiresDay || 0;
+    const kaskoActive    = typeof hasInvestment === 'function' && hasInvestment('inv_kasko');
+    const tempKaskoDay   = gameState.tempKaskoExpiresDay || 0;
     const tempKaskoActive = kaskoActive && tempKaskoDay > 0 && gameState.day <= tempKaskoDay;
     const execPassActive = !!(gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay||0));
-    const radarActive = (gameState.activeBuffs||[]).some(b => b.type==='vip_queue' && b.until > gameState.day*24+gameState.hour);
-    const plate = !!gameState.hasPrestigiousPlate;
+    const radarActive    = (gameState.activeBuffs||[]).some(b => b.type==='vip_queue' && b.until > gameState.day*24+gameState.hour);
+    const plate          = !!gameState.hasPrestigiousPlate;
     const restingCount   = (gameState.drivers||[]).filter(d => d.id!=='ceo' && d.status==='resting').length;
     const stressedCount  = (gameState.drivers||[]).filter(d => d.id!=='ceo' && ((d.stress_level||0)>0||d.burnout_until)).length;
     const trainingCount  = (gameState.driverAcademy||[]).length;
@@ -75,138 +95,165 @@ function renderTabPremiumStore() {
     const lowFuel        = (gameState.fleet||[]).filter(c => (c.fuel||0)<100).length;
     const ceoNeedEnergy  = (gameState.energy||0) < 100;
 
-    // ── TAB: ACQUISISCI FONDI ─────────────────────────────────────────────────
+    // ── TAB: PACCHETTI DC ────────────────────────────────────────────────────
     const ecPkgs = [
-        { dc:50,   bonus:null,  price:'€4,99',  label:'Il Fondo Cassa',       sub:'Liquidità operativa immediata' },
-        { dc:220,  bonus:'+10%', price:'€19,99', label:'Portafoglio Corporate', sub:'Executive Yield incluso' },
-        { dc:600,  bonus:'+20%', price:'€49,99', label:'Conto Offshore',        sub:'Rendimento garantito' },
-        { dc:1300, bonus:'+30%', price:'€99,99', label:'Il Fondo Sovrano',      sub:'Rendimento massimizzato' },
+        {
+            dc:50,   price:'€4,99',  label:'Starter Pack',       sub:'Per iniziare con il piede giusto',
+            art:'🪙', artBg:'linear-gradient(160deg,#1a1200,#2d1e00)',
+            border:'rgba(184,134,11,0.35)', btnBg:'linear-gradient(135deg,#b8860b,#d4af37)', btnColor:'#000',
+            badge:null, coins:'🟡',
+        },
+        {
+            dc:220,  price:'€19,99', label:'Corporate Pack',      sub:'+10% Executive Yield incluso',
+            art:'💰', artBg:'linear-gradient(160deg,#0a1525,#102040)',
+            border:'rgba(96,165,250,0.35)', btnBg:'linear-gradient(135deg,#1d4ed8,#3b82f6)', btnColor:'#fff',
+            badge:{cls:'ec-badge-popular',txt:'POPOLARE'}, coins:'🟡🟡',
+        },
+        {
+            dc:600,  price:'€49,99', label:'Offshore Pack',       sub:'+20% Rendimento garantito',
+            art:'💎', artBg:'linear-gradient(160deg,#0c1a0c,#163016)',
+            border:'rgba(34,197,94,0.40)', btnBg:'linear-gradient(135deg,#15803d,#22c55e)', btnColor:'#fff',
+            badge:{cls:'ec-badge-value',txt:'BEST VALUE'}, coins:'🟡🟡🟡',
+        },
+        {
+            dc:1300, price:'€99,99', label:'Il Fondo Sovrano',    sub:'+30% Rendimento massimizzato',
+            art:'👑', artBg:'linear-gradient(160deg,#16080a,#2d0f15)',
+            border:'rgba(212,175,55,0.60)', btnBg:'linear-gradient(135deg,#b8860b,#f0d060,#b8860b)', btnColor:'#000',
+            badge:{cls:'ec-badge-limited',txt:'PREMIUM'}, coins:'🟡🟡🟡🟡', featured:false,
+        },
     ];
 
+    const _packCard = (p) => `
+<div class="ec-pack-card${p.featured?' featured':''}" style="border:1px solid ${p.border};background:#0a0c14">
+  ${p.badge ? `<div class="ec-badge ${p.badge.cls}">${p.badge.txt}</div>` : ''}
+  <div class="ec-pack-art" style="background:${p.artBg}">
+    <div style="font-size:44px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6))">${p.art}</div>
+    <div style="font-size:11px;letter-spacing:.06em;color:rgba(255,255,255,0.4)">${p.coins}</div>
+  </div>
+  <div class="ec-pack-body">
+    <div style="margin-bottom:6px">
+      <div style="display:flex;align-items:baseline;gap:5px">
+        <span style="font-size:32px;font-weight:900;color:#d4af37;font-family:'Roboto Mono',monospace;line-height:1">${p.dc}</span>
+        <span style="font-size:13px;font-weight:700;color:rgba(212,175,55,0.7)">DC</span>
+      </div>
+      <div style="font-size:12px;font-weight:700;color:var(--text);margin-top:4px">${p.label}</div>
+      <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${p.sub}</div>
+    </div>
+    <button class="ec-buy-btn" style="background:${p.btnBg};color:${p.btnColor}"
+      onclick="window._dcSimPurchase(${p.dc})">
+      Acquista · ${p.price}
+    </button>
+  </div>
+</div>`;
+
     const _acqHtml = `
-        <div style="font-size:0.68rem;color:rgba(212,175,55,0.5);text-align:center;margin-bottom:16px;letter-spacing:.03em;">
-            Pacchetti simulati (demo) — I Driver Coins si accumulano con missioni Presidential e trasferimenti VIP.
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-        ${ecPkgs.map(p => `
-            <div class="ec-card" style="${p.bonus==='+30%'?'border-color:rgba(212,175,55,0.6);background:linear-gradient(135deg,rgba(15,12,30,0.98),rgba(30,22,60,0.96));':''}">
-                ${p.bonus ? `<div class="ec-yield-ribbon">Executive Yield ${p.bonus}</div>` : ''}
-                <div style="padding-top:${p.bonus?'12px':'0'};">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                        <div class="ec-coin" style="width:24px;height:24px;font-size:8px;">CE</div>
-                        <span style="font-size:1.4rem;font-weight:900;color:#d4af37;line-height:1;">${p.dc}</span>
-                        <span style="font-size:0.62rem;color:#9ca3af;margin-top:6px;">DC</span>
-                    </div>
-                    <div style="font-size:0.78rem;font-weight:700;color:#fff;line-height:1.2;margin-bottom:2px;">${p.label}</div>
-                    <div style="font-size:0.62rem;color:rgba(212,175,55,0.55);margin-bottom:10px;">${p.sub}</div>
-                    <div style="font-size:1.05rem;font-weight:900;color:#d4af37;margin-bottom:10px;">${p.price}</div>
-                    <button class="ec-btn" style="width:100%;" onclick="window._dcSimPurchase(${p.dc})">Acquisisci</button>
-                </div>
-            </div>`).join('')}
-        </div>
-    `;
+<div style="font-size:10px;color:rgba(212,175,55,0.45);text-align:center;margin-bottom:16px">
+  Acquisti simulati (demo) — i Driver Coins si accumulano anche completando missioni Presidential e trasferimenti VIP
+</div>
+<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+  ${ecPkgs.map(_packCard).join('')}
+</div>
+<div style="margin-top:20px;padding:14px 16px;background:rgba(212,175,55,0.06);border:1px solid rgba(212,175,55,0.15);border-radius:10px;display:flex;align-items:center;gap:14px">
+  <span style="font-size:24px">ℹ️</span>
+  <div style="font-size:11px;color:var(--text-muted);line-height:1.5">
+    <strong style="color:var(--gold)">Driver Coins (DC)</strong> sono la valuta premium di Chauffeur Empire.
+    Usali nella scheda <em>Servizi Esclusivi</em> per accelerare operazioni, sbloccare bonus e attivare pass speciali.
+    Non scadono mai.
+  </div>
+</div>`;
 
     // ── TAB: SERVIZI ESCLUSIVI ────────────────────────────────────────────────
-    const _itemRow = (it) => `
-        <div class="ec-card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px;${it.disabled?'opacity:0.4;':''}">
-            <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
-                <span style="font-size:1.25rem;flex-shrink:0;">${it.icon}</span>
-                <div style="min-width:0;">
-                    <div style="font-size:0.77rem;font-weight:700;color:#fff;line-height:1.2;">${it.label}</div>
-                    <div style="font-size:0.62rem;color:#9ca3af;line-height:1.3;">${it.sub}</div>
-                </div>
-            </div>
-            <button class="ec-btn" style="width:auto;padding:6px 12px;white-space:nowrap;flex-shrink:0;"
-                onclick="${it.disabled?'':it.fn}" ${it.disabled?'disabled':''}>
-                ${it.disabled ? it.disabledLabel : `${it.cost} DC`}
-            </button>
-        </div>`;
+    const _svcCard = (it) => `
+<div class="ec-service-card${it.disabled?' ec-disabled':''}">
+  <div class="ec-service-icon" style="background:${it.iconBg||'rgba(255,255,255,0.06)'}">
+    ${it.icon}
+  </div>
+  <div style="flex:1;min-width:0">
+    <div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.2">${it.label}</div>
+    <div style="font-size:10px;color:var(--text-muted);margin-top:2px;line-height:1.3">${it.sub}</div>
+  </div>
+  <button class="ec-svc-btn" onclick="${it.disabled?'':it.fn}" ${it.disabled?'disabled':''}>
+    ${it.disabled ? `<span style="font-size:9px">${it.disabledLabel}</span>` : `<span style="font-size:9px;opacity:.7">DC</span> ${it.cost}`}
+  </button>
+</div>`;
 
     const opItems = [
-        { label:'Caffè Sospeso',        sub:'Azzera lo stress del driver più esausto',          cost:10,  icon:'☕',  fn:'window._ecCaffeSospeso()',        disabled:stressedCount===0,     disabledLabel:'Staff in forma' },
-        { label:'Manutenzione Express', sub:'Ripara il veicolo più danneggiato al 100%',        cost:25,  icon:'🔧', fn:'window._ecManutenzioneExpress()',  disabled:(gameState.fleet||[]).every(c=>(c.condition||100)>=100), disabledLabel:'Flotta perfetta' },
-        { label:'Tangente al Sindacato',sub:'Blocca scioperi per 1 giorno di gioco',            cost:50,  icon:'🤝', fn:'window._ecTangenteSindacato()',    disabled:(gameState.tangenteUntil||0)>gameState.day, disabledLabel:'Già protetto' },
-        { label:'Rifornimento Flotta',  sub:`${lowFuel} veicoli sotto al 100% di carburante`,  cost:3,   icon:'⛽',  fn:'fuelBoostDC()',                    disabled:lowFuel===0,           disabledLabel:'Flotta piena' },
-        { label:'Ricarica Energia CEO', sub:'Recupero immediato al 100%',                       cost:4,   icon:'⚡',  fn:'energyBoostDC()',                  disabled:!ceoNeedEnergy,        disabledLabel:'Già al 100%' },
-        { label:'Sveglia Flotta',       sub:`${restingCount} autisti in pausa forzata`,         cost:Math.max(3,restingCount*2), icon:'⏰', fn:'wakeAllDriversDC()', disabled:restingCount===0, disabledLabel:'Nessuno a riposo' },
-        { label:'Benessere Staff',      sub:`${stressedCount} autisti con stress o burnout`,    cost:Math.max(4,stressedCount*2), icon:'💊', fn:'healAllDriversDC()', disabled:stressedCount===0, disabledLabel:'Staff in forma' },
-        { label:'Completamento Corsi',  sub:`${trainingCount} corsi in accademia attivi`,       cost:Math.max(1,trainingCount*5), icon:'🎓', fn:'skipAllAcademyDC()', disabled:trainingCount===0, disabledLabel:'Nessun corso' },
-        { label:'Costruzioni Lampo',    sub:`${constructions.length} cantieri in corso`,        cost:Math.max(1,constructions.length*8), icon:'🏗️', fn:'skipAllConstructionsDC()', disabled:constructions.length===0, disabledLabel:'Nessuna costruzione' },
-        { label:'Pacchetto Operativo',  sub:'Carburante + Energia CEO + Sveglia autisti',       cost:9,   icon:'🚀', fn:'opsBundleDC()',  disabled:lowFuel===0&&!ceoNeedEnergy&&restingCount===0, disabledLabel:'Tutto OK' },
-        { label:'Pacchetto Imperiale',  sub:'Tutto in uno: flotta, staff, corsi, edifici',      cost:35,  icon:'👑', fn:'fullBundleDC()', disabled:false,  disabledLabel:'' },
-        { label:'Limite Offline +2h',   sub:`Progressione offline attuale: ${offLimit}h (max 12h)`, cost:20, icon:'🕐', fn:"window._dcSpend('offline_limit',20)", disabled:offLimit>=12, disabledLabel:'Massimo raggiunto' },
-        { label:'Auto-Rest CEO',        sub:'Recupero energetico automatico durante offline',   cost:30,  icon:'🛌', fn:"window._dcSpend('auto_rest',30)", disabled:autoRest, disabledLabel:'Già attivo' },
+        { label:'Rifornimento Flotta',  sub:`${lowFuel} veicoli con carburante < 100%`,     cost:3,   icon:'⛽', iconBg:'rgba(249,115,22,0.15)', fn:'fuelBoostDC()',                    disabled:lowFuel===0,            disabledLabel:'Flotta piena' },
+        { label:'Ricarica Energia CEO', sub:'Recupero immediato al 100%',                    cost:4,   icon:'⚡', iconBg:'rgba(250,204,21,0.15)',  fn:'energyBoostDC()',                  disabled:!ceoNeedEnergy,         disabledLabel:'Energia al 100%' },
+        { label:'Sveglia Flotta',       sub:`${restingCount} autisti in pausa forzata`,      cost:Math.max(3,restingCount*2), icon:'⏰', iconBg:'rgba(96,165,250,0.15)', fn:'wakeAllDriversDC()', disabled:restingCount===0, disabledLabel:'Nessuno a riposo' },
+        { label:'Caffè Sospeso',        sub:'Azzera lo stress del driver più esausto',       cost:10,  icon:'☕', iconBg:'rgba(180,120,60,0.20)',  fn:'window._ecCaffeSospeso()',         disabled:stressedCount===0,      disabledLabel:'Staff in forma' },
+        { label:'Benessere Staff',      sub:`${stressedCount} autisti con stress o burnout`, cost:Math.max(4,stressedCount*2), icon:'💊', iconBg:'rgba(34,197,94,0.15)', fn:'healAllDriversDC()', disabled:stressedCount===0, disabledLabel:'Staff in forma' },
+        { label:'Manutenzione Express', sub:'Ripara il veicolo più danneggiato al 100%',     cost:25,  icon:'🔧', iconBg:'rgba(148,163,184,0.12)', fn:'window._ecManutenzioneExpress()',  disabled:(gameState.fleet||[]).every(c=>(c.condition||100)>=100), disabledLabel:'Flotta perfetta' },
+        { label:'Completamento Corsi',  sub:`${trainingCount} corsi in accademia attivi`,    cost:Math.max(1,trainingCount*5), icon:'🎓', iconBg:'rgba(139,92,246,0.15)', fn:'skipAllAcademyDC()', disabled:trainingCount===0, disabledLabel:'Nessun corso' },
+        { label:'Costruzioni Lampo',    sub:`${constructions.length} cantieri in corso`,     cost:Math.max(1,constructions.length*8), icon:'🏗️', iconBg:'rgba(251,191,36,0.12)', fn:'skipAllConstructionsDC()', disabled:constructions.length===0, disabledLabel:'Nessuna costruzione' },
+        { label:'Tangente al Sindacato',sub:'Blocca scioperi per 1 giorno di gioco',         cost:50,  icon:'🤝', iconBg:'rgba(244,63,94,0.12)',   fn:'window._ecTangenteSindacato()',    disabled:(gameState.tangenteUntil||0)>gameState.day, disabledLabel:'Già protetto' },
+        { label:'Limite Offline +2h',   sub:`Progressione offline attuale: ${offLimit}h / max 12h`, cost:20, icon:'🕐', iconBg:'rgba(99,102,241,0.15)', fn:"window._dcSpend('offline_limit',20)", disabled:offLimit>=12, disabledLabel:'Massimo raggiunto' },
+        { label:'Auto-Rest CEO',        sub:'Recupero energetico automatico durante offline', cost:30,  icon:'🛌', iconBg:'rgba(6,182,212,0.12)',   fn:"window._dcSpend('auto_rest',30)", disabled:autoRest, disabledLabel:'Già attivo' },
+    ];
+
+    const bundleItems = [
+        { label:'Pacchetto Operativo',  sub:'Carburante + Energia CEO + Sveglia autisti',     cost:9,   icon:'🚀', iconBg:'rgba(34,197,94,0.18)',   fn:'opsBundleDC()',  disabled:lowFuel===0&&!ceoNeedEnergy&&restingCount===0, disabledLabel:'Tutto OK' },
+        { label:'Pacchetto Imperiale',  sub:'Tutto in uno: flotta, staff, corsi, edifici',    cost:35,  icon:'👑', iconBg:'rgba(212,175,55,0.18)',   fn:'fullBundleDC()', disabled:false, disabledLabel:'' },
     ];
 
     const assicItems = [
-        {
-            label:'Polizza Kasko Corporate',
-            sub: kaskoActive && !tempKaskoActive ? 'Polizza permanente attiva — copertura illimitata'
-                : tempKaskoActive ? `Attiva fino al giorno ${tempKaskoDay} (${tempKaskoDay - gameState.day} gg rimasti)`
-                : 'Copertura incidenti per 7 giorni di gioco',
-            cost:150, icon:'🛡️', fn:'window._ecPolizzaKasko()',
-            disabled: kaskoActive && !tempKaskoActive, disabledLabel:'Polizza attiva'
-        },
-        {
-            label:'Executive Pass',
-            sub: execPassActive ? `Attivo — ${(gameState.executivePassExpiresDay||0)-gameState.day} giorni rimasti`
-                : '+25% slot corse · −50% stress · Insta-Repair 1DC · VIP extra',
-            cost:150, icon:'💎', fn:'activateExecutivePass()',
-            disabled:execPassActive, disabledLabel:'Già attivo'
-        },
-    ];
-
-    const presItems = [
-        {
-            label:'Radar VIP',
-            sub: radarActive ? 'Attivo — accesso prioritario corse VIP potenziato'
-                : 'Priority queue +100% per 72 ore di gioco',
-            cost:200, icon:'📡', fn:'window._ecRadarVip()',
-            disabled:radarActive, disabledLabel:'Già attivo'
-        },
-        {
-            label:'Targa Nera Presidenziale',
-            sub: plate ? 'Targa applicata — prestigio massimo sbloccato'
-                : 'Cosmetico permanente. Sblocca clienti esclusivi e reputazione extra.',
-            cost:500, icon:'🏴', fn:'window._ecTargaPresidenziale()',
-            disabled:plate, disabledLabel:'Già posseduta'
-        },
+        { label:'Polizza Kasko Corporate', icon:'🛡️', iconBg:'rgba(59,130,246,0.15)', cost:150, fn:'window._ecPolizzaKasko()',
+          sub: tempKaskoActive ? `Attiva fino al giorno ${tempKaskoDay} (${tempKaskoDay-gameState.day} gg rimasti)` : kaskoActive&&!tempKaskoActive ? 'Polizza permanente attiva' : 'Copertura incidenti per 7 giorni di gioco',
+          disabled:kaskoActive&&!tempKaskoActive, disabledLabel:'Attiva' },
+        { label:'Executive Pass', icon:'💎', iconBg:'rgba(212,175,55,0.15)', cost:150, fn:'activateExecutivePass()',
+          sub: execPassActive ? `Attivo — ${(gameState.executivePassExpiresDay||0)-gameState.day} giorni rimasti` : '+25% slot corse · −50% stress · Insta-Repair 1DC · corse VIP extra',
+          disabled:execPassActive, disabledLabel:'Attivo' },
+        { label:'Radar VIP', icon:'📡', iconBg:'rgba(167,139,250,0.15)', cost:200, fn:'window._ecRadarVip()',
+          sub: radarActive ? 'Attivo — corse VIP in priorità assoluta' : 'Priority queue +100% per 72 ore di gioco',
+          disabled:radarActive, disabledLabel:'Attivo' },
+        { label:'Targa Nera Presidenziale', icon:'🏴', iconBg:'rgba(0,0,0,0.4)', cost:500, fn:'window._ecTargaPresidenziale()',
+          sub: plate ? 'Già applicata — prestigio massimo' : 'Cosmetico permanente · sblocca clienti esclusivi e rep extra',
+          disabled:plate, disabledLabel:'Posseduta' },
     ];
 
     const _serviziHtml = `
-        <div class="ec-section-label">Operatività & Flotta</div>
-        ${opItems.map(_itemRow).join('')}
-        <div class="ec-section-label">Assicurazioni & Licenze</div>
-        ${assicItems.map(_itemRow).join('')}
-        <div class="ec-section-label">Prestigio</div>
-        ${presItems.map(_itemRow).join('')}
-    `;
+<div class="ec-cat-head">⚡ Operatività & Flotta</div>
+<div style="display:flex;flex-direction:column;gap:6px">${opItems.map(_svcCard).join('')}</div>
+<div class="ec-cat-head">📦 Bundle</div>
+<div style="display:flex;flex-direction:column;gap:6px">${bundleItems.map(_svcCard).join('')}</div>
+<div class="ec-cat-head">🏅 Abbonamenti & Licenze</div>
+<div style="display:flex;flex-direction:column;gap:6px">${assicItems.map(_svcCard).join('')}</div>`;
 
     // ── RENDER ────────────────────────────────────────────────────────────────
     container.innerHTML = `
-        <div style="background:linear-gradient(135deg,rgba(5,5,15,0.98),rgba(15,12,35,0.98));border:1px solid rgba(212,175,55,0.3);border-radius:14px;padding:16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
-            <div>
-                <div style="font-size:0.58rem;letter-spacing:.2em;color:rgba(212,175,55,0.55);text-transform:uppercase;font-weight:700;">Chauffeur Empire</div>
-                <div style="font-size:1.05rem;font-weight:900;color:#d4af37;letter-spacing:.04em;font-family:serif;">Executive Club</div>
-                <div style="font-size:0.6rem;color:#4b5563;margin-top:2px;">Private Banking · Black Card Services</div>
-            </div>
-            <div style="text-align:right;">
-                <div style="font-size:0.58rem;letter-spacing:.1em;color:rgba(212,175,55,0.45);text-transform:uppercase;">Saldo</div>
-                <div style="display:flex;align-items:center;gap:5px;justify-content:flex-end;margin-top:3px;">
-                    <div class="ec-coin" style="width:20px;height:20px;font-size:7px;">CE</div>
-                    <span style="font-size:1.15rem;font-weight:900;color:#d4af37;font-family:monospace;">${dc.toLocaleString()}</span>
-                    <span style="font-size:0.62rem;color:#6b7280;">DC</span>
-                </div>
-            </div>
-        </div>
+<div style="background:var(--bg);min-height:100%;padding-bottom:60px">
 
-        <div style="display:flex;border-bottom:1px solid rgba(212,175,55,0.15);margin-bottom:16px;">
-            <div class="ec-tab ${_ecActiveTab==='acquire'?'active':''}" onclick="window._ecSwitchTab('acquire')">Acquisisci Fondi</div>
-            <div class="ec-tab ${_ecActiveTab==='services'?'active':''}" onclick="window._ecSwitchTab('services')">Servizi Esclusivi</div>
+  <!-- Hero banner -->
+  <div style="background:linear-gradient(135deg,rgba(12,8,25,0.98) 0%,rgba(25,15,50,0.98) 50%,rgba(12,8,25,0.98) 100%);border-bottom:1px solid rgba(212,175,55,0.20);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div>
+      <div style="font-size:9px;letter-spacing:.22em;color:rgba(212,175,55,0.55);text-transform:uppercase;font-weight:700;margin-bottom:4px">Chauffeur Empire</div>
+      <div style="font-size:22px;font-weight:900;color:#d4af37;letter-spacing:.04em;font-family:var(--font-display)">Executive Club</div>
+      <div style="font-size:11px;color:rgba(240,244,255,0.35);margin-top:3px">Driver Coins · Servizi Esclusivi · Potenziamenti Flotta</div>
+    </div>
+    <div style="text-align:right;flex-shrink:0">
+      <div style="font-size:8px;letter-spacing:.1em;color:rgba(212,175,55,0.4);text-transform:uppercase;margin-bottom:6px">Il tuo saldo</div>
+      <div style="display:flex;align-items:center;gap:8px;justify-content:flex-end">
+        <div style="width:32px;height:32px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f0d060,#c9a227 55%,#8b6914);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:#000;box-shadow:0 2px 8px rgba(212,175,55,0.4)">DC</div>
+        <div>
+          <span style="font-size:28px;font-weight:900;color:#d4af37;font-family:'Roboto Mono',monospace">${dc.toLocaleString()}</span>
+          <span style="font-size:12px;color:rgba(212,175,55,0.5);margin-left:4px">DC</span>
         </div>
+      </div>
+    </div>
+  </div>
 
-        ${_ecActiveTab === 'acquire' ? _acqHtml : _serviziHtml}
-    `;
+  <!-- Tabs -->
+  <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);background:rgba(0,0,0,0.20);padding:0 16px">
+    <div class="ec-tab ${_ecActiveTab==='acquire'?'active':''}" onclick="window._ecSwitchTab('acquire')">💳 Acquista DC</div>
+    <div class="ec-tab ${_ecActiveTab==='services'?'active':''}" onclick="window._ecSwitchTab('services')">⚡ Servizi Esclusivi</div>
+  </div>
+
+  <!-- Content -->
+  <div style="padding:20px 16px">
+    ${_ecActiveTab === 'acquire' ? _acqHtml : _serviziHtml}
+  </div>
+
+</div>`;
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
