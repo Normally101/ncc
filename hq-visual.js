@@ -1,93 +1,8 @@
 'use strict';
 /* ================================================================
    hq-visual.js — Chauffeur Empire
-   Visual Isometric Campus (SVG + Vanilla JS) — v3 Tiers & Multi-City
+   Visual Campus — v4: Fixed Backgrounds (Ikariam Style)
    ================================================================ */
-
-// ── ISOMETRIC CONFIGURATION ──────────────────────────────────────────────────
-const ISO_TILE_W   = 72;
-const ISO_TILE_H   = 36;
-const ISO_ORIGIN_X = 460;
-const ISO_ORIGIN_Y = 130;
-
-function _isoToScreen(col, row) {
-    return {
-        x: ISO_ORIGIN_X + (col - row) * ISO_TILE_W / 2,
-        y: ISO_ORIGIN_Y + (col + row) * ISO_TILE_H / 2
-    };
-}
-
-// ── ROOM SIZE UTILITY ─────────────────────────────────────────────────────────
-function _getRoomGridSize(roomId) {
-    if (roomId === 'penthouse') return 3;
-    if (roomId === 'garage_main') return 2;
-    if (roomId === 'helipad' || roomId === 'ev_parking' || roomId === 'water_dock') return 1.5;
-    return 1;
-}
-
-// ── SVG DEFS (filters, patterns) ─────────────────────────────────────────────
-const SVG_DEFS = `
-<defs>
-  <radialGradient id="groundGrad" cx="50%" cy="50%" r="60%">
-    <stop offset="0%" stop-color="#1c2a22"/>
-    <stop offset="100%" stop-color="#0d1510"/>
-  </radialGradient>
-  <pattern id="gridPat" width="36" height="18" patternUnits="userSpaceOnUse" patternTransform="skewX(-26.57) scale(1)">
-    <rect width="36" height="18" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="0.5"/>
-  </pattern>
-</defs>`;
-
-// ── EMPTY SLOT ───────────────────────────────────────────────────────────────
-function _emptySlot(cx, cy, roomId, state) {
-    const room  = window.HQ_ROOMS ? window.HQ_ROOMS.find(r => r.id === roomId) : null;
-    const name  = room ? room.name : roomId;
-    const scale = _getRoomGridSize(roomId);
-    const hW    = (ISO_TILE_W / 2) * scale;
-    const hH    = (ISO_TILE_H / 2) * scale;
-    const pts   = `${cx},${cy - hH} ${cx + hW},${cy} ${cx},${cy + hH} ${cx - hW},${cy}`;
-
-    if (state === 'available') {
-        return `<g class="hq-slot-available hq-slot-pulse" onclick="window.hqOpenBuildModal('${roomId}')" style="cursor:pointer">
-            <polygon points="${pts}" fill="rgba(212,175,55,0.07)" stroke="rgba(212,175,55,0.6)" stroke-dasharray="5,4" stroke-width="1.5"/>
-            <text x="${cx}" y="${cy + 4}" fill="#d4af37" font-size="14" font-family="sans-serif" text-anchor="middle" font-weight="bold">+</text>
-            <text x="${cx}" y="${cy + 16}" fill="rgba(212,175,55,0.8)" font-size="7.5" font-family="'Montserrat',sans-serif" text-anchor="middle">${name}</text>
-        </g>`;
-    }
-    return `<g class="hq-building-locked" style="cursor:pointer">
-        <polygon points="${pts}" fill="rgba(255,255,255,0.015)" stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,4" stroke-width="1"/>
-        <text x="${cx}" y="${cy + 5}" fill="#334155" font-size="11" font-family="sans-serif" text-anchor="middle">🔒</text>
-    </g>`;
-}
-
-// ═══════════════════════════════════════════════════════════════════════════════
-//  BUILDING RENDERER (Dynamic Sprite)
-// ═══════════════════════════════════════════════════════════════════════════════
-
-function _bld_sprite(cx, cy, roomId, level) {
-    const scale = _getRoomGridSize(roomId);
-    const width = 120 * scale; 
-    const hw = width / 2;
-    const yOffset = width * 0.8; 
-    
-    // Fallback block if image doesn't load
-    const fW = (ISO_TILE_W / 2) * scale;
-    const fH = (ISO_TILE_H / 2) * scale;
-    const fallbackPts = `${cx},${cy - fH} ${cx + fW},${cy} ${cx},${cy + fH} ${cx - fW},${cy}`;
-    const fallback = `
-        <polygon points="${fallbackPts}" fill="rgba(100,100,100,0.2)" stroke="#555" stroke-width="1"/>
-        <text x="${cx}" y="${cy}" fill="#888" font-size="10" text-anchor="middle">${roomId} Lvl${level}</text>
-    `;
-
-    // Attempt to load the tier image (e.g. assets/buildings/garage_main_lvl1.png)
-    // Se il giocatore non ha ancora l'immagine per questo livello, il browser non mostrerà nulla (o un broken link se non è inline SVG),
-    // e si vedrà il fallback sottostante.
-    return `<g class="hq-building" id="bld-${roomId}" onclick="window.hqShowInfoPanel('${roomId}')">
-        ${fallback}
-        <image href="assets/buildings/${roomId}_lvl${level}.png" x="${cx - hw}" y="${cy - yOffset}" width="${width}" height="${width}" preserveAspectRatio="xMidYMax meet" style="pointer-events: none;" />
-    </g>`;
-}
-
-// ── MAIN RENDER LOOP ──────────────────────────────────────────────────────────
 
 window.renderHQCampus = function() {
     const placeholder = document.getElementById('hq-visual-placeholder');
@@ -95,98 +10,135 @@ window.renderHQCampus = function() {
 
     if (!gameState.hqs) return;
     const currentCityId = gameState.currentHQCity || 'roma';
+    
+    const cityConfig = window.HQ_CITIES.find(c => c.id === currentCityId);
+    if (!cityConfig) return;
+
     const cityData = gameState.hqs[currentCityId];
     if (!cityData) return;
 
     const builtRooms = cityData.rooms || {};
     const grid = cityData.grid || {};
 
-    let html = `<svg width="100%" height="400" viewBox="0 0 920 400" preserveAspectRatio="xMidYMid meet" 
-                     style="background: #0f1519; border-radius:12px; overflow:visible;">`;
-    
-    html += SVG_DEFS;
+    // Sfondo cittadino (se manca mostriamo un fallback gradiente scuro)
+    const bgUrl = \`assets/cities/bg_\${currentCityId}.jpg\`;
 
-    // 1. Draw Ground Base
-    html += _hqGroundGrid();
-
-    // 2. Draw slots (empty or built)
-    // First draw all empty grid slots
-    for (let slot = 0; slot < HQ_GRID_SIZE; slot++) {
-        const row = Math.floor(slot / HQ_GRID_COLS);
-        const col = slot % HQ_GRID_COLS;
-        const pos = _isoToScreen(col * 1.5, row * 1.5); // Spread them out
+    let html = \`
+    <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-gray-900" 
+         style="background-image: url('\${bgUrl}'); background-size: cover; background-position: center;">
         
-        if (!grid[slot]) {
-            // Draw generic empty grid slot
-            const pts = `${pos.x},${pos.y - ISO_TILE_H/2} ${pos.x + ISO_TILE_W/2},${pos.y} ${pos.x},${pos.y + ISO_TILE_H/2} ${pos.x - ISO_TILE_W/2},${pos.y}`;
-            html += `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;
-        }
-    }
+        <!-- Fallback layer se l'immagine manca -->
+        <div class="absolute inset-0 bg-gradient-to-b from-[#1a1c29]/80 to-[#0a0d14]/95 -z-10"></div>
+    \`;
 
-    // 3. Collect built objects and sort them by Y coordinate (Painter's Algorithm)
-    const objectsToDraw = [];
-    
-    for (const [slot, roomId] of Object.entries(grid)) {
-        const s = parseInt(slot, 10);
-        const row = Math.floor(s / HQ_GRID_COLS);
-        const col = s % HQ_GRID_COLS;
-        const pos = _isoToScreen(col * 1.5, row * 1.5);
-        const level = builtRooms[roomId] || 1;
-        
-        objectsToDraw.push({
-            roomId: roomId,
-            level: level,
-            x: pos.x,
-            y: pos.y,
-            svg: _bld_sprite(pos.x, pos.y, roomId, level)
+    // Scorriamo i lotti di terra definiti in hq-data.js
+    if (cityConfig.slots) {
+        cityConfig.slots.forEach(slotDef => {
+            const slotId = slotDef.id;
+            const isOccupied = !!grid[slotId];
+            
+            if (isOccupied) {
+                // Disegna edificio
+                const roomId = grid[slotId];
+                const level = builtRooms[roomId] || 1;
+                const roomDef = window.HQ_ROOMS.find(r => r.id === roomId);
+                const roomName = roomDef ? roomDef.name : roomId;
+                
+                // L'immagine dell'edificio ha la base nel punto esatto del left/top. 
+                // Usiamo transform: translate(-50%, -100%) in modo che le coordinate left/top 
+                // si riferiscano al "suolo" al centro dell'edificio.
+                html += \`
+                <div class="absolute group cursor-pointer hover:scale-105 transition-transform"
+                     style="left: \${slotDef.left}; top: \${slotDef.top}; transform: translate(-50%, -100%);"
+                     onclick="window.hqShowInfoPanel('\${roomId}')">
+                     
+                     <!-- Placeholder se l'immagine manca -->
+                     <div class="w-32 h-32 border-2 border-dashed border-gold/40 bg-black/40 rounded flex flex-col items-center justify-center text-center p-2 absolute bottom-0 left-1/2 -translate-x-1/2">
+                         <span class="text-[10px] text-gray-400">Immagine mancante</span>
+                         <span class="text-xs text-gold font-bold mt-1">\${roomName} Lvl\${level}</span>
+                     </div>
+                     
+                     <img src="assets/buildings/\${roomId}_lvl\${level}.png" 
+                          alt="\${roomName}" 
+                          class="relative z-10 drop-shadow-2xl" 
+                          style="max-height: 200px; width: auto;"
+                          onerror="this.style.display='none'">
+                          
+                     <!-- Label Livello -->
+                     <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 border border-gold/30 text-gold text-[9px] font-mono px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+                        \${roomDef?.icon || ''} \${roomName} Lvl \${level}
+                     </div>
+                </div>\`;
+            } else {
+                // Disegna slot libero
+                html += \`
+                <div class="absolute cursor-pointer hq-slot-pulse"
+                     style="left: \${slotDef.left}; top: \${slotDef.top}; transform: translate(-50%, -50%);"
+                     onclick="window.hqOpenBuildModal('\${currentCityId}', \${slotId})">
+                     <div class="w-16 h-8 rounded-full border-2 border-dashed border-gold/40 bg-gold/5 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:bg-gold/20 hover:border-gold/80 transition-all">
+                        <span class="text-gold font-bold text-lg">+</span>
+                     </div>
+                     <div class="text-center mt-1 text-[9px] text-gold/80 bg-black/50 px-1 rounded whitespace-nowrap">Lotto Libero</div>
+                </div>\`;
+            }
         });
     }
 
-    // Sort ascending by Y to draw back-to-front
-    objectsToDraw.sort((a, b) => a.y - b.y);
-
-    for (const obj of objectsToDraw) {
-        html += obj.svg;
-    }
-
-    html += `</svg>`;
+    html += \`</div>\`;
     placeholder.innerHTML = html;
 };
 
-// ── GROUND GENERATION ─────────────────────────────────────────────────────────
-
-function _hqGroundGrid() {
-    // Generate a large isometric rhombus for the campus ground
-    const cols = 9;
-    const rows = 6;
+// Modifica la vecchia funzione che non accettava cityId e slotIndex assieme
+window.hqOpenBuildModal = function(cityId, slotIndex) {
+    const builtRooms = gameState.hqs[cityId].rooms || {};
     
-    const top    = _isoToScreen(0, 0);
-    const right  = _isoToScreen(cols, 0);
-    const bottom = _isoToScreen(cols, rows);
-    const left   = _isoToScreen(0, rows);
+    // Trova le stanze che l'utente PUO' costruire a livello 1 in questo slot
+    const unlockedRooms = window.HQ_ROOMS.filter(r => {
+        // Se l'ha già costruita (livello > 0) in QUESTA città, non può rimetterla da zero.
+        if (builtRooms[r.id] && builtRooms[r.id] > 0) return false;
+        
+        // Verifica città
+        if (r.citySpecific && !r.citySpecific.includes(cityId)) return false;
+        
+        // Verifica prerequisiti
+        const hasPrereqs = r.prereqs.every(p => builtRooms[p] && builtRooms[p] > 0);
+        return hasPrereqs;
+    });
 
-    // Apply offset because origin is inside
-    const ox = -ISO_TILE_W;
-    const oy = -ISO_TILE_H;
+    const existing = document.getElementById('hq-build-modal');
+    if (existing) existing.remove();
 
-    const pts = `${top.x+ox},${top.y+oy} ${right.x+ox},${right.y+oy} ${bottom.x+ox},${bottom.y+oy} ${left.x+ox},${left.y+oy}`;
+    const modal = document.createElement('div');
+    modal.id = 'hq-build-modal';
+    modal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm';
+    modal.innerHTML = \`
+      <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 w-80 max-w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
+        <div class="flex justify-between items-center mb-4">
+          <div class="text-sm font-bold text-white">🏗️ Costruisci (Lotto \${slotIndex})</div>
+          <button onclick="document.getElementById('hq-build-modal').remove()" class="text-gray-500 hover:text-white text-lg">✕</button>
+        </div>
+        \${unlockedRooms.length === 0
+            ? '<div class="text-[10px] text-gray-500 text-center py-4">Nessuna struttura disponibile per questo lotto. Costruisci prima i prerequisiti.</div>'
+            : unlockedRooms.map(r => {
+                const tDef = r.tiers.find(t => t.level === 1);
+                const canAfford = (gameState.cash || 0) >= tDef.cost && (gameState.reputation || 0) >= tDef.reqRep;
+                return \`
+              <div class="bg-white/3 border border-white/8 rounded-lg p-3 mb-2">
+                <div class="font-bold text-white text-sm">\${r.icon} \${r.name}</div>
+                <div class="text-[10px] text-gray-400 mt-0.5 mb-2">\${r.desc}</div>
+                <div class="flex justify-between items-center">
+                  <span class="text-gold text-[11px] font-mono">€\${tDef.cost.toLocaleString()}</span>
+                  <button onclick="document.getElementById('hq-build-modal').remove(); window.hqUpgradeRoom('\${cityId}', '\${r.id}', \${slotIndex})"
+                    class="btn-gold !text-[9px] !py-1 !px-2 \${!canAfford ? 'opacity-40' : ''}">
+                    Costruisci qui
+                  </button>
+                </div>
+              </div>\`;
+            }).join('')}
+      </div>\`;
+    document.body.appendChild(modal);
+};
 
-    let svg = `<polygon points="${pts}" fill="url(#groundGrad)" stroke="#27382e" stroke-width="1"/>`;
-    // Add grid pattern overlay mapped to isometric plane
-    svg += `<polygon points="${pts}" fill="url(#gridPat)" opacity="0.3"/>`;
-
-    // Road (asphalt dark strip) at the front edge
-    const rL = _isoToScreen(-0.5, rows+0.5);
-    const rR = _isoToScreen(cols+0.5, rows+0.5);
-    const rB = _isoToScreen(cols+1, rows+1);
-    const rBL= _isoToScreen(0, rows+1);
-    
-    svg += `<polygon points="${rL.x+ox},${rL.y+oy} ${rR.x+ox},${rR.y+oy} ${rB.x+ox},${rB.y+oy} ${rBL.x+ox},${rBL.y+oy}" fill="#141a1f"/>`;
-    
-    return svg;
-}
-
-// ── INFO PANEL (CLICK ON BUILDING) ────────────────────────────────────────────
 
 window.hqShowInfoPanel = function(roomId) {
     const currentCityId = gameState.currentHQCity || 'roma';
@@ -202,11 +154,32 @@ window.hqShowInfoPanel = function(roomId) {
     let fxHtml = '';
     for (const [k, v] of Object.entries(tDef.effect)) {
         if (typeof v === 'number') {
-            const val = k.endsWith('Mult') ? `×${v.toFixed(2)}` : `+${v}`;
-            fxHtml += `<span class="text-[10px] bg-gold/10 text-gold px-2 py-1 rounded mr-1">${val}</span>`;
+            const val = k.endsWith('Mult') ? \`×\${v.toFixed(2)}\` : \`+\${v}\`;
+            fxHtml += \`<span class="text-[10px] bg-gold/10 text-gold px-2 py-1 rounded mr-1">\${val}</span>\`;
         } else {
-            fxHtml += `<span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded mr-1">${v}</span>`;
+            fxHtml += \`<span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded mr-1">\${v}</span>\`;
         }
+    }
+
+    const nextTier = room.tiers.find(t => t.level === currentLevel + 1);
+    let upgradeBtnHtml = '';
+    if (nextTier) {
+        const canAfford = (gameState.cash || 0) >= nextTier.cost && (gameState.reputation || 0) >= nextTier.reqRep;
+        upgradeBtnHtml = \`
+            <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+                <div>
+                    <div class="text-[10px] text-gray-400">Prossimo Livello (\${nextTier.level})</div>
+                    <div class="text-gold text-xs font-mono">€\${nextTier.cost.toLocaleString()}</div>
+                    \${nextTier.reqRep > 0 ? \`<div class="text-blue-400 text-[9px]">Req: \${nextTier.reqRep}⭐</div>\` : ''}
+                </div>
+                <button onclick="document.getElementById('hq-info-panel').remove(); window.hqUpgradeRoom('\${currentCityId}', '\${roomId}')"
+                    class="btn-gold !text-[10px] !py-1 !px-3 \${!canAfford ? 'opacity-40' : ''}">
+                    ⬆️ Migliora
+                </button>
+            </div>
+        \`;
+    } else {
+        upgradeBtnHtml = \`<div class="mt-4 pt-3 border-t border-white/10 text-center text-[10px] text-green-400 font-bold uppercase">Livello Massimo Raggiunto</div>\`;
     }
 
     const existing = document.getElementById('hq-info-panel');
@@ -219,24 +192,21 @@ window.hqShowInfoPanel = function(roomId) {
     panel.style.top = '50%';
     panel.style.transform = 'translate(-50%, -50%)';
 
-    panel.innerHTML = `
+    panel.innerHTML = \`
         <div class="flex justify-between items-start mb-2">
             <div>
-                <h3 class="text-white font-bold text-sm">${room.icon} ${room.name}</h3>
-                <div class="text-xs text-gold font-mono uppercase">Livello ${currentLevel}</div>
+                <h3 class="text-white font-bold text-sm">\${room.icon} \${room.name}</h3>
+                <div class="text-xs text-gold font-mono uppercase">Livello \${currentLevel}</div>
             </div>
             <button onclick="this.closest('#hq-info-panel').remove()" class="text-gray-400 hover:text-white ml-4">✕</button>
         </div>
-        <p class="text-[11px] text-gray-300 mb-3">${room.desc}</p>
+        <p class="text-[11px] text-gray-300 mb-3">\${room.desc}</p>
         <div class="mb-3">
-            <div class="text-[9px] text-gray-500 uppercase mb-1">Effetti (Questo Livello)</div>
-            <div class="flex flex-wrap">${fxHtml}</div>
+            <div class="text-[9px] text-gray-500 uppercase mb-1">Effetti Attuali</div>
+            <div class="flex flex-wrap">\${fxHtml}</div>
         </div>
-    `;
+        \${upgradeBtnHtml}
+    \`;
 
     document.getElementById('tab-container').appendChild(panel);
-};
-
-window.hqShowLockedTooltip = function(roomId) {
-    if(typeof showNotification==='function') showNotification('Struttura bloccata. Controlla i prerequisiti.', 'warning');
 };

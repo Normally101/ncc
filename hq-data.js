@@ -1,11 +1,24 @@
 'use strict';
 
+const DEFAULT_SLOTS = [
+    { id: 0, left: '10%', top: '60%' },
+    { id: 1, left: '25%', top: '55%' },
+    { id: 2, left: '40%', top: '50%' },
+    { id: 3, left: '55%', top: '45%' },
+    { id: 4, left: '70%', top: '50%' },
+    { id: 5, left: '85%', top: '55%' },
+    { id: 6, left: '20%', top: '75%' },
+    { id: 7, left: '40%', top: '75%' },
+    { id: 8, left: '60%', top: '75%' },
+    { id: 9, left: '80%', top: '75%' }
+];
+
 window.HQ_CITIES = [
-    { id: 'roma', name: 'Roma', icon: '🏛️', desc: 'Capitale, sede principale.' },
-    { id: 'milano', name: 'Milano', icon: '👔', desc: 'Hub finanziario e business.' },
-    { id: 'firenze', name: 'Firenze', icon: '⚜️', desc: 'Turismo di lusso e arte.' },
-    { id: 'napoli', name: 'Napoli', icon: '🌋', desc: 'Snodo logistico del sud.' },
-    { id: 'venezia', name: 'Venezia', icon: '🛶', desc: 'Water Taxi e turismo esclusivo.' }
+    { id: 'roma', name: 'Roma', icon: '🏛️', desc: 'Capitale, sede principale.', slots: DEFAULT_SLOTS },
+    { id: 'milano', name: 'Milano', icon: '👔', desc: 'Hub finanziario e business.', slots: DEFAULT_SLOTS },
+    { id: 'firenze', name: 'Firenze', icon: '⚜️', desc: 'Turismo di lusso e arte.', slots: DEFAULT_SLOTS },
+    { id: 'napoli', name: 'Napoli', icon: '🌋', desc: 'Snodo logistico del sud.', slots: DEFAULT_SLOTS },
+    { id: 'venezia', name: 'Venezia', icon: '🛶', desc: 'Water Taxi e turismo esclusivo.', slots: DEFAULT_SLOTS }
 ];
 
 window.HQ_ROOMS = [
