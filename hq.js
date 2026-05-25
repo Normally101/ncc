@@ -25,7 +25,7 @@ window.hqInit = function() {
             if (gameState.hqGrid) {
                 gameState.hqs['roma'].grid = gameState.hqGrid;
             } else {
-                gameState.hqs['roma'].grid = { 7: 'garage_main' };
+                gameState.hqs['roma'].grid = { 0: 'garage_main' };
             }
             // Cleanup old state
             delete gameState.hqRooms;

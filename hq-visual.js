@@ -52,17 +52,17 @@ window.renderHQCampus = function() {
                      style="left: \${slotDef.left}; top: \${slotDef.top}; transform: translate(-50%, -100%);"
                      onclick="window.hqShowInfoPanel('\${roomId}')">
                      
-                     <!-- Placeholder se l'immagine manca -->
-                     <div class="w-32 h-32 border-2 border-dashed border-gold/40 bg-black/40 rounded flex flex-col items-center justify-center text-center p-2 absolute bottom-0 left-1/2 -translate-x-1/2">
+                     <!-- Placeholder visibile solo se l'immagine manca -->
+                     <div class="w-32 h-32 border-2 border-dashed border-gold/40 bg-black/40 rounded flex-col items-center justify-center text-center p-2 absolute bottom-0 left-1/2 -translate-x-1/2" style="display:none">
                          <span class="text-[10px] text-gray-400">Immagine mancante</span>
                          <span class="text-xs text-gold font-bold mt-1">\${roomName} Lvl\${level}</span>
                      </div>
-                     
-                     <img src="assets/buildings/\${roomId}_lvl\${level}.png" 
-                          alt="\${roomName}" 
-                          class="relative z-10 drop-shadow-2xl" 
+
+                     <img src="assets/buildings/\${roomId}_lvl\${level}.png"
+                          alt="\${roomName}"
+                          class="relative z-10 drop-shadow-2xl"
                           style="max-height: 200px; width: auto;"
-                          onerror="this.style.display='none'">
+                          onerror="this.style.display='none'; this.previousElementSibling.style.display='flex'">
                           
                      <!-- Label Livello -->
                      <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 border border-gold/30 text-gold text-[9px] font-mono px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
