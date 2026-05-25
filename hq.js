@@ -1,163 +1,96 @@
 'use strict';
 /* ================================================================
    hq.js — Chauffeur Empire
-   Espansione 6: Base Building HQ (diorama isometrico semplificato)
+   Espansione 6: Base Building HQ Multi-Città e Tiers
    ================================================================ */
-
-// ── ROOM DEFINITIONS ──────────────────────────────────────────────────────────
-
-window.HQ_ROOMS = [
-    {
-        id: 'garage_main', name: 'Garage Principale', icon: '🏠',
-        cost: 0, prereqs: [], permanent: true,
-        desc: 'Struttura base. Ospita 2 veicoli extra.',
-        effect: { extraVehicleSlots: 2 },
-        score: 5,
-    },
-    {
-        id: 'gym', name: 'Palestra Autisti', icon: '🏋️',
-        cost: 120000, prereqs: ['garage_main'],
-        desc: '+5% morale autisti al giorno.',
-        effect: { dailyMoraleBonus: 5 },
-        score: 10,
-    },
-    {
-        id: 'mission_room', name: 'Sala Missioni', icon: '🎯',
-        cost: 200000, prereqs: ['garage_main'],
-        desc: '+15% XP guadagnato da tutti gli autisti.',
-        effect: { driverXpMult: 1.15 },
-        score: 15,
-    },
-    {
-        id: 'workshop', name: 'Officina HQ', icon: '🔧',
-        cost: 180000, prereqs: ['garage_main'],
-        desc: 'Ripara automaticamente i veicoli sotto il 20% di condizione (+10/giorno).',
-        effect: { autoRepairThreshold: 20, autoRepairDaily: 10 },
-        score: 12,
-    },
-    {
-        id: 'canteen', name: 'Mensa', icon: '🍕',
-        cost: 90000, prereqs: ['gym'],
-        desc: '−10% costo salari mensili autisti.',
-        effect: { salaryCostMult: 0.90 },
-        score: 8,
-    },
-    {
-        id: 'control_tower', name: 'Torre di Controllo', icon: '📡',
-        cost: 350000, prereqs: ['mission_room'],
-        desc: '+20% probabilità corse VIP/Ultra.',
-        effect: { vipRideBonus: 0.20 },
-        score: 20,
-    },
-    {
-        id: 'security_bunker', name: 'Bunker Sicurezza', icon: '🛡️',
-        cost: 500000, prereqs: ['control_tower'],
-        desc: '+2 livelli difesa shadow ops automaticamente.',
-        effect: { shadowDefenseBonus: 2 },
-        score: 25,
-    },
-    {
-        id: 'infirmary', name: 'Infermeria', icon: '💊',
-        cost: 150000, prereqs: ['canteen'],
-        desc: '−30% durata burnout autisti.',
-        effect: { burnoutReduction: 0.30 },
-        score: 12,
-    },
-    {
-        id: 'it_center', name: 'Centro IT', icon: '💻',
-        cost: 280000, prereqs: ['mission_room'],
-        desc: '+5% mance su tutte le corse.',
-        effect: { tipMult: 1.05 },
-        score: 18,
-    },
-    {
-        id: 'ev_parking', name: 'Parcheggio EV', icon: '🔋',
-        cost: 200000, prereqs: ['workshop'],
-        desc: 'Ricarica automatica veicoli elettrici a costo zero.',
-        effect: { freeEVRecharge: true },
-        score: 15,
-    },
-    {
-        id: 'helipad', name: 'Pista Elicotteri', icon: '🛫',
-        cost: 2000000, prereqs: ['control_tower'],
-        desc: 'Sblocca gli elicotteri dal rideGate 2000 → 500.',
-        effect: { helicopterRideGateOverride: 500 },
-        score: 30,
-    },
-    {
-        id: 'rd_lab', name: 'Laboratorio R&D', icon: '🔬',
-        cost: 800000, prereqs: ['it_center'],
-        desc: '−10% costo upgrade veicoli.',
-        effect: { upgradeDiscountMult: 0.90 },
-        score: 22,
-    },
-    {
-        id: 'vip_lounge', name: 'VIP Lounge', icon: '🥂',
-        cost: 400000, prereqs: ['control_tower', 'canteen'],
-        desc: '+0.2 reputazione aziendale permanente.',
-        effect: { reputationBonus: 0.2 },
-        score: 20,
-    },
-    {
-        id: 'crypto_vault', name: 'Crypto Vault', icon: '🔐',
-        cost: 1000000, prereqs: ['security_bunker'],
-        desc: 'Riduce il rischio sequestro GdF per prelievi offshore del 30%.',
-        effect: { offshoreSiezeReduction: 0.30 },
-        score: 28,
-    },
-    {
-        id: 'penthouse', name: 'Penthouse CEO', icon: '🏙️',
-        cost: 5000000, prereqs: ['vip_lounge', 'rd_lab'],
-        desc: '+25% su tutti i moltiplicatori di reddito. Il massimo del lusso.',
-        effect: { allEarningsMult: 1.25 },
-        score: 50,
-    },
-];
 
 // Grid layout: 5 columns × 3 rows
 const HQ_GRID_COLS = 5;
 const HQ_GRID_ROWS = 3;
 const HQ_GRID_SIZE = HQ_GRID_COLS * HQ_GRID_ROWS;
 
-// ── STATE ACCESS ──────────────────────────────────────────────────────────────
+// ── INIT & MIGRATION ──────────────────────────────────────────────────────────
 
-function _hqRooms() {
-    if (!gameState.hqRooms) gameState.hqRooms = ['garage_main']; // start with main garage
-    return gameState.hqRooms;
-}
-
-window.hqHasRoom = function(roomId) {
-    return _hqRooms().includes(roomId);
-};
-
-window.hqGetEffect = function(effectKey) {
-    const rooms = _hqRooms();
-    let result = null;
-    for (const room of window.HQ_ROOMS) {
-        if (rooms.includes(room.id) && effectKey in room.effect) {
-            const val = room.effect[effectKey];
-            if (typeof val === 'number') {
-                result = result === null ? val : (effectKey.endsWith('Mult') ? result * val : result + val);
-            } else {
-                result = val;
+window.hqInit = function() {
+    // Migration from old state to new state
+    if (!gameState.hqs) {
+        gameState.hqs = {
+            'roma': { rooms: {}, grid: {} }
+        };
+        // Migrate old rooms
+        if (gameState.hqRooms) {
+            for (const r of gameState.hqRooms) {
+                gameState.hqs['roma'].rooms[r] = 1; // default to tier 1
             }
+            if (gameState.hqGrid) {
+                gameState.hqs['roma'].grid = gameState.hqGrid;
+            } else {
+                gameState.hqs['roma'].grid = { 7: 'garage_main' };
+            }
+            // Cleanup old state
+            delete gameState.hqRooms;
+            delete gameState.hqGrid;
+        } else {
+            // New game
+            gameState.hqs['roma'].rooms['garage_main'] = 1;
+            gameState.hqs['roma'].grid = { 7: 'garage_main' };
         }
     }
-    return result;
+    
+    // Ensure all cities exist
+    for (const city of window.HQ_CITIES) {
+        if (!gameState.hqs[city.id]) {
+            gameState.hqs[city.id] = { rooms: {}, grid: {} };
+        }
+    }
+
+    if (!gameState.currentHQCity) {
+        gameState.currentHQCity = 'roma';
+    }
+
+    if (!gameState.driverObituaries) gameState.driverObituaries = [];
 };
 
-// Combined all active effects
+// ── STATE ACCESS ──────────────────────────────────────────────────────────────
+
+window.hqGetCityRooms = function(cityId) {
+    if (!gameState.hqs || !gameState.hqs[cityId]) return {};
+    return gameState.hqs[cityId].rooms || {};
+};
+
+window.hqHasRoomInCity = function(cityId, roomId) {
+    const r = window.hqGetCityRooms(cityId);
+    return r[roomId] !== undefined && r[roomId] > 0;
+};
+
+window.hqGetRoomLevel = function(cityId, roomId) {
+    const r = window.hqGetCityRooms(cityId);
+    return r[roomId] || 0;
+};
+
+// Sum up all effects across all cities
 window.hqAllEffects = function() {
-    const rooms = _hqRooms();
     const fx = {};
-    for (const room of window.HQ_ROOMS) {
-        if (rooms.includes(room.id)) {
-            for (const [k, v] of Object.entries(room.effect)) {
-                if (typeof v === 'number') {
-                    if (k.endsWith('Mult')) fx[k] = (fx[k] || 1.0) * v;
-                    else fx[k] = (fx[k] || 0) + v;
-                } else {
-                    fx[k] = v;
+    if (!gameState.hqs) return fx;
+    
+    for (const cityId of Object.keys(gameState.hqs)) {
+        const rooms = gameState.hqs[cityId].rooms || {};
+        for (const [roomId, level] of Object.entries(rooms)) {
+            if (level > 0) {
+                const roomDef = window.HQ_ROOMS.find(r => r.id === roomId);
+                if (roomDef) {
+                    const tierDef = roomDef.tiers.find(t => t.level === level);
+                    if (tierDef && tierDef.effect) {
+                        for (const [k, v] of Object.entries(tierDef.effect)) {
+                            if (typeof v === 'number') {
+                                if (k.endsWith('Mult')) fx[k] = (fx[k] || 1.0) * v;
+                                else fx[k] = (fx[k] || 0) + v;
+                            } else {
+                                // For boolean flags like freeEVRecharge
+                                fx[k] = v;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -165,67 +98,91 @@ window.hqAllEffects = function() {
     return fx;
 };
 
-// ── BUILD ACTION ──────────────────────────────────────────────────────────────
+window.hqGetEffect = function(effectKey) {
+    return window.hqAllEffects()[effectKey];
+};
 
-window.hqBuildRoom = async function(roomId, slotIndex) {
-    const room = window.HQ_ROOMS.find(r => r.id === roomId);
-    if (!room) return;
-    if (window.hqHasRoom(roomId)) { if(typeof showNotification==='function') showNotification('Stanza già costruita!', 'error'); return; }
+// ── ACTION: BUILD / UPGRADE ───────────────────────────────────────────────────
 
-    // Check prerequisites
-    for (const preq of room.prereqs) {
-        if (!window.hqHasRoom(preq)) {
-            if(typeof showNotification==='function') showNotification(`Richiede prima: ${window.HQ_ROOMS.find(r=>r.id===preq)?.name || preq}`, 'error');
+window.hqUpgradeRoom = async function(cityId, roomId, slotIndex) {
+    const roomDef = window.HQ_ROOMS.find(r => r.id === roomId);
+    if (!roomDef) return;
+    
+    const currentLevel = window.hqGetRoomLevel(cityId, roomId);
+    const nextTier = roomDef.tiers.find(t => t.level === currentLevel + 1);
+    
+    if (!nextTier) {
+        if(typeof showNotification==='function') showNotification('Livello massimo raggiunto!', 'error');
+        return;
+    }
+
+    // Check prerequisites if level 0
+    if (currentLevel === 0) {
+        for (const preq of roomDef.prereqs) {
+            if (!window.hqHasRoomInCity(cityId, preq)) {
+                if(typeof showNotification==='function') showNotification(`Richiede prima: ${window.HQ_ROOMS.find(r=>r.id===preq)?.name || preq} in questa città`, 'error');
+                return;
+            }
+        }
+        // Check city specific
+        if (roomDef.citySpecific && !roomDef.citySpecific.includes(cityId)) {
+            if(typeof showNotification==='function') showNotification(`Questa struttura può essere costruita solo a: ${roomDef.citySpecific.join(', ')}`, 'error');
             return;
         }
     }
 
-    // Check grid slot
-    if (!gameState.hqGrid) gameState.hqGrid = {};
-    if (slotIndex !== undefined && gameState.hqGrid[slotIndex]) {
-        if(typeof showNotification==='function') showNotification('Slot occupato!', 'error');
+    // Check grid slot if building new
+    if (currentLevel === 0 && slotIndex !== undefined) {
+        if (gameState.hqs[cityId].grid[slotIndex]) {
+            if(typeof showNotification==='function') showNotification('Slot occupato!', 'error');
+            return;
+        }
+    }
+
+    // Check rep req
+    if ((gameState.reputation || 0) < nextTier.reqRep) {
+        if(typeof showNotification==='function') showNotification(`Reputazione insufficiente (serve ${nextTier.reqRep}⭐)`, 'error');
         return;
     }
 
     // Check cash
-    if ((gameState.cash || 0) < room.cost) {
-        if(typeof showNotification==='function') showNotification(`Fondi insufficienti (serve €${room.cost.toLocaleString()})`, 'error');
+    if ((gameState.cash || 0) < nextTier.cost) {
+        if(typeof showNotification==='function') showNotification(`Fondi insufficienti (serve €${nextTier.cost.toLocaleString()})`, 'error');
         return;
     }
 
-    if (room.cost > 0) {
-        if (!confirm(`Costruire ${room.icon} ${room.name} per €${room.cost.toLocaleString()}?`)) return;
-        gameState.cash -= room.cost;
+    const actionName = currentLevel === 0 ? 'Costruire' : 'Migliorare';
+    if (nextTier.cost > 0) {
+        if (!confirm(`${actionName} ${roomDef.icon} ${roomDef.name} a Livello ${nextTier.level} per €${nextTier.cost.toLocaleString()}?`)) return;
+        gameState.cash -= nextTier.cost;
     }
 
-    _hqRooms().push(roomId);
-    if (slotIndex !== undefined) gameState.hqGrid[slotIndex] = roomId;
-
-    // Apply one-time permanent effects
-    const fx = room.effect;
-    if (fx.reputationBonus) {
-        gameState.reputation = Math.min(5.0, (gameState.reputation || 0) + fx.reputationBonus);
+    gameState.hqs[cityId].rooms[roomId] = nextTier.level;
+    if (currentLevel === 0 && slotIndex !== undefined) {
+        gameState.hqs[cityId].grid[slotIndex] = roomId;
     }
-    if (fx.shadowDefenseBonus) {
-        gameState._shadowDefenseLevel = Math.min(5, (gameState._shadowDefenseLevel || 0) + fx.shadowDefenseBonus);
+
+    // Apply one-time permanent effects if any (from the delta)
+    // Note: permanent effects like reputationBonus shouldn't be added every tick, they are permanent state changes.
+    // In the new system, it's better to just calculate reputation dynamically or add it here.
+    if (nextTier.effect.reputationBonus) {
+        const prevBonus = currentLevel > 0 ? roomDef.tiers.find(t=>t.level===currentLevel).effect.reputationBonus || 0 : 0;
+        const delta = nextTier.effect.reputationBonus - prevBonus;
+        if (delta > 0) {
+            gameState.reputation = Math.min(5.0, (gameState.reputation || 0) + delta);
+        }
     }
 
     if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();
 
-    // Update leaderboard
-    const sb = window.supabaseClient;
-    if (sb) {
-        const score = _hqRooms().reduce((s, id) => s + (window.HQ_ROOMS.find(r=>r.id===id)?.score || 0), 0);
-        sb.rpc('rpc_update_hq_status', {
-            v_rooms_built: _hqRooms().length,
-            v_hq_score:    score,
-        }).then(null, () => {});
-    }
+    if(typeof showNotification==='function') showNotification(`🏗️ ${roomDef.icon} ${roomDef.name} ${currentLevel===0 ? 'costruita' : 'migliorata'} al Livello ${nextTier.level}!`, 'success');
+    window._hqJustBuiltRoom = roomId; 
+    window.renderTabHQ();
+};
 
-    if(typeof showNotification==='function') showNotification(`🏗️ ${room.icon} ${room.name} costruita!`, 'success');
-    if(typeof logToMap==='function') logToMap(`🏗️ HQ: costruita ${room.name}. Effetto: ${room.desc}`);
-    window._hqJustBuiltRoom = roomId; // For visual campus animation
+window.hqSwitchCity = function(cityId) {
+    gameState.currentHQCity = cityId;
     window.renderTabHQ();
 };
 
@@ -234,36 +191,77 @@ window.hqBuildRoom = async function(roomId, slotIndex) {
 window.renderTabHQ = function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
+    
+    // Ensure initialized
+    if (!gameState.hqs) window.hqInit();
 
-    const builtRooms = _hqRooms();
-    const totalScore = builtRooms.reduce((s, id) => s + (window.HQ_ROOMS.find(r=>r.id===id)?.score || 0), 0);
+    const currentCityId = gameState.currentHQCity || 'roma';
+    const cityData = window.HQ_CITIES.find(c => c.id === currentCityId);
+    
+    let totalScore = 0;
+    // Calculate total score across all cities
+    for (const cid of Object.keys(gameState.hqs)) {
+        const rooms = gameState.hqs[cid].rooms || {};
+        for (const [rId, lvl] of Object.entries(rooms)) {
+            if (lvl > 0) {
+                const rDef = window.HQ_ROOMS.find(r => r.id === rId);
+                if (rDef) {
+                    const tDef = rDef.tiers.find(t => t.level === lvl);
+                    if (tDef) totalScore += tDef.score;
+                }
+            }
+        }
+    }
+    
     const fx = window.hqAllEffects();
 
-    // Available rooms
-    const availableRooms = window.HQ_ROOMS.filter(r => !builtRooms.includes(r.id));
-    const unlockedRooms  = availableRooms.filter(r => r.prereqs.every(p => builtRooms.includes(p)));
-    const lockedRooms    = availableRooms.filter(r => !r.prereqs.every(p => builtRooms.includes(p)));
+    // City Selector Tabs
+    const cityTabsHtml = window.HQ_CITIES.map(c => `
+        <button onclick="window.hqSwitchCity('${c.id}')" 
+                class="px-3 py-1.5 rounded text-xs font-bold transition-all border ${c.id === currentCityId ? 'bg-gold text-black border-gold' : 'bg-[#1a1a2e] text-gray-400 border-white/10 hover:border-white/30'}">
+            ${c.icon} ${c.name}
+        </button>
+    `).join('');
 
-    const roomListHtml = (rooms, locked) => rooms.map(r => `
-      <div class="bg-white/3 border ${locked ? 'border-white/5' : 'border-white/8'} rounded-xl p-3 mb-2 ${locked ? 'opacity-50' : ''}">
-        <div class="flex justify-between items-start">
-          <div class="flex-1">
-            <div class="text-sm font-bold ${locked ? 'text-gray-600' : 'text-white'}">${r.icon} ${r.name}</div>
-            <div class="text-[10px] text-gray-400 mt-0.5">${r.desc}</div>
-            ${locked ? `<div class="text-[9px] text-gray-600 mt-1">🔒 Richiede: ${r.prereqs.map(p=>window.HQ_ROOMS.find(x=>x.id===p)?.name||p).join(', ')}</div>` : ''}
-          </div>
-          <div class="shrink-0 ml-2 text-right">
-            <div class="text-[10px] text-gold font-mono">€${r.cost.toLocaleString()}</div>
-            ${!locked ? `<button onclick="window.hqBuildRoom('${r.id}')"
-              class="btn-gold !text-[9px] !py-1 !px-2 mt-1 ${(gameState.cash||0) < r.cost ? 'opacity-40' : ''}">
-              🏗️ Costruisci
-            </button>` : ''}
-          </div>
-        </div>
-      </div>`).join('');
+    // Room List for Current City
+    const cityRooms = window.hqGetCityRooms(currentCityId);
+    const availableRooms = window.HQ_ROOMS.filter(r => (!r.citySpecific || r.citySpecific.includes(currentCityId)));
+    
+    let roomListHtml = '';
+    
+    for (const r of availableRooms) {
+        const currentLevel = cityRooms[r.id] || 0;
+        const nextTier = r.tiers.find(t => t.level === currentLevel + 1);
+        const isMaxLevel = !nextTier;
+        
+        const isLocked = currentLevel === 0 && !r.prereqs.every(p => window.hqHasRoomInCity(currentCityId, p));
+        
+        const tDef = currentLevel > 0 ? r.tiers.find(t => t.level === currentLevel) : null;
+        
+        roomListHtml += `
+          <div class="bg-white/3 border ${isLocked ? 'border-white/5' : 'border-white/8'} rounded-xl p-3 mb-2 ${isLocked ? 'opacity-50' : ''}">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <div class="text-sm font-bold ${isLocked ? 'text-gray-600' : 'text-white'}">${r.icon} ${r.name} <span class="text-xs text-gold ml-1">Lvl ${currentLevel}</span></div>
+                <div class="text-[10px] text-gray-400 mt-0.5">${r.desc}</div>
+                ${isLocked ? `<div class="text-[9px] text-gray-600 mt-1">🔒 Richiede: ${r.prereqs.map(p=>window.HQ_ROOMS.find(x=>x.id===p)?.name||p).join(', ')}</div>` : ''}
+                ${!isMaxLevel && !isLocked ? `<div class="text-[9px] text-blue-400 mt-1">Prossimo Livello: Richiede ${nextTier.reqRep}⭐ reputazione.</div>` : ''}
+              </div>
+              <div class="shrink-0 ml-2 text-right">
+                ${isMaxLevel ? `<div class="text-[10px] text-green-400 font-mono">Max Level</div>` : `
+                    <div class="text-[10px] text-gold font-mono">€${nextTier.cost.toLocaleString()}</div>
+                    ${!isLocked ? `<button onclick="${currentLevel === 0 ? `window.hqOpenBuildModal('${r.id}')` : `window.hqUpgradeRoom('${currentCityId}', '${r.id}')`}"
+                      class="btn-gold !text-[9px] !py-1 !px-2 mt-1 ${(gameState.cash||0) < nextTier.cost || (gameState.reputation||0) < nextTier.reqRep ? 'opacity-40' : ''}">
+                      ${currentLevel === 0 ? '🏗️ Costruisci' : '⬆️ Migliora'}
+                    </button>` : ''}
+                `}
+              </div>
+            </div>
+          </div>`;
+    }
 
     const _hqFxLabel = (k, v) => {
-        if (typeof v !== 'number') return (k === 'freeEVRecharge' && v) ? 'Ricarica EV gratuita' : null;
+        if (typeof v !== 'number') return (k === 'freeEVRecharge' && v) ? 'Ricarica EV gratuita' : (k === 'unlocksWaterTaxis' && v ? 'Water Taxi Sbloccati' : null);
         switch (k) {
             case 'extraVehicleSlots':          return `+${v} slot veicoli`;
             case 'dailyMoraleBonus':           return `+${v}% morale/giorno`;
@@ -273,12 +271,15 @@ window.renderTabHQ = function() {
             case 'vipRideBonus':               return `+${Math.round(v*100)}% corse VIP`;
             case 'burnoutReduction':           return `−${Math.round(v*100)}% burnout`;
             case 'tipMult':                    return `×${v.toFixed(2)} mance`;
+            case 'waterTaxiTipMult':           return `×${v.toFixed(2)} mance Water Taxi`;
             case 'helicopterRideGateOverride': return `Elicottero sbloccato a ${v} corse`;
             case 'upgradeDiscountMult':        return `×${v.toFixed(2)} upgrade`;
             case 'allEarningsMult':            return `×${v.toFixed(2)} tutti i redditi`;
+            case 'evRangeBonus':               return `×${v.toFixed(2)} autonomia EV`;
             default:                           return null;
         }
     };
+    
     const fxItems = Object.entries(fx)
         .filter(([k]) => !['reputationBonus', 'shadowDefenseBonus'].includes(k))
         .map(([k, v]) => _hqFxLabel(k, v))
@@ -287,35 +288,37 @@ window.renderTabHQ = function() {
     container.innerHTML = DS.header({
         eyebrow: 'Quartier Generale',
         title:   'HQ Base Builder',
-        subtitle: `${builtRooms.length} stanze costruite · Score ⭐ ${totalScore} · ${unlockedRooms.length} disponibili`,
+        subtitle: `Score Globale ⭐ ${totalScore} · Sedi: ${Object.keys(gameState.hqs).length}`,
         actions: DS.pill('Score ' + totalScore, totalScore >= 50 ? 'gold' : 'blue'),
-    }) + DS.kpiStrip([
-        { label: 'Stanze Costruite', val: builtRooms.length, color: 'gold' },
-        { label: 'Disponibili',      val: unlockedRooms.length, color: unlockedRooms.length > 0 ? 'green' : '' },
-        { label: 'Bloccate',         val: lockedRooms.length,   color: lockedRooms.length > 0 ? 'orange' : '' },
-        { label: 'Effetti Attivi',   val: fxItems.length,       color: fxItems.length > 0 ? 'blue' : '' },
+    }) + `
+      <div class="flex gap-2 p-2 overflow-x-auto hide-scrollbar mb-2 border-b border-white/5">
+        ${cityTabsHtml}
+      </div>
+      
+      <div class="p-2 mb-2">
+        <h2 class="text-gold font-bold">${cityData.icon} Sede di ${cityData.name}</h2>
+        <p class="text-xs text-gray-400">${cityData.desc}</p>
+      </div>
+      ` + DS.kpiStrip([
+        { label: 'Effetti Globali Attivi',   val: fxItems.length, color: fxItems.length > 0 ? 'blue' : '' },
     ]) + `
       <div class="p-1">
 
-        <!-- Visual Isometric Campus Placeholder -->
+        <!-- Visual Isometric Campus -->
         <div id="hq-visual-placeholder" class="mb-4"></div>
 
         <!-- Active effects -->
         ${fxItems.length > 0 ? `
           <div class="bg-gold/5 border border-gold/20 rounded-lg p-3 mb-4">
-            <div class="text-[9px] text-gold font-bold uppercase mb-2">⚡ Effetti Attivi</div>
+            <div class="text-[9px] text-gold font-bold uppercase mb-2">⚡ Effetti Globali Attivi</div>
             <div class="flex flex-wrap gap-1">
               ${fxItems.map(f => `<span class="text-[8px] bg-white/10 rounded px-1.5 py-0.5 text-gray-300">${f}</span>`).join('')}
             </div>
           </div>` : ''}
 
         <!-- Build options -->
-        ${unlockedRooms.length > 0 ? `
-          <h3 class="text-[10px] text-gold uppercase tracking-widest mb-2">🔓 Stanze Disponibili</h3>
-          ${roomListHtml(unlockedRooms, false)}` : ''}
-        ${lockedRooms.length > 0 ? `
-          <h3 class="text-[10px] text-gray-600 uppercase tracking-widest mb-2 mt-3">🔒 Stanze Bloccate</h3>
-          ${roomListHtml(lockedRooms, true)}` : ''}
+        <h3 class="text-[10px] text-gold uppercase tracking-widest mb-2">🏢 Gestione Strutture</h3>
+        ${roomListHtml}
       </div>`;
 
     // Render visual diorama campus
@@ -324,11 +327,15 @@ window.renderTabHQ = function() {
     }
 };
 
-window.hqOpenBuildModal = function(slotIndex) {
-    const builtRooms = _hqRooms();
-    const unlockedRooms = window.HQ_ROOMS.filter(r =>
-        !builtRooms.includes(r.id) && r.prereqs.every(p => builtRooms.includes(p))
-    );
+window.hqOpenBuildModal = function(roomId) {
+    const currentCityId = gameState.currentHQCity || 'roma';
+    const grid = gameState.hqs[currentCityId].grid || {};
+    
+    // Find empty slots
+    const emptySlots = [];
+    for (let i = 0; i < HQ_GRID_SIZE; i++) {
+        if (!grid[i]) emptySlots.push(i);
+    }
 
     const existing = document.getElementById('hq-build-modal');
     if (existing) existing.remove();
@@ -339,22 +346,16 @@ window.hqOpenBuildModal = function(slotIndex) {
     modal.innerHTML = `
       <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 w-80 max-w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-4">
-          <div class="text-sm font-bold text-white">🏗️ Scegli cosa costruire</div>
+          <div class="text-sm font-bold text-white">🏗️ Scegli lo slot per ${window.HQ_ROOMS.find(r=>r.id===roomId).name}</div>
           <button onclick="document.getElementById('hq-build-modal').remove()" class="text-gray-500 hover:text-white text-lg">✕</button>
         </div>
-        ${unlockedRooms.length === 0
-            ? '<div class="text-[10px] text-gray-500 text-center py-4">Nessuna stanza disponibile. Costruisci prima i prerequisiti.</div>'
-            : unlockedRooms.map(r => `
-              <div class="bg-white/3 border border-white/8 rounded-lg p-3 mb-2">
-                <div class="font-bold text-white text-sm">${r.icon} ${r.name}</div>
-                <div class="text-[10px] text-gray-400 mt-0.5 mb-2">${r.desc}</div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gold text-[11px] font-mono">€${r.cost.toLocaleString()}</span>
-                  <button onclick="document.getElementById('hq-build-modal').remove(); window.hqBuildRoom('${r.id}', ${slotIndex})"
-                    class="btn-gold !text-[9px] !py-1 !px-2 ${(gameState.cash||0) < r.cost ? 'opacity-40' : ''}">
-                    Costruisci qui
-                  </button>
-                </div>
+        ${emptySlots.length === 0
+            ? '<div class="text-[10px] text-gray-500 text-center py-4">Nessuno slot libero in questa città.</div>'
+            : emptySlots.map(slot => `
+              <div class="bg-white/3 border border-white/8 rounded-lg p-3 mb-2 flex justify-between items-center hover:bg-white/10 transition cursor-pointer"
+                   onclick="document.getElementById('hq-build-modal').remove(); window.hqUpgradeRoom('${currentCityId}', '${roomId}', ${slot})">
+                <div class="font-bold text-white text-sm">Slot #${slot}</div>
+                <div class="text-gold text-[11px] font-mono">Posiziona qui</div>
               </div>`).join('')}
       </div>`;
     document.body.appendChild(modal);
@@ -395,12 +396,4 @@ window._hqDailyTick = function() {
     if (fx.helicopterRideGateOverride !== undefined) {
         window._hqHelicopterRideGateOverride = fx.helicopterRideGateOverride;
     }
-};
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
-
-window.hqInit = function() {
-    if (!gameState.hqRooms) gameState.hqRooms = ['garage_main'];
-    if (!gameState.hqGrid) gameState.hqGrid = { 7: 'garage_main' };
-    if (!gameState.driverObituaries) gameState.driverObituaries = [];
 };

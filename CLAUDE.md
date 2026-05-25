@@ -790,7 +790,13 @@ Se usi classi Tailwind hardcoded in template JS (es. `text-white`, `bg-gray-800`
 | 🧑‍✈️ **Private Chauffeur** | Job di partenza — solo tu + 1 auto | Entry point nuovi giocatori |
 | 🚖 **Taxi** | Trasporto urbano di massa, alto volume basso margine | Pricing model diverso da NCC |
 | 🚛 **Truck / Logistics** | Merci, rotte lunghe, gestione depositi | Nuova categoria fleet[] |
-| ✈️ / 🚢 | Jet privati, barche — espansione ultra-premium | Lungo termine |
+| 🚤 **Water Taxi** | Specialità per HQ Venezia | Veicoli marini, canali navigabili |
+| ✈️ / 🚢 | Jet privati, yacht — espansione ultra-premium | Lungo termine |
+
+### Sistema HQ Multi-Città e Upgrades
+- **Sedi Regionali**: Possibilità di aprire HQ Base Builder in più città (Roma, Milano, Firenze, Napoli, Venezia).
+- **Venezia**: Città con viabilità unica, richiede una flotta mista (auto su terraferma + water taxi nei canali).
+- **Edifici con Tiers**: Gli edifici (Garage, Infirmary, ecc.) non sono solo costruibili/non costruibili, ma avranno livelli di upgrade (Es: Livello 1, 2, 3) con sprite statici forniti dall'utente per ogni livello, offrendo bonus crescenti.
 
 ### Impatto architetturale quando si aggiungono taxi/truck
 
