@@ -4501,6 +4501,13 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
 .hq-slot-pulse {
     animation: hq-slot-pulse-anim 2s ease-in-out infinite;
 }
+
+.hq-building-wrapper:hover .hq-building-label {
+    opacity: 1 !important;
+}
+.hq-building-wrapper:hover {
+    transform: translate(-50%, -100%) scale(1.05);
+}
 @keyframes hq-slot-pulse-anim {
     0%, 100% { opacity: 0.6; }
     50%       { opacity: 1; }

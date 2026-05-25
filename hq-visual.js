@@ -24,11 +24,8 @@ window.renderHQCampus = function() {
     const bgUrl = \`assets/cities/bg_\${currentCityId}.jpg\`;
 
     let html = \`
-    <div class="relative w-full aspect-video rounded-xl overflow-hidden border border-white/10 shadow-2xl bg-gray-900" 
-         style="background-image: url('\${bgUrl}'); background-size: cover; background-position: center;">
-        
-        <!-- Fallback layer se l'immagine manca -->
-        <div class="absolute inset-0 bg-gradient-to-b from-[#1a1c29]/80 to-[#0a0d14]/95 -z-10"></div>
+    <div class="relative w-full rounded-xl overflow-hidden border border-white/10 shadow-2xl"
+         style="aspect-ratio: 16/9; min-height: 240px; background-image: url('\${bgUrl}'); background-size: cover; background-position: center; background-color: #1a1c29;">
     \`;
 
     // Scorriamo i lotti di terra definiti in hq-data.js
@@ -48,24 +45,23 @@ window.renderHQCampus = function() {
                 // Usiamo transform: translate(-50%, -100%) in modo che le coordinate left/top 
                 // si riferiscano al "suolo" al centro dell'edificio.
                 html += \`
-                <div class="absolute group cursor-pointer hover:scale-105 transition-transform"
-                     style="left: \${slotDef.left}; top: \${slotDef.top}; transform: translate(-50%, -100%);"
+                <div class="absolute hq-building-wrapper"
+                     style="left: \${slotDef.left}; top: \${slotDef.top}; transform: translate(-50%, -100%); cursor:pointer; transition:transform 0.2s;"
                      onclick="window.hqShowInfoPanel('\${roomId}')">
                      
                      <!-- Placeholder visibile solo se l'immagine manca -->
-                     <div class="w-32 h-32 border-2 border-dashed border-gold/40 bg-black/40 rounded flex-col items-center justify-center text-center p-2 absolute bottom-0 left-1/2 -translate-x-1/2" style="display:none">
-                         <span class="text-[10px] text-gray-400">Immagine mancante</span>
-                         <span class="text-xs text-gold font-bold mt-1">\${roomName} Lvl\${level}</span>
+                     <div style="display:none; width:128px; height:128px; border:2px dashed rgba(212,175,55,0.4); background:rgba(0,0,0,0.4); border-radius:6px; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8px; position:absolute; bottom:0; left:50%; transform:translateX(-50%);">
+                         <span style="font-size:10px; color:#9ca3af">Immagine mancante</span>
+                         <span style="font-size:12px; color:#d4af37; font-weight:bold; margin-top:4px">\${roomName} Lvl\${level}</span>
                      </div>
 
                      <img src="assets/buildings/\${roomId}_lvl\${level}.png"
                           alt="\${roomName}"
-                          class="relative z-10 drop-shadow-2xl"
-                          style="max-height: 200px; width: auto;"
+                          style="position:relative; z-index:10; max-height:200px; width:auto; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6));"
                           onerror="this.style.display='none'; this.previousElementSibling.style.display='flex'">
-                          
-                     <!-- Label Livello -->
-                     <div class="absolute -top-6 left-1/2 -translate-x-1/2 bg-black/80 border border-gold/30 text-gold text-[9px] font-mono px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-20">
+
+                     <!-- Label Livello (visibile su hover) -->
+                     <div class="hq-building-label" style="position:absolute; top:-24px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); border:1px solid rgba(212,175,55,0.3); color:#d4af37; font-size:9px; font-family:monospace; padding:2px 8px; border-radius:4px; opacity:0; transition:opacity 0.2s; white-space:nowrap; z-index:20; pointer-events:none;">
                         \${roomDef?.icon || ''} \${roomName} Lvl \${level}
                      </div>
                 </div>\`;
@@ -73,12 +69,14 @@ window.renderHQCampus = function() {
                 // Disegna slot libero
                 html += \`
                 <div class="absolute cursor-pointer hq-slot-pulse"
-                     style="left: \${slotDef.left}; top: \${slotDef.top}; transform: translate(-50%, -50%);"
-                     onclick="window.hqOpenBuildModal('\${currentCityId}', \${slotId})">
-                     <div class="w-16 h-8 rounded-full border-2 border-dashed border-gold/40 bg-gold/5 flex items-center justify-center shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:bg-gold/20 hover:border-gold/80 transition-all">
-                        <span class="text-gold font-bold text-lg">+</span>
+                     style="left: \${slotDef.left}; top: \${slotDef.top}; transform: translate(-50%, -50%);">
+                     <div onclick="window.hqOpenBuildModal('\${currentCityId}', \${slotId})"
+                          style="width:56px; height:32px; border:2px dashed rgba(212,175,55,0.5); background:rgba(212,175,55,0.06); border-radius:999px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
+                          onmouseover="this.style.background='rgba(212,175,55,0.2)'; this.style.borderColor='rgba(212,175,55,0.9)'"
+                          onmouseout="this.style.background='rgba(212,175,55,0.06)'; this.style.borderColor='rgba(212,175,55,0.5)'">
+                        <span style="color:#d4af37; font-weight:bold; font-size:18px; line-height:1">+</span>
                      </div>
-                     <div class="text-center mt-1 text-[9px] text-gold/80 bg-black/50 px-1 rounded whitespace-nowrap">Lotto Libero</div>
+                     <div style="text-align:center; margin-top:4px; font-size:9px; color:rgba(212,175,55,0.8); background:rgba(0,0,0,0.5); padding:1px 4px; border-radius:3px; white-space:nowrap">Lotto Libero</div>
                 </div>\`;
             }
         });
