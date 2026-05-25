@@ -202,110 +202,36 @@ function _emptySlot(cx, cy, roomId, state) {
 //  BUILDING RENDERERS — each returns SVG string
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function _bld_sprite(cx, cy, built, state, roomId, width, yOffset) {
+    if (!built) return _emptySlot(cx, cy, roomId, state);
+    const hw = width / 2;
+    return `<g class="hq-building" id="bld-${roomId}" onclick="window.hqShowInfoPanel('${roomId}')">
+        <image href="assets/buildings/${roomId}.png" x="${cx - hw}" y="${cy - yOffset}" width="${width}" height="${width}" preserveAspectRatio="xMidYMax meet" style="pointer-events: none;" />
+    </g>`;
+}
+
 function _bld_garage_main(cx, cy, built, state) {
-    if (!built) return _emptySlot(cx, cy, 'garage_main', state);
-    const W = 100, D = 100, H = 52;
-    // Main concrete structure — warm grey
-    const body = _isoBox(cx, cy, W, D, H, '#8c8070');
-    // Roof details: AC unit
-    const ac1 = _isoBox(cx - 22, cy - H - 2, 18, 18, 8, '#6b7280');
-    const ac2 = _isoBox(cx + 18, cy - H - 2, 14, 14, 6, '#6b7280');
-    // Garage doors (dark steel panels with highlight stripe)
-    const doorL = `<polygon points="${cx-38},${cy+20} ${cx-8},${cy+36} ${cx-8},${cy+8} ${cx-38},${cy-8}" fill="#2a2f36" stroke="#1a1f24" stroke-width="0.5"/>
-                   <polygon points="${cx-38},${cy+20} ${cx-8},${cy+36} ${cx-8},${cy+34} ${cx-38},${cy+18}" fill="#3a4149" opacity="0.7"/>
-                   <line x1="${cx-30}" y1="${cy+14}" x2="${cx-12}" y2="${cy+22}" stroke="#4b5563" stroke-width="1.5"/>
-                   <line x1="${cx-30}" y1="${cy+18}" x2="${cx-12}" y2="${cy+26}" stroke="#4b5563" stroke-width="1"/>`;
-    const doorR = `<polygon points="${cx+8},${cy+36} ${cx+38},${cy+20} ${cx+38},${cy-8} ${cx+8},${cy+8}" fill="#1f2429" stroke="#14181c" stroke-width="0.5"/>
-                   <polygon points="${cx+8},${cy+36} ${cx+38},${cy+20} ${cx+38},${cy+18} ${cx+8},${cy+34}" fill="#2e343b" opacity="0.7"/>
-                   <line x1="${cx+12}" y1="${cy+22}" x2="${cx+30}" y2="${cy+14}" stroke="#374151" stroke-width="1.5"/>
-                   <line x1="${cx+12}" y1="${cy+26}" x2="${cx+30}" y2="${cy+18}" stroke="#374151" stroke-width="1"/>`;
-    // Logo stripe on facade
-    const stripe = `<polygon points="${cx-38},${cy-4} ${cx+38},${cy-4} ${cx+38},${cy-10} ${cx-38},${cy-10}" fill="#d4af37" opacity="0.85"/>`;
-    // Amber work-lamp glow above doors
-    const lamp = `<ellipse cx="${cx}" cy="${cy+2}" rx="28" ry="6" fill="rgba(245,158,11,0.08)"/>`;
-    const label = `<text x="${cx}" y="${cy - H - 12}" fill="#f1f5f9" font-size="8" font-family="'Rajdhani','Roboto Mono',monospace" text-anchor="middle" font-weight="700" letter-spacing="3">GARAGE</text>`;
-    return `<g class="hq-building" id="bld-garage_main" onclick="window.hqShowInfoPanel('garage_main')">${body}${ac1}${ac2}${doorL}${doorR}${stripe}${lamp}${label}</g>`;
+    return _bld_sprite(cx, cy, built, state, 'garage_main', 200, 160);
 }
 
 function _bld_workshop(cx, cy, built, state) {
-    if (!built) return _emptySlot(cx, cy, 'workshop', state);
-    const W = 58, D = 58, H = 42;
-    const body = _isoBox(cx, cy, W, D, H, '#7c6d5e');
-    // Chimney
-    const ch1 = _isoBox(cx + 14, cy - H + 2, 9, 9, 18, '#52443a');
-    const smoke = `<ellipse cx="${cx+14}" cy="${cy - H - 14}" rx="5" ry="3" fill="rgba(200,200,200,0.15)"/>
-                   <ellipse cx="${cx+16}" cy="${cy - H - 20}" rx="4" ry="2.5" fill="rgba(200,200,200,0.1)"/>`;
-    // Windows — amber workshop light
-    const wins = _windowGrid(cx, cy, W, D, H, 'left', 2, 3, '#f59e0b');
-    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 3, '#f59e0b');
-    // Tool chest on roof
-    const toolbox = _isoBox(cx - 16, cy - H, 12, 10, 6, '#ef4444', 0.9);
-    return `<g class="hq-building" id="bld-workshop" onclick="window.hqShowInfoPanel('workshop')">${body}${wins}${winsR}${ch1}${smoke}${toolbox}</g>`;
+    return _bld_sprite(cx, cy, built, state, 'workshop', 140, 120);
 }
 
 function _bld_ev_parking(cx, cy, built, state) {
-    if (!built) return _emptySlot(cx, cy, 'ev_parking', state);
-    const W = 76, D = 76, H = 10;
-    const pad = _isoBox(cx, cy, W, D, H, '#1e3a2f');
-    // Charging station pillars (green LED)
-    const post1 = _isoBox(cx - 20, cy - H + 2, 7, 7, 20, '#10b981', 1.1);
-    const post2 = _isoBox(cx + 12, cy - H + 2, 7, 7, 20, '#10b981', 1.1);
-    // EV symbol on ground
-    const evSym = `<text x="${cx}" y="${cy + 2}" fill="rgba(16,185,129,0.7)" font-size="14" font-family="sans-serif" text-anchor="middle" font-weight="bold">⚡</text>`;
-    // Cable lines
-    const cable = `<path d="M ${cx-20} ${cy-H-8} C ${cx-10} ${cy-H-4} ${cx+2} ${cy-H-4} ${cx+12} ${cy-H-8}" fill="none" stroke="#065f46" stroke-width="2"/>`;
-    // Green glow halos on chargers
-    const glow1 = `<ellipse cx="${cx-20}" cy="${cy-H-18}" rx="6" ry="3" fill="rgba(16,185,129,0.3)" filter="url(#lampGlow)"/>`;
-    const glow2 = `<ellipse cx="${cx+12}" cy="${cy-H-18}" rx="6" ry="3" fill="rgba(16,185,129,0.3)" filter="url(#lampGlow)"/>`;
-    return `<g class="hq-building" id="bld-ev_parking" onclick="window.hqShowInfoPanel('ev_parking')">${pad}${post1}${post2}${cable}${evSym}${glow1}${glow2}</g>`;
+    return _bld_sprite(cx, cy, built, state, 'ev_parking', 160, 100);
 }
 
 function _bld_gym(cx, cy, built, state) {
-    if (!built) return _emptySlot(cx, cy, 'gym', state);
-    const W = 58, D = 58, H = 46;
-    const body = _isoBox(cx, cy, W, D, H, '#4a3a5e');
-    // Glass curtain wall on left face — blue-tinted
-    const glass = `<polygon points="${cx-W/2},${cy-H+D/4} ${cx},${cy-H+D/2} ${cx},${cy+D/2} ${cx-W/2},${cy+D/4}" fill="rgba(96,165,250,0.18)" stroke="rgba(147,197,253,0.3)" stroke-width="0.5"/>`;
-    const wins = _windowGrid(cx, cy, W, D, H, 'right', 2, 4, '#93c5fd');
-    // Pull-up bar silhouette on roof
-    const bar = `<line x1="${cx-16}" y1="${cy-H-2}" x2="${cx+16}" y2="${cy-H-2}" stroke="#7c3aed" stroke-width="3" stroke-linecap="round"/>
-                 <line x1="${cx-16}" y1="${cy-H-8}" x2="${cx-16}" y2="${cy-H-2}" stroke="#6d28d9" stroke-width="2"/>
-                 <line x1="${cx+16}" y1="${cy-H-8}" x2="${cx+16}" y2="${cy-H-2}" stroke="#6d28d9" stroke-width="2"/>`;
-    return `<g class="hq-building" id="bld-gym" onclick="window.hqShowInfoPanel('gym')">${body}${glass}${wins}${bar}</g>`;
+    return _bld_sprite(cx, cy, built, state, 'gym', 140, 130);
 }
 
 function _bld_canteen(cx, cy, built, state) {
-    if (!built) return _emptySlot(cx, cy, 'canteen', state);
-    const W = 58, D = 58, H = 36;
-    const body = _isoBox(cx, cy, W, D, H, '#7a5c3e');
-    // Warm window light
-    const winsL = _windowGrid(cx, cy, W, D, H, 'left', 2, 2, '#fbbf24');
-    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 2, '#fbbf24');
-    // Awning on left face
-    const awning = `<polygon points="${cx-W/2-4},${cy-H+D/4+H*0.3} ${cx+2},${cy-H+D/2+H*0.3} ${cx+2},${cy-H+D/2+H*0.3-8} ${cx-W/2-4},${cy-H+D/4+H*0.3-8}" fill="#d97706" opacity="0.9"/>
-                    <line x1="${cx-W/2-4}" y1="${cy-H+D/4+H*0.3}" x2="${cx+2}" y2="${cy-H+D/2+H*0.3}" stroke="#b45309" stroke-width="1"/>`;
-    // Rooftop exhaust fan
-    const fan = _isoBox(cx - 8, cy - H - 2, 10, 10, 5, '#92400e');
-    // Warm light ambient
-    const ambient = `<ellipse cx="${cx}" cy="${cy+D/4}" rx="30" ry="8" fill="rgba(251,191,36,0.06)"/>`;
-    return `<g class="hq-building" id="bld-canteen" onclick="window.hqShowInfoPanel('canteen')">${body}${winsL}${winsR}${awning}${fan}${ambient}</g>`;
+    return _bld_sprite(cx, cy, built, state, 'canteen', 140, 120);
 }
 
 function _bld_infirmary(cx, cy, built, state) {
-    if (!built) return _emptySlot(cx, cy, 'infirmary', state);
-    const W = 58, D = 58, H = 36;
-    const body = _isoBox(cx, cy, W, D, H, '#e2e8f0', 0.55);
-    // Clean white windows
-    const winsL = _windowGrid(cx, cy, W, D, H, 'left', 2, 2, '#bfdbfe');
-    const winsR = _windowGrid(cx, cy, W, D, H, 'right', 2, 2, '#bfdbfe');
-    // Red cross sign (box on wall)
-    const signBox = `<polygon points="${cx-2},${cy-H+D/2+H*0.2} ${cx+18},${cy-H+D/2+H*0.2+5} ${cx+18},${cy-H+D/2+H*0.2-12} ${cx-2},${cy-H+D/2+H*0.2-17}" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.5"/>`;
-    const crossH  = `<line x1="${cx+2}" y1="${cy-H+D/2+H*0.2-8}" x2="${cx+14}" y2="${cy-H+D/2+H*0.2-2}" stroke="#ef4444" stroke-width="3"/>`;
-    const crossV  = `<line x1="${cx+8}" y1="${cy-H+D/2+H*0.2-12}" x2="${cx+8}" y2="${cy-H+D/2+H*0.2+2}" stroke="#ef4444" stroke-width="3"/>`;
-    // Rooftop helical antenna (med beacon)
-    const beacon = `<line x1="${cx}" y1="${cy-H-2}" x2="${cx}" y2="${cy-H-14}" stroke="#94a3b8" stroke-width="1.5"/>
-                    <circle cx="${cx}" cy="${cy-H-14}" r="3" fill="#ef4444" class="hq-sparkle"/>`;
-    return `<g class="hq-building" id="bld-infirmary" onclick="window.hqShowInfoPanel('infirmary')">${body}${winsL}${winsR}${signBox}${crossH}${crossV}${beacon}</g>`;
+    return _bld_sprite(cx, cy, built, state, 'infirmary', 140, 120);
 }
 
 function _bld_mission_room(cx, cy, built, state) {
