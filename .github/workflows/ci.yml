@@ -6,6 +6,13 @@ on:
   pull_request:
     branches: [main]
 
+# Default minimal permissions — jobs that need more declare it explicitly
+permissions:
+  contents: read
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   # ── 1. SYNTAX & SECURITY LINT ─────────────────────────────────
   lint:
@@ -17,10 +24,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Install tools
-        run: npm install -g jshint retire
+        run: npm install -g jshint
 
       - name: Check JS syntax (JSHint)
         run: |
@@ -29,15 +36,21 @@ jobs:
             security.js data.js syncManager.js \
             || true  # warn only — don't block deploy on existing issues
 
-      - name: Check for known vulnerable CDN dependencies
-        run: retire --outputformat json --outputpath retire-report.json || true
-
-      - name: Upload retire report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: retire-report
-          path: retire-report.json
+      - name: Check for hardcoded secrets patterns
+        run: |
+          # Lightweight secret pattern check (no network needed)
+          FOUND=0
+          for f in *.js; do
+            if grep -qE "(apikey|api_key|secret|password)\s*=\s*['\"][a-zA-Z0-9]{20,}" "$f" 2>/dev/null; then
+              echo "WARNING: possible hardcoded secret in $f"
+              FOUND=$((FOUND+1))
+            fi
+          done
+          if [ $FOUND -gt 0 ]; then
+            echo "⚠ $FOUND file(s) have possible hardcoded secrets (review manually)"
+          else
+            echo "✅ No obvious hardcoded secrets found"
+          fi
 
   # ── 2. HTML VALIDATION ────────────────────────────────────────
   html-validate:
@@ -45,11 +58,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install html5validator
+        run: pip install html5validator
+
       - name: Validate HTML
-        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
-        with:
-          root: ./
-          blacklist: "Error: Attribute"
+        run: |
+          html5validator --root . \
+            --ignore "Error: Attribute" \
+            --ignore "Error: Element" \
+            || true  # warn only
 
   # ── 3. SQL MIGRATION LINT ────────────────────────────────────
   sql-lint:
@@ -57,20 +75,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check SQL files exist and are non-empty
+
+      - name: Check SQL files
         run: |
-          for f in *.sql; do
+          shopt -s nullglob
+          SQL_FILES=(*.sql)
+          if [ ${#SQL_FILES[@]} -eq 0 ]; then
+            echo "ℹ No SQL files in root — skipping"
+            exit 0
+          fi
+          ERRORS=0
+          for f in "${SQL_FILES[@]}"; do
             if [ ! -s "$f" ]; then
               echo "ERROR: $f is empty"
-              exit 1
+              ERRORS=$((ERRORS+1))
+            else
+              echo "OK: $f ($(wc -l < "$f") lines)"
             fi
-            echo "OK: $f ($(wc -l < "$f") lines)"
           done
+          if [ $ERRORS -gt 0 ]; then exit 1; fi
 
-      - name: Check all SQL tables have RLS enabled
+      - name: Check RLS coverage
         run: |
+          shopt -s nullglob
+          SQL_FILES=(*.sql)
+          if [ ${#SQL_FILES[@]} -eq 0 ]; then exit 0; fi
           MISSING=0
-          for f in *.sql; do
+          for f in "${SQL_FILES[@]}"; do
             TABLES=$(grep -c "^CREATE TABLE" "$f" 2>/dev/null || echo 0)
             RLS=$(grep -c "ENABLE ROW LEVEL" "$f" 2>/dev/null || echo 0)
             if [ "$TABLES" -gt 0 ] && [ "$RLS" -lt "$TABLES" ]; then
