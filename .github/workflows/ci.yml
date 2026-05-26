@@ -110,7 +110,12 @@ jobs:
     needs: [lint, sql-lint]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     permissions:
-      contents: write
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v6
 
@@ -121,9 +126,21 @@ jobs:
           done
           echo "✅ All required files present"
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
+      - name: Prepare deploy directory (exclude non-web files)
+        run: |
+          mkdir -p /tmp/deploy
+          rsync -a --exclude='.github' --exclude='docs' --exclude='supabase' \
+            --exclude='*.sql' --exclude='*.md' --exclude='slot_*.json' \
+            ./ /tmp/deploy/
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v4
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./
-          exclude_assets: '.github,*.sql,*.md,docs,supabase,slot_*.json'
+          path: /tmp/deploy
+
+      - name: Deploy to GitHub Pages
+        id: deploy
+        uses: actions/deploy-pages@v4
