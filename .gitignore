@@ -9,6 +9,10 @@ Thumbs.db
 
 # Claude Code local config
 .claude/
+.superpowers/
+
+# Local databases
+ruvector.db
 
 # Node (if ever used)
 node_modules/
