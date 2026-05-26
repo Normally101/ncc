@@ -2985,25 +2985,25 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .ops-kpi { display: flex; flex-direction: column; gap: 2px; padding: 0 20px; }
 .ops-kpi:first-child { padding-left: 0; }
-.ops-kpi-label { font-size: 8px; color: #6b8096; text-transform: uppercase; letter-spacing: 0.1em; }
-.ops-kpi-value { font-size: 20px; font-weight: 700; line-height: 1; }
-.ops-kpi-sub { font-size: 11px; color: #7a90a4; font-weight: 400; }
+.ops-kpi-label { font-size: 10px; color: #6b8096; text-transform: uppercase; letter-spacing: 0.1em; }
+.ops-kpi-value { font-size: 22px; font-weight: 700; line-height: 1; }
+.ops-kpi-sub { font-size: 13px; color: #7a90a4; font-weight: 400; }
 .ops-kpi-sep { width: 1px; align-self: stretch; background: rgba(0,0,0,0.10); margin: 0 4px; }
 
 .ops-alert-pill {
     background: rgba(239,68,68,0.15);
     border: 1px solid rgba(239,68,68,0.5);
     color: #ef4444;
-    font-size: 9px; font-weight: 700;
-    padding: 4px 10px; border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+    padding: 5px 12px; border-radius: 6px;
     font-family: 'Roboto Mono', monospace;
     animation: ops-blink 1s ease-in-out infinite;
 }
 @keyframes ops-blink { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
 .ops-action-btn {
-    font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
-    padding: 6px 14px; border-radius: 6px; cursor: pointer;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.05em;
+    padding: 7px 16px; border-radius: 6px; cursor: pointer;
     border: none; font-family: 'Roboto Mono', monospace;
     transition: all 0.15s ease;
 }
@@ -3021,15 +3021,15 @@ details[open] .finance-section-title { color: #00f2ff; }
 .ops-daily-summary {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
     font-family: monospace;
-    font-size: 9px;
+    font-size: 11px;
     color: var(--text-muted);
     letter-spacing: 0.05em;
     background: rgba(0,0,0,0.04);
     border-top: 1px solid var(--border);
-    padding: 8px 12px;
+    padding: 10px 14px;
     margin-top: 4px;
 }
 .ops-daily-label {
@@ -3068,16 +3068,16 @@ details[open] .finance-section-title { color: #00f2ff; }
     flex-shrink: 0;
 }
 .ops-col-title {
-    font-size: 9px; font-weight: 700;
+    font-size: 11px; font-weight: 700;
     text-transform: uppercase; letter-spacing: 0.12em;
     color: #5a7090;
     font-family: 'Roboto Mono', monospace;
 }
 .ops-col-badge {
-    font-size: 9px; font-weight: 700;
+    font-size: 11px; font-weight: 700;
     background: rgba(0,0,0,0.07);
     color: #5a7090;
-    padding: 2px 8px; border-radius: 10px;
+    padding: 3px 10px; border-radius: 10px;
     font-family: 'Roboto Mono', monospace;
 }
 .ops-col-badge--active {
@@ -3099,8 +3099,8 @@ details[open] .finance-section-title { color: #00f2ff; }
 .ops-ride-card {
     display: grid;
     grid-template-columns: auto 1fr auto;
-    align-items: center; gap: 10px;
-    padding: 10px 12px;
+    align-items: center; gap: 12px;
+    padding: 12px 14px;
     background: #f8fafb;
     border: 1px solid rgba(0,0,0,0.08);
     border-radius: 8px;
@@ -3116,24 +3116,24 @@ details[open] .finance-section-title { color: #00f2ff; }
     background: #fdfaf2;
 }
 .ops-ride-tier {
-    font-size: 8px; font-weight: 700;
-    padding: 3px 7px; border-radius: 4px;
+    font-size: 10px; font-weight: 700;
+    padding: 4px 9px; border-radius: 5px;
     border: 1px solid;
     font-family: 'Roboto Mono', monospace;
     white-space: nowrap;
 }
 .ops-ride-route {
-    font-size: 11px; font-weight: 600; color: #1a2744;
+    font-size: 13px; font-weight: 600; color: #1a2744;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.ops-ride-arrow { color: #8a9db0; margin: 0 4px; }
+.ops-ride-arrow { color: #8a9db0; margin: 0 5px; }
 .ops-ride-price {
-    font-size: 12px; font-weight: 700; color: #22c55e;
+    font-size: 14px; font-weight: 700; color: #22c55e;
     font-family: 'Roboto Mono', monospace;
     text-align: right; white-space: nowrap;
 }
 .ops-ride-margin {
-    display: block; font-size: 9px; font-weight: 600;
+    display: block; font-size: 11px; font-weight: 600;
 }
 
 /* Driver list */
@@ -3144,8 +3144,8 @@ details[open] .finance-section-title { color: #00f2ff; }
 .ops-driver-row {
     display: grid;
     grid-template-columns: 10px 1fr auto auto;
-    align-items: center; gap: 10px;
-    padding: 10px 12px;
+    align-items: center; gap: 12px;
+    padding: 12px 14px;
     background: #f8fafb;
     border: 1px solid rgba(0,0,0,0.08);
     border-radius: 8px;
@@ -3153,34 +3153,34 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .ops-driver-row:hover { background: #eef3f8; }
 .ops-driver-status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
+    width: 9px; height: 9px; border-radius: 50%;
     flex-shrink: 0;
-    box-shadow: 0 0 6px currentColor;
+    box-shadow: 0 0 7px currentColor;
 }
 .ops-driver-info { min-width: 0; }
 .ops-driver-name {
-    font-size: 11px; font-weight: 600; color: #1a2744;
+    font-size: 13px; font-weight: 600; color: #1a2744;
     display: flex; align-items: center; gap: 6px;
 }
-.ops-driver-car { font-size: 9px; color: #6b8096; margin-top: 1px; }
-.ops-driver-right { text-align: right; min-width: 80px; }
+.ops-driver-car { font-size: 11px; color: #6b8096; margin-top: 2px; }
+.ops-driver-right { text-align: right; min-width: 90px; }
 .ops-driver-status-label {
-    font-size: 9px; font-weight: 700;
+    font-size: 11px; font-weight: 700;
     font-family: 'Roboto Mono', monospace;
     text-transform: uppercase; letter-spacing: 0.05em;
 }
-.ops-driver-queue { font-size: 8px; color: #8a9db0; font-family: 'Roboto Mono', monospace; }
+.ops-driver-queue { font-size: 10px; color: #8a9db0; font-family: 'Roboto Mono', monospace; }
 .ops-driver-bars {
-    display: flex; flex-direction: column; gap: 3px;
+    display: flex; flex-direction: column; gap: 4px;
     width: 80px; flex-shrink: 0;
 }
 .ops-bar-wrap {
-    height: 3px; background: rgba(0,0,0,0.12); border-radius: 2px; overflow: hidden;
+    height: 5px; background: rgba(0,0,0,0.12); border-radius: 3px; overflow: hidden;
 }
-.ops-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+.ops-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
 .ops-mini-btn {
-    font-size: 8px; font-weight: 700; letter-spacing: 0.05em;
-    padding: 2px 6px; border-radius: 4px; cursor: pointer;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.05em;
+    padding: 3px 8px; border-radius: 4px; cursor: pointer;
     background: rgba(249,115,22,0.1);
     border: 1px solid rgba(249,115,22,0.35);
     color: #f97316;
@@ -4052,6 +4052,38 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
     border-color: rgba(255,255,255,0.08) !important;
 }
 .ops-daily-label { color: var(--text-muted) !important; }
+
+/* ================================================================
+   GLOBAL: elevate micro-font Tailwind classes in tab content
+   eRepublik/eRevolution use 12-14px minimum — we match that.
+   ================================================================ */
+#tab-container .text-\[7px\]    { font-size: 9px  !important; }
+#tab-container .text-\[8px\]    { font-size: 10px !important; }
+#tab-container .text-\[9px\]    { font-size: 11px !important; }
+#tab-container .text-\[9\.5px\] { font-size: 12px !important; }
+#tab-container .text-\[10px\]   { font-size: 12px !important; }
+#tab-container .text-\[10\.5px\]{ font-size: 13px !important; }
+#tab-container .text-\[11px\]   { font-size: 13px !important; }
+#tab-container .text-\[12px\]   { font-size: 14px !important; }
+#tab-container .text-xs         { font-size: 12px !important; }
+
+/* Section headers / labels in inline styles — override via attribute selector */
+#tab-container [style*="font-size:7px"],
+#tab-container [style*="font-size: 7px"]   { font-size: 9px  !important; }
+#tab-container [style*="font-size:8px"],
+#tab-container [style*="font-size: 8px"]   { font-size: 10px !important; }
+#tab-container [style*="font-size:9px"],
+#tab-container [style*="font-size: 9px"]   { font-size: 11px !important; }
+#tab-container [style*="font-size:9.5px"],
+#tab-container [style*="font-size: 9.5px"] { font-size: 12px !important; }
+#tab-container [style*="font-size:10px"],
+#tab-container [style*="font-size: 10px"]  { font-size: 12px !important; }
+#tab-container [style*="font-size:10.5px"],
+#tab-container [style*="font-size: 10.5px"]{ font-size: 13px !important; }
+#tab-container [style*="font-size:11px"],
+#tab-container [style*="font-size: 11px"]  { font-size: 13px !important; }
+#tab-container [style*="font-size:12px"],
+#tab-container [style*="font-size: 12px"]  { font-size: 14px !important; }
 
 /* ================================================================
    HOME TAB
