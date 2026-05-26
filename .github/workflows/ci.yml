@@ -9,19 +9,16 @@ on:
 permissions:
   contents: read
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
   # ── 1. SYNTAX & SECURITY LINT ─────────────────────────────────
   lint:
     name: Lint & Security Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '22'
 
@@ -45,14 +42,14 @@ jobs:
               FOUND=$((FOUND+1))
             fi
           done
-          echo "${FOUND} potential secret(s) flagged (review manually)"
+          echo "${FOUND} potential secret(s) flagged"
 
   # ── 2. HTML VALIDATION ────────────────────────────────────────
   html-validate:
     name: HTML Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Install html5validator
         run: pip install html5validator
@@ -69,7 +66,7 @@ jobs:
     name: SQL Migration Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Check SQL files
         run: |
@@ -115,7 +112,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Verify critical files present
         run: |
