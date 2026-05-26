@@ -13,7 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
+        run: |
+          git init .
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout FETCH_HEAD
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -48,7 +52,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
+        run: |
+          git init .
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout FETCH_HEAD
 
       - name: Install html5validator
         run: pip install html5validator
@@ -66,7 +74,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
+        run: |
+          git init .
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout FETCH_HEAD
 
       - name: Check SQL files
         run: |
@@ -118,7 +130,11 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - name: Checkout
-        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
+        run: |
+          git init .
+          git remote add origin "https://github.com/${{ github.repository }}.git"
+          git fetch --depth=1 origin "${{ github.sha }}"
+          git checkout FETCH_HEAD
 
       - name: Verify critical files present
         run: |
