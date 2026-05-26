@@ -188,204 +188,147 @@ function renderTabFleet() {
     const _showModelHeaders = filteredFleet.length >= 3;
     let _curModelHeader = null;
 
-    let html = _fleetHeader + `<div class="p-1">` + fuelTickerHtml + fuelDepotHtml + filterBar + `<div class="ds-eyebrow" style="margin:0 0 10px">Tua Flotta <span style="font-weight:400;color:var(--text-dim)">${filteredFleet.length}/${gameState.fleet.length}</span></div>` + noResults + `<div class="space-y-3 mb-6">`;
+    let html = _fleetHeader + `<div class="p-1">` + fuelTickerHtml + fuelDepotHtml + filterBar;
 
-    filteredFleet.forEach(car => {
-        // Model group header
-        const _carModel = car.name || 'Altro';
-        if (_showModelHeaders && _carModel !== _curModelHeader) {
-            _curModelHeader = _carModel;
-            const _mg = _modelGroups[_carModel];
-            const _mgAvgCond = Math.round(_mg.reduce((s, c) => s + (c.condition || 0), 0) / _mg.length);
-            const _mgCondColor = _mgAvgCond < 40 ? '#ef4444' : _mgAvgCond < 70 ? '#f59e0b' : '#22c55e';
-            const _mgNeedsRepair = _mg.some(c => (c.condition || 0) < 90);
-            const _mgRepairIds = JSON.stringify(_mg.filter(c => (c.condition || 0) < 100).map(c => c.id));
-            html += `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;margin:14px -2px 6px;background:rgba(0,0,0,0.04);border-radius:10px;border:1px solid rgba(0,0,0,0.08)">
-                <div>
-                    <span style="font-size:13px;font-weight:800;color:var(--text)">${_carModel}</span>
-                    <span style="font-size:11px;font-weight:600;color:var(--text-muted);margin-left:8px">${_mg.length}×</span>
-                    <span style="font-size:9px;color:#6b7280;margin-left:8px">Cond. media: <span style="color:${_mgCondColor};font-weight:700">${_mgAvgCond}%</span></span>
-                </div>
-                ${_mgNeedsRepair ? `<button onclick="window.bulkRepairFleet(${_mgRepairIds})" style="font-size:8px;padding:5px 10px;border-radius:7px;border:1px solid rgba(212,175,55,0.4);background:rgba(212,175,55,0.10);color:#c9a227;cursor:pointer;white-space:nowrap">🔧 Ripara gruppo</button>` : ''}
-            </div>`;
-        }
-
-        if (!car.upgrades) car.upgrades = [];
-
-        // Catalog lookup for image + electric type (remap legacy vehicleClass on the fly)
-        const _VC_LG = { 'mercedes_e':'stellar_e_exec', 'mercedes_v':'stellar_v_carr', 'mercedes_sprinter':'stellar_v_carr', 'mercedes_s':'stellar_s_imp' };
-        const _vc = _VC_LG[car.vehicleClass] || car.vehicleClass;
-        const catalog = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : [])
-            .find(c => c.vehicleClass === _vc || c.id === _vc || c.id === car.id);
-        const isElectric = catalog?.fuel === 'electric';
-        const cardImg = catalog?.img || 'assets/fleet/stellar-e-executive.jpg';
-
-        // Energy level (charge for electric, fuel for gasoline)
-        const energyPct = isElectric
-            ? Math.floor(car.chargeLevel ?? 100)
-            : (car.fuel !== undefined ? Math.floor(car.fuel) : 100);
-        const energyColor = energyPct < 20 ? '#ff4060' : energyPct < 50 ? '#f59e0b' : (isElectric ? '#22c55e' : '#00f2ff');
-        const energyIcon  = isElectric ? '⚡' : '⛽';
-
-        const tirePct  = car.tirePressure !== undefined ? Math.floor(car.tirePressure) : 100;
-        const tireColor = tirePct < 30 ? '#ff4060' : tirePct < 60 ? '#f59e0b' : '#22c55e';
-        const condPct   = Math.max(0, Math.floor(car.condition || 0));
-        const condColor = condPct <= 10 ? '#ff4060' : condPct < 30 ? '#ef4444' : condPct < 60 ? '#f59e0b' : '#22c55e';
-        const eh        = car.engineHealth !== undefined ? car.engineHealth : 100;
-        const ehColor   = eh <= 0 ? '#ff4060' : eh < 30 ? '#ef4444' : eh < 60 ? '#f59e0b' : '#22c55e';
-
-        const outReason = car.outOfService;
-        const outLabel  = (outReason === 'fuel' && energyPct > 5) ? null
-                        : outReason === 'fuel'   ? (isElectric ? '🔴 FERMA — Batteria scarica' : '🔴 FERMA — Serbatoio esaurito')
-                        : outReason === 'tires'  ? '🔴 FERMA — Deposito Gomme esaurito'
-                        : outReason === 'engine' ? '🔴 MOTORE FUSO — Riparazione urgente'
-                        : null;
-        const condWarn  = condPct <= 10 ? '🔴 FERMA — Officina urgente!' : condPct < 30 ? '⚠ Salute critica — incasso −15%' : '';
-
-        const hasCentralina  = car.upgrades.includes('centralina');
-        const hasSerbatoio   = car.upgrades.includes('serbatoio_ext');
-        const hasVetriC      = car.upgrades.includes('vetri_oscurati');
-        const hasTelepassCar = car.upgrades.includes('telepass_car');
-        const tuningBadges   = [
-            hasCentralina  ? '<span style="background:rgba(0,242,255,0.12);color:#00f2ff;border:1px solid rgba(0,242,255,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🔧+28%</span>' : '',
-            hasSerbatoio   ? '<span style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.3);font-size:8px;padding:1px 5px;border-radius:6px">⛽−55%</span>' : '',
-            hasVetriC      ? '<span style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🕶−65%</span>' : '',
-            hasTelepassCar ? '<span style="background:rgba(212,175,55,0.12);color:#d4af37;border:1px solid rgba(212,175,55,0.3);font-size:8px;padding:1px 5px;border-radius:6px">🛣−15%</span>' : '',
-        ].filter(Boolean).join(' ');
-
-        // Position tracking
-        const assignedDriver = gameState.drivers.find(d => d.assignedCarId === car.id && d.id !== 'ceo');
-        const poiName   = car.currentPoiId && typeof POIS !== 'undefined' && POIS[car.currentPoiId] ? POIS[car.currentPoiId].name : null;
-        const isAtHub   = !car.currentPoiId || car.currentPoiId === 'roma';
-        const isReturning = assignedDriver && assignedDriver._returning;
-        let returnCostStr = '';
-        if (!isAtHub && !isReturning && car.currentPoiId && typeof POIS !== 'undefined' && POIS[car.currentPoiId]) {
-            const fp = POIS[car.currentPoiId], hp = POIS['roma'];
-            if (fp && hp) {
-                const R2 = 6371, dL = (hp.lat-fp.lat)*Math.PI/180, dG = (hp.lng-fp.lng)*Math.PI/180;
-                const aa = Math.sin(dL/2)**2 + Math.cos(fp.lat*Math.PI/180)*Math.cos(hp.lat*Math.PI/180)*Math.sin(dG/2)**2;
-                const d2 = R2*2*Math.atan2(Math.sqrt(aa),Math.sqrt(1-aa));
-                const fc = Math.round(d2*0.18), tc = (hasTelepassCar || (typeof hasInvestment==='function' && hasInvestment('inv_telepass'))) ? 0 : Math.round(d2*0.08);
-                returnCostStr = `€${(fc+tc).toLocaleString()} · ${Math.max(1,Math.ceil(d2/90))}h`;
-            }
-        }
-
-        const repairCostCond = Math.max(500, (100 - condPct) * 85);
-        const repairCostEng  = Math.max(800, (100 - eh) * 180);
-        const borderClass    = outReason ? 'border-red-500/60' : condPct <= 10 ? 'border-orange-500/60' : 'border-white/10';
-
+    // ── FLEET TABLE ─────────────────────────────────────────────────────
+    if (filteredFleet.length === 0) {
+        html += noResults;
+    } else {
+        const _TH = t => `<th style="padding:8px 14px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);font-family:'Roboto Mono',monospace;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);white-space:nowrap">${t}</th>`;
         html += `
-        <div class="fleet-card-luxury ${borderClass}" style="${cardImg ? `--card-img:url('${cardImg}')` : ''}">
-            ${cardImg ? `<div class="fleet-card-photo"></div>` : ''}
-            <div class="fleet-card-glass">
-                <!-- Header -->
-                <div class="fleet-card-header">
-                    <div class="flex-1 min-w-0">
-                        <div class="fleet-card-brand truncate">
-                            ${car.name}
-                            ${car.isLease ? (() => {
-                            const remDays = Math.max(0, car.leaseDuration * 30 - (car.leaseElapsedDays || 0));
-                            const remMonths = Math.ceil(remDays / 30);
-                            const monthly = car.leaseMonthlyRate || Math.round((car.dailyCost||0)*30);
-                            const penalty = Math.round(remMonths * monthly * 0.5);
-                            return `<span class="text-[8px] text-blue-300 border border-blue-400/40 px-1 ml-1 rounded uppercase">Leasing</span>` +
-                                   `<span class="text-[8px] text-gray-500 ml-1">· scade in ${remDays}g</span>` +
-                                   `<span class="text-[8px] text-red-400/70 ml-1">· penale €${penalty.toLocaleString()}</span>`;
-                        })() : ''}
-                        </div>
-                        <div class="fleet-card-tier ${isElectric ? 'fleet-card-electric' : ''}">
-                            ${car.tier.toUpperCase()} · ${Math.floor((car.mileage||0)/1000)}k km
-                            ${isElectric ? '<span class="ml-1 text-[8px] bg-green-500/20 text-green-400 border border-green-500/30 px-1 rounded">CO2 ESENTE</span>' : ''}
-                            ${(car.mileage||0) > 0 && (car.mileage||0) % 5000 < 300 ? '<span class="ml-1 text-orange-400">⚠ Tagliando</span>' : ''}
-                        </div>
-                        ${tuningBadges ? `<div class="mt-1 flex gap-1 flex-wrap">${tuningBadges}</div>` : ''}
-                        ${isReturning    ? `<div class="text-[9px] text-cyan-400 mt-0.5">🏠 In rientro all'Hub…</div>`
-                          : poiName && !isAtHub ? `<div class="text-[9px] text-yellow-400 mt-0.5">📍 ${poiName}</div>`
-                          : `<div class="text-[9px] text-green-400/60 mt-0.5">🏠 Hub Roma</div>`}
-                        <div style="font-size:9px;margin-top:2px;${assignedDriver ? 'color:#4d6480' : 'color:#ef4444;font-weight:700'}">
-                            ${assignedDriver ? `👤 ${assignedDriver.name}` : '👤 Nessun autista assegnato'}
-                        </div>
-                        ${condWarn  ? `<div class="text-[9px] font-bold mt-0.5" style="color:${condColor}">${condWarn}</div>` : ''}
-                        ${outLabel  ? `<div class="text-[9px] text-red-400 font-bold mt-0.5">${outLabel}</div>` : ''}
-                    </div>
-                    <button onclick="openCarModal('${car.id}')" class="btn-blue !py-1 !px-2 ml-2 shrink-0">Gestisci</button>
-                </div>
-
-                <!-- Stats bars -->
-                <div class="fleet-card-stats">
-                    <div class="fleet-stat-row">
-                        <span class="fleet-stat-label">🔧 Carrozzeria</span>
-                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${condPct}%;background:${condColor}"></div></div>
-                        <span class="text-[8px] font-mono" style="color:${condColor}">${condPct}%</span>
-                        ${condPct < 100 ? `
-                        <button onclick="repairVehicle('${car.id}')" class="workshop-repair-btn" title="Ripara: €${repairCostCond.toLocaleString()}">🔩 €${repairCostCond.toLocaleString()}</button>
-                        <button onclick="instantRepairDC('${car.id}')" class="text-[7px] bg-yellow-900/40 text-yellow-300 px-1 rounded hover:bg-yellow-800/50" title="Insta-Repair: 2 DC">⚡2DC</button>` : ''}
-                    </div>
-                    <div class="fleet-stat-row">
-                        <span class="fleet-stat-label">${energyIcon} ${isElectric ? 'Batteria' : 'Carburante'}</span>
-                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${energyPct}%;background:${energyColor}"></div></div>
-                        <span class="text-[8px] font-mono" style="color:${energyColor}">${energyPct}%</span>
-                    </div>
-                    <div class="fleet-stat-row">
-                        <span class="fleet-stat-label">🔵 Gomme</span>
-                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${tirePct}%;background:${tireColor}"></div></div>
-                        <span class="text-[8px] font-mono" style="color:${tireColor}">${tirePct}%</span>
-                    </div>
-                    <div class="fleet-stat-row">
-                        <span class="fleet-stat-label">⚙️ Motore</span>
-                        <div class="fleet-stat-bar"><div class="fleet-stat-fill" style="width:${eh}%;background:${ehColor}"></div></div>
-                        <span class="text-[8px] font-mono" style="color:${ehColor}">${eh}%</span>
-                        ${eh < 30 && eh > 0 ? '<span class="text-[8px] text-red-400 font-bold">⚠ −2×</span>' : ''}
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="fleet-card-actions">
-                    ${isElectric ? `
-                    <button onclick="window.superchargeVehicle('${car.id}')"
-                        class="flex-1 text-[8px] py-1 px-1 rounded border border-green-600/50 bg-green-950/40 text-green-300 hover:bg-green-900/50 transition-colors">
-                        ⚡ Supercharger<br><span class="text-[7px] opacity-60">€80 flat</span>
-                    </button>` : `
-                    <button onclick="window.buyStandardFuel('${car.id}')"
-                        class="flex-1 text-[8px] py-1 px-1 rounded border border-cyan-700/50 bg-cyan-950/30 text-cyan-300 hover:bg-cyan-900/40 transition-colors"
-                        title="Distributore pubblico: prezzo pieno">
-                        ⛽ Rifornisci<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85))}</span>
-                    </button>
-                    <button onclick="window.buyBlackMarketFuel('${car.id}')"
-                        class="flex-1 text-[8px] py-1 px-1 rounded border border-yellow-700/50 bg-yellow-950/30 text-yellow-400 hover:bg-yellow-900/40 transition-colors"
-                        title="Gasolio Agricolo: −40%, 10% rischio motore">
-                        🖤 Agricolo<br><span class="text-[7px] opacity-60">€${Math.floor((100-(car.fuel||0))*0.5*(gameState.fuelPrice||1.85)*0.60)}</span>
-                    </button>`}
-                    ${eh < 100 ? `
-                    <button onclick="window.repairEngine('${car.id}')"
-                        class="flex-1 text-[8px] py-1 px-1 rounded border border-orange-600/50 bg-orange-950/30 text-orange-300 hover:bg-orange-900/40 transition-colors">
-                        🔧 Motore<br><span class="text-[7px] opacity-60">€${repairCostEng.toLocaleString()}</span>
-                    </button>` : ''}
-                </div>
-
-                ${!isAtHub && !isReturning && assignedDriver && assignedDriver.status === 'idle' ? `
-                <button onclick="window.returnToHub('${car.id}')"
-                    class="w-full mt-1.5 text-[8px] py-1 px-2 rounded border border-gold/40 bg-gold/10 text-gold hover:bg-gold/20 transition-colors">
-                    🏠 Ritorna all'Hub &nbsp;<span class="opacity-60">${returnCostStr}</span>
-                </button>` : ''}
-                ${car.isLease ? (() => {
-                    const remDays   = Math.max(0, car.leaseDuration * 30 - (car.leaseElapsedDays || 0));
-                    const remMonths = Math.ceil(remDays / 30);
-                    const monthly   = car.leaseMonthlyRate || Math.round((car.dailyCost||0)*30);
-                    const penalty   = Math.round(remMonths * monthly * 0.5);
-                    return `<button onclick="window.terminateLease('${car.id}')"
-                        class="w-full mt-1.5 text-[8px] py-1 px-2 rounded border border-red-600/40 bg-red-950/30 text-red-400 hover:bg-red-900/40 transition-colors">
-                        📋 Termina Leasing &nbsp;<span class="opacity-70">penale €${penalty.toLocaleString()}</span>
-                    </button>`;
-                })() : ''}
+        <div class="ce-glass" style="overflow:hidden;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(0,0,0,0.28);border-bottom:1px solid rgba(255,255,255,0.06)">
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.12em;color:var(--text-muted);font-family:'Roboto Mono',monospace">Flotta · ${filteredFleet.length} / ${gameState.fleet.length} veicoli</span>
             </div>
-        </div>`;
-    });
+            <table style="width:100%;border-collapse:collapse">
+                <thead><tr style="background:rgba(255,255,255,0.02)">${_TH('Veicolo')}${_TH('Condiz.')}${_TH('Carburante')}${_TH('Gomme')}${_TH('Autista')}${_TH('Stato')}<th></th></tr></thead>
+                <tbody>`;
+
+        filteredFleet.forEach(car => {
+            // Model group header row
+            const _carModel = car.name || 'Altro';
+            if (_showModelHeaders && _carModel !== _curModelHeader) {
+                _curModelHeader = _carModel;
+                const _mg = _modelGroups[_carModel];
+                const _mgAvgCond = Math.round(_mg.reduce((s, c) => s + (c.condition || 0), 0) / _mg.length);
+                const _mgCondColor = _mgAvgCond < 40 ? '#ef4444' : _mgAvgCond < 70 ? '#f59e0b' : '#22c55e';
+                const _mgNeedsRepair = _mg.some(c => (c.condition || 0) < 90);
+                const _mgRepairIds = JSON.stringify(_mg.filter(c => (c.condition || 0) < 100).map(c => c.id));
+                html += `<tr style="background:rgba(0,0,0,0.18)"><td colspan="7" style="padding:7px 14px;border-bottom:1px solid rgba(255,255,255,0.05)">
+                    <div style="display:flex;align-items:center;justify-content:space-between">
+                        <span style="font-size:10px;font-weight:800;color:var(--text-muted)">${_carModel} <span style="font-size:9px;font-weight:400;color:#6b7280">${_mg.length}× · cond. media <span style="color:${_mgCondColor}">${_mgAvgCond}%</span></span></span>
+                        ${_mgNeedsRepair ? `<button onclick="window.bulkRepairFleet(${_mgRepairIds})" style="font-size:8px;padding:3px 8px;border-radius:5px;border:1px solid rgba(212,175,55,0.35);background:rgba(212,175,55,0.08);color:#c9a227;cursor:pointer">🔧 Ripara gruppo</button>` : ''}
+                    </div>
+                </td></tr>`;
+            }
+
+            if (!car.upgrades) car.upgrades = [];
+
+            // Catalog lookup
+            const _VC_LG = { 'mercedes_e':'stellar_e_exec', 'mercedes_v':'stellar_v_carr', 'mercedes_sprinter':'stellar_v_carr', 'mercedes_s':'stellar_s_imp' };
+            const _vc = _VC_LG[car.vehicleClass] || car.vehicleClass;
+            const catalog = (typeof STELLAR_VOLT_CATALOG !== 'undefined' ? STELLAR_VOLT_CATALOG : [])
+                .find(c => c.vehicleClass === _vc || c.id === _vc || c.id === car.id);
+            const isElectric = catalog?.fuel === 'electric';
+
+            // Stats
+            const energyPct = isElectric ? Math.floor(car.chargeLevel ?? 100) : (car.fuel !== undefined ? Math.floor(car.fuel) : 100);
+            const energyColor = energyPct < 20 ? '#ff4060' : energyPct < 50 ? '#f59e0b' : (isElectric ? '#22c55e' : '#00f2ff');
+            const tirePct   = car.tirePressure !== undefined ? Math.floor(car.tirePressure) : 100;
+            const tireColor = tirePct < 30 ? '#ff4060' : tirePct < 60 ? '#f59e0b' : '#22c55e';
+            const condPct   = Math.max(0, Math.floor(car.condition || 0));
+            const condColor = condPct <= 10 ? '#ff4060' : condPct < 30 ? '#ef4444' : condPct < 60 ? '#f59e0b' : '#22c55e';
+            const eh        = car.engineHealth !== undefined ? car.engineHealth : 100;
+
+            const outReason = car.outOfService;
+            const outLabel  = (outReason === 'fuel' && energyPct > 5) ? null
+                            : outReason === 'fuel'   ? (isElectric ? '🔴 Batteria scarica' : '🔴 Serbatoio esaurito')
+                            : outReason === 'tires'  ? '🔴 Gomme esaurite'
+                            : outReason === 'engine' ? '🔴 Motore fuso'
+                            : null;
+
+            const hasCentralina  = car.upgrades.includes('centralina');
+            const hasSerbatoio   = car.upgrades.includes('serbatoio_ext');
+            const hasVetriC      = car.upgrades.includes('vetri_oscurati');
+            const hasTelepassCar = car.upgrades.includes('telepass_car');
+            const tuningBadges   = [
+                hasCentralina  ? '<span style="background:rgba(0,242,255,0.12);color:#00f2ff;border:1px solid rgba(0,242,255,0.3);font-size:7px;padding:1px 4px;border-radius:4px">+28%</span>' : '',
+                hasSerbatoio   ? '<span style="background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.3);font-size:7px;padding:1px 4px;border-radius:4px">⛽−55%</span>' : '',
+                hasVetriC      ? '<span style="background:rgba(168,85,247,0.12);color:#c084fc;border:1px solid rgba(168,85,247,0.3);font-size:7px;padding:1px 4px;border-radius:4px">🕶−65%</span>' : '',
+                hasTelepassCar ? '<span style="background:rgba(212,175,55,0.12);color:#d4af37;border:1px solid rgba(212,175,55,0.3);font-size:7px;padding:1px 4px;border-radius:4px">🛣−15%</span>' : '',
+            ].filter(Boolean).join(' ');
+
+            const assignedDriver = gameState.drivers.find(d => d.assignedCarId === car.id && d.id !== 'ceo');
+            const repairCostCond = Math.max(500, (100 - condPct) * 85);
+            const repairCostEng  = Math.max(800, (100 - eh) * 180);
+
+            // Tier badge
+            const _tColors = { standard:'#6b7280', business:'#00f2ff', vip:'#d4af37', ultra:'#f97316' };
+            const _tc = _tColors[car.tier] || '#6b7280';
+            const tierBadge = `<span style="font-size:8px;font-weight:700;padding:2px 6px;border-radius:4px;background:${_tc}18;color:${_tc};border:1px solid ${_tc}40;white-space:nowrap">${(car.tier||'std').toUpperCase()}${isElectric ? ' ⚡' : ''}</span>`;
+
+            // Status badge
+            let statusLabel, statusColor;
+            if (outLabel)                                            { statusLabel = '● FERMA';      statusColor = '#ef4444'; }
+            else if (condPct < 30)                                   { statusLabel = '⚠ CRITICA';    statusColor = '#f59e0b'; }
+            else if (assignedDriver && assignedDriver.status==='busy') { statusLabel = '● IN CORSA';  statusColor = '#3b82f6'; }
+            else if (assignedDriver)                                 { statusLabel = '● LIBERA';     statusColor = '#22c55e'; }
+            else                                                     { statusLabel = '— NO AUTISTA'; statusColor = '#6b7280'; }
+
+            // Lease badge
+            const leaseBadge = car.isLease ? (() => {
+                const remDays = Math.max(0, car.leaseDuration * 30 - (car.leaseElapsedDays || 0));
+                return `<span style="font-size:7px;color:#93c5fd;border:1px solid rgba(147,197,253,0.3);padding:1px 5px;border-radius:4px;margin-left:4px">Leasing · ${remDays}g</span>`;
+            })() : '';
+
+            html += `
+            <tr class="ce-table-row" style="border-bottom:1px solid rgba(255,255,255,0.04)">
+                <td style="padding:11px 14px;max-width:200px">
+                    <div style="font-size:12px;font-weight:700;color:var(--text)">${car.name}${leaseBadge}</div>
+                    <div style="margin-top:4px;display:flex;align-items:center;gap:4px;flex-wrap:wrap">${tierBadge}${tuningBadges ? `<span style="display:inline-flex;gap:3px;flex-wrap:wrap">${tuningBadges}</span>` : ''}</div>
+                    ${outLabel ? `<div style="font-size:9px;color:#ef4444;font-weight:700;margin-top:3px">${outLabel}</div>` : ''}
+                </td>
+                <td style="padding:11px 14px;min-width:110px">
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <div class="ce-progress-bar" style="flex:1;min-width:50px"><div class="ce-progress-fill" style="width:${condPct}%;background:${condColor}"></div></div>
+                        <span style="font-size:9px;font-family:monospace;color:${condColor};width:28px;text-align:right;flex-shrink:0">${condPct}%</span>
+                    </div>
+                    ${eh < 70 ? `<div style="font-size:8px;color:#f97316;margin-top:3px">⚙ Motore ${eh}%</div>` : ''}
+                </td>
+                <td style="padding:11px 14px;min-width:110px">
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <div class="ce-progress-bar" style="flex:1;min-width:50px"><div class="ce-progress-fill" style="width:${energyPct}%;background:${energyColor}"></div></div>
+                        <span style="font-size:9px;font-family:monospace;color:${energyColor};width:28px;text-align:right;flex-shrink:0">${energyPct}%</span>
+                    </div>
+                </td>
+                <td style="padding:11px 14px;min-width:100px">
+                    <div style="display:flex;align-items:center;gap:6px">
+                        <div class="ce-progress-bar" style="flex:1;min-width:40px"><div class="ce-progress-fill" style="width:${tirePct}%;background:${tireColor}"></div></div>
+                        <span style="font-size:9px;font-family:monospace;color:${tireColor};width:28px;text-align:right;flex-shrink:0">${tirePct}%</span>
+                    </div>
+                </td>
+                <td style="padding:11px 14px">
+                    <div style="font-size:11px;color:${assignedDriver ? 'var(--text)' : '#ef4444'};${assignedDriver ? '' : 'font-weight:700'}">${assignedDriver ? assignedDriver.name : '—'}</div>
+                    <div style="font-size:9px;color:var(--text-dim);margin-top:1px">${Math.floor((car.mileage||0)/1000)}k km</div>
+                </td>
+                <td style="padding:11px 14px;white-space:nowrap">
+                    <span style="font-size:9px;font-weight:700;color:${statusColor}">${statusLabel}</span>
+                </td>
+                <td style="padding:11px 14px;text-align:right;white-space:nowrap">
+                    ${condPct < 100 ? `<button onclick="repairVehicle('${car.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(212,175,55,0.35);background:rgba(212,175,55,0.08);color:#d4af37;cursor:pointer;margin-right:6px" title="Ripara carrozzeria">🔧 €${repairCostCond.toLocaleString()}</button>` : ''}
+                    ${eh < 70 ? `<button onclick="window.repairEngine('${car.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(249,115,22,0.35);background:rgba(249,115,22,0.08);color:#f97316;cursor:pointer;margin-right:6px" title="Ripara motore">⚙ €${repairCostEng.toLocaleString()}</button>` : ''}
+                    <button onclick="openCarModal('${car.id}')" style="font-size:9px;padding:4px 10px;border-radius:6px;border:1px solid rgba(0,242,255,0.3);background:rgba(0,242,255,0.08);color:#00f2ff;cursor:pointer;font-weight:700">Gestisci →</button>
+                </td>
+            </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+    }
 
     // Seized cars notice
     const seized = gameState.seizedCars || [];
     if (seized.length > 0) {
-        html += `</div><div class="hud-card !border-red-500/40 bg-red-950/10 mb-4"><div class="text-[10px] text-red-400 font-bold uppercase mb-2">🚨 Veicoli Sequestrati</div>`;
+        html += `<div class="hud-card !border-red-500/40 bg-red-950/10 mb-4"><div class="text-[10px] text-red-400 font-bold uppercase mb-2">🚨 Veicoli Sequestrati</div>`;
         seized.forEach(sc => {
             const daysLeft = Math.max(0, sc.releaseDay - gameState.day);
             html += `<div class="text-[9px] text-gray-400 flex justify-between"><span>🚗 ${sc.carName}</span><span class="text-red-400">Rilascio fra ${daysLeft}g</span></div>`;
@@ -393,7 +336,7 @@ function renderTabFleet() {
         html += `</div>`;
     }
 
-    html += `</div>
+    html += `
     <div onclick="window.hubNavigate('showroom')"
          style="margin:12px 0;padding:14px 16px;border-radius:10px;
                 border:1px solid rgba(0,212,255,0.2);background:rgba(0,212,255,0.05);
@@ -412,7 +355,7 @@ function renderTabFleet() {
 
     // Prototype / exclusive vehicles
     if (typeof PROTOTYPE_CARS !== 'undefined' && PROTOTYPE_CARS.length > 0) {
-        html += `</div><h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🔬 Prototipi Esclusivi</h3><div class="space-y-2">`;
+        html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🔬 Prototipi Esclusivi</h3><div class="space-y-2">`;
         PROTOTYPE_CARS.forEach(c => {
             const isOwned    = gameState.fleet.some(f => f.protoId === c.id);
             const repOk      = gameState.reputation >= c.reqRep;
@@ -488,7 +431,7 @@ function renderTabFleet() {
     }
     html += `</div>`;
 
-    container.innerHTML = html + `</div></div>`;
+    container.innerHTML = html + `</div>`;
 }
 
 

@@ -86,122 +86,106 @@ function renderTabStaff() {
     </div>`;
 
     // ── I Tuoi Autisti ──────────────────────────────────────────────────────
-    html += `<div class="ds-eyebrow" style="margin:0 0 12px">🚗 I Tuoi Autisti</div>
-    <div style="display:flex;flex-direction:column;gap:8px">`;
-    gameState.drivers.filter(d => d.id !== 'ceo').forEach(d => {
-        const fatigue      = d.fatigue || 0;
-        const fatigueLevel = fatigue >= 85 ? 'red' : fatigue >= 60 ? 'orange' : 'green';
-        const isResting    = d.status === 'resting';
-        const levelData    = (DRIVER_LEVELS || [])[d.level || 0] || { name:'Rookie', xpMin:0, xpMax:200, badge:'lvl-rookie' };
-        const nextLvl      = (DRIVER_LEVELS || [])[Math.min((d.level||0)+1, DRIVER_LEVELS.length-1)];
-        const _xpDenom     = nextLvl ? (nextLvl.xpMin - levelData.xpMin) : 0;
-        const xpPct        = (!nextLvl || nextLvl === levelData || _xpDenom <= 0) ? 100 : Math.max(0, Math.min(100, Math.round(((d.xp||0) - levelData.xpMin) / _xpDenom * 100)));
-        const stress       = d.stress_level !== undefined ? d.stress_level : 0;
-        const isBurnout    = d.burnout_until && (gameState.day * 24 + gameState.hour) < d.burnout_until;
-        const stressLevel  = stress >= 80 ? 'red' : stress >= 50 ? 'orange' : 'green';
-        const morale       = d.morale !== undefined ? d.morale : 100;
-        const moraleLevel  = morale < 25 ? 'red' : morale < 60 ? 'orange' : 'green';
-        const sat          = d.satisfaction !== undefined ? d.satisfaction : 70;
-        const satLevel     = sat < 30 ? 'red' : sat < 60 ? 'orange' : 'green';
-        const statusPill   = isBurnout
-            ? DS.pill(`🔥 BURNOUT — Recupero ${d.restHoursLeft}h`, 'red', true)
-            : isResting
-                ? DS.pill(`☕ Riposo (${d.restHoursLeft}h rimaste)`, 'orange')
-                : fatigue >= 85
-                    ? DS.pill('⚠ ESAUSTO', 'red', true)
-                    : stress >= 80
-                        ? DS.pill('😰 Sotto stress', 'orange')
-                        : '';
-        const avatarHtml = d.avatarBase64
-            ? `<img src="${d.avatarBase64}" class="driver-avatar" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Clicca per cambiare foto" style="cursor:pointer">`
-            : `<div class="driver-avatar-placeholder" onclick="document.getElementById('avatar-upload-${d.id}').click()" title="Aggiungi foto" style="cursor:pointer">👤</div>`;
-        const specs   = typeof DRIVER_SPECIALTIES !== 'undefined' ? DRIVER_SPECIALTIES : [];
-        const curSpec = specs.find(s => s.id === d.specialty);
-        const opts    = specs.map(s => `<option value="${s.id}" ${d.specialty === s.id ? 'selected' : ''}>${s.name}</option>`).join('');
-        html += `<div class="ds-card">
+    const _myDrivers = gameState.drivers.filter(d => d.id !== 'ceo');
+    if (_myDrivers.length === 0) {
+        html += `<div class="ds-eyebrow" style="margin:0 0 12px">🚗 I Tuoi Autisti</div>` +
+            DS.empty({ icon:'🚗', title:'Nessun autista', body:'Assumi autisti dal Mercato Reclutamento qui sotto' });
+    } else {
+        const _STH = t => `<th style="padding:8px 14px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);font-family:'Roboto Mono',monospace;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);white-space:nowrap">${t}</th>`;
+        html += `<div class="ds-eyebrow" style="margin:0 0 12px">🚗 I Tuoi Autisti <span style="font-size:9px;font-weight:400;color:var(--text-dim)">${_myDrivers.length} totali</span></div>
+        <div class="ce-glass" style="overflow:hidden;margin-bottom:16px">
+            <table style="width:100%;border-collapse:collapse">
+                <thead><tr style="background:rgba(255,255,255,0.02)">${_STH('Autista')}${_STH('Stato')}${_STH('Fatica')}${_STH('Stress')}${_STH('Morale')}${_STH('Veicolo')}<th></th></tr></thead>
+                <tbody>`;
+
+        _myDrivers.forEach(d => {
+            const fatigue   = d.fatigue || 0;
+            const stress    = d.stress_level !== undefined ? d.stress_level : 0;
+            const morale    = d.morale !== undefined ? d.morale : 100;
+            const isResting = d.status === 'resting';
+            const isBusy    = d.status === 'busy';
+            const isBurnout = d.burnout_until && (gameState.day * 24 + gameState.hour) < d.burnout_until;
+
+            const fatigueColor = fatigue >= 85 ? '#ef4444' : fatigue >= 60 ? '#f59e0b' : '#22c55e';
+            const stressColor  = stress  >= 80 ? '#ef4444' : stress  >= 50 ? '#f59e0b' : '#22c55e';
+            const moraleColor  = morale  < 25  ? '#ef4444' : morale  < 60  ? '#f59e0b' : '#22c55e';
+
+            const levelData = (DRIVER_LEVELS || [])[d.level || 0] || { name:'Rookie', badge:'lvl-rookie' };
+
+            let statusLabel, statusColor;
+            if (isBurnout)       { statusLabel = '🔥 BURNOUT';    statusColor = '#ef4444'; }
+            else if (d.isOnStrike) { statusLabel = '🪧 SCIOPERO';  statusColor = '#ef4444'; }
+            else if (isResting)  { statusLabel = `☕ Riposo ${d.restHoursLeft}h`; statusColor = '#f97316'; }
+            else if (fatigue >= 85) { statusLabel = '⚠ ESAUSTO';  statusColor = '#f59e0b'; }
+            else if (isBusy)     { statusLabel = '● IN CORSA';    statusColor = '#3b82f6'; }
+            else                 { statusLabel = '● LIBERO';       statusColor = '#22c55e'; }
+
+            const car = gameState.fleet.find(v => v.id === d.assignedCarId);
+            const carLabel = car ? car.name : '—';
+
+            const miniBar = (val, color) => `<div style="display:flex;align-items:center;gap:5px">
+                <div style="flex:1;height:4px;border-radius:3px;background:rgba(255,255,255,0.08);min-width:48px;overflow:hidden">
+                    <div style="height:100%;width:${Math.round(val)}%;background:${color};border-radius:3px"></div>
+                </div>
+                <span style="font-size:9px;font-family:monospace;color:${color};width:26px;text-align:right;flex-shrink:0">${Math.floor(val)}%</span>
+            </div>`;
+
+            // actions
+            const actBtns = [
+                d.isOnStrike && !isBusy
+                    ? `<button onclick="resolveStrike('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(212,175,55,0.4);background:rgba(212,175,55,0.08);color:#d4af37;cursor:pointer">🤝 Accordo</button>`
+                    : (!isResting && !isBurnout && !isBusy && (fatigue >= 40 || stress >= 50))
+                        ? `<button onclick="putDriverOnBreak('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(107,114,128,0.4);background:rgba(107,114,128,0.08);color:#9ca3af;cursor:pointer">☕ Pausa</button>`
+                        : '',
+                `<button onclick="window.renderDriverSkillModal('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.08);color:#60a5fa;cursor:pointer">⭐ Skills</button>`,
+                `<button onclick="fireDriver('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.07);color:#f87171;cursor:pointer">Licenzia</button>`,
+            ].filter(Boolean).join(' ');
+
+            html += `
             <input type="file" id="avatar-upload-${d.id}" accept="image/*" style="display:none" onchange="window.setDriverAvatar('${d.id}', this)">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">
-                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
-                    ${avatarHtml}
-                    <div style="flex:1;min-width:0">
-                        <div style="font-size:12px;font-weight:700;color:var(--text)">${d.name}
-                            <span class="lvl-badge ${levelData.badge}" style="margin-left:4px">${levelData.name}</span>
-                            ${d.isOnStrike ? DS.pill('🪧 SCIOPERO', 'red', true) : ''}
+            <tr class="ce-table-row" style="border-bottom:1px solid rgba(255,255,255,0.04)">
+                <td style="padding:11px 14px">
+                    <div style="display:flex;align-items:center;gap:8px">
+                        ${d.avatarBase64
+                            ? `<img src="${d.avatarBase64}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid rgba(255,255,255,0.12)" onclick="document.getElementById('avatar-upload-${d.id}').click()">`
+                            : `<div style="width:30px;height:30px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:#d4af37;flex-shrink:0" onclick="document.getElementById('avatar-upload-${d.id}').click()">👤</div>`}
+                        <div style="min-width:0">
+                            <div style="font-size:12px;font-weight:700;color:var(--text)">${d.name} <span class="lvl-badge ${levelData.badge}" style="font-size:7px">${levelData.name}</span></div>
+                            <div style="font-size:9px;color:var(--text-dim);margin-top:1px">€${(d.salary||0).toLocaleString()}/mese · XP ${d.xp||0}</div>
+                            ${d.trait ? `<div style="font-size:9px;color:#a855f7;margin-top:1px">${d.trait.name}</div>` : ''}
                         </div>
-                        ${d.trait ? `<div style="font-size:10px;color:#a855f7;margin-top:2px">${d.trait.name} — ${d.trait.desc}</div>` : ''}
-                        <div style="font-size:10px;color:var(--text-dim);margin-top:2px">€${d.salary}/mese · XP: ${d.xp||0}</div>
-                        ${statusPill ? `<div style="margin-top:4px">${statusPill}</div>` : ''}
                     </div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
-                    ${d.isOnStrike
-                        ? DS.btn({ label:'🤝 Accordo', color:'gold', onclick:`resolveStrike('${d.id}')`, size:'sm' })
-                        : (!isResting && !isBurnout && d.status !== 'busy' && (fatigue >= 40 || stress >= 50))
-                            ? DS.btn({ label:'☕ Pausa', color:'ghost', onclick:`putDriverOnBreak('${d.id}')`, size:'sm' })
-                            : ''}
-                    ${DS.btn({ label:'⭐ Skills', color:'blue', onclick:`window.renderDriverSkillModal('${d.id}')`, size:'sm' })}
-                    ${DS.btn({ label:'Licenzia', color:'red', onclick:`fireDriver('${d.id}')`, size:'sm' })}
-                </div>
-            </div>
-            <div style="margin-top:10px;display:flex;flex-direction:column;gap:5px">
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Fatica</span>
-                    <div style="flex:1">${DS.progress(fatigue, fatigueLevel)}</div>
-                    <span style="font-size:9px;font-family:monospace;color:var(--${fatigueLevel})">${Math.floor(fatigue)}%</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">XP</span>
-                    <div style="flex:1">${DS.progress(xpPct, 'blue')}</div>
-                    <span style="font-size:9px;font-family:monospace;color:var(--blue)">${xpPct}%</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Morale</span>
-                    <div style="flex:1">${DS.progress(morale, moraleLevel)}</div>
-                    <span style="font-size:9px;font-family:monospace;color:var(--${moraleLevel})">${Math.floor(morale)}%</span>
-                </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Soddi.</span>
-                    <div style="flex:1">${DS.progress(sat, satLevel)}</div>
-                    <span style="font-size:9px;font-family:monospace;color:var(--${satLevel})">${Math.floor(sat)}%</span>
-                    ${DS.btn({ label:'+€500', color:'green', onclick:`payDriverBonus('${d.id}', 500)`, size:'sm' })}
-                </div>
-                <div style="display:flex;align-items:center;gap:6px">
-                    <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Stress</span>
-                    <div style="flex:1">${DS.progress(stress, stressLevel)}</div>
-                    <span style="font-size:9px;font-family:monospace;color:var(--${stressLevel})">${Math.floor(stress)}%</span>
-                    ${stress >= 50 && !isResting && !isBurnout && d.status !== 'busy'
-                        ? DS.btn({ label:'☕ −40%', color:'ghost', onclick:`putDriverOnBreak('${d.id}')`, size:'sm' }) +
-                          DS.btn({ label:'💊 €1k', color:'green', onclick:`payStressClear('${d.id}')`, size:'sm' })
-                        : ''}
-                </div>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:8px">
-                <span style="font-size:9px;color:var(--text-dim);text-transform:uppercase;width:38px;flex-shrink:0">Spec.</span>
-                <select onchange="assignSpecialty('${d.id}', this.value)" style="flex:1;font-size:9px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px 6px;color:var(--text);cursor:pointer">
-                    <option value="">— Nessuna —</option>${opts}
-                </select>
-                ${curSpec ? `<span style="font-size:9px;color:var(--blue)">${curSpec.name.split(' ')[0]}</span>` : ''}
-            </div>
-            <div class="driver-skills-row" style="margin-top:8px">
-                ${[
-                    ['⚡ Vel.', d.skill_speed      ?? 50, '#00f2ff'],
-                    ['🔧 Eff.', d.skill_efficiency ?? 50, '#22c55e'],
-                    ['✨ Car.', d.skill_charisma   ?? 50, '#a855f7'],
-                ].map(([label, val, color]) => `
-                <div class="driver-skill-chip">
-                    <span class="driver-skill-label">${label}</span>
-                    <div class="driver-skill-bar-bg"><div class="driver-skill-bar-fill" style="width:${val}%;background:${color}"></div></div>
-                    <span class="driver-skill-val" style="color:${color}">${val}</span>
-                </div>`).join('')}
-            </div>
-        </div>`;
-    });
+                </td>
+                <td style="padding:11px 14px;white-space:nowrap">
+                    <span style="font-size:9px;font-weight:700;color:${statusColor}">${statusLabel}</span>
+                </td>
+                <td style="padding:11px 14px;min-width:110px">${miniBar(fatigue, fatigueColor)}</td>
+                <td style="padding:11px 14px;min-width:110px">
+                    ${miniBar(stress, stressColor)}
+                    ${stress >= 50 && !isResting && !isBurnout && !isBusy ? `<div style="margin-top:4px;display:flex;gap:4px">
+                        <button onclick="putDriverOnBreak('${d.id}')" style="font-size:7px;padding:2px 5px;border-radius:4px;border:1px solid rgba(107,114,128,0.35);background:rgba(107,114,128,0.08);color:#9ca3af;cursor:pointer">☕ −40%</button>
+                        <button onclick="payStressClear('${d.id}')" style="font-size:7px;padding:2px 5px;border-radius:4px;border:1px solid rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#22c55e;cursor:pointer">💊 €1k</button>
+                    </div>` : ''}
+                </td>
+                <td style="padding:11px 14px;min-width:110px">
+                    ${miniBar(morale, moraleColor)}
+                    ${morale < 60 ? `<button onclick="payDriverBonus('${d.id}', 500)" style="font-size:7px;padding:2px 5px;border-radius:4px;border:1px solid rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#22c55e;cursor:pointer;margin-top:4px">+€500</button>` : ''}
+                </td>
+                <td style="padding:11px 14px">
+                    <div style="font-size:11px;color:${car ? 'var(--text)' : 'var(--text-dim)'}">${carLabel}</div>
+                </td>
+                <td style="padding:11px 14px;text-align:right;white-space:nowrap">${actBtns}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+    }
 
     // ── Meet & Greet ─────────────────────────────────────────────────────────
     const _mgStaff = (gameState.staff || []).filter(s => s.skill === 'meetgreet');
     if (_mgStaff.length > 0) {
         const _mgIncome = gameState._lastMgIncome || 0;
-        html += `</div><div class="ds-eyebrow" style="margin:16px 0 12px">🤝 Meet &amp; Greet Aeroportuale</div>
+        html += `<div class="ds-eyebrow" style="margin:16px 0 12px">🤝 Meet &amp; Greet Aeroportuale</div>
         <div style="display:flex;flex-direction:column;gap:8px">`;
         _mgStaff.forEach(asst => {
             html += `<div class="ds-card" style="display:flex;justify-content:space-between;align-items:center">
@@ -217,7 +201,7 @@ function renderTabStaff() {
 
     // ── Mercato Reclutamento ──────────────────────────────────────────────────
     const tierIcon = { standard:'🟢', business:'🔵', vip:'🟣', ultra:'⚫' };
-    html += `</div><div class="ds-eyebrow" style="margin:16px 0 4px">Mercato Reclutamento</div>
+    html += `<div class="ds-eyebrow" style="margin:16px 0 4px">Mercato Reclutamento</div>
     <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;font-style:italic">I candidati si aggiornano dopo ogni assunzione.</div>
     <div style="display:flex;flex-direction:column;gap:8px">`;
     (gameState.availableRecruits || []).forEach(p => {
