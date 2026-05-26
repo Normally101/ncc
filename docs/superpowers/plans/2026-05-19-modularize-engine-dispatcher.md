@@ -1,6 +1,6 @@
 # Engine + Dispatcher Modularization Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Split engine.js (5,905 lines) and dispatcher.js (6,018 lines) into focused domain modules, reducing both files to under 4,500 lines without changing any game logic.
 
@@ -53,7 +53,7 @@ ui-finance-mkt.js      ← NEW: renderTabFinance + renderTabMarketing + _flashTi
 
 **Background:** These 9 functions manage the stock market, broker investments, credit score, and macroeconomy. They are called from `processDailyRoutines()` and `_tickBrokerInvestments()` but are otherwise self-contained. They only use globals: `gameState`, `STOCK_TICKERS`, `STOCK_SECTORS`, `LOAN_TIERS`, `showNotification`, `logToMap`, `hasInvestment`.
 
-- [ ] **Step 1.1: Verify function locations in engine.js**
+- [x] **Step 1.1: Verify function locations in engine.js**
 
 Run:
 ```bash
@@ -62,7 +62,7 @@ grep -n "^function _hasWealthManager\|^function _initStockPrices\|^function _tic
 
 Expected: 9 lines with line numbers around 4398–4870. Record the START line of each function and the START line of the next function (that's where the previous one ends).
 
-- [ ] **Step 1.2: Create engine-finance.js with a file header**
+- [x] **Step 1.2: Create engine-finance.js with a file header**
 
 Create `engine-finance.js` with this exact header:
 
@@ -76,7 +76,7 @@ Create `engine-finance.js` with this exact header:
    ================================================================ */
 ```
 
-- [ ] **Step 1.3: Cut each function from engine.js and paste into engine-finance.js**
+- [x] **Step 1.3: Cut each function from engine.js and paste into engine-finance.js**
 
 For each of the 9 functions (`_hasWealthManager`, `_initStockPrices`, `_tickStockMarket`, `_payStockDividends`, `_tickBrokerInvestments`, `_updateCreditScore`, `_getCreditTier`, `_tickMacroEconomy`, `_tickStockHistory`):
 
@@ -86,7 +86,7 @@ For each of the 9 functions (`_hasWealthManager`, `_initStockPrices`, `_tickStoc
 
 Do this for all 9 functions. Keep them in the same relative order they appear in engine.js.
 
-- [ ] **Step 1.4: Verify engine.js no longer contains the extracted functions**
+- [x] **Step 1.4: Verify engine.js no longer contains the extracted functions**
 
 Run:
 ```bash
@@ -94,7 +94,7 @@ grep -c "function _tickStockMarket\|function _tickBrokerInvestments\|function _i
 ```
 Expected output: `0`
 
-- [ ] **Step 1.5: Verify engine-finance.js contains all 9 functions**
+- [x] **Step 1.5: Verify engine-finance.js contains all 9 functions**
 
 Run:
 ```bash
@@ -102,7 +102,7 @@ grep -c "^function " engine-finance.js
 ```
 Expected: `9`
 
-- [ ] **Step 1.6: Check that call sites in engine.js still exist (they should — callers stay)**
+- [x] **Step 1.6: Check that call sites in engine.js still exist (they should — callers stay)**
 
 Run:
 ```bash
@@ -110,7 +110,7 @@ grep -n "_tickStockMarket\|_tickBrokerInvestments\|_initStockPrices\|_tickMacroE
 ```
 Expected: Lines inside `processDailyRoutines`, `gameLoop`, `initGame` — the CALLS remain in engine.js, only the DEFINITIONS moved.
 
-- [ ] **Step 1.7: Commit (do NOT update index.html yet — engine-finance.js not loaded yet)**
+- [x] **Step 1.7: Commit (do NOT update index.html yet — engine-finance.js not loaded yet)**
 
 ```bash
 git add engine.js engine-finance.js
@@ -127,7 +127,7 @@ git commit -m "refactor: extract finance domain → engine-finance.js"
 
 **Background:** 5 functions managing rival AI companies: price wars, active ticking, daily ticking, sabotage, and state initialization. All called from `gameLoop` and `processDailyRoutines` in engine.js. They use globals: `gameState`, `RIVALS`, `showNotification`, `logToMap`, `generatePOIRide`.
 
-- [ ] **Step 2.1: Verify function locations**
+- [x] **Step 2.1: Verify function locations**
 
 Run:
 ```bash
@@ -135,7 +135,7 @@ grep -n "^function _tickPricewars\|^function _ensureRivalState\|^function _tickR
 ```
 Expected: 5 lines around lines 2296–2462.
 
-- [ ] **Step 2.2: Create engine-rivals.js**
+- [x] **Step 2.2: Create engine-rivals.js**
 
 ```js
 'use strict';
@@ -147,13 +147,13 @@ Expected: 5 lines around lines 2296–2462.
    ================================================================ */
 ```
 
-- [ ] **Step 2.3: Cut the 5 rival functions from engine.js → engine-rivals.js**
+- [x] **Step 2.3: Cut the 5 rival functions from engine.js → engine-rivals.js**
 
 Functions to move (in order): `_tickPricewars`, `_ensureRivalState`, `_tickRivalsActive`, `_tickRivalsDaily`, `_maybeRivalSabotage`.
 
 Include the `// ─── RIVALI ─────` section comment above the block.
 
-- [ ] **Step 2.4: Verify extraction**
+- [x] **Step 2.4: Verify extraction**
 
 ```bash
 grep -c "^function _tickRivalsActive\|^function _maybeRivalSabotage" engine.js
@@ -165,7 +165,7 @@ grep -c "^function " engine-rivals.js
 ```
 Expected: `5`
 
-- [ ] **Step 2.5: Commit**
+- [x] **Step 2.5: Commit**
 
 ```bash
 git add engine.js engine-rivals.js
@@ -182,7 +182,7 @@ git commit -m "refactor: extract rivals domain → engine-rivals.js"
 
 **Background:** 12 functions for the penalty/event system: police heat, bankruptcy, driver strikes, dynamic events, fines (standard + ZTL), construction zones (cantieri), police checkpoints, and paparazzi events. Called from `gameLoop` and `processDailyRoutines`. Dependencies: `gameState`, `showNotification`, `logToMap`, `_applyEmailTemplate`, `drawCheckpointMarker` (dispatcher.js — safe because runtime-only call).
 
-- [ ] **Step 3.1: Verify function locations**
+- [x] **Step 3.1: Verify function locations**
 
 Run:
 ```bash
@@ -190,7 +190,7 @@ grep -n "^function _tickPoliceHeat\|^function _triggerBankruptcy\|^function _may
 ```
 Expected: 12 lines from roughly 1278 to 2086.
 
-- [ ] **Step 3.2: Create engine-events.js**
+- [x] **Step 3.2: Create engine-events.js**
 
 ```js
 'use strict';
@@ -203,13 +203,13 @@ Expected: 12 lines from roughly 1278 to 2086.
    ================================================================ */
 ```
 
-- [ ] **Step 3.3: Cut all 12 functions from engine.js → engine-events.js**
+- [x] **Step 3.3: Cut all 12 functions from engine.js → engine-events.js**
 
 In order: `_tickPoliceHeat`, `_triggerBankruptcy`, `_maybeStrike`, `_maybeGenerateDynamicEvent`, `_tickDynamicEvent`, `_maybeGenerateFine`, `_maybeGenerateZTLFine`, `_maybeGenerateCantieri`, `_tickCantieri`, `_getCantieriSpeedMult`, `_maybePoliceCheckpoint`, `_maybeParazziEvent`.
 
 Include section comments (`// ─── POLICE HEAT ─────`, etc.) above each block.
 
-- [ ] **Step 3.4: Verify extraction**
+- [x] **Step 3.4: Verify extraction**
 
 ```bash
 grep -c "^function _maybeGenerateFine\|^function _tickPoliceHeat\|^function _maybePoliceCheckpoint" engine.js
@@ -221,7 +221,7 @@ grep -c "^function " engine-events.js
 ```
 Expected: `12`
 
-- [ ] **Step 3.5: Commit**
+- [x] **Step 3.5: Commit**
 
 ```bash
 git add engine.js engine-events.js
@@ -238,7 +238,7 @@ git commit -m "refactor: extract events/fines domain → engine-events.js"
 
 **Background:** `renderTabEmails` (the complete 3-tab inbox rewritten in a previous session) starts at line ~2306 in dispatcher.js. It uses globals: `gameState`, `window._inboxTab`, `EMAIL_TEMPLATES`, and various game action functions. It should load AFTER dispatcher.js so the switchTab routing is already defined.
 
-- [ ] **Step 4.1: Find exact boundaries of renderTabEmails in dispatcher.js**
+- [x] **Step 4.1: Find exact boundaries of renderTabEmails in dispatcher.js**
 
 Run:
 ```bash
@@ -246,7 +246,7 @@ grep -n "^function renderTabEmails\|^function renderTab" dispatcher.js | head -5
 ```
 Expected: `renderTabEmails` starts around line 2306, next `renderTab*` function follows it.
 
-- [ ] **Step 4.2: Create ui-emails.js**
+- [x] **Step 4.2: Create ui-emails.js**
 
 ```js
 'use strict';
@@ -258,14 +258,14 @@ Expected: `renderTabEmails` starts around line 2306, next `renderTab*` function 
    ================================================================ */
 ```
 
-- [ ] **Step 4.3: Cut renderTabEmails from dispatcher.js → ui-emails.js**
+- [x] **Step 4.3: Cut renderTabEmails from dispatcher.js → ui-emails.js**
 
 1. In dispatcher.js, find `function renderTabEmails()` (line ~2306)
 2. Find where it ends (the closing `}` matched to `function renderTabEmails()`)
 3. Cut the entire function (from `function renderTabEmails()` to its closing `}`)
 4. Paste it into ui-emails.js after the header
 
-- [ ] **Step 4.4: Verify**
+- [x] **Step 4.4: Verify**
 
 ```bash
 grep -c "^function renderTabEmails" dispatcher.js
@@ -277,7 +277,7 @@ grep -c "^function renderTabEmails" ui-emails.js
 ```
 Expected: `1`
 
-- [ ] **Step 4.5: Commit**
+- [x] **Step 4.5: Commit**
 
 ```bash
 git add dispatcher.js ui-emails.js
@@ -294,7 +294,7 @@ git commit -m "refactor: extract renderTabEmails → ui-emails.js"
 
 **Background:** These 3 functions (rewritten in a previous session) are contiguous in dispatcher.js around lines 3314–4128. They use globals: `gameState`, `STOCK_TICKERS`, `MARKETING_CAMPAIGNS`, `window._mktTier`, `window._applyMarketingCampaign`, `window._stopMarketingCampaign`.
 
-- [ ] **Step 5.1: Find exact boundaries**
+- [x] **Step 5.1: Find exact boundaries**
 
 Run:
 ```bash
@@ -302,7 +302,7 @@ grep -n "^function _flashTicker\|^function renderTabFinance\|^function renderTab
 ```
 Expected: `_flashTicker` ~3716, `renderTabFinance` ~3724, `renderTabMarketing` ~3314, `renderTabLifestyle` ~4129. Note: `renderTabMarketing` comes BEFORE `_flashTicker` and `renderTabFinance` in the file.
 
-- [ ] **Step 5.2: Create ui-finance-mkt.js**
+- [x] **Step 5.2: Create ui-finance-mkt.js**
 
 ```js
 'use strict';
@@ -316,14 +316,14 @@ Expected: `_flashTicker` ~3716, `renderTabFinance` ~3724, `renderTabMarketing` ~
    ================================================================ */
 ```
 
-- [ ] **Step 5.3: Cut the 3 functions from dispatcher.js → ui-finance-mkt.js**
+- [x] **Step 5.3: Cut the 3 functions from dispatcher.js → ui-finance-mkt.js**
 
 Move in this order into the new file:
 1. `renderTabMarketing` (around line 3314 — cut the full function)
 2. `_flashTicker` (around line 3716 — cut the full function)
 3. `renderTabFinance` (around line 3724 — cut the full function, ends around line 4128)
 
-- [ ] **Step 5.4: Verify**
+- [x] **Step 5.4: Verify**
 
 ```bash
 grep -c "^function renderTabFinance\|^function renderTabMarketing\|^function _flashTicker" dispatcher.js
@@ -335,7 +335,7 @@ grep -c "^function " ui-finance-mkt.js
 ```
 Expected: `3`
 
-- [ ] **Step 5.5: Commit**
+- [x] **Step 5.5: Commit**
 
 ```bash
 git add dispatcher.js ui-finance-mkt.js
@@ -351,7 +351,7 @@ git commit -m "refactor: extract Finance + Marketing tabs → ui-finance-mkt.js"
 
 **Background:** The new files must be added to index.html in the exact dependency order. Current order has `engine.js` at line 524 and `dispatcher.js` at line 527. New engine-* files go between them; new ui-* files go after dispatcher.js.
 
-- [ ] **Step 6.1: Find the current script block in index.html**
+- [x] **Step 6.1: Find the current script block in index.html**
 
 Run:
 ```bash
@@ -359,7 +359,7 @@ grep -n "engine.js\|dispatcher.js\|vip_clients.js\|war_room.js" index.html
 ```
 Expected: engine.js ~524, vip_clients.js ~525, war_room.js ~526, dispatcher.js ~527.
 
-- [ ] **Step 6.2: Add engine-* files between engine.js and vip_clients.js**
+- [x] **Step 6.2: Add engine-* files between engine.js and vip_clients.js**
 
 Find this block in index.html:
 ```html
@@ -376,7 +376,7 @@ Replace with:
   <script src="vip_clients.js"></script>
 ```
 
-- [ ] **Step 6.3: Add ui-* files after dispatcher.js**
+- [x] **Step 6.3: Add ui-* files after dispatcher.js**
 
 Find this block in index.html:
 ```html
@@ -392,7 +392,7 @@ Replace with:
   <script src="showroom.js"></script>
 ```
 
-- [ ] **Step 6.4: Verify the final script order**
+- [x] **Step 6.4: Verify the final script order**
 
 Run:
 ```bash
@@ -413,7 +413,7 @@ ui-finance-mkt.js
 showroom.js
 ```
 
-- [ ] **Step 6.5: Verify all new files actually exist**
+- [x] **Step 6.5: Verify all new files actually exist**
 
 Run:
 ```bash
@@ -421,7 +421,7 @@ ls engine-finance.js engine-rivals.js engine-events.js ui-emails.js ui-finance-m
 ```
 Expected: all 5 files listed, no errors.
 
-- [ ] **Step 6.6: Smoke test — open game in browser**
+- [x] **Step 6.6: Smoke test — open game in browser**
 
 Open `index.html` in a browser (or the live URL). Check the browser console for errors. Navigate to:
 - Finance tab → portfolio dashboard should show, tickers visible
@@ -431,14 +431,14 @@ Open `index.html` in a browser (or the live URL). Check the browser console for 
 
 Expected: zero console errors related to undefined functions.
 
-- [ ] **Step 6.7: Final commit**
+- [x] **Step 6.7: Final commit**
 
 ```bash
 git add index.html
 git commit -m "refactor: wire 5 domain modules into index.html script loading order"
 ```
 
-- [ ] **Step 6.8: Push**
+- [x] **Step 6.8: Push**
 
 ```bash
 git push

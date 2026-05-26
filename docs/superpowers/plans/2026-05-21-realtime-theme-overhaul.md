@@ -1,6 +1,6 @@
 # Real-Time Engine & Light Theme Overhaul — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Fix white-on-white text across the light panel, replace the simulated fast clock with Italian real time and a monotonic game-day counter, and replace hardcoded 2/10-minute trip durations with realistic price-derived real durations.
 
@@ -33,7 +33,7 @@
 
 Context: `style.css` already overrides `text-white`, `bg-gray-950/900/800`, `bg-white/5`, `border-white/10`, and career dark sections. What's missing: `text-gray-300/400` (nearly invisible on white), `bg-gray-700/600` (dark cards on light panel), and `#tab-container` base text color.
 
-- [ ] **Step 1: Locate insertion point in style.css**
+- [x] **Step 1: Locate insertion point in style.css**
 
   Open [style.css](style.css) and find lines 3789–3792:
   ```css
@@ -43,7 +43,7 @@ Context: `style.css` already overrides `text-white`, `bg-gray-950/900/800`, `bg-
   /* text-gray-300/400/500 stay as-is — readable on light bg naturally */
   ```
 
-- [ ] **Step 2: Replace the wrong comment and add missing text-color overrides**
+- [x] **Step 2: Replace the wrong comment and add missing text-color overrides**
 
   Replace:
   ```css
@@ -55,7 +55,7 @@ Context: `style.css` already overrides `text-white`, `bg-gray-950/900/800`, `bg-
   #main-panel .text-gray-400 { color: #4d6480 !important; }
   ```
 
-- [ ] **Step 3: Add bg-gray-700/600 overrides after the existing bg-gray-800 rule**
+- [x] **Step 3: Add bg-gray-700/600 overrides after the existing bg-gray-800 rule**
 
   Find line ~3800:
   ```css
@@ -68,18 +68,18 @@ Context: `style.css` already overrides `text-white`, `bg-gray-950/900/800`, `bg-
   #main-panel .bg-gray-700\/50 { background: rgba(30,45,69,0.05) !important; }
   ```
 
-- [ ] **Step 4: Add #tab-container default text color**
+- [x] **Step 4: Add #tab-container default text color**
 
   At the very end of the light-theme overrides block (after the ds-card shadow rules), add:
   ```css
   #tab-container { color: var(--text); }
   ```
 
-- [ ] **Step 5: Verify in browser**
+- [x] **Step 5: Verify in browser**
 
   Open the game, navigate to Classifica (Ranking) and Investimenti tabs. Text that was invisible (light gray on white) should now be readable in dark blue tones. No white text should appear on the light panel except inside `bg-[#111120]` / `bg-[#0e0e1c]` career dark sections.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
   ```
   git add style.css
@@ -94,7 +94,7 @@ Context: `style.css` already overrides `text-white`, `bg-gray-950/900/800`, `bg-
 
 Context: Unowned region cards use `bgColor = 'rgba(8,8,22,0.8)'` (near-black) which makes all text invisible on the light panel. The border for accessible-but-unowned regions uses `rgba(255,255,255,0.07)` (invisible on white). The title uses `color:#e0e0ff` (light lavender, invisible on white).
 
-- [ ] **Step 1: Fix bgColor, borderColor, and title color**
+- [x] **Step 1: Fix bgColor, borderColor, and title color**
 
   In [ui-ops.js](ui-ops.js), find lines 43–48:
   ```javascript
@@ -116,11 +116,11 @@ Context: Unowned region cards use `bgColor = 'rgba(8,8,22,0.8)'` (near-black) wh
           <div style="font-size:11px;font-weight:700;color:${owned ? '#d4af37' : 'var(--text)'}">${r.name}</div>
   ```
 
-- [ ] **Step 2: Verify in browser**
+- [x] **Step 2: Verify in browser**
 
   Open the Operazioni tab → Regioni. Unowned region cards should now show on a white/near-white background with readable dark text. Owned cards (gold tint) should be unchanged. Locked cards (red border) should be visible.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```
   git add ui-ops.js
@@ -135,7 +135,7 @@ Context: Unowned region cards use `bgColor = 'rgba(8,8,22,0.8)'` (near-black) wh
 
 Context: In a real-time game, players cannot manually advance time. The button is also potentially confusing since it does nothing meaningful once real-time is active.
 
-- [ ] **Step 1: Remove the Avanza Turno section**
+- [x] **Step 1: Remove the Avanza Turno section**
 
   In [index.html](index.html), find and delete lines 263–270:
   ```html
@@ -149,11 +149,11 @@ Context: In a real-time game, players cannot manually advance time. The button i
         </div>
   ```
 
-- [ ] **Step 2: Verify in browser**
+- [x] **Step 2: Verify in browser**
 
   Open sidebar. The "▶ Avanza Turno" button should be gone. The sidebar should still close/scroll normally.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```
   git add index.html
@@ -168,7 +168,7 @@ Context: In a real-time game, players cannot manually advance time. The button i
 
 Context: `_getItalyTime()` returns real Italian local time and a monotonically increasing `gameDay` counter (day 1 = Nov 1 2025, game launch). Used by `gameLoop` and `updateUI`.
 
-- [ ] **Step 1: Add GAME_EPOCH_MS constant and _getItalyTime() function**
+- [x] **Step 1: Add GAME_EPOCH_MS constant and _getItalyTime() function**
 
   In [engine.js](engine.js), find line 897 (the blank line just before `function gameLoop()`):
   ```javascript
@@ -202,7 +202,7 @@ Context: `_getItalyTime()` returns real Italian local time and a monotonically i
 
   ```
 
-- [ ] **Step 2: Verify in browser console**
+- [x] **Step 2: Verify in browser console**
 
   Open the game and in DevTools console run:
   ```javascript
@@ -212,7 +212,7 @@ Context: `_getItalyTime()` returns real Italian local time and a monotonically i
 
   As of May 2026, `gameDay` should be approximately 200+.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```
   git add engine.js
@@ -235,7 +235,7 @@ Context: Currently `gameLoop` runs every 600ms and adds `gameState.minute += 5` 
 - Remove `if (gameState.day > 30)` month wrap (gameDay is now monotonic)
 - Keep `activeRides` visual loop intact — it computes deferred-pay earnings
 
-- [ ] **Step 1: Replace the complete gameLoop function**
+- [x] **Step 1: Replace the complete gameLoop function**
 
   Find the complete `function gameLoop() { ... }` block (lines 898–1002) and replace with:
 
@@ -350,14 +350,14 @@ Context: Currently `gameLoop` runs every 600ms and adds `gameState.minute += 5` 
   }
   ```
 
-- [ ] **Step 2: Verify in browser console**
+- [x] **Step 2: Verify in browser console**
 
   Open the game and check:
   1. The topbar clock shows the current Italian hour:minute (e.g., matches your device clock if Italy timezone)
   2. Open DevTools console, observe: `gameState.hour` and `gameState.minute` match real time
   3. No errors in console
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```
   git add engine.js
@@ -372,7 +372,7 @@ Context: Currently `gameLoop` runs every 600ms and adds `gameState.minute += 5` 
 
 Context: `gameState.day` is now a monotonic game-day counter (e.g., 202). The date display should show "Giorno 202 · 21 Mag" to communicate both game-day number and real Italian calendar date. The existing `updateUI` already handles time display via `gameState.hour/minute`.
 
-- [ ] **Step 1: Update the tb-date line in updateUI()**
+- [x] **Step 1: Update the tb-date line in updateUI()**
 
   Find in [engine.js](engine.js) around line 4649:
   ```javascript
@@ -385,11 +385,11 @@ Context: `gameState.day` is now a monotonic game-day counter (e.g., 202). The da
   const elDate = document.getElementById('tb-date'); if(elDate) elDate.innerText = `Giorno ${gameState.day} · ${_itaNow.day} ${MONTHS[_itaNow.month-1]}`;
   ```
 
-- [ ] **Step 2: Verify in browser**
+- [x] **Step 2: Verify in browser**
 
   The topbar date element should now show something like "Giorno 202 · 21 Mag" instead of "1 Gen".
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
   ```
   git add engine.js
@@ -406,7 +406,7 @@ Context: The trip system uses `startTime`/`endTime` with real `Date.now()` times
 
 The `activeRides` visual simulation loop uses `ride.duration` (20000ms city / 40000ms intercity) which is SEPARATE — it stays unchanged. Only `_realMs` changes.
 
-- [ ] **Step 1: Add _getRideDurationMs() before assignRideToDriver**
+- [x] **Step 1: Add _getRideDurationMs() before assignRideToDriver**
 
   Find the function `function assignRideToDriver` (around line 2900). Insert immediately before it:
 
@@ -425,7 +425,7 @@ The `activeRides` visual simulation loop uses `ride.duration` (20000ms city / 40
 
   ```
 
-- [ ] **Step 2: Replace _realMs in assignRideToDriver**
+- [x] **Step 2: Replace _realMs in assignRideToDriver**
 
   Find lines 3045–3047 in `assignRideToDriver`:
   ```javascript
@@ -441,7 +441,7 @@ The `activeRides` visual simulation loop uses `ride.duration` (20000ms city / 40
   const _realMs      = _getRideDurationMs(ride);
   ```
 
-- [ ] **Step 3: Verify in browser console**
+- [x] **Step 3: Verify in browser console**
 
   In DevTools console, after dispatching a standard city ride:
   ```javascript
@@ -449,7 +449,7 @@ The `activeRides` visual simulation loop uses `ride.duration` (20000ms city / 40
   ```
   Check `endTime - startTime`. For a €150 city ride: expected ≈ 60 min × 60000 = 3,600,000 ms. For a €400 intercity ride: expected ≈ 160 min × 1.5 × 60000 = 14,400,000 ms (4 hours).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```
   git add engine.js
@@ -464,7 +464,7 @@ The `activeRides` visual simulation loop uses `ride.duration` (20000ms city / 40
 
 Context: In real-time, generating a ride every 6 seconds floods the queue with 600+ rides/hour. We slow down to 5 min (POI) and 8 min (contract), and tighten the queue cap from `> 20` to `>= 15`.
 
-- [ ] **Step 1: Change ride generation intervals in startGame**
+- [x] **Step 1: Change ride generation intervals in startGame**
 
   Find in [engine.js](engine.js) lines 868–870:
   ```javascript
@@ -482,7 +482,7 @@ Context: In real-time, generating a ride every 6 seconds floods the queue with 6
       setInterval(generateContractRide, 8 * 60 * 1000),  // every 8 min real time
   ```
 
-- [ ] **Step 2: Tighten the pending rides queue cap**
+- [x] **Step 2: Tighten the pending rides queue cap**
 
   Find in `generatePOIRide` (around line 2602):
   ```javascript
@@ -494,11 +494,11 @@ Context: In real-time, generating a ride every 6 seconds floods the queue with 6
   if ((gameState.pendingRides || []).length >= 15) return null;
   ```
 
-- [ ] **Step 3: Verify in browser**
+- [x] **Step 3: Verify in browser**
 
   After loading the game, open Corse tab. Within the first minute, the pending rides queue should NOT jump to 20+ items. It should start near 0 and grow at most 12/hour (1 per 5 min POI + 1 per 8 min contract).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
   ```
   git add engine.js
@@ -513,7 +513,7 @@ Context: In real-time, generating a ride every 6 seconds floods the queue with 6
 
 Context: When the player reopens the browser after being offline, passive income (investment returns, HQ rent) should be credited for elapsed real days. `processDailyRoutines()` handles this — we call it once per elapsed day (capped at 7 days to prevent abuse). `lastOnlineTimestamp` is set on every save (every ~60s).
 
-- [ ] **Step 1: Set lastOnlineTimestamp in saveGame()**
+- [x] **Step 1: Set lastOnlineTimestamp in saveGame()**
 
   Find `function saveGame()` at line 462:
   ```javascript
@@ -530,7 +530,7 @@ Context: When the player reopens the browser after being offline, passive income
           window.saveCurrentSlot();
   ```
 
-- [ ] **Step 2: Add _processOfflineCatchup() function**
+- [x] **Step 2: Add _processOfflineCatchup() function**
 
   Find `function loadGame()` at line 469. Insert the following function immediately before it:
 
@@ -551,7 +551,7 @@ Context: When the player reopens the browser after being offline, passive income
 
   ```
 
-- [ ] **Step 3: Call _processOfflineCatchup() in startGame() after loadGame**
+- [x] **Step 3: Call _processOfflineCatchup() in startGame() after loadGame**
 
   Find in `startGame()` (around line 4857–4859):
   ```javascript
@@ -570,12 +570,12 @@ Context: When the player reopens the browser after being offline, passive income
   } else {
   ```
 
-- [ ] **Step 4: Verify in browser**
+- [x] **Step 4: Verify in browser**
 
   1. Start/load the game to ensure `saveGame()` runs — check DevTools: `gameState.lastOnlineTimestamp` should be a recent Unix timestamp (ms since epoch, ~1.748e12 range)
   2. To test catchup: in DevTools console run `gameState.lastOnlineTimestamp = Date.now() - 2 * 24 * 60 * 60 * 1000` then reload. Within 1 second of loading, a notification "💤 Offline per 2 giorni — redditi processati." should appear.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
   ```
   git add engine.js
@@ -590,7 +590,7 @@ Context: When the player reopens the browser after being offline, passive income
 
 The spec was written in the previous session but not yet committed.
 
-- [ ] **Step 1: Commit the spec**
+- [x] **Step 1: Commit the spec**
 
   ```
   git add docs/superpowers/specs/2026-05-21-realtime-theme-overhaul-design.md

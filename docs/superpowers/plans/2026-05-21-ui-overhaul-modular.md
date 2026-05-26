@@ -1,6 +1,6 @@
 # UI Overhaul + dispatcher.js Modularisation Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Replace the current mixed-theme UI with a clean eRepublik-style layout (dark nav sidebar + light content) and split dispatcher.js (~4900 lines) into focused ui-*.js modules.
 
@@ -37,7 +37,7 @@
 - Modify: `tailwind.config.js`
 - Modify: `style.css` (first ~35 lines, `:root` block)
 
-- [ ] **Step 1: Update tailwind.config.js**
+- [x] **Step 1: Update tailwind.config.js**
 
 Replace the full content of `tailwind.config.js` with:
 
@@ -73,7 +73,7 @@ module.exports = {
 }
 ```
 
-- [ ] **Step 2: Update `:root` CSS tokens in style.css**
+- [x] **Step 2: Update `:root` CSS tokens in style.css**
 
 Find the `:root {` block at the very top of `style.css` (lines 1–35 approx). Replace it with:
 
@@ -104,7 +104,7 @@ Find the `:root {` block at the very top of `style.css` (lines 1–35 approx). R
 }
 ```
 
-- [ ] **Step 3: Add tabFadeIn keyframe to style.css**
+- [x] **Step 3: Add tabFadeIn keyframe to style.css**
 
 Add immediately after the `:root` block:
 
@@ -116,7 +116,7 @@ Add immediately after the `:root` block:
 .tab-fade-in { animation: tabFadeIn 0.18s ease-out forwards; }
 ```
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add tailwind.config.js style.css
@@ -132,7 +132,7 @@ git commit -m "feat: update CSS tokens and add tabFadeIn keyframe"
 
 **Context:** The current topbar has 2 rows (~88px total). We replace it with 1 slim row (42px). All existing stat element IDs (`tb-cash`, `tb-rep`, `tb-energy-bar`, `tb-energy-text`, `tb-time`, `tb-date`, `tb-tc`, `cloud-sync-dot`, `logout-btn`) must be preserved — `engine.js` and `updateUI()` target them directly. We add `#tb-breadcrumb` and `#tb-avatar` as new IDs.
 
-- [ ] **Step 1: Replace the entire `<header id="top-bar">` block**
+- [x] **Step 1: Replace the entire `<header id="top-bar">` block**
 
 Find the block from `<header id="top-bar"` through `</header>` (currently lines 104–226) and replace with:
 
@@ -198,11 +198,11 @@ Find the block from `<header id="top-bar"` through `</header>` (currently lines 
   </header>
 ```
 
-- [ ] **Step 2: Verify IDs preserved**
+- [x] **Step 2: Verify IDs preserved**
 
 Check that these IDs exist in the new topbar HTML: `tb-cash`, `tb-rep`, `tb-energy-bar`, `tb-energy-text`, `tb-tc`, `tb-weather-icon`, `tb-surge`, `tb-time`, `tb-date`, `cloud-sync-dot`, `logout-btn`. They must all be present.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add index.html
@@ -218,7 +218,7 @@ git commit -m "feat: replace 2-row topbar with 1-row slim topbar"
 
 **Context:** The current sidebar is a white stats panel (220px wide). We replace it with a dark accordion navigation (160px wide). The player stats (avatar, cash, rep, etc.) are now shown in the topbar — the old sidebar stat IDs (`sidebar-avatar`, `sidebar-cash`, etc.) will no longer exist. The `updateSidebarStats()` call in `premium-ui.js` handles the topbar; we'll add new sidebar-specific IDs for the accordion.
 
-- [ ] **Step 1: Replace the `<aside id="sidebar-player">` block**
+- [x] **Step 1: Replace the `<aside id="sidebar-player">` block**
 
 Find the entire `<aside id="sidebar-player"` block (currently ends at `</aside>` before the `<!-- Mobile sidebar toggle -->` comment) and replace with:
 
@@ -338,7 +338,7 @@ Find the entire `<aside id="sidebar-player"` block (currently ends at `</aside>`
   </aside>
 ```
 
-- [ ] **Step 2: Update main-panel positioning**
+- [x] **Step 2: Update main-panel positioning**
 
 Find `<main id="main-panel"` (currently around line 462) and update its inline style from `top:88px` to `top:42px` and confirm left offset will come from CSS (premium-ui.css sets `left:160px`):
 
@@ -351,7 +351,7 @@ To:
 <main id="main-panel" class="fixed right-0 z-40 flex flex-col overflow-hidden" style="top:42px;bottom:0;left:160px;background:var(--panel)">
 ```
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add index.html
@@ -365,7 +365,7 @@ git commit -m "feat: replace white stats sidebar with dark accordion nav sidebar
 **Files:**
 - Modify: `style.css` (append new sidebar-specific rules)
 
-- [ ] **Step 1: Append sidebar accordion CSS to style.css**
+- [x] **Step 1: Append sidebar accordion CSS to style.css**
 
 Add the following at the end of `style.css`:
 
@@ -431,7 +431,7 @@ Add the following at the end of `style.css`:
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add style.css
@@ -447,7 +447,7 @@ git commit -m "feat: add sidebar accordion CSS"
 
 **Context:** The current premium-ui.css has dark `!important` overrides from the old dark theme. Now that the base theme is light, most of these overrides are either redundant or wrong. We slim it down to just: topbar polish, sidebar offsets for news ticker / live map, and remove anything that fights the new style.
 
-- [ ] **Step 1: Replace entire premium-ui.css**
+- [x] **Step 1: Replace entire premium-ui.css**
 
 ```css
 /* ================================================================
@@ -511,7 +511,7 @@ git commit -m "feat: add sidebar accordion CSS"
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add premium-ui.css
@@ -527,7 +527,7 @@ git commit -m "feat: slim down premium-ui.css for new light theme"
 
 **Context:** This file owns the accordion state machine and the `updateSidebarStats()` function. The stats function now updates the topbar breadcrumb (`#tb-breadcrumb`) and the sidebar avatar/company (`#sidebar-avatar`, `#sidebar-company`). It also patches `switchTab` to update the active sidebar item highlight.
 
-- [ ] **Step 1: Create ui-sidebar.js**
+- [x] **Step 1: Create ui-sidebar.js**
 
 ```js
 'use strict';
@@ -652,7 +652,7 @@ window.addEventListener('load', function() {
 });
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add ui-sidebar.js
@@ -668,7 +668,7 @@ git commit -m "feat: create ui-sidebar.js accordion nav and stats"
 
 **Context:** Remove `diagDispatch` (bug fixed). Remove `updateSidebarStats` (moved to ui-sidebar.js). Remove the `updateUI` patch (moved to ui-sidebar.js). Keep `toggleSidebar` stub only if needed — but since ui-sidebar.js now owns it, we can remove from here too. Keep the hash routing patch for `switchTab` and the `load` handler.
 
-- [ ] **Step 1: Replace entire premium-ui.js**
+- [x] **Step 1: Replace entire premium-ui.js**
 
 ```js
 'use strict';
@@ -694,7 +694,7 @@ window.addEventListener('load', function() {
 });
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add premium-ui.js
@@ -710,7 +710,7 @@ git commit -m "feat: slim premium-ui.js — remove diagDispatch and sidebar stat
 
 **Context:** `_safeRender` is a local const inside `switchTab`. After the render function runs successfully, we add the `.tab-fade-in` class to `#tab-container` to trigger the CSS animation.
 
-- [ ] **Step 1: Update _safeRender in dispatcher.js**
+- [x] **Step 1: Update _safeRender in dispatcher.js**
 
 Find this line in `dispatcher.js` (inside `window.switchTab`, around line 1171):
 ```js
@@ -733,7 +733,7 @@ Replace with:
     };
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add dispatcher.js
@@ -750,13 +750,13 @@ git commit -m "feat: add tab fade-in animation to _safeRender"
 
 **Context:** `renderTabCorse` is at dispatcher.js:1208. The drag-drop `document.addEventListener` calls (for dragover, dragleave, drop) related to rides are at the bottom of the file (around line 2996). Find them with `grep -n "draggedRideId\|dragover\|dragleave.*dCard\|drop.*dCard" dispatcher.js`.
 
-- [ ] **Step 1: Find exact line ranges**
+- [x] **Step 1: Find exact line ranges**
 
 ```bash
 grep -n "^function renderTabCorse\|draggedRideId\|document\.addEventListener.*drag\|document\.addEventListener.*drop" dispatcher.js | head -20
 ```
 
-- [ ] **Step 2: Create ui-dispatch.js**
+- [x] **Step 2: Create ui-dispatch.js**
 
 Create the file with header, then copy the exact text of `renderTabCorse` from dispatcher.js (from `function renderTabCorse()` through the closing `}` before `async function renderTabRanking()`), plus the drag-drop event listener block:
 
@@ -766,12 +766,12 @@ Create the file with header, then copy the exact text of `renderTabCorse` from d
 ```
 Then paste `renderTabCorse` function verbatim, followed by `window.renderTabCorse = renderTabCorse;`, then paste the drag-drop listeners verbatim.
 
-- [ ] **Step 3: Remove from dispatcher.js**
+- [x] **Step 3: Remove from dispatcher.js**
 
 Delete `renderTabCorse` function body from dispatcher.js (lines 1208 through the line before `async function renderTabRanking()`).
 Delete the drag-drop event listener block from the bottom of dispatcher.js.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add ui-dispatch.js dispatcher.js
@@ -786,13 +786,13 @@ git commit -m "refactor: extract renderTabCorse to ui-dispatch.js"
 - Create: `ui-fleet.js`
 - Modify: `dispatcher.js`
 
-- [ ] **Step 1: Find exact line range**
+- [x] **Step 1: Find exact line range**
 
 ```bash
 grep -n "^function renderTabFleet\|^function renderTabStaff" dispatcher.js
 ```
 
-- [ ] **Step 2: Create ui-fleet.js**
+- [x] **Step 2: Create ui-fleet.js**
 
 ```js
 'use strict';
@@ -800,11 +800,11 @@ grep -n "^function renderTabFleet\|^function renderTabStaff" dispatcher.js
 ```
 Copy `renderTabFleet` verbatim from dispatcher.js (from `function renderTabFleet()` up to but not including `function renderTabStaff()`). Add `window.renderTabFleet = renderTabFleet;` at the end.
 
-- [ ] **Step 3: Remove from dispatcher.js**
+- [x] **Step 3: Remove from dispatcher.js**
 
 Delete the `renderTabFleet` function from dispatcher.js.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add ui-fleet.js dispatcher.js
@@ -819,13 +819,13 @@ git commit -m "refactor: extract renderTabFleet to ui-fleet.js"
 - Create: `ui-staff.js`
 - Modify: `dispatcher.js`
 
-- [ ] **Step 1: Find exact line ranges**
+- [x] **Step 1: Find exact line ranges**
 
 ```bash
 grep -n "^function renderTabStaff\|^function renderTabRegions\|^function renderTabLifestyle\|window\.renderTabLifestyle" dispatcher.js
 ```
 
-- [ ] **Step 2: Create ui-staff.js**
+- [x] **Step 2: Create ui-staff.js**
 
 ```js
 'use strict';
@@ -839,11 +839,11 @@ window.renderTabStaff     = renderTabStaff;
 window.renderTabLifestyle = renderTabLifestyle;
 ```
 
-- [ ] **Step 3: Remove from dispatcher.js**
+- [x] **Step 3: Remove from dispatcher.js**
 
 Delete `renderTabStaff` and `renderTabLifestyle` from dispatcher.js (including their `window.renderTab* = ...` assignments if any).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add ui-staff.js dispatcher.js
@@ -858,13 +858,13 @@ git commit -m "refactor: extract renderTabStaff + renderTabLifestyle to ui-staff
 - Create: `ui-ops.js`
 - Modify: `dispatcher.js`
 
-- [ ] **Step 1: Find exact line ranges**
+- [x] **Step 1: Find exact line ranges**
 
 ```bash
 grep -n "^function renderTabRegions\|^function renderTabInvestments\|^async function renderTabProvinces\|^async function renderTabRealEstate" dispatcher.js
 ```
 
-- [ ] **Step 2: Create ui-ops.js**
+- [x] **Step 2: Create ui-ops.js**
 
 ```js
 'use strict';
@@ -878,11 +878,11 @@ window.renderTabRegions   = renderTabRegions;
 window.renderTabProvinces = renderTabProvinces;
 ```
 
-- [ ] **Step 3: Remove from dispatcher.js**
+- [x] **Step 3: Remove from dispatcher.js**
 
 Delete `renderTabRegions` and `renderTabProvinces` from dispatcher.js.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add ui-ops.js dispatcher.js
@@ -899,14 +899,14 @@ git commit -m "refactor: extract renderTabRegions + renderTabProvinces to ui-ops
 
 **Context:** Extract all remaining `renderTab*` functions from dispatcher.js: `renderTabInvestments`, `renderTabLegal`, `renderTabPolitics`, `renderTabCareer`, `renderTabPremiumStore`, `renderTabMarket`, `renderTabHelp`, `renderTabRanking`, `async function renderTabRealEstate`.
 
-- [ ] **Step 1: Verify what remains**
+- [x] **Step 1: Verify what remains**
 
 ```bash
 grep -n "^function renderTab\|^async function renderTab\|^window\.renderTab" dispatcher.js
 ```
 All remaining `renderTab*` definitions should be in this file. List them to confirm.
 
-- [ ] **Step 2: Create ui-meta.js**
+- [x] **Step 2: Create ui-meta.js**
 
 ```js
 'use strict';
@@ -926,7 +926,7 @@ window.renderTabRanking     = renderTabRanking;
 window.renderTabRealEstate  = renderTabRealEstate;
 ```
 
-- [ ] **Step 3: Remove from dispatcher.js**
+- [x] **Step 3: Remove from dispatcher.js**
 
 Delete all remaining `renderTab*` function definitions from dispatcher.js. After deletion, `dispatcher.js` should contain ZERO `renderTab` function definitions (only `window.renderTabX = ...` references in `switchTab` remain, which is fine).
 
@@ -936,7 +936,7 @@ grep -n "^function renderTab\|^async function renderTab" dispatcher.js
 ```
 Expected output: (empty — no results)
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add ui-meta.js dispatcher.js
@@ -952,7 +952,7 @@ git commit -m "refactor: extract remaining renderTab* to ui-meta.js"
 
 **Context:** Add the new `ui-*.js` files in load order. They must load AFTER `dispatcher.js` (so `switchTab` is defined before they try to export to it) but BEFORE `premium-ui.js`.
 
-- [ ] **Step 1: Update the script tags block**
+- [x] **Step 1: Update the script tags block**
 
 Find the section that starts with `<script src="geoCoords.js">` and ends with `<script src="premium-ui.js">`. Replace it with:
 
@@ -1001,7 +1001,7 @@ Find the section that starts with `<script src="geoCoords.js">` and ends with `<
   <script src="premium-ui.js"></script>
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add index.html
@@ -1016,35 +1016,35 @@ git commit -m "feat: update script loading order for new ui-*.js modules"
 - Run: `npm run build:css`
 - Verify: `tailwind.min.css` updated
 
-- [ ] **Step 1: Build Tailwind CSS**
+- [x] **Step 1: Build Tailwind CSS**
 
 ```bash
 npm run build:css
 ```
 Expected: `tailwind.min.css` is regenerated. Should complete without errors.
 
-- [ ] **Step 2: Verify no renderTab functions remain in dispatcher.js**
+- [x] **Step 2: Verify no renderTab functions remain in dispatcher.js**
 
 ```bash
 grep -c "^function renderTab\|^async function renderTab" dispatcher.js
 ```
 Expected output: `0`
 
-- [ ] **Step 3: Verify all new files exist**
+- [x] **Step 3: Verify all new files exist**
 
 ```bash
 ls ui-dispatch.js ui-fleet.js ui-staff.js ui-ops.js ui-meta.js ui-sidebar.js
 ```
 Expected: all 6 files listed without error.
 
-- [ ] **Step 4: Check dispatcher.js line count (should be significantly less)**
+- [x] **Step 4: Check dispatcher.js line count (should be significantly less)**
 
 ```bash
 wc -l dispatcher.js
 ```
 Before: ~4900 lines. After extraction of 15 renderTab functions: should be under 2000 lines.
 
-- [ ] **Step 5: Commit and push**
+- [x] **Step 5: Commit and push**
 
 ```bash
 git add tailwind.min.css
