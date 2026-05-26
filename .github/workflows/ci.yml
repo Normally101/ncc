@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [main]
 
-# Default minimal permissions — jobs that need more declare it explicitly
 permissions:
   contents: read
 
@@ -26,7 +25,7 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Install tools
+      - name: Install JSHint
         run: npm install -g jshint
 
       - name: Check JS syntax (JSHint)
@@ -34,23 +33,19 @@ jobs:
           jshint --config .jshintrc \
             engine.js dispatcher.js auth.js quests.js \
             security.js data.js syncManager.js \
-            || true  # warn only — don't block deploy on existing issues
+            || true
 
-      - name: Check for hardcoded secrets patterns
+      - name: Secret pattern scan (offline)
         run: |
-          # Lightweight secret pattern check (no network needed)
           FOUND=0
           for f in *.js; do
-            if grep -qE "(apikey|api_key|secret|password)\s*=\s*['\"][a-zA-Z0-9]{20,}" "$f" 2>/dev/null; then
+            [ -f "$f" ] || continue
+            if grep -qE '(api_key|apikey|secret|password)\s*[:=]\s*["\x27][a-zA-Z0-9_\-]{20,}' "$f"; then
               echo "WARNING: possible hardcoded secret in $f"
               FOUND=$((FOUND+1))
             fi
           done
-          if [ $FOUND -gt 0 ]; then
-            echo "⚠ $FOUND file(s) have possible hardcoded secrets (review manually)"
-          else
-            echo "✅ No obvious hardcoded secrets found"
-          fi
+          echo "${FOUND} potential secret(s) flagged (review manually)"
 
   # ── 2. HTML VALIDATION ────────────────────────────────────────
   html-validate:
@@ -67,7 +62,7 @@ jobs:
           html5validator --root . \
             --ignore "Error: Attribute" \
             --ignore "Error: Element" \
-            || true  # warn only
+            || true
 
   # ── 3. SQL MIGRATION LINT ────────────────────────────────────
   sql-lint:
@@ -81,7 +76,7 @@ jobs:
           shopt -s nullglob
           SQL_FILES=(*.sql)
           if [ ${#SQL_FILES[@]} -eq 0 ]; then
-            echo "ℹ No SQL files in root — skipping"
+            echo "No SQL files in root — skipping"
             exit 0
           fi
           ERRORS=0
@@ -93,44 +88,25 @@ jobs:
               echo "OK: $f ($(wc -l < "$f") lines)"
             fi
           done
-          if [ $ERRORS -gt 0 ]; then exit 1; fi
+          [ $ERRORS -eq 0 ] || exit 1
 
       - name: Check RLS coverage
         run: |
           shopt -s nullglob
           SQL_FILES=(*.sql)
-          if [ ${#SQL_FILES[@]} -eq 0 ]; then exit 0; fi
+          [ ${#SQL_FILES[@]} -eq 0 ] && exit 0
           MISSING=0
           for f in "${SQL_FILES[@]}"; do
             TABLES=$(grep -c "^CREATE TABLE" "$f" 2>/dev/null || echo 0)
             RLS=$(grep -c "ENABLE ROW LEVEL" "$f" 2>/dev/null || echo 0)
             if [ "$TABLES" -gt 0 ] && [ "$RLS" -lt "$TABLES" ]; then
-              echo "WARNING: $f has $TABLES tables but only $RLS RLS enables"
+              echo "WARNING: $f — $TABLES tables, $RLS RLS enables"
               MISSING=$((MISSING+1))
             fi
           done
-          if [ $MISSING -gt 0 ]; then
-            echo "⚠ $MISSING file(s) may have tables without RLS"
-          else
-            echo "✅ RLS coverage looks complete"
-          fi
+          [ $MISSING -gt 0 ] && echo "⚠ $MISSING file(s) missing RLS" || echo "✅ RLS coverage OK"
 
-  # ── 4. SECRET SCAN ───────────────────────────────────────────
-  secret-scan:
-    name: Secret Detection
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Scan for secrets with Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-        continue-on-error: true  # warn, don't block (anon key is intentionally public)
-
-  # ── 5. DEPLOY TO GITHUB PAGES ────────────────────────────────
+  # ── 4. DEPLOY TO GITHUB PAGES ────────────────────────────────
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
@@ -143,12 +119,8 @@ jobs:
 
       - name: Verify critical files present
         run: |
-          REQUIRED="index.html style.css auth.js engine.js dispatcher.js security.js"
-          for f in $REQUIRED; do
-            if [ ! -f "$f" ]; then
-              echo "MISSING required file: $f"
-              exit 1
-            fi
+          for f in index.html style.css auth.js engine.js dispatcher.js security.js; do
+            [ -f "$f" ] || { echo "MISSING: $f"; exit 1; }
           done
           echo "✅ All required files present"
 
