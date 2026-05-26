@@ -155,7 +155,7 @@ function _applyMarketingCampaign(campaignId) {
     }
     const endsDay = gameState.day + camp.duration;
     gameState.activeCampaigns.push({ id: campaignId, startDay: gameState.day, endsDay, cooldownUntil: endsDay + (camp.cooldown || 0) });
-    if (camp.repBonus) gameState.reputation = Math.min(5.0, (gameState.reputation || 0) + camp.repBonus);
+    if (camp.repBonus) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation || 0) + camp.repBonus);
     showNotification(`🚀 Campagna "${camp.name}" avviata! Dura ${camp.duration} giorni.`, 'success');
     if (typeof renderTabMarketing === 'function') renderTabMarketing();
     return true;
@@ -289,6 +289,12 @@ let gameState = {
     completedQuests: [],
     hasEVHub: false,
 };
+
+// Expose gameState via window getter so all files can use window.gameState
+Object.defineProperty(window, 'gameState', {
+    get() { return gameState; },
+    configurable: true,
+});
 
 function hasInvestment(id) { return gameState.investments.includes(id); }
 
@@ -575,7 +581,7 @@ function loadGame() {
         });
         if (!save.driverObituaries) save.driverObituaries = [];
         if (!save.hqRooms) save.hqRooms = ['garage_main'];
-        if (!save.hqGrid)  save.hqGrid  = { 7: 'garage_main' };
+        if (!save.hqGrid)  save.hqGrid  = { 0: 'garage_main' };
         if (!save.vipNemeses) save.vipNemeses = {};
         if (!save.corporateTenders)   save.corporateTenders   = [];
         if (!save.corporateContracts) save.corporateContracts = [];
@@ -1024,24 +1030,6 @@ function gameLoop() {
     updateUI();
 }
 
-// ─── MARKETING ────────────────────────────────────────────────────
-window.activateCampaign = function(id) {
-    const camp = MARKETING_CAMPAIGNS.find(c => c.id === id);
-    if (!camp) return;
-    if (gameState.activeCampaign === id) return;
-    gameState.activeCampaign = id;
-    logToMap(`📣 Campagna attivata: ${camp.name}`);
-    if(typeof showNotification==='function') showNotification(`Campagna "${camp.name}" attivata!`, 'success');
-    if(typeof renderTabMarketing==='function') renderTabMarketing();
-};
-
-window.deactivateCampaign = function() {
-    if (!gameState.activeCampaign) return;
-    gameState.activeCampaign = null;
-    logToMap('📣 Campagna marketing disattivata.');
-    if(typeof showNotification==='function') showNotification('Campagna disattivata.', 'success');
-    if(typeof renderTabMarketing==='function') renderTabMarketing();
-};
 
 // ─── LOG E WORLD NEWS ───
 function logToMap(msg) {
@@ -1572,7 +1560,7 @@ async function buyInvestment(invId) {
         if (typeof showNotification === 'function') showNotification(`🏗️ ${item.name}: costruzione avviata (${item.buildTime} giorni)!`, 'success');
     } else {
         gameState.investments.push(invId);
-        if (item.rep) gameState.reputation = Math.min(5.0, gameState.reputation + item.rep);
+        if (item.rep) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + item.rep);
         if (invId === 'inv_kasko') gameState._permKasko = true;
         if (invId === 'inv_ev_hub') gameState.hasEVHub = true;
         if (invId === 'inv_acquire') applyAcquisition();
@@ -1673,32 +1661,32 @@ window.newGamePlus = function() {
         unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
         availableRecruits: [],
         weather: 'sole', weatherHoursLeft: 6,
-        activeCampaign: null,
-        activeFines: [],
-        achievements: [],
-        loans: [],
+        activeCampaigns: [], activeCampaign: null,
+        activeFines: [], achievements: [], loans: [],
         newGamePlusCount: ngpCount,
         fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85, fuelTankLevel: 1,
-        depositoGomme: 0,
-        seizedCars: [],
-        policeHeat: 0,
-        consecutiveRedDays: 0,
-        blacklistedClients: [],
-        hqLevel: 0,
-        activeDynamicEvent: null,
-        activeStrike: null,
+        depositoGomme: 0, seizedCars: [], policeHeat: 0, consecutiveRedDays: 0,
+        blacklistedClients: [], hqLevel: 0, activeDynamicEvent: null, activeStrike: null,
         prestige: 0,
         stockPrices: {}, stockHoldings: {}, brokerInvestments: [],
         lifestyleAssets: [], creditScore: 300,
         totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
-        pricewars: [], shadowMissionsTotal: 0,
-        ventureCapital: [], annualProfitTracker: 0,
-        driverCoins: 0, npcMarket: [], questStats: {},
-        loginStreak: 0, lastDailyClaim: 0,
+        pricewars: [], shadowMissionsTotal: 0, ventureCapital: [], annualProfitTracker: 0,
+        driverCoins: 50, npcMarket: [],
+        questStats: { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
+        loginStreak: 0, lastDailyClaim: null,
+        weeklyEarnings: 0, weeklyRides: 0, weekStartDay: 1,
+        executivePassActive: false, executivePassExpiresDay: 0,
+        ownedHubs: [], hubTaxBalance: 0, driverAcademy: [], marketplace: [],
+        activeAuction: null, vipNemeses: {}, constructions: [], claimableQuests: [], completedQuests: [],
+        holding: { incorporated: false, incorporationDay: 0, subsidiaries: [] },
+        cempOwnedShares: 0, cempHistory: [], companyIPO: null,
+        hqs: {}, currentHQCity: 'roma',
         companyName: gameState.companyName || 'Chauffeur Empire',
         companyLogo: gameState.companyLogo || '👁️',
         companyColor: gameState.companyColor || '#d4af37',
     };
+    if (typeof hqInit === 'function') hqInit();
     gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1 });
     gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [], vehicleClass: 'mercedes_e' });
     _refreshRecruits();
@@ -1733,7 +1721,8 @@ window.sellCompanyNGP = function() {
         pendingRides: [], activeRides: [], emails: [],
         unlockedRegions: ['lazio'], nextId: 1, cannesBoostDays: 0,
         availableRecruits: [], weather: 'sole', weatherHoursLeft: 6,
-        activeCampaign: null, activeFines: [], achievements: [], loans: [],
+        activeCampaigns: [], activeCampaign: null,
+        activeFines: [], achievements: [], loans: [],
         newGamePlusCount: ngpCount, fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85,
         depositoGomme: 0, seizedCars: [], policeHeat: 0, consecutiveRedDays: 0,
         blacklistedClients: [], hqLevel: 0, activeDynamicEvent: null, activeStrike: null, prestige: 0,
@@ -1744,11 +1733,23 @@ window.sellCompanyNGP = function() {
         stockHistory: {}, shortPositions: {}, shortMarginHeld: 0,
         inflationRate: 0.020, interestRateBase: 0.045,
         lobbyingPoints: 0, activeLobbyLaws: [],
+        activeTrips: [],
         companyName: gameState.companyName || 'Chauffeur Empire',
         companyLogo: gameState.companyLogo || '👁️',
         companyColor: gameState.companyColor || '#d4af37',
         fuelTankLevel: 1, ventureCapital: [], annualProfitTracker: 0,
+        driverCoins: 50, npcMarket: [],
+        questStats: { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
+        loginStreak: 0, lastDailyClaim: null,
+        weeklyEarnings: 0, weeklyRides: 0, weekStartDay: 1,
+        executivePassActive: false, executivePassExpiresDay: 0,
+        ownedHubs: [], hubTaxBalance: 0, driverAcademy: [], marketplace: [],
+        activeAuction: null, vipNemeses: {}, constructions: [], claimableQuests: [], completedQuests: [],
+        holding: { incorporated: false, incorporationDay: 0, subsidiaries: [] },
+        cempOwnedShares: 0, cempHistory: [], companyIPO: null,
+        hqs: {}, currentHQCity: 'roma',
     };
+    if (typeof hqInit === 'function') hqInit();
     gameState.drivers.push({ id:'ceo', name:'Tu (CEO)', status:'idle', assignedCarId:'c_loaner', queue:[], fatigue:0, restHoursLeft:0, xp:0, level:0, morale:100, upgrades:[], hiredDay:1 });
     gameState.fleet.push({ id:'c_loaner', name:'Berlina Base', tier:'standard', condition:100, isLease:true, dailyCost:40, leaseDuration:12, leaseElapsedDays:0, fuel:100, mileage:0, tirePressure:100, upgrades:[], vehicleClass:'mercedes_e' });
     _initStockPrices();
@@ -1809,7 +1810,7 @@ window.acceptDiamondContract = function(emailId) {
     email.status = 'resolved';
     const price = email.offer || 30000;
     gameState.cash += price;
-    gameState.reputation = Math.min(10, gameState.reputation + 0.2);
+    gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.2);
     gameState.diamondContractsCompleted = (gameState.diamondContractsCompleted || 0) + 1;
     logToMap(`🔶 Diamond Contract completato! +€${price.toLocaleString()} +0.2★`);
     showBigEvent('🔶', 'Diamond Contract Completato!', `€${price.toLocaleString()} incassati. +0.2★ Reputazione. Totale Diamond: ${gameState.diamondContractsCompleted}.`);

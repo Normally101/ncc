@@ -91,7 +91,7 @@ function generatePOIRide(tierOverride = null) {
     const weatherMult = (WEATHER_STATES.find(w => w.id === gameState.weather) || {priceMult:1}).priceMult;
     // Surge pricing: domanda alta = tariffe più alte
     const pending = gameState.pendingRides.length;
-    const surgeMult = pending >= 15 ? 1.35 : pending >= 8 ? 1.15 : 1.0;
+    const surgeMult = pending >= 8 ? 1.15 : 1.0;
     const seasonMult  = _getSeasonalMult().priceMult;
     const livreMult   = hasInvestment('inv_livrea') ? 1.08 : 1.0;
     const carbonMult2 = hasInvestment('inv_carbon_neutral') && tier === 'business' && Math.random() < 0.3 ? 1.15 : 1.0;
@@ -609,7 +609,7 @@ function completeRide(ride, _deferPay = false) {
     const skillTipMult  = _skillEffects.tipMult || 1.0;
     // Diplomatico: Ambasciatore — VIP rep gain
     if (isVipOrUltra && _skillEffects.vipRepGain && driver?.id !== 'ceo') {
-        gameState.reputation = Math.min(5.0, (gameState.reputation || 0) + _skillEffects.vipRepGain);
+        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation || 0) + _skillEffects.vipRepGain);
     }
     // Specialty tip bonus
     let specTipMult = 1.0;
@@ -645,7 +645,7 @@ function completeRide(ride, _deferPay = false) {
         };
         const extraRate = extraRates[vClass] || 105;
         delayBonus  = Math.floor(extraRate * 1.25); // selling price version
-        if (ride.duration !== undefined) ride.duration += 60; // car blocked 1 more hour
+        if (ride.duration !== undefined) ride.duration += 3_600_000; // car blocked 1 more hour
         logToMap(`⏱️ Ritardo cliente: +1h fatturata a ${driver?.name || 'autista'} (corsa ${ride.toPoi?.name || ''}). Bonus +€${delayBonus}`);
         showNotification(`⏱️ Ritardo cliente! +€${delayBonus} extra fatturati.`, 'success');
     }

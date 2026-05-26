@@ -278,8 +278,11 @@ window.openCarModal = function(carId) {
     document.getElementById('car-modal-title').innerText = car.name;
     document.getElementById('car-modal-desc').innerText = `${car.tier.toUpperCase()} · Condizione ${Math.floor(car.condition)}% · Carburante ${Math.floor(car.fuel||100)}%`;
 
-    let repairCost = Math.floor((100 - car.condition) * 25);
-    if (gameState.staff.some(s => s.id === 'mech')) repairCost = Math.floor(repairCost * 0.5);
+    const _repMissing = 100 - Math.max(0, Math.floor(car.condition || 0));
+    const _repHasMech = gameState.staff.some(s => s.id === 'mech');
+    const _repContractDisc = (gameState.maintenanceContract && gameState.day <= gameState.maintenanceContractPaidUntilDay) ? 0.70 : 1.0;
+    const _repMechDisc = _repHasMech ? 0.50 : 1.0;
+    let repairCost = Math.round(Math.max(500, _repMissing * 85) * _repContractDisc * _repMechDisc);
 
     const fuelPct = car.fuel !== undefined ? Math.floor(car.fuel) : 100;
     const fuelColor = fuelPct < 20 ? '#ff4060' : fuelPct < 50 ? '#f59e0b' : '#00f2ff';

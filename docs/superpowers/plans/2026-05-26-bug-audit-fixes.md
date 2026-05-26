@@ -383,18 +383,18 @@ const repairCost = Math.max(500, missingPoints * 85); // stessa formula di engin
 
 ## Checklist fix in ordine di priorità
 
-- [ ] **BUG 18** — Esporre `gameState` via `Object.defineProperty` getter in `engine.js` (o `window.getGameState` helper)
-- [ ] **BUG 14** — `ui-dispatch.js:187` — `.ride-card` → `.ops-ride-card`, `.driver-card` → `.ops-driver-row`
-- [ ] **BUG 10–13** — `ui-home.js:91,140,145,151` — `vehicleId` → `assignedCarId`, `'driving'` → `'busy'`
-- [ ] **BUG 6** — `engine-fleet.js:60` — bloccare `repairVehicle` se motore rotto, o richiedere `repairEngine` prima
-- [ ] **BUG 1** — `engine.js:578` — `{ 7: 'garage_main' }` → `{ 0: 'garage_main' }`
-- [ ] **BUG 20** — 13 file × Math.min(5.0 → 5.0 + prestige)
-- [ ] **BUG 19** — `ui-staff.js:281` — allineare formula preview riparazione a `engine-fleet.js`
-- [ ] **BUG 3** — `engine.js:1668/1736` — completare lista campi reset NGP
-- [ ] **BUG 5** — `engine-daily.js:312` — `|| 30` → `|| 0`
-- [ ] **BUG 8** — `engine-rides.js:648` — `+= 60` → `+= 3_600_000`
-- [ ] **BUG 7** — `engine-events.js:220` — `ride.driverId` → lookup nome autista
-- [ ] **BUG 15** — `engine-drivers.js:165` — aggiungere `saveGame()` in `fireDriver()`
-- [ ] **BUG 16** — `engine-fleet.js:61` — label sconto combinato
-- [ ] **BUG 9** — `engine-rides.js:94` — rimuovere surge dead code
-- [ ] **BUG 2** — `engine.js:1028–1044` — rimuovere `activateCampaign`/`deactivateCampaign` dead code
+- [x] **BUG 18** — `Object.defineProperty` getter `window.gameState` in `engine.js:295`
+- [x] **BUG 14** — `ui-dispatch.js:188-192` — `.ride-card` → `.ops-ride-card`, `.driver-card` → `.ops-driver-row`
+- [x] **BUG 10–13** — `ui-home.js:91,140,145,151` — `vehicleId` → `assignedCarId`, `'driving'` → `'busy'`
+- [x] **BUG 6** — `engine-fleet.js:57-60` — blocca `repairVehicle` se `engineHealth <= 0`, label sconto combinato
+- [x] **BUG 1** — `engine.js:584` — `{ 7: 'garage_main' }` → `{ 0: 'garage_main' }`
+- [x] **BUG 20** — 13 occorrenze `Math.min(5.0, ...)` → `Math.min(5.0 + prestige, ...)` in 7 file
+- [x] **BUG 19** — `ui-staff.js:281` — formula preview allineata a `engine-fleet.js` (max(500, missing×85) × sconti)
+- [x] **BUG 3** — `engine.js:1682/1735` — reset NGP completo con tutti i campi mancanti + `hqInit()`
+- [x] **BUG 5** — `engine-daily.js:312` — `|| 30` → `|| 0`
+- [x] **BUG 8** — `engine-rides.js:648` — `+= 60` → `+= 3_600_000`
+- [x] **BUG 7** — `engine-events.js:214` — lookup nome autista per multa ZTL
+- [x] **BUG 15** — `engine-drivers.js:167` — `saveGame()` aggiunto in `fireDriver()`
+- [x] **BUG 16** — `engine-fleet.js:61` — label sconto combinato (già fixato in BUG 6)
+- [x] **BUG 9** — `engine-rides.js:94` — rimosso caso `>= 15` dead code dal surge
+- [x] **BUG 2** — `engine.js` — rimosso `activateCampaign`/`deactivateCampaign` dead code

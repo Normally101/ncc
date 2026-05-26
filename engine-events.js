@@ -211,9 +211,10 @@ function _maybeGenerateZTLFine() {
         if (inNord   && hasInvestment('inv_ztl_nord'))   return;
 
         if (Math.random() > 0.05) return; // bassa probabilità per non essere punitivo
+        const _fineDriver = (gameState.drivers || []).find(d => d.id === ride.driverId);
         const fine = {
             id: gameState.nextId++,
-            driverName: ride.driverId,
+            driverName: _fineDriver ? _fineDriver.name : ride.driverId,
             desc: `Accesso ZTL non autorizzato: ${dest.name}`,
             amount: 164,
             severity: 'medium',
@@ -369,7 +370,7 @@ function _maybeParazziEvent() {
         // Positive: VIP happy with discretion, big tip
         const bonus = Math.floor(ride.price * 0.40);
         gameState.cash += bonus;
-        gameState.reputation = Math.min(5.0, gameState.reputation + 0.05);
+        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.05);
         logToMap(`📸 Paparazzi! ${driver?.name} protegge il cliente VIP. Mancia extra: +€${bonus}`);
         if (typeof showNotification === 'function') showNotification(`📸 Paparazzi evitati! +€${bonus} mancia.`, 'success');
     } else if (roll < 0.80) {
@@ -379,7 +380,7 @@ function _maybeParazziEvent() {
         showBigEvent('📸', 'Scandalo Paparazzi!', `${driver?.name || 'Il tuo autista'} è stato fotografato con un cliente VIP. La discrezione è la chiave del lusso. −0.08★ reputazione.`);
     } else {
         // Viral moment: big rep boost
-        gameState.reputation = Math.min(5.0, gameState.reputation + 0.15);
+        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.15);
         logToMap(`📸 Momento virale! Chauffeur Empire sui social. +0.15★ Reputazione.`);
         if (typeof showNotification === 'function') showNotification(`📸 Chauffeur Empire diventa virale! +0.15★`, 'success');
     }

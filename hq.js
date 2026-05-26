@@ -169,7 +169,7 @@ window.hqUpgradeRoom = async function(cityId, roomId, slotIndex) {
         const prevBonus = currentLevel > 0 ? roomDef.tiers.find(t=>t.level===currentLevel).effect.reputationBonus || 0 : 0;
         const delta = nextTier.effect.reputationBonus - prevBonus;
         if (delta > 0) {
-            gameState.reputation = Math.min(5.0, (gameState.reputation || 0) + delta);
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation || 0) + delta);
         }
     }
 

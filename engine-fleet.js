@@ -54,11 +54,18 @@ window.repairVehicle = function(carId) {
     const mechDisc     = hasMech ? 0.50 : 1.0;
     const baseCost = Math.max(500, missing * 85);
     const cost = Math.round(baseCost * contractDisc * mechDisc);
+    if ((car.engineHealth !== undefined) && car.engineHealth <= 0) {
+        showNotification('⚙️ Motore fuso — usa "Ripara Motore" prima di riparare la carrozzeria.', 'error');
+        return;
+    }
     if (gameState.cash < cost) { showNotification(`Fondi insufficienti — Riparazione: €${cost.toLocaleString()}`, 'error'); return; }
     gameState.cash -= cost;
     car.condition = 100;
     car.outOfService = null;
-    const discLabel = contractDisc < 1 ? ' (−30% contratto)' : hasMech ? ' (−50% Capo Officina)' : '';
+    let discLabel = '';
+    if (contractDisc < 1 && hasMech) discLabel = ' (−30% contratto + −50% Capo Officina)';
+    else if (contractDisc < 1) discLabel = ' (−30% contratto)';
+    else if (hasMech) discLabel = ' (−50% Capo Officina)';
     logToMap(`🔧 ${car.name} riparata: 100% (€${cost.toLocaleString()}${discLabel})`);
     showNotification(`✅ ${car.name} riparata!`, 'success');
     updateUI(); saveGame();

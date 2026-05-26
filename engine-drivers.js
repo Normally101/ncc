@@ -164,6 +164,7 @@ window.fireDriver = function fireDriver(driverId) {
     const driver = gameState.drivers[idx];
     gameState.drivers.splice(idx, 1);
     if(typeof showNotification==='function') showNotification(`${driver.name} licenziato.`, 'error');
+    if(typeof saveGame==='function') saveGame();
     if(typeof renderTabStaff==='function') renderTabStaff();
 };
 

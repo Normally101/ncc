@@ -320,7 +320,7 @@ window.buyLifestyleAsset = function(assetId) {
     if (!gameState.lifestyleAssets) gameState.lifestyleAssets = [];
     gameState.cash -= asset.price;
     gameState.lifestyleAssets.push(assetId);
-    if (asset.repBonus) gameState.reputation = Math.min(10.0, gameState.reputation + asset.repBonus);
+    if (asset.repBonus) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + asset.repBonus);
     logToMap(`🏰 Acquisito: ${asset.name} (${asset.location}) — €${asset.price.toLocaleString()}`);
     showBigEvent(asset.icon, `Acquisito: ${asset.name}!`,
         `${asset.desc}\n\n${asset.repBonus > 0 ? `+${asset.repBonus}★ Reputazione immediata. ` : ''}${asset.passive > 0 ? `+€${asset.passive.toLocaleString()}/g entrate passive. ` : ''}${asset.intlUnlock ? 'Tratte internazionali sbloccate!' : ''}`

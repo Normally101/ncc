@@ -309,7 +309,7 @@ function _maybeGreyMarketMission() {
 
 
 function processDailyRoutines() {
-    const _closingDay = gameState.day - 1 || 30; // day that just ended (day was already incremented)
+    const _closingDay = (gameState.day - 1) || 0; // day that just ended (day was already incremented)
     if (typeof window.CE_Contracts !== 'undefined') window.CE_Contracts.dailyTick();
     let income = 0; let expenses = 0;
 
@@ -585,7 +585,7 @@ function processDailyRoutines() {
             const bonusAmt = tenure === 30 ? 500 : tenure === 60 ? 1000 : 2000;
             const repBonus = tenure === 90 ? 0.1 : 0;
             gameState.cash += bonusAmt;
-            gameState.reputation = Math.min(5.0, gameState.reputation + repBonus);
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + repBonus);
             d.morale = Math.min(100, (d.morale || 100) + 15);
             logToMap(`🎖️ ${d.name}: ${tenure} giorni di servizio! Bonus fedeltà +€${bonusAmt}${repBonus > 0 ? ' +0.1★' : ''}`);
             showBigEvent('🎖️', `${d.name}: ${tenure} Giorni!`, `Fedeltà premiata con un bonus di €${bonusAmt}. Morale autista +15.`);
@@ -696,7 +696,7 @@ function processDailyRoutines() {
 
     // Filantropia: +0.5 rep settimanale
     if (hasInvestment('inv_philanthropy') && gameState.day % 7 === 0) {
-        gameState.reputation = Math.min(5.0, gameState.reputation + 0.5);
+        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.5);
         logToMap('💝 Fondazione: +0.5★ Reputazione settimanale.');
     }
 
@@ -746,7 +746,7 @@ function processDailyRoutines() {
             const bonus  = streak >= 3 ? 10000 : streak === 2 ? 5000 : 2000;
             const repGain = streak >= 3 ? 0.2 : 0.1;
             gameState.cash += bonus;
-            gameState.reputation = Math.min(5.0, gameState.reputation + repGain);
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + repGain);
             logToMap(`🤝 Classic Vacations: quota settim. raggiunta (${completed}/${target})! Streak ${streak}× → +€${bonus.toLocaleString()} +${repGain}★`);
             showBigEvent('🤝', 'Quota CV Completata!', `${completed} tratte su ${target} consegnate.\nBonus: +€${bonus.toLocaleString()} · +${repGain}★ rep\nStreak: ${streak} settimane consecutive.`);
         } else if (completed > 0) {
@@ -997,7 +997,7 @@ function autoNegotiateEmails() {
             let counterOffer = Math.floor(email.offer * 1.15);
             logToMap(`L'Event Manager ha chiuso un Appalto B2B a €${counterOffer}`);
             gameState.cash += counterOffer;
-            gameState.reputation = Math.min(5.0, gameState.reputation + 0.05);
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.05);
             email.status = 'resolved';
 
             let numRides = Math.floor(Math.random() * 3) + 3;
@@ -1021,14 +1021,14 @@ function negotiateEmail(emailId, action, choiceIdx = null) {
         const choice = email.eventData.choices[choiceIdx];
         if (gameState.cash >= Math.max(0, choice.cost)) {
             gameState.cash -= choice.cost;
-            gameState.reputation = Math.min(5.0, Math.max(0, gameState.reputation + choice.repBonus));
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), Math.max(0, gameState.reputation + choice.repBonus));
             logToMap(`Evento: Hai scelto "${choice.text}".`);
         } else { return; } // Fondi insufficienti
     } else if (email.type === 'b2b') {
         let successChance = 100 - (((action / email.offer) - 1) * 100) + (gameState.reputation * 15);
         if (Math.random() * 100 <= successChance) {
             logToMap(`✅ Appalto B2B chiuso: €${action}`);
-            gameState.cash += action; gameState.reputation = Math.min(5.0, gameState.reputation + 0.05);
+            gameState.cash += action; gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.05);
             let numRides = Math.floor(Math.random() * 3) + 3;
             for(let i=0; i<numRides; i++) generatePOIRide(Math.random()>0.5?'business':'vip');
         } else {

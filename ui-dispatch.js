@@ -185,11 +185,11 @@ function _updateTrafficLabel() {
 
 let draggedRideId = null;
 function setupDragAndDrop() {
-    document.addEventListener('dragstart', (e) => { const card = e.target.closest('.ride-card'); if (card) { draggedRideId = card.getAttribute('data-id'); card.style.opacity = '0.5'; } });
-    document.addEventListener('dragend', (e) => { const card = e.target.closest('.ride-card'); if (card) { card.style.opacity = '1'; draggedRideId = null; } });
-    document.addEventListener('dragover', (e) => { const dCard = e.target.closest('.driver-card'); if (dCard) { e.preventDefault(); dCard.classList.add('bg-white/10'); } });
-    document.addEventListener('dragleave', (e) => { const dCard = e.target.closest('.driver-card'); if (dCard) dCard.classList.remove('bg-white/10'); });
-    document.addEventListener('drop', (e) => { e.preventDefault(); const dCard = e.target.closest('.driver-card'); if (dCard && draggedRideId) { dCard.classList.remove('bg-white/10'); assignRideToDriver(draggedRideId, dCard.getAttribute('data-id')); renderTabCorse(); } });
+    document.addEventListener('dragstart', (e) => { const card = e.target.closest('.ops-ride-card'); if (card) { draggedRideId = card.getAttribute('data-id'); card.style.opacity = '0.5'; } });
+    document.addEventListener('dragend', (e) => { const card = e.target.closest('.ops-ride-card'); if (card) { card.style.opacity = '1'; draggedRideId = null; } });
+    document.addEventListener('dragover', (e) => { const dCard = e.target.closest('.ops-driver-row'); if (dCard) { e.preventDefault(); dCard.classList.add('bg-white/10'); } });
+    document.addEventListener('dragleave', (e) => { const dCard = e.target.closest('.ops-driver-row'); if (dCard) dCard.classList.remove('bg-white/10'); });
+    document.addEventListener('drop', (e) => { e.preventDefault(); const dCard = e.target.closest('.ops-driver-row'); if (dCard && draggedRideId) { dCard.classList.remove('bg-white/10'); assignRideToDriver(draggedRideId, dCard.getAttribute('data-id')); renderTabCorse(); } });
 }
 
 window.renderTabCorse = renderTabCorse;

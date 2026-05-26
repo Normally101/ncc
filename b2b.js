@@ -145,7 +145,7 @@ window._b2bDailyTick = async function() {
             `"${data.title}"\n\n✅ SLA rispettato al 100%.\nBonus reputazione: +${data.rep_bonus}★\n\nEseguita la consegna finale. Il cliente è soddisfatto.`);
         logToMap(`💼 Appalto B2B completato: "${data.title}" — +${data.rep_bonus}★ reputazione`);
         if (!window.ServerState?.isReady()) {
-            gameState.reputation = Math.min(5.0, (gameState.reputation||0) + (data.rep_bonus||0));
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation||0) + (data.rep_bonus||0));
         }
     } else if (data.payout > 0) {
         showNotification(`💼 B2B: +€${data.payout.toLocaleString()} da "${data.title}" (${data.days_remaining}g rim.)`, 'success');

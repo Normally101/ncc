@@ -88,7 +88,7 @@ window.renderTabHome = function() {
     const ridesRows = activeRides.slice(0, 6).map(ride => {
         const driver  = (gs.drivers||[]).find(d => d.id === ride.driverId);
         const dname   = _homeEsc(driver ? driver.name : '—');
-        const car     = driver ? (gs.fleet||[]).find(v => v.id === driver.vehicleId) : null;
+        const car     = driver ? (gs.fleet||[]).find(v => v.id === driver.assignedCarId) : null;
         const carLabel = car ? _homeEsc((car.brand||'') + ' ' + (car.model||'')) : '—';
 
         const fromName = _homeEsc(ride.fromPoi?.name || ride.originName || '—');
@@ -137,18 +137,18 @@ window.renderTabHome = function() {
 </td></tr>` : '';
 
     // ── Drivers list ──────────────────────────────────────────────────
-    const driversOnDuty = (gs.drivers||[]).filter(d => d.status === 'driving' || d.status === 'idle');
+    const driversOnDuty = (gs.drivers||[]).filter(d => d.status === 'busy' || d.status === 'idle');
     const totalDrivers  = (gs.drivers||[]).length;
     const driverRows = (gs.drivers||[]).slice(0, 8).map(d => {
         const avatarColor = _homeAvatarColor(d.name);
         const initials    = _homeInitials(d.name);
-        const car   = (gs.fleet||[]).find(v => v.id === d.vehicleId);
+        const car   = (gs.fleet||[]).find(v => v.id === d.assignedCarId);
         const carLbl = car ? _homeEsc((car.brand||'')+ ' ' +(car.model||'')) : 'Nessun veicolo';
         const fatigue = Math.round(d.fatigue || 0);
         const fatigueColor = fatigue > 75 ? '#f87171' : (fatigue > 50 ? '#f59e0b' : '#4ade80');
 
         let statusLabel, statusColor;
-        if (d.status === 'driving')  { statusLabel = 'In corsa'; statusColor = '#4ade80'; }
+        if (d.status === 'busy')  { statusLabel = 'In corsa'; statusColor = '#4ade80'; }
         else if (d.status === 'resting') { statusLabel = 'Riposo'; statusColor = '#94a3b8'; }
         else if (d.status === 'academy') { statusLabel = 'Accademia'; statusColor = '#a78bfa'; }
         else { statusLabel = 'Libero'; statusColor = '#60a5fa'; }
