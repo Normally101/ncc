@@ -1,194 +1,311 @@
 'use strict';
 /* ui-career.js — Chauffeur Empire
-   renderTabCareer: missioni, quests, bivio narrative.
-   Dipendenze: engine.js, quests.js, design-system.js */
+   renderTabCareer: quest journal cinematico.
+   Mostra solo missioni sbloccate e completate — mai quelle locked. */
 
+/* ── Costanti UI ──────────────────────────────────────────── */
+const _CH_NAMES = {
+    1: '🎓 Il Battesimo del Fuoco',
+    2: '📦 Volume I — La Prima Ombra',
+    3: '🏢 Volume II — Le Ombre · Il Dominio',
+    4: '⚡ Volume III — L\'Energia',
+    5: '👑 Volume IV — Il Potere Assoluto',
+    6: '🌍 Volume V — L\'Impero Continentale',
+    7: '⚔️ Volume VI — La Guerra delle Ombre',
+    8: '🌑 Volume VII — Il Giudizio Finale',
+    9: '🌋 Volume Finale — L\'Apocalisse',
+};
+
+const _TIER_COLOR = {
+    bronze: '#cd7f32', silver: '#b0b8c4', gold: '#d4af37',
+    diamond: '#7ec8e3', legendary: '#ff6b35',
+};
+const _TIER_GRAD = {
+    bronze:   'linear-gradient(135deg,#2a1608 0%,#12121e 100%)',
+    silver:   'linear-gradient(135deg,#141c28 0%,#0e0e1c 100%)',
+    gold:     'linear-gradient(135deg,#1e1600 0%,#0e0e1c 100%)',
+    diamond:  'linear-gradient(135deg,#051828 0%,#0e0e1c 100%)',
+    legendary:'linear-gradient(135deg,#1f0800 0%,#0e0e1c 100%)',
+};
+const _TYPE_LABEL = { tutorial: 'Tutorial', story: 'Storia', raid: '⚔️ Raid Boss', milestone: 'Traguardo' };
+
+function _isUnlocked(q, completed) {
+    return (q.prereqs || []).every(id => completed.includes(id));
+}
+
+function _rewardLine(r) {
+    const parts = [
+        r.cash       ? `💰 €${r.cash.toLocaleString('it')}` : null,
+        r.tc         ? `🪙 +${r.tc} TC` : null,
+        r.rep        ? `⭐ +${r.rep}★` : null,
+        r.shadowCoin ? `👁️ +${r.shadowCoin.toLocaleString('it')} SC` : null,
+        r.unlock     ? `🔓 ${r.unlock}` : null,
+        r.title      ? `🏅 "${r.title}"` : null,
+    ].filter(Boolean);
+    return parts.length ? parts.join('  ·  ') : (r.desc || '—');
+}
+
+/* ── Main render ──────────────────────────────────────────── */
 function renderTabCareer() {
     const container = document.getElementById('tab-container');
-    if (typeof window.QUEST_DB === 'undefined') {
-        container.innerHTML = `<div class="text-center text-gray-500 mt-10 text-[10px]">Sistema missioni non caricato.</div>`;
+    if (!window.QUEST_DB) {
+        container.innerHTML = `<div style="color:rgba(255,255,255,0.3);font-size:10px;text-align:center;margin-top:40px">Sistema missioni non caricato.</div>`;
         return;
     }
-    const gs = gameState;
+
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+
+    const gs        = gameState;
     const completed = gs.completedQuests || [];
     const claimable = gs.claimableQuests || [];
-    const total     = window.QUEST_DB.length;
 
-    const chLabels = {
-        1:'🎓 Tutorial — Il Battesimo del Fuoco',
-        2:'📦 Volume I — La Prima Ombra',
-        3:'🏢 Volume II-III — Le Ombre · Il Dominio',
-        4:'⚡ Volume IV — L\'Energia',
-        5:'👑 Volume V — Il Potere Assoluto',
-        6:'🌍 Volume VI — L\'Impero Continentale',
-        7:'⚔️ Volume VII — La Guerra delle Ombre',
-        8:'🌑 Volume VIII — Il Giudizio Finale',
-        9:'🌋 Volume Finale — L\'Apocalisse',
-    };
+    // Classify all quests
+    const storyTypes = ['tutorial', 'story', 'raid'];
+    let activeStory     = null; // first unlocked story/raid/tutorial quest
+    const activeMiles   = [];   // all unlocked milestones not yet completed
+    const claimMiles    = [];   // claimable milestones
 
-    const tierGradient = {
-        bronze:   'linear-gradient(135deg,#3d2010 0%,#1a1a2e 100%)',
-        silver:   'linear-gradient(135deg,#1c2333 0%,#1a1a2e 100%)',
-        gold:     'linear-gradient(135deg,#2d2200 0%,#1a1a2e 100%)',
-        diamond:  'linear-gradient(135deg,#0a2233 0%,#1a1a2e 100%)',
-        legendary:'linear-gradient(135deg,#2d1000 0%,#1a1a2e 100%)',
-    };
-    const tierColor = { bronze:'#cd7f32', silver:'#c0c0c0', gold:'#d4af37', diamond:'#a8d8ea', legendary:'#ff6b35' };
-    const typeLabel = { tutorial:'Tutorial', story:'Storia', raid:'Raid Boss', milestone:'Traguardo' };
-
-    // Find the single active quest: first in DB order that is claimable or (prereqs met and not done)
-    const activeQ = window.QUEST_DB.find(q => {
-        if (completed.includes(q.id)) return false;
-        const prereqsMet = (q.prereqs || []).every(p => completed.includes(p));
-        return prereqsMet;
-    });
-
-    // If all quests are done
-    if (!activeQ) {
-        container.innerHTML = `
-            <div class="text-center mt-16 space-y-3">
-                <div class="text-4xl">🏆</div>
-                <div class="text-[13px] font-bold text-gold">Campagna completata!</div>
-                <div class="text-[10px] text-gray-400">${total}/${total} missioni completate.</div>
-            </div>`;
-        return;
+    for (const q of window.QUEST_DB) {
+        if (completed.includes(q.id)) continue;
+        if (!_isUnlocked(q, completed)) continue;
+        if (storyTypes.includes(q.type)) {
+            if (!activeStory) activeStory = q;
+        } else if (q.type === 'milestone') {
+            if (claimable.includes(q.id)) claimMiles.push(q);
+            else activeMiles.push(q);
+        }
     }
 
-    const isClaim    = claimable.includes(activeQ.id);
-    const alreadyRun = !!(gs.questStats?.missionRuns?.[activeQ.id]);
-    const canDispatch = activeQ.type === 'story' || activeQ.type === 'raid' ||
-        (activeQ.type === 'tutorial' && ['t03','t05','t06'].includes(activeQ.id));
-    const showDispatch = canDispatch && !isClaim && !alreadyRun;
+    // Completed quests grouped by chapter (story only for archive)
+    const completedByChapter = {};
+    for (const q of window.QUEST_DB) {
+        if (!completed.includes(q.id)) continue;
+        const ch = q.ch;
+        if (!completedByChapter[ch]) completedByChapter[ch] = [];
+        completedByChapter[ch].push(q);
+    }
+
+    const totalCompleted = completed.length;
+    const currentCh      = activeStory ? activeStory.ch : (totalCompleted > 0 ? Math.max(...window.QUEST_DB.filter(q => completed.includes(q.id)).map(q => q.ch)) : 1);
+    const chName         = _CH_NAMES[currentCh] || `Capitolo ${currentCh}`;
+
+    let html = '';
+
+    // ── HEADER ──────────────────────────────────────────────
+    html += `
+    <div style="background:linear-gradient(135deg,#0a0c16,#111828);border-bottom:1px solid rgba(212,175,55,0.12);padding:18px 20px 14px;position:sticky;top:0;z-index:10">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between">
+            <div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:3px">Percorso Corrente</div>
+                <div style="font-size:13px;font-weight:800;color:#d4af37;font-family:'Orbitron',monospace;line-height:1.1">${chName}</div>
+            </div>
+            <div style="text-align:right">
+                <div style="font-size:22px;font-weight:900;color:white;line-height:1">${totalCompleted}</div>
+                <div style="font-size:8px;color:rgba(255,255,255,0.3)">missioni completate</div>
+            </div>
+        </div>
+        <div style="height:2px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:12px;overflow:hidden">
+            <div style="height:100%;background:linear-gradient(90deg,#d4af37,#cd7f32);border-radius:2px;width:${Math.round(totalCompleted / Math.max(1, window.QUEST_DB.length) * 100)}%;transition:width 0.6s ease"></div>
+        </div>
+    </div>
+    <div style="padding:16px">`;
+
+    // ── CAMPAGNA COMPLETATA ──────────────────────────────────
+    if (!activeStory && activeMiles.length === 0 && claimMiles.length === 0) {
+        html += `
+        <div style="text-align:center;padding:60px 20px">
+            <div style="font-size:48px;margin-bottom:12px">🏆</div>
+            <div style="font-size:14px;font-weight:800;color:#d4af37;margin-bottom:6px">Campagna Completata.</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.35)">Hai dominato il mercato NCC italiano.</div>
+        </div>`;
+    }
+
+    // ── MISSIONI DA RISCATTARE (priorità assoluta) ───────────
+    if (activeStory && claimable.includes(activeStory.id)) {
+        html += _renderClaimBanner(activeStory);
+    }
+    if (claimMiles.length > 0) {
+        html += `<div style="margin-bottom:4px">`;
+        for (const q of claimMiles) html += _renderClaimBanner(q);
+        html += `</div>`;
+    }
+
+    // ── MISSIONE ATTIVA (storia) ─────────────────────────────
+    if (activeStory && !claimable.includes(activeStory.id)) {
+        html += _renderActiveStory(activeStory, gs, claimable);
+    }
+
+    // ── TRAGUARDI ATTIVI ────────────────────────────────────
+    if (activeMiles.length > 0) {
+        html += `
+        <div style="margin-top:${activeStory ? 20 : 0}px">
+            <div style="font-size:8px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px">🏅 Traguardi in Corso</div>
+            <div style="display:flex;flex-direction:column;gap:8px">`;
+        for (const q of activeMiles.slice(0, 5)) {
+            html += _renderMilestoneCard(q, gs);
+        }
+        if (activeMiles.length > 5) {
+            html += `<div style="font-size:9px;color:rgba(255,255,255,0.25);text-align:center;padding:8px">+${activeMiles.length - 5} altri traguardi in corso</div>`;
+        }
+        html += `</div></div>`;
+    }
+
+    // ── ARCHIVIO COMPLETATE ──────────────────────────────────
+    const archiveChapters = Object.keys(completedByChapter).map(Number).sort((a, b) => b - a);
+    if (archiveChapters.length > 0) {
+        html += `
+        <div style="margin-top:28px;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px">
+            <div style="font-size:8px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:14px">📚 Archivio Completate</div>`;
+        for (const ch of archiveChapters) {
+            const quests = completedByChapter[ch];
+            const chLabel = _CH_NAMES[ch] || `Capitolo ${ch}`;
+            html += `
+            <div style="margin-bottom:16px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.45)">${chLabel}</div>
+                    <div style="font-size:8px;color:rgba(255,255,255,0.2);font-variant-numeric:tabular-nums">${quests.length} completate</div>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:4px">`;
+            for (const q of quests) {
+                const tc = _TIER_COLOR[q.tier] || '#d4af37';
+                html += `
+                <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:rgba(255,255,255,0.025);border-radius:7px;border-left:2px solid ${tc}40">
+                    <span style="font-size:14px;flex-shrink:0">${q.icon}</span>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.title}</div>
+                        <div style="font-size:8px;color:rgba(255,255,255,0.25)">${_rewardLine(q.rewards)}</div>
+                    </div>
+                    <span style="color:#22c55e;font-size:11px;flex-shrink:0">✓</span>
+                </div>`;
+            }
+            // Subtle "more" hint if this is the current chapter and there are locked quests ahead
+            if (ch === currentCh && activeStory) {
+                html += `<div style="text-align:center;padding:10px 0 2px;color:rgba(255,255,255,0.12);font-size:12px;letter-spacing:0.3em">· · ·</div>`;
+            }
+            html += `</div></div>`;
+        }
+        html += `</div>`;
+    }
+
+    html += `</div>`; // close padding wrapper
+    container.innerHTML = html;
+}
+
+/* ── Card Builders ────────────────────────────────────────── */
+function _renderClaimBanner(q) {
+    const tc = _TIER_COLOR[q.tier] || '#d4af37';
+    return `
+    <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(21,128,61,0.08));border:1px solid rgba(34,197,94,0.35);border-radius:12px;padding:14px 16px;margin-bottom:12px;animation:tut-pulse 2s ease-in-out infinite">
+        <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:22px">${q.icon}</span>
+            <div style="flex:1">
+                <div style="font-size:8px;color:#22c55e;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:2px">🎁 Ricompensa Disponibile</div>
+                <div style="font-size:12px;font-weight:800;color:white">${q.title}</div>
+                <div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:1px">${_rewardLine(q.rewards)}</div>
+            </div>
+            <button onclick="window.claimQuestReward('${q.id}')" style="padding:8px 16px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:8px;color:white;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">RISCATTA</button>
+        </div>
+    </div>`;
+}
+
+function _renderActiveStory(q, gs, claimable) {
+    const tc       = _TIER_COLOR[q.tier] || '#d4af37';
+    const tGrad    = _TIER_GRAD[q.tier]  || _TIER_GRAD.gold;
+    const isRaid   = q.type === 'raid';
+    const typeTag  = _TYPE_LABEL[q.type] || q.type;
 
     let prog = { cur: 0, tgt: 1 };
-    try { prog = activeQ.check(gs); } catch(e) {}
-    if (isClaim) prog.cur = prog.tgt;
-    const pct = Math.min(100, Math.round(((prog.cur || 0) / Math.max(1, prog.tgt || 1)) * 100));
-    const barColor = isClaim ? '#22c55e' : activeQ.type === 'raid' ? '#ff6b35' : '#d4af37';
+    try { prog = q.check(gs); } catch(e) {}
+    const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
+    const barColor = isRaid ? '#ff6b35' : tc;
 
-    const tColor    = tierColor[activeQ.tier] || '#d4af37';
-    const tGrad     = tierGradient[activeQ.tier] || tierGradient.gold;
-    const chLabel   = chLabels[activeQ.ch] || `Capitolo ${activeQ.ch}`;
-    const typeTag   = typeLabel[activeQ.type] || activeQ.type;
-    const isRaid    = activeQ.type === 'raid';
+    const isClaim    = claimable.includes(q.id);
+    const alreadyRun = !!(gs.questStats?.missionRuns?.[q.id]);
+    const canDispatch = q.type === 'story' || q.type === 'raid' || (q.type === 'tutorial' && ['t03','t05','t06'].includes(q.id));
+    const showDispatch = canDispatch && !isClaim && !alreadyRun;
 
-    const rewardParts = [
-        activeQ.rewards.cash       ? `€${activeQ.rewards.cash.toLocaleString()}` : null,
-        activeQ.rewards.tc         ? `+${activeQ.rewards.tc} Driver Coins` : null,
-        activeQ.rewards.rep        ? `+${activeQ.rewards.rep}★ Reputazione` : null,
-        activeQ.rewards.shadowCoin ? `+${activeQ.rewards.shadowCoin.toLocaleString()} Shadow Coin` : null,
-        activeQ.rewards.unlock     ? `🔓 ${activeQ.rewards.unlock}` : null,
-        activeQ.rewards.title      ? `🏅 "${activeQ.rewards.title}"` : null,
-    ].filter(Boolean);
-    const rewardDisplay = rewardParts.length ? rewardParts : [activeQ.rewards.desc || '—'];
+    const giverHtml = q.giver ? `
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+            <div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);flex-shrink:0">${q.giver.name[0]}</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4)">${q.giver.name} <span style="color:rgba(255,255,255,0.2)">·</span> ${q.giver.faction}</div>
+        </div>` : '';
 
-    // Next quest preview
-    const nextQ = window.QUEST_DB.find(q => {
-        if (completed.includes(q.id) || q.id === activeQ.id) return false;
-        const prereqsMet = (q.prereqs || []).every(p => completed.includes(p) || q.prereqs.includes(activeQ.id) && q.prereqs.every(p2 => p2 === activeQ.id || completed.includes(p2)));
-        return prereqsMet || q.prereqs.includes(activeQ.id);
-    });
+    const ctaHtml = isClaim
+        ? `<button onclick="window.claimQuestReward('${q.id}')" style="width:100%;padding:10px;background:linear-gradient(90deg,#22c55e,#16a34a);border:none;border-radius:8px;color:white;font-size:11px;font-weight:800;cursor:pointer;margin-top:12px">🎁 Ritira Ricompensa</button>`
+        : showDispatch
+        ? `<button onclick="window.startMissionRun('${q.id}')" style="width:100%;padding:10px;background:${tc}22;border:1px solid ${tc}55;border-radius:8px;color:${tc};font-size:11px;font-weight:700;cursor:pointer;margin-top:12px">▶ Avvia Missione</button>`
+        : '';
 
-    const questIndex = window.QUEST_DB.findIndex(q => q.id === activeQ.id) + 1;
+    return `
+    <div style="border:1px solid ${isRaid ? 'rgba(255,107,53,0.35)' : 'rgba(255,255,255,0.08)'};border-radius:14px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.5)">
 
-    let html = `
-        <!-- Chapter header -->
-        <div class="flex items-center justify-between mb-3">
-            <div class="text-[9px] text-gray-500 uppercase tracking-widest">${chLabel}</div>
-            <div class="text-[9px] text-gray-600 font-mono">${completed.length}/${total} completate</div>
-        </div>
-
-        <!-- Progress strip -->
-        <div class="w-full h-1 bg-white/5 rounded-full overflow-hidden mb-4">
-            <div class="h-full rounded-full" style="width:${Math.round(completed.length/total*100)}%;background:linear-gradient(90deg,#d4af37,#cd7f32)"></div>
-        </div>
-
-        <!-- Active mission card -->
-        <div class="rounded-xl overflow-hidden border ${isRaid ? 'border-orange-500/40' : 'border-white/10'} shadow-2xl mb-4">
-
-            <!-- Hero banner -->
-            <div class="relative px-4 pt-5 pb-4" style="background:${tGrad}">
-                <div class="flex items-start gap-3">
-                    <div class="text-3xl flex-shrink-0 mt-0.5">${activeQ.icon}</div>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-2 mb-0.5">
-                            <span class="text-[8px] uppercase tracking-widest px-1.5 py-0.5 rounded" style="background:${tColor}22;color:${tColor}">${typeTag}</span>
-                            <span class="text-[8px] text-gray-500">#${questIndex}</span>
-                        </div>
-                        <div class="text-[14px] font-bold leading-tight" style="color:${tColor}">${activeQ.title}</div>
-                        <div class="text-[10px] text-gray-300 mt-0.5">${activeQ.subtitle || ''}</div>
+        <!-- Hero banner -->
+        <div style="padding:20px 18px 16px;background:${tGrad}">
+            <div style="display:flex;align-items:flex-start;gap:12px">
+                <div style="font-size:36px;line-height:1;flex-shrink:0">${q.icon}</div>
+                <div style="flex:1;min-width:0">
+                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+                        <span style="font-size:7px;text-transform:uppercase;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;background:${tc}20;color:${tc};font-weight:700">${typeTag}</span>
                     </div>
-                </div>
-                ${activeQ.giver ? `<div class="text-[8px] text-gray-500 mt-2">${activeQ.giver.name} · ${activeQ.giver.faction}</div>` : ''}
-            </div>
-
-            <!-- Lore -->
-            ${activeQ.lore ? `
-            <div class="px-4 py-3 bg-white/3 border-t border-white/5">
-                <div class="text-[9px] text-gray-400 italic leading-relaxed">"${activeQ.lore}"</div>
-            </div>` : ''}
-
-            <!-- How to complete -->
-            <div class="px-4 py-3 border-t border-white/5" style="background:rgba(212,175,55,0.06)">
-                <div class="text-[8px] font-bold uppercase tracking-widest mb-1" style="color:#c9a227">📋 Come completarla</div>
-                <div class="text-[10px] leading-relaxed" style="color:#1a2744">${activeQ.howTo || activeQ.subtitle || 'Segui le indicazioni del tuo mentore per avanzare.'}</div>
-            </div>
-
-            <!-- Task box -->
-            <div class="px-4 py-3 bg-[#111120] border-t border-white/5">
-                <div class="flex items-center justify-between mb-2">
-                    <div class="text-[10px] font-semibold text-white">${activeQ.subtitle || 'Obiettivo'}</div>
-                    <div class="text-[11px] font-bold font-mono" style="color:${isClaim ? '#22c55e' : tColor}">${prog.cur}/${prog.tgt}</div>
-                </div>
-                <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                    <div class="h-full rounded-full transition-all duration-500" style="width:${pct}%;background:${barColor}"></div>
-                </div>
-                ${isClaim ? `
-                <div class="mt-3">
-                    <button onclick="window.claimQuestReward('${activeQ.id}')"
-                        class="w-full py-2 rounded-lg text-[11px] font-bold text-black animate-pulse"
-                        style="background:linear-gradient(90deg,#22c55e,#16a34a)">
-                        🎁 Ritira Ricompensa
-                    </button>
-                </div>` : showDispatch ? `
-                <div class="mt-3">
-                    <button onclick="window.startMissionRun('${activeQ.id}')"
-                        class="w-full py-2 rounded-lg text-[11px] font-bold"
-                        style="background:linear-gradient(90deg,${tColor}cc,${tColor}88);color:#000">
-                        ▶ Avvia Missione
-                    </button>
-                </div>` : ''}
-            </div>
-
-            <!-- Reward section -->
-            <div class="border-t border-white/10">
-                <div class="px-4 py-1.5 text-center text-[8px] font-bold uppercase tracking-widest text-black" style="background:${tColor}">
-                    Ricompensa
-                </div>
-                <div class="px-4 py-3 bg-[#0e0e1c] flex flex-wrap gap-2">
-                    ${rewardDisplay.map(r => `
-                    <div class="flex items-center gap-1.5 bg-white/5 rounded-lg px-2.5 py-1.5">
-                        <span class="text-[10px] text-yellow-300">${r}</span>
-                    </div>`).join('')}
+                    <div style="font-size:16px;font-weight:900;color:${tc};line-height:1.1;font-family:'Orbitron',monospace">${q.title}</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:3px">${q.subtitle || ''}</div>
                 </div>
             </div>
+            ${giverHtml}
         </div>
 
-        <!-- Next quest preview -->
-        ${nextQ ? `
-        <div class="opacity-40 rounded-xl border border-white/5 overflow-hidden">
-            <div class="px-3 py-2 bg-white/3 flex items-center gap-2">
-                <span class="text-base">🔒</span>
-                <div>
-                    <div class="text-[8px] text-gray-500 uppercase tracking-widest">Prossima missione</div>
-                    <div class="text-[10px] text-gray-400 font-medium">${nextQ.title}</div>
-                    <div class="text-[8px] text-gray-600">${nextQ.subtitle || ''}</div>
-                </div>
-            </div>
+        <!-- Lore -->
+        ${q.lore ? `<div style="padding:14px 18px;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05)">
+            <div style="font-size:9.5px;color:rgba(255,255,255,0.38);font-style:italic;line-height:1.7">"${q.lore}"</div>
         </div>` : ''}
-    `;
 
-    container.innerHTML = html;
+        <!-- Come fare -->
+        ${q.howTo ? `<div style="padding:12px 18px;background:rgba(212,175,55,0.04);border-top:1px solid rgba(212,175,55,0.1)">
+            <div style="font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#c9a227;margin-bottom:5px">📋 Come completarla</div>
+            <div style="font-size:9.5px;color:rgba(255,255,255,0.55);line-height:1.65">${q.howTo}</div>
+        </div>` : ''}
+
+        <!-- Progress -->
+        <div style="padding:14px 18px;background:#0a0c12;border-top:1px solid rgba(255,255,255,0.05)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                <div style="font-size:9px;color:rgba(255,255,255,0.4)">Progresso</div>
+                <div style="font-size:11px;font-weight:800;font-family:monospace;color:${isClaim ? '#22c55e' : tc}">${prog.cur} / ${prog.tgt}</div>
+            </div>
+            <div style="height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden">
+                <div style="height:100%;background:${barColor};border-radius:3px;width:${pct}%;transition:width 0.6s ease"></div>
+            </div>
+            ${ctaHtml}
+        </div>
+
+        <!-- Reward bar -->
+        <div style="border-top:1px solid rgba(255,255,255,0.06)">
+            <div style="padding:6px 18px;background:${tc};text-align:center">
+                <span style="font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:rgba(0,0,0,0.75)">Ricompensa</span>
+            </div>
+            <div style="padding:12px 18px;background:#0d0f1a">
+                <div style="font-size:10px;color:rgba(255,255,255,0.6);line-height:1.7">${_rewardLine(q.rewards)}</div>
+            </div>
+        </div>
+    </div>`;
+}
+
+function _renderMilestoneCard(q, gs) {
+    const tc = _TIER_COLOR[q.tier] || '#d4af37';
+    let prog = { cur: 0, tgt: 1 };
+    try { prog = q.check(gs); } catch(e) {}
+    const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
+
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:9px;border:1px solid rgba(255,255,255,0.06)">
+        <span style="font-size:18px;flex-shrink:0">${q.icon}</span>
+        <div style="flex:1;min-width:0">
+            <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.title}</div>
+            <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
+                <div style="height:100%;background:${tc};border-radius:2px;width:${pct}%"></div>
+            </div>
+        </div>
+        <div style="font-size:9px;font-weight:700;color:${tc};font-family:monospace;flex-shrink:0">${prog.cur}/${prog.tgt}</div>
+    </div>`;
 }
 window.renderTabCareer = renderTabCareer;
 
