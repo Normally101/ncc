@@ -372,6 +372,118 @@ Righe 855–993: Highway Router — _getHWGraph, _findHWPath (BFS), _buildRideWa
 
 ---
 
+## Sistema HQ — Architettura completa (Maggio 2026)
+
+### gameState — struttura HQ
+
+```js
+gameState.hqs = {
+    'roma': {
+        rooms: { 'garage_main': 1, 'workshop': 2, ... },  // roomId → livello corrente
+        grid:  { 0: 'garage_main', 2: 'workshop', ... }   // slotId → roomId
+    },
+    'milano': { rooms: {}, grid: {} },
+    // ... una entry per ogni città
+};
+gameState.currentHQCity = 'roma';   // città selezionata nella UI
+```
+
+**Regola critica:** `gameState` è `let` in `engine.js`, NON è `window.gameState`. Tutti i file HQ usano il bare `gameState` (non `window.gameState`).
+
+---
+
+### hq-data.js — Struttura dati (114 righe)
+
+**`window.HQ_CITIES`** — 5 città, ognuna con array `slots`:
+```js
+{ id: 'roma',    slots: [ {id:0,left:'22%',top:'45%'}, {id:1,left:'46%',top:'33%'}, {id:2,left:'62%',top:'48%'}, {id:3,left:'38%',top:'63%'} ] }
+{ id: 'milano',  slots: 5 slot }
+{ id: 'firenze', slots: 6 slot }
+{ id: 'napoli',  slots: 5 slot }
+{ id: 'venezia', slots: 5 slot }
+```
+Le coordinate `left/top` sono percentuali relative al contenitore 16:9 → puntano al "suolo" dove si poggia l'edificio.
+
+**`window.HQ_ROOMS`** — 6 edifici con tiers:
+
+| id | Nome | Prereq | Tiers | Effetti chiave |
+|---|---|---|---|---|
+| `garage_main` | Garage | nessuno | 3 | `extraVehicleSlots` |
+| `workshop` | Officina | garage_main | 3 | `autoRepairThreshold`, `autoRepairDaily` |
+| `mission_room` | Sala Missioni | garage_main | 3 | `driverXpMult` |
+| `control_tower` | Torre di Controllo | mission_room | 3 | `vipRideBonus` |
+| `penthouse` | Penthouse | control_tower | 5 | `allEarningsMult` (fino a ×2.0) |
+| `vip_lounge` | VIP Lounge | control_tower | 3 | `reputationBonus`, `vipRideBonus` — solo Firenze |
+
+Struttura di un tier:
+```js
+{ level: 2, cost: 100000, effect: { extraVehicleSlots: 5 }, score: 10, reqRep: 1 }
+```
+
+---
+
+### hq.js — Struttura interna (~400 righe)
+
+| Righe | Funzione | Descrizione |
+|---|---|---|
+| 14–52 | `window.hqInit()` | Migration da vecchio `gameState.hqRooms` + init città |
+| 56–99 | State access | `hqGetCityRooms`, `hqHasRoomInCity`, `hqGetRoomLevel`, `hqAllEffects`, `hqGetEffect` |
+| 107–182 | `window.hqUpgradeRoom(cityId, roomId, slotIndex)` | Costruisce o upgrada un edificio — verifica cash, rep, prereq, slot |
+| 184–187 | `window.hqSwitchCity(cityId)` | Cambia città attiva e ri-renderizza |
+| 191–328 | `window.renderTabHQ()` | Render completo tab HQ: city tabs + visual campus + room list |
+| 330–362 | `window.hqOpenBuildModal(roomId)` | Modal selezione slot per nuova costruzione |
+| 367–399 | `window._hqDailyTick()` | Effetti giornalieri: auto-repair, morale, EV recharge |
+
+**Chiamata da `processDailyRoutines`** in engine-daily.js:
+```js
+if (typeof window._hqDailyTick === 'function') window._hqDailyTick();
+```
+
+**`hqAllEffects()`** — aggrega tutti gli effetti da tutte le città. I moltiplicatori (`endsWith('Mult')`) si moltiplicano tra loro; i bonus additivi si sommano.
+
+---
+
+### hq-visual.js — Struttura interna (~210 righe)
+
+Esporta solo `window.renderHQCampus()` — chiamata da `renderTabHQ()` dopo il render della lista.
+
+**Flusso di render:**
+1. Legge `gameState.currentHQCity` → trova `cityConfig` in `HQ_CITIES`
+2. Container `div` con `background-image: url('assets/cities/bg_${cityId}.jpg')`; aspect-ratio 16/9 inline (NON classe Tailwind `aspect-video` — non è nel bundle compilato)
+3. Itera `cityConfig.slots` → per ogni slot:
+   - Se `grid[slotId]` esiste → disegna `<img src="assets/buildings/${roomId}_lvl${level}.png">` con `transform: translate(-50%, -100%)` (origine = suolo sotto al centro dell'edificio)
+   - Se vuoto → mostra pulsante "+" con `onclick="window.hqOpenBuildModal('${currentCityId}', ${slotId})"`
+4. `onerror` sull'img: nasconde l'immagine e mostra il placeholder testuale inline
+
+**Hover effects** in `style.css`:
+```css
+.hq-building-wrapper:hover .hq-building-label { opacity: 1 !important; }
+.hq-building-wrapper:hover { transform: translate(-50%, -100%) scale(1.05); }
+```
+
+**CRITICO — NON usare classi Tailwind arbitrarie in hq-visual.js.** Solo classi base (`absolute`, `relative`, `flex`, ecc.) o inline styles. Classi come `aspect-video`, `border-gold/40`, `bg-gold/5`, `text-[9px]` NON sono nel bundle compilato → div a height=0 o stili mancanti.
+
+---
+
+### Assets HQ — Convenzione naming
+
+**Sprite edifici:** `assets/buildings/${roomId}_lvl${level}.png`
+- Esempi: `garage_main_lvl1.png`, `penthouse_lvl3.png`, `control_tower_lvl2.png`
+- PNG trasparente, prospettiva isometrica 30° da destra
+- Max height 200px nella UI (controllato da `max-height:200px` inline)
+- Background rimosso con remove.bg API (chiave: vedi owner)
+
+**Sfondi città:** `assets/cities/bg_${cityId}.jpg`
+- Esempi: `bg_roma.jpg`, `bg_milano.jpg`, `bg_venezia.jpg`
+- Formato panoramico (≥16:9), pixel art / illustrato in stile Ikariam
+- Caricato come `background-image` CSS — fallback `background-color: #1a1c29`
+
+**Sprite da rigenerare** (prospettiva o rimozione sfondo imperfetti):
+- `control_tower_lvl3.png` — prospettiva frontale/cinematica invece di isometrica 30°
+- `vip_lounge_lvl1.png` — piccolo residuo pavimento scuro in basso
+
+---
+
 ## Architettura Quest System
 
 Il quest system usa due file distinti (CRITICO — non unirli):
@@ -634,6 +746,44 @@ Ogni fix significativo va documentato qui con: **cosa è andato storto → perch
 
 ---
 
+### [2026-05-26] hq-visual.js — SyntaxError da backtick escapati
+
+**Errore:** `Uncaught SyntaxError: Invalid or unexpected token (at hq-visual.js?v=3:24:19)`
+
+**Causa:** L'intero file `hq-visual.js` era stato scritto con `\`` (backslash + backtick) invece di `` ` `` reali — 30+ occorrenze. Il file era JS invalido dalla creazione. `window.renderHQCampus` non veniva mai definita, quindi `hq.js` saltava silenziosamente il render visuale.
+
+**Fix:** Script Python `e:\tmp\fix_hqvisual.py` → `.replace('\\`', '`').replace('\\${', '${')`. Poi bumped `hq-visual.js?v=4` in `index.html`.
+
+**Lezione:** Quando una funzione `window.X` esportata da un file non esiste a runtime, il primo sospetto è un errore di sintassi nel file — verificare la console del browser PRIMA di debuggare la logica.
+
+---
+
+### [2026-05-26] hq-visual.js — Campus invisibile (height=0)
+
+**Errore:** La pagina HQ mostrava la lista gestione ma nessun campus visuale.
+
+**Causa 1:** Classe Tailwind `aspect-video` usata nel template HTML — NON presente nel bundle `tailwind.min.css` compilato → div collassa a `height:0` → `overflow:hidden` taglia tutto il contenuto.
+
+**Causa 2:** Classi arbitrarie Tailwind (`border-gold/40`, `bg-gold/5`, `text-[9px]`, ecc.) non compilate → elementi invisibili o stili mancanti.
+
+**Fix:** Sostituite tutte le classi Tailwind arbitrarie con inline styles. Sostituito `aspect-video` con `style="aspect-ratio: 16/9; min-height: 240px;"`.
+
+**Regola:** In template JS (template literals con HTML), usare SOLO classi Tailwind base già presenti nel bundle, oppure inline styles. Verificare `tailwind.input.css` per le classi custom.
+
+---
+
+### [2026-05-26] hq.js — Slot 7 inesistente per nuova partita
+
+**Errore:** Garage principale invisibile nel campus visuale su nuova partita.
+
+**Causa:** `hqInit()` ramo "new game" usava `grid: { 7: 'garage_main' }` ma Roma ha solo 4 slot (id 0–3). Slot 7 non esiste → nessun edificio veniva renderizzato.
+
+**Fix:** Cambiato `{ 7: 'garage_main' }` → `{ 0: 'garage_main' }` in `hq.js:36`.
+
+**File:** `hq.js:36`
+
+---
+
 ### [2026-05-24] Home tab, sidebar gradient, auto-refresh — implementati
 
 **Funzionalità aggiunte:**
@@ -660,9 +810,14 @@ I file seguenti sono ancora troppo grandi per lavorarci facilmente in sessioni A
 
 | File | Righe | Stato |
 |---|---|---|
-| `engine.js` | ~3908 | Da splittare ulteriormente |
+| `engine.js` | ~1956 | ✅ Splittato (da 3908) |
+| `engine-daily.js` | ~1093 | ✅ Nuovo da split |
+| `engine-rides.js` | ~904 | ✅ Nuovo da split |
+| `map.js` | ~461 | ✅ Splittato (da 993) |
+| `map-visual.js` | ~170 | ✅ Nuovo da split |
+| `map-router.js` | ~143 | ✅ Nuovo da split |
+| `map-garage.js` | ~227 | ✅ Nuovo da split |
 | `quests-data.js` | 1509 | OK — dati statici, non splittare |
-| `map.js` | 993 | Da splittare |
 | `showroom.js` | 729 | Da splittare |
 | `ui-staff.js` | 602 | OK |
 | `war_room.js` | 494 | OK |
@@ -692,30 +847,21 @@ engine-rides.js    ~904 righe  — _findEmptyLegRide, generatePOIRide,
 Le funzioni private (es. `_sendDriverToRest` in engine.js) sono accessibili da engine-daily.js
 e engine-rides.js come bare variables a runtime (non serve window.*). ✓
 
-### Split proposto per map.js (993 → 3 file)
+### Split map.js ✅ COMPLETATO (Maggio 2026)
+
+map.js (993 → ~461 righe) + 3 nuovi file già in produzione:
 
 ```
-map.js (~400 righe) ← mantieni solo:
-  - var map, config, MAPBOX_TOKEN
-  - initMap() (setup layers, sources, terrain)
-  - _ensureMap(), _destroyMap()
-  - _updateVehicleLayer, _updateRegionLabels, _updateContractDestinations
-  - _updateActiveRouteLines, drawHighways, drawPOIs
-  - markers (incident, checkpoint, cantiere)
+map.js          ~461 righe — var map (GLOBALE), MAPBOX_TOKEN, initMap(),
+                              update functions (vehicle layer, region labels,
+                              contract destinations, route lines, highways, POIs, markers)
 
-map-visual.js (NUOVO, ~200 righe) ← estrai:
-  - visualLoop() (righe 482–635) — animazione veicoli + trail scia
+map-visual.js   ~170 righe — visualLoop(), animazione veicoli + trail scia
 
-map-router.js (NUOVO, ~150 righe) ← estrai:
-  - _getHWGraph (riga 857)
-  - _findHWPath (riga 871, BFS algorithm)
-  - _buildRideWaypoints (riga 892)
-  - calculateInterpolatedPosition (riga 957)
-  - _fetchRoadGeom (riga 17, Mapbox Directions API)
+map-router.js   ~143 righe — _getHWGraph, _findHWPath (BFS), _buildRideWaypoints,
+                              calculateInterpolatedPosition
 
-map-garage.js (NUOVO, ~220 righe) ← estrai:
-  - openGarage3D, closeGarage3D (righe 637–762)
-  - _generateVehicleSVG (riga 763)
+map-garage.js   ~227 righe — openGarage3D, closeGarage3D, _generateVehicleSVG
 ```
 
 ### Split proposto per showroom.js (729 → 2 file)
@@ -838,6 +984,9 @@ Se usi classi Tailwind hardcoded in template JS (es. `text-white`, `bg-gray-800`
 | `map-router.js` | BFS highway router, calculateInterpolatedPosition | ~143 |
 | `map-garage.js` | openGarage3D, closeGarage3D, _generateVehicleSVG | ~227 |
 | `map-visual.js` | visualLoop, vehicle markers, trail scia | ~170 |
+| `hq-data.js` | HQ_CITIES (5 città + slot coords), HQ_ROOMS (6 edifici + tiers) | ~115 |
+| `hq.js` | hqInit, hqUpgradeRoom, renderTabHQ, hqAllEffects, _hqDailyTick | ~400 |
+| `hq-visual.js` | renderHQCampus — campus isometrico con sprite PNG + slot vuoti | ~210 |
 | `quests-data.js` | 156 quest statiche (data only) | 1509 |
 | `quests.js` | Quest engine (logic only) | 79 |
 | `serverState.js` | Sync Supabase Realtime, ServerState | 609 |

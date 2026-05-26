@@ -33,7 +33,7 @@ window.hqInit = function() {
         } else {
             // New game
             gameState.hqs['roma'].rooms['garage_main'] = 1;
-            gameState.hqs['roma'].grid = { 7: 'garage_main' };
+            gameState.hqs['roma'].grid = { 0: 'garage_main' };
         }
     }
     
