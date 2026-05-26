@@ -12,7 +12,8 @@ jobs:
     name: Lint & Security Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -46,7 +47,8 @@ jobs:
     name: HTML Validation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
 
       - name: Install html5validator
         run: pip install html5validator
@@ -63,7 +65,8 @@ jobs:
     name: SQL Migration Check
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
 
       - name: Check SQL files
         run: |
@@ -114,7 +117,8 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v6
+      - name: Checkout
+        run: git clone --depth=1 "https://github.com/${{ github.repository }}.git" .
 
       - name: Verify critical files present
         run: |
