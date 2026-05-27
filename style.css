@@ -4624,3 +4624,46 @@ body > .fixed.bg-gradient-to-b { opacity: 0.4 !important; }
     border-bottom: 1px solid rgba(255,255,255,0.05);
 }
 
+/* ── GLOBAL MICRO-INTERACTIONS (taste-skill + impeccable) ──────── */
+
+/* Tactile press feedback on all buttons */
+button:not([disabled]):active {
+    transform: scale(0.97) !important;
+    transition: transform 0.08s ease-out !important;
+}
+button {
+    transition: background 0.12s, border-color 0.12s, color 0.12s,
+                opacity 0.12s, transform 0.1s ease-out;
+}
+
+/* Gold focus ring on inputs */
+input:not([type='range']):not([type='checkbox']):not([type='radio']):focus,
+textarea:focus,
+select:focus {
+    outline: none !important;
+    border-color: rgba(212,175,55,0.45) !important;
+    box-shadow: 0 0 0 2px rgba(212,175,55,0.08) !important;
+}
+
+/* Stagger fade-in for flat list rows */
+@keyframes ce-fade-up {
+    from { opacity: 0; transform: translateY(5px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.ce-stagger > * {
+    animation: ce-fade-up 0.18s ease-out both;
+}
+.ce-stagger > *:nth-child(1)   { animation-delay: 0ms; }
+.ce-stagger > *:nth-child(2)   { animation-delay: 30ms; }
+.ce-stagger > *:nth-child(3)   { animation-delay: 60ms; }
+.ce-stagger > *:nth-child(4)   { animation-delay: 90ms; }
+.ce-stagger > *:nth-child(5)   { animation-delay: 120ms; }
+.ce-stagger > *:nth-child(6)   { animation-delay: 150ms; }
+.ce-stagger > *:nth-child(7)   { animation-delay: 180ms; }
+.ce-stagger > *:nth-child(n+8) { animation-delay: 210ms; }
+
+/* Campaign tier: replace side-stripe (impeccable ban) with full tinted border */
+.campaign-card.tier-starter { border-left: none !important; border: 1px solid rgba(34,197,94,0.30); }
+.campaign-card.tier-growth  { border-left: none !important; border: 1px solid rgba(59,130,246,0.30); }
+.campaign-card.tier-empire  { border-left: none !important; border: 1px solid rgba(217,119,6,0.30); }
+

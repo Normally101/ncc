@@ -49,17 +49,37 @@ function renderTabMarketing() {
     // ─────────────────────────────────────────────────────────────
     // BUILD HTML
     // ─────────────────────────────────────────────────────────────
-    let html = DS.header({
-        eyebrow: 'Marketing & Brand',
-        title:   'Brand Intelligence',
-        subtitle: `Volume ${bv}/100 · Prestige ${bp}/100 · Campagne attive: ${activeCampaigns.length}/${maxSlots}`,
-        actions: hasMarkDir ? DS.pill('Marketing Dir.', 'gold') : '',
-    }) + DS.kpiStrip([
-        { label: 'Brand Volume',  val: bv,  color: bv >= 75 ? 'green' : bv >= 25 ? 'gold' : '' },
-        { label: 'Prestige',      val: bp,  color: bp >= 75 ? 'gold'  : bp >= 25 ? 'blue' : '' },
-        { label: 'Surge',         val: surgeLabel },
-        { label: 'Campagne',      val: `${activeCampaigns.length}/${maxSlots}`, color: activeCampaigns.length >= maxSlots ? 'red' : 'green' },
-    ]);
+    let html = `
+    <div style="padding:16px 16px 0;max-width:800px">
+    <div style="padding-bottom:16px;border-bottom:1px solid #21262d;margin-bottom:16px">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Marketing & Brand</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
+            <div>
+                <div style="font-size:20px;font-weight:700;color:#e6edf3;letter-spacing:-.01em">Brand Intelligence</div>
+                <div style="font-size:11px;color:#8b949e;margin-top:2px">Volume ${bv}/100 · Prestige ${bp}/100 · Campagne ${activeCampaigns.length}/${maxSlots}</div>
+            </div>
+            ${hasMarkDir ? `<span style="display:inline-flex;padding:2px 8px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;background:#1a160818;border:1px solid #b8962b44;color:#d4af37">MARKETING DIR.</span>` : ''}
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Brand Volume</div>
+            <div style="font-size:18px;font-weight:700;color:${bv>=75?'#3fb950':bv>=25?'#d4af37':'#e6edf3'};font-family:monospace">${bv}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Prestige</div>
+            <div style="font-size:18px;font-weight:700;color:${bp>=75?'#d4af37':bp>=25?'#58a6ff':'#e6edf3'};font-family:monospace">${bp}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Surge</div>
+            <div style="font-size:12px;font-weight:700;color:${pending>=15?'#f85149':pending>=8?'#f59e0b':'#3fb950'};font-family:monospace">${pending>=15?'+35%':pending>=8?'+15%':'STD'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Campagne</div>
+            <div style="font-size:18px;font-weight:700;color:${activeCampaigns.length>=maxSlots?'#f85149':'#3fb950'};font-family:monospace">${activeCampaigns.length}<span style="font-size:11px;color:#6b7280">/${maxSlots}</span></div>
+        </div>
+    </div>
+    `;
 
     // ── 1. BRAND AWARENESS ────────────────────────────────────────
     html += `<div class="mkt-section-header">Brand Awareness</div>
@@ -90,23 +110,23 @@ function renderTabMarketing() {
 
     // ── 2. SITUAZIONE MERCATO ─────────────────────────────────────
     html += `<div class="mkt-section-header">Situazione Mercato</div>
-    <div class="grid grid-cols-2 gap-2 mb-4">
-        <div class="hud-card text-center">
-            <div class="text-2xl mb-1">${ws.icon}</div>
-            <div class="text-[9px] text-gray-400">${ws.label}</div>
-            <div class="text-[9px] font-bold text-yellow-400">Tariffe +${Math.round((ws.priceMult - 1) * 100)}%</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;text-align:center">
+            <div style="font-size:22px;margin-bottom:4px">${ws.icon}</div>
+            <div style="font-size:10px;color:#8b949e">${ws.label}</div>
+            <div style="font-size:10px;font-weight:700;color:#f59e0b;margin-top:2px">Tariffe +${Math.round((ws.priceMult - 1) * 100)}%</div>
         </div>
-        <div class="hud-card text-center flex flex-col justify-center">
-            <div class="text-[10px] font-bold ${surgeColor}">${surgeLabel}</div>
-            <div class="text-[9px] text-gray-500 mt-1">Corse in attesa: ${pending}</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;display:flex;flex-direction:column;justify-content:center;text-align:center">
+            <div style="font-size:11px;font-weight:700;color:${pending>=15?'#f85149':pending>=8?'#f59e0b':'#3fb950'}">${surgeLabel}</div>
+            <div style="font-size:9px;color:#6b7280;margin-top:4px;font-family:monospace">Corse in attesa: ${pending}</div>
         </div>
     </div>`;
 
     const season = typeof _getSeasonalMult === 'function' ? _getSeasonalMult() : null;
     if (season && season.priceMult !== 1.0) {
-        html += `<div class="hud-card !border-gold/30 bg-gold/5 mb-3">
-            <div class="text-[9px] text-gold font-bold uppercase mb-1">${season.name}</div>
-            <div class="text-[9px] text-gray-300">Tariffe +${Math.round((season.priceMult - 1) * 100)}% · Volume corse ×${season.rideBonus.toFixed(1)}</div>
+        html += `<div style="background:#1a1608;border:1px solid #b8962b;border-radius:6px;padding:10px 12px;margin-bottom:12px">
+            <div style="font-size:9px;color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${season.name}</div>
+            <div style="font-size:10px;color:#8b949e">Tariffe +${Math.round((season.priceMult - 1) * 100)}% · Volume corse ×${season.rideBonus.toFixed(1)}</div>
         </div>`;
     }
 
@@ -280,7 +300,7 @@ function renderTabMarketing() {
 
     const roiEntries = Object.entries(campaignROI).filter(([, v]) => v > 0);
     if (roiEntries.length === 0) {
-        html += `<div style="font-size:9px;color:#374151;font-style:italic">Nessun dato ROI disponibile. Avvia una campagna per tracciare il ritorno sull'investimento.</div>`;
+        html += `<div style="font-size:9px;color:#6b7280;font-style:italic">Nessun dato ROI disponibile. Avvia una campagna per tracciare il ritorno sull'investimento.</div>`;
     } else {
         roiEntries.forEach(([campId, revenue]) => {
             const c = MARKETING_CAMPAIGNS.find(x => x.id === campId);
@@ -297,7 +317,7 @@ function renderTabMarketing() {
         </div>`;
     }
 
-    html += `</div>`;
+    html += `</div></div>`;
 
     container.innerHTML = html;
 }
