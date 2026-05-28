@@ -39,29 +39,55 @@ Poi aggiorna i memory files rilevanti in `/Users/vlad/.claude/projects/-Users-vl
 
 ---
 
-## SKILLS DI DESIGN INSTALLATE
+## SKILLS INSTALLATE — Quale usare per cosa
 
-Tre skills guidano le decisioni di design — usale attivamente, non ignorarle:
+Il catalogo completo è in `/Users/vlad/.claude/projects/-Users-vlad-Documents-ncc-game/memory/skills_installate.md`.
+Qui il riferimento rapido per le situazioni più comuni di questo progetto:
 
-### taste-skill-leonx (`/taste-skill`)
-Anti-slop design: anti-card-overuse, gerarchia visiva, densità calibrata, layout non banale.
-Parametri baseline del progetto: DESIGN_VARIANCE: 8, MOTION_INTENSITY: 6, VISUAL_DENSITY: 4.
-Usala per: gerarchia visiva, scelta layout, evitare pattern banali.
+### Coding & Logic
+| Situazione | Skill |
+|---|---|
+| Bug, crash, errore runtime JS/Supabase | `/debugging` |
+| Modellare stati complessi (driver FSM, ride cycle) | `/state-machine` |
+| Output troncato su file lunghi | `/output-skill` |
 
-### emilkowalski (`/emil-design-eng`)
-Polish e micro-interactions: dettagli invisibili che si sommano.
-Pattern chiave:
-- Bottoni: `transform: scale(0.97)` su `:active`
-- Sempre `ease-out` (mai `ease-in`) su elementi che appaiono
-- `transition: transform 200ms ease-out` (mai `transition: all`)
-- Niente in the real world appare dal nulla → `scale(0.95) + opacity:0` come start state
-Usala per: polish finale, micro-interactions, stati hover/active/focus.
+### UI Rewrite & Redesign (tab eRepublik)
+| Situazione | Skill |
+|---|---|
+| Riscrivere tab da DS.* a eRepublik flat | `/redesign-skill` poi `/impeccable craft [tab]` |
+| UI sembra generica o "AI-made" | `/taste-skill` |
+| Review visivo pre-commit | `/impeccable polish [target]` |
+| Design troppo piatto → più carattere | `/impeccable bolder [target]` |
+| Da screenshot → codice | `/image-to-code-skill` |
 
-### impeccable (`/impeccable`)
-Design review strutturato con comandi: `craft`, `shape`, `polish`, `bolder`, `animate`, `audit`.
-**Richiede `PRODUCT.md` e `DESIGN.md`** nella root del progetto.
-Se mancano: eseguire `/impeccable teach` per crearli prima di usare altri comandi.
-Usala per: review prima di committare UI, bolder/quieter di tab specifici, polish pre-ship.
+### Micro-interactions & Animazioni
+| Situazione | Skill |
+|---|---|
+| :active, hover, transizioni bottoni | `/emil-design-eng` |
+| Animare modal, tab, lista | `/animation-principles` |
+| Duration/easing sistematici | `/motion-system` |
+
+### Componenti specifici
+| Situazione | Skill |
+|---|---|
+| Loading skeleton per fetch Supabase | `/loading-states` |
+| Errori RPC, validazione form | `/error-handling-ux` |
+| Toast, notifiche, feedback azioni | `/feedback-patterns` |
+| Form modal (acquisto, hiring) | `/form-design` |
+| Grafici stock, sparkline, charts | `/data-visualization` |
+
+### Game Design & UX
+| Situazione | Skill |
+|---|---|
+| Loop engagement, daily rewards, streak | `/hooked-ux` |
+| Quante opzioni in un menu | `/hicks-law` |
+| Chunking KPI, card layout | `/millers-law` |
+| Far risaltare CTA critica | `/von-restorff-effect` |
+| Usability review completo tab | `/ux-heuristics` |
+| Brainstorming nuova feature | `/brainstorming` |
+
+### Setup impeccable (richiede PRODUCT.md + DESIGN.md)
+**Stato: NON ancora creati.** Eseguire `/impeccable teach` prima di usare `craft/polish/bolder/audit/animate`.
 
 ---
 
