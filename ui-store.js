@@ -3,6 +3,7 @@
    renderTabPremiumStore: Driver Coins, Executive Club, DC boosters.
    Dipendenze: engine.js, engine-store.js, design-system.js */
 
+var _ecActiveTab = 'acquire';
 window._ecSwitchTab = function(tab) { _ecActiveTab = tab; renderTabPremiumStore(); };
 
 

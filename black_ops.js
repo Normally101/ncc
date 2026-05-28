@@ -238,8 +238,7 @@ window.renderTabShadow = function() {
               </div>`;
           }).join('');
 
-    container.innerHTML = `
-    `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
         <div>
             <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Operazioni</div>
             <div style="font-size:20px;font-weight:700;color:#e6edf3">Agenzia Ombra</div>
