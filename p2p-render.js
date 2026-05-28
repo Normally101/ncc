@@ -382,6 +382,81 @@ window.renderIspettoratoSection = function() {
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
+// SEZIONE 3b: CONSORZI — azioni
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.createConsorzio = async function(name, description) {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_create_consorzio', { v_name: name, v_description: description || '' });
+    if (error) { showNotification(_p2pErrMsg('Errore creazione consorzio', error), 'error'); return; }
+    showNotification(`🤝 Consorzio "${data.name}" fondato!`, 'success');
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.joinConsorzio = async function(consorzioId) {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_join_consorzio', { v_consorzio_id: consorzioId });
+    if (error) { showNotification(_p2pErrMsg('Errore ingresso consorzio', error), 'error'); return; }
+    showNotification('✅ Sei entrato nel consorzio!', 'success');
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.leaveConsorzio = async function(consorzioId) {
+    if (!_uid()) return;
+    const { error } = await _sb().rpc('rpc_leave_consorzio', { v_consorzio_id: consorzioId });
+    if (error) { showNotification(_p2pErrMsg('Errore uscita consorzio', error), 'error'); return; }
+    showNotification('Hai lasciato il consorzio.', 'info');
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.contributeConsorzio = async function(consorzioId, amount) {
+    if (!_uid()) return;
+    const roundedAmount = Math.round(amount);
+    const { data, error } = await _sb().rpc('rpc_contribute_consorzio', { v_consorzio_id: consorzioId, v_amount: roundedAmount });
+    if (error) { showNotification(_p2pErrMsg('Errore contributo consorzio', error), 'error'); return; }
+    if (!window.ServerState?.isReady()) gameState.cash -= roundedAmount;
+    await saveGame();
+    showNotification(`💰 Contribuito €${roundedAmount.toLocaleString()} alla cassa consorzio.`, 'success');
+    updateUI();
+    await p2pFetchConsorzi();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SEZIONE 3c: ISPETTORATO — azioni
+// ─────────────────────────────────────────────────────────────────────────────
+
+window.hireCrumiri = async function() {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_hire_crumiri');
+    if (error) { showNotification(_p2pErrMsg('Errore crumiri', error), 'error'); return; }
+    window._sindacatoState.gdfRisk           = data.risk_level || 0;
+    window._sindacatoState.crumiriBoostUntil = data.crumiri_boost_until || null;
+    showBigEvent('👷', 'Crumiri Assunti!',
+        `Lavoratori non sindacalizzati operativi per 48 ore.\n+50% redditi su tutte le corse.\n\n⚠️ Rischio GdF ora: ${data.risk_level}%.\nSe supera 70%, rischi un\'ispezione con multa del 10% del cash.`);
+    logToMap(`👷 Crumiri assunti — +50% redditi 48h | GdF rischio: ${data.risk_level}%`);
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+window.payDonCarmine = async function() {
+    if (!_uid()) return;
+    const { data, error } = await _sb().rpc('rpc_pay_don_carmine');
+    if (error) { showNotification(_p2pErrMsg('Don Carmine', error), 'error'); return; }
+    if (!window.ServerState?.isReady()) gameState.cash -= 50000;
+    await saveGame();
+    window._sindacatoState.gdfRisk              = 0;
+    window._sindacatoState.carmineImmunityUntil = data.immunity_until || null;
+    showBigEvent('🤵', 'Don Carmine ha parlato.',
+        `Dossier GdF distrutto. Rischio azzerato.\nImmunità garantita per 24 ore.\n\n"Non dimenticare chi ti ha aiutato." — Don Carmine`);
+    logToMap('🤵 Don Carmine: dossier eliminato. Immunità 24h.');
+    updateUI();
+    if (typeof renderTabInvestments === 'function') renderTabInvestments();
+};
+
+// ─────────────────────────────────────────────────────────────────────────────
 // SEZIONE 7: INIT — avvia tutto all'avvio
 // ─────────────────────────────────────────────────────────────────────────────
 
