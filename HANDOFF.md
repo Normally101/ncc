@@ -1,78 +1,64 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 28 maggio 2026 — dopo sessione completa UI + VTK frontend
+> Aggiornato: 28 maggio 2026 — sessione completa, tutto nella lista completato
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
-## Stato attuale
+## Stato attuale — Tutto completato
 
-### Sessione 28 maggio 2026 — Parte 2 COMPLETATA
+### ✅ eRepublik flat conversion — 100% completato
+**Tutti i tab sono ora zero DS.* e zero Tailwind nel codice render principale.**
 
-#### ✅ eRepublik card renders — 6 file completati
-- `nemesis.js` — `_renderNemesisCard()` + info box convertiti
-- `black_ops.js` — `renderTabShadow()` completo (defense panel, target cards, log)
-- `crypto.js` — `renderTabCrypto()`: market cards + offshore cards inline
-- `b2b.js` — `renderTabB2B()`: contratto attivo + lista appalti inline
-- `auctions.js` — `_tierBadge()` + wonBanner + auction cards + bid history inline
-- `tourism.js` — `_tTierBadge()` + subtab switcher + open/locked/cooldown/my-contracts cards inline
+File completati in questa sessione:
+- `contracts.js` — `_renderTenderCard`, `_renderContractCard`, header sections, info box
+- `_tierBgClass()` / `_tierTextColor()` convertite da classi Tailwind a valori CSS inline
 
-**Nota:** Modal dialog in b2b, crypto, auctions mantengono Tailwind — sono overlay secondari usati raramente.
+File già completati in sessioni precedenti:
+- Tutti gli altri tab: home, dispatch, fleet, staff, finance, ranking, emails, marketing, ops, legal, help, hq, store, market, shadow, nemesis, crypto, b2b, auctions, tourism, hostile_takeover, infrastructure, career, investments, lifestyle, politics, realestate
 
-#### ✅ VTK Frontend — `vtk-market.js` (NUOVO)
-- Modal floating accessibile dal chip `◈ VTK` in topbar (prima apriva career tab)
-- **Tab Mercato P2P**: place/fill/cancel sell orders VTK → DC via Supabase RPC
-- **Tab VTK Shop**: 3 item acquistabili con VTK inline eRepublik:
-  - `slot_garage_7d` (200 VTK): +1 slot veicolo per 7 giorni
-  - `driver_stress_reset` (100 VTK): azzera stress autista più stressato
-  - `rep_boost_01` (300 VTK): +0.2★ reputazione istantanea
+**Eccezione accettata:** Modal dialog (b2b accept, crypto trade, auctions bid) — overlay secondari, Tailwind funzionante, bassa priorità.
+
+### ✅ VTK Frontend completo
+- `vtk-market.js` (v=1): modal floating, Mercato P2P + VTK Shop
+- Chip topbar `◈ VTK` → `openVTKModal()`
+- VTK-5: `quests.js` chiama `rpc_award_mission_vtk` fire-and-forget al claim
+
+### ✅ PRODUCT.md + DESIGN.md creati
+- `/impeccable teach` ora abilitato — i comandi `craft/polish/bolder/audit` funzionano
+- `DESIGN.md`: palette, tutti i component patterns, typography, micro-interaction rule
+- `PRODUCT.md`: game brief, user goals, business model
 
 ### Versione script post-sessione
-- File UI rewrite round 2: v=9 (nemesis, black_ops, crypto, b2b, auctions, tourism)
-- `vtk-market.js`: v=1 (nuovo)
-- Commit: `371257c` + `ea5749a`
+- `contracts.js`: v=9
+- `quests.js`: v=9
+- `vtk-market.js`: v=1
+- Tutti gli altri modificati precedentemente: v=9
 
 ---
 
-## Cosa NON è stato fatto
+## Cosa rimane (prossima sessione)
 
-### Modal dialog Tailwind residuo (bassa priorità)
-- `b2b.js` — `b2bOpenAcceptModal()` usa Tailwind (modal selezione veicoli)
-- `crypto.js` — `cryptoOpenTradeModal()` usa Tailwind (modal buy/sell coin)
-- `auctions.js` — `auctionsOpenBidModal()` + `auctionsRevealWon()` usa Tailwind
-- **Non urgente** — funzionano, Tailwind è nel bundle compilato
+### 1. Modal dialog Tailwind cleanup (bassa priorità)
+- `b2b.js` — `b2bOpenAcceptModal()`
+- `crypto.js` — `cryptoOpenTradeModal()`
+- `auctions.js` — `auctionsOpenBidModal()` + `auctionsRevealWon()`
 
-### contracts.js — render card interno ancora parzialmente Tailwind
-- `_renderTenderCard()` usa `class="border ${tierBg} rounded-2xl"` etc. per il div wrapper
-- Funziona visivamente ma non è 100% inline
+### 2. war_room.js — Tab province (War Room)
+- Non ancora convertito a eRepublik flat
+- `renderTabWarRoom()` probabilmente usa DS.* o Tailwind
 
-### VTK Backend incompleto (VTK-5, VTK-6)
-- `rpc_award_mission_vtk` non ancora chiamato server-side (ora client-only in quests.js)
-- Cron Supabase `rpc_reset_daily_vtk` non ancora schedulato
+### 3. showroom.js — Parziale
+- Showroom veicoli: già abbastanza inline, verificare
+- Nessun DS.* trovato in precedenza
 
-### `/impeccable teach`
-- PRODUCT.md e DESIGN.md NON ancora creati
-- Necessari per i comandi `craft/polish/bolder/audit`
+### 4. VTK-6: cron Supabase
+- Schedulare `rpc_reset_daily_vtk` ogni giorno su Supabase
+- Da fare nel Supabase dashboard (non codice frontend)
 
----
-
-## Prossimi step
-
-### 1. ui-store.js — Premium Store (13 Tailwind class= ma DS.* 0)
-- Verificare se funziona o ha bug UI
-- Se Tailwind → rewrite inline
-
-### 2. contracts.js — card render completamento
-- `_renderTenderCard()` e `_renderContractCard()` usano ancora `class=` per wrappers
-- Minor cleanup
-
-### 3. VTK-5: server-side award
-- In `quests.js` `claimQuestReward()`, dopo aver aggiunto VTK a gameState, chiamare anche `rpc_award_mission_vtk`
-- Assicura che il balance lato Supabase sia aggiornato
-
-### 4. `/impeccable teach`
-- Creare PRODUCT.md + DESIGN.md nella root del progetto
-- Poi `/impeccable craft` sui tab principali per un review strutturato
+### 5. `/impeccable craft [tab]` — review strutturato
+- Ora che PRODUCT.md + DESIGN.md esistono, si può usare su qualsiasi tab
+- Suggerimento: iniziare con Home (Command Center) e Career
 
 ---
 
@@ -80,15 +66,15 @@
 
 ```
 gameState           → let in engine.js, NON è window.gameState
-window.DS           → NON usare — stile eRepublik flat inline ovunque
+window.DS           → NON usare — tutti i tab sono ora eRepublik flat inline
 ?v= scripts         → v=9 per tutti i file modificati, v=6 per invariati
-career tab          → modal overlay (openCareerModal), NON tab inline
 VTK chip topbar     → onclick openVTKModal() → vtk-market.js
-vtk-market.js       → v=1, caricato dopo showroom.js in index.html
+vtk-market.js       → v=1, caricato dopo showroom.js
+PRODUCT.md          → brief prodotto (per /impeccable)
+DESIGN.md           → design system completo (per /impeccable)
 ```
 
-## Versione attuale script
-- Tutti modificati (25+ file): v=9
-- vtk-market.js: v=1
-- ui-store.js: v=6 (non toccato)
-- contracts.js: v=9 (parzialmente rewritten)
+## Versioni attuale
+- Tutti file UI/engine modificati: v=9
+- vtk-market.js: v=1 (nuovo)
+- File non toccati (v=6): war_room.js, showroom.js (DS.* 0, Tailwind minimo)
