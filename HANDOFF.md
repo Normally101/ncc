@@ -1,116 +1,94 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 28 maggio 2026 — dopo sessione debugging completo
+> Aggiornato: 28 maggio 2026 — dopo sessione completa UI + VTK frontend
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
 ## Stato attuale
 
-### Sessione debugging (28 maggio 2026) — COMPLETATA AL 90%
+### Sessione 28 maggio 2026 — Parte 2 COMPLETATA
 
-Eseguiti 3 round di debugging su tutto il codebase. Bug trovati e fixati:
+#### ✅ eRepublik card renders — 6 file completati
+- `nemesis.js` — `_renderNemesisCard()` + info box convertiti
+- `black_ops.js` — `renderTabShadow()` completo (defense panel, target cards, log)
+- `crypto.js` — `renderTabCrypto()`: market cards + offshore cards inline
+- `b2b.js` — `renderTabB2B()`: contratto attivo + lista appalti inline
+- `auctions.js` — `_tierBadge()` + wonBanner + auction cards + bid history inline
+- `tourism.js` — `_tTierBadge()` + subtab switcher + open/locked/cooldown/my-contracts cards inline
 
-#### ✅ BUG #1 — `buyRegion` non esportata (engine.js)
-- `async function buyRegion()` non era `window.buyRegion`
-- Chiamata da `onclick` in `ui-ops.js` → cliccando "Sblocca Regione" non succedeva nulla
-- **Fix:** `window.buyRegion = async function buyRegion()`
+**Nota:** Modal dialog in b2b, crypto, auctions mantengono Tailwind — sono overlay secondari usati raramente.
 
-#### ✅ BUG #2 — `rest()` non esportata (engine.js)
-- `async function rest()` non era `window.rest`
-- Chiamata dai pulsanti Hotel in `index.html` → riposo CEO non funzionava
-- **Fix:** `window.rest = async function rest()`
+#### ✅ VTK Frontend — `vtk-market.js` (NUOVO)
+- Modal floating accessibile dal chip `◈ VTK` in topbar (prima apriva career tab)
+- **Tab Mercato P2P**: place/fill/cancel sell orders VTK → DC via Supabase RPC
+- **Tab VTK Shop**: 3 item acquistabili con VTK inline eRepublik:
+  - `slot_garage_7d` (200 VTK): +1 slot veicolo per 7 giorni
+  - `driver_stress_reset` (100 VTK): azzera stress autista più stressato
+  - `rep_boost_01` (300 VTK): +0.2★ reputazione istantanea
 
-#### ✅ BUG #3 — `payToRepairCar` non esportata (engine.js)
-- Chiamata da `onclick` in `ui-staff.js` → bottone Ripara auto nel modal non funzionava
-- **Fix:** `window.payToRepairCar = async function payToRepairCar()`
-
-#### ✅ BUG #4 — `sellCar` non esportata (engine.js)
-- Chiamata da `onclick` in `ui-staff.js` → bottone Vendi auto non funzionava
-- **Fix:** `window.sellCar = async function sellCar()`
-
-#### ✅ BUG #5 — `buyInvestment` non esportata (engine.js)
-- Chiamata da `onclick` in `ui-investments.js` → acquisto investimenti non funzionava
-- **Fix:** `window.buyInvestment = async function buyInvestment()`
-
-#### ✅ BUG #6 — `hqOpenBuildModal` firma sbagliata (hq.js)
-- `hq.js` chiamava `hqOpenBuildModal('${r.id}')` con 1 argomento (roomId)
-- `hq-visual.js` (caricato dopo, vince) aspetta `(cityId, slotIndex)`
-- Crash silenzioso: modale non si apriva
-- **Fix:** aggiunto `window._hqBuildFromList(roomId)` che trova il primo slot libero nella città corrente e chiama `hqUpgradeRoom(cityId, roomId, slotIndex)`
-
-### Versione script post-debugging
-- `engine.js?v=8`
-- `hq.js?v=8`
-- Tutti gli altri: v=7 o v=6 (invariati)
+### Versione script post-sessione
+- File UI rewrite round 2: v=9 (nemesis, black_ops, crypto, b2b, auctions, tourism)
+- `vtk-market.js`: v=1 (nuovo)
+- Commit: `371257c` + `ea5749a`
 
 ---
 
-## Cosa NON è stato fatto (interrotto)
+## Cosa NON è stato fatto
 
-Il debugging era al ~90% — mancano ancora:
+### Modal dialog Tailwind residuo (bassa priorità)
+- `b2b.js` — `b2bOpenAcceptModal()` usa Tailwind (modal selezione veicoli)
+- `crypto.js` — `cryptoOpenTradeModal()` usa Tailwind (modal buy/sell coin)
+- `auctions.js` — `auctionsOpenBidModal()` + `auctionsRevealWon()` usa Tailwind
+- **Non urgente** — funzionano, Tailwind è nel bundle compilato
 
-### Round 3 incompleto
-- [ ] `ui-home.js` — `_homeTimer` non viene mai cancellato quando si cambia tab (interval leak potenziale se renderTabHome viene chiamato più volte) → da investigare
-- [ ] `p2p-render.js` — due `setInterval` in `p2pInit()` senza storage → OK perché `p2pInit` viene chiamato una sola volta da `auth.js`, ma verificare
-- [ ] Scan completo di `engine-drivers.js` per logic bugs (skill tree, academy course)
-- [ ] Scan `vip-clients.js` e `vip-buffs.js` per handler mancanti
-- [ ] Verificare `showroom.js` — tab non ancora redesignato + eventuali bug onclick
+### contracts.js — render card interno ancora parzialmente Tailwind
+- `_renderTenderCard()` usa `class="border ${tierBg} rounded-2xl"` etc. per il div wrapper
+- Funziona visivamente ma non è 100% inline
 
-### Non verificati (false positivi esclusi ma non confermati)
-- `window.gameState` in `contracts.js:240` — guard in `dailyTick()`, sembra OK
-- `serverState.js` usa `window.gameState` come guard — intenzionale
+### VTK Backend incompleto (VTK-5, VTK-6)
+- `rpc_award_mission_vtk` non ancora chiamato server-side (ora client-only in quests.js)
+- Cron Supabase `rpc_reset_daily_vtk` non ancora schedulato
+
+### `/impeccable teach`
+- PRODUCT.md e DESIGN.md NON ancora creati
+- Necessari per i comandi `craft/polish/bolder/audit`
 
 ---
 
-## Prossimi step nella prossima sessione
+## Prossimi step
 
-### 1. COMPLETA IL DEBUGGING (inizia da qui)
-```
-Continua Round 3:
-- ui-home.js _homeTimer leak
-- engine-drivers.js logic scan
-- vip-clients.js / vip-buffs.js
-- showroom.js onclick scan
-- Poi: node --check su tutti i file ancora da verificare
-```
+### 1. ui-store.js — Premium Store (13 Tailwind class= ma DS.* 0)
+- Verificare se funziona o ha bug UI
+- Se Tailwind → rewrite inline
 
-### 2. UI REWRITE — Tab ancora con DS.*
-- `ui-store.js` — Executive Club / showroom
-- `ui-hub.js` — HQ buildings
-- Verificare: `ui-emails.js`, `ui-ops.js`, `ui-legal.js`, `ui-home.js`, `ui-help.js`
+### 2. contracts.js — card render completamento
+- `_renderTenderCard()` e `_renderContractCard()` usano ancora `class=` per wrappers
+- Minor cleanup
 
-### 3. VTK frontend
-- UI Mercato VTK (SQL pronto, frontend manca)
-- VTK Shop (item: slot_garage_7d, driver_stress_reset, rep_boost_01)
+### 3. VTK-5: server-side award
+- In `quests.js` `claimQuestReward()`, dopo aver aggiunto VTK a gameState, chiamare anche `rpc_award_mission_vtk`
+- Assicura che il balance lato Supabase sia aggiornato
 
 ### 4. `/impeccable teach`
-- Creare PRODUCT.md + DESIGN.md per abilitare i comandi impeccable strutturati
+- Creare PRODUCT.md + DESIGN.md nella root del progetto
+- Poi `/impeccable craft` sui tab principali per un review strutturato
 
 ---
 
-## Architettura critica da ricordare
+## Architettura critica
 
 ```
 gameState           → let in engine.js, NON è window.gameState
-window.DS           → NON usare in nuovi tab — stile eRepublik flat inline
-?v= scripts         → attualmente v=8 per engine.js e hq.js, v=7 per gli altri
+window.DS           → NON usare — stile eRepublik flat inline ovunque
+?v= scripts         → v=9 per tutti i file modificati, v=6 per invariati
 career tab          → modal overlay (openCareerModal), NON tab inline
-drag-drop dispatch  → class ops-ride-card e ops-driver-row su <tr> — NON rinominare
-activeRides loop    → backward (length-1 → 0) + splice — corretto
+VTK chip topbar     → onclick openVTKModal() → vtk-market.js
+vtk-market.js       → v=1, caricato dopo showroom.js in index.html
 ```
 
-## Pattern bug più comune trovato
-
-**Funzioni `async function foo()` in engine.js NON esportate come `window.foo`.**
-I `function` top-level diventano globali, ma le `async function` + le arrow functions no in strict mode.
-Prima di aggiungere qualsiasi funzione chiamata da onclick, verificare che sia `window.foo = async function`.
-
-## Skills di design
-- `/taste-skill` → anti-slop, layout, gerarchia
-- `/emil-design-eng` → micro-interactions, :active scale(0.97), ease-out
-- `/impeccable` → review strutturata (manca PRODUCT.md — fare `/impeccable teach` prima)
-
 ## Versione attuale script
-- `engine.js`: v=8 | `hq.js`: v=8
-- Tutti gli altri modificati di recente: v=7
+- Tutti modificati (25+ file): v=9
+- vtk-market.js: v=1
+- ui-store.js: v=6 (non toccato)
+- contracts.js: v=9 (parzialmente rewritten)
