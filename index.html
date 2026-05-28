@@ -130,7 +130,7 @@
       <span class="text-yellow-400 text-[10px]">🪙</span>
       <span id="tb-tc" class="text-yellow-300 font-mono font-bold text-xs">50</span>
     </div>
-    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0 cursor-pointer" onclick="switchTab('career')" title="Vettura Token — guadagnati dalle missioni">
+    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0 cursor-pointer" onclick="if(typeof openVTKModal==='function')openVTKModal()" title="Vettura Token — clicca per Mercato VTK">
       <span class="text-blue-300 text-[10px]">◈</span>
       <span id="tb-vtk" class="text-blue-300 font-mono font-bold text-xs">0</span>
     </div>
@@ -593,6 +593,7 @@
   <script defer src="ui-map-utils.js?v=6"></script>
   <script defer src="ui-sidebar.js?v=6"></script>
   <script defer src="showroom.js?v=6"></script>
+  <script defer src="vtk-market.js?v=1"></script>
   <script defer src="p2p-market.js?v=6"></script>
   <script defer src="p2p-render.js?v=6"></script>
   <script defer src="b2b.js?v=9"></script>
