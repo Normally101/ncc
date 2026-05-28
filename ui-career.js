@@ -473,10 +473,10 @@ function _buildRewardChips(r) {
     if (r.vtk)        chips.push(`<span class="cm-chip vtk">+${r.vtk} VTK</span>`);
     if (r.tc)         chips.push(`<span class="cm-chip gold">+${r.tc} DC</span>`);
     if (r.rep)        chips.push(`<span class="cm-chip gold">+${r.rep}★</span>`);
-    if (r.shadowCoin) chips.push(`<span class="cm-chip">+${r.shadowCoin.toLocaleString('it')} SC</span>`);
-    if (r.unlock)     chips.push(`<span class="cm-chip">${r.unlock}</span>`);
-    if (r.title)      chips.push(`<span class="cm-chip">"${r.title}"</span>`);
-    if (chips.length === 0 && r.desc) chips.push(`<span class="cm-chip">${r.desc}</span>`);
+    if (r.shadowCoin) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">+${r.shadowCoin.toLocaleString('it')} SC</span>`);
+    if (r.unlock)     chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">${r.unlock}</span>`);
+    if (r.title)      chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">"${r.title}"</span>`);
+    if (chips.length === 0 && r.desc) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">${r.desc}</span>`);
     return chips.join('');
 }
 

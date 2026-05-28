@@ -42,75 +42,72 @@ window.openGarage3D = function(carId) {
     const luggage = vClass.includes('carr') ? 7 : vClass.includes('sprinter') ? 12 : 3;
 
     const leftPanel = carImg
-        ? `<div class="w-full md:w-3/5 relative overflow-hidden" style="min-height:320px">
+        ? `<div style="width:60%;position:relative;overflow:hidden;min-height:320px;flex-shrink:0">
                <img src="${carImg}" alt="${car.name}"
-                    class="absolute inset-0 w-full h-full object-cover"
-                    style="object-position:center">
-               ${isElec ? `<div class="absolute top-4 left-4 bg-green-500/90 text-white text-xs font-bold px-2 py-1 rounded shadow">⚡ CO2 ESENTE</div>` : ''}
-               <div class="absolute bottom-3 left-4 text-white/50 text-[8px] uppercase tracking-widest font-mono">${vClass.replace(/_/g,' ').toUpperCase()}</div>
+                    style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center">
+               ${isElec ? `<div style="position:absolute;top:16px;left:16px;background:rgba(34,197,94,0.9);color:#fff;font-size:10px;font-weight:700;padding:4px 8px;border-radius:4px">⚡ CO2 ESENTE</div>` : ''}
+               <div style="position:absolute;bottom:12px;left:16px;color:rgba(255,255,255,0.5);font-size:8px;text-transform:uppercase;letter-spacing:.1em;font-family:monospace">${vClass.replace(/_/g,' ').toUpperCase()}</div>
            </div>`
-        : `<div class="w-full md:w-3/5 bg-black/80 relative flex items-center justify-center p-8 overflow-hidden" style="min-height:320px">
-               <div class="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-black/90 pointer-events-none"></div>
-               <div class="relative z-10 w-full drop-shadow-[0_20px_30px_rgba(0,0,0,1)] transition-transform duration-700 hover:scale-105">
+        : `<div style="width:60%;background:rgba(0,0,0,0.8);position:relative;display:flex;align-items:center;justify-content:center;padding:32px;overflow:hidden;min-height:320px;flex-shrink:0">
+               <div style="position:absolute;inset:0;background:linear-gradient(135deg,rgba(29,78,216,0.2),rgba(0,0,0,0.9));pointer-events:none"></div>
+               <div style="position:relative;z-index:10;width:100%">
                    ${typeof _generateVehicleSVG === 'function' ? _generateVehicleSVG(vClass, upgrades) : ''}
                </div>
            </div>`;
 
     modal.innerHTML = `
-        <div class="bg-panel border border-white/10 rounded-2xl w-[95%] max-w-5xl min-h-[500px] overflow-hidden relative shadow-2xl flex flex-col md:flex-row transform transition-all" style="max-height:90vh">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;width:95%;max-width:900px;min-height:500px;overflow:hidden;position:relative;display:flex;flex-direction:row;max-height:90vh">
             ${leftPanel}
-            <div class="w-full md:w-2/5 p-8 bg-panel border-l border-white/10 flex flex-col justify-between overflow-y-auto">
+            <div style="flex:1;padding:32px;background:#161b22;border-left:1px solid #21262d;display:flex;flex-direction:column;justify-content:space-between;overflow-y:auto">
                 <div>
-                    <div class="flex justify-between items-start mb-2">
-                        <h2 class="text-2xl font-bold text-white uppercase tracking-wider leading-tight">${car.name}</h2>
-                        <span class="bg-white/10 text-white px-2 py-1 rounded text-xs font-mono border border-white/20 ml-2 flex-shrink-0">${car.tier.toUpperCase()}</span>
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                        <div style="font-size:22px;font-weight:700;color:#e6edf3;text-transform:uppercase;letter-spacing:.06em;line-height:1.2">${car.name}</div>
+                        <span style="background:rgba(255,255,255,0.08);color:#e6edf3;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace;border:1px solid rgba(255,255,255,0.15);margin-left:8px;flex-shrink:0">${car.tier.toUpperCase()}</span>
                     </div>
-                    <p class="text-gold text-sm mb-6 font-mono">${vClass.replace(/_/g, ' ').toUpperCase()}</p>
-                    <div class="space-y-5">
+                    <div style="color:#d4af37;font-size:12px;margin-bottom:24px;font-family:monospace">${vClass.replace(/_/g, ' ').toUpperCase()}</div>
+                    <div style="display:flex;flex-direction:column;gap:16px">
                         <div>
-                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">🔧 CONDIZIONE</span><span class="text-white">${Math.floor(car.condition)}%</span></div>
-                            <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
-                                <div class="h-full transition-all duration-1000 ease-out ${car.condition > 50 ? 'bg-green-500' : 'bg-red-500'}" style="width:0%" id="anim-cond"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">${isElec ? '⚡ BATTERIA' : '⛽ CARBURANTE'}</span><span class="text-white">${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%</span></div>
-                            <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
-                                <div class="h-full ${isElec ? 'bg-green-500' : 'bg-blue-500'} transition-all duration-1000 ease-out" style="width:0%" id="anim-fuel"></div>
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#8b949e">🔧 CONDIZIONE</span><span style="color:#e6edf3">${Math.floor(car.condition)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
+                                <div style="height:100%;background:${car.condition > 50 ? '#3fb950' : '#f85149'};transition:width 1s ease-out;width:0%" id="anim-cond"></div>
                             </div>
                         </div>
                         <div>
-                            <div class="flex justify-between text-xs mb-1.5 font-bold"><span class="text-gray-400">🛞 PRESSIONE GOMME</span><span class="text-white">${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%</span></div>
-                            <div class="w-full bg-black/60 h-3 rounded-full overflow-hidden border border-white/10">
-                                <div class="h-full bg-yellow-500 transition-all duration-1000 ease-out" style="width:0%" id="anim-tire"></div>
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#8b949e">${isElec ? '⚡ BATTERIA' : '⛽ CARBURANTE'}</span><span style="color:#e6edf3">${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
+                                <div style="height:100%;background:${isElec ? '#3fb950' : '#58a6ff'};transition:width 1s ease-out;width:0%" id="anim-fuel"></div>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-3 mt-4">
-                            <div class="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center gap-3 hover:border-white/20 transition-colors">
-                                <span class="text-2xl">💺</span>
-                                <div><p class="text-[9px] text-gray-500 font-bold">POSTI</p><p class="text-base font-bold text-white">${seats}</p></div>
-                            </div>
-                            <div class="bg-black/40 p-3 rounded-lg border border-white/5 flex items-center gap-3 hover:border-white/20 transition-colors">
-                                <span class="text-2xl">🧳</span>
-                                <div><p class="text-[9px] text-gray-500 font-bold">BAGAGLI</p><p class="text-base font-bold text-white">${luggage}</p></div>
+                        <div>
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#8b949e">🛞 PRESSIONE GOMME</span><span style="color:#e6edf3">${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
+                                <div style="height:100%;background:#f59e0b;transition:width 1s ease-out;width:0%" id="anim-tire"></div>
                             </div>
                         </div>
-                        <div class="mt-4">
-                            <p class="text-[9px] text-gray-500 font-bold mb-2 uppercase tracking-widest">Upgrade Installati</p>
-                            <div class="flex flex-wrap gap-1.5">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
+                            <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px">
+                                <span style="font-size:22px">💺</span>
+                                <div><div style="font-size:9px;color:#6b7280;font-weight:700">POSTI</div><div style="font-size:16px;font-weight:700;color:#e6edf3">${seats}</div></div>
+                            </div>
+                            <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px">
+                                <span style="font-size:22px">🧳</span>
+                                <div><div style="font-size:9px;color:#6b7280;font-weight:700">BAGAGLI</div><div style="font-size:16px;font-weight:700;color:#e6edf3">${luggage}</div></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size:9px;color:#6b7280;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Upgrade Installati</div>
+                            <div style="display:flex;flex-wrap:wrap;gap:6px">
                                 ${upgrades.length > 0
-                                    ? upgrades.map(u => `<span class="bg-blue-900/40 text-blue-300 border border-blue-500/30 text-[9px] px-2 py-0.5 rounded">${u.replace('upg_','').toUpperCase()}</span>`).join('')
-                                    : '<span class="text-gray-600 text-xs italic">Nessun upgrade</span>'}
+                                    ? upgrades.map(u => `<span style="background:rgba(88,166,255,0.12);color:#58a6ff;border:1px solid rgba(88,166,255,0.3);font-size:9px;padding:2px 8px;border-radius:4px">${u.replace('upg_','').toUpperCase()}</span>`).join('')
+                                    : '<span style="color:#6b7280;font-size:11px;font-style:italic">Nessun upgrade</span>'}
                             </div>
                         </div>
                     </div>
                 </div>
-                <button onclick="closeGarage3D()" class="mt-6 w-full py-3 text-sm font-bold uppercase tracking-widest rounded-xl bg-red-900/30 border border-red-500/40 text-red-300 hover:bg-red-900/50 transition-colors">✕ Chiudi Ispezione</button>
+                <button onclick="closeGarage3D()" style="margin-top:24px;width:100%;padding:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:6px;background:rgba(127,29,29,0.3);border:1px solid rgba(185,28,28,0.4);color:#fca5a5;cursor:pointer;transition:all .15s" onmousedown="this.style.background='rgba(127,29,29,0.5)'" onmouseup="this.style.background='rgba(127,29,29,0.3)'" onmouseleave="this.style.background='rgba(127,29,29,0.3)'">✕ Chiudi Ispezione</button>
             </div>
         </div>`;
 
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
     modal.style.cssText = 'position:fixed;inset:0;z-index:110;background:rgba(0,0,0,0.45);backdrop-filter:blur(4px);display:flex;align-items:center;justify-content:center;';
 
     setTimeout(() => {
@@ -126,8 +123,7 @@ window.openGarage3D = function(carId) {
 window.closeGarage3D = function() {
     const modal = document.getElementById('modal-garage3d');
     if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
+        modal.style.display = 'none';
         modal.style.cssText = '';
         modal.innerHTML = '';
     }
@@ -202,7 +198,7 @@ function _generateVehicleSVG(vClass, upgrades) {
             ${hasLivrea ? '<path d="M90,249 L720,249" stroke="#00f2ff" stroke-width="2" opacity="0.7"/>' : ''}`;
     }
 
-    return `<svg viewBox="0 0 850 320" class="w-full h-auto" xmlns="http://www.w3.org/2000/svg">
+    return `<svg viewBox="0 0 850 320" style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">
       <defs>
         <linearGradient id="bodyPaint" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stop-color="${paint1}"/><stop offset="100%" stop-color="${paint2}"/>

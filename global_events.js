@@ -142,7 +142,7 @@ window.renderGlobalEventPanel = function(containerId) {
     const now = Date.now();
 
     if (events.length === 0) {
-        el.innerHTML = '<div class="text-[10px] text-gray-500 text-center py-4">Nessun evento globale attivo.</div>';
+        el.innerHTML = '<div style="font-size:10px;color:#8b949e;text-align:center;padding:16px 0">Nessun evento globale attivo.</div>';
         return;
     }
 
@@ -166,15 +166,19 @@ window.renderGlobalEventPanel = function(containerId) {
             ? `⏱ Termina tra ${Math.floor(endsIn / 3600000)}h`
             : `⏳ Inizia tra ${Math.floor(startsIn / 3600000)}h`;
 
+        const border = isActive ? 'rgba(212,175,55,0.35)' : 'rgba(255,255,255,0.08)';
+        const titleC = isActive ? '#d4af37' : '#d1d5db';
+        const timeC  = isActive ? '#d4af37' : '#8b949e';
+
         return `
-          <div class="bg-white/3 border ${isActive ? 'border-gold/40' : 'border-white/8'} rounded-xl p-3 mb-2">
-            <div class="flex justify-between items-start mb-1">
-              <div class="font-bold text-sm ${isActive ? 'text-gold' : 'text-gray-300'}">${ev.icon} ${ev.name}</div>
-              <div class="text-[9px] ${isActive ? 'text-gold' : 'text-gray-500'} shrink-0 ml-2">${timeLabel}</div>
+          <div style="background:rgba(255,255,255,0.02);border:1px solid ${border};border-radius:6px;padding:10px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+              <div style="font-weight:700;font-size:12px;color:${titleC}">${ev.icon} ${ev.name}</div>
+              <div style="font-size:9px;color:${timeC};flex-shrink:0;margin-left:8px">${timeLabel}</div>
             </div>
-            <div class="text-[10px] text-gray-400 mb-2">${ev.description || ''}</div>
-            <div class="flex flex-wrap gap-1">
-              ${fxBadges.map(b => `<span class="text-[9px] bg-white/10 rounded px-1.5 py-0.5 text-gray-300">${b}</span>`).join('')}
+            <div style="font-size:10px;color:#8b949e;margin-bottom:6px">${ev.description || ''}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              ${fxBadges.map(b => `<span style="font-size:9px;background:rgba(255,255,255,0.08);border-radius:4px;padding:2px 6px;color:#d1d5db">${b}</span>`).join('')}
             </div>
           </div>`;
     }).join('');

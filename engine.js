@@ -391,18 +391,18 @@ function showBigEvent(icon, title, body) {
     if (!el) {
         el = document.createElement('div');
         el.id = 'big-event-modal';
-        el.className = 'fixed inset-0 z-[200] bg-black/90 backdrop-blur-sm flex items-center justify-center';
+        el.style.cssText = 'position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.9);display:flex;align-items:center;justify-content:center';
         el.addEventListener('click', () => el.remove());
         document.body.appendChild(el);
     }
     el.innerHTML = `
-        <div class="bg-panel border border-gold/50 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center mx-4" onclick="event.stopPropagation()">
-            <div class="text-5xl mb-4">${icon}</div>
-            <h2 class="text-gold font-bold uppercase tracking-widest text-sm mb-3">${title}</h2>
-            <p class="text-gray-300 text-[11px] leading-relaxed mb-6">${body}</p>
-            <button onclick="document.getElementById('big-event-modal').remove()" class="btn-gold px-8 py-2">OK, Capito</button>
+        <div style="background:#161b22;border:1px solid rgba(212,175,55,0.5);padding:32px;border-radius:16px;max-width:384px;width:100%;text-align:center;margin:0 16px" onclick="event.stopPropagation()">
+            <div style="font-size:48px;margin-bottom:16px">${icon}</div>
+            <h2 style="color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:12px;margin-bottom:12px">${title}</h2>
+            <p style="color:#d1d5db;font-size:11px;line-height:1.5;margin-bottom:24px">${body}</p>
+            <button onclick="document.getElementById('big-event-modal').remove()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:8px 32px;border-radius:4px;font-size:11px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">OK, Capito</button>
         </div>`;
-    el.classList.remove('hidden');
+    el.style.display = 'flex';
 }
 window.showBigEvent = showBigEvent;
 

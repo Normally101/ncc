@@ -19,9 +19,9 @@ window.renderTabInfrastructure = async function() {
         <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Monopoli</div>
         <div style="font-size:20px;font-weight:700;color:#e6edf3">Infrastrutture Carburante</div>
         <div style="font-size:11px;color:#8b949e;margin-top:4px">Acquista depositi carburante nelle province — riscuoti un levy su tutte le corse</div>
-    </div>` + `<div class="p-1">
-      <div id="infra-loading" style="text-align:center;padding:32px 0;color:var(--text-dim);font-size:11px">Caricamento depositi…</div>
-      <div id="infra-content" class="hidden"></div>
+    </div>` + `<div>
+      <div id="infra-loading" style="text-align:center;padding:32px 0;color:#6b7280;font-size:11px">Caricamento depositi…</div>
+      <div id="infra-content" style="display:none"></div>
     </div>`;
 
     try {
@@ -38,8 +38,8 @@ function _renderInfraContent(depots) {
     const loading = document.getElementById('infra-loading');
     const content = document.getElementById('infra-content');
     if (!loading || !content) return;
-    loading.classList.add('hidden');
-    content.classList.remove('hidden');
+    loading.style.display = 'none';
+    content.style.display = '';
 
     const depotByProv = {};
     depots.forEach(d => { depotByProv[d.province_id] = d; });
@@ -49,14 +49,14 @@ function _renderInfraContent(depots) {
 
     content.innerHTML = `
     ${myDepots.length > 0 ? `
-      <div class="mb-6">
-        <div class="text-xs font-bold text-green-400 uppercase tracking-wider mb-3">I Tuoi Depositi</div>
+      <div style="margin-bottom:24px">
+        <div style="font-size:11px;font-weight:700;color:#4ade80;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">I Tuoi Depositi</div>
         ${myDepots.map(d => _renderMyDepotCard(d)).join('')}
       </div>
     ` : ''}
 
-    <div class="mb-6">
-      <div class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-3">Province Disponibili</div>
+    <div style="margin-bottom:24px">
+      <div style="font-size:11px;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Province Disponibili</div>
       ${_INFRA_PROVINCES.map(prov => {
           const depot = depotByProv[prov.id];
           if (depot && !depot.is_mine) return _renderOccupiedCard(prov, depot);
@@ -66,13 +66,13 @@ function _renderInfraContent(depots) {
     </div>
 
     ${otherDepots.length > 0 ? `
-      <div class="mb-6">
-        <div class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Depositi Rivali</div>
+      <div style="margin-bottom:24px">
+        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Depositi Rivali</div>
         ${otherDepots.map(d => _renderRivalCard(d)).join('')}
       </div>
     ` : ''}
 
-    <div class="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-xs text-blue-200 mt-4">
+    <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:6px;padding:16px;font-size:11px;color:#93c5fd;margin-top:16px">
       <strong>Come funziona:</strong> Ogni volta che un concorrente completa una corsa in una tua provincia,
       paga un <strong>levy carburante</strong> basato sul tuo markup (0–50%).
       Il costo del deposito è <strong>€300.000</strong>. Solo un deposito per provincia.
@@ -81,23 +81,23 @@ function _renderInfraContent(depots) {
 
 function _renderMyDepotCard(d) {
     return `
-    <div class="border border-green-500/30 bg-green-500/5 rounded-2xl p-5 mb-3">
-      <div class="flex items-start justify-between mb-3">
+    <div style="border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.05);border-radius:6px;padding:20px;margin-bottom:12px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
         <div>
-          <div class="text-white font-bold">⛽ ${d.province_name}</div>
-          <div class="text-xs text-green-400 mt-0.5">Il tuo deposito · Incassato: €${(d.total_earned||0).toLocaleString('it-IT')}</div>
+          <div style="color:#e6edf3;font-weight:700">⛽ ${d.province_name}</div>
+          <div style="font-size:11px;color:#4ade80;margin-top:2px">Il tuo deposito · Incassato: €${(d.total_earned||0).toLocaleString('it-IT')}</div>
         </div>
-        <span class="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-400 font-bold">${Math.round(d.markup_pct)}% markup</span>
+        <span style="font-size:11px;padding:4px 8px;border-radius:99px;background:rgba(34,197,94,0.2);color:#4ade80;font-weight:700">${Math.round(d.markup_pct)}% markup</span>
       </div>
-      <div class="flex items-center gap-3 mt-3">
-        <label class="text-xs text-gray-400 flex-shrink-0">Markup:</label>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
+        <label style="font-size:11px;color:#8b949e;flex-shrink:0">Markup:</label>
         <input type="range" min="0" max="50" step="1" value="${Math.round(d.markup_pct)}"
                id="markup-slider-${d.province_id}"
                oninput="document.getElementById('markup-val-${d.province_id}').textContent=this.value+'%'"
-               class="flex-1 accent-green-500">
-        <span id="markup-val-${d.province_id}" class="text-xs text-green-400 w-10 text-right">${Math.round(d.markup_pct)}%</span>
+               style="flex:1;accent-color:#22c55e">
+        <span id="markup-val-${d.province_id}" style="font-size:11px;color:#4ade80;width:40px;text-align:right">${Math.round(d.markup_pct)}%</span>
         <button onclick="_infraSetMarkup('${d.province_id}')"
-          class="px-3 py-1.5 rounded-lg text-xs font-bold bg-green-500/20 border border-green-500/30 text-green-300 hover:bg-green-500/30 transition-colors cursor-pointer">
+          style="padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.3);color:#86efac;cursor:pointer">
           Salva
         </button>
       </div>
@@ -106,13 +106,13 @@ function _renderMyDepotCard(d) {
 
 function _renderAvailableCard(prov) {
     return `
-    <div class="border border-white/10 bg-white/3 rounded-2xl p-4 mb-3 flex items-center justify-between">
+    <div style="border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.03);border-radius:6px;padding:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div class="text-white font-semibold text-sm">${prov.name}</div>
-        <div class="text-xs text-gray-500">${prov.region} · Libero</div>
+        <div style="color:#e6edf3;font-weight:600;font-size:12px">${prov.name}</div>
+        <div style="font-size:11px;color:#6b7280">${prov.region} · Libero</div>
       </div>
       <button onclick="_infraBuyDepot('${prov.id}','${prov.name}')"
-        class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-500/20 border border-blue-500/30 text-blue-300 hover:bg-blue-500/30 transition-colors cursor-pointer">
+        style="padding:8px 16px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.3);color:#93c5fd;cursor:pointer">
         Acquista €300k
       </button>
     </div>`;
@@ -120,20 +120,20 @@ function _renderAvailableCard(prov) {
 
 function _renderOccupiedCard(prov, d) {
     return `
-    <div class="border border-red-500/20 bg-red-500/3 rounded-2xl p-4 mb-3 flex items-center justify-between opacity-60">
+    <div style="border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.03);border-radius:6px;padding:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;opacity:.6">
       <div>
-        <div class="text-white font-semibold text-sm">${prov.name}</div>
-        <div class="text-xs text-red-400">${prov.region} · Occupato da ${d.owner_company}</div>
+        <div style="color:#e6edf3;font-weight:600;font-size:12px">${prov.name}</div>
+        <div style="font-size:11px;color:#f87171">${prov.region} · Occupato da ${d.owner_company}</div>
       </div>
-      <span class="text-xs text-red-400 font-bold">${d.markup_pct}% markup</span>
+      <span style="font-size:11px;color:#f87171;font-weight:700">${d.markup_pct}% markup</span>
     </div>`;
 }
 
 function _renderRivalCard(d) {
     return `
-    <div class="border border-gray-500/20 rounded-xl p-3 mb-2 flex items-center justify-between">
-      <div class="text-sm text-gray-300">${d.province_name}</div>
-      <div class="text-xs text-gray-500">${d.owner_company} · ${d.markup_pct}% · incassato €${(d.total_earned||0).toLocaleString('it-IT')}</div>
+    <div style="border:1px solid rgba(107,114,128,0.2);border-radius:6px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:12px;color:#d1d5db">${d.province_name}</div>
+      <div style="font-size:11px;color:#6b7280">${d.owner_company} · ${d.markup_pct}% · incassato €${(d.total_earned||0).toLocaleString('it-IT')}</div>
     </div>`;
 }
 

@@ -24,8 +24,7 @@ window.renderHQCampus = function() {
     const bgUrl = `assets/cities/bg_${currentCityId}.jpg`;
 
     let html = `
-    <div class="relative w-full rounded-xl overflow-hidden border border-white/10 shadow-2xl"
-         style="aspect-ratio: 16/9; min-height: 240px; background-image: url('${bgUrl}'); background-size: cover; background-position: center; background-color: #1a1c29;">
+    <div style="position:relative;width:100%;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.1);aspect-ratio:16/9;min-height:240px;background-image:url('${bgUrl}');background-size:cover;background-position:center;background-color:#1a1c29;">
     `;
 
     // Scorriamo i lotti di terra definiti in hq-data.js
@@ -45,8 +44,8 @@ window.renderHQCampus = function() {
                 // Usiamo transform: translate(-50%, -100%) in modo che le coordinate left/top 
                 // si riferiscano al "suolo" al centro dell'edificio.
                 html += `
-                <div class="absolute hq-building-wrapper"
-                     style="left: ${slotDef.left}; top: ${slotDef.top}; transform: translate(-50%, -100%); cursor:pointer; transition:transform 0.2s;"
+                <div class="hq-building-wrapper"
+                     style="position:absolute;left:${slotDef.left};top:${slotDef.top};transform:translate(-50%,-100%);cursor:pointer;transition:transform 0.2s;"
                      onclick="window.hqShowInfoPanel('${roomId}')">
                      
                      <!-- Placeholder visibile solo se l'immagine manca -->
@@ -68,8 +67,8 @@ window.renderHQCampus = function() {
             } else {
                 // Disegna slot libero
                 html += `
-                <div class="absolute cursor-pointer hq-slot-pulse"
-                     style="left: ${slotDef.left}; top: ${slotDef.top}; transform: translate(-50%, -50%);">
+                <div class="hq-slot-pulse"
+                     style="position:absolute;left:${slotDef.left};top:${slotDef.top};transform:translate(-50%,-50%);cursor:pointer;">
                      <div onclick="window.hqOpenBuildModal('${currentCityId}', ${slotId})"
                           style="width:56px; height:32px; border:2px dashed rgba(212,175,55,0.5); background:rgba(212,175,55,0.06); border-radius:999px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
                           onmouseover="this.style.background='rgba(212,175,55,0.2)'; this.style.borderColor='rgba(212,175,55,0.9)'"
@@ -108,26 +107,26 @@ window.hqOpenBuildModal = function(cityId, slotIndex) {
 
     const modal = document.createElement('div');
     modal.id = 'hq-build-modal';
-    modal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center backdrop-blur-sm';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `
-      <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 w-80 max-w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          <div class="text-sm font-bold text-white">🏗️ Costruisci (Lotto ${slotIndex})</div>
-          <button onclick="document.getElementById('hq-build-modal').remove()" class="text-gray-500 hover:text-white text-lg">✕</button>
+      <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);max-height:80vh;overflow-y:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:#e6edf3">🏗️ Costruisci (Lotto ${slotIndex})</div>
+          <button onclick="document.getElementById('hq-build-modal').remove()" style="color:#6b7280;background:none;border:none;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
         ${unlockedRooms.length === 0
-            ? '<div class="text-[10px] text-gray-500 text-center py-4">Nessuna struttura disponibile per questo lotto. Costruisci prima i prerequisiti.</div>'
+            ? '<div style="font-size:10px;color:#6b7280;text-align:center;padding:16px 0">Nessuna struttura disponibile per questo lotto. Costruisci prima i prerequisiti.</div>'
             : unlockedRooms.map(r => {
                 const tDef = r.tiers.find(t => t.level === 1);
                 const canAfford = (gameState.cash || 0) >= tDef.cost && (gameState.reputation || 0) >= tDef.reqRep;
                 return `
-              <div class="bg-white/3 border border-white/8 rounded-lg p-3 mb-2">
-                <div class="font-bold text-white text-sm">${r.icon} ${r.name}</div>
-                <div class="text-[10px] text-gray-400 mt-0.5 mb-2">${r.desc}</div>
-                <div class="flex justify-between items-center">
-                  <span class="text-gold text-[11px] font-mono">€${tDef.cost.toLocaleString()}</span>
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;margin-bottom:8px">
+                <div style="font-weight:700;color:#e6edf3;font-size:12px">${r.icon} ${r.name}</div>
+                <div style="font-size:10px;color:#8b949e;margin:4px 0 8px">${r.desc}</div>
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <span style="color:#d4af37;font-size:11px;font-family:monospace">€${tDef.cost.toLocaleString()}</span>
                   <button onclick="document.getElementById('hq-build-modal').remove(); window.hqUpgradeRoom('${cityId}', '${r.id}', ${slotIndex})"
-                    class="btn-gold !text-[9px] !py-1 !px-2 ${!canAfford ? 'opacity-40' : ''}">
+                    style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 8px;border-radius:4px;font-size:9px;cursor:pointer;${!canAfford ? 'opacity:.4' : ''}">
                     Costruisci qui
                   </button>
                 </div>
@@ -153,9 +152,9 @@ window.hqShowInfoPanel = function(roomId) {
     for (const [k, v] of Object.entries(tDef.effect)) {
         if (typeof v === 'number') {
             const val = k.endsWith('Mult') ? `×${v.toFixed(2)}` : `+${v}`;
-            fxHtml += `<span class="text-[10px] bg-gold/10 text-gold px-2 py-1 rounded mr-1">${val}</span>`;
+            fxHtml += `<span style="font-size:10px;background:rgba(212,175,55,0.1);color:#d4af37;padding:4px 8px;border-radius:4px;margin-right:4px">${val}</span>`;
         } else {
-            fxHtml += `<span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-1 rounded mr-1">${v}</span>`;
+            fxHtml += `<span style="font-size:10px;background:rgba(59,130,246,0.1);color:#60a5fa;padding:4px 8px;border-radius:4px;margin-right:4px">${v}</span>`;
         }
     }
 
@@ -164,20 +163,20 @@ window.hqShowInfoPanel = function(roomId) {
     if (nextTier) {
         const canAfford = (gameState.cash || 0) >= nextTier.cost && (gameState.reputation || 0) >= nextTier.reqRep;
         upgradeBtnHtml = `
-            <div class="mt-4 pt-3 border-t border-white/10 flex justify-between items-center">
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);display:flex;justify-content:space-between;align-items:center">
                 <div>
-                    <div class="text-[10px] text-gray-400">Prossimo Livello (${nextTier.level})</div>
-                    <div class="text-gold text-xs font-mono">€${nextTier.cost.toLocaleString()}</div>
-                    ${nextTier.reqRep > 0 ? `<div class="text-blue-400 text-[9px]">Req: ${nextTier.reqRep}⭐</div>` : ''}
+                    <div style="font-size:10px;color:#8b949e">Prossimo Livello (${nextTier.level})</div>
+                    <div style="color:#d4af37;font-size:11px;font-family:monospace">€${nextTier.cost.toLocaleString()}</div>
+                    ${nextTier.reqRep > 0 ? `<div style="color:#60a5fa;font-size:9px">Req: ${nextTier.reqRep}⭐</div>` : ''}
                 </div>
                 <button onclick="document.getElementById('hq-info-panel').remove(); window.hqUpgradeRoom('${currentCityId}', '${roomId}')"
-                    class="btn-gold !text-[10px] !py-1 !px-3 ${!canAfford ? 'opacity-40' : ''}">
+                    style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 12px;border-radius:4px;font-size:10px;cursor:pointer;${!canAfford ? 'opacity:.4' : ''}">
                     ⬆️ Migliora
                 </button>
             </div>
         `;
     } else {
-        upgradeBtnHtml = `<div class="mt-4 pt-3 border-t border-white/10 text-center text-[10px] text-green-400 font-bold uppercase">Livello Massimo Raggiunto</div>`;
+        upgradeBtnHtml = `<div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.1);text-align:center;font-size:10px;color:#4ade80;font-weight:700;text-transform:uppercase">Livello Massimo Raggiunto</div>`;
     }
 
     const existing = document.getElementById('hq-info-panel');
@@ -185,23 +184,20 @@ window.hqShowInfoPanel = function(roomId) {
 
     const panel = document.createElement('div');
     panel.id = 'hq-info-panel';
-    panel.className = 'absolute z-50 bg-[#161b22]/95 border border-white/20 p-4 rounded-xl shadow-2xl backdrop-blur-md hq-info-pop max-w-[280px] pointer-events-auto';
-    panel.style.left = '50%';
-    panel.style.top = '50%';
-    panel.style.transform = 'translate(-50%, -50%)';
+    panel.style.cssText = 'position:absolute;z-index:50;background:rgba(22,27,34,0.95);border:1px solid rgba(255,255,255,0.2);padding:16px;border-radius:6px;box-shadow:0 20px 60px rgba(0,0,0,0.8);max-width:280px;pointer-events:auto;left:50%;top:50%;transform:translate(-50%,-50%)';
 
     panel.innerHTML = `
-        <div class="flex justify-between items-start mb-2">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
             <div>
-                <h3 class="text-white font-bold text-sm">${room.icon} ${room.name}</h3>
-                <div class="text-xs text-gold font-mono uppercase">Livello ${currentLevel}</div>
+                <div style="color:#e6edf3;font-weight:700;font-size:12px">${room.icon} ${room.name}</div>
+                <div style="font-size:11px;color:#d4af37;font-family:monospace;text-transform:uppercase">Livello ${currentLevel}</div>
             </div>
-            <button onclick="this.closest('#hq-info-panel').remove()" class="text-gray-400 hover:text-white ml-4">✕</button>
+            <button onclick="document.getElementById('hq-info-panel').remove()" style="color:#8b949e;background:none;border:none;margin-left:16px;cursor:pointer;font-size:16px;padding:0;line-height:1">✕</button>
         </div>
-        <p class="text-[11px] text-gray-300 mb-3">${room.desc}</p>
-        <div class="mb-3">
-            <div class="text-[9px] text-gray-500 uppercase mb-1">Effetti Attuali</div>
-            <div class="flex flex-wrap">${fxHtml}</div>
+        <p style="font-size:11px;color:#d1d5db;margin-bottom:12px">${room.desc}</p>
+        <div style="margin-bottom:12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;margin-bottom:4px">Effetti Attuali</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">${fxHtml}</div>
         </div>
         ${upgradeBtnHtml}
     `;

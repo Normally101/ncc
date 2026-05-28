@@ -96,14 +96,14 @@ window.renderRealWeatherPanel = function() {
     const data = window._realWeatherState.data;
     const provinces = Object.values(data);
     if (provinces.length === 0) {
-        container.innerHTML = '<div class="text-[9px] text-gray-500 text-center">Dati meteo non disponibili</div>';
+        container.innerHTML = '<div style="font-size:9px;color:#8b949e;text-align:center">Dati meteo non disponibili</div>';
         return;
     }
 
     const weatherIcons = { sole: '☀️', pioggia: '🌧️', neve: '❄️' };
     container.innerHTML = `
-      <div class="text-[9px] text-gold uppercase tracking-widest mb-2">🌍 Meteo Reale Italia</div>
-      <div class="grid grid-cols-2 gap-1">
+      <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">🌍 Meteo Reale Italia</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
         ${provinces.map(p => {
             const provinceNames = {
                 prov_roma: 'Roma', prov_milano: 'Milano', prov_napoli: 'Napoli',
@@ -111,12 +111,12 @@ window.renderRealWeatherPanel = function() {
             };
             const ageMin = Math.round((Date.now() - new Date(p.updated_at).getTime()) / 60000);
             return `
-              <div class="bg-white/3 rounded-lg p-1.5 text-center">
-                <div class="text-[8px] text-gray-400">${provinceNames[p.province_id] || p.province_id}</div>
-                <div class="text-lg leading-none">${weatherIcons[p.game_weather] || '☁️'}</div>
-                ${p.temp_celsius != null ? `<div class="text-[9px] text-white">${p.temp_celsius}°C</div>` : ''}
-                ${p.traffic_mult > 1.05 ? `<div class="text-[8px] text-orange-400">Traffico ×${p.traffic_mult.toFixed(1)}</div>` : ''}
-                <div class="text-[7px] text-gray-600">${ageMin}m fa</div>
+              <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:6px;text-align:center">
+                <div style="font-size:8px;color:#8b949e">${provinceNames[p.province_id] || p.province_id}</div>
+                <div style="font-size:18px;line-height:1">${weatherIcons[p.game_weather] || '☁️'}</div>
+                ${p.temp_celsius != null ? `<div style="font-size:9px;color:#e6edf3">${p.temp_celsius}°C</div>` : ''}
+                ${p.traffic_mult > 1.05 ? `<div style="font-size:8px;color:#f59e0b">Traffico ×${p.traffic_mult.toFixed(1)}</div>` : ''}
+                <div style="font-size:7px;color:#6b7280">${ageMin}m fa</div>
               </div>`;
         }).join('')}
       </div>`;

@@ -99,37 +99,38 @@ window.auctionsOpenBidModal = function(auctionId) {
 
     const modal = document.createElement('div');
     modal.id = 'auction-bid-modal';
-    modal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `
-      <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 w-80 max-w-full mx-4 shadow-2xl">
-        <div class="flex justify-between items-start mb-3">
+      <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
           <div>
-            <div class="text-sm font-bold text-white">${auction.icon} ${auction.title}</div>
-            ${isContainer ? '<div class="text-[10px] text-amber-400 mt-1">📦 Contenuto rivelato solo al vincitore</div>' : ''}
-            ${auction.vehicle_data?.tier ? _tierBadge(auction.vehicle_data.tier) : ''}
+            <div style="font-size:13px;font-weight:700;color:#e6edf3">${auction.icon} ${auction.title}</div>
+            ${isContainer ? '<div style="font-size:10px;color:#f59e0b;margin-top:3px">📦 Contenuto rivelato solo al vincitore</div>' : ''}
+            ${auction.vehicle_data?.tier ? `<div style="margin-top:6px">${_tierBadge(auction.vehicle_data.tier)}</div>` : ''}
           </div>
-          <button onclick="document.getElementById('auction-bid-modal').remove()" class="text-gray-500 hover:text-white text-lg leading-none">✕</button>
+          <button onclick="document.getElementById('auction-bid-modal').remove()" style="background:transparent;border:none;color:#8b949e;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">✕</button>
         </div>
 
-        <div class="bg-white/5 rounded-lg p-3 mb-4 space-y-1 text-[11px]">
-          <div class="flex justify-between"><span class="text-gray-400">Offerta minima</span><span class="text-white font-mono">${_fmtCurrency(auction.min_bid)}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Offerta più alta</span><span class="text-gold font-mono">${auction.top_bid ? _fmtCurrency(auction.top_bid) : '—'}</span></div>
-          ${myBid ? `<div class="flex justify-between"><span class="text-gray-400">La tua offerta</span><span class="text-blue-300 font-mono">${_fmtCurrency(myBid)}</span></div>` : ''}
-          <div class="flex justify-between"><span class="text-gray-400">Offerte totali</span><span class="text-white">${auction.bid_count || 0}</span></div>
-          <div class="flex justify-between"><span class="text-gray-400">Scadenza</span><span class="text-red-300">${_countdown(auction.auction_ends_at)}</span></div>
+        <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#8b949e">Offerta minima</span><span style="color:#e6edf3;font-family:monospace">${_fmtCurrency(auction.min_bid)}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#8b949e">Offerta più alta</span><span style="color:#d4af37;font-family:monospace">${auction.top_bid ? _fmtCurrency(auction.top_bid) : '—'}</span></div>
+          ${myBid ? `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#8b949e">La tua offerta</span><span style="color:#58a6ff;font-family:monospace">${_fmtCurrency(myBid)}</span></div>` : ''}
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#8b949e">Offerte totali</span><span style="color:#e6edf3">${auction.bid_count || 0}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:#8b949e">Scadenza</span><span style="color:#f85149">${_countdown(auction.auction_ends_at)}</span></div>
         </div>
 
-        <div class="mb-3">
-          <label class="text-[10px] text-gray-400 mb-1 block">La tua offerta (min ${_fmtCurrency(minNext)})</label>
+        <div style="margin-bottom:12px">
+          <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:4px">La tua offerta (min ${_fmtCurrency(minNext)})</label>
           <input id="bid-amount-input" type="number" min="${minNext}" step="1000"
             value="${Math.max(minNext, myBid ? myBid + 5000 : minNext)}"
-            class="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white text-sm focus:border-gold outline-none" />
+            style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 10px;color:#e6edf3;font-size:12px;outline:none;box-sizing:border-box" />
         </div>
 
-        <div id="bid-error" class="text-red-400 text-[10px] mb-2 hidden"></div>
+        <div id="bid-error" style="color:#f85149;font-size:10px;margin-bottom:8px;display:none"></div>
 
         <button id="bid-confirm-btn" onclick="window.auctionsConfirmBid('${auctionId}')"
-          class="btn-gold w-full">
+          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s"
+          onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
           🔨 Piazza Offerta
         </button>
       </div>
@@ -147,18 +148,18 @@ window.auctionsConfirmBid = async function(auctionId) {
     const amount = parseInt(input.value, 10);
     if (!amount || amount <= 0) {
         errDiv.textContent = 'Inserisci un importo valido';
-        errDiv.classList.remove('hidden');
+        errDiv.style.display = 'block';
         return;
     }
 
     btn.disabled = true;
     btn.textContent = '⏳ Invio...';
-    errDiv.classList.add('hidden');
+    errDiv.style.display = 'none';
 
     const result = await window.auctionsPlaceBid(auctionId, amount);
     if (result.error) {
         errDiv.textContent = result.error;
-        errDiv.classList.remove('hidden');
+        errDiv.style.display = 'block';
         btn.disabled = false;
         btn.textContent = '🔨 Piazza Offerta';
         return;
@@ -178,51 +179,47 @@ window.auctionsRevealWon = function(auctionId) {
     const existing = document.getElementById('auction-won-modal');
     if (existing) existing.remove();
 
+    const _itemCard = s => `<div style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 12px;font-size:11px;color:#e6edf3;margin-bottom:4px">${s}</div>`;
     let contentHtml = '';
     if (won.lot_type === 'container') {
         const items = (won.container_data?.items || []);
         contentHtml = `
-          <div class="text-amber-400 text-center text-2xl mb-2">📦 Contenuto Svelato!</div>
-          <div class="space-y-2">
+          <div style="font-size:22px;text-align:center;color:#f59e0b;margin-bottom:8px">📦 Contenuto Svelato!</div>
+          <div style="margin-bottom:12px">
             ${items.map(item => {
-                if (item.type === 'vehicle') {
-                    return `<div class="bg-white/5 rounded p-2 text-[11px]">🚗 Veicolo ${item.tier} — Condizione ${item.condition}%</div>`;
-                } else if (item.type === 'cash') {
-                    return `<div class="bg-white/5 rounded p-2 text-[11px]">💰 Liquidità: ${_fmtCurrency(item.amount)}</div>`;
-                }
-                return `<div class="bg-white/5 rounded p-2 text-[11px]">📦 ${JSON.stringify(item)}</div>`;
+                if (item.type === 'vehicle') return _itemCard(`🚗 Veicolo ${item.tier} — Condizione ${item.condition}%`);
+                if (item.type === 'cash')    return _itemCard(`💰 Liquidità: ${_fmtCurrency(item.amount)}`);
+                return _itemCard(`📦 ${JSON.stringify(item)}`);
             }).join('')}
           </div>`;
     } else if (won.lot_type === 'fleet_pack') {
         const vehicles = won.vehicle_data?.vehicles || [];
-        contentHtml = `
-          <div class="space-y-2">
-            ${vehicles.map(v => `<div class="bg-white/5 rounded p-2 text-[11px]">🚗 ${v.tier} — Condizione ${v.condition}%</div>`).join('')}
-          </div>`;
+        contentHtml = `<div style="margin-bottom:12px">${vehicles.map(v => _itemCard(`🚗 ${v.tier} — Condizione ${v.condition}%`)).join('')}</div>`;
     } else {
         const vd = won.vehicle_data || {};
         contentHtml = `
-          <div class="bg-white/5 rounded p-3 text-[11px] space-y-1">
-            ${vd.tier ? `<div class="flex justify-between"><span class="text-gray-400">Tier</span>${_tierBadge(vd.tier)}</div>` : ''}
-            ${vd.condition ? `<div class="flex justify-between"><span class="text-gray-400">Condizione</span><span class="text-white">${vd.condition}%</span></div>` : ''}
-            ${vd.km ? `<div class="flex justify-between"><span class="text-gray-400">Chilometri</span><span class="text-white">${Number(vd.km).toLocaleString()} km</span></div>` : ''}
-            ${vd.year ? `<div class="flex justify-between"><span class="text-gray-400">Anno</span><span class="text-white">${vd.year}</span></div>` : ''}
+          <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:12px">
+            ${vd.tier ? `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#8b949e">Tier</span>${_tierBadge(vd.tier)}</div>` : ''}
+            ${vd.condition ? `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#8b949e">Condizione</span><span style="color:#e6edf3">${vd.condition}%</span></div>` : ''}
+            ${vd.km ? `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px"><span style="color:#8b949e">Chilometri</span><span style="color:#e6edf3">${Number(vd.km).toLocaleString()} km</span></div>` : ''}
+            ${vd.year ? `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:#8b949e">Anno</span><span style="color:#e6edf3">${vd.year}</span></div>` : ''}
           </div>`;
     }
 
     const modal = document.createElement('div');
     modal.id = 'auction-won-modal';
-    modal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `
-      <div class="bg-[#1a1a2e] border border-gold/40 rounded-xl p-5 w-80 max-w-full mx-4 shadow-2xl">
-        <div class="text-center mb-4">
-          <div class="text-3xl mb-2">${won.icon}</div>
-          <div class="text-sm font-bold text-gold">${won.title}</div>
-          <div class="text-[10px] text-gray-400 mt-1">Aggiudicato per ${_fmtCurrency(won.winning_bid)}</div>
+      <div style="background:#161b22;border:1px solid rgba(212,175,55,0.35);border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+        <div style="text-align:center;margin-bottom:16px">
+          <div style="font-size:36px;margin-bottom:8px">${won.icon}</div>
+          <div style="font-size:14px;font-weight:700;color:#d4af37">${won.title}</div>
+          <div style="font-size:10px;color:#8b949e;margin-top:4px">Aggiudicato per ${_fmtCurrency(won.winning_bid)}</div>
         </div>
         ${contentHtml}
         <button onclick="document.getElementById('auction-won-modal').remove()"
-          class="btn-gold w-full mt-4">Chiudi</button>
+          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s"
+          onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Chiudi</button>
       </div>
     `;
     document.body.appendChild(modal);
@@ -351,7 +348,7 @@ window.renderTabAuctions = function() {
             <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Da Ritirare</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${won.length > 0 ? '#3fb950' : '#e6edf3'}">${won.length}</div>
         </div>
-    </div>` + `<div class="p-1">
+    </div>` + `<div>
         ${wonBanner}
         ${auctionsHtml}
         ${myBidsHtml}

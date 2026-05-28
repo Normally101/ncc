@@ -60,7 +60,7 @@ function renderTabEmails() {
             const h = Math.max(0, gameState.fuelPriceLockUntil - now);
             buffItems.push(`⛽ Carburante bloccato €${gameState.fuelPriceLock.toFixed(2)} <span style="color:var(--text-dim)">(${h}h)</span>`);
         }
-        html += `<div class="ds-card" style="border-color:rgba(34,197,94,0.3);margin-bottom:12px;font-size:10px;color:var(--green);display:flex;flex-wrap:wrap;gap:8px">
+        html += `<div style="background:#161b22;border:1px solid rgba(34,197,94,0.3);border-radius:6px;padding:16px;margin-bottom:12px;font-size:10px;color:#3fb950;display:flex;flex-wrap:wrap;gap:8px">
             ${buffItems.map(i => `<span>${i}</span>`).join('')}
         </div>`;
     }
@@ -141,7 +141,7 @@ function renderTabEmails() {
         const gameHour  = gameState.day * 24 + gameState.hour;
         const hoursLeft = e.expiresAt ? Math.max(0, e.expiresAt - gameHour) : null;
         const expiryHtml = hoursLeft !== null
-            ? `<div class="email-expiry"><span class="text-${hoursLeft <= 3 ? 'red' : 'orange'}-400">⏰ Scade in ${hoursLeft}h</span></div>`
+            ? `<div class="email-expiry"><span style="color:${hoursLeft <= 3 ? '#f85149' : '#f59e0b'}">⏰ Scade in ${hoursLeft}h</span></div>`
             : '';
 
         const cardClass    = _emailCardClass(e);
@@ -184,9 +184,9 @@ function renderTabEmails() {
         html += `<div class="email-actions">`;
 
         if (e.type === 'ceo_event') {
-            html += `</div><div class="text-[10px] text-gray-300 mb-3">${e.eventData.desc}</div><div class="flex flex-col gap-2">`;
+            html += `</div><div style="font-size:10px;color:#d1d5db;margin-bottom:12px">${e.eventData.desc}</div><div style="display:flex;flex-direction:column;gap:8px">`;
             e.eventData.choices.forEach((c, idx) => {
-                html += `<button onclick="negotiateEmail(${e.id}, 0, ${idx})" class="btn-gold !text-[9px] !text-left">${c.text}</button>`;
+                html += `<button onclick="negotiateEmail(${e.id}, 0, ${idx})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;text-align:left;transition:opacity .15s">${c.text}</button>`;
             });
             html += `</div>`;
 
@@ -194,84 +194,84 @@ function renderTabEmails() {
             const sr = e.shadowData;
             const hasVetri = gameState.fleet.some(c => (c.upgrades||[]).includes('vetri_oscurati'));
             html += `</div>
-            <div class="text-[10px] text-red-200 mb-1">Pagamento: <b style="color:#ff4060">×5 tariffa</b> — Rischio sequestro: <b style="color:#ff4060">${sr.seizureRisk}%</b>${hasVetri ? ' <span style="color:#22c55e">(−65% con Vetri Oscurati)</span>' : ' <span style="color:#f59e0b">⚠ Installa Vetri Oscurati</span>'}</div>
-            <div class="text-[10px] text-gray-400 mb-3">Un checkpoint della polizia verrà posizionato sulla rotta. Operazione ad altissimo rischio.</div>
-            <div class="flex gap-2">
-                <button onclick="acceptShadowMission(${e.id})" class="btn-gold !bg-red-950/60 !text-red-200 !border !border-red-600/60 flex-1">🔴 ACCETTA RISCHIO (×5)</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Rifiuta</button>
+            <div style="font-size:10px;color:#fecaca;margin-bottom:4px">Pagamento: <b style="color:#ff4060">×5 tariffa</b> — Rischio sequestro: <b style="color:#ff4060">${sr.seizureRisk}%</b>${hasVetri ? ' <span style="color:#22c55e">(−65% con Vetri Oscurati)</span>' : ' <span style="color:#f59e0b">⚠ Installa Vetri Oscurati</span>'}</div>
+            <div style="font-size:10px;color:#8b949e;margin-bottom:12px">Un checkpoint della polizia verrà posizionato sulla rotta. Operazione ad altissimo rischio.</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptShadowMission(${e.id})" style="background:rgba(69,10,10,0.6);border:1px solid rgba(220,38,38,0.6);color:#fecaca;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">🔴 ACCETTA RISCHIO (×5)</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Rifiuta</button>
             </div>`;
 
         } else if (e.type === 'poaching') {
             html += `</div>
-            <div class="text-[10px] text-orange-300 mb-3">${e.rivalName} offre a <b>${e.driverName}</b> €${e.counterOffer.toLocaleString()}/mese. Vuoi pareggiare l'offerta?</div>
-            <div class="flex gap-2">
-                <button onclick="respondPoaching(${e.id}, true)"  class="btn-gold flex-1 !text-[9px]">✅ Pareggia (€${e.counterOffer.toLocaleString()}/mese)</button>
-                <button onclick="respondPoaching(${e.id}, false)" class="btn-blue flex-1 !text-[9px] !text-red-300">❌ Lascialo andare</button>
+            <div style="font-size:10px;color:#fdba74;margin-bottom:12px">${e.rivalName} offre a <b>${e.driverName}</b> €${e.counterOffer.toLocaleString()}/mese. Vuoi pareggiare l'offerta?</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="respondPoaching(${e.id}, true)"  style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">✅ Pareggia (€${e.counterOffer.toLocaleString()}/mese)</button>
+                <button onclick="respondPoaching(${e.id}, false)" style="background:#0d1b2d;border:1px solid #1d3557;color:#fca5a5;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">❌ Lascialo andare</button>
             </div>`;
 
         } else if (e.type === 'grey_market') {
             html += `</div>
-            <div class="text-[10px] text-gray-400 mb-3">Tariffa tripla. Se la polizia ti ferma durante questa corsa il veicolo viene sequestrato per 7 giorni.</div>
-            <div class="flex gap-2">
-                <button onclick="acceptGreyMarket(${e.id})" class="btn-gold !bg-red-900/40 !text-red-300 !border !border-red-700/50 flex-1">⚠ Accetta Rischio</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Rifiuta</button>
+            <div style="font-size:10px;color:#8b949e;margin-bottom:12px">Tariffa tripla. Se la polizia ti ferma durante questa corsa il veicolo viene sequestrato per 7 giorni.</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptGreyMarket(${e.id})" style="background:rgba(127,29,29,0.4);border:1px solid rgba(185,28,28,0.5);color:#fca5a5;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">⚠ Accetta Rischio</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Rifiuta</button>
             </div>`;
 
         } else if (e.type === 'diamond') {
             html += `</div>
-            <div class="text-[10px] mb-2" style="color:#d4af37">Contratto Diamond — €${(e.offer||0).toLocaleString()}</div>
-            <div class="text-[9px] text-gray-400 mb-3">Richiede asset Lifestyle specifici e reputazione minima. Pagamento in contanti alla consegna.</div>
-            <div class="flex gap-2">
-                <button onclick="acceptDiamondContract(${e.id})" class="btn-gold flex-1 !text-[9px]" style="background:linear-gradient(135deg,#92400e,#78350f);border-color:#d4af37">🔶 ACCETTA</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;margin-bottom:8px" style="color:#d4af37">Contratto Diamond — €${(e.offer||0).toLocaleString()}</div>
+            <div style="font-size:9px;color:#8b949e;margin-bottom:12px">Richiede asset Lifestyle specifici e reputazione minima. Pagamento in contanti alla consegna.</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptDiamondContract(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s" style="background:linear-gradient(135deg,#92400e,#78350f);border-color:#d4af37">🔶 ACCETTA</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'broker_result') {
             const pl = e.brokerGain >= 0 ? `+€${e.brokerGain.toLocaleString()}` : `−€${Math.abs(e.brokerGain).toLocaleString()}`;
             const plColor = e.brokerGain >= 0 ? '#22c55e' : '#ef4444';
             html += `</div>
-            <div class="text-[10px] mb-2">Capitale investito: <b>€${(e.brokerCapital||0).toLocaleString()}</b> · Profilo: ${e.brokerRisk||''}</div>
-            <div class="text-sm font-bold mb-3" style="color:${plColor}">${pl}</div>
-            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; if(typeof spawnMoneyParticles==='function'){const r=this.getBoundingClientRect();spawnMoneyParticles(r.left+r.width/2,r.top,${e.brokerGain||0});} renderTabEmails();" class="btn-blue w-full !text-[9px]">OK, Incassato</button>`;
+            <div style="font-size:10px;margin-bottom:8px">Capitale investito: <b>€${(e.brokerCapital||0).toLocaleString()}</b> · Profilo: ${e.brokerRisk||''}</div>
+            <div style="font-size:12px;font-weight:700;margin-bottom:12px" style="color:${plColor}">${pl}</div>
+            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; if(typeof spawnMoneyParticles==='function'){const r=this.getBoundingClientRect();spawnMoneyParticles(r.left+r.width/2,r.top,${e.brokerGain||0});} renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;width:100%">OK, Incassato</button>`;
 
         } else if (e.type === 'driver_msg') {
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3 leading-relaxed">${e.body || e.subject}</div>
-            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue w-full !text-[9px]">Ho capito</button>`;
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px;line-height:1.5">${e.body || e.subject}</div>
+            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;width:100%">Ho capito</button>`;
 
         } else if (e.type === 'info') {
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">${e.subject}</div>
-            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" class="btn-blue w-full !text-[9px]">OK, Capito</button>`;
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">${e.subject}</div>
+            <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved'; renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;width:100%">OK, Capito</button>`;
 
         // ── VIP CLIENTS ──────────────────────────────────────────────────────
         } else if (e.type === 'vip_grigori') {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">🕵️ Richiede: <b>Majestic Spirit o E-Specter ≥95%</b> e autista Lv2+.<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b> + mancia €15.000</div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipGrigori(${e.id})" class="btn-gold flex-1 !text-[9px]">🕵️ Accetta (VVIP)</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">🕵️ Richiede: <b>Majestic Spirit o E-Specter ≥95%</b> e autista Lv2+.<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b> + mancia €15.000</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipGrigori(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🕵️ Accetta (VVIP)</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_grigori_event') {
             const cost = (e.vipEventData||{}).cost||500;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">Durante il trasporto Grigori ha richiesto un rerouting di emergenza per motivi di sicurezza. Come gestite la situazione?</div>
-            <div class="flex gap-2">
-                <button onclick="vipGrigoriEventAccept(${e.id})" class="btn-gold flex-1 !text-[9px]">✅ Soddisfa (−€${cost})</button>
-                <button onclick="vipGrigoriEventDecline(${e.id})" class="btn-blue flex-1 !text-[9px] !text-red-300">❌ Ignora (−0.1★)</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">Durante il trasporto Grigori ha richiesto un rerouting di emergenza per motivi di sicurezza. Come gestite la situazione?</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="vipGrigoriEventAccept(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">✅ Soddisfa (−€${cost})</button>
+                <button onclick="vipGrigoriEventDecline(${e.id})" style="background:#0d1b2d;border:1px solid #1d3557;color:#fca5a5;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">❌ Ignora (−0.1★)</button>
             </div>`;
 
         } else if (e.type === 'vip_strata') {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">💼 Richiede: <b>Berlina Business (Stellar E/S/Q)</b> ≥70%.<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br><span class="text-orange-300">⚠ 20% rischio chargeback · 5-streak = buff +10% guadagni</span></div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipStrata(${e.id})" class="btn-gold flex-1 !text-[9px]">💼 Accetta B2B</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">💼 Richiede: <b>Berlina Business (Stellar E/S/Q)</b> ≥70%.<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br><span style="color:#fdba74">⚠ 20% rischio chargeback · 5-streak = buff +10% guadagni</span></div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipStrata(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">💼 Accetta B2B</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_platinum') {
@@ -279,36 +279,36 @@ function renderTabEmails() {
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             const vCount = (gameState.fleet||[]).filter(c=>c.vehicleClass==='stellar_v_carr'&&(c.condition||0)>=70&&!c.outOfService&&!c.isSeized).length;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">⭐ Richiede: <b>2× Stellar V-Carrier ≥70%</b> (disponibili: ${vCount}/2).<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br><span class="text-orange-300">40% paparazzi event · Hype buff +20% mance</span></div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipPlatinum(${e.id})" class="btn-gold flex-1 !text-[9px]">⭐ Accetta (Diva)</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">⭐ Richiede: <b>2× Stellar V-Carrier ≥70%</b> (disponibili: ${vCount}/2).<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br><span style="color:#fdba74">40% paparazzi event · Hype buff +20% mance</span></div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipPlatinum(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">⭐ Accetta (Diva)</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_platinum_event') {
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">📸 Paparazzi intercettati sul percorso. Come vuoi gestire la situazione?</div>
-            <div class="flex gap-2">
-                <button onclick="vipPlatinumEventBlock(${e.id})" class="btn-gold flex-1 !text-[9px]">🚫 Blocca (−€300 + buff)</button>
-                <button onclick="vipPlatinumEventAllow(${e.id})" class="btn-blue flex-1 !text-[9px]">📸 Lascia scattare (+0.15★)</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">📸 Paparazzi intercettati sul percorso. Come vuoi gestire la situazione?</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="vipPlatinumEventBlock(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🚫 Blocca (−€300 + buff)</button>
+                <button onclick="vipPlatinumEventAllow(${e.id})" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">📸 Lascia scattare (+0.15★)</button>
             </div>`;
 
         } else if (e.type === 'vip_onorevole') {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">🏛️ Richiede: <b>Berlina Discreta (no EV) Lv2+ autista</b>.<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br>Compenso: +1 Gettone Politico · 10% GdF check</div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipOnorevole(${e.id})" class="btn-gold flex-1 !text-[9px]">🏛️ Accetta</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">🏛️ Richiede: <b>Berlina Discreta (no EV) Lv2+ autista</b>.<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br>Compenso: +1 Gettone Politico · 10% GdF check</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipOnorevole(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🏛️ Accetta</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_onorevole_event') {
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">🚔 La Guardia di Finanza ha fermato il veicolo durante il trasporto istituzionale. Come procedi?</div>
-            <div class="flex gap-2">
-                <button onclick="vipOnorevoleEventCopera(${e.id})" class="btn-gold flex-1 !text-[9px]">🤝 Coopera (−Token o −€1k)</button>
-                <button onclick="vipOnorevoleEventResisti(${e.id})" class="btn-blue flex-1 !text-[9px]">⚖️ Resisti (+1 Token, −0.05★)</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">🚔 La Guardia di Finanza ha fermato il veicolo durante il trasporto istituzionale. Come procedi?</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="vipOnorevoleEventCopera(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🤝 Coopera (−Token o −€1k)</button>
+                <button onclick="vipOnorevoleEventResisti(${e.id})" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">⚖️ Resisti (+1 Token, −0.05★)</button>
             </div>`;
 
         } else if (e.type === 'vip_emiro') {
@@ -317,40 +317,40 @@ function renderTabEmails() {
             const validVcSet = ['majestic_spirit','majestic_e_specter','stellar_s_imp','stellar_g_over','volt_s_hyper'];
             const readyCount = (gameState.fleet||[]).filter(c=>validVcSet.includes(c.vehicleClass)&&(c.condition||0)>=80&&!c.outOfService&&!c.isSeized).length;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">👑 Richiede: <b>4 veicoli VIP/Ultra ≥80%</b> (disponibili: ${readyCount}/4).<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br>Bonus: blocco prezzo carburante 48h · 30% shopping +€5k</div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipEmiro(${e.id})" class="btn-gold flex-1 !text-[9px]">👑 Accetta Convoglio</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">👑 Richiede: <b>4 veicoli VIP/Ultra ≥80%</b> (disponibili: ${readyCount}/4).<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br>Bonus: blocco prezzo carburante 48h · 30% shopping +€5k</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipEmiro(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">👑 Accetta Convoglio</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_golden') {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">⚽ Richiede: <b>Majestic Spirit / Volt S-Hyper / E-Specter ≥80%</b>.<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br><span class="text-orange-300">60% danno auto · Tutti autisti −20 stress dopo la corsa</span></div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipGolden(${e.id})" class="btn-gold flex-1 !text-[9px]">⚽ Accetta</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">⚽ Richiede: <b>Majestic Spirit / Volt S-Hyper / E-Specter ≥80%</b>.<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br><span style="color:#fdba74">60% danno auto · Tutti autisti −20 stress dopo la corsa</span></div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipGolden(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">⚽ Accetta</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_techbro') {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">⚡ Richiede: <b>EV ≥90% condizione · autista stress ≤20%</b>.<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br>Bonus: routing buff +5% velocità per 24h</div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipTechBro(${e.id})" class="btn-gold flex-1 !text-[9px]">⚡ Accetta</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">⚡ Richiede: <b>EV ≥90% condizione · autista stress ≤20%</b>.<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br>Bonus: routing buff +5% velocità per 24h</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipTechBro(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">⚡ Accetta</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_garante') {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">⚠️ Richiede: <b>G-Overlord o Majestic Spirit ≥85% (no EV)</b>.<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br><span class="text-red-400">25% posto di blocco · Autista +50 stress · Multa −50% per 24h</span></div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipGarante(${e.id})" class="btn-gold !bg-red-950/50 !border-red-700/50 flex-1 !text-[9px] !text-red-200">⚠️ Accetta (Rischio)</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">⚠️ Richiede: <b>G-Overlord o Majestic Spirit ≥85% (no EV)</b>.<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br><span style="color:#f87171">25% posto di blocco · Autista +50 stress · Multa −50% per 24h</span></div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipGarante(${e.id})" style="background:rgba(69,10,10,0.5);border:1px solid rgba(185,28,28,0.5);color:#fecaca;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">⚠️ Accetta (Rischio)</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_garante_event') {
@@ -358,10 +358,10 @@ function renderTabEmails() {
             const disc = typeof window._getBuffValue === 'function' ? window._getBuffValue('fine_discount') : 0;
             const finalFine = Math.floor(fine * (1 - disc/100));
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">🚔 Posto di blocco durante il trasporto. Multa stimata: €${finalFine.toLocaleString()}${disc>0?` (−${disc}% buff Il Garante)`:''}</div>
-            <div class="flex gap-2">
-                <button onclick="vipGaranteEventPaga(${e.id})" class="btn-blue flex-1 !text-[9px]">💸 Paga (€${finalFine.toLocaleString()})</button>
-                <button onclick="vipGaranteEventIntimidisci(${e.id})" class="btn-gold flex-1 !text-[9px]">😤 Intimidisci (Token/Rischio)</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">🚔 Posto di blocco durante il trasporto. Multa stimata: €${finalFine.toLocaleString()}${disc>0?` (−${disc}% buff Il Garante)`:''}</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="vipGaranteEventPaga(${e.id})" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">💸 Paga (€${finalFine.toLocaleString()})</button>
+                <button onclick="vipGaranteEventIntimidisci(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">😤 Intimidisci (Token/Rischio)</button>
             </div>`;
 
         } else if (e.type === 'vip_wedding') {
@@ -370,43 +370,43 @@ function renderTabEmails() {
             const majesticOk = (gameState.fleet||[]).some(c=>c.vehicleClass==='majestic_spirit'&&c.condition>=100&&!c.outOfService&&!c.isSeized);
             const vCount = (gameState.fleet||[]).filter(c=>c.vehicleClass==='stellar_v_carr'&&c.condition>=100&&!c.outOfService&&!c.isSeized).length;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">💍 Richiede: <b>Majestic Spirit 100%</b> ${majesticOk?'✅':'❌'} <b>+ 2× V-Carrier 100%</b> (${vCount}/2).<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br>Saldo posticipato · 30% drama · VIP queue +25% 24h</div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipWedding(${e.id})" class="btn-gold flex-1 !text-[9px]">💍 Accetta Corteo</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">💍 Richiede: <b>Majestic Spirit 100%</b> ${majesticOk?'✅':'❌'} <b>+ 2× V-Carrier 100%</b> (${vCount}/2).<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br>Saldo posticipato · 30% drama · VIP queue +25% 24h</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipWedding(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">💍 Accetta Corteo</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else if (e.type === 'vip_wedding_event') {
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">💥 Drama nuziale: uno sposo ha abbandonato la cerimonia. White Lace chiede il tuo intervento immediato.</div>
-            <div class="flex gap-2">
-                <button onclick="vipWeddingEventGestisci(${e.id})" class="btn-gold flex-1 !text-[9px]">💍 Gestisci (−€800 +€2k)</button>
-                <button onclick="vipWeddingEventIgnora(${e.id})" class="btn-blue flex-1 !text-[9px] !text-red-300">❌ Ignora (−0.2★)</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">💥 Drama nuziale: uno sposo ha abbandonato la cerimonia. White Lace chiede il tuo intervento immediato.</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="vipWeddingEventGestisci(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">💍 Gestisci (−€800 +€2k)</button>
+                <button onclick="vipWeddingEventIgnora(${e.id})" style="background:#0d1b2d;border:1px solid #1d3557;color:#fca5a5;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">❌ Ignora (−0.2★)</button>
             </div>`;
 
         } else if (e.type === 'vip_wedding_payment') {
             const bonus = (e.vipEventData||{}).bonus||0;
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">💍 Saldo posticipato White Lace Weddings: <b class="text-green-400">+€${bonus.toLocaleString()}</b></div>
-            <button onclick="vipWeddingPaymentCollect(${e.id})" class="btn-gold w-full !text-[9px]">💰 Incassa Saldo</button>`;
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">💍 Saldo posticipato White Lace Weddings: <b style="color:#4ade80">+€${bonus.toLocaleString()}</b></div>
+            <button onclick="vipWeddingPaymentCollect(${e.id})" style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">💰 Incassa Saldo</button>`;
 
         } else if (e.type === 'vip_erede') {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             const hasKasko = typeof hasInvestment === 'function' && hasInvestment('inv_kasko');
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-2">💸 Richiede: <b>Volt S-Hyper / Majestic ≥80%</b> + Kasko ${hasKasko?'✅':'❌ MANCANTE'}.<br>Rotta: ${from} → ${to} — <b class="text-yellow-300">€${(d.price||0).toLocaleString()}</b><br><span class="text-orange-300">30% incidente (Kasko protegge) · 30% viral +100% tip</span></div>
-            <div class="flex gap-2">
-                <button onclick="acceptVipErede(${e.id})" class="btn-gold flex-1 !text-[9px]" ${!hasKasko?'disabled style="opacity:0.4"':''}>💸 Accetta</button>
-                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" class="btn-blue flex-1 !text-[9px]">Declina</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:8px">💸 Richiede: <b>Volt S-Hyper / Majestic ≥80%</b> + Kasko ${hasKasko?'✅':'❌ MANCANTE'}.<br>Rotta: ${from} → ${to} — <b style="color:#fde047">€${(d.price||0).toLocaleString()}</b><br><span style="color:#fdba74">30% incidente (Kasko protegge) · 30% viral +100% tip</span></div>
+            <div style="display:flex;gap:8px">
+                <button onclick="acceptVipErede(${e.id})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s" ${!hasKasko?'disabled style="opacity:0.4"':''}>💸 Accetta</button>
+                <button onclick="(gameState.emails.find(x=>x.id==${e.id})||{}).status='resolved';renderTabEmails();" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
             </div>`;
 
         } else {
             html += `</div>
-            <div class="text-[10px] text-gray-300 mb-3">Appalto potenziale da €${(e.offer||0).toLocaleString()}.</div>
-            <div class="flex gap-2">
-                <button onclick="negotiateEmail(${e.id}, ${e.offer||0})" class="btn-gold flex-1">Accetta</button>
-                <button onclick="negotiateEmail(${e.id}, ${Math.floor((e.offer||0)*1.3)})" class="btn-gold !bg-gray-800 flex-1">Rilancia</button>
+            <div style="font-size:10px;color:#d1d5db;margin-bottom:12px">Appalto potenziale da €${(e.offer||0).toLocaleString()}.</div>
+            <div style="display:flex;gap:8px">
+                <button onclick="negotiateEmail(${e.id}, ${e.offer||0})" style="flex:1;padding:7px;font-size:10px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Accetta</button>
+                <button onclick="negotiateEmail(${e.id}, ${Math.floor((e.offer||0)*1.3)})" style="flex:1;padding:7px;font-size:10px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #21262d;color:#8b949e;border-radius:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Rilancia</button>
             </div>`;
         }
 

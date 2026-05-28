@@ -57,33 +57,33 @@ function renderTabFleet() {
         const gommeColor= gomme === 0 ? '#ff4060' : gomme < 3 ? '#f59e0b' : '#22c55e';
         const outCount  = gameState.fleet.filter(c => c.outOfService).length;
         fuelDepotHtml = `
-        <div class="hud-card !border-blue/30 bg-blue/5 mb-4">
-            <div class="flex justify-between items-center mb-2">
-                <div class="text-[10px] text-blue font-bold uppercase tracking-widest">🛢️ Deposito Aziendale</div>
-                <div class="text-[10px] font-bold" style="color:${pColor}">€${price}/L</div>
+        <div style="background:rgba(88,166,255,0.04);border:1px solid rgba(88,166,255,0.25);border-radius:6px;padding:14px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div style="font-size:10px;color:#58a6ff;font-weight:700;text-transform:uppercase;letter-spacing:.08em">🛢️ Deposito Aziendale</div>
+                <div style="font-size:10px;font-weight:700;color:${pColor}">€${price}/L</div>
             </div>
-            ${outCount > 0 ? `<div class="text-[9px] text-red-400 font-bold mb-2 flex items-center justify-between gap-1">
+            ${outCount > 0 ? `<div style="font-size:9px;color:#f87171;font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:4px">
                 <span>🔴 ${outCount} auto ferme — deposito esaurito</span>
-                <button onclick="window.emergencyRefuel()" class="btn-gold !bg-red-900/40 !text-red-300 !text-[7px] !py-0.5 !px-2 animate-pulse">🚨 Rifornimento Emergenza (3×)</button>
+                <button onclick="window.emergencyRefuel()" style="background:rgba(127,29,29,0.4);border:1px solid rgba(185,28,28,0.5);color:#fca5a5;font-size:7px;padding:2px 8px;border-radius:4px;cursor:pointer">🚨 Rifornimento Emergenza (3×)</button>
             </div>` : ''}
-            <div class="text-[8px] text-gray-500 uppercase mb-1">Gasolio</div>
-            <div class="flex items-center gap-2 mb-2">
-                <div class="fuel-bar-bg flex-1"><div class="fuel-bar-fill" style="width:${pct}%; background:${tankColor}"></div></div>
-                <span class="text-[9px] font-mono" style="color:${tankColor}">${tank.toLocaleString()}/${cap.toLocaleString()}L</span>
+            <div style="font-size:8px;color:#6b7280;text-transform:uppercase;margin-bottom:4px">Gasolio</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+                <div class="fuel-bar-bg" style="flex:1"><div class="fuel-bar-fill" style="width:${pct}%; background:${tankColor}"></div></div>
+                <span style="font-size:9px;font-family:monospace;color:${tankColor}">${tank.toLocaleString()}/${cap.toLocaleString()}L</span>
             </div>
-            <div class="grid grid-cols-3 gap-1 mb-3">
-                <button onclick="buyFuelForDepot(5000)"  class="btn-blue !text-[8px] !py-1">+5k L<br><span class="text-[7px] opacity-60">€${Math.floor(5000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
-                <button onclick="buyFuelForDepot(15000)" class="btn-blue !text-[8px] !py-1">+15k L<br><span class="text-[7px] opacity-60">€${Math.floor(15000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
-                <button onclick="buyFuelForDepot(${cap})" class="btn-gold !text-[8px] !py-1">Fill<br><span class="text-[7px] opacity-60">€${Math.floor((cap-tank)*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:12px">
+                <button onclick="buyFuelForDepot(5000)"  style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;font-size:8px;padding:4px;border-radius:4px;cursor:pointer;text-align:center">+5k L<br><span style="font-size:7px;opacity:.6">€${Math.floor(5000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
+                <button onclick="buyFuelForDepot(15000)" style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;font-size:8px;padding:4px;border-radius:4px;cursor:pointer;text-align:center">+15k L<br><span style="font-size:7px;opacity:.6">€${Math.floor(15000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
+                <button onclick="buyFuelForDepot(${cap})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;font-size:8px;padding:4px;border-radius:4px;cursor:pointer;text-align:center">Fill<br><span style="font-size:7px;opacity:.6">€${Math.floor((cap-tank)*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
             </div>
-            <div class="flex justify-between items-center mb-1">
-                <div class="text-[8px] text-gray-500 uppercase">Treni di Gomme</div>
-                <span class="text-[10px] font-bold font-mono" style="color:${gommeColor}">${gomme} set</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <div style="font-size:8px;color:#6b7280;text-transform:uppercase">Treni di Gomme</div>
+                <span style="font-size:10px;font-weight:700;font-family:monospace;color:${gommeColor}">${gomme} set</span>
             </div>
-            <div class="grid grid-cols-3 gap-1 mb-3">
-                <button onclick="buyTiresForDepot(1)"  class="btn-blue !text-[8px] !py-1">+1 set<br><span class="text-[7px] opacity-60">€800</span></button>
-                <button onclick="buyTiresForDepot(5)"  class="btn-blue !text-[8px] !py-1">+5 set<br><span class="text-[7px] opacity-60">€3.500</span></button>
-                <button onclick="buyTiresForDepot(10)" class="btn-gold !text-[8px] !py-1">+10 set<br><span class="text-[7px] opacity-60">€6.000</span></button>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:4px;margin-bottom:12px">
+                <button onclick="buyTiresForDepot(1)"  style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;font-size:8px;padding:4px;border-radius:4px;cursor:pointer;text-align:center">+1 set<br><span style="font-size:7px;opacity:.6">€800</span></button>
+                <button onclick="buyTiresForDepot(5)"  style="background:#0d1b2d;border:1px solid #1d3557;color:#58a6ff;font-size:8px;padding:4px;border-radius:4px;cursor:pointer;text-align:center">+5 set<br><span style="font-size:7px;opacity:.6">€3.500</span></button>
+                <button onclick="buyTiresForDepot(10)" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;font-size:8px;padding:4px;border-radius:4px;cursor:pointer;text-align:center">+10 set<br><span style="font-size:7px;opacity:.6">€6.000</span></button>
             </div>
             ${(() => {
                 const lvl = gameState.fuelTankLevel || 1;
@@ -97,11 +97,11 @@ function renderTabFleet() {
                 const cur  = DEPOT_LVL_LIST.find(d => d.level === lvl) || DEPOT_LVL_LIST[0];
                 const next = DEPOT_LVL_LIST.find(d => d.level === lvl + 1);
                 const upgCost = next ? Math.round(5000 * Math.pow(lvl, 1.8)) : 0;
-                return `<div class="flex justify-between items-center border-t border-white/5 pt-2 mt-1">
-                    <div class="text-[8px] text-gray-500">🏗️ ${cur.name} <span class="text-blue">Lv.${lvl}</span></div>
+                return `<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid rgba(255,255,255,0.05);padding-top:8px;margin-top:4px">
+                    <div style="font-size:8px;color:#6b7280">🏗️ ${cur.name} <span style="color:#58a6ff">Lv.${lvl}</span></div>
                     ${next
-                        ? `<button onclick="upgradeFuelDepot()" class="btn-gold !text-[7px] !py-0.5 !px-1.5">Upgrade → ${next.name}<br><span class="opacity-60">€${upgCost.toLocaleString()}</span></button>`
-                        : `<span class="text-[8px] text-green-400 font-bold">MAX</span>`
+                        ? `<button onclick="upgradeFuelDepot()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;font-size:7px;padding:2px 6px;border-radius:4px;cursor:pointer">Upgrade → ${next.name}<br><span style="opacity:.6">€${upgCost.toLocaleString()}</span></button>`
+                        : `<span style="font-size:8px;color:#4ade80;font-weight:700">MAX</span>`
                     }
                 </div>`;
             })()}
@@ -113,10 +113,10 @@ function renderTabFleet() {
     const fpColor = fp < 1.68 ? '#22c55e' : fp > 2.20 ? '#ff4060' : '#f59e0b';
     const fpTrend = fp < 1.68 ? '📉' : fp > 2.20 ? '📈' : '➡️';
     const fuelTickerHtml = !hasDepot ? `
-    <div class="flex items-center gap-2 mb-3 px-1">
-        <span class="text-[8px] text-gray-500 uppercase tracking-widest">Gasolio Mercato</span>
-        <span class="text-[9px] font-bold font-mono" style="color:${fpColor}">${fpTrend} €${fp.toFixed(4)}/L</span>
-        <span class="text-[8px] text-gray-600">(aggiornamento orario)</span>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:0 4px">
+        <span style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em">Gasolio Mercato</span>
+        <span style="font-size:9px;font-weight:700;font-family:monospace;color:${fpColor}">${fpTrend} €${fp.toFixed(4)}/L</span>
+        <span style="font-size:8px;color:#4b5563">(aggiornamento orario)</span>
     </div>` : '';
 
     // ── Fleet filter bar ──────────────────────────────────────
@@ -139,9 +139,9 @@ function renderTabFleet() {
     const _bm = b => _brandMeta[b] || { color:'#9ca3af', bg:'rgba(0,0,0,0.05)', border:'rgba(0,0,0,0.15)', icon:b.charAt(0).toUpperCase() };
 
     const filterBar = (allBrands.length > 1 || allTiers.length > 1) ? `
-    <div class="mb-4">
+    <div style="margin-bottom:16px">
         ${allBrands.length > 1 ? `
-        <div class="text-[8px] text-gray-500 uppercase tracking-widest mb-2">Produttore</div>
+        <div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Produttore</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;margin-bottom:12px">
             <button onclick="window._fleetFilter.brand=null;renderTabFleet()"
                 style="padding:12px 6px;border-radius:12px;border:1px solid ${!activeBrand ? 'rgba(212,175,55,0.55)' : 'rgba(0,0,0,0.10)'};background:${!activeBrand ? 'rgba(212,175,55,0.12)' : 'rgba(0,0,0,0.04)'};text-align:center;cursor:pointer;transition:all .15s">
@@ -163,10 +163,10 @@ function renderTabFleet() {
             }).join('')}
         </div>` : ''}
         ${allTiers.length > 1 ? `
-        <div class="text-[8px] text-gray-500 uppercase tracking-widest mb-1.5">Categoria</div>
-        <div class="flex flex-wrap gap-1.5">
+        <div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px">Categoria</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
             <button onclick="window._fleetFilter.tier=null;renderTabFleet()"
-                class="text-[8px] px-2 py-1 rounded-full border transition-colors"
+                style="font-size:8px;padding:4px 8px;border-radius:99px;border:1px solid;cursor:pointer"
                 style="${!activeTier ? 'background:rgba(212,175,55,0.15);border-color:rgba(212,175,55,0.5);color:#d4af37;font-weight:700' : 'background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.12);color:#6b7280'}">
                 Tutte
             </button>
@@ -175,7 +175,7 @@ function renderTabFleet() {
                 const isActive = activeTier === t;
                 const tierVal = isActive ? 'null' : `'${t}'`;
                 return `<button onclick="window._fleetFilter.tier=${tierVal};renderTabFleet()"
-                    class="text-[8px] px-2 py-1 rounded-full border transition-colors"
+                    style="font-size:8px;padding:4px 8px;border-radius:99px;border:1px solid;cursor:pointer"
                     style="${isActive ? 'background:' + tierColors[t] + ';border-color:' + tierBorder[t] + ';color:#e5e7eb;font-weight:700' : 'background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.12);color:#9ca3af'}">
                     ${tierLabels[t]||t} <span style="opacity:0.6">${cnt}</span>
                 </button>`;
@@ -192,7 +192,7 @@ function renderTabFleet() {
         .sort((a, b) => (a.name || '').localeCompare(b.name || ''));
 
     const noResults = filteredFleet.length === 0
-        ? `<div class="text-[10px] text-gray-600 text-center py-8">Nessun veicolo corrisponde ai filtri selezionati.</div>`
+        ? `<div style="font-size:10px;color:#4b5563;text-align:center;padding:32px 0">Nessun veicolo corrisponde ai filtri selezionati.</div>`
         : '';
 
     // Pre-compute model groups for headers and bulk actions
@@ -205,7 +205,7 @@ function renderTabFleet() {
     const _showModelHeaders = filteredFleet.length >= 3;
     let _curModelHeader = null;
 
-    let html = _fleetHeader + `<div class="p-1">` + fuelTickerHtml + fuelDepotHtml + filterBar;
+    let html = _fleetHeader + `<div>` + fuelTickerHtml + fuelDepotHtml + filterBar;
 
     // ── FLEET TABLE ─────────────────────────────────────────────────────
     if (filteredFleet.length === 0) {
@@ -345,10 +345,10 @@ function renderTabFleet() {
     // Seized cars notice
     const seized = gameState.seizedCars || [];
     if (seized.length > 0) {
-        html += `<div class="hud-card !border-red-500/40 bg-red-950/10 mb-4"><div class="text-[10px] text-red-400 font-bold uppercase mb-2">🚨 Veicoli Sequestrati</div>`;
+        html += `<div style="background:rgba(248,81,73,0.04);border:1px solid rgba(248,81,73,0.3);border-radius:6px;padding:14px;margin-bottom:16px"><div style="font-size:10px;color:#f85149;font-weight:700;text-transform:uppercase;margin-bottom:8px">🚨 Veicoli Sequestrati</div>`;
         seized.forEach(sc => {
             const daysLeft = Math.max(0, sc.releaseDay - gameState.day);
-            html += `<div class="text-[9px] text-gray-400 flex justify-between"><span>🚗 ${sc.carName}</span><span class="text-red-400">Rilascio fra ${daysLeft}g</span></div>`;
+            html += `<div style="font-size:9px;color:#8b949e;display:flex;justify-content:space-between"><span>🚗 ${sc.carName}</span><span style="color:#f85149">Rilascio fra ${daysLeft}g</span></div>`;
         });
         html += `</div>`;
     }
@@ -372,7 +372,7 @@ function renderTabFleet() {
 
     // Prototype / exclusive vehicles
     if (typeof PROTOTYPE_CARS !== 'undefined' && PROTOTYPE_CARS.length > 0) {
-        html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-4">🔬 Prototipi Esclusivi</h3><div class="space-y-2">`;
+        html += `<div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:12px;margin-top:20px">🔬 Prototipi Esclusivi</div><div style="display:flex;flex-direction:column;gap:8px">`;
         PROTOTYPE_CARS.forEach(c => {
             const isOwned    = gameState.fleet.some(f => f.protoId === c.id);
             const repOk      = gameState.reputation >= c.reqRep;
@@ -385,19 +385,19 @@ function renderTabFleet() {
             if (!evOk)   lockParts.push('Hub EV');
             const lockMsg = isOwned ? '' : lockParts.length ? `🔒 Richiede: ${lockParts.join(' · ')}` : '';
             html += `
-            <div class="hud-card ${canBuy ? 'hover:border-gold/50' : 'opacity-60'}">
-                <div class="flex justify-between items-center">
+            <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;${!canBuy && !isOwned ? 'opacity:.6' : ''}">
+                <div style="display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <div class="text-xs font-bold text-white">${c.name}</div>
-                        <div class="text-[9px] text-purple-400">${c.desc}</div>
-                        <div class="text-[9px] text-gray-500">Tier: ${c.tier.toUpperCase()} · Min Rep: ${c.reqRep}★</div>
-                        ${lockMsg ? `<div class="text-[9px] text-red-400 mt-0.5">${lockMsg}</div>` : ''}
+                        <div style="font-size:11px;font-weight:700;color:#e6edf3">${c.name}</div>
+                        <div style="font-size:9px;color:#c084fc">${c.desc}</div>
+                        <div style="font-size:9px;color:#8b949e">Tier: ${c.tier.toUpperCase()} · Min Rep: ${c.reqRep}★</div>
+                        ${lockMsg ? `<div style="font-size:9px;color:#f85149;margin-top:2px">${lockMsg}</div>` : ''}
                     </div>
                     ${isOwned
-                        ? `<span class="text-green-400 text-[9px] font-bold">✓ In Flotta</span>`
+                        ? `<span style="font-size:9px;font-weight:700;color:#3fb950">✓ In Flotta</span>`
                         : canBuy
-                            ? `<button onclick="buyPrototypeCar('${c.id}')" class="btn-gold !text-[8px]">€${c.price.toLocaleString()}</button>`
-                            : `<span class="text-gray-600 text-[9px] font-bold px-2">🔒</span>`
+                            ? `<button onclick="buyPrototypeCar('${c.id}')" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">€${c.price.toLocaleString()}</button>`
+                            : `<span style="font-size:9px;color:#6b7280;font-weight:700;padding:0 8px">🔒</span>`
                     }
                 </div>
             </div>`;
@@ -408,24 +408,24 @@ function renderTabFleet() {
     const contractActive = gameState.maintenanceContract && gameState.day <= (gameState.maintenanceContractPaidUntilDay||0);
     const contractDaysLeft = contractActive ? gameState.maintenanceContractPaidUntilDay - gameState.day : 0;
     html += `
-    <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-5">🔧 Officina & Contratti</h3>
-    <div class="hud-card mb-4 ${contractActive ? '!border-green-500/30 bg-green-950/10' : ''}">
-        <div class="flex justify-between items-center">
+    <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:12px;margin-top:24px">🔧 Officina &amp; Contratti</div>
+    <div style="background:${contractActive ? 'rgba(63,185,80,0.04)' : '#161b22'};border:1px solid ${contractActive ? 'rgba(63,185,80,0.25)' : '#21262d'};border-radius:6px;padding:14px;margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div class="text-xs font-bold text-white">Contratto di Manutenzione</div>
-                <div class="text-[9px] text-gray-400">−30% su tutte le riparazioni · 7 giorni</div>
-                ${contractActive ? `<div class="text-[9px] text-green-400 mt-0.5">✅ Attivo — ${contractDaysLeft}g rimasti</div>` : ''}
+                <div style="font-size:11px;font-weight:700;color:#e6edf3">Contratto di Manutenzione</div>
+                <div style="font-size:9px;color:#8b949e;margin-top:2px">−30% su tutte le riparazioni · 7 giorni</div>
+                ${contractActive ? `<div style="font-size:9px;color:#3fb950;margin-top:2px">✅ Attivo — ${contractDaysLeft}g rimasti</div>` : ''}
             </div>
             ${contractActive
-                ? '<span class="text-green-500 text-[9px] font-bold">ATTIVO</span>'
-                : `<button onclick="buyMaintenanceContract()" class="btn-gold !text-[8px]">€10.000 / 7g</button>`}
+                ? '<span style="font-size:9px;font-weight:700;color:#3fb950">ATTIVO</span>'
+                : `<button onclick="buyMaintenanceContract()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">€10.000 / 7g</button>`}
         </div>
     </div>`;
 
     // ── HUB CONQUEST ──────────────────────────────────────────────────────
-    html += `<h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-3 mt-2">🏛️ Conquista Hub</h3>
-    <p class="text-[9px] text-gray-500 italic mb-3">Possiedi la concessione: incassi il 5% su ogni corsa che transita da lì.</p>
-    <div class="space-y-2 mb-4">`;
+    html += `<div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #21262d;padding-bottom:6px;margin-bottom:8px;margin-top:8px">🏛️ Conquista Hub</div>
+    <div style="font-size:9px;color:#8b949e;font-style:italic;margin-bottom:12px">Possiedi la concessione: incassi il 5% su ogni corsa che transita da lì.</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">`;
     const hubIds = ['roma_fco','mil_mxp','mil_lin','nap_capo','olbia','ven_mp','venezia','firenze','bologna'];
     if (typeof POIS !== 'undefined') {
         hubIds.filter(id => POIS[id] && (gameState.unlockedRegions||[]).includes(POIS[id].region)).forEach(id => {
@@ -434,14 +434,14 @@ function renderTabFleet() {
             const cost  = 50000 + Math.floor(hub.baseFlat * 200);
             const canBuy = !owned && (gameState.reputation||0) >= 2.5 && gameState.cash >= cost;
             html += `
-            <div class="hud-card flex justify-between items-center ${owned ? '!border-gold/40 bg-gold/5' : ''}">
+            <div style="background:${owned ? 'rgba(212,175,55,0.04)' : '#161b22'};border:1px solid ${owned ? 'rgba(212,175,55,0.3)' : '#21262d'};border-radius:6px;padding:12px;display:flex;justify-content:space-between;align-items:center">
                 <div>
-                    <div class="text-xs font-bold text-white">${hub.name}${owned ? ' 🏛️' : ''}</div>
-                    <div class="text-[9px] text-gray-500">${hub.region} · +5% tassa corse · €${Math.round(cost/1000)}k</div>
+                    <div style="font-size:11px;font-weight:700;color:#e6edf3">${hub.name}${owned ? ' 🏛️' : ''}</div>
+                    <div style="font-size:9px;color:#8b949e">${hub.region} · +5% tassa corse · €${Math.round(cost/1000)}k</div>
                 </div>
                 ${owned
-                    ? `<button onclick="sellHub('${id}')" class="btn-gold !bg-red-900/30 !text-red-400 !text-[7px] !py-0.5">Cedi</button>`
-                    : `<button onclick="buyHub('${id}')" class="${canBuy ? 'btn-gold' : 'btn-gold opacity-40'} !text-[8px] !py-1" ${canBuy ? '' : 'disabled'}>€${Math.round(cost/1000)}k</button>`
+                    ? `<button onclick="sellHub('${id}')" style="background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149;padding:4px 8px;border-radius:4px;font-size:8px;cursor:pointer">Cedi</button>`
+                    : `<button onclick="buyHub('${id}')" ${canBuy ? '' : 'disabled'} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 10px;border-radius:4px;font-size:9px;cursor:pointer;${canBuy ? '' : 'opacity:.4;cursor:not-allowed'}">€${Math.round(cost/1000)}k</button>`
                 }
             </div>`;
         });

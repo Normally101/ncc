@@ -42,7 +42,7 @@ function renderTabRegions() {
     </div>`;
 
     GROUPS.forEach(group => {
-        html += `<div class="ds-eyebrow" style="margin:20px 0 10px">${group.icon} ${group.label}</div>
+        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">${group.icon} ${group.label}</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px">`;
 
         group.ids.forEach(rid => {
@@ -59,7 +59,7 @@ function renderTabRegions() {
             html += `<div style="background:${bgColor};border:1px solid ${borderColor};border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div style="font-size:11px;font-weight:700;color:${owned ? '#d4af37' : 'var(--text)'}">${r.name}</div>
-                    ${owned ? `<span class="ds-pill ds-pill--gold">ATTIVA</span>` : ''}
+                    ${owned ? `<span style="font-size:9px;font-weight:700;color:#d4af37;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:2px 6px">ATTIVA</span>` : ''}
                 </div>
                 <div style="font-size:9px;color:${hasRep ? '#6b7280' : '#ef4444'};font-family:var(--font-mono)">
                     ${r.repReq}★ richiesta
@@ -70,8 +70,7 @@ function renderTabRegions() {
                         ? `<div style="font-size:9px;color:#22c55e;font-weight:700;font-family:var(--font-mono)">✓ Licenza operativa</div>`
                         : r.price === 0 ? ''
                         : `<button onclick="buyRegion('${r.id}')"
-                            class="ds-btn ds-btn--${canBuy ? 'gold' : 'ghost'}"
-                            style="width:100%;justify-content:center;padding:6px;font-size:10px"
+                            style="width:100%;justify-content:center;padding:6px;font-size:10px;border-radius:4px;cursor:pointer;${canBuy ? 'background:#1a1608;border:1px solid #b8962b;color:#d4af37' : 'background:#161b22;border:1px solid #21262d;color:#8b949e;opacity:.6'}"
                             ${!canBuy ? 'disabled' : ''}>
                             ${!hasRep ? '🔒 ' : ''}€${(r.price/1000).toFixed(0)}k
                            </button>`
@@ -88,7 +87,7 @@ function renderTabRegions() {
 
 async function renderTabProvinces() {
     const container = document.getElementById('tab-container');
-    container.innerHTML = `<div class="text-[10px] text-gray-500 text-center py-6">Caricamento mappa territoriale…</div>`;
+    container.innerHTML = `<div style="font-size:10px;color:#6b7280;text-align:center;padding:24px 0">Caricamento mappa territoriale…</div>`;
 
     let provinces = [], regions = [], influence = {};
     try {
@@ -98,7 +97,7 @@ async function renderTabProvinces() {
         regions   = snap.regions   || [];
         influence = snap.influence  || {};
     } catch(e) {
-        container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore caricamento territorio: ${e.message}</div>`;
+        container.innerHTML = `<div style="color:#f85149;font-size:11px;padding:16px">Errore caricamento territorio: ${e.message}</div>`;
         return;
     }
 
@@ -125,12 +124,12 @@ async function renderTabProvinces() {
     });
 
     let html = `
-    <div class="mb-3 hud-card !border-gold/30 bg-gold/5">
-        <div class="text-[10px] text-gold font-bold uppercase tracking-widest mb-1">🏴 Guerra Territoriale</div>
-        <div class="text-[9px] text-gray-400 leading-relaxed">
-            Ogni corsa che parte o arriva in una provincia ti guadagna <b class="text-white">+10 Punti Influenza</b>.
-            Raggiungi la soglia per lanciare un'OPA (120% del valore). Chi controlla >50% delle province di una regione
-            diventa <b class="text-yellow-300">Governatore</b> e percepisce l'1% su ogni corsa nella regione.
+    <div style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.3);border-radius:6px;padding:12px 16px;margin-bottom:12px">
+        <div style="font-size:10px;color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">🏴 Guerra Territoriale</div>
+        <div style="font-size:9px;color:#8b949e;line-height:1.5">
+            Ogni corsa che parte o arriva in una provincia ti guadagna <b style="color:#e6edf3">+10 Punti Influenza</b>.
+            Raggiungi la soglia per lanciare un'OPA (120% del valore). Chi controlla &gt;50% delle province di una regione
+            diventa <b style="color:#fde047">Governatore</b> e percepisce l'1% su ogni corsa nella regione.
         </div>
     </div>`;
 
@@ -141,20 +140,20 @@ async function renderTabProvinces() {
         const total    = totalCount[regionId]     || 0;
         const amGov    = reg.governor_company === myCompanyName;
         const govLabel = reg.governor_company
-            ? `<span class="text-yellow-300">👑 ${reg.governor_company}</span>`
-            : `<span class="text-gray-600">— nessun governatore</span>`;
+            ? `<span style="color:#fde047">👑 ${reg.governor_company}</span>`
+            : `<span style="color:#4b5563">— nessun governatore</span>`;
 
         html += `
-        <div class="mb-4">
-            <div class="flex items-center justify-between mb-2 px-1">
-                <div class="text-[9px] font-bold text-gray-300 uppercase tracking-widest">${reg.name}</div>
-                <div class="text-[8px] text-gray-500">
+        <div style="margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px">
+                <div style="font-size:9px;font-weight:700;color:#d1d5db;text-transform:uppercase;letter-spacing:.08em">${reg.name}</div>
+                <div style="font-size:8px;color:#6b7280">
                     ${govLabel}
-                    ${amGov ? ' <span class="text-[7px] bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 px-1 rounded">TU SEI GOVERNATORE</span>' : ''}
+                    ${amGov ? ' <span style="font-size:7px;background:rgba(234,179,8,0.2);color:#facc15;border:1px solid rgba(234,179,8,0.3);padding:1px 4px;border-radius:3px">TU SEI GOVERNATORE</span>' : ''}
                     · ${myCount}/${total} province
                 </div>
             </div>
-            <div class="space-y-2">`;
+            <div style="display:flex;flex-direction:column;gap:8px">`;
 
         provs.forEach(p => {
             const isOwned   = p.owner_company === myCompanyName;
@@ -167,46 +166,45 @@ async function renderTabProvinces() {
             const taxPct    = ((p.transit_tax_pct || 0.025) * 100).toFixed(1);
 
             html += `
-            <div class="hud-card ${isOwned ? '!border-gold/60 bg-gold/5' : isFree ? '!border-green-500/30 bg-green-950/10' : '!border-white/10'}">
-                <div class="flex justify-between items-start mb-1">
+            <div style="background:#161b22;border:1px solid ${isOwned ? 'rgba(212,175,55,0.6)' : isFree ? 'rgba(63,185,80,0.3)' : 'rgba(255,255,255,0.1)'};border-radius:6px;padding:12px 14px;${isOwned ? 'background:rgba(212,175,55,0.05)' : isFree ? 'background:rgba(0,63,30,0.1)' : ''}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
                     <div>
-                        <span class="text-[10px] font-bold text-white">${p.name}</span>
-                        ${isOwned ? '<span class="ml-1 text-[7px] bg-gold/20 text-gold border border-gold/30 px-1 rounded">TUA</span>' : ''}
-                        ${isFree  ? '<span class="ml-1 text-[7px] bg-green-500/20 text-green-400 border border-green-500/30 px-1 rounded">LIBERA</span>' : ''}
-                        ${amGov && !isOwned ? '<span class="ml-1 text-[7px] bg-yellow-500/10 text-yellow-500 border border-yellow-600/30 px-1 rounded">+1% regionale</span>' : ''}
+                        <span style="font-size:10px;font-weight:700;color:#e6edf3">${p.name}</span>
+                        ${isOwned ? '<span style="margin-left:4px;font-size:7px;background:rgba(212,175,55,0.2);color:#d4af37;border:1px solid rgba(212,175,55,0.3);padding:1px 4px;border-radius:3px">TUA</span>' : ''}
+                        ${isFree  ? '<span style="margin-left:4px;font-size:7px;background:rgba(63,185,80,0.2);color:#3fb950;border:1px solid rgba(63,185,80,0.3);padding:1px 4px;border-radius:3px">LIBERA</span>' : ''}
+                        ${amGov && !isOwned ? '<span style="margin-left:4px;font-size:7px;background:rgba(234,179,8,0.1);color:#eab308;border:1px solid rgba(234,179,8,0.3);padding:1px 4px;border-radius:3px">+1% regionale</span>' : ''}
                     </div>
-                    <div class="text-right">
-                        <div class="text-[10px] font-bold text-gold">€${(p.current_value||0).toLocaleString()}</div>
-                        <div class="text-[7px] text-gray-600">tassa: ${taxPct}%</div>
+                    <div style="text-align:right">
+                        <div style="font-size:10px;font-weight:700;color:#d4af37">€${(p.current_value||0).toLocaleString()}</div>
+                        <div style="font-size:7px;color:#4b5563">tassa: ${taxPct}%</div>
                     </div>
                 </div>
 
-                ${!isOwned && !isFree ? `<div class="text-[8px] text-gray-400 mb-1">Proprietario: <span class="text-blue-300">${p.owner_company}</span></div>` : ''}
+                ${!isOwned && !isFree ? `<div style="font-size:8px;color:#8b949e;margin-bottom:4px">Proprietario: <span style="color:#93c5fd">${p.owner_company}</span></div>` : ''}
 
-                <!-- Barra influenza -->
-                <div class="mb-1">
-                    <div class="flex justify-between text-[7px] text-gray-500 mb-0.5">
+                <div style="margin-bottom:4px">
+                    <div style="display:flex;justify-content:space-between;font-size:7px;color:#6b7280;margin-bottom:2px">
                         <span>Influenza</span>
-                        <span class="${infUnlocked ? 'text-green-400' : 'text-gray-500'}">${myInf}/${threshold} ${infUnlocked ? '✅' : ''}</span>
+                        <span style="color:${infUnlocked ? '#3fb950' : '#6b7280'}">${myInf}/${threshold} ${infUnlocked ? '✅' : ''}</span>
                     </div>
                     <div class="fuel-bar-bg">
                         <div class="fuel-bar-fill" style="width:${infPct}%;background:${infUnlocked ? '#22c55e' : infPct > 60 ? '#f59e0b' : '#6b7280'}"></div>
                     </div>
-                    ${!infUnlocked ? `<div class="text-[7px] text-gray-600 mt-0.5">Completa corse da/verso questa provincia per aumentare l'influenza</div>` : ''}
+                    ${!infUnlocked ? `<div style="font-size:7px;color:#4b5563;margin-top:2px">Completa corse da/verso questa provincia per aumentare l'influenza</div>` : ''}
                 </div>
 
                 ${isOwned ? `
-                <div class="text-[8px] text-green-400 bg-green-950/20 border border-green-500/20 rounded px-2 py-1">
+                <div style="font-size:8px;color:#3fb950;background:rgba(0,63,30,0.2);border:1px solid rgba(63,185,80,0.2);border-radius:4px;padding:4px 8px">
                     ✅ Percepisci il ${taxPct}% su ogni corsa provinciale${amGov ? ` + 1% come Governatore di ${reg.name}` : ''}
                 </div>` : infUnlocked ? `
-                <div class="flex gap-1 mt-1">
+                <div style="display:flex;gap:4px;margin-top:4px">
                     <input id="offer-${p.id}" type="number" min="${minOffer}" step="10000"
-                        class="flex-1 bg-black/40 border border-white/20 rounded px-2 py-1 text-[8px] text-white"
+                        style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:4px 8px;font-size:8px;color:#e6edf3"
                         placeholder="Offerta min. €${minOffer.toLocaleString()}">
-                    <button onclick="window.doAcquireProvince('${p.id}')" class="btn-gold !text-[7px] !py-1 !px-2 shrink-0">🏴 OPA</button>
+                    <button onclick="window.doAcquireProvince('${p.id}')" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 8px;border-radius:4px;font-size:7px;cursor:pointer;white-space:nowrap">🏴 OPA</button>
                 </div>
-                <div class="text-[7px] text-gray-600 mt-0.5">Min: €${minOffer.toLocaleString()} · Vecchio proprietario riceve 80%</div>` : `
-                <div class="text-[7px] text-gray-600 mt-1 italic">🔒 Raggiungi ${threshold} punti influenza per sbloccare l'OPA</div>`}
+                <div style="font-size:7px;color:#4b5563;margin-top:2px">Min: €${minOffer.toLocaleString()} · Vecchio proprietario riceve 80%</div>` : `
+                <div style="font-size:7px;color:#4b5563;margin-top:4px;font-style:italic">🔒 Raggiungi ${threshold} punti influenza per sbloccare l'OPA</div>`}
             </div>`;
         });
 

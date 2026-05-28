@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<title>Mockup B — Chat Narrativa</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #07090f; color: #e2e8f0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; display:flex; flex-direction:column; align-items:center; padding: 24px; }
+
+  .label { font-size: 11px; letter-spacing: 3px; color: #d4af37; text-transform: uppercase; margin-bottom: 24px; font-family: monospace; }
+
+  .app { width: 100%; max-width: 760px; display: grid; grid-template-columns: 220px 1fr; height: 620px; border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; overflow: hidden; }
+
+  /* SIDEBAR */
+  .sidebar { background: #0a0c12; border-right: 1px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; }
+  .sidebar-header { padding: 14px 14px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .sidebar-title { font-size: 9px; font-family: monospace; text-transform: uppercase; letter-spacing: 3px; color: #d4af37; margin-bottom: 2px; }
+  .sidebar-sub { font-size: 8px; color: #374151; }
+
+  .contact { display:flex; align-items:center; gap: 10px; padding: 10px 14px; cursor:pointer; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
+  .contact:hover, .contact.active { background: rgba(212,175,55,0.06); }
+  .contact.active { border-right: 2px solid #d4af37; }
+  .avatar { width: 32px; height: 32px; border-radius: 50%; display:flex; align-items:center; justify-content:center; font-size: 11px; font-weight: 700; flex-shrink: 0; }
+  .contact-info { min-width: 0; flex:1; }
+  .contact-name { font-size: 10px; font-weight: 600; color: #e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .contact-last { font-size: 9px; color: #4b5563; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top: 1px; }
+  .badge { background: #d4af37; color: #000; font-size: 8px; font-weight: 700; border-radius: 10px; padding: 1px 6px; flex-shrink:0; }
+  .badge.red { background: #ef4444; color: #fff; }
+
+  /* CHAT */
+  .chat { display:flex; flex-direction:column; background: #080b10; }
+  .chat-header { padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.06); display:flex; align-items:center; gap: 10px; background: #0a0c12; }
+  .online-dot { width: 7px; height: 7px; border-radius: 50%; background: #22c55e; margin-left: auto; }
+  .chat-status { font-size: 9px; color: #22c55e; }
+
+  .chat-messages { flex:1; overflow-y:auto; padding: 16px; display:flex; flex-direction:column; gap: 10px; }
+
+  .msg { max-width: 80%; }
+  .msg.them { align-self: flex-start; }
+  .msg.me { align-self: flex-end; }
+
+  .msg-sender { font-size: 8px; font-family: monospace; color: #4b5563; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 1px; }
+  .msg-bubble { padding: 9px 13px; border-radius: 12px; font-size: 11px; line-height: 1.5; }
+  .msg.them .msg-bubble { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: #d1d5db; border-top-left-radius: 3px; }
+  .msg.me .msg-bubble  { background: rgba(212,175,55,0.12); border: 1px solid rgba(212,175,55,0.2); color: #fde68a; border-top-right-radius: 3px; }
+  .msg-time { font-size: 8px; font-family: monospace; color: #1f2937; margin-top: 3px; }
+  .msg.me .msg-time { text-align:right; }
+
+  /* MISSION CARD inside chat */
+  .mission-card { margin-top: 8px; background: rgba(0,0,0,0.4); border: 1px solid rgba(212,175,55,0.35); border-radius: 8px; padding: 12px; }
+  .mc-label { font-size: 8px; font-family: monospace; text-transform: uppercase; letter-spacing: 2px; color: #d4af37; margin-bottom: 6px; }
+  .mc-title { font-size: 12px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .mc-desc { font-size: 10px; color: #6b7280; margin-bottom: 10px; }
+  .mc-bar { display:flex; align-items:center; gap: 8px; margin-bottom: 5px; }
+  .mc-bar-label { font-size: 9px; color: #6b7280; min-width: 130px; }
+  .mc-bar-bg { flex:1; height: 3px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow:hidden; }
+  .mc-bar-fill { height:100%; background: #d4af37; border-radius: 2px; }
+  .mc-bar-val { font-size: 8px; font-family: monospace; color: #6b7280; }
+  .mc-goto { margin-top: 10px; padding: 6px 14px; background: rgba(212,175,55,0.15); border: 1px solid rgba(212,175,55,0.4); color: #d4af37; border-radius: 6px; font-size: 9px; font-family: monospace; font-weight: 700; cursor:pointer; display:inline-block; }
+
+  /* EVENT messages */
+  .event-msg { align-self: center; background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); border-radius: 20px; padding: 4px 14px; font-size: 9px; color: #4ade80; font-family: monospace; }
+
+  /* notification pills */
+  .notif-list { display:flex; flex-direction:column; gap: 4px; padding: 10px 14px; border-top: 1px solid rgba(255,255,255,0.05); }
+  .notif { display:flex; align-items:center; gap: 8px; font-size: 9px; color: #374151; }
+  .notif::before { content:'●'; color: #374151; font-size: 7px; }
+</style>
+</head>
+<body>
+
+<div class="label">▸ MOCKUP B — CHAT NARRATIVA ◂</div>
+
+<div class="app">
+
+  <!-- SIDEBAR CONTATTI -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Messaggi</div>
+      <div class="sidebar-sub">3 non letti</div>
+    </div>
+
+    <div class="contact active">
+      <div class="avatar" style="background:rgba(212,175,55,0.15);color:#d4af37;border:1px solid rgba(212,175,55,0.3)">V</div>
+      <div class="contact-info">
+        <div class="contact-name">Vittorio</div>
+        <div class="contact-last">Missione sbloccata...</div>
+      </div>
+      <div class="badge">2</div>
+    </div>
+
+    <div class="contact">
+      <div class="avatar" style="background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.2)">R</div>
+      <div class="contact-info">
+        <div class="contact-name">Marco Ferretti</div>
+        <div class="contact-last">Attento — il tuo territorio...</div>
+      </div>
+      <div class="badge red">!</div>
+    </div>
+
+    <div class="contact">
+      <div class="avatar" style="background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.2)">B</div>
+      <div class="contact-info">
+        <div class="contact-name">Banca Imperiale</div>
+        <div class="contact-last">Prestito approvato: €50k</div>
+      </div>
+    </div>
+
+    <div class="contact">
+      <div class="avatar" style="background:rgba(168,85,247,0.15);color:#c084fc;border:1px solid rgba(168,85,247,0.2)">★</div>
+      <div class="contact-info">
+        <div class="contact-name">Cliente VIP</div>
+        <div class="contact-last">Servizio eccellente, CEO...</div>
+      </div>
+    </div>
+
+    <div class="notif-list" style="margin-top:auto">
+      <div class="notif">Rivale attivo nella tua zona</div>
+      <div class="notif">1 autista esausto</div>
+    </div>
+  </div>
+
+  <!-- CHAT PRINCIPALE -->
+  <div class="chat">
+    <div class="chat-header">
+      <div class="avatar" style="background:rgba(212,175,55,0.15);color:#d4af37;border:1px solid rgba(212,175,55,0.3);width:30px;height:30px;font-size:11px">V</div>
+      <div>
+        <div style="font-size:11px;font-weight:600;color:#e2e8f0">Vittorio Conti</div>
+        <div style="font-size:9px;color:#4b5563">Mentore · Trent'anni nel settore</div>
+      </div>
+      <div class="online-dot"></div>
+      <div class="chat-status">online</div>
+    </div>
+
+    <div class="chat-messages">
+
+      <!-- DAY SEPARATOR -->
+      <div style="text-align:center;font-size:9px;font-family:monospace;color:#1f2937">─── GIORNO 1 ───</div>
+
+      <div class="msg them">
+        <div class="msg-sender">Vittorio · 09:00</div>
+        <div class="msg-bubble">
+          Benvenuto. Ho sentito parlare di te.<br>Hai una macchina e un garage. Quello che ti manca è il primo cliente.<br><br>
+          Apri il Dispatch Center e accetta la prima corsa.
+        </div>
+      </div>
+
+      <div class="event-msg">✓ Hai completato la prima corsa · +€1.200</div>
+
+      <div class="msg them">
+        <div class="msg-sender">Vittorio · 09:45</div>
+        <div class="msg-bubble">
+          Bene. Puntuale. È tutto quello che conta per ora.<br><br>
+          Ma un'agenzia seria non vive di una corsa. Devi scalare — e per scalare ti servono persone.
+          <div class="mission-card">
+            <div class="mc-label">🎯 Missione Sbloccata</div>
+            <div class="mc-title">Il Primo Autista</div>
+            <div class="mc-desc">Un'agenzia la guida un team, non un solo uomo.</div>
+            <div class="mc-bar">
+              <div class="mc-bar-label">Assumi 1 autista</div>
+              <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:0%"></div></div>
+              <div class="mc-bar-val">0/1</div>
+            </div>
+            <div class="mc-goto">→ Vai allo Staff & HR</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DAY SEPARATOR -->
+      <div style="text-align:center;font-size:9px;font-family:monospace;color:#1f2937">─── GIORNO 4 ───</div>
+
+      <div class="msg me">
+        <div class="msg-bubble" style="text-align:right">Autista assunto. Si chiama Luca.</div>
+        <div class="msg-time">14:20 ✓✓</div>
+      </div>
+
+      <div class="msg them">
+        <div class="msg-sender">Vittorio · 14:22</div>
+        <div class="msg-bubble">
+          Luca Marino. Lo conosco — buon autista, se lo tieni in forma.<br><br>
+          Ora hai una flotta, anche se piccola. Il prossimo passo è costruire una reputazione che regga. I VIP scelgono chi viene raccomandato.
+          <div class="mission-card">
+            <div class="mc-label">🎯 Missione Attiva</div>
+            <div class="mc-title">Prima Corsa Ufficiale</div>
+            <div class="mc-bar">
+              <div class="mc-bar-label">Completa 3 corse standard</div>
+              <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:66%"></div></div>
+              <div class="mc-bar-val">2/3</div>
+            </div>
+            <div class="mc-bar">
+              <div class="mc-bar-label">Incassa €5.000</div>
+              <div class="mc-bar-bg"><div class="mc-bar-fill" style="width:36%"></div></div>
+              <div class="mc-bar-val">1.8k</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

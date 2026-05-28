@@ -14,8 +14,8 @@ window.renderTabOPA = async function() {
             <div style="font-size:11px;color:#8b949e;margin-top:4px">Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto</div>
         </div>
         <span style="font-size:9px;font-weight:700;color:#d4af37;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:3px 8px">51% → Controllo</span>
-    </div>` + `<div class="p-1">
-      <div class="ds-card" style="border-color:rgba(234,179,8,0.3);margin-bottom:16px;font-size:11px;color:#fde68a;line-height:1.5">
+    </div>` + `<div>
+      <div style="background:rgba(234,179,8,0.04);border:1px solid rgba(234,179,8,0.3);border-radius:6px;padding:16px;margin-bottom:16px;font-size:11px;color:#fde68a;line-height:1.5">
         <strong>Come funziona:</strong> Compra azioni di un rivale quotato in borsa dal tab Finance.
         Quando raggiungi il <strong>51%</strong>, scatta l'OPA ostile: il <strong>20%</strong> di ogni sua corsa
         futura finisce nelle tue tasche come dividendo.
@@ -41,15 +41,15 @@ async function _loadOPAList() {
     } catch(e) { error = e; }
 
     if (error) {
-        list.innerHTML = `<div class="text-red-400 text-sm p-4">Errore: ${error.message || error}</div>`;
+        list.innerHTML = `<div style="color:#f87171;font-size:12px;padding:16px">Errore: ${error.message || error}</div>`;
         return;
     }
 
     if (!data || !data.length) {
         list.innerHTML = `
-        <div class="text-center py-12">
-          <div class="text-5xl mb-3">🤝</div>
-          <div class="text-gray-400 text-sm">Nessuna OPA in corso.<br>
+        <div style="text-align:center;padding:48px 0">
+          <div style="font-size:48px;margin-bottom:12px">🤝</div>
+          <div style="color:#8b949e;font-size:12px">Nessuna OPA in corso.<br>
           Compra azioni di un rivale dal tab Finance → Borsa per iniziare.</div>
         </div>`;
         return;
@@ -64,56 +64,54 @@ function _renderOPACard(opa) {
     const since    = new Date(opa.triggered_at).toLocaleDateString('it-IT');
 
     const roleLabel = isTarget
-        ? '<span class="bg-red-500/20 text-red-400 border border-red-500/30 text-xs px-2 py-0.5 rounded-full font-bold">⚠️ Sei il TARGET</span>'
+        ? '<span style="background:rgba(239,68,68,0.2);color:#f87171;border:1px solid rgba(239,68,68,0.3);font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700">⚠️ Sei il TARGET</span>'
         : isRaider
-        ? '<span class="bg-green-500/20 text-green-400 border border-green-500/30 text-xs px-2 py-0.5 rounded-full font-bold">🦅 Sei il RAIDER</span>'
-        : '<span class="bg-gray-500/20 text-gray-400 border border-gray-500/30 text-xs px-2 py-0.5 rounded-full">👁 Osservatore</span>';
+        ? '<span style="background:rgba(34,197,94,0.2);color:#4ade80;border:1px solid rgba(34,197,94,0.3);font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700">🦅 Sei il RAIDER</span>'
+        : '<span style="background:rgba(107,114,128,0.2);color:#9ca3af;border:1px solid rgba(107,114,128,0.3);font-size:11px;padding:2px 8px;border-radius:99px">👁 Osservatore</span>';
 
     const buybackBtn = isTarget ? `
     <button
       onclick="window._opaRequestBuyback('${opa.opa_id}', ${opa.buyback_price})"
-      class="w-full mt-3 py-3 rounded-xl font-bold text-sm
-             bg-blue-500/20 border border-blue-500/40 text-blue-300
-             hover:bg-blue-500/30 active:scale-95 transition-all cursor-pointer">
+      style="width:100%;margin-top:12px;padding:12px;border-radius:6px;font-weight:700;font-size:12px;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4);color:#93c5fd;cursor:pointer">
       🛡️ Riacquista maggioranza — €${Number(opa.buyback_price).toLocaleString('it-IT')}
     </button>` : '';
 
-    const borderColor = isTarget ? 'border-red-500/30' : isRaider ? 'border-green-500/30' : 'border-white/10';
-    const bgColor     = isTarget ? 'bg-red-500/5' : isRaider ? 'bg-green-500/5' : 'bg-white/5';
+    const borderClr = isTarget ? 'rgba(239,68,68,0.3)' : isRaider ? 'rgba(34,197,94,0.3)' : 'rgba(255,255,255,0.1)';
+    const bgClr     = isTarget ? 'rgba(239,68,68,0.05)' : isRaider ? 'rgba(34,197,94,0.05)' : 'rgba(255,255,255,0.05)';
 
     return `
-    <div class="${bgColor} border ${borderColor} rounded-2xl p-5">
-      <div class="flex items-start justify-between mb-4">
+    <div style="background:${bgClr};border:1px solid ${borderClr};border-radius:6px;padding:20px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
         <div>
-          <div class="flex items-center gap-2 mb-1 flex-wrap">
-            <span class="text-white font-bold text-sm">${opa.raider_company}</span>
-            <span class="text-gray-500 text-xs">vs</span>
-            <span class="text-white font-bold text-sm">${opa.target_company}</span>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+            <span style="color:#e6edf3;font-weight:700;font-size:12px">${opa.raider_company}</span>
+            <span style="color:#6b7280;font-size:11px">vs</span>
+            <span style="color:#e6edf3;font-weight:700;font-size:12px">${opa.target_company}</span>
           </div>
-          <div class="text-xs text-gray-500">In corso dal ${since}</div>
+          <div style="font-size:11px;color:#6b7280">In corso dal ${since}</div>
         </div>
         ${roleLabel}
       </div>
 
-      <div class="grid grid-cols-3 gap-3 mb-3">
-        <div class="bg-white/5 rounded-xl p-3 text-center">
-          <div class="text-lg font-bold text-orange-400">${Number(opa.raider_pct).toFixed(1)}%</div>
-          <div class="text-xs text-gray-500 mt-0.5">Quota raider</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+        <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:12px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#fb923c">${Number(opa.raider_pct).toFixed(1)}%</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Quota raider</div>
         </div>
-        <div class="bg-white/5 rounded-xl p-3 text-center">
-          <div class="text-lg font-bold text-green-400">€${Number(opa.total_dividends || 0).toLocaleString('it-IT')}</div>
-          <div class="text-xs text-gray-500 mt-0.5">Dividendi totali</div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:12px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#4ade80">€${Number(opa.total_dividends || 0).toLocaleString('it-IT')}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Dividendi totali</div>
         </div>
-        <div class="bg-white/5 rounded-xl p-3 text-center">
-          <div class="text-lg font-bold text-blue-400">€${Number(opa.buyback_price).toLocaleString('it-IT')}</div>
-          <div class="text-xs text-gray-500 mt-0.5">Prezzo buyback</div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:12px;text-align:center">
+          <div style="font-size:18px;font-weight:700;color:#60a5fa">€${Number(opa.buyback_price).toLocaleString('it-IT')}</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Prezzo buyback</div>
         </div>
       </div>
 
-      <div class="text-xs text-gray-500 bg-black/20 rounded-lg p-2.5">
-        💸 <strong class="text-yellow-400">20%</strong> di ogni corsa completata da
-        <span class="text-white">${opa.target_company}</span>
-        va automaticamente a <span class="text-white">${opa.raider_company}</span>
+      <div style="font-size:11px;color:#6b7280;background:rgba(0,0,0,0.2);border-radius:6px;padding:10px">
+        💸 <strong style="color:#facc15">20%</strong> di ogni corsa completata da
+        <span style="color:#e6edf3">${opa.target_company}</span>
+        va automaticamente a <span style="color:#e6edf3">${opa.raider_company}</span>
       </div>
 
       ${buybackBtn}

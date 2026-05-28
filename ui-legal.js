@@ -37,20 +37,20 @@ function renderTabLegal() {
     </div>`;
 
     if (!hasLegal) {
-        html += `<div class="ds-card ds-card--alert" style="margin-bottom:20px">
-            <div style="font-size:11px;font-weight:700;color:var(--red);margin-bottom:4px">⚠ Nessun Avvocato in Staff</div>
-            <div style="font-size:11px;color:var(--text-muted)">Tasso di contestazione automatica: solo 35%. Assumi un Avvocato nel tab Staff per salire al 70%.</div>
+        html += `<div style="background:rgba(248,81,73,0.04);border:1px solid rgba(248,81,73,0.2);border-radius:6px;padding:16px;margin-bottom:20px">
+            <div style="font-size:11px;font-weight:700;color:#f85149;margin-bottom:4px">⚠ Nessun Avvocato in Staff</div>
+            <div style="font-size:11px;color:#8b949e">Tasso di contestazione automatica: solo 35%. Assumi un Avvocato nel tab Staff per salire al 70%.</div>
         </div>`;
     }
 
-    html += `<div class="ds-eyebrow" style="margin:0 0 12px">⚖️ Sanzioni Attive (${pending.length})</div>`;
+    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px">⚖️ Sanzioni Attive (${pending.length})</div>`;
 
     if (pending.length === 0) {
         html += `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">✅</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessuna sanzione in sospeso</div><div style="font-size:11px;color:#8b949e;margin-top:4px">La tua flotta è in regola. Continua così.</div></div>`;
     } else {
         pending.forEach(f => {
             const hoursLeft = Math.max(0, (f.expiresAt || 0) - gameHour);
-            html += `<div class="ds-card ds-card--alert" style="margin-bottom:10px">
+            html += `<div style="background:rgba(248,81,73,0.04);border:1px solid rgba(248,81,73,0.2);border-radius:6px;padding:16px;margin-bottom:10px">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
                     <div>
                         <div style="font-size:12px;font-weight:700;color:var(--text)">${f.desc}</div>
@@ -98,6 +98,6 @@ function renderTabLegal() {
     container.innerHTML = html;
 
     const fineDot = document.getElementById('fine-dot');
-    if (fineDot) fineDot.classList.toggle('hidden', pending.length === 0);
+    if (fineDot) fineDot.style.display = pending.length === 0 ? 'none' : '';
 }
 window.renderTabLegal = renderTabLegal;

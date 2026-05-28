@@ -160,34 +160,35 @@ window.cryptoOpenTradeModal = function(coinId, side) {
 
     const modal = document.createElement('div');
     modal.id = 'crypto-trade-modal';
-    modal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `
-      <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 w-80 max-w-full mx-4 shadow-2xl">
-        <div class="flex justify-between items-center mb-4">
-          <div class="font-bold text-white">${coin.icon} ${coin.name} — ${isBuy ? 'ACQUISTO' : 'VENDITA'}</div>
-          <button onclick="document.getElementById('crypto-trade-modal').remove()" class="text-gray-500 hover:text-white text-lg">✕</button>
+      <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:13px;font-weight:700;color:#e6edf3">${coin.icon} ${coin.name} — ${isBuy ? 'ACQUISTO' : 'VENDITA'}</div>
+          <button onclick="document.getElementById('crypto-trade-modal').remove()" style="background:transparent;border:none;color:#8b949e;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
 
-        <div class="bg-white/5 rounded-lg p-3 mb-4 text-[11px] space-y-1">
-          <div class="flex justify-between"><span class="text-gray-400">Prezzo attuale</span><span class="text-white font-mono">€${_fmt(coin.price_eur)}</span></div>
-          ${holding ? `<div class="flex justify-between"><span class="text-gray-400">In portafoglio</span><span class="text-white font-mono">${_fmtCoin(holding.amount)}</span></div>` : ''}
-          ${holding ? `<div class="flex justify-between"><span class="text-gray-400">PnL</span><span class="${(holding.pnl_pct||0)>=0?'text-green-400':'text-red-400'} font-mono">${(holding.pnl_pct||0).toFixed(2)}%</span></div>` : ''}
+        <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#8b949e">Prezzo attuale</span><span style="color:#e6edf3;font-family:monospace">€${_fmt(coin.price_eur)}</span></div>
+          ${holding ? `<div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px"><span style="color:#8b949e">In portafoglio</span><span style="color:#e6edf3;font-family:monospace">${_fmtCoin(holding.amount)}</span></div>` : ''}
+          ${holding ? `<div style="display:flex;justify-content:space-between;font-size:11px"><span style="color:#8b949e">PnL</span><span style="color:${(holding.pnl_pct||0)>=0?'#3fb950':'#f85149'};font-family:monospace">${(holding.pnl_pct||0).toFixed(2)}%</span></div>` : ''}
         </div>
 
-        <div class="mb-3">
-          <label class="text-[10px] text-gray-400 mb-1 block">${isBuy ? 'EUR da investire' : 'Quantità da vendere'}</label>
+        <div style="margin-bottom:12px">
+          <label style="font-size:10px;color:#8b949e;display:block;margin-bottom:4px">${isBuy ? 'EUR da investire' : 'Quantità da vendere'}</label>
           <input id="${inputId}" type="number" min="${isBuy ? 100 : 0}" step="${isBuy ? 1000 : 0.01}"
             value="${isBuy ? 10000 : (holding?.amount || 0)}"
-            class="w-full bg-black/40 border border-white/10 rounded px-3 py-2 text-white text-sm focus:border-gold outline-none"
+            style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 10px;color:#e6edf3;font-size:12px;outline:none;box-sizing:border-box"
             oninput="window._cryptoUpdatePreview('${coinId}','${side}',this.value)" />
         </div>
 
-        <div id="crypto-preview" class="text-[10px] text-gray-400 mb-3"></div>
-        <div id="crypto-trade-err" class="text-red-400 text-[10px] mb-2 hidden"></div>
+        <div id="crypto-preview" style="font-size:10px;color:#8b949e;margin-bottom:10px"></div>
+        <div id="crypto-trade-err" style="color:#f85149;font-size:10px;margin-bottom:8px;display:none"></div>
 
         <button id="crypto-trade-btn"
           onclick="${isBuy ? `window.cryptoBuy('${coinId}', document.getElementById('${inputId}').value)` : `window.cryptoSell('${coinId}', document.getElementById('${inputId}').value)`}"
-          class="btn-gold w-full">
+          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s"
+          onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
           ${isBuy ? '💰 Acquista' : '💵 Vendi'}
         </button>
       </div>`;

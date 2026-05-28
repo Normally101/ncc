@@ -187,7 +187,7 @@ window.switchTab = function(tab) {
         } catch(e) {
             console.error('[switchTab]', e);
             const _sup = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com';
-            container.innerHTML = `<div class="text-red-400 text-xs p-4">Errore rendering: ${e.message}<br><span class="text-gray-500">Se il problema persiste, scrivi a <a href="mailto:${_sup}" class="underline">${_sup}</a></span></div>`;
+            container.innerHTML = `<div style="color:#f87171;font-size:11px;padding:16px">Errore rendering: ${e.message}<br><span style="color:#6b7280">Se il problema persiste, scrivi a <a href="mailto:${_sup}" style="text-decoration:underline">${_sup}</a></span></div>`;
         }
     };
     switch(tab) {

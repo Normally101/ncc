@@ -187,42 +187,54 @@ window.b2bOpenAcceptModal = function(contractId) {
 
     const modal = document.createElement('div');
     modal.id = 'b2b-select-modal';
-    modal.className = 'fixed inset-0 z-[110] bg-black/85 backdrop-blur-sm flex justify-center items-center pointer-events-auto';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:110;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;pointer-events:auto';
     modal.innerHTML = `
-    <div class="bg-panel border border-white/10 rounded-2xl w-[460px] max-h-[85vh] overflow-y-auto p-6 shadow-2xl">
-        <h2 class="text-gold font-bold uppercase tracking-widest text-sm mb-1">💼 Accetta Appalto</h2>
-        <div class="text-[10px] text-gray-400 mb-1">${contract.client_icon} ${contract.client_name}</div>
-        <div class="text-[10px] text-gold mb-4">${contract.title}</div>
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;width:460px;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+        <div style="font-size:9px;color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">💼 Accetta Appalto</div>
+        <div style="font-size:10px;color:#8b949e;margin-bottom:2px">${contract.client_icon} ${contract.client_name}</div>
+        <div style="font-size:13px;font-weight:700;color:#d4af37;margin-bottom:16px">${contract.title}</div>
 
-        <div class="grid grid-cols-2 gap-2 mb-4 text-[9px]">
-            <div class="hud-card !py-2"><div class="text-gray-500">Payout giornaliero</div><div class="text-green-400 font-mono font-bold">+€${contract.daily_payout.toLocaleString()}</div></div>
-            <div class="hud-card !py-2"><div class="text-gray-500">Durata</div><div class="text-white font-bold">${contract.duration_days} giorni</div></div>
-            <div class="hud-card !py-2"><div class="text-gray-500">Penale rescissione</div><div class="text-red-400 font-mono">−€${contract.penalty_amount.toLocaleString()}</div></div>
-            <div class="hud-card !py-2"><div class="text-gray-500">Tier richiesto</div><div class="text-white">${_TIER_LABEL[contract.required_tier]}</div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Payout giornaliero</div>
+                <div style="font-size:12px;font-weight:700;color:#3fb950;font-family:monospace">+€${contract.daily_payout.toLocaleString()}</div>
+            </div>
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Durata</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">${contract.duration_days} giorni</div>
+            </div>
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Penale rescissione</div>
+                <div style="font-size:12px;font-weight:700;color:#f85149;font-family:monospace">−€${contract.penalty_amount.toLocaleString()}</div>
+            </div>
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Tier richiesto</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">${_TIER_LABEL[contract.required_tier]}</div>
+            </div>
         </div>
 
-        <div class="text-[10px] text-gray-400 mb-2 uppercase tracking-widest">Seleziona ${contract.required_count} veicoli da vincolare:</div>
-        <div id="b2b-car-list" class="space-y-1 mb-4 max-h-48 overflow-y-auto">
+        <div style="font-size:10px;color:#8b949e;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Seleziona ${contract.required_count} veicoli da vincolare:</div>
+        <div id="b2b-car-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;max-height:192px;overflow-y:auto">
             ${available.map(c => `
-            <label class="flex items-center gap-2 hud-card !py-1.5 cursor-pointer hover:border-gold/30 transition-colors">
-                <input type="checkbox" class="b2b-car-check accent-gold" value="${c.id}" onchange="b2bCheckLimit(${contract.required_count})">
-                <div class="flex-1 min-w-0">
-                    <div class="text-[9px] font-bold text-white truncate">${c.name}</div>
-                    <div class="text-[8px] text-gray-500">${_TIER_LABEL[(c.tier||'').toUpperCase()] || c.tier} · Cond. ${c.condition||100}%</div>
+            <label style="display:flex;align-items:center;gap:10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px;cursor:pointer">
+                <input type="checkbox" class="b2b-car-check" style="accent-color:#d4af37;width:14px;height:14px;flex-shrink:0" value="${c.id}" onchange="b2bCheckLimit(${contract.required_count})">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:10px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+                    <div style="font-size:9px;color:#8b949e">${_TIER_LABEL[(c.tier||'').toUpperCase()] || c.tier} · Cond. ${c.condition||100}%</div>
                 </div>
             </label>`).join('')}
         </div>
 
-        <div class="text-[10px] text-gray-500 mb-2">
+        <div style="font-size:10px;color:#8b949e;margin-bottom:12px">
             <span id="b2b-sel-count">0</span>/${contract.required_count} selezionati
         </div>
 
-        <div class="flex gap-2">
+        <div style="display:flex;gap:8px">
             <button onclick="document.getElementById('b2b-select-modal').remove()"
-                class="flex-1 p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
+                style="flex:1;padding:8px;border-radius:4px;font-size:11px;cursor:pointer;background:#161b22;border:1px solid #21262d;color:#8b949e">Annulla</button>
             <button id="b2b-confirm-btn" onclick="b2bConfirmAccept('${contractId}', ${contract.required_count})"
                 disabled
-                class="flex-1 p-2 bg-gold hover:bg-yellow-500 text-black font-bold rounded text-xs uppercase opacity-40 cursor-not-allowed transition-all"
+                style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;cursor:not-allowed;background:#1a1608;border:1px solid #b8962b;color:#d4af37;opacity:.4;transition:all .15s"
                 data-req="${contract.required_count}">
                 Firma Contratto
             </button>

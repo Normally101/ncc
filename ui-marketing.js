@@ -132,7 +132,7 @@ function renderTabMarketing() {
 
     // ── 3. STRATEGIA TARIFFARIA ───────────────────────────────────
     html += `<div class="mkt-section-header">Strategia Tariffaria</div>
-    <div class="pricing-strategy-panel mb-4">
+    <div class="pricing-strategy-panel" style="margin-bottom:16px">
         <button onclick="setPricingStrategy('discount')" class="pricing-btn ${_ps === 'discount' ? 'pricing-btn-active' : ''}">
             <span class="pricing-btn-icon">📉</span>
             <span class="pricing-btn-label">Scontato</span>
@@ -173,7 +173,7 @@ function renderTabMarketing() {
                     <div class="campaign-progress-bar" style="width:${progress}%"></div>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-                    <div class="text-[8px] text-gray-500">Giorno ${daysDone} di ${totalDays} · termina G.${ac.endsDay}</div>
+                    <div style="font-size:8px;color:#6b7280">Giorno ${daysDone} di ${totalDays} · termina G.${ac.endsDay}</div>
                     <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
                 </div>
             </div>`;
@@ -281,7 +281,7 @@ function renderTabMarketing() {
             const progress  = totalDays > 0 ? Math.min(100, Math.round((daysDone / totalDays) * 100)) : 0;
             html += `<div class="campaign-progress-wrap"><div class="campaign-progress-bar" style="width:${progress}%"></div></div>
                 <div style="display:flex;justify-content:space-between;align-items:center">
-                    <div class="text-[8px] text-green-400 font-bold">▶ ATTIVA — ${daysLeft}g rimanenti</div>
+                    <div style="font-size:8px;color:#4ade80;font-weight:700">▶ ATTIVA — ${daysLeft}g rimanenti</div>
                     <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
                 </div>`;
         } else {

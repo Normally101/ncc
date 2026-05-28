@@ -217,8 +217,8 @@ window.renderTabHQ = function() {
 
     // City Selector Tabs
     const cityTabsHtml = window.HQ_CITIES.map(c => `
-        <button onclick="window.hqSwitchCity('${c.id}')" 
-                class="px-3 py-1.5 rounded text-xs font-bold transition-all border ${c.id === currentCityId ? 'bg-gold text-black border-gold' : 'bg-[#1a1a2e] text-gray-400 border-white/10 hover:border-white/30'}">
+        <button onclick="window.hqSwitchCity('${c.id}')"
+                style="padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;border:1px solid ${c.id === currentCityId ? '#b8962b' : 'rgba(255,255,255,0.1)'};background:${c.id === currentCityId ? '#1a1608' : '#0d1117'};color:${c.id === currentCityId ? '#d4af37' : '#8b949e'};cursor:pointer;transition:opacity .15s">
             ${c.icon} ${c.name}
         </button>
     `).join('');
@@ -238,20 +238,21 @@ window.renderTabHQ = function() {
         
         const tDef = currentLevel > 0 ? r.tiers.find(t => t.level === currentLevel) : null;
         
+        const canAffordUpgrade = nextTier && (gameState.cash||0) >= nextTier.cost && (gameState.reputation||0) >= nextTier.reqRep;
         roomListHtml += `
-          <div class="bg-white/3 border ${isLocked ? 'border-white/5' : 'border-white/8'} rounded-xl p-3 mb-2 ${isLocked ? 'opacity-50' : ''}">
-            <div class="flex justify-between items-start">
-              <div class="flex-1">
-                <div class="text-sm font-bold ${isLocked ? 'text-gray-600' : 'text-white'}">${r.icon} ${r.name} <span class="text-xs text-gold ml-1">Lvl ${currentLevel}</span></div>
-                <div class="text-[10px] text-gray-400 mt-0.5">${r.desc}</div>
-                ${isLocked ? `<div class="text-[9px] text-gray-600 mt-1">🔒 Richiede: ${r.prereqs.map(p=>window.HQ_ROOMS.find(x=>x.id===p)?.name||p).join(', ')}</div>` : ''}
-                ${!isMaxLevel && !isLocked ? `<div class="text-[9px] text-blue-400 mt-1">Prossimo Livello: Richiede ${nextTier.reqRep}⭐ reputazione.</div>` : ''}
+          <div style="background:rgba(255,255,255,0.03);border:1px solid ${isLocked ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.08)'};border-radius:6px;padding:12px;margin-bottom:8px;${isLocked ? 'opacity:.5' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start">
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:700;color:${isLocked ? '#4b5563' : '#e6edf3'}">${r.icon} ${r.name} <span style="font-size:11px;color:#d4af37;margin-left:4px">Lvl ${currentLevel}</span></div>
+                <div style="font-size:10px;color:#8b949e;margin-top:2px">${r.desc}</div>
+                ${isLocked ? `<div style="font-size:9px;color:#4b5563;margin-top:4px">🔒 Richiede: ${r.prereqs.map(p=>window.HQ_ROOMS.find(x=>x.id===p)?.name||p).join(', ')}</div>` : ''}
+                ${!isMaxLevel && !isLocked ? `<div style="font-size:9px;color:#60a5fa;margin-top:4px">Prossimo Livello: Richiede ${nextTier.reqRep}⭐ reputazione.</div>` : ''}
               </div>
-              <div class="shrink-0 ml-2 text-right">
-                ${isMaxLevel ? `<div class="text-[10px] text-green-400 font-mono">Max Level</div>` : `
-                    <div class="text-[10px] text-gold font-mono">€${nextTier.cost.toLocaleString()}</div>
+              <div style="flex-shrink:0;margin-left:8px;text-align:right">
+                ${isMaxLevel ? `<div style="font-size:10px;color:#4ade80;font-family:monospace">Max Level</div>` : `
+                    <div style="font-size:10px;color:#d4af37;font-family:monospace">€${nextTier.cost.toLocaleString()}</div>
                     ${!isLocked ? `<button onclick="${currentLevel === 0 ? `window._hqBuildFromList('${r.id}')` : `window.hqUpgradeRoom('${currentCityId}', '${r.id}')`}"
-                      class="btn-gold !text-[9px] !py-1 !px-2 mt-1 ${(gameState.cash||0) < nextTier.cost || (gameState.reputation||0) < nextTier.reqRep ? 'opacity-40' : ''}">
+                      style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 8px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;${!canAffordUpgrade ? 'opacity:.4' : ''}">
                       ${currentLevel === 0 ? '🏗️ Costruisci' : '⬆️ Migliora'}
                     </button>` : ''}
                 `}
@@ -300,31 +301,18 @@ window.renderTabHQ = function() {
         <div style="font-size:14px;font-weight:700;color:#d4af37">${cityData.icon} Sede di ${cityData.name}</div>
         <div style="font-size:10px;color:#8b949e;margin-top:2px">${cityData.desc}</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:16px">
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Effetti Globali Attivi</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${fxItems.length > 0 ? '#58a6ff' : '#e6edf3'}">${fxItems.length}</div>
+    <div id="hq-visual-placeholder" style="margin-bottom:16px"></div>
+
+    ${fxItems.length > 0 ? `
+      <div style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.2);border-radius:6px;padding:12px;margin-bottom:16px">
+        <div style="font-size:9px;color:#d4af37;font-weight:700;text-transform:uppercase;margin-bottom:8px">⚡ Effetti Globali Attivi</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px">
+          ${fxItems.map(f => `<span style="font-size:8px;background:rgba(255,255,255,0.1);border-radius:4px;padding:2px 6px;color:#d1d5db">${f}</span>`).join('')}
         </div>
-    </div>
-    `
-      <div class="p-1">
+      </div>` : ''}
 
-        <!-- Visual Isometric Campus -->
-        <div id="hq-visual-placeholder" class="mb-4"></div>
-
-        <!-- Active effects -->
-        ${fxItems.length > 0 ? `
-          <div class="bg-gold/5 border border-gold/20 rounded-lg p-3 mb-4">
-            <div class="text-[9px] text-gold font-bold uppercase mb-2">⚡ Effetti Globali Attivi</div>
-            <div class="flex flex-wrap gap-1">
-              ${fxItems.map(f => `<span class="text-[8px] bg-white/10 rounded px-1.5 py-0.5 text-gray-300">${f}</span>`).join('')}
-            </div>
-          </div>` : ''}
-
-        <!-- Build options -->
-        <h3 class="text-[10px] text-gold uppercase tracking-widest mb-2">🏢 Gestione Strutture</h3>
-        ${roomListHtml}
-      </div>`;
+    <div style="font-size:10px;color:#d4af37;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🏢 Gestione Strutture</div>
+    ${roomListHtml}`;
 
     // Render visual diorama campus
     if (typeof window.renderHQCampus === 'function') {
@@ -347,20 +335,20 @@ window.hqOpenBuildModal = function(roomId) {
 
     const modal = document.createElement('div');
     modal.id = 'hq-build-modal';
-    modal.className = 'fixed inset-0 bg-black/70 z-50 flex items-center justify-center';
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `
-      <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 w-80 max-w-full mx-4 shadow-2xl max-h-[80vh] overflow-y-auto">
-        <div class="flex justify-between items-center mb-4">
-          <div class="text-sm font-bold text-white">🏗️ Scegli lo slot per ${window.HQ_ROOMS.find(r=>r.id===roomId).name}</div>
-          <button onclick="document.getElementById('hq-build-modal').remove()" class="text-gray-500 hover:text-white text-lg">✕</button>
+      <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);max-height:80vh;overflow-y:auto">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:#e6edf3">🏗️ Scegli lo slot per ${window.HQ_ROOMS.find(r=>r.id===roomId).name}</div>
+          <button onclick="document.getElementById('hq-build-modal').remove()" style="color:#6b7280;background:none;border:none;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
         ${emptySlots.length === 0
-            ? '<div class="text-[10px] text-gray-500 text-center py-4">Nessuno slot libero in questa città.</div>'
+            ? '<div style="font-size:10px;color:#6b7280;text-align:center;padding:16px 0">Nessuno slot libero in questa città.</div>'
             : emptySlots.map(slot => `
-              <div class="bg-white/3 border border-white/8 rounded-lg p-3 mb-2 flex justify-between items-center hover:bg-white/10 transition cursor-pointer"
+              <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer"
                    onclick="document.getElementById('hq-build-modal').remove(); window.hqUpgradeRoom('${currentCityId}', '${roomId}', ${slot})">
-                <div class="font-bold text-white text-sm">Slot #${slot}</div>
-                <div class="text-gold text-[11px] font-mono">Posiziona qui</div>
+                <div style="font-weight:700;color:#e6edf3;font-size:12px">Slot #${slot}</div>
+                <div style="color:#d4af37;font-size:11px;font-family:monospace">Posiziona qui</div>
               </div>`).join('')}
       </div>`;
     document.body.appendChild(modal);
