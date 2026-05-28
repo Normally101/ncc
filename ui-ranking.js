@@ -1,10 +1,5 @@
 'use strict';
-/* ui-ranking.js — Chauffeur Empire
-   renderTabRanking: classifica globale Supabase.
-   Dipendenze: engine.js, dispatcher.js, design-system.js */
-
-'use strict';
-/* ui-meta.js — remaining renderTab* from dispatcher.js */
+/* ui-ranking.js — Chauffeur Empire */
 
 async function renderTabRanking() {
     const container = document.getElementById('tab-container');
@@ -14,19 +9,21 @@ async function renderTabRanking() {
     renderTabRanking._token = renderToken;
 
     // Loading skeleton
-    container.innerHTML = DS.header({
-        eyebrow: 'MULTIPLAYER · LIVE',
-        title:   'Classifica Globale',
-        subtitle:'Caricamento dati in tempo reale...',
-        actions: DS.btn({ label:'⟳ Aggiorna', color:'ghost', onclick:'renderTabRanking()', size:'sm' }),
-    }) + DS.kpiStrip([
-        { label:'La Tua Posizione', val:'—' },
-        { label:'Patrimonio',       val:'—' },
-        { label:'Reputazione',      val:'—' },
-        { label:'Aziende Globali',  val:'—' },
-    ]) + `<div style="display:flex;flex-direction:column;gap:8px">${Array(5).fill(`<div class="ds-skel" style="height:52px;border-radius:10px"></div>`).join('')}</div>`;
+    container.innerHTML = `
+    <div style="padding:0 0 16px">
+        <div style="font-size:9px;color:#6b7280;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-bottom:2px">Classifica Globale</div>
+        <div style="font-size:11px;color:#6b7280">Caricamento dati in tempo reale...</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        ${['La Tua Posizione','Patrimonio','Reputazione','Aziende Globali'].map(l => `
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${l}</div>
+            <div style="font-size:16px;font-weight:700;color:#e6edf3;font-family:monospace">—</div>
+        </div>`).join('')}
+    </div>
+    ${Array(5).fill(`<div style="height:40px;background:#161b22;border:1px solid #21262d;border-radius:4px;margin-bottom:6px"></div>`).join('')}`;
 
-    // Fetch leaderboard from Supabase — columns match table exactly
     let rows = [];
     let fetchError = null;
     if (window.supabaseClient) {
@@ -52,14 +49,12 @@ async function renderTabRanking() {
         fetchError = 'Supabase non disponibile';
     }
 
-    // User switched tab while fetching — don't overwrite their current tab
     if (renderTabRanking._token !== renderToken) return;
 
-    const myId   = window.currentUser?.id;
-    const now    = Date.now();
+    const myId = window.currentUser?.id;
+    const now  = Date.now();
     const ONLINE_MS = 5 * 60 * 1000;
 
-    // Inject own row if not in top 50 (using exact table column names)
     const myInList = rows.some(r => r.user_id === myId);
     if (!myInList && myId) {
         rows.push({
@@ -80,47 +75,64 @@ async function renderTabRanking() {
     const rankIcon = myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : myRank > 0 ? `#${myRank}` : '—';
     const isTop3  = myRank > 0 && myRank <= 3;
 
-    // Top-3 bonus banner
-    const bonusBanner = isTop3 ? `<div class="ds-card ds-card--gold" style="margin-bottom:20px">
-        <div class="ds-eyebrow" style="color:var(--gold);margin-bottom:8px">✨ Bonus Attivo — Top ${myRank}</div>
+    function _kpi(label, val, color) {
+        const c = color === 'gold' ? '#d4af37' : color === 'green' ? '#3fb950' : color === 'blue' ? '#58a6ff' : '#e6edf3';
+        return `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${label}</div>
+            <div style="font-size:16px;font-weight:700;color:${c};font-family:monospace">${val}</div>
+        </div>`;
+    }
+
+    const bonusBanner = isTop3 ? `
+    <div style="background:#161b22;border:1px solid #b8962b;border-radius:6px;padding:12px 16px;margin-bottom:16px">
+        <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Bonus Attivo — Top ${myRank}</div>
         <div style="display:flex;gap:16px;flex-wrap:wrap">
-            <span style="font-size:11px;color:var(--text-muted)">🚘 Corse Ultra-Luxury sbloccate</span>
-            <span style="font-size:11px;color:var(--text-muted)">🛡 Premi assicurativi −15%</span>
-            <span style="font-size:11px;color:var(--text-muted)">📍 POI esclusivi visibili</span>
+            <span style="font-size:10px;color:#6b7280">Corse Ultra-Luxury sbloccate</span>
+            <span style="font-size:10px;color:#6b7280">Premi assicurativi −15%</span>
+            <span style="font-size:10px;color:#6b7280">POI esclusivi visibili</span>
         </div>
     </div>` : '';
 
-    // Error banner
-    const errBanner = fetchError ? `<div class="ds-card ds-card--alert" style="margin-bottom:16px">
-        <span style="font-size:11px;color:var(--red)">⚠ ${fetchError}</span>
+    const errBanner = fetchError ? `
+    <div style="background:#161b22;border:1px solid #3d1a1a;border-radius:6px;padding:10px 14px;margin-bottom:12px">
+        <span style="font-size:10px;color:#f85149">⚠ ${fetchError}</span>
     </div>` : '';
 
-    let html = DS.header({
-        eyebrow: 'MULTIPLAYER · LIVE',
-        title:   'Classifica Globale',
-        subtitle:`${total} aziende attive · Aggiornato adesso`,
-        actions: DS.btn({ label:'⟳ Aggiorna', color:'ghost', onclick:'renderTabRanking()', size:'sm' }),
-    }) + DS.kpiStrip([
-        { label:'La Tua Posizione', val: rankIcon,                                          color: isTop3 ? 'gold' : '' },
-        { label:'Patrimonio',       val: '€' + Math.floor(myRow?.liquid_assets||gameState.cash||0).toLocaleString('it-IT'), color:'green' },
-        { label:'Reputazione',      val: '★' + Number(myRow?.reputation||gameState.reputation||0).toFixed(1), color:'blue' },
-        { label:'Aziende Globali',  val: total },
-    ]) + errBanner + bonusBanner;
+    let html = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 0 16px">
+        <div>
+            <div style="font-size:9px;color:#6b7280;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-bottom:2px">Classifica Globale</div>
+            <div style="font-size:11px;color:#6b7280">${total} aziende attive · Aggiornato adesso</div>
+        </div>
+        <button onclick="renderTabRanking()" style="background:#161b22;border:1px solid #21262d;border-radius:4px;padding:5px 12px;color:#8b949e;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        ${_kpi('La Tua Posizione', rankIcon, isTop3 ? 'gold' : '')}
+        ${_kpi('Patrimonio', '€' + Math.floor(myRow?.liquid_assets||gameState.cash||0).toLocaleString('it-IT'), 'green')}
+        ${_kpi('Reputazione', '★' + Number(myRow?.reputation||gameState.reputation||0).toFixed(1), 'blue')}
+        ${_kpi('Aziende Globali', total, '')}
+    </div>
+    ${errBanner}${bonusBanner}`;
 
-    // ── Leaderboard table ────────────────────────────────────────
     if (rows.length === 0) {
-        html += DS.empty({ icon:'🏆', title:'Classifica vuota', body:'Completa una corsa per comparire nella classifica globale.' });
+        html += `<div style="text-align:center;padding:40px;background:#161b22;border:1px solid #21262d;border-radius:6px">
+            <div style="font-size:32px;margin-bottom:8px">🏆</div>
+            <div style="font-size:12px;font-weight:700;color:#e6edf3;margin-bottom:4px">Classifica vuota</div>
+            <div style="font-size:10px;color:#6b7280">Completa una corsa per comparire nella classifica globale.</div>
+        </div>`;
     } else {
-        html += `<div class="ds-table-wrap">
-        <table class="ds-table">
-            <thead><tr>
-                <th style="width:50px">#</th>
-                <th>Azienda</th>
-                <th class="col-right">Patrimonio</th>
-                <th class="col-center">⭐ Rep</th>
-                <th class="col-center">🚘</th>
-                <th class="col-center">Status</th>
-            </tr></thead>
+        html += `<table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+            <thead>
+                <tr style="border-bottom:1px solid #21262d">
+                    <th style="width:44px;text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">#</th>
+                    <th style="text-align:left;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Azienda</th>
+                    <th style="text-align:right;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Patrimonio</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Rep</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Flotta</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Status</th>
+                </tr>
+            </thead>
             <tbody>`;
         rows.forEach((r, i) => {
             const pos    = i + 1;
@@ -128,44 +140,49 @@ async function renderTabRanking() {
             const tsMs   = r.last_active ? new Date(r.last_active).getTime() : 0;
             const online = tsMs && (now - tsMs) < ONLINE_MS;
             const medal  = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
-            const rowStyle = isMe ? 'background:rgba(212,175,55,0.07);' : '';
-            const nameColor = isMe ? 'color:var(--gold);' : '';
-            const onlineDot = online ? `<span style="display:inline-block;width:6px;height:6px;background:var(--green);border-radius:50%;margin-left:6px;box-shadow:var(--glow-green)"></span>` : '';
-            html += `<tr style="${rowStyle}">
-                <td style="text-align:center;font-size:${pos<=3?'18':'12'}px">${medal}</td>
-                <td>
-                    <div style="font-weight:700;${nameColor}font-size:11px">${r.company_name || 'Chauffeur Empire'}${isMe?`<span style="font-size:9px;color:var(--gold);margin-left:6px">(Tu)</span>`:''}${onlineDot}</div>
+            const rowBg  = isMe ? 'background:rgba(212,175,55,0.06);' : '';
+            const nameclr = isMe ? '#d4af37' : '#e6edf3';
+            html += `<tr style="border-bottom:1px solid #21262d;${rowBg}">
+                <td style="text-align:center;padding:8px;font-size:${pos<=3?'16':'11'}px;color:#8b949e">${medal}</td>
+                <td style="padding:8px">
+                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${r.company_name || 'Chauffeur Empire'}</span>
+                    ${isMe ? `<span style="font-size:9px;color:#d4af37;margin-left:6px">(Tu)</span>` : ''}
+                    ${online ? `<span style="display:inline-block;width:5px;height:5px;background:#3fb950;border-radius:50%;margin-left:5px;vertical-align:middle"></span>` : ''}
                 </td>
-                <td class="col-right" style="font-family:var(--font-mono);font-weight:700;color:var(--blue)">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
-                <td class="col-center" style="font-family:var(--font-mono)">${Number(r.reputation||0).toFixed(1)}</td>
-                <td class="col-center" style="color:var(--text-muted)">${r.fleet_count||0}</td>
-                <td class="col-center">${online ? `<span class="ds-pill ds-pill--green">ONLINE</span>` : `<span style="font-size:9px;color:var(--text-dim)">—</span>`}</td>
+                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:700;font-size:11px;color:#58a6ff">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
+                <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:#8b949e">${Number(r.reputation||0).toFixed(1)}</td>
+                <td style="text-align:center;padding:8px;font-size:11px;color:#6b7280">${r.fleet_count||0}</td>
+                <td style="text-align:center;padding:8px">
+                    ${online
+                        ? `<span style="font-size:9px;color:#3fb950;border:1px solid #1a3a20;background:#0d2016;border-radius:3px;padding:2px 6px">ONLINE</span>`
+                        : `<span style="font-size:9px;color:#404040">—</span>`}
+                </td>
             </tr>`;
         });
-        html += `</tbody></table></div>`;
+        html += `</tbody></table>`;
     }
 
-    // ── Guerra dei Prezzi ────────────────────────────────────────
+    // Guerra dei Prezzi
     const activePricewars = gameState.pricewars || [];
     const unlockedRegionIds = (gameState.unlockedRegions||[]).filter(id => REGIONS[id]);
-    html += `<div class="ds-eyebrow" style="margin:24px 0 12px">⚔️ Guerra dei Prezzi</div>`;
+    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">⚔ Guerra dei Prezzi</div>`;
     activePricewars.forEach(pw => {
         const rname = REGIONS[pw.regionId]?.name || pw.regionId;
         const isMono = !!pw.monopolyEndsDay;
-        html += `<div class="ds-card ds-card--${isMono?'gold':'alert'}" style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        html += `<div style="background:#161b22;border:1px solid ${isMono?'#b8962b':'#3d1a1a'};border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div style="font-size:11px;font-weight:700;color:${isMono?'var(--gold)':'var(--red)'}">${isMono?'👑 MONOPOLIO':'⚔️ Guerra'}: ${rname}</div>
-                <div style="font-size:9px;color:var(--text-muted)">${isMono?`Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)`:`Fine giorno ${pw.endsDay} (−30% prezzi)`}</div>
+                <div style="font-size:11px;font-weight:700;color:${isMono?'#d4af37':'#f85149'}">${isMono?'MONOPOLIO':'Guerra'}: ${rname}</div>
+                <div style="font-size:9px;color:#6b7280">${isMono?`Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)`:`Fine giorno ${pw.endsDay} (−30% prezzi)`}</div>
             </div>
-            ${DS.pill(isMono?'+40%':'−30%', isMono?'gold':'red')}
+            <span style="font-size:9px;font-weight:700;color:${isMono?'#d4af37':'#f85149'};border:1px solid ${isMono?'#b8962b':'#3d1a1a'};border-radius:3px;padding:2px 8px">${isMono?'+40%':'−30%'}</span>
         </div>`;
     });
 
     if (unlockedRegionIds.length > 0) {
-        html += `<div class="ds-card" style="margin-bottom:16px">
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:10px">Attacca una regione: −30% tariffe ai rivali per 3 giorni. Se crollano → <strong style="color:var(--gold)">Monopolio +40% per 7 giorni</strong></div>
+        html += `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 14px;margin-bottom:16px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:10px">Attacca una regione: −30% tariffe ai rivali per 3 giorni. Se crollano → <strong style="color:#d4af37">Monopolio +40% per 7 giorni</strong></div>
             <div style="display:flex;gap:8px;align-items:center">
-                <select id="attack-region-select" style="flex:1;font-size:11px;background:rgba(0,0,0,0.5);border:1px solid var(--border-sub);border-radius:6px;padding:6px 10px;color:var(--text);font-family:var(--font-mono)">
+                <select id="attack-region-select" style="flex:1;font-size:11px;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;color:#e6edf3;font-family:monospace">
                     ${unlockedRegionIds.map(id => {
                         const r = REGIONS[id];
                         const atWar = activePricewars.some(pw => pw.regionId === id);
@@ -173,34 +190,35 @@ async function renderTabRanking() {
                         return `<option value="${id}" ${atWar?'disabled':''}>${r.name}${atWar?' (guerra)':''} — €${warCost.toLocaleString()}</option>`;
                     }).join('')}
                 </select>
-                ${DS.btn({ label:'⚔️ Attacca', color:'red', onclick:"attackTerritory(document.getElementById('attack-region-select').value)" })}
+                <button onclick="attackTerritory(document.getElementById('attack-region-select').value)"
+                    style="background:#2d0d0d;border:1px solid #8b2020;border-radius:4px;padding:5px 12px;color:#f85149;font-size:10px;cursor:pointer;white-space:nowrap">⚔ Attacca</button>
             </div>
         </div>`;
     }
 
-    // ── Obiettivi ────────────────────────────────────────────────
+    // Achievements
     if (typeof ACHIEVEMENTS !== 'undefined' && ACHIEVEMENTS.length > 0) {
         const earned = gameState.achievements || [];
-        html += `<div class="ds-eyebrow" style="margin:24px 0 12px">🏅 Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</div>
-        <div class="ds-grid-4">`;
+        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:24px 0 12px">Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px">`;
         ACHIEVEMENTS.forEach(ach => {
             const done = earned.includes(ach.id);
-            html += `<div class="ds-card" style="text-align:center;padding:12px;${!done?'opacity:0.35':''}${done?'border-color:var(--gold-border)':''}">
-                <div style="font-size:24px;margin-bottom:6px">${ach.icon}</div>
-                <div style="font-size:9px;font-weight:700;color:${done?'var(--gold)':'var(--text-muted)'}">${ach.name}</div>
-                <div style="font-size:8px;color:var(--text-dim);margin-top:3px">${ach.desc}</div>
+            html += `<div style="background:#161b22;border:1px solid ${done?'#b8962b':'#21262d'};border-radius:6px;padding:12px;text-align:center;opacity:${done?1:0.35}">
+                <div style="font-size:22px;margin-bottom:6px">${ach.icon}</div>
+                <div style="font-size:9px;font-weight:700;color:${done?'#d4af37':'#6b7280'}">${ach.name}</div>
+                <div style="font-size:8px;color:#404040;margin-top:3px">${ach.desc}</div>
             </div>`;
         });
         html += `</div>`;
     }
 
-    // ── New Game+ ────────────────────────────────────────────────
+    // New Game+
     if (gameState.reputation >= 4.5) {
-        html += `<div class="ds-card" style="margin-top:20px;text-align:center;border-color:rgba(168,85,247,0.4);background:rgba(168,85,247,0.05)">
-            <div style="font-size:32px;margin-bottom:10px">♾️</div>
-            <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:6px;font-family:var(--font-display)">NEW GAME+ DISPONIBILE</div>
-            <div style="font-size:11px;color:var(--text-muted);margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
-            ${DS.btn({ label:'Inizia New Game+', color:'blue', onclick:'newGamePlus()' })}
+        html += `<div style="background:#161b22;border:1px solid rgba(168,85,247,0.4);border-radius:6px;padding:20px;text-align:center;margin-top:16px">
+            <div style="font-size:28px;margin-bottom:10px">♾</div>
+            <div style="font-size:12px;font-weight:700;color:#a855f7;margin-bottom:6px">NEW GAME+ DISPONIBILE</div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
+            <button onclick="newGamePlus()" style="background:#1a0d2e;border:1px solid #7c3aed;border-radius:4px;padding:7px 20px;color:#a855f7;font-size:10px;cursor:pointer">Inizia New Game+</button>
         </div>`;
     }
 
@@ -208,7 +226,5 @@ async function renderTabRanking() {
     container.innerHTML = html;
     const _regionSel = document.getElementById('attack-region-select');
     if (_regionSel && _savedRegion) _regionSel.value = _savedRegion;
-}/* ================================================================
-   dispatcher.js — RECOVERY PARTE 3: MERCATI, STAFF & EMAIL
-   ================================================================ */
+}
 window.renderTabRanking = renderTabRanking;

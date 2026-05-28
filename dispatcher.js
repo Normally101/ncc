@@ -204,7 +204,7 @@ window.switchTab = function(tab) {
         case 'finance':  title.innerText = "$WALL-ST · Finance"; _safeRender(renderTabFinance); break;
         case 'lifestyle': title.innerText = "Lifestyle & Empire"; _safeRender(renderTabLifestyle); break;
         case 'politics': title.innerText = "Politica & Lobbying"; _safeRender(renderTabPolitics); break;
-        case 'career':   title.innerText = "Missioni & Carriera"; _safeRender(renderTabCareer); break;
+        case 'career':   title.innerText = "Missioni & Carriera"; window._careerPrevTab = _prevTab; _safeRender(renderTabCareer); break;
         case 'store':    title.innerText = "💎 Executive Club"; _safeRender(renderTabPremiumStore); break;
         case 'market':   title.innerText = "🚗 Mercato Auto"; _safeRender(renderTabMarket); break;
         case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;

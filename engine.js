@@ -283,6 +283,7 @@ let gameState = {
     companyIPO: null,        // { listed, listedDay, sharesTotal, sharePrice, npcSharesOwned, dividendsPaid }
     // ── SISTEMA QUEST & DRIVER COINS ─────────────────────────────
     driverCoins:     50,
+    vtkBalance:      0,
     questStats:      { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
     constructions:   [],   // [{ invId, startDay, buildDays, completesDay }]
     claimableQuests: [],
@@ -563,6 +564,7 @@ function loadGame() {
         if (save.hq.region === undefined) save.hq.region = null;
         // Quest & Driver Coins
         if (save.driverCoins     === undefined) save.driverCoins     = save.titanCoins ?? 50;
+        if (save.vtkBalance      === undefined) save.vtkBalance      = 0;
         delete save.titanCoins;
         if (!save.questStats)    save.questStats    = { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 };
         if (!save.constructions)   save.constructions   = [];
@@ -1684,7 +1686,7 @@ window.newGamePlus = function() {
         lifestyleAssets: [], creditScore: 300,
         totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
         pricewars: [], shadowMissionsTotal: 0, ventureCapital: [], annualProfitTracker: 0,
-        driverCoins: 50, npcMarket: [],
+        driverCoins: 50, vtkBalance: 0, npcMarket: [],
         questStats: { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
         loginStreak: 0, lastDailyClaim: null,
         weeklyEarnings: 0, weeklyRides: 0, weekStartDay: 1,
@@ -1750,7 +1752,7 @@ window.sellCompanyNGP = function() {
         companyLogo: gameState.companyLogo || '👁️',
         companyColor: gameState.companyColor || '#d4af37',
         fuelTankLevel: 1, ventureCapital: [], annualProfitTracker: 0,
-        driverCoins: 50, npcMarket: [],
+        driverCoins: 50, vtkBalance: 0, npcMarket: [],
         questStats: { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 },
         loginStreak: 0, lastDailyClaim: null,
         weeklyEarnings: 0, weeklyRides: 0, weekStartDay: 1,
@@ -1870,6 +1872,9 @@ function updateUI() {
     // Driver Coins balance chip
     const elTC = document.getElementById('tb-tc');
     if (elTC) elTC.innerText = (gameState.driverCoins || 0);
+    // VTK balance chip
+    const elVTK = document.getElementById('tb-vtk');
+    if (elVTK) elVTK.innerText = (gameState.vtkBalance || 0);
 
     // Career dot (claimable quests)
     const careerDot = document.getElementById('career-dot');

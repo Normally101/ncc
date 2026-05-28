@@ -1,73 +1,201 @@
 'use strict';
-/* ui-career.js — Chauffeur Empire
-   renderTabCareer: quest journal cinematico.
-   Mostra solo missioni sbloccate e completate — mai quelle locked. */
+/* ui-career.js — Chauffeur Empire · Missioni (modal overlay) */
 
-/* ── Costanti UI ──────────────────────────────────────────── */
+/* ── Constants ──────────────────────────────────────────────── */
 const _CH_NAMES = {
-    1: '🎓 Il Battesimo del Fuoco',
-    2: '📦 Volume I — La Prima Ombra',
-    3: '🏢 Volume II — Le Ombre · Il Dominio',
-    4: '⚡ Volume III — L\'Energia',
-    5: '👑 Volume IV — Il Potere Assoluto',
-    6: '🌍 Volume V — L\'Impero Continentale',
-    7: '⚔️ Volume VI — La Guerra delle Ombre',
-    8: '🌑 Volume VII — Il Giudizio Finale',
-    9: '🌋 Volume Finale — L\'Apocalisse',
+    1: 'Il Battesimo del Fuoco',
+    2: 'Volume I — La Prima Ombra',
+    3: 'Volume II — Le Ombre · Il Dominio',
+    4: 'Volume III — L\'Energia',
+    5: 'Volume IV — Il Potere Assoluto',
+    6: 'Volume V — L\'Impero Continentale',
+    7: 'Volume VI — La Guerra delle Ombre',
+    8: 'Volume VII — Il Giudizio Finale',
+    9: 'Volume Finale — L\'Apocalisse',
 };
 
 const _TIER_COLOR = {
     bronze: '#cd7f32', silver: '#b0b8c4', gold: '#d4af37',
     diamond: '#7ec8e3', legendary: '#ff6b35',
 };
-const _TIER_GRAD = {
-    bronze:   'linear-gradient(135deg,#2a1608 0%,#12121e 100%)',
-    silver:   'linear-gradient(135deg,#141c28 0%,#0e0e1c 100%)',
-    gold:     'linear-gradient(135deg,#1e1600 0%,#0e0e1c 100%)',
-    diamond:  'linear-gradient(135deg,#051828 0%,#0e0e1c 100%)',
-    legendary:'linear-gradient(135deg,#1f0800 0%,#0e0e1c 100%)',
-};
-const _TYPE_LABEL = { tutorial: 'Tutorial', story: 'Storia', raid: '⚔️ Raid Boss', milestone: 'Traguardo' };
 
-function _isUnlocked(q, completed) {
+const _TYPE_LABEL = { tutorial: 'Tutorial', story: 'Storia', raid: 'Raid Boss', milestone: 'Traguardo' };
+
+/* ── CSS injected once ──────────────────────────────────────── */
+(function _injectCareerCSS() {
+    if (document.getElementById('career-modal-css')) return;
+    const s = document.createElement('style');
+    s.id = 'career-modal-css';
+    s.textContent = `
+#career-modal-overlay {
+    position:fixed;inset:0;background:rgba(7,9,15,0.82);
+    z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px;
+}
+#career-modal-wrap { position:relative;width:100%;max-width:820px;max-height:90vh;display:flex;flex-direction:column; }
+#career-modal-close {
+    position:absolute;top:-8px;right:-8px;z-index:1;
+    width:24px;height:24px;background:#21262d;border:1px solid #30363d;
+    color:#6b7280;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+}
+#career-modal-close:hover { background:#30363d;color:#c9d1d9; }
+#career-modal {
+    background:#161b22;border:1px solid #21262d;border-top:2px solid #b8962b;
+    display:grid;grid-template-columns:1fr 240px;max-height:90vh;overflow:hidden;
+}
+.cm-main { display:flex;flex-direction:column;overflow:hidden;min-width:0; }
+.cm-head {
+    padding:14px 16px 12px;border-bottom:1px solid #21262d;background:#0d1117;flex-shrink:0;
+}
+.cm-breadcrumb { font-size:8px;font-family:monospace;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px; }
+.cm-breadcrumb .gold { color:#d4af37; }
+.cm-title { font-size:15px;font-weight:700;color:#e6edf3;margin-bottom:5px; }
+.cm-giver { display:flex;align-items:center;gap:8px;font-size:10px;color:#6b7280; }
+.cm-giver-badge { font-size:9px;font-family:monospace;background:#2a2210;border:1px solid #b8962b;color:#d4af37;padding:1px 8px; }
+.cm-timeline {
+    display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #21262d;
+    background:#0d1117;gap:0;overflow-x:auto;flex-shrink:0;
+}
+.cm-tl-node {
+    width:22px;height:22px;border:1px solid;display:flex;align-items:center;justify-content:center;
+    font-size:8px;font-family:monospace;font-weight:700;flex-shrink:0;position:relative;cursor:default;
+}
+.cm-tl-node.done   { border-color:#3d5a3e;background:#1a2e1a;color:#4b8b4f; }
+.cm-tl-node.active { border-color:#b8962b;background:#2a2210;color:#d4af37; }
+.cm-tl-node.locked { border-color:#21262d;background:#0d1117;color:#30363d; }
+.cm-tl-label {
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:#161b22;
+    border:1px solid #30363d;padding:2px 6px;font-size:8px;white-space:nowrap;color:#8b949e;
+    pointer-events:none;display:none;z-index:10;font-family:monospace;
+}
+.cm-tl-node:hover .cm-tl-label { display:block; }
+.cm-tl-line { flex:1;height:1px;background:#21262d;min-width:10px; }
+.cm-tl-line.done { background:#3d5a3e; }
+.cm-tl-next { font-size:8px;font-family:monospace;color:#30363d;margin-left:10px;white-space:nowrap;flex-shrink:0; }
+.cm-status {
+    display:flex;align-items:center;gap:12px;padding:7px 16px;border-bottom:1px solid #21262d;
+    background:#0d1117;flex-shrink:0;
+}
+.cm-status-badge {
+    font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;
+    padding:2px 8px;border:1px solid #b8962b;color:#d4af37;background:#2a2210;
+}
+.cm-status-badge.claim { border-color:#3d5a3e;color:#4b8b4f;background:#1a2e1a; }
+.cm-status-sub { font-size:9px;color:#6b7280;font-family:monospace; }
+.cm-lore {
+    padding:12px 16px;border-bottom:1px solid #21262d;border-left:3px solid #b8962b;
+    font-size:11px;color:#8b949e;line-height:1.6;font-style:italic;background:#0d1117;flex-shrink:0;
+}
+.cm-objectives { flex:1;overflow-y:auto; }
+.cm-obj-table { width:100%;border-collapse:collapse; }
+.cm-obj-table thead tr { background:#0d1117; }
+.cm-obj-table thead th {
+    padding:7px 16px;font-size:8px;font-family:monospace;text-transform:uppercase;
+    letter-spacing:1px;color:#6b7280;text-align:left;font-weight:600;border-bottom:1px solid #21262d;
+}
+.cm-obj-table thead th:last-child { text-align:right; }
+.cm-obj-table tbody tr { border-bottom:1px solid #161b22; }
+.cm-obj-table tbody tr:hover { background:rgba(255,255,255,0.02); }
+.cm-obj-table tbody td { padding:9px 16px;font-size:10px;color:#8b949e;vertical-align:middle; }
+.cm-obj-status { font-size:8px;font-family:monospace;font-weight:700;white-space:nowrap; }
+.cm-obj-status.done  { color:#4b8b4f; }
+.cm-obj-status.prog  { color:#d4af37; }
+.cm-obj-status.open  { color:#30363d; }
+.cm-mbar-wrap { display:flex;align-items:center;gap:8px; }
+.cm-mbar-bg { width:70px;height:3px;background:#21262d;overflow:hidden;flex-shrink:0; }
+.cm-mbar-fill { height:100%; }
+.cm-mbar-val { font-size:9px;font-family:monospace;color:#6b7280;white-space:nowrap; }
+.cm-howto { font-size:9px;color:#6b7280;line-height:1.5;margin-top:4px; }
+.cm-reward {
+    padding:10px 16px;border-top:1px solid #21262d;background:#0d1117;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;
+}
+.cm-rlabel { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-right:4px; }
+.cm-chip { font-size:9px;font-family:monospace;padding:3px 10px;border:1px solid #30363d;color:#8b949e;background:#161b22; }
+.cm-chip.gold  { border-color:#b8962b;color:#d4af37;background:#2a2210; }
+.cm-chip.green { border-color:#3d5a3e;color:#4b8b4f;background:#1a2e1a; }
+.cm-chip.vtk   { border-color:#4b5a8b;color:#7b9fe0;background:#151c2e; }
+.cm-btn {
+    margin-left:auto;padding:6px 18px;background:#2a2210;border:1px solid #b8962b;
+    color:#d4af37;font-size:9px;font-family:monospace;font-weight:700;text-transform:uppercase;
+    letter-spacing:1px;cursor:pointer;
+}
+.cm-btn:hover { background:#352c15; }
+.cm-btn.claim { background:#1a2e1a;border-color:#3d5a3e;color:#4b8b4f; }
+.cm-btn.claim:hover { background:#223c22; }
+.cm-sidebar { border-left:1px solid #21262d;display:flex;flex-direction:column;background:#0d1117;overflow-y:auto; }
+.cm-side-head {
+    padding:8px 12px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;
+    align-items:center;font-size:8px;font-family:monospace;text-transform:uppercase;
+    letter-spacing:1px;color:#6b7280;flex-shrink:0;background:#0d1117;
+}
+.cm-side-head .gold { color:#d4af37; }
+.cm-node-row { display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #21262d;cursor:default; }
+.cm-node-row.active-row { background:#1a1d23;border-left:2px solid #d4af37;padding-left:10px; }
+.cm-node-num {
+    width:18px;height:18px;border:1px solid;display:flex;align-items:center;justify-content:center;
+    font-size:8px;font-family:monospace;font-weight:700;flex-shrink:0;
+}
+.cm-node-num.done   { border-color:#3d5a3e;color:#4b8b4f;background:#1a2e1a; }
+.cm-node-num.active { border-color:#b8962b;color:#d4af37;background:#2a2210; }
+.cm-node-num.locked { border-color:#21262d;color:#30363d;background:#0d1117; }
+.cm-node-name { font-size:10px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.cm-node-name.done   { color:#3d4450; }
+.cm-node-name.active { color:#c9d1d9;font-weight:600; }
+.cm-node-name.locked { color:#30363d; }
+.cm-node-tag { font-size:8px;font-family:monospace;flex-shrink:0; }
+.cm-node-tag.ic { border:1px solid #b8962b;color:#d4af37;padding:1px 5px; }
+.cm-node-tag.lock { color:#21262d; }
+.cm-node-tag.date { color:#3d4450; }
+.cm-dots { padding:8px 12px;font-size:10px;color:#21262d;letter-spacing:4px; }
+.cm-arch-section { border-top:1px solid #21262d;flex-shrink:0; }
+.cm-arch-row { display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid #21262d; }
+.cm-arch-name { font-size:9px;color:#3d4450; }
+.cm-arch-date { font-size:8px;font-family:monospace;color:#30363d; }
+.cm-miles-section { padding:12px 16px;border-top:1px solid #21262d;flex-shrink:0; }
+.cm-miles-label { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:8px; }
+.cm-mile-row { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #21262d; }
+.cm-mile-icon { font-size:14px;flex-shrink:0; }
+.cm-mile-name { font-size:10px;color:#8b949e;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.cm-mile-bar-bg { width:50px;height:3px;background:#21262d;overflow:hidden;flex-shrink:0; }
+.cm-mile-bar-fill { height:100%; }
+.cm-mile-val { font-size:8px;font-family:monospace;color:#6b7280;white-space:nowrap;flex-shrink:0; }
+.cm-empty { text-align:center;padding:48px 20px;color:#6b7280;font-size:11px; }
+    `;
+    document.head.appendChild(s);
+})();
+
+/* ── Helpers ────────────────────────────────────────────────── */
+function _carIsUnlocked(q, completed) {
     return (q.prereqs || []).every(id => completed.includes(id));
 }
 
-function _rewardLine(r) {
+function _carRewardLine(r) {
     const parts = [
-        r.cash       ? `💰 €${r.cash.toLocaleString('it')}` : null,
-        r.tc         ? `🪙 +${r.tc} TC` : null,
-        r.rep        ? `⭐ +${r.rep}★` : null,
-        r.shadowCoin ? `👁️ +${r.shadowCoin.toLocaleString('it')} SC` : null,
-        r.unlock     ? `🔓 ${r.unlock}` : null,
-        r.title      ? `🏅 "${r.title}"` : null,
+        r.cash       ? `+€${r.cash.toLocaleString('it')}` : null,
+        r.vtk        ? `+${r.vtk} VTK` : null,
+        r.tc         ? `+${r.tc} DC` : null,
+        r.rep        ? `+${r.rep}★` : null,
+        r.shadowCoin ? `+${r.shadowCoin.toLocaleString('it')} SC` : null,
+        r.unlock     ? r.unlock : null,
+        r.title      ? `"${r.title}"` : null,
     ].filter(Boolean);
     return parts.length ? parts.join('  ·  ') : (r.desc || '—');
 }
 
-/* ── Main render ──────────────────────────────────────────── */
-function renderTabCareer() {
-    const container = document.getElementById('tab-container');
-    if (!window.QUEST_DB) {
-        container.innerHTML = `<div style="color:rgba(255,255,255,0.3);font-size:10px;text-align:center;margin-top:40px">Sistema missioni non caricato.</div>`;
-        return;
-    }
-
-    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
-
+function _carGetData() {
     const gs        = gameState;
-    const completed = gs.completedQuests || [];
-    const claimable = gs.claimableQuests || [];
+    const completed = gs.completedQuests  || [];
+    const claimable = gs.claimableQuests  || [];
+    const db        = window.QUEST_DB     || [];
 
-    // Classify all quests
     const storyTypes = ['tutorial', 'story', 'raid'];
-    let activeStory     = null; // first unlocked story/raid/tutorial quest
-    const activeMiles   = [];   // all unlocked milestones not yet completed
-    const claimMiles    = [];   // claimable milestones
+    let   activeStory = null;
+    const activeMiles = [];
+    const claimMiles  = [];
 
-    for (const q of window.QUEST_DB) {
+    for (const q of db) {
         if (completed.includes(q.id)) continue;
-        if (!_isUnlocked(q, completed)) continue;
+        if (!_carIsUnlocked(q, completed)) continue;
         if (storyTypes.includes(q.type)) {
             if (!activeStory) activeStory = q;
         } else if (q.type === 'milestone') {
@@ -76,238 +204,321 @@ function renderTabCareer() {
         }
     }
 
-    // Completed quests grouped by chapter (story only for archive)
     const completedByChapter = {};
-    for (const q of window.QUEST_DB) {
+    for (const q of db) {
         if (!completed.includes(q.id)) continue;
-        const ch = q.ch;
-        if (!completedByChapter[ch]) completedByChapter[ch] = [];
-        completedByChapter[ch].push(q);
+        if (!completedByChapter[q.ch]) completedByChapter[q.ch] = [];
+        completedByChapter[q.ch].push(q);
     }
 
     const totalCompleted = completed.length;
-    const currentCh      = activeStory ? activeStory.ch : (totalCompleted > 0 ? Math.max(...window.QUEST_DB.filter(q => completed.includes(q.id)).map(q => q.ch)) : 1);
+    const currentCh      = activeStory
+        ? activeStory.ch
+        : (totalCompleted > 0 ? Math.max(...db.filter(q => completed.includes(q.id)).map(q => q.ch)) : 1);
     const chName         = _CH_NAMES[currentCh] || `Capitolo ${currentCh}`;
+    const chQuests       = db.filter(q => q.ch === currentCh && storyTypes.includes(q.type));
 
-    let html = '';
+    return { gs, completed, claimable, activeStory, activeMiles, claimMiles,
+             completedByChapter, totalCompleted, currentCh, chName, chQuests };
+}
 
-    // ── HEADER ──────────────────────────────────────────────
-    html += `
-    <div style="background:linear-gradient(135deg,#0a0c16,#111828);border-bottom:1px solid rgba(212,175,55,0.12);padding:18px 20px 14px;position:sticky;top:0;z-index:10">
-        <div style="display:flex;align-items:flex-end;justify-content:space-between">
-            <div>
-                <div style="font-size:8px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:3px">Percorso Corrente</div>
-                <div style="font-size:13px;font-weight:800;color:#d4af37;font-family:'Orbitron',monospace;line-height:1.1">${chName}</div>
-            </div>
-            <div style="text-align:right">
-                <div style="font-size:22px;font-weight:900;color:white;line-height:1">${totalCompleted}</div>
-                <div style="font-size:8px;color:rgba(255,255,255,0.3)">missioni completate</div>
-            </div>
-        </div>
-        <div style="height:2px;background:rgba(255,255,255,0.06);border-radius:2px;margin-top:12px;overflow:hidden">
-            <div style="height:100%;background:linear-gradient(90deg,#d4af37,#cd7f32);border-radius:2px;width:${Math.round(totalCompleted / Math.max(1, window.QUEST_DB.length) * 100)}%;transition:width 0.6s ease"></div>
-        </div>
-    </div>
-    <div style="padding:16px">`;
+/* ── Build modal HTML ───────────────────────────────────────── */
+function _buildCareerModal() {
+    if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
+    const d = _carGetData();
+    const { gs, completed, claimable, activeStory, activeMiles, claimMiles,
+            completedByChapter, totalCompleted, currentCh, chName, chQuests } = d;
 
-    // ── CAMPAGNA COMPLETATA ──────────────────────────────────
+    /* timeline */
+    let tlHtml = '';
+    for (let i = 0; i < chQuests.length; i++) {
+        const q    = chQuests[i];
+        const isDone   = completed.includes(q.id);
+        const isActive = activeStory && q.id === activeStory.id;
+        const isLocked = !isDone && !isActive && !_carIsUnlocked(q, completed);
+        const cls  = isDone ? 'done' : isActive ? 'active' : isLocked ? 'locked' : 'locked';
+        const lbl  = isDone ? '✓' : String(i + 1);
+        if (i > 0) {
+            tlHtml += `<div class="cm-tl-line${isDone ? ' done' : ''}"></div>`;
+        }
+        tlHtml += `<div class="cm-tl-node ${cls}">${lbl}<div class="cm-tl-label">${q.title}</div></div>`;
+    }
+    // hint for next chapter
+    if (chQuests.length > 0) {
+        tlHtml += `<div class="cm-tl-next">→ Cap. ${currentCh + 1}</div>`;
+    }
+
+    /* active mission */
+    let mainHtml = '';
+
     if (!activeStory && activeMiles.length === 0 && claimMiles.length === 0) {
-        html += `
-        <div style="text-align:center;padding:60px 20px">
-            <div style="font-size:48px;margin-bottom:12px">🏆</div>
-            <div style="font-size:14px;font-weight:800;color:#d4af37;margin-bottom:6px">Campagna Completata.</div>
-            <div style="font-size:10px;color:rgba(255,255,255,0.35)">Hai dominato il mercato NCC italiano.</div>
+        mainHtml = `<div class="cm-empty">Campagna completata — hai dominato il mercato.</div>`;
+    } else {
+        /* claim banner for claimable story */
+        if (activeStory && claimable.includes(activeStory.id)) {
+            mainHtml += _buildClaimStory(activeStory);
+        } else if (activeStory) {
+            mainHtml += _buildActiveStory(activeStory, gs, claimable);
+        }
+        /* milestone claim banners */
+        if (claimMiles.length > 0) {
+            mainHtml += `<div style="border-top:1px solid #21262d">`;
+            for (const q of claimMiles) mainHtml += _buildClaimMile(q);
+            mainHtml += `</div>`;
+        }
+    }
+
+    /* active milestones footer */
+    if (activeMiles.length > 0) {
+        mainHtml += `
+        <div class="cm-miles-section">
+            <div class="cm-miles-label">Traguardi in Corso</div>
+            ${activeMiles.slice(0, 4).map(q => _buildMileRow(q, gs)).join('')}
+            ${activeMiles.length > 4 ? `<div style="font-size:9px;color:#374151;padding:6px 0">+${activeMiles.length - 4} altri…</div>` : ''}
         </div>`;
     }
 
-    // ── MISSIONI DA RISCATTARE (priorità assoluta) ───────────
-    if (activeStory && claimable.includes(activeStory.id)) {
-        html += _renderClaimBanner(activeStory);
-    }
-    if (claimMiles.length > 0) {
-        html += `<div style="margin-bottom:4px">`;
-        for (const q of claimMiles) html += _renderClaimBanner(q);
-        html += `</div>`;
-    }
+    /* sidebar node list */
+    let nodesHtml = chQuests.map((q, i) => {
+        const isDone   = completed.includes(q.id);
+        const isActive = activeStory && q.id === activeStory.id;
+        const isLocked = !isDone && !isActive;
+        const cls      = isDone ? 'done' : isActive ? 'active' : 'locked';
+        const numCls   = isDone ? 'done' : isActive ? 'active' : 'locked';
+        const num      = isDone ? '✓' : String(i + 1);
+        const rowCls   = isActive ? 'cm-node-row active-row' : 'cm-node-row';
+        const tag      = isDone
+            ? `<span class="cm-node-tag date">${_dayCompleted(q.id, gs)}</span>`
+            : isActive
+            ? `<span class="cm-node-tag ic">● attiva</span>`
+            : `<span class="cm-node-tag lock">🔒</span>`;
+        return `<div class="${rowCls}">
+            <div class="cm-node-num ${numCls}">${num}</div>
+            <div class="cm-node-name ${cls}">${q.title}</div>
+            ${tag}
+        </div>`;
+    }).join('') + `<div class="cm-dots">· · ·</div>`;
 
-    // ── MISSIONE ATTIVA (storia) ─────────────────────────────
-    if (activeStory && !claimable.includes(activeStory.id)) {
-        html += _renderActiveStory(activeStory, gs, claimable);
-    }
-
-    // ── TRAGUARDI ATTIVI ────────────────────────────────────
-    if (activeMiles.length > 0) {
-        html += `
-        <div style="margin-top:${activeStory ? 20 : 0}px">
-            <div style="font-size:8px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:10px">🏅 Traguardi in Corso</div>
-            <div style="display:flex;flex-direction:column;gap:8px">`;
-        for (const q of activeMiles.slice(0, 5)) {
-            html += _renderMilestoneCard(q, gs);
-        }
-        if (activeMiles.length > 5) {
-            html += `<div style="font-size:9px;color:rgba(255,255,255,0.25);text-align:center;padding:8px">+${activeMiles.length - 5} altri traguardi in corso</div>`;
-        }
-        html += `</div></div>`;
-    }
-
-    // ── ARCHIVIO COMPLETATE ──────────────────────────────────
-    const archiveChapters = Object.keys(completedByChapter).map(Number).sort((a, b) => b - a);
-    if (archiveChapters.length > 0) {
-        html += `
-        <div style="margin-top:28px;border-top:1px solid rgba(255,255,255,0.06);padding-top:20px">
-            <div style="font-size:8px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:0.14em;margin-bottom:14px">📚 Archivio Completate</div>`;
-        for (const ch of archiveChapters) {
-            const quests = completedByChapter[ch];
-            const chLabel = _CH_NAMES[ch] || `Capitolo ${ch}`;
-            html += `
-            <div style="margin-bottom:16px">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-                    <div style="font-size:9px;font-weight:700;color:rgba(255,255,255,0.45)">${chLabel}</div>
-                    <div style="font-size:8px;color:rgba(255,255,255,0.2);font-variant-numeric:tabular-nums">${quests.length} completate</div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:4px">`;
-            for (const q of quests) {
-                const tc = _TIER_COLOR[q.tier] || '#d4af37';
-                html += `
-                <div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:rgba(255,255,255,0.025);border-radius:7px;border-left:2px solid ${tc}40">
-                    <span style="font-size:14px;flex-shrink:0">${q.icon}</span>
-                    <div style="flex:1;min-width:0">
-                        <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.title}</div>
-                        <div style="font-size:8px;color:rgba(255,255,255,0.25)">${_rewardLine(q.rewards)}</div>
-                    </div>
-                    <span style="color:#22c55e;font-size:11px;flex-shrink:0">✓</span>
-                </div>`;
-            }
-            // Subtle "more" hint if this is the current chapter and there are locked quests ahead
-            if (ch === currentCh && activeStory) {
-                html += `<div style="text-align:center;padding:10px 0 2px;color:rgba(255,255,255,0.12);font-size:12px;letter-spacing:0.3em">· · ·</div>`;
-            }
-            html += `</div></div>`;
-        }
-        html += `</div>`;
+    /* sidebar archive */
+    const archChapters = Object.keys(completedByChapter).map(Number).sort((a, b) => b - a);
+    let archHtml = '';
+    if (archChapters.length > 0) {
+        archHtml = `<div class="cm-arch-section">
+            <div class="cm-side-head"><span>Archivio Completate</span><span class="gold">${totalCompleted}</span></div>
+            ${archChapters.map(ch => {
+                const cqs = completedByChapter[ch];
+                return cqs.map(q => `
+                    <div class="cm-arch-row">
+                        <div class="cm-arch-name">${q.title}</div>
+                        <div class="cm-arch-date">Cap.${ch}</div>
+                    </div>`).join('');
+            }).join('')}
+        </div>`;
     }
 
-    html += `</div>`; // close padding wrapper
-    container.innerHTML = html;
-}
-
-/* ── Card Builders ────────────────────────────────────────── */
-function _renderClaimBanner(q) {
-    const tc = _TIER_COLOR[q.tier] || '#d4af37';
     return `
-    <div style="background:linear-gradient(135deg,rgba(34,197,94,0.12),rgba(21,128,61,0.08));border:1px solid rgba(34,197,94,0.35);border-radius:12px;padding:14px 16px;margin-bottom:12px;animation:tut-pulse 2s ease-in-out infinite">
-        <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-size:22px">${q.icon}</span>
-            <div style="flex:1">
-                <div style="font-size:8px;color:#22c55e;text-transform:uppercase;letter-spacing:0.1em;font-weight:700;margin-bottom:2px">🎁 Ricompensa Disponibile</div>
-                <div style="font-size:12px;font-weight:800;color:white">${q.title}</div>
-                <div style="font-size:9px;color:rgba(255,255,255,0.5);margin-top:1px">${_rewardLine(q.rewards)}</div>
+    <div id="career-modal-wrap">
+        <div id="career-modal-close" onclick="window.closeCareerModal()">✕</div>
+        <div id="career-modal">
+            <!-- LEFT -->
+            <div class="cm-main">
+                <!-- Header -->
+                <div class="cm-head">
+                    <div class="cm-breadcrumb">Capitolo ${currentCh} &nbsp;›&nbsp; <span class="gold">${chName}</span></div>
+                    <div class="cm-title">${activeStory ? activeStory.title : 'Campagna Completata'}</div>
+                    <div class="cm-giver">
+                        ${activeStory?.giver ? `<div class="cm-giver-badge">${activeStory.giver.name}</div>${activeStory.giver.faction}` : ''}
+                    </div>
+                </div>
+                <!-- Timeline -->
+                <div class="cm-timeline">${tlHtml}</div>
+                <!-- Body -->
+                <div class="cm-objectives" id="cm-main-body">${mainHtml}</div>
             </div>
-            <button onclick="window.claimQuestReward('${q.id}')" style="padding:8px 16px;background:linear-gradient(135deg,#22c55e,#16a34a);border:none;border-radius:8px;color:white;font-size:10px;font-weight:800;cursor:pointer;white-space:nowrap;flex-shrink:0">RISCATTA</button>
+            <!-- RIGHT -->
+            <div class="cm-sidebar">
+                <div class="cm-side-head">
+                    <span>Capitolo ${currentCh}</span>
+                    <span class="gold">${chQuests.filter(q => completed.includes(q.id)).length} / ${chQuests.length}</span>
+                </div>
+                ${nodesHtml}
+                ${archHtml}
+            </div>
         </div>
     </div>`;
 }
 
-function _renderActiveStory(q, gs, claimable) {
-    const tc       = _TIER_COLOR[q.tier] || '#d4af37';
-    const tGrad    = _TIER_GRAD[q.tier]  || _TIER_GRAD.gold;
-    const isRaid   = q.type === 'raid';
-    const typeTag  = _TYPE_LABEL[q.type] || q.type;
+function _dayCompleted(qid, gs) {
+    // We don't track per-quest completion day, so just show checkmark
+    return 'fatto';
+}
 
+/* ── Sub-builders ───────────────────────────────────────────── */
+function _buildActiveStory(q, gs, claimable) {
+    const isClaim = claimable.includes(q.id);
+    const tc      = _TIER_COLOR[q.tier] || '#d4af37';
     let prog = { cur: 0, tgt: 1 };
     try { prog = q.check(gs); } catch(e) {}
     const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
-    const barColor = isRaid ? '#ff6b35' : tc;
-
-    const isClaim    = claimable.includes(q.id);
     const alreadyRun = !!(gs.questStats?.missionRuns?.[q.id]);
-    const canDispatch = q.type === 'story' || q.type === 'raid' || (q.type === 'tutorial' && ['t03','t05','t06'].includes(q.id));
+    const canDispatch = ['story','raid','tutorial'].includes(q.type) && ['t03','t05','t06'].includes(q.id);
     const showDispatch = canDispatch && !isClaim && !alreadyRun;
 
-    const giverHtml = q.giver ? `
-        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
-            <div style="width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:rgba(255,255,255,0.6);flex-shrink:0">${q.giver.name[0]}</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.4)">${q.giver.name} <span style="color:rgba(255,255,255,0.2)">·</span> ${q.giver.faction}</div>
-        </div>` : '';
+    const statusBadge = isClaim
+        ? `<div class="cm-status-badge claim">Completata — da riscuotere</div>`
+        : `<div class="cm-status-badge">${_TYPE_LABEL[q.type] || 'In Corso'}</div>`;
 
-    const ctaHtml = isClaim
-        ? `<button onclick="window.claimQuestReward('${q.id}')" style="width:100%;padding:10px;background:linear-gradient(90deg,#22c55e,#16a34a);border:none;border-radius:8px;color:white;font-size:11px;font-weight:800;cursor:pointer;margin-top:12px">🎁 Ritira Ricompensa</button>`
+    const btn = isClaim
+        ? `<button class="cm-btn claim" onclick="window.claimQuestReward('${q.id}')">Riscuoti Ricompensa →</button>`
         : showDispatch
-        ? `<button onclick="window.startMissionRun('${q.id}')" style="width:100%;padding:10px;background:${tc}22;border:1px solid ${tc}55;border-radius:8px;color:${tc};font-size:11px;font-weight:700;cursor:pointer;margin-top:12px">▶ Avvia Missione</button>`
+        ? `<button class="cm-btn" onclick="window.startMissionRun('${q.id}')">Avvia Missione →</button>`
         : '';
 
+    const rewardChips = _buildRewardChips(q.rewards);
+
     return `
-    <div style="border:1px solid ${isRaid ? 'rgba(255,107,53,0.35)' : 'rgba(255,255,255,0.08)'};border-radius:14px;overflow:hidden;box-shadow:0 4px 32px rgba(0,0,0,0.5)">
-
-        <!-- Hero banner -->
-        <div style="padding:20px 18px 16px;background:${tGrad}">
-            <div style="display:flex;align-items:flex-start;gap:12px">
-                <div style="font-size:36px;line-height:1;flex-shrink:0">${q.icon}</div>
-                <div style="flex:1;min-width:0">
-                    <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
-                        <span style="font-size:7px;text-transform:uppercase;letter-spacing:0.1em;padding:2px 7px;border-radius:3px;background:${tc}20;color:${tc};font-weight:700">${typeTag}</span>
-                    </div>
-                    <div style="font-size:16px;font-weight:900;color:${tc};line-height:1.1;font-family:'Orbitron',monospace">${q.title}</div>
-                    <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:3px">${q.subtitle || ''}</div>
-                </div>
-            </div>
-            ${giverHtml}
+        <div class="cm-status">
+            ${statusBadge}
+            <div class="cm-status-sub">${pct}% completato · ${prog.cur} / ${prog.tgt}</div>
         </div>
-
-        <!-- Lore -->
-        ${q.lore ? `<div style="padding:14px 18px;background:rgba(255,255,255,0.02);border-top:1px solid rgba(255,255,255,0.05)">
-            <div style="font-size:9.5px;color:rgba(255,255,255,0.38);font-style:italic;line-height:1.7">"${q.lore}"</div>
-        </div>` : ''}
-
-        <!-- Come fare -->
-        ${q.howTo ? `<div style="padding:12px 18px;background:rgba(212,175,55,0.04);border-top:1px solid rgba(212,175,55,0.1)">
-            <div style="font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:#c9a227;margin-bottom:5px">📋 Come completarla</div>
-            <div style="font-size:9.5px;color:rgba(255,255,255,0.55);line-height:1.65">${q.howTo}</div>
-        </div>` : ''}
-
-        <!-- Progress -->
-        <div style="padding:14px 18px;background:#0a0c12;border-top:1px solid rgba(255,255,255,0.05)">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-                <div style="font-size:9px;color:rgba(255,255,255,0.4)">Progresso</div>
-                <div style="font-size:11px;font-weight:800;font-family:monospace;color:${isClaim ? '#22c55e' : tc}">${prog.cur} / ${prog.tgt}</div>
-            </div>
-            <div style="height:5px;background:rgba(255,255,255,0.07);border-radius:3px;overflow:hidden">
-                <div style="height:100%;background:${barColor};border-radius:3px;width:${pct}%;transition:width 0.6s ease"></div>
-            </div>
-            ${ctaHtml}
-        </div>
-
-        <!-- Reward bar -->
-        <div style="border-top:1px solid rgba(255,255,255,0.06)">
-            <div style="padding:6px 18px;background:${tc};text-align:center">
-                <span style="font-size:7.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.12em;color:rgba(0,0,0,0.75)">Ricompensa</span>
-            </div>
-            <div style="padding:12px 18px;background:#0d0f1a">
-                <div style="font-size:10px;color:rgba(255,255,255,0.6);line-height:1.7">${_rewardLine(q.rewards)}</div>
-            </div>
-        </div>
-    </div>`;
+        ${q.lore ? `<div class="cm-lore">«${q.lore}»</div>` : ''}
+        <table class="cm-obj-table">
+            <thead>
+                <tr>
+                    <th style="width:22px"></th>
+                    <th>Obiettivo</th>
+                    <th style="width:120px">Progresso</th>
+                    <th style="width:56px;text-align:right">Stato</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span style="font-size:9px;color:${isClaim ? '#4b8b4f' : pct > 0 ? '#d4af37' : '#30363d'};font-family:monospace">${isClaim ? '✓' : pct > 0 ? '◐' : '○'}</span></td>
+                    <td>
+                        <div style="${isClaim ? 'text-decoration:line-through;color:#3d4450' : ''}">${q.howTo || q.subtitle || q.title}</div>
+                    </td>
+                    <td>
+                        <div class="cm-mbar-wrap">
+                            <div class="cm-mbar-bg"><div class="cm-mbar-fill" style="width:${pct}%;background:${tc}"></div></div>
+                            <div class="cm-mbar-val">${prog.cur} / ${prog.tgt}</div>
+                        </div>
+                    </td>
+                    <td style="text-align:right"><span class="cm-obj-status ${isClaim ? 'done' : pct > 0 ? 'prog' : 'open'}">${isClaim ? 'FATTO' : pct > 0 ? 'IN CORSO' : '—'}</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="cm-reward">
+            <div class="cm-rlabel">Ricompensa</div>
+            ${rewardChips}
+            ${btn}
+        </div>`;
 }
 
-function _renderMilestoneCard(q, gs) {
+function _buildClaimStory(q) {
+    const rewardChips = _buildRewardChips(q.rewards);
+    return `
+        <div class="cm-status">
+            <div class="cm-status-badge claim">Completata — da riscuotere</div>
+        </div>
+        ${q.lore ? `<div class="cm-lore">«${q.lore}»</div>` : ''}
+        <table class="cm-obj-table">
+            <thead><tr><th style="width:22px"></th><th>Obiettivo</th><th></th><th style="text-align:right">Stato</th></tr></thead>
+            <tbody>
+                <tr>
+                    <td><span style="font-size:9px;color:#4b8b4f;font-family:monospace">✓</span></td>
+                    <td style="text-decoration:line-through;color:#3d4450">${q.howTo || q.title}</td>
+                    <td></td>
+                    <td style="text-align:right"><span class="cm-obj-status done">FATTO</span></td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="cm-reward">
+            <div class="cm-rlabel">Ricompensa</div>
+            ${rewardChips}
+            <button class="cm-btn claim" onclick="window.claimQuestReward('${q.id}')">Riscuoti →</button>
+        </div>`;
+}
+
+function _buildClaimMile(q) {
+    const rewardChips = _buildRewardChips(q.rewards);
+    return `
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #21262d">
+            <span style="font-size:18px;flex-shrink:0">${q.icon}</span>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:8px;font-family:monospace;color:#4b8b4f;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Traguardo completato</div>
+                <div style="font-size:11px;font-weight:600;color:#e6edf3">${q.title}</div>
+                <div style="font-size:9px;color:#6b7280;margin-top:2px">${rewardChips}</div>
+            </div>
+            <button class="cm-btn claim" style="flex-shrink:0" onclick="window.claimQuestReward('${q.id}')">Riscuoti →</button>
+        </div>`;
+}
+
+function _buildMileRow(q, gs) {
     const tc = _TIER_COLOR[q.tier] || '#d4af37';
     let prog = { cur: 0, tgt: 1 };
     try { prog = q.check(gs); } catch(e) {}
     const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
-
     return `
-    <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:9px;border:1px solid rgba(255,255,255,0.06)">
-        <span style="font-size:18px;flex-shrink:0">${q.icon}</span>
-        <div style="flex:1;min-width:0">
-            <div style="font-size:10px;font-weight:600;color:rgba(255,255,255,0.7);margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${q.title}</div>
-            <div style="height:3px;background:rgba(255,255,255,0.07);border-radius:2px;overflow:hidden">
-                <div style="height:100%;background:${tc};border-radius:2px;width:${pct}%"></div>
-            </div>
-        </div>
-        <div style="font-size:9px;font-weight:700;color:${tc};font-family:monospace;flex-shrink:0">${prog.cur}/${prog.tgt}</div>
-    </div>`;
+        <div class="cm-mile-row">
+            <div class="cm-mile-icon">${q.icon}</div>
+            <div class="cm-mile-name">${q.title}</div>
+            <div class="cm-mile-bar-bg"><div class="cm-mile-bar-fill" style="width:${pct}%;background:${tc}"></div></div>
+            <div class="cm-mile-val">${prog.cur}/${prog.tgt}</div>
+        </div>`;
 }
-window.renderTabCareer = renderTabCareer;
+
+function _buildRewardChips(r) {
+    const chips = [];
+    if (r.cash)       chips.push(`<span class="cm-chip gold">+€${r.cash.toLocaleString('it')}</span>`);
+    if (r.vtk)        chips.push(`<span class="cm-chip vtk">+${r.vtk} VTK</span>`);
+    if (r.tc)         chips.push(`<span class="cm-chip gold">+${r.tc} DC</span>`);
+    if (r.rep)        chips.push(`<span class="cm-chip gold">+${r.rep}★</span>`);
+    if (r.shadowCoin) chips.push(`<span class="cm-chip">+${r.shadowCoin.toLocaleString('it')} SC</span>`);
+    if (r.unlock)     chips.push(`<span class="cm-chip">${r.unlock}</span>`);
+    if (r.title)      chips.push(`<span class="cm-chip">"${r.title}"</span>`);
+    if (chips.length === 0 && r.desc) chips.push(`<span class="cm-chip">${r.desc}</span>`);
+    return chips.join('');
+}
+
+/* ── Public API ─────────────────────────────────────────────── */
+window.openCareerModal = function() {
+    document.getElementById('career-modal-overlay')?.remove();
+
+    const overlay = document.createElement('div');
+    overlay.id = 'career-modal-overlay';
+    overlay.innerHTML = _buildCareerModal();
+
+    // Close on backdrop click
+    overlay.addEventListener('click', e => {
+        if (e.target === overlay) window.closeCareerModal();
+    });
+
+    document.body.appendChild(overlay);
+
+    // Escape key
+    const onKey = e => { if (e.key === 'Escape') window.closeCareerModal(); };
+    document.addEventListener('keydown', onKey);
+    overlay._keyHandler = onKey;
+};
+
+window.closeCareerModal = function() {
+    const overlay = document.getElementById('career-modal-overlay');
+    if (!overlay) return;
+    if (overlay._keyHandler) document.removeEventListener('keydown', overlay._keyHandler);
+    overlay.remove();
+    // Return to previous tab
+    const prev = window._careerPrevTab;
+    if (prev && prev !== 'career' && typeof window.switchTab === 'function') {
+        window.switchTab(prev);
+    }
+};
+
+window.renderTabCareer = function() {
+    // Tab-container gets emptied — modal covers it
+    const container = document.getElementById('tab-container');
+    if (container) container.innerHTML = '';
+    window.openCareerModal();
+};
 
 window.startMissionRun = function(questId) {
     const q = (window.QUEST_DB || []).find(x => x.id === questId);
@@ -316,37 +527,37 @@ window.startMissionRun = function(questId) {
         window._showBivioModal(q);
     } else {
         if (typeof window.completeMissionRun === 'function') window.completeMissionRun(questId);
-        if (typeof renderTabCareer === 'function' && typeof _tabIs === 'function' && _tabIs('career')) renderTabCareer();
+        // Refresh modal if open
+        if (document.getElementById('career-modal-overlay')) window.openCareerModal();
     }
 };
 
 window._showBivioModal = function(q) {
-    const existing = document.getElementById('bivio-modal');
-    if (existing) existing.remove();
-
+    document.getElementById('bivio-modal')?.remove();
     const optHtml = q.bivio.options.map(opt => `
         <button onclick="window._applyBivioChoice('${q.id}','${opt.id}')"
-                class="w-full text-left p-3 rounded-lg border border-white/10 hover:border-gold/40 hover:bg-white/5 transition-all mt-2">
-            <div class="text-[10px] font-bold text-white">${opt.label}</div>
-            <div class="text-[9px] text-gray-400 mt-0.5">${opt.desc}</div>
+                style="display:block;width:100%;text-align:left;padding:10px 12px;background:#161b22;border:1px solid #21262d;color:#c9d1d9;margin-top:8px;cursor:pointer;font-size:10px">
+            <div style="font-weight:700;margin-bottom:2px">${opt.label}</div>
+            <div style="font-size:9px;color:#6b7280">${opt.desc}</div>
         </button>`).join('');
 
-    const giverLine = q.giver ? `<div class="text-[9px] text-gray-500 mb-3">${q.giver.name} · ${q.giver.faction}</div>` : '';
+    const giverLine = q.giver
+        ? `<div style="font-size:9px;color:#6b7280;margin-bottom:10px">${q.giver.name} · ${q.giver.faction}</div>`
+        : '';
 
     const modal = document.createElement('div');
     modal.id = 'bivio-modal';
-    modal.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:20px';
     modal.innerHTML = `
-        <div class="bg-[#1a1a2e] border border-white/10 rounded-xl p-5 max-w-sm w-full shadow-2xl">
-            <div class="text-[10px] text-gold uppercase tracking-widest mb-1">${q.icon} ${q.title}</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-top:2px solid #b8962b;padding:20px;max-width:360px;width:100%">
+            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#d4af37;margin-bottom:6px">${q.icon} ${q.title}</div>
             ${giverLine}
-            <div class="text-[11px] text-white font-medium mb-1">${q.bivio.prompt}</div>
+            <div style="font-size:11px;color:#c9d1d9;font-weight:600;margin-bottom:4px">${q.bivio.prompt}</div>
             ${optHtml}
             <button onclick="document.getElementById('bivio-modal').remove()"
-                    class="mt-4 text-[9px] text-gray-600 hover:text-gray-400 w-full text-center">Annulla</button>
+                    style="margin-top:14px;font-size:9px;color:#374151;background:none;border:none;cursor:pointer;width:100%;text-align:center">Annulla</button>
         </div>`;
     document.body.appendChild(modal);
-
     window._bivioQuestRef = q;
 };
 
@@ -359,8 +570,6 @@ window._applyBivioChoice = function(questId, optionId) {
     try { opt.effect(gameState); } catch(e) {}
     if (typeof window.completeMissionRun === 'function') window.completeMissionRun(questId);
     if (typeof updateUI === 'function') updateUI();
-    if (typeof renderTabCareer === 'function' && typeof _tabIs === 'function' && _tabIs('career')) renderTabCareer();
+    if (document.getElementById('career-modal-overlay')) window.openCareerModal();
     if (typeof saveGame === 'function') saveGame();
 };
-
-let _ecActiveTab = 'acquire';

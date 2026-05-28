@@ -55,6 +55,7 @@ window.claimQuestReward = function(questId) {
 
   const r = q.rewards;
   if (r.cash)       { gs.cash += r.cash; gs.annualProfitTracker = (gs.annualProfitTracker || 0) + r.cash; }
+  if (r.vtk)        gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;
   if (r.tc)         gs.driverCoins = (gs.driverCoins || 0) + r.tc;
   if (r.rep)        gs.reputation = Math.min(5.0 + (gs.prestige || 0), gs.reputation + r.rep);
   if (r.shadowCoin) gs.shadowCoin = (gs.shadowCoin || 0) + r.shadowCoin;
@@ -74,6 +75,6 @@ window.claimQuestReward = function(questId) {
   if (dot && !(gs.claimableQuests?.length > 0)) dot.classList.add('hidden');
 
   if (typeof updateUI === 'function') updateUI();
-  if (typeof renderTabCareer === 'function' && typeof _tabIs === 'function' && _tabIs('career')) renderTabCareer();
+  if (document.getElementById('career-modal-overlay') && typeof window.openCareerModal === 'function') window.openCareerModal();
   if (typeof saveGame === 'function') saveGame();
 };

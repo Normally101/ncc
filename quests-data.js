@@ -64,7 +64,7 @@ const QUEST_DB = [
     giver:{ name:'Vittorio', faction:'Mentore' },
     prereqs:[],
     check: gs => ({ cur: gs.fleet.some(v=>v.vehicleClass==='nexus_h_line')?1:0, tgt:1 }),
-    rewards:{ cash:0, tc:0, rep:0, unlock:'hr_tab', desc:'Sblocca scheda HR' } },
+    rewards:{ cash:0, tc:0, vtk:50, rep:0, unlock:'hr_tab', desc:'Sblocca scheda HR' } },
 
   { id:'t02', ch:1, type:'tutorial', tier:'bronze', icon:'👷',
     title:'Carne da Macello',
@@ -74,7 +74,7 @@ const QUEST_DB = [
     giver:{ name:'Vittorio', faction:'Mentore' },
     prereqs:['t01'],
     check: gs => ({ cur: gs.drivers.filter(d=>d.id!=='ceo').length, tgt:1 }),
-    rewards:{ cash:500, tc:0, rep:0, unlock:'dispatch', desc:'+€500 · Sblocca Dispatcher' } },
+    rewards:{ cash:500, tc:0, vtk:60, rep:0, unlock:'dispatch', desc:'+€500 · Sblocca Dispatcher' } },
 
   { id:'t03', ch:1, type:'tutorial', tier:'bronze', icon:'🤝',
     title:'Il Cliente Pignolo',
@@ -84,7 +84,7 @@ const QUEST_DB = [
     giver:{ name:'Vittorio', faction:'Mentore' },
     prereqs:['t02'],
     check: gs => ({ cur: _mRun(gs,'t03'), tgt:1 }),
-    rewards:{ cash:1500, tc:0, rep:0, desc:'+€1.500' } },
+    rewards:{ cash:1500, tc:0, vtk:80, rep:0, desc:'+€1.500 · +80 VTK' } },
 
   { id:'t04', ch:1, type:'tutorial', tier:'bronze', icon:'🔧',
     title:'Spie Rosse sul Cruscotto',
@@ -94,7 +94,7 @@ const QUEST_DB = [
     giver:{ name:'Vittorio', faction:'Mentore' },
     prereqs:['t03'],
     check: gs => ({ cur: gs.fleet.some(v=>(v.condition||0)>=95)?1:0, tgt:1 }),
-    rewards:{ cash:0, tc:0, rep:0, unlock:'business_tier', desc:'Sblocca tier Business' } },
+    rewards:{ cash:0, tc:0, vtk:70, rep:0, unlock:'business_tier', desc:'Sblocca tier Business' } },
 
   { id:'t05', ch:1, type:'tutorial', tier:'bronze', icon:'🌟',
     title:'Benvenuto nel Club',
@@ -104,7 +104,7 @@ const QUEST_DB = [
     giver:{ name:'Vittorio', faction:'Mentore' },
     prereqs:['t04'],
     check: gs => ({ cur: _mRun(gs,'t05'), tgt:1 }),
-    rewards:{ cash:0, tc:5, rep:0, unlock:'market', desc:'+5 Driver Coins · Sblocca Mercato' } },
+    rewards:{ cash:0, tc:0, vtk:100, rep:0, unlock:'market', desc:'+100 VTK · Sblocca Mercato' } },
 
   { id:'t06', ch:1, type:'tutorial', tier:'silver', icon:'🕵️',
     title:"L'Ombra dello Stato",
@@ -121,7 +121,7 @@ const QUEST_DB = [
         { id:'accetta', label:'Accetta', desc:'€5.000 subito, ma rischi una multa GdF.', effect: gs => { gs.cash += 5000; } }
       ]
     },
-    rewards:{ cash:0, tc:0, rep:0, unlock:'full_map', desc:'Sblocca mappa completa · Sblocca Finanze' } },
+    rewards:{ cash:0, tc:0, vtk:120, rep:0, unlock:'full_map', desc:'+120 VTK · Sblocca mappa completa · Sblocca Finanze' } },
 
   /* ═══════════════ VOLUME 0 — L'ASCESA (m01-m15) ═══════════════ */
   { id:'m01', ch:2, type:'story', tier:'silver', icon:'👁️',
@@ -139,7 +139,7 @@ const QUEST_DB = [
         { id:'accetta', label:'Accetta deviazione', desc:'+€150.000 ma -0.5★', effect: gs => { gs.cash += 150000; gs.reputation = Math.max(0, gs.reputation-0.5); } }
       ]
     },
-    rewards:{ cash:30000, tc:0, rep:0.2, shadowCoin:0, desc:'+€30.000 · +0.2★' } },
+    rewards:{ cash:30000, tc:0, vtk:200, rep:0.2, shadowCoin:0, desc:'+€30.000 · +0.2★ · +200 VTK' } },
 
   { id:'m02', ch:2, type:'story', tier:'silver', icon:'👗',
     title:"L'Inaugurazione della Fashion Week",
@@ -156,7 +156,7 @@ const QUEST_DB = [
         { id:'accetta', label:'Accetta stop', desc:'+€20.000 ma -0.3★', effect: gs => { gs.cash += 20000; gs.reputation = Math.max(0, gs.reputation-0.3); } }
       ]
     },
-    rewards:{ cash:20000, tc:0, rep:0, desc:'+€20.000' } },
+    rewards:{ cash:20000, tc:0, vtk:180, rep:0, desc:'+€20.000 · +180 VTK' } },
 
   { id:'m03', ch:2, type:'story', tier:'silver', icon:'🏛️',
     title:'Il Volo del Politico',
@@ -173,7 +173,7 @@ const QUEST_DB = [
         { id:'accetta', label:'Forza blocco', desc:'Loyalty staff +10%', effect: gs => { (gs.staff||[]).forEach(s=>{ s.loyalty = Math.min(100,(s.loyalty||50)+10); }); } }
       ]
     },
-    rewards:{ cash:25000, tc:0, rep:0, desc:'+€25.000' } },
+    rewards:{ cash:25000, tc:0, vtk:200, rep:0, desc:'+€25.000 · +200 VTK' } },
 
   { id:'m04', ch:2, type:'story', tier:'silver', icon:'🕴️',
     title:"Il Silenzio dell'Oligarca",
@@ -190,7 +190,7 @@ const QUEST_DB = [
         { id:'accetta', label:'Passa senza fermarsi', desc:'Perdi la fiducia di Grigori', effect: gs => { gs.reputation = Math.max(0, gs.reputation-0.1); } }
       ]
     },
-    rewards:{ cash:25000, tc:50, rep:0, desc:'+€25.000 · +50 Driver Coins' } },
+    rewards:{ cash:25000, tc:0, vtk:250, rep:0, desc:'+€25.000 · +250 VTK' } },
 
   { id:'m05', ch:2, type:'story', tier:'gold', icon:'💻',
     title:'La Fuga del Tech Bro',
@@ -207,7 +207,7 @@ const QUEST_DB = [
         { id:'accetta', label:'Accetta ShadowCoin', desc:'+30.000 SC', effect: gs => { gs.shadowCoin = (gs.shadowCoin||0)+30000; } }
       ]
     },
-    rewards:{ cash:0, tc:0, rep:0, desc:'Scelta: cash o SC' } },
+    rewards:{ cash:0, tc:0, vtk:300, rep:0, desc:'+300 VTK · Scelta: cash o SC' } },
 
   { id:'m06', ch:2, type:'story', tier:'silver', icon:'🏗️',
     title:'Mattoni e Cemento',
@@ -217,7 +217,7 @@ const QUEST_DB = [
     prereqs:['m03','m04'],
     check: gs => ({ cur: _mRun(gs,'m06'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presidential,...VG.armored], note:'Comfort alto' }, driver:{ levelMin:3, stressMax:60, count:1 } },
-    rewards:{ cash:40000, tc:0, rep:0, unlock:'hq_base_builder', desc:'+€40.000 · Sblocca HQ Builder' } },
+    rewards:{ cash:40000, tc:0, vtk:220, rep:0, unlock:'hq_base_builder', desc:'+€40.000 · +220 VTK · Sblocca HQ Builder' } },
 
   { id:'m07', ch:2, type:'story', tier:'silver', icon:'📸',
     title:'Fame di Visibilità',
@@ -227,7 +227,7 @@ const QUEST_DB = [
     prereqs:['m06'],
     check: gs => ({ cur: _mRun(gs,'m07'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltCity, note:'Volt Ciudad con vetri oscurati' }, driver:{ levelMin:2, stressMax:70, count:1 } },
-    rewards:{ cash:30000, tc:0, rep:0, unlock:'marketing_tab', desc:'+€30.000 · Sblocca Marketing' } },
+    rewards:{ cash:30000, tc:0, vtk:230, rep:0, unlock:'marketing_tab', desc:'+€30.000 · +230 VTK · Sblocca Marketing' } },
 
   { id:'m08', ch:2, type:'story', tier:'gold', icon:'🏛️',
     title:'Asta a Porte Chiuse',
@@ -237,7 +237,7 @@ const QUEST_DB = [
     prereqs:['m07'],
     check: gs => ({ cur: _mRun(gs,'m08'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.luxury,...VG.armored], note:'Vettura di lusso' }, driver:{ levelMin:4, stressMax:40, count:1 } },
-    rewards:{ cash:350000, tc:0, rep:0, unlock:'real_estate_tab', desc:'+€350.000 · Sblocca Real Estate' } },
+    rewards:{ cash:350000, tc:0, vtk:350, rep:0, unlock:'real_estate_tab', desc:'+€350.000 · +350 VTK · Sblocca Real Estate' } },
 
   { id:'m09', ch:2, type:'story', tier:'gold', icon:'🎙️',
     title:'Cimici sotto il Sedile',
@@ -247,7 +247,7 @@ const QUEST_DB = [
     prereqs:['m08'],
     check: gs => ({ cur: _mRun(gs,'m09'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presidential,...VG.armored], note:'Berlina ad alte prestazioni' }, driver:{ levelMin:4, stressMax:40, count:1 } },
-    rewards:{ cash:120000, tc:0, rep:0, unlock:'shadow_agency_tab', desc:'+€120.000 · Sblocca Agenzia Ombra' } },
+    rewards:{ cash:120000, tc:0, vtk:280, rep:0, unlock:'shadow_agency_tab', desc:'+€120.000 · +280 VTK · Sblocca Agenzia Ombra' } },
 
   { id:'m10', ch:2, type:'story', tier:'gold', icon:'✍️',
     title:'La Firma del Secolo',
@@ -257,7 +257,7 @@ const QUEST_DB = [
     prereqs:['m08','m09'],
     check: gs => ({ cur: _mRun(gs,'m10'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presidential,...VG.luxury], conditionMin:85, count:3, note:'3 vetture premium' }, driver:{ levelMin:4, stressMax:30, count:3 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:15000, unlock:'corporate_b2b', desc:'+15.000 SC · Sblocca Corporate B2B' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:15000, unlock:'corporate_b2b', desc:'+15.000 SC · Sblocca Corporate B2B' } },
 
   { id:'m11', ch:2, type:'story', tier:'gold', icon:'🏦',
     title:'Il Canale Svizzero',
@@ -268,7 +268,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m11'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B6', note:'Blindata Overlord' }, driver:{ levelMin:5, stressMax:40, count:1 } },
     risk:{ gdf:90, weather:false, pvp:false, note:'Alta esposizione GdF' },
-    rewards:{ cash:140000, tc:0, rep:0, unlock:'crypto_exchange', desc:'+€140.000 · Sblocca Crypto Exchange' } },
+    rewards:{ cash:140000, tc:0, vtk:300, rep:0, unlock:'crypto_exchange', desc:'+€140.000 · Sblocca Crypto Exchange' } },
 
   { id:'m12', ch:2, type:'story', tier:'gold', icon:'⚔️',
     title:'Rastrellamento Ostile',
@@ -278,7 +278,7 @@ const QUEST_DB = [
     prereqs:['m11'],
     check: gs => ({ cur: _mRun(gs,'m12'), tgt:1 }),
     requires:{ company:{ cash:100000 } },
-    rewards:{ cash:50000, tc:0, rep:0, unlock:'opa_hostile_pvp', desc:'+€50.000 · Sblocca OPA PvP' } },
+    rewards:{ cash:50000, tc:0, vtk:250, rep:0, unlock:'opa_hostile_pvp', desc:'+€50.000 · Sblocca OPA PvP' } },
 
   { id:'m13', ch:2, type:'story', tier:'gold', icon:'⛽',
     title:'Guerra delle Pompe',
@@ -288,7 +288,7 @@ const QUEST_DB = [
     prereqs:['m12'],
     check: gs => ({ cur: _mRun(gs,'m13'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus Stellar' }, driver:{ levelMin:4, stressMax:50, count:1 } },
-    rewards:{ cash:500000, tc:0, rep:0, unlock:'infrastructure_monopoly', desc:'+€500.000 · Sblocca Monopolio Infrastrutture' } },
+    rewards:{ cash:500000, tc:0, vtk:450, rep:0, unlock:'infrastructure_monopoly', desc:'+€500.000 · Sblocca Monopolio Infrastrutture' } },
 
   { id:'m14', ch:2, type:'story', tier:'gold', icon:'🌧️',
     title:'Codice Rosso Meteo',
@@ -298,7 +298,7 @@ const QUEST_DB = [
     prereqs:['m13'],
     check: gs => ({ cur: _mRun(gs,'m14'), tgt:1 }),
     risk:{ gdf:30, weather:true, pvp:false, note:'Meteo API attiva' },
-    rewards:{ cash:180000, tc:0, rep:0, unlock:'weather_surge_pricing', desc:'+€180.000 · Sblocca Surge Pricing Meteo' } },
+    rewards:{ cash:180000, tc:0, vtk:300, rep:0, unlock:'weather_surge_pricing', desc:'+€180.000 · Sblocca Surge Pricing Meteo' } },
 
   { id:'m15', ch:2, type:'story', tier:'gold', icon:'✊',
     title:'La Rivolta dei Volanti',
@@ -308,7 +308,7 @@ const QUEST_DB = [
     prereqs:['m14'],
     check: gs => ({ cur: _mRun(gs,'m15'), tgt:1 }),
     requires:{ driver:{ stressMax:50, count:5, note:'5 autisti con stress >50' } },
-    rewards:{ cash:100000, tc:0, rep:0, unlock:'union_advanced', desc:'+€100.000 · Sblocca Sindacato Avanzato' } },
+    rewards:{ cash:100000, tc:0, vtk:300, rep:0, unlock:'union_advanced', desc:'+€100.000 · Sblocca Sindacato Avanzato' } },
 
   /* ═══════════════ VOLUME 1 — IL POTERE (m16-m22) ═══════════════ */
   { id:'m16', ch:2, type:'story', tier:'gold', icon:'📋',
@@ -319,7 +319,7 @@ const QUEST_DB = [
     prereqs:['m15'],
     check: gs => ({ cur: _mRun(gs,'m16'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, conditionMin:95, note:'Minibus 95%+' }, driver:{ levelMin:4, stressMax:0, count:1 } },
-    rewards:{ cash:0, tc:120, rep:0, unlock:'union_office', desc:'+120 Driver Coins · Sblocca Ufficio Sindacale' } },
+    rewards:{ cash:0, tc:120, vtk:200, rep:0, unlock:'union_office', desc:'+120 Driver Coins · Sblocca Ufficio Sindacale' } },
 
   { id:'m17', ch:2, type:'story', tier:'gold', icon:'💾',
     title:'Sabotaggio Industriale P2P',
@@ -329,7 +329,7 @@ const QUEST_DB = [
     prereqs:['m16'],
     check: gs => ({ cur: _mRun(gs,'m17'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex','volt_ciudad'], note:'Elettrica + modulo hack' }, driver:{ levelMin:4, stressMax:50, count:1 } },
-    rewards:{ cash:80000, tc:0, rep:0, unlock:'spy_metrics', desc:'+€80.000 · Sblocca Metriche Spia' } },
+    rewards:{ cash:80000, tc:0, vtk:250, rep:0, unlock:'spy_metrics', desc:'+€80.000 · Sblocca Metriche Spia' } },
 
   { id:'m18', ch:2, type:'story', tier:'diamond', icon:'🚨',
     title:'Il Convoglio del Diplomatico',
@@ -339,7 +339,7 @@ const QUEST_DB = [
     prereqs:['m17'],
     check: gs => ({ cur: _mRun(gs,'m18'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], count:1, note:'Citadel + 2x Overlord' }, driver:{ levelMin:5, stressMax:40, count:3 } },
-    rewards:{ cash:350000, tc:0, rep:0, unlock:'presidential_tier_showroom', desc:'+€350.000 · Sblocca Showroom Presidential' } },
+    rewards:{ cash:350000, tc:0, vtk:380, rep:0, unlock:'presidential_tier_showroom', desc:'+€350.000 · Sblocca Showroom Presidential' } },
 
   { id:'m19', ch:2, type:'story', tier:'gold', icon:'🕵️',
     title:"L'Infiltrato nei Servizi Segreti",
@@ -349,7 +349,7 @@ const QUEST_DB = [
     prereqs:['m18'],
     check: gs => ({ cur: _mRun(gs,'m19'), tgt:1 }),
     requires:{ vehicle:{ classes:['nexus_h_line'], note:'Solo Nexus, nessun mod' }, driver:{ levelMin:4, stressMax:20, count:1 } },
-    rewards:{ cash:120000, tc:0, rep:0, unlock:'military_windows_l5', desc:'+€120.000 · Sblocca Vetri Militari L5' } },
+    rewards:{ cash:120000, tc:0, vtk:300, rep:0, unlock:'military_windows_l5', desc:'+€120.000 · Sblocca Vetri Militari L5' } },
 
   { id:'m20', ch:2, type:'story', tier:'gold', icon:'🪙',
     title:'La Speculazione della Meme-Coin',
@@ -359,7 +359,7 @@ const QUEST_DB = [
     prereqs:['m19'],
     check: gs => ({ cur: _mRun(gs,'m20'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], note:'Apex batteria massima' }, driver:{ levelMin:5, stressMax:50, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:15000, unlock:'opa_p2p', desc:'+15.000 SC · Sblocca OPA P2P' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:15000, unlock:'opa_p2p', desc:'+15.000 SC · Sblocca OPA P2P' } },
 
   { id:'m21', ch:2, type:'story', tier:'gold', icon:'⚡',
     title:'Il Sabotaggio delle Linee Elettriche',
@@ -369,7 +369,7 @@ const QUEST_DB = [
     prereqs:['m20'],
     check: gs => ({ cur: _mRun(gs,'m21'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + officina mobile' }, driver:{ levelMin:5, stressMax:50, count:1 } },
-    rewards:{ cash:140000, tc:0, rep:0, unlock:'megafactory_battery', desc:'+€140.000 · Sblocca Megafactory Battery' } },
+    rewards:{ cash:140000, tc:0, vtk:300, rep:0, unlock:'megafactory_battery', desc:'+€140.000 · Sblocca Megafactory Battery' } },
 
   { id:'m22', ch:2, type:'story', tier:'diamond', icon:'🏛️',
     title:"L'Evacuazione del Governatore",
@@ -379,7 +379,7 @@ const QUEST_DB = [
     prereqs:['m21'],
     check: gs => ({ cur: _mRun(gs,'m22'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B6', note:'Overlord B6' }, driver:{ levelMin:6, stressMax:50, count:1 } },
-    rewards:{ cash:500000, tc:0, rep:0, unlock:'majestic_spirit_30pct_discount', title:'Eminenza Grigia', desc:'+€500.000 · TITOLO: Eminenza Grigia' } },
+    rewards:{ cash:500000, tc:0, vtk:450, rep:0, unlock:'majestic_spirit_30pct_discount', title:'Eminenza Grigia', desc:'+€500.000 · TITOLO: Eminenza Grigia' } },
 
   /* ═══════════════ VOLUME 2 — L'INTRIGO (m23-m30) ═══════════════ */
   { id:'m23', ch:3, type:'story', tier:'gold', icon:'⛪',
@@ -390,7 +390,7 @@ const QUEST_DB = [
     prereqs:['m22'],
     check: gs => ({ cur: _mRun(gs,'m23'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], note:'Citadel scuro' }, driver:{ levelMin:4, stressMax:40, count:1 } },
-    rewards:{ cash:90000, tc:0, rep:0, unlock:'diplomatic_channel', desc:'+€90.000 · Sblocca Canale Diplomatico' } },
+    rewards:{ cash:90000, tc:0, vtk:250, rep:0, unlock:'diplomatic_channel', desc:'+€90.000 · Sblocca Canale Diplomatico' } },
 
   { id:'m24', ch:3, type:'story', tier:'silver', icon:'🚉',
     title:'Il Blitz alla Stazione Centrale',
@@ -400,7 +400,7 @@ const QUEST_DB = [
     prereqs:['m23'],
     check: gs => ({ cur: _mRun(gs,'m24'), tgt:1 }),
     requires:{ vehicle:{ classes:['nexus_h_line'], count:2, note:'2x Nexus' }, driver:{ levelMin:2, stressMax:15, count:2 } },
-    rewards:{ cash:45000, tc:0, rep:0, unlock:'gdf_scanner', desc:'+€45.000 · Sblocca Scanner GdF' } },
+    rewards:{ cash:45000, tc:0, vtk:200, rep:0, unlock:'gdf_scanner', desc:'+€45.000 · Sblocca Scanner GdF' } },
 
   { id:'m25', ch:3, type:'story', tier:'diamond', icon:'💎',
     title:"L'Oligarca e i Diamanti di Sangue",
@@ -410,7 +410,7 @@ const QUEST_DB = [
     prereqs:['m24'],
     check: gs => ({ cur: _mRun(gs,'m25'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', note:'Overlord B7' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:200000, unlock:'b7_armor_unlock', desc:'+200.000 SC · Sblocca Armatura B7' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:200000, unlock:'b7_armor_unlock', desc:'+200.000 SC · Sblocca Armatura B7' } },
 
   { id:'m26', ch:3, type:'story', tier:'gold', icon:'🔐',
     title:'La Notte del Ransomware',
@@ -420,7 +420,7 @@ const QUEST_DB = [
     prereqs:['m25'],
     check: gs => ({ cur: _mRun(gs,'m26'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], note:'Apex + EMP shield' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, unlock:'military_firewall', desc:'Sblocca Firewall Militare' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, unlock:'military_firewall', desc:'Sblocca Firewall Militare' } },
 
   { id:'m27', ch:3, type:'story', tier:'diamond', icon:'🏎️',
     title:'Il Gran Premio dei CEO',
@@ -430,7 +430,7 @@ const QUEST_DB = [
     prereqs:['m26'],
     check: gs => ({ cur: _mRun(gs,'m27'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], note:'Hyper + inverter overclock' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:150000, tc:0, rep:0, unlock:'hypercar_tier_s', desc:'+€150.000 · Sblocca Tier Hypercar S' } },
+    rewards:{ cash:150000, tc:0, vtk:300, rep:0, unlock:'hypercar_tier_s', desc:'+€150.000 · Sblocca Tier Hypercar S' } },
 
   { id:'m28', ch:3, type:'story', tier:'silver', icon:'🤝',
     title:'La Rivolta dei Subappalti',
@@ -440,7 +440,7 @@ const QUEST_DB = [
     prereqs:['m27'],
     check: gs => ({ cur: _mRun(gs,'m28'), tgt:1 }),
     requires:{ vehicle:{ classes:['nexus_h_line'], count:3, note:'3x Nexus' }, driver:{ levelMin:2, stressMax:60, count:3 } },
-    rewards:{ cash:60000, tc:0, rep:0, unlock:'subcontract_p2p_advanced', desc:'+€60.000 · Sblocca Subappalto P2P' } },
+    rewards:{ cash:60000, tc:0, vtk:250, rep:0, unlock:'subcontract_p2p_advanced', desc:'+€60.000 · Sblocca Subappalto P2P' } },
 
   { id:'m29', ch:3, type:'story', tier:'diamond', icon:'✈️',
     title:'Il Vertice Governativo a Fiumicino',
@@ -450,7 +450,7 @@ const QUEST_DB = [
     prereqs:['m28'],
     check: gs => ({ cur: _mRun(gs,'m29'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.minibus,...VG.presidential], conditionMin:100, count:5, note:'5x Carrier + 3x Presidential' }, driver:{ levelMin:5, stressMax:30, count:8 } },
-    rewards:{ cash:400000, tc:0, rep:0, unlock:'ztl_licenses_global', desc:'+€400.000 · Sblocca Licenze ZTL Globali' } },
+    rewards:{ cash:400000, tc:0, vtk:380, rep:0, unlock:'ztl_licenses_global', desc:'+€400.000 · Sblocca Licenze ZTL Globali' } },
 
   { id:'m30', ch:3, type:'story', tier:'diamond', icon:'📉',
     title:"Il Rug Pull dell'Exchange",
@@ -460,7 +460,7 @@ const QUEST_DB = [
     prereqs:['m29'],
     check: gs => ({ cur: _mRun(gs,'m30'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltShoot, note:'Volt Estate + sospensioni' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:250000, unlock:'swiss_account_grade_svizzero', desc:'+250.000 SC · Conto Svizzero' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:250000, unlock:'swiss_account_grade_svizzero', desc:'+250.000 SC · Conto Svizzero' } },
 
   /* ═══════════════ VOLUME 3 — L'IMPERO (m31-m39) ═══════════════ */
   { id:'m31', ch:3, type:'story', tier:'gold', icon:'📈',
@@ -471,7 +471,7 @@ const QUEST_DB = [
     prereqs:['m30'],
     check: gs => ({ cur: _mRun(gs,'m31'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.presidential, note:'Majestic Spirit premium' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:180000, tc:0, rep:0, unlock:'dividend_panel', desc:'+€180.000 · Sblocca Pannello Dividendi' } },
+    rewards:{ cash:180000, tc:0, vtk:300, rep:0, unlock:'dividend_panel', desc:'+€180.000 · Sblocca Pannello Dividendi' } },
 
   { id:'m32', ch:3, type:'story', tier:'gold', icon:'🏦',
     title:"L'Infiltrato nel Caveau",
@@ -481,7 +481,7 @@ const QUEST_DB = [
     prereqs:['m31'],
     check: gs => ({ cur: _mRun(gs,'m32'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B6', note:'Overlord + rostri frontali' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:70000, tc:0, rep:0, unlock:'armored_vault_hq', desc:'+€70.000 · Sblocca Caveau Blindato HQ' } },
+    rewards:{ cash:70000, tc:0, vtk:250, rep:0, unlock:'armored_vault_hq', desc:'+€70.000 · Sblocca Caveau Blindato HQ' } },
 
   { id:'m33', ch:3, type:'story', tier:'gold', icon:'🤖',
     title:'La Notte degli Algoritmi',
@@ -491,7 +491,7 @@ const QUEST_DB = [
     prereqs:['m32'],
     check: gs => ({ cur: _mRun(gs,'m33'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltShoot, note:'Estate + satellite ultrabroadband' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:40000, unlock:'arbitrage_bot_l1', desc:'+40.000 SC · Sblocca Bot Arbitraggio L1' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:40000, unlock:'arbitrage_bot_l1', desc:'+40.000 SC · Sblocca Bot Arbitraggio L1' } },
 
   { id:'m34', ch:3, type:'story', tier:'gold', icon:'🏖️',
     title:'Il Riciclaggio di Capri',
@@ -501,7 +501,7 @@ const QUEST_DB = [
     prereqs:['m33'],
     check: gs => ({ cur: _mRun(gs,'m34'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus VIP executive' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:220000, tc:0, rep:0, unlock:'real_estate_hotel', desc:'+€220.000 · Sblocca Hotel Real Estate' } },
+    rewards:{ cash:220000, tc:0, vtk:380, rep:0, unlock:'real_estate_hotel', desc:'+€220.000 · Sblocca Hotel Real Estate' } },
 
   { id:'m35', ch:3, type:'story', tier:'gold', icon:'🏢',
     title:"L'Ombra della Holding",
@@ -511,7 +511,7 @@ const QUEST_DB = [
     prereqs:['m34'],
     check: gs => ({ cur: _mRun(gs,'m35'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], note:'Apex timer 12min' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:130000, tc:0, rep:0, unlock:'poison_pill_defense', desc:'+€130.000 · Sblocca Poison Pill' } },
+    rewards:{ cash:130000, tc:0, vtk:300, rep:0, unlock:'poison_pill_defense', desc:'+€130.000 · Sblocca Poison Pill' } },
 
   { id:'m36', ch:3, type:'story', tier:'diamond', icon:'🌍',
     title:'Il Carico Diplomatico Clandestino',
@@ -521,7 +521,7 @@ const QUEST_DB = [
     prereqs:['m35'],
     check: gs => ({ cur: _mRun(gs,'m36'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', note:'Overlord B7 + targa contraffatta' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:300000, tc:0, rep:0, unlock:'international_transit_licenses', desc:'+€300.000 · Sblocca Licenze Transit Int.' } },
+    rewards:{ cash:300000, tc:0, vtk:380, rep:0, unlock:'international_transit_licenses', desc:'+€300.000 · Sblocca Licenze Transit Int.' } },
 
   { id:'m37', ch:3, type:'story', tier:'diamond', icon:'🔬',
     title:"L'Estrazione dell'Ingegnere Volt",
@@ -531,7 +531,7 @@ const QUEST_DB = [
     prereqs:['m36'],
     check: gs => ({ cur: _mRun(gs,'m37'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], conditionMin:100, note:'Hyper 100% carica' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:180000, tc:0, rep:0, unlock:'quantum_battery_module', desc:'+€180.000 · Sblocca Modulo Batteria Quantistica' } },
+    rewards:{ cash:180000, tc:0, vtk:300, rep:0, unlock:'quantum_battery_module', desc:'+€180.000 · Sblocca Modulo Batteria Quantistica' } },
 
   { id:'m38', ch:3, type:'story', tier:'gold', icon:'🎭',
     title:'Il Ricatto del Governatore Centrale',
@@ -541,7 +541,7 @@ const QUEST_DB = [
     prereqs:['m37'],
     check: gs => ({ cur: _mRun(gs,'m38'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], note:'Citadel scuro, no contrassegni' }, driver:{ levelMin:5, stressMax:30, count:1 } },
-    rewards:{ cash:110000, tc:0, rep:0, unlock:'senate_table_exclusive', desc:'+€110.000 · Sblocca Tavolo Senato' } },
+    rewards:{ cash:110000, tc:0, vtk:300, rep:0, unlock:'senate_table_exclusive', desc:'+€110.000 · Sblocca Tavolo Senato' } },
 
   { id:'m39', ch:3, type:'story', tier:'gold', icon:'📷',
     title:"L'Assalto dei Paparazzi",
@@ -551,7 +551,7 @@ const QUEST_DB = [
     prereqs:['m38'],
     check: gs => ({ cur: _mRun(gs,'m39'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.electric,...VG.presidential], count:3, note:'3 vetture: esca + Apex military' }, driver:{ levelMin:4, stressMax:50, count:3 } },
-    rewards:{ cash:160000, tc:0, rep:0.3, unlock:'counter_paparazzi', desc:'+€160.000 · +0.3★ · Sblocca Counter-Paparazzi' } },
+    rewards:{ cash:160000, tc:0, vtk:300, rep:0.3, unlock:'counter_paparazzi', desc:'+€160.000 · +0.3★ · Sblocca Counter-Paparazzi' } },
 
   /* ═══════════════ VOLUME 4 — IL DOMINIO (m40-m49) ═══════════════ */
   { id:'m40', ch:4, type:'story', tier:'legendary', icon:'🌐',
@@ -562,7 +562,7 @@ const QUEST_DB = [
     prereqs:['m39'],
     check: gs => ({ cur: _mRun(gs,'m40'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], conditionMin:100, count:3, note:'3x Citadel + 3x Minibus 100%' }, driver:{ levelMin:6, stressMax:30, count:6 } },
-    rewards:{ cash:600000, tc:0, rep:0, shadowCoin:100000, unlock:'corporate_s_tier_contracts', desc:'+€600.000 · +100.000 SC · Corporate S-Tier' } },
+    rewards:{ cash:600000, tc:0, vtk:450, rep:0, shadowCoin:100000, unlock:'corporate_s_tier_contracts', desc:'+€600.000 · +100.000 SC · Corporate S-Tier' } },
 
   { id:'m41', ch:4, type:'story', tier:'gold', icon:'🛢️',
     title:"L'Embargo del Carburante",
@@ -572,7 +572,7 @@ const QUEST_DB = [
     prereqs:['m40'],
     check: gs => ({ cur: _mRun(gs,'m41'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltCity, conditionMin:100, note:'Ciudad batteria 100%' }, driver:{ levelMin:4, stressMax:50, count:1 } },
-    rewards:{ cash:95000, tc:0, rep:0, unlock:'private_fuel_depot', desc:'+€95.000 · Sblocca Deposito Carburante Privato' } },
+    rewards:{ cash:95000, tc:0, vtk:250, rep:0, unlock:'private_fuel_depot', desc:'+€95.000 · Sblocca Deposito Carburante Privato' } },
 
   { id:'m42', ch:4, type:'story', tier:'gold', icon:'⚡',
     title:'La Guerra dei Supercharger',
@@ -582,7 +582,7 @@ const QUEST_DB = [
     prereqs:['m41'],
     check: gs => ({ cur: _mRun(gs,'m42'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltShoot, note:'Estate + inverter modificato' }, driver:{ levelMin:5, stressMax:20, count:1 } },
-    rewards:{ cash:65000, tc:0, rep:0, unlock:'firmware_bypass_electric', desc:'+€65.000 · Sblocca Firmware Bypass' } },
+    rewards:{ cash:65000, tc:0, vtk:250, rep:0, unlock:'firmware_bypass_electric', desc:'+€65.000 · Sblocca Firmware Bypass' } },
 
   { id:'m43', ch:4, type:'story', tier:'diamond', icon:'💥',
     title:"Il Sabotaggio dell'Oleodotto",
@@ -592,7 +592,7 @@ const QUEST_DB = [
     prereqs:['m42'],
     check: gs => ({ cur: _mRun(gs,'m43'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B6', note:'Overlord B6 + anti-speronamento' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:140000, tc:0, rep:0, unlock:'priority_fuel_depot', desc:'+€140.000 · Sblocca Deposito Prioritario' } },
+    rewards:{ cash:140000, tc:0, vtk:300, rep:0, unlock:'priority_fuel_depot', desc:'+€140.000 · Sblocca Deposito Prioritario' } },
 
   { id:'m44', ch:4, type:'story', tier:'gold', icon:'🤫',
     title:"Il Ricatto dell'OPEC Locale",
@@ -602,7 +602,7 @@ const QUEST_DB = [
     prereqs:['m43'],
     check: gs => ({ cur: _mRun(gs,'m44'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], note:'Citadel scuro tinted' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:120000, tc:0, rep:0, unlock:'co2_immunity_permanent', desc:'+€120.000 · Immunità CO2 Permanente' } },
+    rewards:{ cash:120000, tc:0, vtk:300, rep:0, unlock:'co2_immunity_permanent', desc:'+€120.000 · Immunità CO2 Permanente' } },
 
   { id:'m45', ch:4, type:'story', tier:'diamond', icon:'🖥️',
     title:'La Fusione Fredda dei Server',
@@ -612,7 +612,7 @@ const QUEST_DB = [
     prereqs:['m44'],
     check: gs => ({ cur: _mRun(gs,'m45'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], conditionMin:100, note:'Hyper overclock 100%' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:60000, unlock:'hydrogen_cell_hq', desc:'+60.000 SC · Sblocca Cella Idrogeno HQ' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:60000, unlock:'hydrogen_cell_hq', desc:'+60.000 SC · Sblocca Cella Idrogeno HQ' } },
 
   { id:'m46', ch:4, type:'story', tier:'gold', icon:'🐴',
     title:'Il Cavallo di Troia Logistico',
@@ -622,7 +622,7 @@ const QUEST_DB = [
     prereqs:['m45'],
     check: gs => ({ cur: _mRun(gs,'m46'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus standard, no mod' }, driver:{ levelMin:4, stressMax:50, count:1 } },
-    rewards:{ cash:110000, tc:0, rep:0, unlock:'contract_intercept_module', desc:'+€110.000 · Sblocca Modulo Intercettazione' } },
+    rewards:{ cash:110000, tc:0, vtk:300, rep:0, unlock:'contract_intercept_module', desc:'+€110.000 · Sblocca Modulo Intercettazione' } },
 
   { id:'m47', ch:4, type:'story', tier:'diamond', icon:'🚁',
     title:'La Notte dei Droni GdF',
@@ -633,7 +633,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m47'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], note:'Apex + chaff flares visivi' }, driver:{ levelMin:5, stressMax:0, count:1 } },
     risk:{ gdf:80, weather:false, pvp:true, note:'Rischio droni GdF' },
-    rewards:{ cash:85000, tc:0, rep:0, unlock:'thermal_shielding_engine', desc:'+€85.000 · Sblocca Schermatura Termica' } },
+    rewards:{ cash:85000, tc:0, vtk:250, rep:0, unlock:'thermal_shielding_engine', desc:'+€85.000 · Sblocca Schermatura Termica' } },
 
   { id:'m48', ch:4, type:'story', tier:'diamond', icon:'👻',
     title:'Il Sequestro della Flotta Fantasma',
@@ -643,7 +643,7 @@ const QUEST_DB = [
     prereqs:['m47'],
     check: gs => ({ cur: _mRun(gs,'m48'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + 2 ghost driver lv4' }, driver:{ levelMin:4, stressMax:20, count:2 } },
-    rewards:{ cash:0, tc:0, rep:0, unlock:'judicial_auction_priority', desc:'Sblocca Asta Giudiziaria Prioritaria' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, unlock:'judicial_auction_priority', desc:'Sblocca Asta Giudiziaria Prioritaria' } },
 
   { id:'m49', ch:4, type:'story', tier:'diamond', icon:'🏢',
     title:"L'Infiltrato nell'HQ Nemico",
@@ -653,7 +653,7 @@ const QUEST_DB = [
     prereqs:['m48'],
     check: gs => ({ cur: _mRun(gs,'m49'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + officina mobile' }, driver:{ levelMin:5, stressMax:30, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:150000, unlock:'security_room_l3', desc:'+150.000 SC · Sblocca Sala Sicurezza L3' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:150000, unlock:'security_room_l3', desc:'+150.000 SC · Sblocca Sala Sicurezza L3' } },
 
   /* ═══════════════ RAID BOSS — m50 ═══════════════ */
   { id:'m50', ch:4, type:'raid', tier:'legendary', icon:'⚔️',
@@ -665,7 +665,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m50'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7,...VG.hypercar], count:5, armor:'B7', note:'1x Spirit + 2x Overlord B7 + 2x Hyper' }, driver:{ levelMin:6, stressMax:0, count:5 } },
     risk:{ gdf:95, weather:true, pvp:true, note:'RAID: massima difficoltà' },
-    rewards:{ cash:1000000, tc:0, rep:0, shadowCoin:500000, unlock:'majestic_spirit_gold', title:'Governatore Supremo', desc:'+€1.000.000 · +500.000 SC · TITOLO: Governatore Supremo · Sblocca Majestic Spirit Gold' } },
+    rewards:{ cash:1000000, tc:0, vtk:450, rep:0, shadowCoin:500000, unlock:'majestic_spirit_gold', title:'Governatore Supremo', desc:'+€1.000.000 · +500.000 SC · TITOLO: Governatore Supremo · Sblocca Majestic Spirit Gold' } },
 
   /* ═══════════════ VOLUME 5 — LA VENDETTA (m51-m59) ═══════════════ */
   { id:'m51', ch:5, type:'story', tier:'diamond', icon:'🩸',
@@ -676,7 +676,7 @@ const QUEST_DB = [
     prereqs:['m50'],
     check: gs => ({ cur: _mRun(gs,'m51'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', note:'Overlord B7 + rostri' }, driver:{ levelMin:6, stressMax:0, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:150000, unlock:'satellite_monitor_torretta', desc:'+150.000 SC · Sblocca Monitor Satellitare' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:150000, unlock:'satellite_monitor_torretta', desc:'+150.000 SC · Sblocca Monitor Satellitare' } },
 
   { id:'m52', ch:5, type:'story', tier:'diamond', icon:'📊',
     title:'La Verifica della Corte dei Conti',
@@ -686,7 +686,7 @@ const QUEST_DB = [
     prereqs:['m51'],
     check: gs => ({ cur: _mRun(gs,'m52'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.presGold, conditionMin:100, cleanMin:100, note:'Spirit Gold usura 0 clean 100' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:80000, tc:0, rep:0, unlock:'data_spoofer', desc:'+€80.000 · Sblocca Data Spoofer' } },
+    rewards:{ cash:80000, tc:0, vtk:250, rep:0, unlock:'data_spoofer', desc:'+€80.000 · Sblocca Data Spoofer' } },
 
   { id:'m53', ch:5, type:'story', tier:'diamond', icon:'🌿',
     title:'La Secessione Toscana',
@@ -696,7 +696,7 @@ const QUEST_DB = [
     prereqs:['m52'],
     check: gs => ({ cur: _mRun(gs,'m53'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], count:2, armor:'B6', note:'2x Overlord + Minibus' }, driver:{ levelMin:5, stressMax:30, count:3 } },
-    rewards:{ cash:250000, tc:0, rep:0, unlock:'coercive_collection_rights', desc:'+€250.000 · Sblocca Diritti Riscossione' } },
+    rewards:{ cash:250000, tc:0, vtk:380, rep:0, unlock:'coercive_collection_rights', desc:'+€250.000 · Sblocca Diritti Riscossione' } },
 
   { id:'m54', ch:5, type:'story', tier:'gold', icon:'⚖️',
     title:"L'Inchiesta dell'Antitrust Centrale",
@@ -706,7 +706,7 @@ const QUEST_DB = [
     prereqs:['m53'],
     check: gs => ({ cur: _mRun(gs,'m54'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltShoot, note:'Estate VIP executive' }, driver:{ levelMin:5, stressMax:30, count:1 } },
-    rewards:{ cash:180000, tc:0, rep:0, unlock:'antitrust_certified', desc:'+€180.000 · Certificazione Antitrust' } },
+    rewards:{ cash:180000, tc:0, vtk:300, rep:0, unlock:'antitrust_certified', desc:'+€180.000 · Certificazione Antitrust' } },
 
   { id:'m55', ch:5, type:'story', tier:'diamond', icon:'⚓',
     title:'Il Cartello di Civitavecchia',
@@ -716,7 +716,7 @@ const QUEST_DB = [
     prereqs:['m54'],
     check: gs => ({ cur: _mRun(gs,'m55'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel','stellar_m_cruiser'], count:2, note:'Citadel + Minibus' }, driver:{ levelMin:6, stressMax:40, count:2 } },
-    rewards:{ cash:300000, tc:0, rep:0, unlock:'port_monopoly_10pct', desc:'+€300.000 · Monopolio Portuale 10%' } },
+    rewards:{ cash:300000, tc:0, vtk:380, rep:0, unlock:'port_monopoly_10pct', desc:'+€300.000 · Monopolio Portuale 10%' } },
 
   { id:'m56', ch:5, type:'story', tier:'legendary', icon:'📈',
     title:'La Quotazione a Wall Street',
@@ -726,7 +726,7 @@ const QUEST_DB = [
     prereqs:['m55'],
     check: gs => ({ cur: _mRun(gs,'m56'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], conditionMin:100, note:'Hyper overclock + hydrogen charge' }, driver:{ levelMin:6, stressMax:30, count:1 } },
-    rewards:{ cash:500000, tc:0, rep:0, unlock:'ipo_tab_active', desc:'+€500.000 · Sblocca IPO Tab' } },
+    rewards:{ cash:500000, tc:0, vtk:450, rep:0, unlock:'ipo_tab_active', desc:'+€500.000 · Sblocca IPO Tab' } },
 
   { id:'m57', ch:5, type:'story', tier:'diamond', icon:'🔏',
     title:'Il Corriere Diplomatico Cifrato',
@@ -736,7 +736,7 @@ const QUEST_DB = [
     prereqs:['m56'],
     check: gs => ({ cur: _mRun(gs,'m57'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], armor:'B7', note:'Citadel B7 + radio contraffazione' }, driver:{ levelMin:6, stressMax:10, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:150000, unlock:'crypto_terminal_military', desc:'+150.000 SC · Terminal Crypto Militare' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:150000, unlock:'crypto_terminal_military', desc:'+150.000 SC · Terminal Crypto Militare' } },
 
   { id:'m58', ch:5, type:'story', tier:'gold', icon:'🤖',
     title:"L'Attacco dei Bot di Arbitraggio",
@@ -746,7 +746,7 @@ const QUEST_DB = [
     prereqs:['m57'],
     check: gs => ({ cur: _mRun(gs,'m58'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], note:'Apex + satellite quantistica' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:140000, tc:0, rep:0, unlock:'arbitrage_bot_t2', desc:'+€140.000 · Bot Arbitraggio T2' } },
+    rewards:{ cash:140000, tc:0, vtk:300, rep:0, unlock:'arbitrage_bot_t2', desc:'+€140.000 · Bot Arbitraggio T2' } },
 
   { id:'m59', ch:5, type:'story', tier:'diamond', icon:'🏛️',
     title:'Il Veto del Senato Corporativo',
@@ -756,7 +756,7 @@ const QUEST_DB = [
     prereqs:['m58'],
     check: gs => ({ cur: _mRun(gs,'m59'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus VIP 12 posti tinted L5' }, driver:{ levelMin:6, stressMax:30, count:1 } },
-    rewards:{ cash:200000, tc:0, rep:0, unlock:'senate_budget_presidency', desc:'+€200.000 · Presidenza Bilancio Senato' } },
+    rewards:{ cash:200000, tc:0, vtk:380, rep:0, unlock:'senate_budget_presidency', desc:'+€200.000 · Presidenza Bilancio Senato' } },
 
   /* ═══════════════ RAID BOSS — m60 ═══════════════ */
   { id:'m60', ch:5, type:'raid', tier:'legendary', icon:'👑',
@@ -768,7 +768,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m60'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7,...VG.hypercar], count:6, armor:'B7', note:'2x Spirit Gold + 2x Overlord B7 + 2x Hyper' }, driver:{ levelMin:6, stressMax:0, count:6 } },
     risk:{ gdf:99, weather:true, pvp:true, note:'RAID: Colpo di Stato' },
-    rewards:{ cash:2500000, tc:0, rep:0, shadowCoin:1000000, unlock:'monopolio_energetico', title:'Dominion Supremo', desc:'+€2.500.000 · +1.000.000 SC · TITOLO: Dominion Supremo' } },
+    rewards:{ cash:2500000, tc:0, vtk:450, rep:0, shadowCoin:1000000, unlock:'monopolio_energetico', title:'Dominion Supremo', desc:'+€2.500.000 · +1.000.000 SC · TITOLO: Dominion Supremo' } },
 
   /* ═══════════════ VOLUME 6 — L'ESPANSIONE (m61-m69) ═══════════════ */
   { id:'m61', ch:6, type:'story', tier:'diamond', icon:'🌍',
@@ -779,7 +779,7 @@ const QUEST_DB = [
     prereqs:['m60'],
     check: gs => ({ cur: _mRun(gs,'m61'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltShoot, conditionMin:100, note:'Estate usura 0' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:200000, tc:0, rep:0, unlock:'real_estate_east_europe', desc:'+€200.000 · Real Estate Europa Est' } },
+    rewards:{ cash:200000, tc:0, vtk:380, rep:0, unlock:'real_estate_east_europe', desc:'+€200.000 · Real Estate Europa Est' } },
 
   { id:'m62', ch:6, type:'story', tier:'diamond', icon:'✈️',
     title:'Il Controllo dei Cieli',
@@ -789,7 +789,7 @@ const QUEST_DB = [
     prereqs:['m61'],
     check: gs => ({ cur: _mRun(gs,'m62'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', note:'Overlord B7' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:180000, tc:0, rep:0, unlock:'airport_monopoly_8pct', desc:'+€180.000 · Monopolio Aeroporti 8%' } },
+    rewards:{ cash:180000, tc:0, vtk:300, rep:0, unlock:'airport_monopoly_8pct', desc:'+€180.000 · Monopolio Aeroporti 8%' } },
 
   { id:'m63', ch:6, type:'story', tier:'diamond', icon:'🏔️',
     title:'Il Canale Svizzero Cifrato',
@@ -799,7 +799,7 @@ const QUEST_DB = [
     prereqs:['m62'],
     check: gs => ({ cur: _mRun(gs,'m63'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], note:'Citadel + schermatura termica' }, driver:{ levelMin:5, stressMax:10, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:80000, unlock:'crypto_terminal_l4', desc:'+80.000 SC · Terminal Crypto L4' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:80000, unlock:'crypto_terminal_l4', desc:'+80.000 SC · Terminal Crypto L4' } },
 
   { id:'m64', ch:6, type:'story', tier:'gold', icon:'✊',
     title:'La Rivolta dei Sindacati Radicali',
@@ -809,7 +809,7 @@ const QUEST_DB = [
     prereqs:['m63'],
     check: gs => ({ cur: _mRun(gs,'m64'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + officina mobile' }, driver:{ levelMin:5, stressMax:10, count:1 } },
-    rewards:{ cash:110000, tc:0, rep:0, unlock:'union_imperial_contract', desc:'+€110.000 · Contratto Imperiale Sindacato' } },
+    rewards:{ cash:110000, tc:0, vtk:300, rep:0, unlock:'union_imperial_contract', desc:'+€110.000 · Contratto Imperiale Sindacato' } },
 
   { id:'m65', ch:6, type:'story', tier:'legendary', icon:'⚡',
     title:'Il Monopolio dei Supercharger Quantistici',
@@ -819,7 +819,7 @@ const QUEST_DB = [
     prereqs:['m64'],
     check: gs => ({ cur: _mRun(gs,'m65'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], conditionMin:100, note:'Hyper overclock 100%' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:120000, unlock:'megafactory_monopoly_absolute', desc:'+120.000 SC · Monopolio Megafactory Assoluto' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:120000, unlock:'megafactory_monopoly_absolute', desc:'+120.000 SC · Monopolio Megafactory Assoluto' } },
 
   { id:'m66', ch:6, type:'story', tier:'legendary', icon:'🕴️',
     title:"L'Estradizione di Grigori",
@@ -829,7 +829,7 @@ const QUEST_DB = [
     prereqs:['m65'],
     check: gs => ({ cur: _mRun(gs,'m66'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', count:2, note:'Overlord B7 + Minibus esca' }, driver:{ levelMin:6, stressMax:5, count:2 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:400000, unlock:'opa_fast_30pct', desc:'+400.000 SC · OPA Rapida 30%' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:400000, unlock:'opa_fast_30pct', desc:'+400.000 SC · OPA Rapida 30%' } },
 
   { id:'m67', ch:6, type:'story', tier:'diamond', icon:'💸',
     title:'Il Rug Pull di Wall Street P2P',
@@ -839,7 +839,7 @@ const QUEST_DB = [
     prereqs:['m66'],
     check: gs => ({ cur: _mRun(gs,'m67'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], note:'Apex + satellite timer 12min' }, driver:{ levelMin:6, stressMax:10, count:1 } },
-    rewards:{ cash:300000, tc:0, rep:0, unlock:'swiss_account_l5', desc:'+€300.000 · Conto Svizzero L5' } },
+    rewards:{ cash:300000, tc:0, vtk:380, rep:0, unlock:'swiss_account_l5', desc:'+€300.000 · Conto Svizzero L5' } },
 
   { id:'m68', ch:6, type:'story', tier:'diamond', icon:'🌪️',
     title:'Allerta Meteo Catastrofe',
@@ -850,7 +850,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m68'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', note:'Overlord B7 + sospensioni + all-weather' }, driver:{ levelMin:5, stressMax:40, count:1 } },
     risk:{ gdf:40, weather:true, pvp:false, note:'Allerta meteo critica' },
-    rewards:{ cash:160000, tc:0, rep:0, unlock:'surge_pricing_l3_auto', desc:'+€160.000 · Surge Pricing L3 Auto' } },
+    rewards:{ cash:160000, tc:0, vtk:300, rep:0, unlock:'surge_pricing_l3_auto', desc:'+€160.000 · Surge Pricing L3 Auto' } },
 
   { id:'m69', ch:6, type:'story', tier:'diamond', icon:'⚖️',
     title:"L'Infiltrato nell'Antitrust Suprema",
@@ -860,7 +860,7 @@ const QUEST_DB = [
     prereqs:['m68'],
     check: gs => ({ cur: _mRun(gs,'m69'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + officina mobile' }, driver:{ levelMin:5, stressMax:10, count:1 } },
-    rewards:{ cash:150000, tc:0, rep:0, unlock:'judicial_immunity_supreme', desc:'+€150.000 · Immunità Giudiziaria Suprema' } },
+    rewards:{ cash:150000, tc:0, vtk:300, rep:0, unlock:'judicial_immunity_supreme', desc:'+€150.000 · Immunità Giudiziaria Suprema' } },
 
   /* ═══════════════ RAID BOSS — m70 ═══════════════ */
   { id:'m70', ch:6, type:'raid', tier:'legendary', icon:'⚡',
@@ -872,7 +872,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m70'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7,...VG.voltShoot,...VG.hypercar], count:8, armor:'B7', note:'2x Gold + 2x Overlord B7 + 2x Estate + 2x Hyper' }, driver:{ levelMin:6, stressMax:0, count:8 } },
     risk:{ gdf:99, weather:true, pvp:true, note:'RAID: Giudizio Universale' },
-    rewards:{ cash:5000000, tc:0, rep:0, shadowCoin:2000000, unlock:'monopolio_assoluto', title:'Overlord Absolute', desc:'+€5.000.000 · +2.000.000 SC · TITOLO: Overlord Absolute' } },
+    rewards:{ cash:5000000, tc:0, vtk:450, rep:0, shadowCoin:2000000, unlock:'monopolio_assoluto', title:'Overlord Absolute', desc:'+€5.000.000 · +2.000.000 SC · TITOLO: Overlord Absolute' } },
 
   /* ═══════════════ VOLUME 7 — LA CONQUISTA (m71-m79) ═══════════════ */
   { id:'m71', ch:7, type:'story', tier:'diamond', icon:'🏢',
@@ -883,7 +883,7 @@ const QUEST_DB = [
     prereqs:['m70'],
     check: gs => ({ cur: _mRun(gs,'m71'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex','stellar_g_overlord'], count:2, note:'Apex + Overlord B7' }, driver:{ levelMin:6, stressMax:40, count:2 } },
-    rewards:{ cash:250000, tc:0, rep:0, unlock:'counter_intelligence_hq', desc:'+€250.000 · Counter-Intelligence HQ' } },
+    rewards:{ cash:250000, tc:0, vtk:380, rep:0, unlock:'counter_intelligence_hq', desc:'+€250.000 · Counter-Intelligence HQ' } },
 
   { id:'m72', ch:7, type:'story', tier:'diamond', icon:'🧊',
     title:'Il Congelamento dei Beni Offshore',
@@ -893,7 +893,7 @@ const QUEST_DB = [
     prereqs:['m71'],
     check: gs => ({ cur: _mRun(gs,'m72'), tgt:1 }),
     requires:{ vehicle:{ classes:['nexus_h_line'], note:'Nexus anonimo, no mod' }, driver:{ levelMin:5, stressMax:20, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:100000, unlock:'fiscal_shield_l5', desc:'+100.000 SC · Scudo Fiscale L5' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:100000, unlock:'fiscal_shield_l5', desc:'+100.000 SC · Scudo Fiscale L5' } },
 
   { id:'m73', ch:7, type:'story', tier:'legendary', icon:'✈️',
     title:'La Tratta dei Super-Jet Internazionali',
@@ -903,7 +903,7 @@ const QUEST_DB = [
     prereqs:['m72'],
     check: gs => ({ cur: _mRun(gs,'m73'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.presGold, conditionMin:100, count:3, note:'3x Spirit Gold usura 0' }, driver:{ levelMin:5, stressMax:40, count:3 } },
-    rewards:{ cash:350000, tc:0, rep:0, unlock:'aviation_monopoly_12pct', desc:'+€350.000 · Monopolio Aviazione 12%' } },
+    rewards:{ cash:350000, tc:0, vtk:380, rep:0, unlock:'aviation_monopoly_12pct', desc:'+€350.000 · Monopolio Aviazione 12%' } },
 
   { id:'m74', ch:7, type:'story', tier:'diamond', icon:'🌊',
     title:'Il Sabotaggio del Cavo Sottomarino',
@@ -913,7 +913,7 @@ const QUEST_DB = [
     prereqs:['m73'],
     check: gs => ({ cur: _mRun(gs,'m74'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + EMP shield' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:150000, tc:0, rep:0, unlock:'quantum_firewall_inverse', desc:'+€150.000 · Firewall Quantistico Inverso' } },
+    rewards:{ cash:150000, tc:0, vtk:300, rep:0, unlock:'quantum_firewall_inverse', desc:'+€150.000 · Firewall Quantistico Inverso' } },
 
   { id:'m75', ch:7, type:'story', tier:'legendary', icon:'🐉',
     title:"L'Infiltrazione del Cartello Asiatico",
@@ -923,7 +923,7 @@ const QUEST_DB = [
     prereqs:['m74'],
     check: gs => ({ cur: _mRun(gs,'m75'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], conditionMin:100, note:'Hyper overclock 100%' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:200000, unlock:'poison_pill_advanced_military', desc:'+200.000 SC · Poison Pill Militare' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:200000, unlock:'poison_pill_advanced_military', desc:'+200.000 SC · Poison Pill Militare' } },
 
   { id:'m76', ch:7, type:'story', tier:'diamond', icon:'🏭',
     title:'La Secessione dei Depositi',
@@ -933,7 +933,7 @@ const QUEST_DB = [
     prereqs:['m75'],
     check: gs => ({ cur: _mRun(gs,'m76'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', count:2, note:'2x Overlord B7 + Minibus' }, driver:{ levelMin:6, stressMax:40, count:3 } },
-    rewards:{ cash:300000, tc:0, rep:0, unlock:'energy_tax_continental_control', desc:'+€300.000 · Controllo Tassa Energetica' } },
+    rewards:{ cash:300000, tc:0, vtk:380, rep:0, unlock:'energy_tax_continental_control', desc:'+€300.000 · Controllo Tassa Energetica' } },
 
   { id:'m77', ch:7, type:'story', tier:'diamond', icon:'🌐',
     title:"Il Protocollo d'Estrazione dell'Ambasciatore",
@@ -943,7 +943,7 @@ const QUEST_DB = [
     prereqs:['m76'],
     check: gs => ({ cur: _mRun(gs,'m77'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], armor:'B7', note:'Citadel B7 tinted L5' }, driver:{ levelMin:6, stressMax:10, count:1 } },
-    rewards:{ cash:250000, tc:0, rep:0, unlock:'diplomatic_immunity_fleet_permanent', desc:'+€250.000 · Immunità Diplomatica Flotta' } },
+    rewards:{ cash:250000, tc:0, vtk:380, rep:0, unlock:'diplomatic_immunity_fleet_permanent', desc:'+€250.000 · Immunità Diplomatica Flotta' } },
 
   { id:'m78', ch:7, type:'story', tier:'diamond', icon:'🎯',
     title:"La Caccia all'Hacker di Stato",
@@ -953,7 +953,7 @@ const QUEST_DB = [
     prereqs:['m77'],
     check: gs => ({ cur: _mRun(gs,'m78'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], note:'Hyper + satellite' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:130000, tc:0, rep:0, unlock:'server_room_l5', desc:'+€130.000 · Server Room L5' } },
+    rewards:{ cash:130000, tc:0, vtk:300, rep:0, unlock:'server_room_l5', desc:'+€130.000 · Server Room L5' } },
 
   { id:'m79', ch:7, type:'story', tier:'legendary', icon:'🏗️',
     title:'La Nazionalizzazione delle Infrastrutture',
@@ -963,7 +963,7 @@ const QUEST_DB = [
     prereqs:['m78'],
     check: gs => ({ cur: _mRun(gs,'m79'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus VIP 12 posti tinted L5' }, driver:{ levelMin:6, stressMax:30, count:1 } },
-    rewards:{ cash:220000, tc:0, rep:0, unlock:'demanial_council_presidency', desc:'+€220.000 · Presidenza Consiglio Demaniale' } },
+    rewards:{ cash:220000, tc:0, vtk:380, rep:0, unlock:'demanial_council_presidency', desc:'+€220.000 · Presidenza Consiglio Demaniale' } },
 
   /* ═══════════════ RAID BOSS — m80 ═══════════════ */
   { id:'m80', ch:7, type:'raid', tier:'legendary', icon:'⚓',
@@ -975,7 +975,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m80'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7,...VG.voltShoot,...VG.hypercar], count:8, armor:'B7', note:'2x Gold + 2x Overlord B7 + 2x Estate + 2x Hyper' }, driver:{ levelMin:6, stressMax:0, count:8 } },
     risk:{ gdf:99, weather:true, pvp:true, note:'RAID: Blocco Navale' },
-    rewards:{ cash:5000000, tc:0, rep:0, shadowCoin:2000000, unlock:'dominion_assoluto', title:'Dominion Assoluto', desc:'+€5.000.000 · +2.000.000 SC · TITOLO: Dominion Assoluto' } },
+    rewards:{ cash:5000000, tc:0, vtk:450, rep:0, shadowCoin:2000000, unlock:'dominion_assoluto', title:'Dominion Assoluto', desc:'+€5.000.000 · +2.000.000 SC · TITOLO: Dominion Assoluto' } },
 
   /* ═══════════════ VOLUME 8 — IL COLLASSO (m81-m89) ═══════════════ */
   { id:'m81', ch:8, type:'story', tier:'legendary', icon:'📉',
@@ -986,7 +986,7 @@ const QUEST_DB = [
     prereqs:['m80'],
     check: gs => ({ cur: _mRun(gs,'m81'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], conditionMin:100, note:'Apex + EMP shield 100%' }, driver:{ levelMin:6, stressMax:20, count:1 } },
-    rewards:{ cash:300000, tc:0, rep:0, unlock:'market_stabilizer_panel', desc:'+€300.000 · Pannello Stabilizzatore Mercato' } },
+    rewards:{ cash:300000, tc:0, vtk:380, rep:0, unlock:'market_stabilizer_panel', desc:'+€300.000 · Pannello Stabilizzatore Mercato' } },
 
   { id:'m82', ch:8, type:'story', tier:'diamond', icon:'🇪🇺',
     title:'Il Protocollo Eurojust',
@@ -996,7 +996,7 @@ const QUEST_DB = [
     prereqs:['m81'],
     check: gs => ({ cur: _mRun(gs,'m82'), tgt:1 }),
     requires:{ vehicle:{ classes:['majestic_citadel'], armor:'B7', note:'Citadel B7 tinted L5' }, driver:{ levelMin:6, stressMax:20, count:1 } },
-    rewards:{ cash:150000, tc:0, rep:0, unlock:'data_obfuscator', desc:'+€150.000 · Data Obfuscator' } },
+    rewards:{ cash:150000, tc:0, vtk:300, rep:0, unlock:'data_obfuscator', desc:'+€150.000 · Data Obfuscator' } },
 
   { id:'m83', ch:8, type:'story', tier:'legendary', icon:'🌍',
     title:'Il G7 dei Trasporti Imperiale',
@@ -1006,7 +1006,7 @@ const QUEST_DB = [
     prereqs:['m82'],
     check: gs => ({ cur: _mRun(gs,'m83'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7], conditionMin:100, count:7, note:'4x Gold + 3x Overlord B7, usura 0' }, driver:{ levelMin:5, stressMax:30, count:7 } },
-    rewards:{ cash:500000, tc:0, rep:0, unlock:'highway_monopoly_3pct', desc:'+€500.000 · Monopolio Autostrade 3%' } },
+    rewards:{ cash:500000, tc:0, vtk:450, rep:0, unlock:'highway_monopoly_3pct', desc:'+€500.000 · Monopolio Autostrade 3%' } },
 
   { id:'m84', ch:8, type:'story', tier:'diamond', icon:'🏎️',
     title:"L'Attacco delle Hypercar Spia",
@@ -1016,7 +1016,7 @@ const QUEST_DB = [
     prereqs:['m83'],
     check: gs => ({ cur: _mRun(gs,'m84'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], conditionMin:100, note:'Hyper overclock 100%' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:120000, unlock:'quantum_inverter_shield_emp', desc:'+120.000 SC · Scudo EMP Quantistico' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:120000, unlock:'quantum_inverter_shield_emp', desc:'+120.000 SC · Scudo EMP Quantistico' } },
 
   { id:'m85', ch:8, type:'story', tier:'legendary', icon:'🚄',
     title:"Il Monopolio Ferroviario dell'Alta Velocità",
@@ -1026,7 +1026,7 @@ const QUEST_DB = [
     prereqs:['m84'],
     check: gs => ({ cur: _mRun(gs,'m85'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus VIP sospensioni idrauliche' }, driver:{ levelMin:5, stressMax:10, count:1 } },
-    rewards:{ cash:280000, tc:0, rep:0, unlock:'railway_monopoly_10pct', desc:'+€280.000 · Monopolio Ferroviario 10%' } },
+    rewards:{ cash:280000, tc:0, vtk:380, rep:0, unlock:'railway_monopoly_10pct', desc:'+€280.000 · Monopolio Ferroviario 10%' } },
 
   { id:'m86', ch:8, type:'story', tier:'legendary', icon:'💻',
     title:"L'Estradizione dell'Hacker Quantistico",
@@ -1036,7 +1036,7 @@ const QUEST_DB = [
     prereqs:['m85'],
     check: gs => ({ cur: _mRun(gs,'m86'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord','majestic_spirit_gold'], armor:'B7', count:3, note:'2x Overlord B7 + Spirit Gold' }, driver:{ levelMin:6, stressMax:20, count:3 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:350000, unlock:'quantum_overclock_l3', desc:'+350.000 SC · Overclock Quantistico L3' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:350000, unlock:'quantum_overclock_l3', desc:'+350.000 SC · Overclock Quantistico L3' } },
 
   { id:'m87', ch:8, type:'story', tier:'diamond', icon:'🏘️',
     title:'La Bolla del Real Estate di Iași',
@@ -1046,7 +1046,7 @@ const QUEST_DB = [
     prereqs:['m86'],
     check: gs => ({ cur: _mRun(gs,'m87'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltShoot, conditionMin:100, note:'Estate + satellite usura 0' }, driver:{ levelMin:6, stressMax:10, count:1 } },
-    rewards:{ cash:200000, tc:0, rep:0, unlock:'poison_pill_real_estate', desc:'+€200.000 · Poison Pill Real Estate' } },
+    rewards:{ cash:200000, tc:0, vtk:380, rep:0, unlock:'poison_pill_real_estate', desc:'+€200.000 · Poison Pill Real Estate' } },
 
   { id:'m88', ch:8, type:'story', tier:'legendary', icon:'🌐',
     title:"Il Ricatto dell'Antitrust Globale",
@@ -1056,7 +1056,7 @@ const QUEST_DB = [
     prereqs:['m87'],
     check: gs => ({ cur: _mRun(gs,'m88'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.presGold, note:'Spirit Gold tinted L5' }, driver:{ levelMin:5, stressMax:15, count:1 } },
-    rewards:{ cash:250000, tc:0, rep:0, unlock:'monopoly_supreme_immunity', desc:'+€250.000 · Immunità Monopolio Suprema' } },
+    rewards:{ cash:250000, tc:0, vtk:380, rep:0, unlock:'monopoly_supreme_immunity', desc:'+€250.000 · Immunità Monopolio Suprema' } },
 
   { id:'m89', ch:8, type:'story', tier:'diamond', icon:'🕵️',
     title:'La Rivolta delle Agenzie Ombra Sottomesse',
@@ -1066,7 +1066,7 @@ const QUEST_DB = [
     prereqs:['m88'],
     check: gs => ({ cur: _mRun(gs,'m89'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + officina + schermatura' }, driver:{ levelMin:5, stressMax:40, count:1 } },
-    rewards:{ cash:140000, tc:0, rep:0, unlock:'quantum_security_l5', desc:'+€140.000 · Sicurezza Quantistica L5' } },
+    rewards:{ cash:140000, tc:0, vtk:300, rep:0, unlock:'quantum_security_l5', desc:'+€140.000 · Sicurezza Quantistica L5' } },
 
   /* ═══════════════ RAID BOSS — m90 ═══════════════ */
   { id:'m90', ch:8, type:'raid', tier:'legendary', icon:'🌑',
@@ -1078,7 +1078,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m90'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7,...VG.voltShoot,...VG.hypercar], count:8, armor:'B7', note:'2x Gold + 2x Overlord B7 + 2x Estate + 2x Hyper' }, driver:{ levelMin:6, stressMax:0, count:8 } },
     risk:{ gdf:99, weather:true, pvp:true, note:'RAID: Eclissi Totale' },
-    rewards:{ cash:6000000, tc:0, rep:0, shadowCoin:3000000, unlock:'dominion_continentale_t5', title:'Overlord Absolute Tier 5', desc:'+€6.000.000 · +3.000.000 SC · TITOLO: Overlord Absolute Tier 5' } },
+    rewards:{ cash:6000000, tc:0, vtk:450, rep:0, shadowCoin:3000000, unlock:'dominion_continentale_t5', title:'Overlord Absolute Tier 5', desc:'+€6.000.000 · +3.000.000 SC · TITOLO: Overlord Absolute Tier 5' } },
 
   /* ═══════════════ VOLUME FINALE — L'IMPERATORE (m91-m99) ═══════════════ */
   { id:'m91', ch:9, type:'story', tier:'legendary', icon:'🌎',
@@ -1089,7 +1089,7 @@ const QUEST_DB = [
     prereqs:['m90'],
     check: gs => ({ cur: _mRun(gs,'m91'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_hyper'], conditionMin:100, note:'Hyper overclock usura 0' }, driver:{ levelMin:6, stressMax:40, count:1 } },
-    rewards:{ cash:500000, tc:0, rep:0, unlock:'full_takeover_module', desc:'+€500.000 · Modulo Takeover Completo' } },
+    rewards:{ cash:500000, tc:0, vtk:450, rep:0, unlock:'full_takeover_module', desc:'+€500.000 · Modulo Takeover Completo' } },
 
   { id:'m92', ch:9, type:'story', tier:'legendary', icon:'💣',
     title:'Il Sabotaggio del Monopolio Clandestino',
@@ -1099,7 +1099,7 @@ const QUEST_DB = [
     prereqs:['m91'],
     check: gs => ({ cur: _mRun(gs,'m92'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', note:'Overlord B7 + rostri' }, driver:{ levelMin:6, stressMax:20, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:200000, unlock:'security_room_final_l5', desc:'+200.000 SC · Sala Sicurezza Finale L5' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:200000, unlock:'security_room_final_l5', desc:'+200.000 SC · Sala Sicurezza Finale L5' } },
 
   { id:'m93', ch:9, type:'story', tier:'legendary', icon:'📜',
     title:"Il Decreto Supremo dell'Antitrust Internazionale",
@@ -1109,7 +1109,7 @@ const QUEST_DB = [
     prereqs:['m92'],
     check: gs => ({ cur: _mRun(gs,'m93'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.presGold, conditionMin:100, note:'Spirit Gold clima + executive' }, driver:{ levelMin:5, stressMax:20, count:1 } },
-    rewards:{ cash:250000, tc:0, rep:0, unlock:'holding_supreme_certified', desc:'+€250.000 · Holding Suprema Certificata' } },
+    rewards:{ cash:250000, tc:0, vtk:380, rep:0, unlock:'holding_supreme_certified', desc:'+€250.000 · Holding Suprema Certificata' } },
 
   { id:'m94', ch:9, type:'story', tier:'legendary', icon:'🏃',
     title:'La Fuga del Governatore Corrotto Centrale',
@@ -1119,7 +1119,7 @@ const QUEST_DB = [
     prereqs:['m93'],
     check: gs => ({ cur: _mRun(gs,'m94'), tgt:1 }),
     requires:{ vehicle:{ classes:['stellar_g_overlord'], armor:'B7', note:'Overlord B7 + targa contraffatta' }, driver:{ levelMin:6, stressMax:10, count:1 } },
-    rewards:{ cash:300000, tc:0, rep:0, unlock:'senate_exclusive_legislation', desc:'+€300.000 · Legislazione Esclusiva Senato' } },
+    rewards:{ cash:300000, tc:0, vtk:380, rep:0, unlock:'senate_exclusive_legislation', desc:'+€300.000 · Legislazione Esclusiva Senato' } },
 
   { id:'m95', ch:9, type:'story', tier:'legendary', icon:'🎰',
     title:"L'Infiltrazione della Rete di Montecarlo",
@@ -1129,7 +1129,7 @@ const QUEST_DB = [
     prereqs:['m94'],
     check: gs => ({ cur: _mRun(gs,'m95'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + officina mobile' }, driver:{ levelMin:5, stressMax:30, count:1 } },
-    rewards:{ cash:0, tc:0, rep:0, shadowCoin:150000, unlock:'hydrogen_cell_montecarlo', desc:'+150.000 SC · Cella Idrogeno Montecarlo' } },
+    rewards:{ cash:0, tc:0, vtk:200, rep:0, shadowCoin:150000, unlock:'hydrogen_cell_montecarlo', desc:'+150.000 SC · Cella Idrogeno Montecarlo' } },
 
   { id:'m96', ch:9, type:'story', tier:'legendary', icon:'🏦',
     title:'Il Blocco dei Conti della Svizzera',
@@ -1139,7 +1139,7 @@ const QUEST_DB = [
     prereqs:['m95'],
     check: gs => ({ cur: _mRun(gs,'m96'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.voltShoot, conditionMin:100, note:'Estate + satellite usura 0' }, driver:{ levelMin:6, stressMax:20, count:1 } },
-    rewards:{ cash:250000, tc:0, rep:0, unlock:'swiss_account_total_level5', desc:'+€250.000 · Conto Svizzero Totale L5' } },
+    rewards:{ cash:250000, tc:0, vtk:380, rep:0, unlock:'swiss_account_total_level5', desc:'+€250.000 · Conto Svizzero Totale L5' } },
 
   { id:'m97', ch:9, type:'story', tier:'legendary', icon:'👑',
     title:'Il Summit dei Sette Sovrani',
@@ -1149,7 +1149,7 @@ const QUEST_DB = [
     prereqs:['m96'],
     check: gs => ({ cur: _mRun(gs,'m97'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7], conditionMin:100, count:7, note:'4x Gold + 3x Overlord B7 usura 0' }, driver:{ levelMin:6, stressMax:20, count:7 } },
-    rewards:{ cash:600000, tc:0, rep:0, unlock:'corporate_s_tier_international', desc:'+€600.000 · Corporate S-Tier International' } },
+    rewards:{ cash:600000, tc:0, vtk:450, rep:0, unlock:'corporate_s_tier_international', desc:'+€600.000 · Corporate S-Tier International' } },
 
   { id:'m98', ch:9, type:'story', tier:'legendary', icon:'🚁',
     title:'La Notte dei Droni Militari Quantistici',
@@ -1160,7 +1160,7 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m98'), tgt:1 }),
     requires:{ vehicle:{ classes:['volt_s_apex'], note:'Apex + chaff flares' }, driver:{ levelMin:6, stressMax:0, count:1 } },
     risk:{ gdf:95, weather:false, pvp:true, note:'Droni militari quantistici' },
-    rewards:{ cash:180000, tc:0, rep:0, unlock:'thermal_shield_l5_all', desc:'+€180.000 · Scudo Termico L5 Tutta la Flotta' } },
+    rewards:{ cash:180000, tc:0, vtk:300, rep:0, unlock:'thermal_shield_l5_all', desc:'+€180.000 · Scudo Termico L5 Tutta la Flotta' } },
 
   { id:'m99', ch:9, type:'story', tier:'legendary', icon:'⚡',
     title:'Il Sabotaggio della Rete Elettrica di Stato',
@@ -1170,7 +1170,7 @@ const QUEST_DB = [
     prereqs:['m98'],
     check: gs => ({ cur: _mRun(gs,'m99'), tgt:1 }),
     requires:{ vehicle:{ classes:VG.minibus, note:'Minibus + officina mobile' }, driver:{ levelMin:6, stressMax:30, count:1 } },
-    rewards:{ cash:300000, tc:0, rep:0, unlock:'megafactory_quantum_monopoly', desc:'+€300.000 · Monopolio Megafactory Quantistico' } },
+    rewards:{ cash:300000, tc:0, vtk:380, rep:0, unlock:'megafactory_quantum_monopoly', desc:'+€300.000 · Monopolio Megafactory Quantistico' } },
 
   /* ═══════════════ RAID BOSS FINALE — m100 ═══════════════ */
   { id:'m100', ch:9, type:'raid', tier:'legendary', icon:'🌋',
@@ -1182,92 +1182,92 @@ const QUEST_DB = [
     check: gs => ({ cur: _mRun(gs,'m100'), tgt:1 }),
     requires:{ vehicle:{ classes:[...VG.presGold,...VG.armoredB7,...VG.voltShoot,...VG.presidential,...VG.hypercar], count:10, armor:'B7', note:'2x Gold + 2x Overlord B7 + 2x Estate + 2x Spirit + 2x Hyper' }, driver:{ levelMin:6, stressMax:0, count:10 } },
     risk:{ gdf:99, weather:true, pvp:true, note:'RAID FINALE: Apocalisse Digitale' },
-    rewards:{ cash:10000000, tc:0, rep:0, shadowCoin:5000000, unlock:'emperor_dominion', title:'Emperor Dominion Supreme', desc:'+€10.000.000 · +5.000.000 SC · TITOLO: Emperor Dominion Supreme' } },
+    rewards:{ cash:10000000, tc:0, vtk:450, rep:0, shadowCoin:5000000, unlock:'emperor_dominion', title:'Emperor Dominion Supreme', desc:'+€10.000.000 · +5.000.000 SC · TITOLO: Emperor Dominion Supreme' } },
 
   /* ═══════════════ MILESTONE · CAPITOLO 1 — IL PADRONCINO ═══════════════ */
   { id:'q01', ch:1, type:'milestone', tier:'bronze', icon:'🚗', title:'Prima Corsa',
     desc:'Completa la tua prima corsa NCC.',
     prereqs:[],
     check: gs => ({ cur: gs.questStats.totalRides, tgt: 1 }),
-    rewards:{ cash:1500, tc:3, rep:0, desc:'+€1.500 · +3 Driver Coins' } },
+    rewards:{ cash:1500, tc:3, vtk:150, rep:0, desc:'+€1.500 · +3 Driver Coins' } },
 
   { id:'q02', ch:1, type:'milestone', tier:'bronze', icon:'⛽', title:'Liquidità di Base',
     desc:'Raggiungi €8.000 di cassa. Le corse si pagano in anticipo.',
     prereqs:['q01'],
     check: gs => ({ cur: Math.min(gs.cash, 8000), tgt: 8000 }),
-    rewards:{ cash:2000, tc:2, rep:0, desc:'+€2.000 · +2 DC' } },
+    rewards:{ cash:2000, tc:2, vtk:150, rep:0, desc:'+€2.000 · +2 DC' } },
 
   { id:'q03', ch:1, type:'milestone', tier:'bronze', icon:'👔', title:'Primo Autista',
     desc:'Assumi il tuo primo autista professionale.',
     prereqs:['q01'],
     check: gs => ({ cur: gs.drivers.filter(d=>d.id!=='ceo').length, tgt: 1 }),
-    rewards:{ cash:3000, tc:3, rep:0.1, desc:'+€3.000 · +3 DC · +0.1★' } },
+    rewards:{ cash:3000, tc:3, vtk:150, rep:0.1, desc:'+€3.000 · +3 DC · +0.1★' } },
 
   { id:'q04', ch:1, type:'milestone', tier:'bronze', icon:'⭐', title:'Reputazione Base',
     desc:'Raggiungi 1.5★ di reputazione sul mercato.',
     prereqs:['q01'],
     check: gs => ({ cur: Math.min(gs.reputation, 1.5), tgt: 1.5 }),
-    rewards:{ cash:2500, tc:2, rep:0, desc:'+€2.500 · +2 DC' } },
+    rewards:{ cash:2500, tc:2, vtk:150, rep:0, desc:'+€2.500 · +2 DC' } },
 
   { id:'q05', ch:1, type:'milestone', tier:'bronze', icon:'✈️', title:'Corsa Fiumicino',
     desc:'Completa 3 trasferimenti da/per l\'aeroporto FCO.',
     prereqs:['q01'],
     check: gs => ({ cur: gs.questStats.fcoRides, tgt: 3 }),
-    rewards:{ cash:2000, tc:2, rep:0.05, desc:'+€2.000 · +2 DC' } },
+    rewards:{ cash:2000, tc:2, vtk:150, rep:0.05, desc:'+€2.000 · +2 DC' } },
 
   { id:'q06', ch:1, type:'milestone', tier:'bronze', icon:'🚘', title:'Flotta Doppia',
     desc:'Possiedi almeno 2 veicoli in flotta.',
     prereqs:['q02'],
     check: gs => ({ cur: gs.fleet.length, tgt: 2 }),
-    rewards:{ cash:5000, tc:3, rep:0.1, desc:'+€5.000 · +3 DC · +0.1★' } },
+    rewards:{ cash:5000, tc:3, vtk:150, rep:0.1, desc:'+€5.000 · +3 DC · +0.1★' } },
 
   { id:'q07', ch:1, type:'milestone', tier:'bronze', icon:'🔟', title:'Dieci Corse',
     desc:'Completa 10 corse totali.',
     prereqs:['q03'],
     check: gs => ({ cur: gs.questStats.totalRides, tgt: 10 }),
-    rewards:{ cash:4000, tc:4, rep:0, desc:'+€4.000 · +4 DC' } },
+    rewards:{ cash:4000, tc:4, vtk:150, rep:0, desc:'+€4.000 · +4 DC' } },
 
   { id:'q08', ch:1, type:'milestone', tier:'bronze', icon:'🗺️', title:'Prima Regione',
     desc:'Sblocca la prima regione fuori dal Lazio.',
     prereqs:['q02'],
     check: gs => ({ cur: gs.unlockedRegions.filter(r=>r!=='lazio').length, tgt: 1 }),
-    rewards:{ cash:8000, tc:5, rep:0.2, desc:'+€8.000 · +5 DC · +0.2★' } },
+    rewards:{ cash:8000, tc:5, vtk:150, rep:0.2, desc:'+€8.000 · +5 DC · +0.2★' } },
 
   { id:'q09', ch:1, type:'milestone', tier:'bronze', icon:'💼', title:'Prima VIP',
     desc:'Completa la tua prima corsa di livello VIP.',
     prereqs:['q04'],
     check: gs => ({ cur: gs.questStats.vipRides, tgt: 1 }),
-    rewards:{ cash:5000, tc:3, rep:0.1, desc:'+€5.000 · +3 DC · +0.1★' } },
+    rewards:{ cash:5000, tc:3, vtk:150, rep:0.1, desc:'+€5.000 · +3 DC · +0.1★' } },
 
   { id:'q10', ch:1, type:'milestone', tier:'bronze', icon:'🔧', title:'Primo Upgrade',
     desc:'Installa il primo upgrade su un veicolo della flotta.',
     prereqs:['q06'],
     check: gs => ({ cur: gs.fleet.some(c=>(c.upgrades||[]).length>0)?1:0, tgt: 1 }),
-    rewards:{ cash:3000, tc:3, rep:0, desc:'+€3.000 · +3 DC' } },
+    rewards:{ cash:3000, tc:3, vtk:150, rep:0, desc:'+€3.000 · +3 DC' } },
 
   { id:'q11', ch:1, type:'milestone', tier:'bronze', icon:'👥', title:'Team Raddoppiato',
     desc:'Porta la squadra a 2 autisti professionisti.',
     prereqs:['q03'],
     check: gs => ({ cur: gs.drivers.filter(d=>d.id!=='ceo').length, tgt: 2 }),
-    rewards:{ cash:6000, tc:4, rep:0.1, desc:'+€6.000 · +4 DC · +0.1★' } },
+    rewards:{ cash:6000, tc:4, vtk:150, rep:0.1, desc:'+€6.000 · +4 DC · +0.1★' } },
 
   { id:'q12', ch:1, type:'milestone', tier:'bronze', icon:'💰', title:'Diecimila',
     desc:'Accumula €20.000 di liquidità.',
     prereqs:['q07'],
     check: gs => ({ cur: Math.min(gs.cash, 20000), tgt: 20000 }),
-    rewards:{ cash:3000, tc:2, rep:0, desc:'+€3.000 · +2 DC' } },
+    rewards:{ cash:3000, tc:2, vtk:150, rep:0, desc:'+€3.000 · +2 DC' } },
 
   { id:'q13', ch:1, type:'milestone', tier:'bronze', icon:'🌟', title:'Reputazione Solida',
     desc:'Raggiungi 2.0★ di reputazione.',
     prereqs:['q04'],
     check: gs => ({ cur: Math.min(gs.reputation, 2.0), tgt: 2.0 }),
-    rewards:{ cash:8000, tc:5, rep:0, desc:'+€8.000 · +5 DC' } },
+    rewards:{ cash:8000, tc:5, vtk:150, rep:0, desc:'+€8.000 · +5 DC' } },
 
   { id:'q14', ch:1, type:'milestone', tier:'bronze', icon:'🏁', title:'Venticinque Corse',
     desc:'Completa 25 corse totali.',
     prereqs:['q07'],
     check: gs => ({ cur: gs.questStats.totalRides, tgt: 25 }),
-    rewards:{ cash:10000, tc:6, rep:0.1, desc:'+€10.000 · +6 DC · +0.1★' } },
+    rewards:{ cash:10000, tc:6, vtk:150, rep:0.1, desc:'+€10.000 · +6 DC · +0.1★' } },
 
   { id:'q15', ch:1, type:'milestone', tier:'bronze', icon:'🏆', title:'Padroncino Affermato',
     desc:'Completa tutte le sfide del Capitolo 1.',
@@ -1276,171 +1276,171 @@ const QUEST_DB = [
       const need=['q05','q08','q09','q10','q11','q12','q13','q14'];
       return { cur: need.filter(id=>gs.completedQuests.includes(id)).length, tgt: need.length };
     },
-    rewards:{ cash:25000, tc:15, rep:0.2, desc:'+€25.000 · +15 DC · +0.2★' } },
+    rewards:{ cash:25000, tc:15, vtk:200, rep:0.2, desc:'+€25.000 · +15 DC · +0.2★' } },
 
   /* ═══════════════ MILESTONE · CAPITOLO 2 — L'AGENZIA ═══════════════ */
   { id:'q16', ch:2, type:'milestone', tier:'silver', icon:'🚐', title:'Minivan Aziendale',
     desc:'Acquista uno Stellar V-Carrier per il trasporto gruppi.',
     prereqs:['q15'],
     check: gs => ({ cur: gs.fleet.some(c=>c.vehicleClass==='stellar_v_carr'||c.vehicleClass==='stellar_q_carr')?1:0, tgt: 1 }),
-    rewards:{ cash:20000, tc:8, rep:0.2, desc:'+€20.000 · +8 DC · +0.2★' } },
+    rewards:{ cash:20000, tc:8, vtk:200, rep:0.2, desc:'+€20.000 · +8 DC · +0.2★' } },
 
   { id:'q17', ch:2, type:'milestone', tier:'silver', icon:'🚚', title:'Carrier in Flotta',
     desc:'Acquista un secondo Carrier (V o Q) per i transfer di gruppo.',
     prereqs:['q16'],
     check: gs => ({ cur: gs.fleet.filter(c=>c.vehicleClass==='stellar_v_carr'||c.vehicleClass==='stellar_q_carr').length, tgt: 2 }),
-    rewards:{ cash:25000, tc:10, rep:0.2, desc:'+€25.000 · +10 DC · +0.2★' } },
+    rewards:{ cash:25000, tc:10, vtk:200, rep:0.2, desc:'+€25.000 · +10 DC · +0.2★' } },
 
   { id:'q18', ch:2, type:'milestone', tier:'silver', icon:'🛢️', title:'Deposito Carburante',
     desc:'Acquista il Deposito Carburante Aziendale.',
     prereqs:['q15'],
     check: gs => ({ cur: (gs.investments.includes('inv_fuel_depot')||(gs.constructions||[]).some(c=>c.id==='inv_fuel_depot'))?1:0, tgt: 1 }),
-    rewards:{ cash:30000, tc:8, rep:0, desc:'+€30.000 · +8 DC' } },
+    rewards:{ cash:30000, tc:8, vtk:200, rep:0, desc:'+€30.000 · +8 DC' } },
 
   { id:'q19', ch:2, type:'milestone', tier:'silver', icon:'📦', title:'Logistics Manager',
     desc:'Assumi il Logistics Manager.',
     prereqs:['q18'],
     check: gs => ({ cur: gs.staff.some(s=>s.id==='logistics')?1:0, tgt: 1 }),
-    rewards:{ cash:15000, tc:5, rep:0.1, desc:'+€15.000 · +5 DC · +0.1★' } },
+    rewards:{ cash:15000, tc:5, vtk:150, rep:0.1, desc:'+€15.000 · +5 DC · +0.1★' } },
 
   { id:'q20', ch:2, type:'milestone', tier:'silver', icon:'🏢', title:'HQ Executive',
     desc:'Fai upgrade alla sede: Ufficio Executive (HQ Lv2).',
     prereqs:['q15'],
     check: gs => ({ cur: (gs.investments.includes('inv_hq_office')||(gs.constructions||[]).some(c=>c.id==='inv_hq_office'))?1:0, tgt: 1 }),
-    rewards:{ cash:40000, tc:12, rep:0.2, desc:'+€40.000 · +12 DC · +0.2★' } },
+    rewards:{ cash:40000, tc:12, vtk:200, rep:0.2, desc:'+€40.000 · +12 DC · +0.2★' } },
 
   { id:'q21', ch:2, type:'milestone', tier:'silver', icon:'📋', title:'Primo Contratto CV',
     desc:'Completa la prima corsa del contratto Classic Vacations.',
     prereqs:['q16'],
     check: gs => ({ cur: gs.questStats.contractRides, tgt: 1 }),
-    rewards:{ cash:10000, tc:5, rep:0.1, desc:'+€10.000 · +5 DC · +0.1★' } },
+    rewards:{ cash:10000, tc:5, vtk:150, rep:0.1, desc:'+€10.000 · +5 DC · +0.1★' } },
 
   { id:'q22', ch:2, type:'milestone', tier:'silver', icon:'📄', title:'Cinque Contratti CV',
     desc:'Completa 5 corse Classic Vacations.',
     prereqs:['q21'],
     check: gs => ({ cur: gs.questStats.contractRides, tgt: 5 }),
-    rewards:{ cash:20000, tc:8, rep:0.1, desc:'+€20.000 · +8 DC · +0.1★' } },
+    rewards:{ cash:20000, tc:8, vtk:200, rep:0.1, desc:'+€20.000 · +8 DC · +0.1★' } },
 
   { id:'q23', ch:2, type:'milestone', tier:'silver', icon:'5️⃣', title:'Cinquanta Corse',
     desc:'Completa 50 corse totali.',
     prereqs:['q14'],
     check: gs => ({ cur: gs.questStats.totalRides, tgt: 50 }),
-    rewards:{ cash:30000, tc:10, rep:0.2, desc:'+€30.000 · +10 DC · +0.2★' } },
+    rewards:{ cash:30000, tc:10, vtk:200, rep:0.2, desc:'+€30.000 · +10 DC · +0.2★' } },
 
   { id:'q24', ch:2, type:'milestone', tier:'silver', icon:'🧭', title:'Espansione Nord',
     desc:'Sblocca 2 regioni fuori dal Lazio.',
     prereqs:['q08'],
     check: gs => ({ cur: gs.unlockedRegions.filter(r=>r!=='lazio').length, tgt: 2 }),
-    rewards:{ cash:20000, tc:7, rep:0.2, desc:'+€20.000 · +7 DC · +0.2★' } },
+    rewards:{ cash:20000, tc:7, vtk:200, rep:0.2, desc:'+€20.000 · +7 DC · +0.2★' } },
 
   { id:'q25', ch:2, type:'milestone', tier:'silver', icon:'💯', title:'Centomila',
     desc:'Accumula €100.000 di liquidità.',
     prereqs:['q12'],
     check: gs => ({ cur: Math.min(gs.cash, 100000), tgt: 100000 }),
-    rewards:{ cash:20000, tc:10, rep:0, desc:'+€20.000 · +10 DC' } },
+    rewards:{ cash:20000, tc:10, vtk:200, rep:0, desc:'+€20.000 · +10 DC' } },
 
   { id:'q26', ch:2, type:'milestone', tier:'silver', icon:'⚓', title:'Trasferimenti Porto',
     desc:'Completa 3 trasferimenti da/per porti italiani.',
     prereqs:['q08'],
     check: gs => ({ cur: gs.questStats.portRides, tgt: 3 }),
-    rewards:{ cash:15000, tc:6, rep:0.1, desc:'+€15.000 · +6 DC · +0.1★' } },
+    rewards:{ cash:15000, tc:6, vtk:150, rep:0.1, desc:'+€15.000 · +6 DC · +0.1★' } },
 
   { id:'q27', ch:2, type:'milestone', tier:'silver', icon:'👩‍💼', title:'HR Manager',
     desc:'Assumi l\'HR Manager per la gestione del team.',
     prereqs:['q11'],
     check: gs => ({ cur: gs.staff.some(s=>s.id==='hr')?1:0, tgt: 1 }),
-    rewards:{ cash:12000, tc:5, rep:0.1, desc:'+€12.000 · +5 DC · +0.1★' } },
+    rewards:{ cash:12000, tc:5, vtk:150, rep:0.1, desc:'+€12.000 · +5 DC · +0.1★' } },
 
   { id:'q28', ch:2, type:'milestone', tier:'silver', icon:'🚗🚗🚗', title:'Flotta Tripla',
     desc:'Possiedi almeno 3 veicoli.',
     prereqs:['q06'],
     check: gs => ({ cur: gs.fleet.length, tgt: 3 }),
-    rewards:{ cash:15000, tc:6, rep:0.1, desc:'+€15.000 · +6 DC · +0.1★' } },
+    rewards:{ cash:15000, tc:6, vtk:150, rep:0.1, desc:'+€15.000 · +6 DC · +0.1★' } },
 
   { id:'q29', ch:2, type:'milestone', tier:'silver', icon:'📡', title:'Senior Dispatcher',
     desc:'Assumi il Senior Dispatcher per le corse VIP automatiche.',
     prereqs:['q27'],
     check: gs => ({ cur: gs.staff.some(s=>s.id==='sr_disp')?1:0, tgt: 1 }),
-    rewards:{ cash:20000, tc:8, rep:0.1, desc:'+€20.000 · +8 DC · +0.1★' } },
+    rewards:{ cash:20000, tc:8, vtk:200, rep:0.1, desc:'+€20.000 · +8 DC · +0.1★' } },
 
   { id:'q30', ch:2, type:'milestone', tier:'silver', icon:'🗺️', title:'Tre Regioni',
     desc:'Sblocca 3 regioni extra oltre al Lazio.',
     prereqs:['q24'],
     check: gs => ({ cur: gs.unlockedRegions.filter(r=>r!=='lazio').length, tgt: 3 }),
-    rewards:{ cash:35000, tc:12, rep:0.2, desc:'+€35.000 · +12 DC · +0.2★' } },
+    rewards:{ cash:35000, tc:12, vtk:200, rep:0.2, desc:'+€35.000 · +12 DC · +0.2★' } },
 
   /* ═══════════════ MILESTONE · CAPITOLO 3 — IL LUSSO ═══════════════ */
   { id:'q31', ch:3, type:'milestone', tier:'gold', icon:'🤝', title:'Airport Greeter',
     desc:'Assumi un assistente Meet & Greet aeroportuale.',
     prereqs:['q20','q29'],
     check: gs => ({ cur: gs.staff.some(s=>s.skill==='meetgreet')?1:0, tgt: 1 }),
-    rewards:{ cash:50000, tc:15, rep:0.2, desc:'+€50.000 · +15 DC · +0.2★' } },
+    rewards:{ cash:50000, tc:15, vtk:250, rep:0.2, desc:'+€50.000 · +15 DC · +0.2★' } },
 
   { id:'q32', ch:3, type:'milestone', tier:'gold', icon:'👑', title:'Limousine Presidenziale',
     desc:'Acquista la Stellar S-Imperial o un veicolo Presidential.',
     prereqs:['q25','q31'],
     check: gs => ({ cur: gs.fleet.some(c=>['stellar_s_imp','stellar_q_imp','volt_s_apex','majestic_spirit','majestic_e_specter'].includes(c.vehicleClass))?1:0, tgt: 1 }),
-    rewards:{ cash:60000, tc:20, rep:0.3, desc:'+€60.000 · +20 DC · +0.3★' } },
+    rewards:{ cash:60000, tc:20, vtk:250, rep:0.3, desc:'+€60.000 · +20 DC · +0.3★' } },
 
   { id:'q33', ch:3, type:'milestone', tier:'gold', icon:'💎', title:'Cinque Ultra',
     desc:'Completa 5 corse di livello Ultra.',
     prereqs:['q09'],
     check: gs => ({ cur: gs.questStats.ultraRides, tgt: 5 }),
-    rewards:{ cash:40000, tc:12, rep:0.2, desc:'+€40.000 · +12 DC · +0.2★' } },
+    rewards:{ cash:40000, tc:12, vtk:200, rep:0.2, desc:'+€40.000 · +12 DC · +0.2★' } },
 
   { id:'q34', ch:3, type:'milestone', tier:'gold', icon:'⭐⭐⭐⭐', title:'Quattro Stelle',
     desc:'Raggiungi 4.0★ di reputazione.',
     prereqs:['q13'],
     check: gs => ({ cur: Math.min(gs.reputation, 4.0), tgt: 4.0 }),
-    rewards:{ cash:50000, tc:15, rep:0, desc:'+€50.000 · +15 DC' } },
+    rewards:{ cash:50000, tc:15, vtk:250, rep:0, desc:'+€50.000 · +15 DC' } },
 
   { id:'q35', ch:3, type:'milestone', tier:'gold', icon:'🚘×5', title:'Fleet Elite',
     desc:'Possiedi almeno 5 veicoli in flotta.',
     prereqs:['q28'],
     check: gs => ({ cur: gs.fleet.length, tgt: 5 }),
-    rewards:{ cash:40000, tc:12, rep:0.2, desc:'+€40.000 · +12 DC · +0.2★' } },
+    rewards:{ cash:40000, tc:12, vtk:200, rep:0.2, desc:'+€40.000 · +12 DC · +0.2★' } },
 
   { id:'q36', ch:3, type:'milestone', tier:'gold', icon:'⛵', title:'Licenza Veneto',
     desc:'Sblocca il Veneto per accedere a Venezia.',
     prereqs:['q30'],
     check: gs => ({ cur: gs.unlockedRegions.includes('veneto')?1:0, tgt: 1 }),
-    rewards:{ cash:60000, tc:15, rep:0.3, desc:'+€60.000 · +15 DC · +0.3★' } },
+    rewards:{ cash:60000, tc:15, vtk:250, rep:0.3, desc:'+€60.000 · +15 DC · +0.3★' } },
 
   { id:'q37', ch:3, type:'milestone', tier:'gold', icon:'🛥️', title:'Capitano Acqueo',
     desc:'Acquista un Water Taxi per le corse lagunari di Venezia.',
     prereqs:['q36'],
     check: gs => ({ cur: gs.fleet.some(c=>c.vehicleClass==='water_taxi')?1:0, tgt: 1 }),
-    rewards:{ cash:80000, tc:20, rep:0.3, desc:'+€80.000 · +20 DC · +0.3★' } },
+    rewards:{ cash:80000, tc:20, vtk:250, rep:0.3, desc:'+€80.000 · +20 DC · +0.3★' } },
 
   { id:'q38', ch:3, type:'milestone', tier:'gold', icon:'📋×20', title:'Venti Contratti CV',
     desc:'Completa 20 corse Classic Vacations.',
     prereqs:['q22'],
     check: gs => ({ cur: gs.questStats.contractRides, tgt: 20 }),
-    rewards:{ cash:45000, tc:15, rep:0.2, desc:'+€45.000 · +15 DC · +0.2★' } },
+    rewards:{ cash:45000, tc:15, vtk:200, rep:0.2, desc:'+€45.000 · +15 DC · +0.2★' } },
 
   { id:'q39', ch:3, type:'milestone', tier:'gold', icon:'💯', title:'Cento Corse',
     desc:'Completa 100 corse totali.',
     prereqs:['q23'],
     check: gs => ({ cur: gs.questStats.totalRides, tgt: 100 }),
-    rewards:{ cash:75000, tc:20, rep:0.2, desc:'+€75.000 · +20 DC · +0.2★' } },
+    rewards:{ cash:75000, tc:20, vtk:250, rep:0.2, desc:'+€75.000 · +20 DC · +0.2★' } },
 
   { id:'q40', ch:3, type:'milestone', tier:'gold', icon:'💎💎', title:'Mezzo Milione',
     desc:'Accumula €500.000 di liquidità.',
     prereqs:['q25'],
     check: gs => ({ cur: Math.min(gs.cash, 500000), tgt: 500000 }),
-    rewards:{ cash:50000, tc:15, rep:0, desc:'+€50.000 · +15 DC' } },
+    rewards:{ cash:50000, tc:15, vtk:250, rep:0, desc:'+€50.000 · +15 DC' } },
 
   { id:'q41', ch:3, type:'milestone', tier:'gold', icon:'🗺️×5', title:'Cinque Regioni',
     desc:'Sblocca 5 regioni extra oltre al Lazio.',
     prereqs:['q30'],
     check: gs => ({ cur: gs.unlockedRegions.filter(r=>r!=='lazio').length, tgt: 5 }),
-    rewards:{ cash:50000, tc:15, rep:0.3, desc:'+€50.000 · +15 DC · +0.3★' } },
+    rewards:{ cash:50000, tc:15, vtk:250, rep:0.3, desc:'+€50.000 · +15 DC · +0.3★' } },
 
   { id:'q42', ch:3, type:'milestone', tier:'gold', icon:'📣', title:'Brand Power',
     desc:'Lancia la campagna Elite Media Blitz.',
     prereqs:['q20'],
     check: gs => ({ cur: gs.activeMarketing==='elite'?1:0, tgt: 1 }),
-    rewards:{ cash:30000, tc:10, rep:0.3, desc:'+€30.000 · +10 DC · +0.3★' } },
+    rewards:{ cash:30000, tc:10, vtk:200, rep:0.3, desc:'+€30.000 · +10 DC · +0.3★' } },
 
   /* ═══════════════ MILESTONE · CAPITOLO 4 — L'IMPERO ═══════════════ */
   { id:'q43', ch:4, type:'milestone', tier:'diamond', icon:'🏔️', title:'Italia Settentrionale',
@@ -1450,31 +1450,31 @@ const QUEST_DB = [
       const nord=['emilia','liguria','piemonte','lombardia','veneto','friuli','trentino','valle_aosta'];
       return { cur: gs.unlockedRegions.filter(r=>nord.includes(r)).length, tgt: 5 };
     },
-    rewards:{ cash:150000, tc:30, rep:0.3, desc:'+€150.000 · +30 DC · +0.3★' } },
+    rewards:{ cash:150000, tc:30, vtk:300, rep:0.3, desc:'+€150.000 · +30 DC · +0.3★' } },
 
   { id:'q44', ch:4, type:'milestone', tier:'diamond', icon:'🏙️', title:'Capitale del Nord',
     desc:'Sblocca la Lombardia e conquista Milano.',
     prereqs:['q43'],
     check: gs => ({ cur: gs.unlockedRegions.includes('lombardia')?1:0, tgt: 1 }),
-    rewards:{ cash:200000, tc:35, rep:0.5, desc:'+€200.000 · +35 DC · +0.5★' } },
+    rewards:{ cash:200000, tc:35, vtk:380, rep:0.5, desc:'+€200.000 · +35 DC · +0.5★' } },
 
   { id:'q45', ch:4, type:'milestone', tier:'diamond', icon:'🚗×10', title:'Flotta Totale',
     desc:'Possiedi almeno 10 veicoli in flotta.',
     prereqs:['q35'],
     check: gs => ({ cur: gs.fleet.length, tgt: 10 }),
-    rewards:{ cash:100000, tc:25, rep:0.2, desc:'+€100.000 · +25 DC · +0.2★' } },
+    rewards:{ cash:100000, tc:25, vtk:300, rep:0.2, desc:'+€100.000 · +25 DC · +0.2★' } },
 
   { id:'q46', ch:4, type:'milestone', tier:'diamond', icon:'⭐×5', title:'Stella Suprema',
     desc:'Raggiungi la reputazione massima: 5.0★.',
     prereqs:['q34'],
     check: gs => ({ cur: Math.min(gs.reputation, 5.0), tgt: 5.0 }),
-    rewards:{ cash:200000, tc:40, rep:0, desc:'+€200.000 · +40 DC' } },
+    rewards:{ cash:200000, tc:40, vtk:380, rep:0, desc:'+€200.000 · +40 DC' } },
 
   { id:'q47', ch:4, type:'milestone', tier:'diamond', icon:'⚓', title:'Porto Cervo Ultra',
     desc:'Completa una corsa Ultra a Porto Cervo.',
     prereqs:['q37'],
     check: gs => ({ cur: gs.questStats.portoCervoRides||0, tgt: 1 }),
-    rewards:{ cash:80000, tc:20, rep:0.2, desc:'+€80.000 · +20 DC · +0.2★' } },
+    rewards:{ cash:80000, tc:20, vtk:250, rep:0.2, desc:'+€80.000 · +20 DC · +0.2★' } },
 
   { id:'q48', ch:4, type:'milestone', tier:'diamond', icon:'🥇', title:'Numero Uno',
     desc:'Raggiungi la prima posizione nella classifica globale.',
@@ -1483,13 +1483,13 @@ const QUEST_DB = [
       const pos = typeof RIVALS!=='undefined' ? RIVALS.filter(r=>r.rep>gs.reputation).length+1 : 99;
       return { cur: pos===1?1:0, tgt: 1 };
     },
-    rewards:{ cash:250000, tc:50, rep:0, desc:'+€250.000 · +50 DC' } },
+    rewards:{ cash:250000, tc:50, vtk:380, rep:0, desc:'+€250.000 · +50 DC' } },
 
   { id:'q49', ch:4, type:'milestone', tier:'diamond', icon:'200', title:'Duecento Corse',
     desc:'Completa 200 corse totali. Una leggenda del settore.',
     prereqs:['q39'],
     check: gs => ({ cur: gs.questStats.totalRides, tgt: 200 }),
-    rewards:{ cash:150000, tc:30, rep:0.3, desc:'+€150.000 · +30 DC · +0.3★' } },
+    rewards:{ cash:150000, tc:30, vtk:300, rep:0.3, desc:'+€150.000 · +30 DC · +0.3★' } },
 
   { id:'q50', ch:4, type:'milestone', tier:'diamond', icon:'🌟', title:'CEO Supremo',
     desc:'Dominio assoluto: 10+ veicoli, 5.0★, €1M liquidità, #1 classifica.',
@@ -1499,7 +1499,7 @@ const QUEST_DB = [
       const ok = [gs.fleet.length>=10, gs.reputation>=5.0, gs.cash>=1000000, pos===1];
       return { cur: ok.filter(Boolean).length, tgt: 4 };
     },
-    rewards:{ cash:1000000, tc:100, rep:0, desc:'+€1.000.000 · +100 DC · TITOLO: CEO SUPREMO' } },
+    rewards:{ cash:1000000, tc:100, vtk:450, rep:0, desc:'+€1.000.000 · +100 DC · TITOLO: CEO SUPREMO' } },
 ];
 
 /* ──────────────────────────────────────────────────────────────

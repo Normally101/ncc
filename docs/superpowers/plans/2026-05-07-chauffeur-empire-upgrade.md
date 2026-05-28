@@ -1583,3 +1583,85 @@ serve(async () => {
 ```
 
 Schedule via `supabase/functions/credit-rents/config.toml` with `schedule = "0 * * * *"` (hourly) or use pg_cron in Supabase Dashboard.
+
+---
+
+## Brainstorming: Token Economy — VTK (Vettura Token)
+
+> **Problema:** Dare DC come reward delle missioni introduce inflazione incontrollata. Il DC è la valuta premium del gioco — se il giocatore ne guadagna liberamente svolgendo missioni, perde valore. Soluzione: introdurre un token secondario (VTK) che si guadagna dalle missioni e si scambia con DC sul mercato tra giocatori.
+
+### Concetto base
+
+| | DC (Diamond Coin) | VTK (Vettura Token) |
+|---|---|---|
+| **Fonte** | Acquisto reale / eventi rari / ranking | Missioni, obiettivi giornalieri, traguardi |
+| **Scarsità** | Alta — emissione controllata | Media — emissione da missioni, con cap giornaliero |
+| **Uso diretto** | Acquisti premium (veicoli top, slot staff extra, boost) | Mercato P2P → DC, oppure spendibile in un negozio VTK separato |
+| **Tasso di cambio** | Fisso lato sviluppatore: no | Dinamico: determinato dall'offerta/domanda dei giocatori |
+
+### Come funziona il mercato VTK ↔ DC
+
+- I giocatori che vogliono DC in più possono comprare VTK con DC (a un tasso che decidono loro).
+- I giocatori che hanno VTK da missioni possono venderli per DC.
+- Il tasso di cambio fluttua in base all'offerta disponibile — più missioni vengono completate, più VTK in circolazione, più il prezzo VTK/DC scende (come nel mercato valute di eRepublik).
+- Questo crea un ciclo economico: i giocatori attivi guadagnano VTK → vendono per DC → i giocatori premium comprano VTK con DC per spenderli nel negozio VTK.
+
+### Negozio VTK (alternativa al mercato P2P)
+
+Oggetti acquistabili solo con VTK (non con DC né con €):
+- Slot garage temporaneo (+1 veicolo per 7 giorni)
+- Boost fatica autista (ripristino immediato)
+- Skin livrea veicolo esclusiva
+- Accesso anticipato a missioni capitolo successivo
+- Booster reputazione (+0.1 rep immediato, cap 1/settimana)
+
+Questo crea domanda costante di VTK anche senza passare per il mercato P2P.
+
+### Emissione controllata
+
+- Cap giornaliero per giocatore: es. max 500 VTK/giorno da missioni
+- Missioni capitoli avanzati danno più VTK (incentivo alla progressione)
+- VTK non trasferibili direttamente tra account (evita farming multi-account) — solo scambiabili via mercato con DC
+
+### Tabella reward missioni (proposta)
+
+| Tipo missione | Reward € | Reward VTK | Note |
+|---|---|---|---|
+| Missione base (Cap. I) | €3.000–8.000 | 50–150 VTK | nessun DC |
+| Missione avanzata (Cap. II+) | €10.000–30.000 | 200–500 VTK | nessun DC |
+| Obiettivo giornaliero | €500–2.000 | 20–80 VTK | reset 24h |
+| Traguardo ranking (top 10) | — | 1.000 VTK bonus | settimanale |
+| Evento speciale | — | 500–2.000 VTK | occasionale |
+
+### Implementazione tecnica (schema SQL)
+
+```sql
+-- Tabella saldi VTK per azienda
+ALTER TABLE companies ADD COLUMN IF NOT EXISTS vtk_balance BIGINT NOT NULL DEFAULT 0;
+
+-- Mercato P2P VTK ↔ DC
+CREATE TABLE IF NOT EXISTS vtk_market_orders (
+    id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    seller_id   UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    vtk_amount  BIGINT NOT NULL,          -- VTK in vendita
+    dc_price    NUMERIC(10,4) NOT NULL,   -- DC richiesti per 1 VTK
+    created_at  TIMESTAMPTZ DEFAULT now(),
+    filled_at   TIMESTAMPTZ
+);
+
+-- RPC: reward VTK da missione (server-authoritative)
+-- rpc_award_mission_vtk(mission_id, vtk_amount) → aggiorna vtk_balance
+-- RPC: piazza ordine di vendita VTK
+-- rpc_place_vtk_sell_order(vtk_amount, dc_price_per_vtk)
+-- RPC: compra VTK da ordine esistente (paga in DC)
+-- rpc_fill_vtk_order(order_id)
+```
+
+### Task da implementare (future)
+
+- [ ] **VTK-1:** Aggiungere colonna `vtk_balance` a `companies` + RPC `rpc_award_mission_vtk`
+- [ ] **VTK-2:** Tabella `vtk_market_orders` + RPC place/fill order
+- [ ] **VTK-3:** UI tab "Mercato VTK" (lista ordini, piazza ordine, storico)
+- [ ] **VTK-4:** Negozio VTK con 5–8 oggetti spendibili
+- [ ] **VTK-5:** Cap giornaliero VTK da missioni (tracked in `daily_vtk_earned` su `companies`)
+- [ ] **VTK-6:** Aggiornare reward di tutte le missioni esistenti: sostituire DC con VTK
