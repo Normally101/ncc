@@ -250,7 +250,7 @@ window.renderTabHQ = function() {
               <div class="shrink-0 ml-2 text-right">
                 ${isMaxLevel ? `<div class="text-[10px] text-green-400 font-mono">Max Level</div>` : `
                     <div class="text-[10px] text-gold font-mono">€${nextTier.cost.toLocaleString()}</div>
-                    ${!isLocked ? `<button onclick="${currentLevel === 0 ? `window.hqOpenBuildModal('${r.id}')` : `window.hqUpgradeRoom('${currentCityId}', '${r.id}')`}"
+                    ${!isLocked ? `<button onclick="${currentLevel === 0 ? `window._hqBuildFromList('${r.id}')` : `window.hqUpgradeRoom('${currentCityId}', '${r.id}')`}"
                       class="btn-gold !text-[9px] !py-1 !px-2 mt-1 ${(gameState.cash||0) < nextTier.cost || (gameState.reputation||0) < nextTier.reqRep ? 'opacity-40' : ''}">
                       ${currentLevel === 0 ? '🏗️ Costruisci' : '⬆️ Migliora'}
                     </button>` : ''}
@@ -396,4 +396,14 @@ window._hqDailyTick = function() {
     if (fx.helicopterRideGateOverride !== undefined) {
         window._hqHelicopterRideGateOverride = fx.helicopterRideGateOverride;
     }
+};
+
+window._hqBuildFromList = function(roomId) {
+    const cityId = gameState.currentHQCity || 'roma';
+    const cityConfig = (window.HQ_CITIES || []).find(c => c.id === cityId);
+    if (!cityConfig) return;
+    const grid = (gameState.hqs[cityId] || {}).grid || {};
+    const freeSlot = cityConfig.slots.find(s => !grid[s.id]);
+    const slotIndex = freeSlot ? freeSlot.id : undefined;
+    window.hqUpgradeRoom(cityId, roomId, slotIndex);
 };

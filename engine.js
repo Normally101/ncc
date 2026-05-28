@@ -1385,7 +1385,7 @@ window.respondPoaching = function(emailId, accept) {
 };
 
 // ─── GESTIONE AVANZATA AUTO (RIPARA, VENDI, ASSEGNA) ───
-async function payToRepairCar(carId) {
+window.payToRepairCar = async function payToRepairCar(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if(!car) return;
     if(car.condition === 100) return;
@@ -1411,9 +1411,9 @@ async function payToRepairCar(carId) {
     if(typeof closeModals === 'function') closeModals();
     if(typeof renderTabFleet === 'function') renderTabFleet();
     updateUI();
-}
+};
 
-async function sellCar(carId) {
+window.sellCar = async function sellCar(carId) {
     const idx = gameState.fleet.findIndex(c => c.id === carId);
     if(idx === -1) return;
     const car = gameState.fleet[idx];
@@ -1433,7 +1433,7 @@ async function sellCar(carId) {
     if(typeof closeModals === 'function') closeModals();
     if(typeof renderTabFleet === 'function') renderTabFleet();
     updateUI();
-}
+};
 
 function assignCarToDriver(carId, driverId) {
     const driver = gameState.drivers.find(d => d.id === driverId);
@@ -1488,7 +1488,7 @@ function confirmLease() {
     if(typeof renderTabFleet === 'function') renderTabFleet();
 }
 
-async function rest(stars) {
+window.rest = async function rest(stars) {
     const cost       = stars === 3 ? 80  : (stars === 4 ? 200  : 600);
     const energyGain = stars === 3 ? 50  : (stars === 4 ? 75   : 100);
     const repGain    = stars === 5 ? 0.1 : 0;
@@ -1500,7 +1500,7 @@ async function rest(stars) {
     gameState.reputation += repGain;
     if(typeof closeModals === 'function') closeModals();
     updateUI();
-}
+};
 
 window.foundCompany = function(lng, lat, customName) {
     // Find nearest POI region
@@ -1529,7 +1529,7 @@ window.foundCompany = function(lng, lat, customName) {
     saveGame();
 };
 
-async function buyRegion(regionId) {
+window.buyRegion = async function buyRegion(regionId) {
     const region = REGIONS[regionId];
     if (!region) return;
     if (gameState.reputation < region.repReq) {
@@ -1547,9 +1547,9 @@ async function buyRegion(regionId) {
     if (typeof drawPOIs === 'function') drawPOIs();
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
     saveGame();
-}
+};
 
-async function buyInvestment(invId) {
+window.buyInvestment = async function buyInvestment(invId) {
     const item = INVESTMENTS.find(i => i.id === invId);
     if (!item || gameState.investments.includes(invId)) return;
     if ((gameState.constructions || []).some(c => c.invId === invId)) {
@@ -1586,7 +1586,7 @@ async function buyInvestment(invId) {
     updateUI();
     if(typeof renderTabInvestments==='function') renderTabInvestments();
     saveGame();
-}
+};
 
 window.speedUpConstruction = function(invId) {
     const c = (gameState.constructions || []).find(x => x.invId === invId);

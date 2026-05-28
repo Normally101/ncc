@@ -1,101 +1,116 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 28 maggio 2026
+> Aggiornato: 28 maggio 2026 — dopo sessione debugging completo
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
-## Stato attuale (cosa è stato fatto)
+## Stato attuale
 
-### Sessione 27 maggio 2026 (sera)
+### Sessione debugging (28 maggio 2026) — COMPLETATA AL 90%
 
-1. **Career tab → modal overlay** (`ui-career.js` rewrite completo)
-   - `window.openCareerModal()` / `window.closeCareerModal()` / `window.renderTabCareer()`
-   - Layout 2 colonne: timeline+obiettivi | sidebar archivio
-   - CSS iniettato via `<style id="career-modal-css">`
-   - Chiusura ripristina il tab precedente via `window._careerPrevTab`
+Eseguiti 3 round di debugging su tutto il codebase. Bug trovati e fixati:
 
-2. **VTK token economy** — sistema completo
-   - `gameState.vtkBalance` in engine.js
-   - Tutte le 156 quest migrate con campo `vtk` (nessuna dà più DC)
-   - `serverState.js` sincronizza `vtk_balance` da Supabase
-   - `quests.js` gestisce `r.vtk` in `claimQuestReward()`
-   - Topbar chip `#tb-vtk` (blu) in index.html, updateUI() lo aggiorna
-   - `21_vtk_token.sql` DEPLOYED su Supabase
+#### ✅ BUG #1 — `buyRegion` non esportata (engine.js)
+- `async function buyRegion()` non era `window.buyRegion`
+- Chiamata da `onclick` in `ui-ops.js` → cliccando "Sblocca Regione" non succedeva nulla
+- **Fix:** `window.buyRegion = async function buyRegion()`
 
-3. **Tab redesign eRepublik flat completati in questa sessione:**
-   - `ui-dispatch.js` — layout 2 colonne, drag-drop preservato
-   - `ui-finance.js` — CSS iniettato, stock table, broker flat
-   - `ui-ranking.js` — classifica flat, achievements grid
-   - (i tab di ieri: ui-politics, ui-market, ui-investments, ui-realestate, ui-lifestyle, ui-marketing)
+#### ✅ BUG #2 — `rest()` non esportata (engine.js)
+- `async function rest()` non era `window.rest`
+- Chiamata dai pulsanti Hotel in `index.html` → riposo CEO non funzionava
+- **Fix:** `window.rest = async function rest()`
 
-4. **Versione script:** tutti i file modificati bumped a `?v=7`
+#### ✅ BUG #3 — `payToRepairCar` non esportata (engine.js)
+- Chiamata da `onclick` in `ui-staff.js` → bottone Ripara auto nel modal non funzionava
+- **Fix:** `window.payToRepairCar = async function payToRepairCar()`
 
-### Sessione 28 maggio 2026 (oggi)
+#### ✅ BUG #4 — `sellCar` non esportata (engine.js)
+- Chiamata da `onclick` in `ui-staff.js` → bottone Vendi auto non funzionava
+- **Fix:** `window.sellCar = async function sellCar()`
 
-- Committato tutto il lavoro di ieri che era rimasto unstaged
-- Inizializzato sistema di memoria in `/Users/vlad/.claude/projects/-Users-vlad-Documents-ncc-game/memory/`
-- Aggiunto PROTOCOLLO SESSIONE in CLAUDE.md (skills, stile eRepublik, palette, regole)
+#### ✅ BUG #5 — `buyInvestment` non esportata (engine.js)
+- Chiamata da `onclick` in `ui-investments.js` → acquisto investimenti non funzionava
+- **Fix:** `window.buyInvestment = async function buyInvestment()`
+
+#### ✅ BUG #6 — `hqOpenBuildModal` firma sbagliata (hq.js)
+- `hq.js` chiamava `hqOpenBuildModal('${r.id}')` con 1 argomento (roomId)
+- `hq-visual.js` (caricato dopo, vince) aspetta `(cityId, slotIndex)`
+- Crash silenzioso: modale non si apriva
+- **Fix:** aggiunto `window._hqBuildFromList(roomId)` che trova il primo slot libero nella città corrente e chiama `hqUpgradeRoom(cityId, roomId, slotIndex)`
+
+### Versione script post-debugging
+- `engine.js?v=8`
+- `hq.js?v=8`
+- Tutti gli altri: v=7 o v=6 (invariati)
 
 ---
 
-## Prossimi step (da fare nella prossima sessione)
+## Cosa NON è stato fatto (interrotto)
 
-### PRIORITÀ ALTA — Tab da rifare (stile eRepublik)
+Il debugging era al ~90% — mancano ancora:
 
-1. **`ui-store.js`** — Executive Club / showroom
-   - Attualmente usa DS.* e Tailwind
-   - Contiene: store veicoli premium, upgrade, DC spend actions
+### Round 3 incompleto
+- [ ] `ui-home.js` — `_homeTimer` non viene mai cancellato quando si cambia tab (interval leak potenziale se renderTabHome viene chiamato più volte) → da investigare
+- [ ] `p2p-render.js` — due `setInterval` in `p2pInit()` senza storage → OK perché `p2pInit` viene chiamato una sola volta da `auth.js`, ma verificare
+- [ ] Scan completo di `engine-drivers.js` per logic bugs (skill tree, academy course)
+- [ ] Scan `vip-clients.js` e `vip-buffs.js` per handler mancanti
+- [ ] Verificare `showroom.js` — tab non ancora redesignato + eventuali bug onclick
 
-2. **`ui-hub.js`** — HQ buildings
-   - Attualmente usa DS.* e Tailwind
-   - Contiene: Smart Hub navigation, toggle, openHub
+### Non verificati (false positivi esclusi ma non confermati)
+- `window.gameState` in `contracts.js:240` — guard in `dailyTick()`, sembra OK
+- `serverState.js` usa `window.gameState` come guard — intenzionale
 
-3. **Verificare questi** (aprirli e guardare se usano DS.*):
-   - `ui-emails.js`
-   - `ui-ops.js` (regions/provinces)
-   - `ui-legal.js`
-   - `ui-home.js`
-   - `ui-help.js`
+---
 
-### PRIORITÀ MEDIA — VTK frontend mancante
+## Prossimi step nella prossima sessione
 
-4. **VTK Market UI** — tab o sezione in Finance
-   - SQL pronto (`vtk_market_orders`, RPC place/fill/cancel order)
-   - Funzionalità: lista ordini aperti, piazza ordine sell, compra VTK
-   - Modello: simile alla sezione P2P di Finance
+### 1. COMPLETA IL DEBUGGING (inizia da qui)
+```
+Continua Round 3:
+- ui-home.js _homeTimer leak
+- engine-drivers.js logic scan
+- vip-clients.js / vip-buffs.js
+- showroom.js onclick scan
+- Poi: node --check su tutti i file ancora da verificare
+```
 
-5. **VTK Shop UI** — items acquistabili con VTK
-   - Item pianificati: `slot_garage_7d` (200 VTK), `driver_stress_reset` (80 VTK), `rep_boost_01` (150 VTK, 1/settimana)
+### 2. UI REWRITE — Tab ancora con DS.*
+- `ui-store.js` — Executive Club / showroom
+- `ui-hub.js` — HQ buildings
+- Verificare: `ui-emails.js`, `ui-ops.js`, `ui-legal.js`, `ui-home.js`, `ui-help.js`
 
-6. **`rpc_award_mission_vtk`** — collegarlo al completamento missione server-side
-   - Attualmente il VTK è assegnato solo client-side in `quests.js`
-   - Il RPC esiste già su Supabase (con cap 500/day)
+### 3. VTK frontend
+- UI Mercato VTK (SQL pronto, frontend manca)
+- VTK Shop (item: slot_garage_7d, driver_stress_reset, rep_boost_01)
 
-### PRIORITÀ BASSA
-
-7. `/impeccable teach` — creare PRODUCT.md + DESIGN.md per abilitare i comandi impeccable strutturati
-8. Province War UI (`renderTabProvinces`) — definita in war_room.js ma UI da rivedere
-9. Real Estate expansion
+### 4. `/impeccable teach`
+- Creare PRODUCT.md + DESIGN.md per abilitare i comandi impeccable strutturati
 
 ---
 
 ## Architettura critica da ricordare
 
 ```
-gameState           → let in engine.js, NON è window.gameState (usare sempre bare gameState)
-window.DS           → NON usare in nuovi tab — stile eRepublik flat invece
-?v= scripts         → bumpa sempre prima di committare (attualmente v=7)
-career tab          → apre modal overlay, NON renderizza in #tab-container
-drag-drop dispatch  → class ops-ride-card e ops-driver-row su <tr> — NON rinominare mai
+gameState           → let in engine.js, NON è window.gameState
+window.DS           → NON usare in nuovi tab — stile eRepublik flat inline
+?v= scripts         → attualmente v=8 per engine.js e hq.js, v=7 per gli altri
+career tab          → modal overlay (openCareerModal), NON tab inline
+drag-drop dispatch  → class ops-ride-card e ops-driver-row su <tr> — NON rinominare
+activeRides loop    → backward (length-1 → 0) + splice — corretto
 ```
 
-## Skills di design
+## Pattern bug più comune trovato
 
-- **taste-skill-leonx** → anti-slop, layout, gerarchia
-- **emilkowalski** → micro-interactions, :active scale(0.97), ease-out, polish
-- **impeccable** → review strutturata (manca PRODUCT.md — fare /impeccable teach prima)
+**Funzioni `async function foo()` in engine.js NON esportate come `window.foo`.**
+I `function` top-level diventano globali, ma le `async function` + le arrow functions no in strict mode.
+Prima di aggiungere qualsiasi funzione chiamata da onclick, verificare che sia `window.foo = async function`.
+
+## Skills di design
+- `/taste-skill` → anti-slop, layout, gerarchia
+- `/emil-design-eng` → micro-interactions, :active scale(0.97), ease-out
+- `/impeccable` → review strutturata (manca PRODUCT.md — fare `/impeccable teach` prima)
 
 ## Versione attuale script
-
-Tutti i file core: `?v=7` in index.html
+- `engine.js`: v=8 | `hq.js`: v=8
+- Tutti gli altri modificati di recente: v=7
