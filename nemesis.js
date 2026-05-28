@@ -173,69 +173,62 @@ window.renderTabNemesis = function() {
             <div style="font-size:11px;color:#8b949e;margin-top:4px">${nemeses.length === 0 ? 'Nessun VIP deluso — ottimo!' : `${nemeses.length} VIP ostili · ${criticalNem > 0 ? criticalNem + ' guerra aperta' : 'Gestibile'}`}</div>
         </div>
         ${_nemBadge}
-    </div>` + `
-    <div class="p-1">
-      ${nemeses.length === 0 ? _nemEmpty
-        : nemeses.map(([vipId, nem]) => _renderNemesisCard(vipId, nem)).join('')}
-
-      <div class="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-xs text-blue-200">
+    </div>
+    ${nemeses.length === 0 ? _nemEmpty : nemeses.map(([vipId, nem]) => _renderNemesisCard(vipId, nem)).join('')}
+    <div style="background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.18);border-radius:6px;padding:14px 16px;margin-top:16px;font-size:11px;color:#79c0ff;line-height:1.6">
         <strong>Come farsi perdonare:</strong> Paga una corruzione (riduci la rabbia) oppure usa
         l'<strong>Agenzia Ombra</strong> → Sabotaggio per danneggiare i rivali che hanno ricevuto fondi,
         dimostrando che nessuno può servire il VIP meglio di te.
-      </div>
     </div>`;
 };
 
 function _renderNemesisCard(vipId, nem) {
-    const levelColor = nem.level >= 2 ? 'border-red-500/40 bg-red-500/5' : 'border-orange-500/30 bg-orange-500/5';
-    const angerBar   = Math.round(nem.anger);
-    const barColor   = nem.anger >= 60 ? 'bg-red-500' : 'bg-orange-400';
-    const bribeAmt   = Math.floor(5000 + (nem.anger / 100) * 45000);
+    const isWar    = nem.level >= 2;
+    const angerBar = Math.round(nem.anger);
+    const bribeAmt = Math.floor(5000 + (nem.anger / 100) * 45000);
+    const borderC  = isWar ? 'rgba(248,81,73,0.3)' : 'rgba(245,158,11,0.25)';
+    const bgC      = isWar ? 'rgba(248,81,73,0.04)' : 'rgba(245,158,11,0.04)';
+    const barC     = nem.anger >= 60 ? '#f85149' : '#f59e0b';
+    const lvlColor = isWar ? '#f85149' : '#f59e0b';
+    const lvlBg    = isWar ? 'rgba(248,81,73,0.12)' : 'rgba(245,158,11,0.12)';
 
     return `
-    <div class="border ${levelColor} rounded-2xl p-5 mb-4">
-      <div class="flex items-start justify-between mb-3">
-        <div>
-          <div class="flex items-center gap-2">
-            <span class="text-lg">${nem.level >= 2 ? '🔥' : '😠'}</span>
-            <span class="text-white font-bold">${nem.name}</span>
-          </div>
-          <div class="text-xs text-gray-500 mt-0.5">
-            ${nem.level >= 2 ? '⚠️ GUERRA APERTA — finanzia i tuoi rivali' : '😤 Deluso — potrebbe agire presto'}
-          </div>
+    <div style="background:${bgC};border:1px solid ${borderC};border-radius:6px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
+            <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                    <span style="font-size:18px">${isWar ? '🔥' : '😠'}</span>
+                    <span style="font-size:13px;font-weight:700;color:#e6edf3">${nem.name}</span>
+                </div>
+                <div style="font-size:10px;color:#8b949e">${isWar ? '⚠️ GUERRA APERTA — finanzia i tuoi rivali' : '😤 Deluso — potrebbe agire presto'}</div>
+            </div>
+            <span style="font-size:9px;font-weight:700;color:${lvlColor};background:${lvlBg};border:1px solid ${lvlColor};border-radius:10px;padding:3px 8px">Livello ${nem.level}</span>
         </div>
-        <span class="text-xs px-2 py-1 rounded-full font-bold ${nem.level >= 2 ? 'bg-red-500/20 text-red-400' : 'bg-orange-500/20 text-orange-400'}">
-          Livello ${nem.level}
-        </span>
-      </div>
 
-      <div class="mb-3">
-        <div class="flex justify-between text-xs text-gray-400 mb-1">
-          <span>Rabbia</span>
-          <span>${angerBar}/100</span>
+        <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:#8b949e;margin-bottom:4px">
+                <span>Rabbia</span><span>${angerBar}/100</span>
+            </div>
+            <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden">
+                <div style="height:100%;width:${angerBar}%;background:${barC};border-radius:3px;transition:width .3s"></div>
+            </div>
         </div>
-        <div class="w-full bg-white/10 rounded-full h-2">
-          <div class="${barColor} h-2 rounded-full transition-all" style="width:${angerBar}%"></div>
+
+        <div style="font-size:10px;color:#8b949e;margin-bottom:14px">
+            Motivo: <span style="color:#e6edf3">${nem.reason === 'fallita' ? 'Corsa fallita / ritardo' : 'Richiesta ignorata'}</span>
         </div>
-      </div>
 
-      <div class="text-xs text-gray-500 mb-4">
-        Motivo: <span class="text-gray-300">${nem.reason === 'fallita' ? 'Corsa fallita / ritardo' : 'Richiesta ignorata'}</span>
-      </div>
-
-      <div class="flex gap-2">
-        <button onclick="window._nemesisBribeVip('${vipId}')"
-          class="flex-1 py-2.5 rounded-xl text-xs font-bold
-                 bg-yellow-500/20 border border-yellow-500/30 text-yellow-300
-                 hover:bg-yellow-500/30 transition-colors cursor-pointer">
-          💰 Corrompi (€${bribeAmt.toLocaleString('it-IT')})
-        </button>
-        <button onclick="window.hubNavigate('shadow')"
-          class="flex-1 py-2.5 rounded-xl text-xs font-bold
-                 bg-gray-500/20 border border-gray-500/30 text-gray-300
-                 hover:bg-gray-500/30 transition-colors cursor-pointer">
-          🕵️ Agenzia Ombra
-        </button>
-      </div>
+        <div style="display:flex;gap:8px">
+            <button onclick="window._nemesisBribeVip('${vipId}')"
+                style="flex:1;padding:8px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);color:#d4af37;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                💰 Corrompi (€${bribeAmt.toLocaleString('it-IT')})
+            </button>
+            <button onclick="window.hubNavigate('shadow')"
+                style="flex:1;padding:8px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #21262d;color:#8b949e;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                🕵️ Agenzia Ombra
+            </button>
+        </div>
     </div>`;
 }

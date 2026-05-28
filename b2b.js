@@ -306,7 +306,7 @@ function renderTabB2B() {
     </div>`;
 
     if (!uid) {
-        container.innerHTML = html + `<div class="text-[9px] text-gray-500 italic text-center mt-8">Accedi per visualizzare i contratti disponibili.</div>`;
+        container.innerHTML = html + `<div style="font-size:9px;color:#8b949e;font-style:italic;text-align:center;margin-top:32px">Accedi per visualizzare i contratti disponibili.</div>`;
         return;
     }
 
@@ -315,67 +315,50 @@ function renderTabB2B() {
         const _dt = active.days_total || active.days_remaining || 1;
         const pct = Math.max(0, Math.min(100, Math.round((((_dt) - active.days_remaining) / _dt) * 100)));
         const sla = active.sla_score ?? 100;
-        const slaColor = sla >= 90 ? '#22c55e' : sla >= 70 ? '#f59e0b' : '#ef4444';
+        const slaColor = sla >= 90 ? '#3fb950' : sla >= 70 ? '#f59e0b' : '#f85149';
         const lockedVehicles = window.b2bLockedVehicleIds();
         const lockedNames = lockedVehicles
             .map(id => (gameState.fleet||[]).find(c => c.id === id)?.name || id)
             .join(', ') || '—';
 
         html += `
-        <div class="hud-card !border-gold/40 bg-gold/5 mb-4">
-            <div class="flex justify-between items-start mb-2">
+        <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:16px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
                 <div>
-                    <div class="text-[9px] text-gray-500 uppercase tracking-widest mb-0.5">Contratto Attivo</div>
-                    <div class="text-[11px] font-bold text-gold">${active.contract_icon||'💼'} ${active.contract_title}</div>
-                    <div class="text-[9px] text-gray-400">${active.contract_client}</div>
+                    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratto Attivo</div>
+                    <div style="font-size:11px;font-weight:700;color:#d4af37">${active.contract_icon||'💼'} ${active.contract_title}</div>
+                    <div style="font-size:9px;color:#8b949e;margin-top:2px">${active.contract_client}</div>
                 </div>
-                <div class="text-right">
-                    <div class="text-[10px] font-bold text-green-400 font-mono">+€${(active.daily_payout||0).toLocaleString()}/g</div>
-                    <div class="text-[8px] text-gray-500">${active.days_remaining} giorni rimanenti</div>
-                </div>
-            </div>
-
-            <div class="mb-2">
-                <div class="flex justify-between text-[8px] text-gray-500 mb-0.5">
-                    <span>Progresso</span><span>${pct}%</span>
-                </div>
-                <div class="w-full h-1.5 bg-white/10 rounded-full">
-                    <div class="h-1.5 rounded-full bg-gold transition-all" style="width:${pct}%"></div>
+                <div style="text-align:right">
+                    <div style="font-size:10px;font-weight:700;color:#3fb950;font-family:monospace">+€${(active.daily_payout||0).toLocaleString()}/g</div>
+                    <div style="font-size:8px;color:#6b7280;margin-top:2px">${active.days_remaining} giorni rimanenti</div>
                 </div>
             </div>
-
-            <div class="mb-2">
-                <div class="flex justify-between text-[8px] mb-0.5">
-                    <span class="text-gray-500">SLA Score</span>
-                    <span style="color:${slaColor}" class="font-mono font-bold">${Math.round(sla)}%</span>
-                </div>
-                <div class="w-full h-1 bg-white/10 rounded-full">
-                    <div class="h-1 rounded-full transition-all" style="width:${Math.round(sla)}%;background:${slaColor}"></div>
-                </div>
-                <div class="text-[7px] text-gray-600 mt-0.5">SLA &lt; 50%: contratto rescisso automaticamente</div>
+            <div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;font-size:8px;color:#6b7280;margin-bottom:4px"><span>Progresso</span><span>${pct}%</span></div>
+                <div style="height:5px;border-radius:3px;background:rgba(255,255,255,0.08)"><div style="height:100%;width:${pct}%;background:#d4af37;border-radius:3px;transition:width .3s"></div></div>
             </div>
-
-            <div class="text-[8px] text-gray-500 mb-3">
-                🔒 Veicoli bloccati: <span class="text-gray-300">${lockedNames}</span>
+            <div style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;font-size:8px;margin-bottom:4px"><span style="color:#6b7280">SLA Score</span><span style="color:${slaColor};font-family:monospace;font-weight:700">${Math.round(sla)}%</span></div>
+                <div style="height:4px;border-radius:3px;background:rgba(255,255,255,0.08)"><div style="height:100%;width:${Math.round(sla)}%;background:${slaColor};border-radius:3px;transition:width .3s"></div></div>
+                <div style="font-size:7px;color:#6b7280;margin-top:3px">SLA &lt; 50%: contratto rescisso automaticamente</div>
             </div>
-
+            <div style="font-size:8px;color:#6b7280;margin-bottom:12px">🔒 Veicoli bloccati: <span style="color:#8b949e">${lockedNames}</span></div>
             <button onclick="b2bTerminateContract('${active.id}')"
-                class="btn-gold !bg-red-900/30 !text-red-400 !text-[8px] w-full">
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149;border-radius:4px;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 ⚠️ Rescindi Anticipatamente (penale −€${(active.penalty_amount||0).toLocaleString()})
             </button>
         </div>`;
     } else {
-        html += `
-        <div class="hud-card !border-green-500/20 bg-green-950/5 mb-4 text-center">
-            <div class="text-[9px] text-gray-400">Nessun contratto attivo. Scegli un appalto qui sotto per iniziare il farming passivo.</div>
-        </div>`;
+        html += `<div style="background:rgba(63,185,80,0.04);border:1px solid rgba(63,185,80,0.15);border-radius:6px;padding:14px;margin-bottom:16px;text-align:center;font-size:9px;color:#8b949e">Nessun contratto attivo. Scegli un appalto qui sotto per iniziare il farming passivo.</div>`;
     }
 
     // ── CONTRATTI DISPONIBILI ──
-    html += `<div class="text-[9px] text-gray-500 uppercase tracking-widest mb-2 border-b border-white/5 pb-1">Appalti Disponibili</div>`;
+    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #21262d">Appalti Disponibili</div>`;
 
     if (contracts.length === 0) {
-        html += `<div class="text-[9px] text-gray-600 italic text-center py-4">Nessun appalto disponibile al momento. Riprova più tardi.</div>`;
+        html += `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;padding:16px 0">Nessun appalto disponibile al momento. Riprova più tardi.</div>`;
     } else {
         contracts.forEach(c => {
             const locked       = !!active;
@@ -387,46 +370,43 @@ function renderTabB2B() {
             });
             const carsOk = eligibleCars.length >= c.required_count;
             const canAccept = !locked && repOk && carsOk;
-
             const totalPayout = c.daily_payout * c.duration_days;
             const roi = c.penalty_amount > 0 ? ((totalPayout / c.penalty_amount) * 100).toFixed(0) : '∞';
 
             html += `
-            <div class="hud-card mb-2 ${!repOk || !carsOk ? 'opacity-50' : ''}">
-                <div class="flex justify-between items-start mb-2">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-1 mb-0.5">
-                            <span class="text-base">${c.client_icon}</span>
+            <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:8px;${!repOk || !carsOk ? 'opacity:.5' : ''}">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                    <div style="flex:1;min-width:0">
+                        <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+                            <span style="font-size:16px">${c.client_icon}</span>
                             <div>
-                                <div class="text-[10px] font-bold text-white truncate">${c.title}</div>
-                                <div class="text-[8px] text-gray-400">${c.client_name}</div>
+                                <div style="font-size:11px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
+                                <div style="font-size:9px;color:#8b949e">${c.client_name}</div>
                             </div>
                         </div>
-                        <div class="flex flex-wrap gap-1 mt-1">
-                            <span class="text-[7px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">${_TIER_LABEL[c.required_tier]} ×${c.required_count}</span>
-                            ${c.province_id ? `<span class="text-[7px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">📍 ${c.province_id.replace('prov_','')}</span>` : ''}
-                            <span class="text-[7px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">⭐ min ${c.min_reputation}★</span>
+                        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#8b949e">${_TIER_LABEL[c.required_tier]} ×${c.required_count}</span>
+                            ${c.province_id ? `<span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#8b949e">📍 ${c.province_id.replace('prov_','')}</span>` : ''}
+                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#8b949e">⭐ min ${c.min_reputation}★</span>
                         </div>
                     </div>
-                    <div class="text-right ml-2 shrink-0">
-                        <div class="text-[11px] font-bold text-green-400 font-mono">+€${c.daily_payout.toLocaleString()}/g</div>
-                        <div class="text-[8px] text-gray-500">${c.duration_days}g · tot. €${(totalPayout/1000).toFixed(0)}k</div>
-                        <div class="text-[8px] text-gray-600">ROI vs penale: ${roi}%</div>
+                    <div style="text-align:right;margin-left:8px;flex-shrink:0">
+                        <div style="font-size:11px;font-weight:700;color:#3fb950;font-family:monospace">+€${c.daily_payout.toLocaleString()}/g</div>
+                        <div style="font-size:8px;color:#6b7280">${c.duration_days}g · tot. €${(totalPayout/1000).toFixed(0)}k</div>
+                        <div style="font-size:8px;color:#6b7280">ROI vs penale: ${roi}%</div>
                     </div>
                 </div>
-
-                <div class="flex justify-between text-[8px] mb-2">
-                    <span class="text-gray-500">Penale rescissione:</span>
-                    <span class="text-red-400 font-mono">−€${c.penalty_amount.toLocaleString()}</span>
+                <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:10px">
+                    <span style="color:#6b7280">Penale rescissione:</span>
+                    <span style="color:#f85149;font-family:monospace">−€${c.penalty_amount.toLocaleString()}</span>
                 </div>
-
-                ${!repOk ? `<div class="text-[8px] text-red-400 mb-1">🔒 Reputazione insufficiente (serve ${c.min_reputation}★, hai ${rep.toFixed(1)}★)</div>` : ''}
-                ${!carsOk ? `<div class="text-[8px] text-red-400 mb-1">🔒 Veicoli insufficienti (serve ×${c.required_count} ${_TIER_LABEL[c.required_tier]}, disponibili ${eligibleCars.length})</div>` : ''}
-                ${locked ? `<div class="text-[8px] text-yellow-500 mb-1">⏳ Hai già un contratto attivo</div>` : ''}
-
+                ${!repOk ? `<div style="font-size:9px;color:#f85149;margin-bottom:4px">🔒 Reputazione insufficiente (serve ${c.min_reputation}★, hai ${rep.toFixed(1)}★)</div>` : ''}
+                ${!carsOk ? `<div style="font-size:9px;color:#f85149;margin-bottom:4px">🔒 Veicoli insufficienti (serve ×${c.required_count} ${_TIER_LABEL[c.required_tier]}, disponibili ${eligibleCars.length})</div>` : ''}
+                ${locked ? `<div style="font-size:9px;color:#f59e0b;margin-bottom:4px">⏳ Hai già un contratto attivo</div>` : ''}
                 <button onclick="b2bOpenAcceptModal('${c.id}')"
                     ${canAccept ? '' : 'disabled'}
-                    class="btn-gold w-full !text-[8px] !py-1.5 ${canAccept ? '' : 'opacity-40 cursor-not-allowed'}">
+                    style="width:100%;padding:7px;font-size:9px;font-weight:700;border-radius:4px;cursor:${canAccept?'pointer':'not-allowed'};background:#1a1608;border:1px solid #b8962b;color:#d4af37;transition:opacity .15s;${canAccept ? '' : 'opacity:.4'}"
+                    onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                     💼 Accetta Appalto
                 </button>
             </div>`;

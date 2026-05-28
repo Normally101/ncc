@@ -229,25 +229,24 @@ window.renderTabCrypto = function() {
 
     const marketHtml = market.map(coin => {
         const holding = portfolio.find(p => p.coin_id === coin.id);
-        const priceChange = 0; // would need historical data
         return `
-          <div class="bg-white/3 border border-white/8 rounded-xl p-3 mb-2">
-            <div class="flex justify-between items-center mb-1">
-              <div class="font-bold text-white text-sm">${coin.icon} ${coin.name} <span class="text-[9px] text-gray-500">${coin.id}</span></div>
-              <div class="text-right">
-                <div class="text-white font-mono text-sm">€${_fmt(coin.price_eur)}</div>
-              </div>
+          <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${holding ? 8 : 10}px">
+              <div style="font-size:13px;font-weight:700;color:#e6edf3">${coin.icon} ${coin.name} <span style="font-size:9px;color:#6b7280">${coin.id}</span></div>
+              <div style="font-family:monospace;font-size:13px;color:#e6edf3">€${_fmt(coin.price_eur)}</div>
             </div>
             ${holding ? `
-              <div class="text-[10px] text-gray-400 mb-2">
-                In portafoglio: <span class="text-white">${_fmtCoin(holding.amount)} (€${_fmt(holding.value_eur)})</span>
-                — PnL: <span class="${(holding.pnl_pct||0)>=0?'text-green-400':'text-red-400'}">${(holding.pnl_pct||0).toFixed(2)}%</span>
+              <div style="font-size:10px;color:#8b949e;margin-bottom:10px">
+                In portafoglio: <span style="color:#e6edf3">${_fmtCoin(holding.amount)} (€${_fmt(holding.value_eur)})</span>
+                — PnL: <span style="color:${(holding.pnl_pct||0)>=0?'#3fb950':'#f85149'}">${(holding.pnl_pct||0).toFixed(2)}%</span>
               </div>` : ''}
-            <div class="flex gap-2">
+            <div style="display:flex;gap:8px">
               <button onclick="window.cryptoOpenTradeModal('${coin.id}','buy')"
-                class="btn-gold flex-1 !text-[10px] !py-1">💰 Acquista</button>
+                style="flex:1;padding:5px 0;font-size:10px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">💰 Acquista</button>
               ${holding ? `<button onclick="window.cryptoOpenTradeModal('${coin.id}','sell')"
-                class="btn-gold flex-1 !text-[10px] !py-1 !bg-red-900/30 !text-red-300">💵 Vendi</button>` : ''}
+                style="flex:1;padding:5px 0;font-size:10px;font-weight:700;cursor:pointer;background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149;border-radius:4px;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">💵 Vendi</button>` : ''}
             </div>
           </div>`;
     }).join('');
@@ -264,24 +263,26 @@ window.renderTabCrypto = function() {
         const wdInputId  = `off-wd-${j.id}`;
 
         return `
-          <div class="bg-white/3 border border-white/8 rounded-xl p-3 mb-2">
-            <div class="flex justify-between items-center mb-2">
-              <div class="font-bold text-white text-sm">${j.icon} ${j.name}</div>
-              <div class="text-[10px] text-gray-400">Rischio GdF: ${j.risk}</div>
+          <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div style="font-size:13px;font-weight:700;color:#e6edf3">${j.icon} ${j.name}</div>
+              <div style="font-size:10px;color:#8b949e">Rischio GdF: ${j.risk}</div>
             </div>
-            ${acc ? `<div class="text-[11px] text-gray-300 mb-2">💰 Saldo: <span class="text-white font-mono">€${acc.balance.toLocaleString()}</span></div>` : '<div class="text-[10px] text-gray-500 mb-2">Conto non aperto</div>'}
-            <div class="flex gap-2 mb-1">
+            ${acc ? `<div style="font-size:11px;color:#8b949e;margin-bottom:8px">💰 Saldo: <span style="color:#e6edf3;font-family:monospace">€${acc.balance.toLocaleString()}</span></div>` : '<div style="font-size:10px;color:#6b7280;margin-bottom:8px">Conto non aperto</div>'}
+            <div style="display:flex;gap:8px;margin-bottom:6px">
               <input id="${depInputId}" type="number" min="10000" step="10000" value="50000"
-                class="finance-input flex-1 !text-[9px] !py-1" placeholder="€ deposito">
+                style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:10px;color:#e6edf3;outline:none" placeholder="€ deposito">
               <button onclick="window.cryptoDepositOffshore('${j.id}', document.getElementById('${depInputId}').value)"
-                class="btn-gold !text-[9px] !py-1 !px-2">⬇️ Deposita</button>
+                style="padding:5px 10px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;white-space:nowrap;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⬇️ Deposita</button>
             </div>
             ${acc && acc.balance > 0 ? `
-            <div class="flex gap-2">
+            <div style="display:flex;gap:8px">
               <input id="${wdInputId}" type="number" min="1000" max="${acc.balance}" step="10000"
-                class="finance-input flex-1 !text-[9px] !py-1" placeholder="€ prelievo">
+                style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:10px;color:#e6edf3;outline:none" placeholder="€ prelievo">
               <button onclick="window.cryptoWithdrawOffshore('${j.id}', document.getElementById('${wdInputId}').value)"
-                class="btn-gold !text-[9px] !py-1 !px-2 !bg-orange-900/30 !text-orange-300">⬆️ Preleva</button>
+                style="padding:5px 10px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1a08;border:1px solid #9a7b1a;color:#f59e0b;border-radius:4px;white-space:nowrap;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⬆️ Preleva</button>
             </div>` : ''}
           </div>`;
     }).join('');
@@ -312,16 +313,11 @@ window.renderTabCrypto = function() {
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:#d4af37">${offshore.filter(o => o.balance > 0).length}</div>
         </div>
     </div>` + `
-      <div class="p-1">
-        <!-- Market -->
-        <div class="ds-eyebrow" style="margin-bottom:12px">📈 Mercato Crypto</div>
-        ${marketHtml}
-
-        <!-- Offshore -->
-        <div class="ds-eyebrow" style="margin-top:16px;margin-bottom:8px">🏦 Conti Offshore</div>
-        <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px">Fondi offshore non visibili al fisco. Prelievo soggetto a rischio sequestro GdF.</div>
-        ${offshoreHtml}
-      </div>`;
+    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">📈 Mercato Crypto</div>
+    ${marketHtml}
+    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-top:20px;margin-bottom:8px;padding-top:16px;border-top:1px solid #21262d">🏦 Conti Offshore</div>
+    <div style="font-size:10px;color:#8b949e;margin-bottom:12px">Fondi offshore non visibili al fisco. Prelievo soggetto a rischio sequestro GdF.</div>
+    ${offshoreHtml}`;
 };
 
 // ── REALTIME ──────────────────────────────────────────────────────────────────

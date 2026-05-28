@@ -68,11 +68,11 @@ function _tCountdown(isoStr) {
 }
 
 function _tTierBadge(tier) {
-    const colors = ['', 'text-green-400', 'text-blue-400', 'text-purple-400', 'text-yellow-300'];
-    const labels = ['', 'STANDARD',       'BUSINESS',      'VIP',             'ULTRA'];
-    const c = colors[tier] || 'text-gray-400';
+    const palette = { 1: '#3fb950', 2: '#58a6ff', 3: '#c084fc', 4: '#d4af37' };
+    const labels  = { 1: 'STANDARD', 2: 'BUSINESS', 3: 'VIP', 4: 'ULTRA' };
+    const c = palette[tier] || '#8b949e';
     const l = labels[tier] || `T${tier}`;
-    return `<span class="text-[7px] font-mono font-bold ${c} border border-current/30 px-1.5 py-0.5 rounded">${l}</span>`;
+    return `<span style="font-size:8px;font-family:monospace;font-weight:700;color:${c};border:1px solid ${c};border-radius:4px;padding:2px 5px">${l}</span>`;
 }
 
 function _tBarColor(score) {
@@ -251,27 +251,28 @@ window.renderTabTourism = function() {
     </div>`;
 
     if (!uid) {
-        container.innerHTML = html + `<div class="text-[9px] text-gray-500 italic text-center mt-8">Accedi per partecipare ai bandi turismo.</div>`;
+        container.innerHTML = html + `<div style="font-size:9px;color:#8b949e;font-style:italic;text-align:center;margin-top:32px">Accedi per partecipare ai bandi turismo.</div>`;
         return;
     }
 
     // ── SUB-TAB SWITCHER ──
     html += `
-    <div class="flex gap-1 mb-4 border-b border-white/5 pb-2">
+    <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid #21262d;padding-bottom:10px;align-items:center">
         <button onclick="window._tourismState._subTab='open'; window.renderTabTourism();"
-            class="px-3 py-1.5 text-[9px] font-mono uppercase tracking-widest rounded transition-all ${subTab === 'open'
-                ? 'bg-gold text-black font-bold'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'}">
-            Bandi Aperti <span class="ml-1 opacity-60">${openCount}</span>
+            style="padding:5px 12px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;border-radius:4px;cursor:pointer;transition:all .15s;${subTab === 'open'
+                ? 'background:#1a1608;border:1px solid #b8962b;color:#d4af37;font-weight:700'
+                : 'background:transparent;border:1px solid transparent;color:#8b949e'}">
+            Bandi Aperti <span style="opacity:.6;margin-left:4px">${openCount}</span>
         </button>
         <button onclick="window._tourismState._subTab='mine'; window.renderTabTourism();"
-            class="px-3 py-1.5 text-[9px] font-mono uppercase tracking-widest rounded transition-all ${subTab === 'mine'
-                ? 'bg-gold text-black font-bold'
-                : 'text-gray-400 hover:text-white hover:bg-white/5'}">
-            I Miei Contratti <span class="ml-1 opacity-60">${myActive.length}</span>
+            style="padding:5px 12px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;border-radius:4px;cursor:pointer;transition:all .15s;${subTab === 'mine'
+                ? 'background:#1a1608;border:1px solid #b8962b;color:#d4af37;font-weight:700'
+                : 'background:transparent;border:1px solid transparent;color:#8b949e'}">
+            I Miei Contratti <span style="opacity:.6;margin-left:4px">${myActive.length}</span>
         </button>
         <button onclick="window.tourismRefresh(true).then(()=>window.renderTabTourism())"
-            class="ml-auto px-2 py-1 text-[8px] text-gray-600 hover:text-gray-300 hover:bg-white/5 rounded transition-all" title="Aggiorna">
+            style="margin-left:auto;padding:4px 8px;font-size:8px;color:#6b7280;background:transparent;border:1px solid transparent;border-radius:4px;cursor:pointer;transition:all .15s"
+            title="Aggiorna" onmouseenter="this.style.color='#8b949e'" onmouseleave="this.style.color='#6b7280'">
             ↺ Aggiorna
         </button>
     </div>`;
@@ -287,7 +288,7 @@ window.renderTabTourism = function() {
 
 function _tRenderOpenBids(tenders, uid) {
     if (tenders.length === 0) {
-        return `<div class="text-[9px] text-gray-600 italic text-center py-8">Caricamento bandi… clicca ↺ Aggiorna.</div>`;
+        return `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;padding:32px 0">Caricamento bandi… clicca ↺ Aggiorna.</div>`;
     }
 
     const open     = tenders.filter(t => t.status === 'open_bidding');
@@ -297,18 +298,18 @@ function _tRenderOpenBids(tenders, uid) {
     let html = '';
 
     if (open.length === 0) {
-        html += `<div class="text-[9px] text-gray-500 italic text-center py-4 border border-white/5 rounded mb-4">Nessun bando aperto al momento.</div>`;
+        html += `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;padding:16px;border:1px solid #21262d;border-radius:6px;margin-bottom:16px">Nessun bando aperto al momento.</div>`;
     } else {
         open.forEach(t => { html += _tRenderOpenCard(t); });
     }
 
     if (active.length > 0) {
-        html += `<div class="text-[8px] text-gray-600 uppercase tracking-widest mt-5 mb-2 border-t border-white/5 pt-3">In Uso — ${active.length} contratto/i</div>`;
+        html += `<div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 8px;padding-top:12px;border-top:1px solid #21262d">In Uso — ${active.length} contratto/i</div>`;
         active.forEach(t => { html += _tRenderLockedCard(t); });
     }
 
     if (cooldown.length > 0) {
-        html += `<div class="text-[8px] text-gray-600 uppercase tracking-widest mt-4 mb-2 border-t border-white/5 pt-3">In Cooldown — ${cooldown.length}</div>`;
+        html += `<div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px;padding-top:12px;border-top:1px solid #21262d">In Cooldown — ${cooldown.length}</div>`;
         cooldown.forEach(t => { html += _tRenderCooldownCard(t); });
     }
 
@@ -316,80 +317,81 @@ function _tRenderOpenBids(tenders, uid) {
 }
 
 function _tRenderOpenCard(t) {
-    const req       = t.requirements || {};
-    const reqTier   = req.req_tier          || 'standard';
-    const reqCount  = req.req_vehicle_count || 0;
-    const minRep    = req.min_reputation    || 0;
-    const pledge    = window._tourismState._pledgeAmts[t.id] || 0;
-    const sc        = _tPlayerScore(reqTier, reqCount, pledge);
-    const reqs      = _tMeetsReqs(t);
-    const hasBid    = t.my_bid_status === 'pending';
-    const barColor  = _tBarColor(sc.total);
-    const tierBadge = _tTierBadge(t.tier);
-    const dailyPay  = t.daily_payout || (t.base_payout_per_hour || 0) * 16;
+    const req      = t.requirements || {};
+    const reqTier  = req.req_tier          || 'standard';
+    const reqCount = req.req_vehicle_count || 0;
+    const minRep   = req.min_reputation    || 0;
+    const pledge   = window._tourismState._pledgeAmts[t.id] || 0;
+    const sc       = _tPlayerScore(reqTier, reqCount, pledge);
+    const reqs     = _tMeetsReqs(t);
+    const hasBid   = t.my_bid_status === 'pending';
+    const barColor = _tBarColor(sc.total);
+    const tierBadge= _tTierBadge(t.tier);
+    const dailyPay = t.daily_payout || (t.base_payout_per_hour || 0) * 16;
 
     return `
-    <div class="hud-card mb-3${!reqs.ok && !hasBid ? ' opacity-60' : ''}">
-        <div class="flex justify-between items-start mb-2">
-            <div class="flex items-start gap-2 flex-1 min-w-0">
-                <span class="text-xl leading-none mt-0.5 shrink-0">${t.icon || '✈️'}</span>
-                <div class="min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                        <span class="text-[11px] font-bold text-white">${t.name}</span>
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:10px;${!reqs.ok && !hasBid ? 'opacity:.6' : ''}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">
+                <span style="font-size:20px;flex-shrink:0">${t.icon || '✈️'}</span>
+                <div style="min-width:0">
+                    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+                        <span style="font-size:11px;font-weight:700;color:#e6edf3">${t.name}</span>
                         ${tierBadge}
                     </div>
-                    <div class="text-[8px] text-gray-500 truncate">${t.company_type || ''} · ${t.clientele || ''}</div>
-                    <div class="text-[8px] text-gray-600 italic mt-0.5 line-clamp-2">${t.lore || ''}</div>
+                    <div style="font-size:9px;color:#8b949e;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.company_type || ''} · ${t.clientele || ''}</div>
+                    <div style="font-size:9px;color:#6b7280;font-style:italic;margin-top:2px">${(t.lore || '').substring(0,80)}${(t.lore||'').length>80?'…':''}</div>
                 </div>
             </div>
-            <div class="text-right ml-2 shrink-0">
-                <div class="text-[10px] font-bold text-green-400 font-mono">+€${dailyPay.toLocaleString()}/g</div>
-                <div class="text-[8px] text-gray-500">${t.duration_days || 14}g</div>
+            <div style="text-align:right;margin-left:8px;flex-shrink:0">
+                <div style="font-size:10px;font-weight:700;color:#3fb950;font-family:monospace">+€${dailyPay.toLocaleString()}/g</div>
+                <div style="font-size:8px;color:#6b7280">${t.duration_days || 14}g</div>
             </div>
         </div>
 
-        <div class="flex flex-wrap gap-1 mb-2">
-            <span class="text-[7px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">${reqTier} ×${reqCount}</span>
-            <span class="text-[7px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">⭐ ${minRep}★</span>
-            <span class="text-[7px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">👥 ${t.bid_count || 0} offert${t.bid_count === 1 ? 'a' : 'e'}</span>
-            <span class="text-[7px] bg-white/5 border border-white/10 px-1.5 py-0.5 rounded">⏱ ${_tCountdown(t.bidding_ends_at)}</span>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#8b949e">${reqTier} ×${reqCount}</span>
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#8b949e">⭐ ${minRep}★</span>
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#8b949e">👥 ${t.bid_count || 0} offert${t.bid_count === 1 ? 'a' : 'e'}</span>
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#8b949e">⏱ ${_tCountdown(t.bidding_ends_at)}</span>
         </div>
 
-        ${!reqs.ok && !hasBid ? `<div class="text-[8px] text-red-400 mb-2">🔒 ${reqs.reason}</div>` : ''}
+        ${!reqs.ok && !hasBid ? `<div style="font-size:9px;color:#f85149;margin-bottom:8px">🔒 ${reqs.reason}</div>` : ''}
 
         ${hasBid ? `
-        <div class="flex items-center justify-between p-2 bg-green-950/30 border border-green-500/20 rounded mb-2">
-            <div class="text-[9px] text-green-400">✅ Offerta inviata — Score: <strong>${(t.my_bid_score || 0).toFixed(1)}</strong> · Pledge: €${(t.my_bid_pledge || 0).toLocaleString()}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(63,185,80,0.06);border:1px solid rgba(63,185,80,0.2);border-radius:4px;margin-bottom:6px">
+            <div style="font-size:9px;color:#3fb950">✅ Offerta inviata — Score: <strong>${(t.my_bid_score || 0).toFixed(1)}</strong> · Pledge: €${(t.my_bid_pledge || 0).toLocaleString()}</div>
             <button onclick="window.tourismCancelBid('${t.id}')"
-                class="text-[7px] text-red-400 hover:text-red-300 border border-red-500/30 px-2 py-0.5 rounded hover:bg-red-950/30 transition-colors">
+                style="font-size:8px;color:#f85149;background:transparent;border:1px solid rgba(248,81,73,0.3);padding:2px 7px;border-radius:4px;cursor:pointer">
                 Ritira
             </button>
         </div>
         ` : reqs.ok ? `
-        <div class="border-t border-white/5 pt-2 mt-1">
-            <div class="flex items-center justify-between mb-1">
-                <span class="text-[8px] text-gray-500">Pledge (max €100k)</span>
-                <span class="text-[8px] text-gold font-mono" id="t-pledge-val-${t.id}">€0</span>
+        <div style="border-top:1px solid #21262d;padding-top:10px;margin-top:4px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                <span style="font-size:8px;color:#6b7280">Pledge (max €100k)</span>
+                <span style="font-size:8px;color:#d4af37;font-family:monospace" id="t-pledge-val-${t.id}">€0</span>
             </div>
             <input type="range" min="0" max="100000" step="1000"
                 value="${pledge}"
-                class="w-full h-1 mb-2 accent-yellow-400 cursor-pointer"
+                style="width:100%;height:4px;margin-bottom:8px;cursor:pointer;accent-color:#d4af37"
                 oninput="window._tSetPledge('${t.id}', this.value)">
 
-            <div class="flex justify-between items-center mb-1">
-                <div class="text-[8px] text-gray-600 font-mono space-x-2">
-                    <span>REP <span id="t-sc-rep-${t.id}" class="text-gray-400">${sc.rep}</span></span>
-                    <span>FLEET <span id="t-sc-fleet-${t.id}" class="text-gray-400">${sc.fleet}</span></span>
-                    <span>PLEDGE <span id="t-sc-pledge-${t.id}" class="text-gray-400">${sc.pledge}</span></span>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                <div style="font-size:8px;font-family:monospace;color:#6b7280">
+                    REP <span id="t-sc-rep-${t.id}" style="color:#8b949e">${sc.rep}</span>
+                    &nbsp;FLEET <span id="t-sc-fleet-${t.id}" style="color:#8b949e">${sc.fleet}</span>
+                    &nbsp;PLEDGE <span id="t-sc-pledge-${t.id}" style="color:#8b949e">${sc.pledge}</span>
                 </div>
-                <span class="text-[10px] font-bold font-mono" id="t-score-${t.id}" style="color:${barColor}">${sc.total}</span>
+                <span style="font-size:10px;font-weight:700;font-family:monospace;color:${barColor}" id="t-score-${t.id}">${sc.total}</span>
             </div>
-            <div class="w-full h-1 bg-white/10 rounded-full mb-2">
-                <div id="t-bar-${t.id}" class="h-1 rounded-full transition-all" style="width:${sc.total}%;background:${barColor}"></div>
+            <div style="height:4px;border-radius:2px;background:rgba(255,255,255,0.08);margin-bottom:8px">
+                <div id="t-bar-${t.id}" style="height:100%;border-radius:2px;width:${sc.total}%;background:${barColor};transition:width .3s"></div>
             </div>
 
             <button onclick="window.tourismSubmitBid('${t.id}')"
-                class="btn-gold w-full !text-[8px] !py-1.5">
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 🌍 Fai Offerta
             </button>
         </div>
@@ -399,34 +401,34 @@ function _tRenderOpenCard(t) {
 
 function _tRenderLockedCard(t) {
     return `
-    <div class="hud-card mb-2 opacity-40 !py-2">
-        <div class="flex items-center gap-2">
-            <span class="text-lg leading-none">${t.icon || '✈️'}</span>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-[9px] font-bold text-white">${t.name}</span>
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 14px;margin-bottom:6px;opacity:.4">
+        <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">${t.icon || '✈️'}</span>
+            <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span style="font-size:9px;font-weight:700;color:#e6edf3">${t.name}</span>
                     ${_tTierBadge(t.tier)}
-                    <span class="text-[7px] font-mono text-gold border border-gold/30 px-1.5 py-0.5 rounded">IN USO</span>
+                    <span style="font-size:7px;font-family:monospace;color:#d4af37;border:1px solid rgba(212,175,55,0.3);padding:1px 5px;border-radius:4px">IN USO</span>
                 </div>
-                <div class="text-[8px] text-gray-500">${t.owner_company_name || 'altro operatore'} · Scade: ${_tCountdown(t.expires_at)}</div>
+                <div style="font-size:8px;color:#8b949e;margin-top:2px">${t.owner_company_name || 'altro operatore'} · Scade: ${_tCountdown(t.expires_at)}</div>
             </div>
-            <div class="text-[9px] font-mono text-gray-600 shrink-0">+€${(t.daily_payout || 0).toLocaleString()}/g</div>
+            <div style="font-size:9px;font-family:monospace;color:#6b7280;flex-shrink:0">+€${(t.daily_payout || 0).toLocaleString()}/g</div>
         </div>
     </div>`;
 }
 
 function _tRenderCooldownCard(t) {
     return `
-    <div class="hud-card mb-2 opacity-30 !py-2">
-        <div class="flex items-center gap-2">
-            <span class="text-lg leading-none">${t.icon || '✈️'}</span>
-            <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2 flex-wrap">
-                    <span class="text-[9px] font-bold text-white">${t.name}</span>
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 14px;margin-bottom:6px;opacity:.3">
+        <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:18px">${t.icon || '✈️'}</span>
+            <div style="flex:1;min-width:0">
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span style="font-size:9px;font-weight:700;color:#e6edf3">${t.name}</span>
                     ${_tTierBadge(t.tier)}
-                    <span class="text-[7px] font-mono text-gray-500 border border-gray-600/30 px-1.5 py-0.5 rounded">COOLDOWN</span>
+                    <span style="font-size:7px;font-family:monospace;color:#6b7280;border:1px solid rgba(107,114,128,0.3);padding:1px 5px;border-radius:4px">COOLDOWN</span>
                 </div>
-                <div class="text-[8px] text-gray-600">Disponibile tra: ${_tCountdown(t.cooldown_until)}</div>
+                <div style="font-size:8px;color:#6b7280;margin-top:2px">Disponibile tra: ${_tCountdown(t.cooldown_until)}</div>
             </div>
         </div>
     </div>`;
@@ -437,52 +439,53 @@ function _tRenderCooldownCard(t) {
 function _tRenderMyContracts(myActive) {
     if (myActive.length === 0) {
         return `
-        <div class="text-center py-8">
-            <div class="text-3xl mb-3">🌍</div>
-            <div class="text-[9px] text-gray-500">Nessun contratto turismo attivo.</div>
-            <div class="text-[8px] text-gray-600 mt-1">Partecipa ai bandi aperti per iniziare a guadagnare.</div>
+        <div style="text-align:center;padding:32px 0">
+            <div style="font-size:32px;margin-bottom:10px">🌍</div>
+            <div style="font-size:9px;color:#8b949e">Nessun contratto turismo attivo.</div>
+            <div style="font-size:8px;color:#6b7280;margin-top:4px">Partecipa ai bandi aperti per iniziare a guadagnare.</div>
         </div>`;
     }
 
     return myActive.map(t => {
-        const sla       = t.sla_score ?? 100;
-        const slaColor  = sla >= 90 ? '#22c55e' : sla >= 70 ? '#f59e0b' : '#ef4444';
+        const sla        = t.sla_score ?? 100;
+        const slaColor   = sla >= 90 ? '#3fb950' : sla >= 70 ? '#f59e0b' : '#f85149';
         const repPenalty = ((t.tier || 3) * 0.15).toFixed(2);
 
         return `
-        <div class="hud-card mb-3 !border-gold/30 bg-gold/3">
-            <div class="flex justify-between items-start mb-2">
-                <div class="flex items-start gap-2">
-                    <span class="text-2xl leading-none">${t.icon || '✈️'}</span>
+        <div style="background:rgba(212,175,55,0.03);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:14px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+                <div style="display:flex;align-items:flex-start;gap:8px">
+                    <span style="font-size:22px">${t.icon || '✈️'}</span>
                     <div>
-                        <div class="flex items-center gap-2 flex-wrap mb-0.5">
-                            <span class="text-[11px] font-bold text-gold">${t.name}</span>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
+                            <span style="font-size:11px;font-weight:700;color:#d4af37">${t.name}</span>
                             ${_tTierBadge(t.tier)}
                         </div>
-                        <div class="text-[8px] text-gray-500">${t.company_type || ''}</div>
-                        <div class="text-[8px] text-gray-600">Round #${t.round_number || 1}</div>
+                        <div style="font-size:8px;color:#8b949e">${t.company_type || ''}</div>
+                        <div style="font-size:8px;color:#6b7280">Round #${t.round_number || 1}</div>
                     </div>
                 </div>
-                <div class="text-right">
-                    <div class="text-[10px] font-bold text-green-400 font-mono">+€${(t.daily_payout || 0).toLocaleString()}/g</div>
-                    <div class="text-[8px] text-gray-500">Scade: ${_tCountdown(t.expires_at)}</div>
-                    <div class="text-[8px] text-gray-600">Totale: €${(t.total_paid || 0).toLocaleString()}</div>
+                <div style="text-align:right">
+                    <div style="font-size:10px;font-weight:700;color:#3fb950;font-family:monospace">+€${(t.daily_payout || 0).toLocaleString()}/g</div>
+                    <div style="font-size:8px;color:#8b949e;margin-top:2px">Scade: ${_tCountdown(t.expires_at)}</div>
+                    <div style="font-size:8px;color:#6b7280">Totale: €${(t.total_paid || 0).toLocaleString()}</div>
                 </div>
             </div>
 
-            <div class="mb-3">
-                <div class="flex justify-between text-[8px] mb-0.5">
-                    <span class="text-gray-500">SLA Score</span>
-                    <span style="color:${slaColor}" class="font-mono font-bold">${Math.round(sla)}%</span>
+            <div style="margin-bottom:12px">
+                <div style="display:flex;justify-content:space-between;font-size:8px;margin-bottom:4px">
+                    <span style="color:#6b7280">SLA Score</span>
+                    <span style="color:${slaColor};font-family:monospace;font-weight:700">${Math.round(sla)}%</span>
                 </div>
-                <div class="w-full h-1 bg-white/10 rounded-full">
-                    <div class="h-1 rounded-full transition-all" style="width:${Math.round(sla)}%;background:${slaColor}"></div>
+                <div style="height:4px;border-radius:2px;background:rgba(255,255,255,0.08)">
+                    <div style="height:100%;border-radius:2px;width:${Math.round(sla)}%;background:${slaColor};transition:width .3s"></div>
                 </div>
-                <div class="text-[7px] text-gray-700 mt-0.5">SLA &lt; 50%: rescissione automatica</div>
+                <div style="font-size:7px;color:#6b7280;margin-top:3px">SLA &lt; 50%: rescissione automatica</div>
             </div>
 
             <button onclick="window.tourismTerminate('${t.id}')"
-                class="btn-gold !bg-red-900/30 !text-red-400 !text-[8px] w-full">
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149;border-radius:4px;transition:opacity .15s"
+                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 ⚠️ Rescindi Anticipatamente (−${repPenalty}★ reputazione)
             </button>
         </div>`;
