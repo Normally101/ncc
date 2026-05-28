@@ -6,6 +6,143 @@ Browser MMO gestionale di auto di lusso. Vanilla HTML/CSS/JS puro. Nessun framew
 
 ---
 
+## PROTOCOLLO SESSIONE — Leggi questo PRIMA di tutto il resto
+
+### All'inizio di ogni sessione (OBBLIGATORIO)
+
+Esegui questi 3 step in ordine prima di rispondere a qualsiasi richiesta:
+
+1. **Leggi `HANDOFF.md`** nella root del progetto — contiene esattamente cosa è stato fatto nell'ultima sessione, cosa manca, decisioni architetturali prese. Se non esiste, vai al passo 2.
+2. **`git log --oneline -5`** — vedi gli ultimi commit per capire lo stato del lavoro.
+3. **Leggi i memory files** in `/Users/vlad/.claude/projects/-Users-vlad-Documents-ncc-game/memory/` — contengono profilo utente, stile visivo, skills, VTK economy.
+
+Non chiedere mai "dove eravamo?" — derivalo dai file sopra.
+
+Se l'utente scrive "continua" senza altro contesto: leggi HANDOFF.md + git log, poi riprendi esattamente dal punto in cui si era interrotto.
+
+### Durante ogni sessione
+
+- Stile visivo: sempre **eRepublik flat** (vedi sezione dedicata più avanti)
+- MAI usare `DS.*` helpers nei tab JS (DS.header, DS.kpiStrip, DS.card, DS.btn, ecc.)
+- Bump `?v=` in index.html per ogni file JS modificato prima di committare
+- Usare le 3 skills installate per decisioni di design (vedi sezione Skills)
+
+### A fine sessione (OBBLIGATORIO)
+
+Aggiorna `HANDOFF.md` con:
+- Cosa è stato fatto in questa sessione (bullet precisi)
+- Stato attuale di ogni feature in lavorazione
+- Prossimi step concreti (cosa fare nella prossima sessione)
+- Eventuali decisioni architetturali prese
+
+Poi aggiorna i memory files rilevanti in `/Users/vlad/.claude/projects/-Users-vlad-Documents-ncc-game/memory/` se qualcosa è cambiato (design, VTK, feedback).
+
+---
+
+## SKILLS DI DESIGN INSTALLATE
+
+Tre skills guidano le decisioni di design — usale attivamente, non ignorarle:
+
+### taste-skill-leonx (`/taste-skill`)
+Anti-slop design: anti-card-overuse, gerarchia visiva, densità calibrata, layout non banale.
+Parametri baseline del progetto: DESIGN_VARIANCE: 8, MOTION_INTENSITY: 6, VISUAL_DENSITY: 4.
+Usala per: gerarchia visiva, scelta layout, evitare pattern banali.
+
+### emilkowalski (`/emil-design-eng`)
+Polish e micro-interactions: dettagli invisibili che si sommano.
+Pattern chiave:
+- Bottoni: `transform: scale(0.97)` su `:active`
+- Sempre `ease-out` (mai `ease-in`) su elementi che appaiono
+- `transition: transform 200ms ease-out` (mai `transition: all`)
+- Niente in the real world appare dal nulla → `scale(0.95) + opacity:0` come start state
+Usala per: polish finale, micro-interactions, stati hover/active/focus.
+
+### impeccable (`/impeccable`)
+Design review strutturato con comandi: `craft`, `shape`, `polish`, `bolder`, `animate`, `audit`.
+**Richiede `PRODUCT.md` e `DESIGN.md`** nella root del progetto.
+Se mancano: eseguire `/impeccable teach` per crearli prima di usare altri comandi.
+Usala per: review prima di committare UI, bolder/quieter di tab specifici, polish pre-ship.
+
+---
+
+## STILE VISIVO — eRepublik Flat (REGOLA ASSOLUTA)
+
+Tutto il frontend di gioco usa questo stile. Non deviare mai.
+
+### Palette
+
+```
+Background pagina:  #0d1117
+Card background:    #161b22
+Card border:        1px solid #21262d
+Testo primario:     #e6edf3
+Testo muted:        #8b949e
+Testo dim:          #6b7280
+Gold (testo):       #d4af37
+Gold (border):      #b8962b
+Gold (background):  #1a1608
+Green:              #3fb950
+Blue:               #58a6ff
+Red:                #f85149
+Font mono:          font-family: monospace
+```
+
+### Regole
+
+- **Zero** neon, glow, box-shadow decorativo, glassmorphism
+- **Tutto inline style** nei file JS — no Tailwind classes, no DS.* helpers
+- Border-radius: max `6px` su card, `4px` su button/input
+- Bottone gold: `background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px`
+- Bottone ghost: `background:#161b22;border:1px solid #21262d;color:#8b949e;padding:5px 12px`
+- Bottone destructive: `background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149`
+- Header sezione: `font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em`
+- KPI strip: `display:grid;grid-template-columns:repeat(4,1fr);gap:8px`
+- Tabelle: `border-collapse:collapse`, TH `font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;padding:7px 14px;border-bottom:1px solid #21262d`
+- TD: `padding:8px 14px;border-bottom:1px solid #161b22;font-size:11px;color:#e6edf3`
+- Micro-interaction obbligatoria su tutti i bottoni: `transition:opacity .15s` + `onmousedown scale(0.97)`
+
+### Componenti pattern (copy-paste)
+
+**Card:**
+```html
+<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px">
+```
+
+**KPI item:**
+```html
+<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+  <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">LABEL</div>
+  <div style="font-size:20px;font-weight:700;color:#e6edf3;font-family:monospace">VALUE</div>
+</div>
+```
+
+**Sezione header:**
+```html
+<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #21262d">TITOLO SEZIONE</div>
+```
+
+**Tabella TH helper (in JS):**
+```js
+const _TH  = t => `<th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d;white-space:nowrap">${t}</th>`;
+const _THR = t => `<th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:right;border-bottom:1px solid #21262d;white-space:nowrap">${t}</th>`;
+```
+
+### Tab completati (stile eRepublik)
+
+✅ ui-fleet.js · ui-staff.js · ui-dispatch.js · ui-finance.js · ui-ranking.js
+✅ ui-career.js (modal overlay, non tab inline)
+✅ ui-politics.js · ui-market.js · ui-investments.js · ui-realestate.js · ui-lifestyle.js · ui-marketing.js
+
+### Tab ancora DA rifare (usano ancora DS.*)
+
+- `ui-store.js` — Executive Club / showroom
+- `ui-hub.js` — HQ buildings
+- Verificare: `ui-emails.js`, `ui-ops.js`, `ui-legal.js`, `ui-home.js`, `ui-help.js`
+
+---
+
+---
+
 ## Stack tecnico
 
 | Layer | Tecnologia |
