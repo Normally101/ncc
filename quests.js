@@ -55,7 +55,14 @@ window.claimQuestReward = function(questId) {
 
   const r = q.rewards;
   if (r.cash)       { gs.cash += r.cash; gs.annualProfitTracker = (gs.annualProfitTracker || 0) + r.cash; }
-  if (r.vtk)        gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;
+  if (r.vtk) {
+    gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;
+    // VTK-5: sync server-side balance (fire-and-forget, client is source of truth for now)
+    if (window.supabaseClient && window.currentUser?.id) {
+      window.supabaseClient.rpc('rpc_award_mission_vtk', { v_vtk_amount: r.vtk })
+        .then(({ error }) => { if (error) console.warn('[VTK-5] rpc_award_mission_vtk error:', error.message); });
+    }
+  }
   if (r.tc)         gs.driverCoins = (gs.driverCoins || 0) + r.tc;
   if (r.rep)        gs.reputation = Math.min(5.0 + (gs.prestige || 0), gs.reputation + r.rep);
   if (r.shadowCoin) gs.shadowCoin = (gs.shadowCoin || 0) + r.shadowCoin;

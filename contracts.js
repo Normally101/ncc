@@ -320,7 +320,7 @@ window.renderTabContracts = function() {
         <div style="font-size:20px;font-weight:700;color:#e6edf3">Bandi &amp; Contratti Aziendali</div>
         <div style="font-size:11px;color:#8b949e;margin-top:4px">Vinci bandi d'appalto contro rivali AI — incassa reddito passivo per ogni contratto attivo</div>
     </div>` + `
-    <div class="p-1">
+    <div>
 
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px">
         <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
@@ -346,19 +346,19 @@ window.renderTabContracts = function() {
     </div>
 
     <!-- ── Open Tenders ── -->
-    <div class="mt-4 mb-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
-      Bandi Aperti ${tenders.length > 0 ? `<span class="text-gray-500 font-normal normal-case">— scadono dopo ${OPEN_DAYS_LABEL} giorni</span>` : ''}
+    <div style="font-size:9px;font-weight:700;color:#58a6ff;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">
+      Bandi Aperti ${tenders.length > 0 ? `<span style="color:#6b7280;font-weight:400;text-transform:none;letter-spacing:0">— scadono dopo ${OPEN_DAYS_LABEL} giorni</span>` : ''}
     </div>
 
     ${tenders.length === 0 ? `
-      <div class="bg-white/3 border border-white/8 rounded-2xl p-6 text-center text-gray-500 text-xs mb-4">
-        Nessun bando disponibile — il prossimo batch tra <strong>${daysNext} giorni</strong>
+      <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:24px;text-align:center;color:#6b7280;font-size:11px;margin-bottom:16px">
+        Nessun bando disponibile — il prossimo batch tra <strong style="color:#e6edf3">${daysNext} giorni</strong>
       </div>
     ` : tenders.map(t => _renderTenderCard(t)).join('')}
 
     <!-- ── Active Contracts ── -->
     ${active.length > 0 ? `
-      <div class="mt-5 mb-2 text-xs font-bold text-green-400 uppercase tracking-wider">Contratti Attivi</div>
+      <div style="font-size:9px;font-weight:700;color:#3fb950;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px">Contratti Attivi</div>
       ${active.map(c => _renderContractCard(c)).join('')}
     ` : ''}
 
@@ -397,7 +397,7 @@ window.renderTabContracts = function() {
       </div>
     ` : ''}
 
-    <div class="bg-blue-500/8 border border-blue-500/15 rounded-xl p-4 text-xs text-blue-200 mt-5">
+    <div style="background:rgba(88,166,255,0.06);border:1px solid rgba(88,166,255,0.18);border-radius:6px;padding:14px;font-size:11px;color:#79c0ff;margin-top:20px;line-height:1.6">
       <strong>Come funziona:</strong> Ogni 3 giorni arrivano 4 nuovi bandi.
       Hai 2 giorni per fare un'offerta. Il <strong>tuo score</strong> dipende da
       reputazione (40%), flotta qualificata (40%) e pledge opzionale €0–50k (20%).
@@ -409,10 +409,12 @@ window.renderTabContracts = function() {
 };
 
 function _tierBgClass(tier) {
-    return ['', 'border-gray-500/20 bg-gray-500/5','border-green-500/20 bg-green-500/5','border-blue-500/20 bg-blue-500/5','border-purple-500/20 bg-purple-500/5','border-yellow-500/20 bg-yellow-500/5'][tier] || 'border-white/10 bg-white/3';
+    const bgs = ['','rgba(107,114,128,0.04)','rgba(63,185,80,0.04)','rgba(88,166,255,0.04)','rgba(192,132,252,0.04)','rgba(245,158,11,0.04)'];
+    const borders = ['','rgba(107,114,128,0.2)','rgba(63,185,80,0.2)','rgba(88,166,255,0.2)','rgba(192,132,252,0.2)','rgba(245,158,11,0.2)'];
+    return { bg: bgs[tier]||'rgba(255,255,255,0.02)', border: borders[tier]||'rgba(255,255,255,0.08)' };
 }
 function _tierTextColor(tier) {
-    return ['','text-gray-400','text-green-400','text-blue-400','text-purple-400','text-yellow-400'][tier] || 'text-gray-400';
+    return ['','#8b949e','#3fb950','#58a6ff','#c084fc','#f59e0b'][tier] || '#8b949e';
 }
 
 function _renderTenderCard(tender) {
@@ -423,63 +425,63 @@ function _renderTenderCard(tender) {
     const daysLeft  = Math.max(0, tender.closingDay - (gameState.day || 0));
     const daily     = Math.round(co.payout_per_hour * 16);
     const baseScore = _cPlayerScore(co, 0);
-    const tierColor = _TIER_COLORS[co.tier] || 'gray';
-    const tierBg    = _tierBgClass(co.tier);
-    const tierTxt   = _tierTextColor(co.tier);
+    const tierStyle = _tierBgClass(co.tier);
+    const tierTxtC  = _tierTextColor(co.tier);
     const stars     = '★'.repeat(co.tier) + '☆'.repeat(5 - co.tier);
 
     return `
-    <div class="border ${tierBg} rounded-2xl p-4 mb-3">
-      <div class="flex items-start justify-between mb-2">
-        <div class="flex-1 min-w-0 pr-3">
-          <div class="flex items-center gap-2 mb-0.5 flex-wrap">
-            <span class="text-white font-bold text-sm">${co.company_name}</span>
-            <span class="${tierTxt} text-[11px]">${stars}</span>
-            <span style="font-size:9px;font-weight:700;color:${tierColor==='gold'?'#d4af37':tierColor==='blue'?'#58a6ff':tierColor==='green'?'#3fb950':'#8b949e'};border:1px solid;border-radius:4px;padding:2px 6px">T${co.tier}</span>
-            <span style="font-size:9px;font-weight:700;color:#58a6ff;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);border-radius:4px;padding:2px 6px">${co.industry}</span>
+    <div style="background:${tierStyle.bg};border:1px solid ${tierStyle.border};border-radius:6px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
+        <div style="flex:1;min-width:0;padding-right:12px">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+            <span style="font-size:13px;font-weight:700;color:#e6edf3">${co.company_name}</span>
+            <span style="font-size:11px;color:${tierTxtC}">${stars}</span>
+            <span style="font-size:9px;font-weight:700;color:${tierTxtC};border:1px solid ${tierTxtC};border-radius:4px;padding:2px 5px">T${co.tier}</span>
+            <span style="font-size:9px;font-weight:700;color:#58a6ff;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);border-radius:4px;padding:2px 5px">${co.industry}</span>
           </div>
-          <div class="text-[10px] text-gray-500 italic leading-relaxed">${co.lore_description}</div>
+          <div style="font-size:10px;color:#8b949e;font-style:italic;line-height:1.4">${co.lore_description}</div>
         </div>
-        <div class="text-right flex-shrink-0">
-          <div class="text-green-400 font-bold">€${daily.toLocaleString('it-IT')}<span class="text-[9px] text-gray-500 font-normal">/gg</span></div>
-          <div class="text-[10px] text-gray-500">${co.contract_duration_days}gg · €${(daily * co.contract_duration_days).toLocaleString('it-IT')} tot</div>
-          <div class="text-[10px] text-red-400 mt-0.5">scade tra ${daysLeft}gg</div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-size:13px;font-weight:700;color:#3fb950">€${daily.toLocaleString('it-IT')}<span style="font-size:9px;color:#6b7280;font-weight:400">/gg</span></div>
+          <div style="font-size:10px;color:#8b949e">${co.contract_duration_days}gg · €${(daily * co.contract_duration_days).toLocaleString('it-IT')} tot</div>
+          <div style="font-size:10px;color:#f85149;margin-top:2px">scade tra ${daysLeft}gg</div>
         </div>
       </div>
 
-      <div class="grid grid-cols-3 gap-x-3 gap-y-1 text-[10px] mb-3 mt-2 border-t border-white/5 pt-2">
-        <div class="${repOk ? 'text-green-400' : 'text-red-400'}">${repOk?'✓':'✗'} Rep: ${req.min_reputation}% <span class="text-gray-600">(tua ${playerRepPct}%)</span></div>
-        <div class="${fleetOk ? 'text-green-400' : 'text-red-400'}">${fleetOk?'✓':'✗'} Flotta: ${req.min_fleet_size} <span class="text-gray-600">(tua ${qualifying})</span></div>
-        <div class="text-gray-400">🚗 ${req.required_vehicle_type.replace(/_/g,' ')}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:10px;margin-bottom:10px;padding-top:8px;border-top:1px solid #21262d">
+        <div style="color:${repOk ? '#3fb950' : '#f85149'}">${repOk?'✓':'✗'} Rep: ${req.min_reputation}% <span style="color:#6b7280">(tua ${playerRepPct}%)</span></div>
+        <div style="color:${fleetOk ? '#3fb950' : '#f85149'}">${fleetOk?'✓':'✗'} Flotta: ${req.min_fleet_size} <span style="color:#6b7280">(tua ${qualifying})</span></div>
+        <div style="color:#8b949e">🚗 ${req.required_vehicle_type.replace(/_/g,' ')}</div>
       </div>
 
       ${pb ? `
-      <div class="bg-blue-500/10 border border-blue-500/25 rounded-xl p-3 flex items-center justify-between">
-        <div class="text-xs text-blue-200">
-          ✅ Offerta inviata · Score: <strong class="${tierTxt}">${pb.score}/100</strong>
-          ${pb.pledgedCash > 0 ? `· Pledge: <span class="text-yellow-400">€${pb.pledgedCash.toLocaleString('it-IT')}</span>` : ''}
+      <div style="background:rgba(88,166,255,0.08);border:1px solid rgba(88,166,255,0.2);border-radius:6px;padding:10px 12px;display:flex;align-items:center;justify-content:space-between">
+        <div style="font-size:11px;color:#79c0ff">
+          ✅ Offerta inviata · Score: <strong style="color:${tierTxtC}">${pb.score}/100</strong>
+          ${pb.pledgedCash > 0 ? `· Pledge: <span style="color:#f59e0b">€${pb.pledgedCash.toLocaleString('it-IT')}</span>` : ''}
         </div>
         <button onclick="CE_cancelBid('${tender.id}')"
-          class="text-[10px] text-red-400 hover:text-red-300 cursor-pointer ml-4 flex-shrink-0">Annulla</button>
+          style="font-size:10px;color:#f85149;background:transparent;border:none;cursor:pointer;padding:0;margin-left:12px;flex-shrink:0">Annulla</button>
       </div>
       ` : `
       <div>
-        <div class="flex items-center gap-2 text-[10px] text-gray-400 mb-2">
+        <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:#8b949e;margin-bottom:8px">
           <span>Score stimato:</span>
-          <strong class="text-cyan-400" id="bid-score-${tender.id}">${baseScore}</strong>
-          <span class="text-gray-600">/100</span>
-          <span class="ml-auto text-gray-600">pledge opzionale (boost +20%)</span>
+          <strong style="color:#22d3ee" id="bid-score-${tender.id}">${baseScore}</strong>
+          <span style="color:#6b7280">/100</span>
+          <span style="margin-left:auto;color:#6b7280">pledge opzionale (boost +20%)</span>
         </div>
-        <div class="flex items-center gap-2 mb-3">
-          <span class="text-[10px] text-gray-500 w-12 flex-shrink-0">Pledge:</span>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+          <span style="font-size:10px;color:#8b949e;width:48px;flex-shrink:0">Pledge:</span>
           <input type="range" min="0" max="50000" step="1000" value="0"
             id="pledge-${tender.id}"
             oninput="CE_updateBidPreview('${tender.id}', this.value)"
-            class="flex-1 accent-blue-500">
-          <span id="bid-pledge-val-${tender.id}" class="text-[10px] text-blue-400 w-14 text-right flex-shrink-0">€0</span>
+            style="flex:1;accent-color:#58a6ff">
+          <span id="bid-pledge-val-${tender.id}" style="font-size:10px;color:#58a6ff;width:56px;text-align:right;flex-shrink:0">€0</span>
         </div>
         <button onclick="CE_placeBid('${tender.id}', document.getElementById('pledge-${tender.id}').value)"
-          class="w-full py-2 rounded-xl text-xs font-bold bg-blue-500/20 border border-blue-500/30 text-blue-300 hover:bg-blue-500/30 transition-colors cursor-pointer">
+          style="width:100%;padding:8px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;transition:opacity .15s"
+          onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
           📤 Invia Offerta
         </button>
       </div>
@@ -496,29 +498,30 @@ function _renderContractCard(c) {
     const remain  = Math.max(0, c.endDay - (gameState.day || 0));
     const pct     = Math.min(100, Math.round(elapsed / co.contract_duration_days * 100));
 
+    const tierTxtC = _tierTextColor(co.tier);
     return `
-    <div class="border border-green-500/25 bg-green-500/5 rounded-2xl p-4 mb-3">
-      <div class="flex items-start justify-between mb-2">
+    <div style="background:rgba(63,185,80,0.04);border:1px solid rgba(63,185,80,0.2);border-radius:6px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
-          <div class="flex items-center gap-2">
-            <span class="text-white font-bold text-sm">🤝 ${co.company_name}</span>
-            <span style="font-size:9px;font-weight:700;color:${(_TIER_COLORS[co.tier]||'gray')==='gold'?'#d4af37':(_TIER_COLORS[co.tier]||'gray')==='blue'?'#58a6ff':(_TIER_COLORS[co.tier]||'gray')==='green'?'#3fb950':'#8b949e'};background:rgba(139,148,158,0.12);border:1px solid rgba(139,148,158,0.3);border-radius:4px;padding:2px 6px">T${co.tier}</span>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
+            <span style="font-size:13px;font-weight:700;color:#e6edf3">🤝 ${co.company_name}</span>
+            <span style="font-size:9px;font-weight:700;color:${tierTxtC};border:1px solid ${tierTxtC};border-radius:4px;padding:2px 5px">T${co.tier}</span>
           </div>
-          <div class="text-[10px] text-gray-500 mt-0.5">${co.industry}</div>
+          <div style="font-size:10px;color:#8b949e;margin-top:2px">${co.industry}</div>
         </div>
-        <div class="text-right">
-          <div class="text-green-400 font-bold">€${c.dailyPayout.toLocaleString('it-IT')}<span class="text-[9px] text-gray-500">/gg</span></div>
-          <div class="text-[10px] text-green-300">+€${c.totalEarned.toLocaleString('it-IT')} incassato</div>
+        <div style="text-align:right">
+          <div style="font-size:13px;font-weight:700;color:#3fb950">€${c.dailyPayout.toLocaleString('it-IT')}<span style="font-size:9px;color:#6b7280">/gg</span></div>
+          <div style="font-size:10px;color:#3fb950">+€${c.totalEarned.toLocaleString('it-IT')} incassato</div>
         </div>
       </div>
-      <div class="flex items-center gap-3 mb-2">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <div style="flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden"><div style="height:100%;width:${pct}%;background:#3fb950;border-radius:3px;transition:width .3s"></div></div>
-        <span class="text-[10px] text-gray-400 flex-shrink-0">${remain}gg rimasti</span>
+        <span style="font-size:10px;color:#8b949e;flex-shrink:0">${remain}gg rimasti</span>
       </div>
-      <div class="flex items-center justify-between text-[10px] text-gray-500">
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#8b949e">
         <span>Valore totale: €${total.toLocaleString('it-IT')}</span>
         <button onclick="CE_terminateContract('${c.id}')"
-          class="text-red-500/70 hover:text-red-400 cursor-pointer">Termina</button>
+          style="font-size:10px;color:#f85149;background:transparent;border:none;cursor:pointer">Termina</button>
       </div>
     </div>`;
 }
