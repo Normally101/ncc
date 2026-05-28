@@ -17,11 +17,11 @@ function renderTabHelp() {
     const generalSubject = encodeURIComponent(`Supporto — ${companyName}`);
     const build = new Date().toLocaleDateString('it-IT', { month:'short', year:'numeric' });
 
-    container.innerHTML = DS.header({
-        eyebrow: 'Centro Assistenza',
-        title:   'Supporto & Documentazione',
-        subtitle:`Risposta garantita entro 24h · Build ${build}`,
-    }) + `
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Centro Assistenza</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3">Supporto &amp; Documentazione</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:4px">Risposta garantita entro 24h · Build ${build}</div>
+    </div>` + `
 
     <div class="ds-grid-2" style="margin-bottom:20px">
 

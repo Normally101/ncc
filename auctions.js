@@ -329,17 +329,31 @@ window.renderTabAuctions = function() {
           </div>`;
     }
 
-    container.innerHTML = DS.header({
-        eyebrow: 'Aste',
-        title:   'Aste Giudiziarie',
-        subtitle: `${auctions.length} lotti aperti · ${myBids.length} tue offerte · ${won.length > 0 ? won.length + ' da ritirare' : 'Nessun premio in attesa'}`,
-        actions: DS.btn({ label:'↻ Aggiorna', color:'ghost', onclick:"window.auctionsRefresh(true).then(()=>window.switchTab('auctions'))", size:'sm' })
-               + (won.length > 0 ? DS.pill(won.length + ' Da Ritirare', 'gold', true) : ''),
-    }) + DS.kpiStrip([
-        { label: 'Lotti Aperti', val: auctions.length,  color: auctions.length > 0 ? 'blue' : '' },
-        { label: 'Tue Offerte',  val: myBids.length,    color: myBids.length > 0 ? 'gold' : '' },
-        { label: 'Da Ritirare',  val: won.length,        color: won.length > 0 ? 'green' : '' },
-    ]) + `<div class="p-1">
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Aste</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Aste Giudiziarie</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">${auctions.length} lotti aperti · ${myBids.length} tue offerte · ${won.length > 0 ? won.length + ' da ritirare' : 'Nessun premio in attesa'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+            ${won.length > 0 ? `<span style="font-size:9px;font-weight:700;color:#d4af37;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:3px 8px">${won.length} Da Ritirare</span>` : ''}
+            <button onclick="window.auctionsRefresh(true).then(()=>window.switchTab('auctions'))" style="background:#161b22;border:1px solid #21262d;color:#8b949e;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">↻ Aggiorna</button>
+        </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Lotti Aperti</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${auctions.length > 0 ? '#58a6ff' : '#e6edf3'}">${auctions.length}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Tue Offerte</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${myBids.length > 0 ? '#d4af37' : '#e6edf3'}">${myBids.length}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Da Ritirare</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${won.length > 0 ? '#3fb950' : '#e6edf3'}">${won.length}</div>
+        </div>
+    </div>` + `<div class="p-1">
         ${wonBanner}
         ${auctionsHtml}
         ${myBidsHtml}

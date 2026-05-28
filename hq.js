@@ -285,23 +285,28 @@ window.renderTabHQ = function() {
         .map(([k, v]) => _hqFxLabel(k, v))
         .filter(Boolean);
 
-    container.innerHTML = DS.header({
-        eyebrow: 'Quartier Generale',
-        title:   'HQ Base Builder',
-        subtitle: `Score Globale ⭐ ${totalScore} · Sedi: ${Object.keys(gameState.hqs).length}`,
-        actions: DS.pill('Score ' + totalScore, totalScore >= 50 ? 'gold' : 'blue'),
-    }) + `
-      <div class="flex gap-2 p-2 overflow-x-auto hide-scrollbar mb-2 border-b border-white/5">
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Quartier Generale</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">HQ Base Builder</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">Score Globale ⭐ ${totalScore} · Sedi: ${Object.keys(gameState.hqs).length}</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;color:${totalScore >= 50 ? '#d4af37' : '#58a6ff'};background:${totalScore >= 50 ? 'rgba(212,175,55,0.12)' : 'rgba(88,166,255,0.12)'};border:1px solid ${totalScore >= 50 ? 'rgba(212,175,55,0.3)' : 'rgba(88,166,255,0.3)'};border-radius:4px;padding:3px 8px">Score ${totalScore}</span>
+    </div>
+    <div style="display:flex;gap:6px;padding:8px 0;overflow-x:auto;margin-bottom:8px;border-bottom:1px solid #21262d">
         ${cityTabsHtml}
-      </div>
-      
-      <div class="p-2 mb-2">
-        <h2 class="text-gold font-bold">${cityData.icon} Sede di ${cityData.name}</h2>
-        <p class="text-xs text-gray-400">${cityData.desc}</p>
-      </div>
-      ` + DS.kpiStrip([
-        { label: 'Effetti Globali Attivi',   val: fxItems.length, color: fxItems.length > 0 ? 'blue' : '' },
-    ]) + `
+    </div>
+    <div style="padding:8px 0;margin-bottom:8px">
+        <div style="font-size:14px;font-weight:700;color:#d4af37">${cityData.icon} Sede di ${cityData.name}</div>
+        <div style="font-size:10px;color:#8b949e;margin-top:2px">${cityData.desc}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr;gap:8px;margin-bottom:16px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Effetti Globali Attivi</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${fxItems.length > 0 ? '#58a6ff' : '#e6edf3'}">${fxItems.length}</div>
+        </div>
+    </div>
+    `
       <div class="p-1">
 
         <!-- Visual Isometric Campus -->

@@ -924,18 +924,14 @@ function processDailyRoutines() {
     logToMap(`📊 Chiusura Giornaliera: Entrate +€${income} | Uscite -€${Math.floor(expenses)} (Inc. Tasse: €${luxuryTax})`);
 
     // ── DAILY SUMMARY TOAST ───────────────────────────────────────────────────
-    if (typeof window.DS !== 'undefined') {
+    {
         const _net = income - Math.floor(expenses);
         const _today = gameState.todayEarnings || 0;
-        const _rideCount = gameState.weeklyRides || 0;
         const _sumType = _net >= 0 ? 'success' : 'error';
         const _todayStr = _today > 0 ? ` · Corse: €${_today.toLocaleString()}` : '';
-        window.DS.toast({
-            title: `Giorno ${_closingDay} — Chiusura`,
-            msg: `Passivo: ${_net >= 0 ? '+' : ''}€${_net.toLocaleString()} · Tasse €${luxuryTax.toLocaleString()}${_todayStr}`,
-            type: _sumType,
-            duration: 6000,
-        });
+        if (typeof showNotification === 'function') showNotification(
+            `Giorno ${_closingDay} — ${_net >= 0 ? '+' : ''}€${_net.toLocaleString()} · Tasse €${luxuryTax.toLocaleString()}${_todayStr}`,
+            _sumType);
         // Store daily summary for dispatch center overlay
         gameState._dailySummary = {
             day: _closingDay,

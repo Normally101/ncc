@@ -7,12 +7,14 @@ window.renderTabOPA = async function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    container.innerHTML = DS.header({
-        eyebrow: 'M&A',
-        title:   'OPA Ostili',
-        subtitle: 'Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto',
-        actions: DS.pill('51% → Controllo', 'gold'),
-    }) + `<div class="p-1">
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">M&amp;A</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">OPA Ostili</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto</div>
+        </div>
+        <span style="font-size:9px;font-weight:700;color:#d4af37;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:3px 8px">51% → Controllo</span>
+    </div>` + `<div class="p-1">
       <div class="ds-card" style="border-color:rgba(234,179,8,0.3);margin-bottom:16px;font-size:11px;color:#fde68a;line-height:1.5">
         <strong>Come funziona:</strong> Compra azioni di un rivale quotato in borsa dal tab Finance.
         Quando raggiungi il <strong>51%</strong>, scatta l'OPA ostile: il <strong>20%</strong> di ogni sua corsa

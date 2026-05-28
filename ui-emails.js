@@ -23,12 +23,14 @@ function renderTabEmails() {
 
     // ── Header ────────────────────────────────────────────────────────────────
     const totalUnread = countUrgenti + countVip + countComm;
-    let html = DS.header({
-        eyebrow: 'Inbox CEO',
-        title:   'Comunicazioni Riservate',
-        subtitle: totalUnread > 0 ? `${totalUnread} messaggi non letti` : 'Nessun nuovo messaggio',
-        actions: totalUnread > 0 ? DS.pill(String(totalUnread), 'red', true) : '',
-    });
+    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Inbox CEO</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Comunicazioni Riservate</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">${totalUnread > 0 ? `${totalUnread} messaggi non letti` : 'Nessun nuovo messaggio'}</div>
+        </div>
+        ${totalUnread > 0 ? `<span style="font-size:10px;font-weight:700;color:#f85149;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);border-radius:4px;padding:3px 8px">${totalUnread}</span>` : ''}
+    </div>`;
 
     // ── 3-Tab bar ─────────────────────────────────────────────────────────────
     html += `<div class="inbox-tabs">`;
@@ -79,7 +81,7 @@ function renderTabEmails() {
         const emptyTitle = window._inboxTab === 'urgenti' ? 'Nessun messaggio urgente'
                          : window._inboxTab === 'vip'     ? 'Nessuna richiesta VIP'
                          : 'Nessuna comunicazione';
-        html += DS.empty({ icon: emptyIcon, title: emptyTitle });
+        html += `<div style="text-align:center;padding:48px 0"><div style="font-size:36px;margin-bottom:12px">${emptyIcon}</div><div style="font-size:14px;font-weight:600;color:#e6edf3">${emptyTitle}</div></div>`;
         container.innerHTML = html;
         return;
     }

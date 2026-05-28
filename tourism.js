@@ -223,19 +223,32 @@ window.renderTabTourism = function() {
     const openCount        = tenders.filter(t => t.status === 'open_bidding').length;
     const bestScore        = myBids.length > 0 ? Math.max(...myBids.map(t => t.my_bid_score || 0)) : null;
 
-    let html = DS.header({
-        eyebrow:  'Mercato · PvP',
-        title:    'Bandi Turismo B2B',
-        subtitle: myActive.length > 0
-            ? `${myActive.length} contratto/i attivo/i · +€${totalDailyPayout.toLocaleString()}/giorno`
-            : `${openCount} bandi aperti · Compete con altri operatori`,
-        actions: myActive.length > 0 ? DS.pill(`${myActive.length} ATTIVO`, 'green', true) : '',
-    }) + DS.kpiStrip([
-        { label: 'Contratti Attivi', val: myActive.length  > 0 ? myActive.length  : '—', color: myActive.length > 0 ? 'green' : '' },
-        { label: 'Entrate/Giorno',  val: totalDailyPayout > 0 ? `+€${totalDailyPayout.toLocaleString()}` : '—', color: totalDailyPayout > 0 ? 'green' : '' },
-        { label: 'Offerte in Corsa', val: myBids.length   > 0 ? myBids.length     : '—', color: myBids.length > 0 ? 'gold' : '' },
-        { label: 'Miglior Score',   val: bestScore !== null ? bestScore.toFixed(0) : '—', color: bestScore !== null && bestScore >= 70 ? 'green' : 'orange' },
-    ]);
+    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Mercato · PvP</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Bandi Turismo B2B</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">${myActive.length > 0 ? `${myActive.length} contratto/i attivo/i · +€${totalDailyPayout.toLocaleString()}/giorno` : `${openCount} bandi aperti · Compete con altri operatori`}</div>
+        </div>
+        ${myActive.length > 0 ? `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">${myActive.length} ATTIVO</span>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratti Attivi</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${myActive.length > 0 ? '#3fb950' : '#e6edf3'}">${myActive.length > 0 ? myActive.length : '—'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Entrate/Giorno</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${totalDailyPayout > 0 ? '#3fb950' : '#e6edf3'}">${totalDailyPayout > 0 ? '+€' + totalDailyPayout.toLocaleString() : '—'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offerte in Corsa</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${myBids.length > 0 ? '#d4af37' : '#e6edf3'}">${myBids.length > 0 ? myBids.length : '—'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Miglior Score</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${bestScore !== null && bestScore >= 70 ? '#3fb950' : '#f59e0b'}">${bestScore !== null ? bestScore.toFixed(0) : '—'}</div>
+        </div>
+    </div>`;
 
     if (!uid) {
         container.innerHTML = html + `<div class="text-[9px] text-gray-500 italic text-center mt-8">Accedi per partecipare ai bandi turismo.</div>`;

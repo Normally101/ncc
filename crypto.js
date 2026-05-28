@@ -286,17 +286,32 @@ window.renderTabCrypto = function() {
           </div>`;
     }).join('');
 
-    container.innerHTML = DS.header({
-        eyebrow: 'Finanza Alternativa',
-        title:   'Crypto & Offshore',
-        subtitle: `Portfolio €${Math.floor(portfolioValue).toLocaleString()} · Offshore €${offshoreTotal.toLocaleString()}`,
-        actions: DS.btn({ label:'↻ Aggiorna', color:'ghost', onclick:"window.cryptoRefresh(true).then(()=>window.switchTab('crypto'))", size:'sm' }),
-    }) + DS.kpiStrip([
-        { label: 'Portfolio Crypto', val: '€' + Math.floor(portfolioValue/1000) + 'k', color: portfolioValue > 0 ? 'gold' : '' },
-        { label: 'Offshore',         val: offshoreTotal > 0 ? '€' + Math.floor(offshoreTotal/1000) + 'k' : '—', color: offshoreTotal > 0 ? 'green' : '' },
-        { label: 'Coin Detenute',    val: portfolio.length, color: portfolio.length > 0 ? 'blue' : '' },
-        { label: 'Conti Aperti',     val: offshore.filter(o => o.balance > 0).length, color: 'gold' },
-    ]) + `
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Finanza Alternativa</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Crypto &amp; Offshore</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">Portfolio €${Math.floor(portfolioValue).toLocaleString()} · Offshore €${offshoreTotal.toLocaleString()}</div>
+        </div>
+        <button onclick="window.cryptoRefresh(true).then(()=>window.switchTab('crypto'))" style="background:#161b22;border:1px solid #21262d;color:#8b949e;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">↻ Aggiorna</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Portfolio Crypto</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${portfolioValue > 0 ? '#d4af37' : '#e6edf3'}">€${Math.floor(portfolioValue/1000)}k</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offshore</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${offshoreTotal > 0 ? '#3fb950' : '#e6edf3'}">${offshoreTotal > 0 ? '€' + Math.floor(offshoreTotal/1000) + 'k' : '—'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Coin Detenute</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${portfolio.length > 0 ? '#58a6ff' : '#e6edf3'}">${portfolio.length}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Conti Aperti</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#d4af37">${offshore.filter(o => o.balance > 0).length}</div>
+        </div>
+    </div>` + `
       <div class="p-1">
         <!-- Market -->
         <div class="ds-eyebrow" style="margin-bottom:12px">📈 Mercato Crypto</div>

@@ -24,16 +24,29 @@ function renderTabStaff() {
         return s + (role ? role.salary : 0);
     }, 0);
 
-    let html = DS.header({
-        eyebrow: 'Risorse Umane',
-        title:   'Gestione Staff',
-        subtitle:`${hqName} · ${currentStaff} / ${maxStaff === 99 ? '∞' : maxStaff} posizioni · Stipendi €${monthlyPayroll.toLocaleString()}/mese`,
-    }) + DS.kpiStrip([
-        { label:'Staff Ufficio',   val: officeStaff,                                       color: officeStaff > 0 ? 'green' : '' },
-        { label:'Autisti',         val: driverCount,                                        color: driverCount > 0 ? 'blue' : '' },
-        { label:'Capacità',        val: currentStaff + '/' + (maxStaff===99?'∞':maxStaff), color: staffFull ? 'red' : 'green' },
-        { label:'Stipendi/mese',   val: '€' + monthlyPayroll.toLocaleString(),             color: monthlyPayroll > 0 ? 'red' : 'green' },
-    ]);
+    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Risorse Umane</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3">Gestione Staff</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:4px">${hqName} · ${currentStaff} / ${maxStaff === 99 ? '∞' : maxStaff} posizioni · Stipendi €${monthlyPayroll.toLocaleString()}/mese</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Staff Ufficio</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${officeStaff > 0 ? '#3fb950' : '#e6edf3'}">${officeStaff}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Autisti</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${driverCount > 0 ? '#58a6ff' : '#e6edf3'}">${driverCount}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Capacità</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${staffFull ? '#f85149' : '#3fb950'}">${currentStaff}/${maxStaff===99?'∞':maxStaff}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Stipendi/mese</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${monthlyPayroll > 0 ? '#f85149' : '#3fb950'}">€${monthlyPayroll.toLocaleString()}</div>
+        </div>
+    </div>`;
 
     html += `<div class="ds-eyebrow" style="margin:0 0 12px">🏢 Ufficio Centralizzato</div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">`;
@@ -47,9 +60,9 @@ function renderTabStaff() {
             </div>
             <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
                 ${owned
-                    ? `${DS.pill('✓ ATTIVO', 'green')}
-                       ${DS.btn({ label:'Licenzia', color:'red', onclick:`window.fireStaff('${s.id}')`, size:'sm' })}`
-                    : DS.btn({ label:'Assumi', color:'gold', onclick:`hireOfficeStaff('${s.id}')`, disabled:staffFull, size:'sm' })
+                    ? `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:2px 6px;margin-bottom:4px;display:block;width:fit-content">✓ ATTIVO</span>
+                       <button onclick="window.fireStaff('${s.id}')" style="background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Licenzia</button>`
+                    : `<button onclick="hireOfficeStaff('${s.id}')" ${staffFull ? 'disabled' : ''} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s;${staffFull ? 'opacity:.4;cursor:not-allowed' : ''}" onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Assumi</button>`
                 }
             </div>
         </div>`;
@@ -79,8 +92,8 @@ function renderTabStaff() {
             </div>
             <div>
                 ${hrActive
-                    ? DS.pill('ATTIVO', 'green')
-                    : DS.btn({ label:'🪙 5 DC · 7g', color:'gold', onclick:'window.buyHRAutomation()', size:'sm' })}
+                    ? `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:2px 6px">ATTIVO</span>`
+                    : `<button onclick="window.buyHRAutomation()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🪙 5 DC · 7g</button>`}
             </div>
         </div>
     </div>`;
@@ -89,7 +102,7 @@ function renderTabStaff() {
     const _myDrivers = gameState.drivers.filter(d => d.id !== 'ceo');
     if (_myDrivers.length === 0) {
         html += `<div class="ds-eyebrow" style="margin:0 0 12px">🚗 I Tuoi Autisti</div>` +
-            DS.empty({ icon:'🚗', title:'Nessun autista', body:'Assumi autisti dal Mercato Reclutamento qui sotto' });
+            `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">🚗</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun autista</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Assumi autisti dal Mercato Reclutamento qui sotto</div></div>`;
     } else {
         const _STH = t => `<th style="padding:8px 14px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);font-family:'Roboto Mono',monospace;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);white-space:nowrap">${t}</th>`;
         html += `<div class="ds-eyebrow" style="margin:0 0 12px">🚗 I Tuoi Autisti <span style="font-size:9px;font-weight:400;color:var(--text-dim)">${_myDrivers.length} totali</span></div>
@@ -194,7 +207,7 @@ function renderTabStaff() {
                     <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Aeroporto: ${asst.airport || '—'} · Missioni passive: attive</div>
                     <div style="font-size:10px;color:var(--green);margin-top:2px">Entrate ultima sessione: +€${(_mgIncome / _mgStaff.length).toFixed(0)}/g</div>
                 </div>
-                ${DS.pill('✓ ON DUTY', 'green')}
+                <span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:2px 6px">✓ ON DUTY</span>
             </div>`;
         });
     }
@@ -211,11 +224,11 @@ function renderTabStaff() {
                 ${p.trait ? `<div style="margin-top:4px">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span style="font-size:9px;color:var(--text-dim)">${p.trait.desc}</span></div>` : ''}
                 <div style="font-size:10px;color:var(--text-dim);margin-top:4px">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
             </div>
-            ${DS.btn({ label:'Assumi', color:'gold', onclick:`hireDriver('${p.name}', ${p.salary})`, size:'sm' })}
+            <button onclick="hireDriver('${p.name}', ${p.salary})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Assumi</button>
         </div>`;
     });
     if ((gameState.availableRecruits || []).length === 0) {
-        html += DS.empty({ icon:'👤', title:'Nessun candidato', body:'Il mercato si aggiorna ad ogni assunzione' });
+        html += `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">👤</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun candidato</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Il mercato si aggiorna ad ogni assunzione</div></div>`;
     }
 
     // ── Driver Academy ────────────────────────────────────────────────────────
@@ -223,17 +236,17 @@ function renderTabStaff() {
     const _inTrainingCount = (gameState.driverAcademy||[]).length;
     html += `</div><div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 12px">
         <div class="ds-eyebrow">🎓 Accademia Autisti</div>
-        ${_inTrainingCount > 0 ? DS.pill(`📚 ${_inTrainingCount} in formazione`, 'gold') : ''}
+        ${_inTrainingCount > 0 ? `<span style="font-size:9px;font-weight:700;color:#d4af37;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:2px 6px">📚 ${_inTrainingCount} in formazione</span>` : ''}
     </div>`;
     if (_academyDrivers.length === 0) {
-        html += DS.empty({ icon:'🎓', title:'Nessun autista', body:"Assumi almeno un autista per accedere all'Accademia" });
+        html += `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">🎓</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun autista</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Assumi almeno un autista per accedere all'Accademia</div></div>`;
     } else {
         html += `<div class="ds-card" style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
             <div>
                 <div style="font-size:12px;font-weight:700;color:var(--text)">Gestione Corsi</div>
                 <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
             </div>
-            ${DS.btn({ label:'Apri Accademia →', color:'gold', onclick:'window.openAcademyModal()', size:'sm' })}
+            <button onclick="window.openAcademyModal()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Apri Accademia →</button>
         </div>`;
     }
 

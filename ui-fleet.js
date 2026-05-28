@@ -14,17 +14,34 @@ function renderTabFleet() {
     _fl.forEach(c => { if (_tierCounts[c.tier] !== undefined) _tierCounts[c.tier]++; });
     const _tierSub = Object.entries(_tierCounts).filter(([,v]) => v > 0).map(([k,v]) => `${v} ${k}`).join(' · ');
 
-    const _fleetHeader = DS.header({
-        eyebrow: 'Gestione Flotta',
-        title:   'Veicoli',
-        subtitle: `${_fl.length} veicoli · ${_tierSub}`,
-        actions: _seized > 0 ? DS.pill(`${_seized} fuori servizio`, 'red', true) : DS.pill(`${_active} operativi`, 'green'),
-    }) + DS.kpiStrip([
-        { label: 'Flotta',        val: _fl.length,                         },
-        { label: 'Operativi',     val: _active,          color: _active < _fl.length ? 'gold' : 'green' },
-        { label: 'Cond. media',   val: _avgCond + '%',   color: _condColor },
-        { label: 'Fuori servizio',val: _seized,          color: _seized > 0 ? 'red' : 'green' },
-    ]);
+    const _fleetHeader = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Gestione Flotta</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Veicoli</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">${_fl.length} veicoli · ${_tierSub}</div>
+        </div>
+        ${_seized > 0
+            ? `<span style="font-size:9px;font-weight:700;color:#f85149;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);border-radius:4px;padding:3px 8px">${_seized} fuori servizio</span>`
+            : `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">${_active} operativi</span>`}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Flotta</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#e6edf3">${_fl.length}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Operativi</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${_active < _fl.length ? '#d4af37' : '#3fb950'}">${_active}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Cond. media</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${_condColor === 'red' ? '#f85149' : _condColor === 'gold' ? '#d4af37' : '#3fb950'}">${_avgCond}%</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Fuori servizio</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${_seized > 0 ? '#f85149' : '#3fb950'}">${_seized}</div>
+        </div>
+    </div>`;
 
     // Depot block (gasolio + gomme)
     const hasDepot = typeof hasInvestment === 'function' && hasInvestment('inv_fuel_depot');

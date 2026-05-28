@@ -315,20 +315,35 @@ window.renderTabContracts = function() {
     const pending   = tenders.filter(t => t.playerBid);
     const daysNext  = Math.max(0, (gs.nextTenderDay || 0) - gs.day);
 
-    container.innerHTML = DS.header({
-        eyebrow:  'Corporate Deals',
-        title:    'Bandi & Contratti Aziendali',
-        subtitle: 'Vinci bandi d\'appalto contro rivali AI — incassa reddito passivo per ogni contratto attivo',
-    }) + `
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Corporate Deals</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3">Bandi &amp; Contratti Aziendali</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:4px">Vinci bandi d'appalto contro rivali AI — incassa reddito passivo per ogni contratto attivo</div>
+    </div>` + `
     <div class="p-1">
 
-    ${DS.kpiStrip([
-        { label:'Contratti Attivi',  val: active.length,                                            color: active.length > 0 ? 'green' : '' },
-        { label:'Ricavo Giornaliero',val:`€${dailyRev.toLocaleString('it-IT')}`,                   color: dailyRev > 0 ? 'green' : '' },
-        { label:'Bandi Aperti',      val: tenders.length,                                           color: tenders.length > 0 ? 'blue' : '' },
-        { label:'Prossimo Batch',    val: tenders.length > 0 ? `${daysNext}gg` : `${daysNext}gg`  },
-        { label:'Offerte Inviate',   val: pending.length,                                           color: pending.length > 0 ? 'blue' : '' },
-    ])}
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratti Attivi</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active.length > 0 ? '#3fb950' : '#e6edf3'}">${active.length}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Ricavo Giornaliero</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${dailyRev > 0 ? '#3fb950' : '#e6edf3'}">€${dailyRev.toLocaleString('it-IT')}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Bandi Aperti</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${tenders.length > 0 ? '#58a6ff' : '#e6edf3'}">${tenders.length}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Prossimo Batch</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#e6edf3">${daysNext}gg</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offerte Inviate</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${pending.length > 0 ? '#58a6ff' : '#e6edf3'}">${pending.length}</div>
+        </div>
+    </div>
 
     <!-- ── Open Tenders ── -->
     <div class="mt-4 mb-2 text-xs font-bold text-blue-400 uppercase tracking-wider">
@@ -349,24 +364,37 @@ window.renderTabContracts = function() {
 
     <!-- ── History ── -->
     ${history.length > 0 ? `
-      <div class="mt-5 mb-2 text-xs font-bold text-gray-500 uppercase tracking-wider">Storico Bandi</div>
-      ${DS.table(
-        [
-          { label:'Azienda',   key:'_name',   render: r => `<span class="text-white text-xs">${r._name}</span>` },
-          { label:'Tier',      key:'_tier',   render: r => DS.pill('T'+r._tier, _TIER_COLORS[r._tier]||'gray') },
-          { label:'Esito',     key:'_won',    render: r => r._won ? DS.pill('VINTO','green') : DS.pill('PERSO','red') },
-          { label:'Score',     key:'_score',  align:'right', render: r => `<span class="${r._won?'text-green-400':'text-red-400'} text-xs">${r._pScore} vs ${r._aiScore}</span>` },
-          { label:'Payout/gg', key:'_daily',  align:'right', render: r => r._won ? `<span class="text-green-400 text-xs">€${r._daily.toLocaleString('it-IT')}</span>` : '<span class="text-gray-600 text-xs">—</span>' },
-        ],
-        [...history].reverse().map(t => ({
-          _name:    t.company.company_name,
-          _tier:    t.company.tier,
-          _won:     t.result?.won,
-          _pScore:  t.result?.pScore ?? '—',
-          _aiScore: t.result?.bestAI ?? '—',
-          _daily:   Math.round(t.company.payout_per_hour * 16),
-        }))
-      )}
+      <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px">Storico Bandi</div>
+      <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;overflow:hidden;margin-bottom:16px">
+        <table style="width:100%;border-collapse:collapse">
+          <thead><tr>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d">Azienda</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d">Tier</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d">Esito</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:right;border-bottom:1px solid #21262d">Score</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:right;border-bottom:1px solid #21262d">Payout/gg</th>
+          </tr></thead>
+          <tbody>
+            ${[...history].reverse().map(t => {
+              const _name  = t.company.company_name;
+              const _tier  = t.company.tier;
+              const _won   = t.result?.won;
+              const _pScore= t.result?.pScore ?? '—';
+              const _aiScore=t.result?.bestAI ?? '—';
+              const _daily = Math.round(t.company.payout_per_hour * 16);
+              const _tc    = _TIER_COLORS[_tier] || 'gray';
+              const _tc2   = _tc === 'gold' ? '#d4af37' : _tc === 'blue' ? '#58a6ff' : _tc === 'green' ? '#3fb950' : '#8b949e';
+              return `<tr style="border-bottom:1px solid #161b22">
+                <td style="padding:8px 14px;font-size:11px;color:#e6edf3">${_name}</td>
+                <td style="padding:8px 14px"><span style="font-size:9px;font-weight:700;color:${_tc2};background:${_tc2}1a;border:1px solid ${_tc2}4d;border-radius:4px;padding:2px 6px">T${_tier}</span></td>
+                <td style="padding:8px 14px"><span style="font-size:9px;font-weight:700;color:${_won?'#3fb950':'#f85149'};background:${_won?'rgba(63,185,80,0.12)':'rgba(248,81,73,0.12)'};border:1px solid ${_won?'rgba(63,185,80,0.3)':'rgba(248,81,73,0.3)'};border-radius:4px;padding:2px 6px">${_won?'VINTO':'PERSO'}</span></td>
+                <td style="padding:8px 14px;font-size:11px;color:${_won?'#3fb950':'#f85149'};text-align:right;font-family:monospace">${_pScore} vs ${_aiScore}</td>
+                <td style="padding:8px 14px;font-size:11px;color:${_won?'#3fb950':'#8b949e'};text-align:right;font-family:monospace">${_won?'€'+_daily.toLocaleString('it-IT'):'—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
     ` : ''}
 
     <div class="bg-blue-500/8 border border-blue-500/15 rounded-xl p-4 text-xs text-blue-200 mt-5">
@@ -407,8 +435,8 @@ function _renderTenderCard(tender) {
           <div class="flex items-center gap-2 mb-0.5 flex-wrap">
             <span class="text-white font-bold text-sm">${co.company_name}</span>
             <span class="${tierTxt} text-[11px]">${stars}</span>
-            ${DS.pill('T'+co.tier, tierColor)}
-            ${DS.pill(co.industry, 'blue')}
+            <span style="font-size:9px;font-weight:700;color:${tierColor==='gold'?'#d4af37':tierColor==='blue'?'#58a6ff':tierColor==='green'?'#3fb950':'#8b949e'};border:1px solid;border-radius:4px;padding:2px 6px">T${co.tier}</span>
+            <span style="font-size:9px;font-weight:700;color:#58a6ff;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);border-radius:4px;padding:2px 6px">${co.industry}</span>
           </div>
           <div class="text-[10px] text-gray-500 italic leading-relaxed">${co.lore_description}</div>
         </div>
@@ -474,7 +502,7 @@ function _renderContractCard(c) {
         <div>
           <div class="flex items-center gap-2">
             <span class="text-white font-bold text-sm">🤝 ${co.company_name}</span>
-            ${DS.pill('T'+co.tier, _TIER_COLORS[co.tier]||'gray')}
+            <span style="font-size:9px;font-weight:700;color:${(_TIER_COLORS[co.tier]||'gray')==='gold'?'#d4af37':(_TIER_COLORS[co.tier]||'gray')==='blue'?'#58a6ff':(_TIER_COLORS[co.tier]||'gray')==='green'?'#3fb950':'#8b949e'};background:rgba(139,148,158,0.12);border:1px solid rgba(139,148,158,0.3);border-radius:4px;padding:2px 6px">T${co.tier}</span>
           </div>
           <div class="text-[10px] text-gray-500 mt-0.5">${co.industry}</div>
         </div>
@@ -484,7 +512,7 @@ function _renderContractCard(c) {
         </div>
       </div>
       <div class="flex items-center gap-3 mb-2">
-        ${DS.progress(pct, 'green')}
+        <div style="flex:1;height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden"><div style="height:100%;width:${pct}%;background:#3fb950;border-radius:3px;transition:width .3s"></div></div>
         <span class="text-[10px] text-gray-400 flex-shrink-0">${remain}gg rimasti</span>
       </div>
       <div class="flex items-center justify-between text-[10px] text-gray-500">

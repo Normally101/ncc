@@ -160,14 +160,22 @@ window.renderTabNemesis = function() {
     const nemeses = Object.entries(gameState.vipNemeses || {});
 
     const criticalNem = nemeses.filter(([, n]) => n.level >= 2).length;
-    container.innerHTML = DS.header({
-        eyebrow: 'VIP Relations',
-        title:   'Lista Nemici',
-        subtitle: nemeses.length === 0 ? 'Nessun VIP deluso — ottimo!' : `${nemeses.length} VIP ostili · ${criticalNem > 0 ? criticalNem + ' guerra aperta' : 'Gestibile'}`,
-        actions: criticalNem > 0 ? DS.pill('⚠ GUERRA APERTA', 'red', true) : (nemeses.length > 0 ? DS.pill(nemeses.length + ' Ostili', 'orange') : DS.pill('✓ OK', 'green')),
-    }) + `
+    const _nemBadge = criticalNem > 0
+        ? `<span style="font-size:9px;font-weight:700;color:#f85149;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);border-radius:4px;padding:3px 8px">⚠ GUERRA APERTA</span>`
+        : nemeses.length > 0
+            ? `<span style="font-size:9px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:3px 8px">${nemeses.length} Ostili</span>`
+            : `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">✓ OK</span>`;
+    const _nemEmpty = `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">😇</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun nemico</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Continua a non deludere i VIP.</div></div>`;
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">VIP Relations</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Lista Nemici</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">${nemeses.length === 0 ? 'Nessun VIP deluso — ottimo!' : `${nemeses.length} VIP ostili · ${criticalNem > 0 ? criticalNem + ' guerra aperta' : 'Gestibile'}`}</div>
+        </div>
+        ${_nemBadge}
+    </div>` + `
     <div class="p-1">
-      ${nemeses.length === 0 ? DS.empty({ icon:'😇', title:'Nessun nemico', body:'Continua a non deludere i VIP.' })
+      ${nemeses.length === 0 ? _nemEmpty
         : nemeses.map(([vipId, nem]) => _renderNemesisCard(vipId, nem)).join('')}
 
       <div class="mt-6 bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 text-xs text-blue-200">

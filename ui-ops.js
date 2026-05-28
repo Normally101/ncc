@@ -15,18 +15,31 @@ function renderTabRegions() {
     const totalRegions = allRegions.length;
     const coveragePct = totalRegions > 0 ? Math.round(totalOwned / totalRegions * 100) : 0;
 
-    let html = DS.header({
-        eyebrow: 'Espansione Territoriale',
-        title:   'Licenze Regionali',
-        subtitle:`${totalOwned} / ${totalRegions} regioni attive · Copertura nazionale ${coveragePct}%`,
-    });
+    const _kpiColor = (c) => c === 'green' ? '#3fb950' : c === 'gold' ? '#d4af37' : c === 'red' ? '#f85149' : c === 'blue' ? '#58a6ff' : '#e6edf3';
+    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Espansione Territoriale</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3">Licenze Regionali</div>
+        <div style="font-size:11px;color:#8b949e;margin-top:4px">${totalOwned} / ${totalRegions} regioni attive · Copertura nazionale ${coveragePct}%</div>
+    </div>`;
 
-    html += DS.kpiStrip([
-        { label:'Regioni Attive',    val: totalOwned,                    color: totalOwned > 0 ? 'green' : '' },
-        { label:'Copertura',         val: coveragePct + '%',             color: coveragePct >= 50 ? 'gold' : '' },
-        { label:'Reputazione CEO',   val: (gameState.reputation||0) + '★' },
-        { label:'Budget Disponibile',val: '€' + ((gameState.cash||0)/1000).toFixed(0) + 'k', color:'green' },
-    ]);
+    html += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Regioni Attive</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${totalOwned > 0 ? '#3fb950' : '#e6edf3'}">${totalOwned}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Copertura</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${coveragePct >= 50 ? '#d4af37' : '#e6edf3'}">${coveragePct}%</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Reputazione CEO</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#e6edf3">${(gameState.reputation||0)}★</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Budget Disponibile</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#3fb950">€${((gameState.cash||0)/1000).toFixed(0)}k</div>
+        </div>
+    </div>`;
 
     GROUPS.forEach(group => {
         html += `<div class="ds-eyebrow" style="margin:20px 0 10px">${group.icon} ${group.label}</div>

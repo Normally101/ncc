@@ -277,17 +277,33 @@ function renderTabB2B() {
     const rep      = gameState.reputation || 0;
 
     const monthlyFromActive = active ? (active.daily_payout || 0) * 30 : 0;
-    let html = DS.header({
-        eyebrow: 'Corporate',
-        title:   'Contratti B2B',
-        subtitle: active ? `Contratto attivo: ${active.contract_title} · €${(active.daily_payout||0).toLocaleString()}/g` : `${contracts.length} contratti disponibili · Reputazione ${rep.toFixed(1)}★`,
-        actions: active ? DS.pill('ATTIVO', 'green', true) : '',
-    }) + DS.kpiStrip([
-        { label: 'Contratto',    val: active ? active.contract_icon + ' ' + (active.contract_client || '—') : '—', color: active ? 'gold' : '' },
-        { label: 'Entrate/g',   val: active ? '+€' + (active.daily_payout||0).toLocaleString() : '—', color: active ? 'green' : '' },
-        { label: 'Giorni rimasti', val: active ? active.days_remaining : '—', color: active && active.days_remaining <= 3 ? 'red' : '' },
-        { label: 'SLA Score',    val: active ? Math.round(active.sla_score ?? 100) + '%' : '—', color: active && (active.sla_score ?? 100) >= 90 ? 'green' : 'orange' },
-    ]);
+    const _kpiC = c => c === 'green' ? '#3fb950' : c === 'gold' ? '#d4af37' : c === 'red' ? '#f85149' : c === 'blue' ? '#58a6ff' : c === 'orange' ? '#f59e0b' : '#e6edf3';
+    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+        <div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Corporate</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Contratti B2B</div>
+            <div style="font-size:11px;color:#8b949e;margin-top:4px">${active ? `Contratto attivo: ${active.contract_title} · €${(active.daily_payout||0).toLocaleString()}/g` : `${contracts.length} contratti disponibili · Reputazione ${rep.toFixed(1)}★`}</div>
+        </div>
+        ${active ? `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">ATTIVO</span>` : ''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratto</div>
+            <div style="font-size:14px;font-weight:700;font-family:monospace;color:${active ? '#d4af37' : '#e6edf3'}">${active ? active.contract_icon + ' ' + (active.contract_client || '—') : '—'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Entrate/g</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active ? '#3fb950' : '#e6edf3'}">${active ? '+€' + (active.daily_payout||0).toLocaleString() : '—'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Giorni rimasti</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active && active.days_remaining <= 3 ? '#f85149' : '#e6edf3'}">${active ? active.days_remaining : '—'}</div>
+        </div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">SLA Score</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active && (active.sla_score ?? 100) >= 90 ? '#3fb950' : '#f59e0b'}">${active ? Math.round(active.sla_score ?? 100) + '%' : '—'}</div>
+        </div>
+    </div>`;
 
     if (!uid) {
         container.innerHTML = html + `<div class="text-[9px] text-gray-500 italic text-center mt-8">Accedi per visualizzare i contratti disponibili.</div>`;
