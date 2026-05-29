@@ -258,8 +258,8 @@ window.b2bCheckLimit = function(max) {
     if (btn) {
         const ok = count >= max;
         btn.disabled = !ok;
-        btn.classList.toggle('opacity-40', !ok);
-        btn.classList.toggle('cursor-not-allowed', !ok);
+        btn.style.opacity    = ok ? '1' : '0.4';
+        btn.style.cursor     = ok ? 'pointer' : 'not-allowed';
     }
 };
 
