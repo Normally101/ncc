@@ -963,6 +963,24 @@ Ogni fix significativo va documentato qui con: **cosa è andato storto → perch
 
 ---
 
+### [2026-05-29] War Room sparisce dopo ~1 secondo ad ogni apertura
+
+**Errore:** Aprendo il tab War Room (provinces), la mappa si mostrava per circa 1 secondo e poi spariva tornando al Dispatch Center.
+
+**Causa:** In `map.js`, dentro la callback `'load'` di Mapbox (che si attiva quando la mappa finisce di caricare, ~1s), era presente la riga:
+```js
+if (typeof window.switchTab === 'function') window.switchTab('corse');
+```
+`initMap()` è chiamata SOLO da `_ensureMap()` → `openMapOverlay()` → `switchTab('provinces')`. Quando Mapbox terminava il caricamento, questa riga chiamava `switchTab('corse')`, che a sua volta triggera `closeMapOverlay()` → `_destroyMap()` → War Room spariva e la mappa veniva distrutta.
+
+**Fix:** Rimossa quella riga da `map.js`. Era dead code residuo da un vecchio boot sequence dove `initMap()` veniva chiamata all'avvio — quel pattern non esiste più, `initMap` è ora chiamata solo dall'utente via War Room.
+
+**Regola:** Qualsiasi `switchTab()` inside una callback async (timers, event listeners, promise then) può causare loop o redirect inattesi. Verificare sempre che una callback async non triggeri navigazione a tab diverso da quello attuale.
+
+**File:** `map.js` (riga ~262, rimossa)
+
+---
+
 ## Prossimi step tecnici — Piano split file
 
 ### Contesto
