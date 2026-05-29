@@ -259,7 +259,6 @@ function initMap() {
         // Secondo render ritardato: assicura che highway e POI siano visibili
         setTimeout(() => { drawHighways(); drawPOIs(); }, 800);
         setTimeout(() => { drawHighways(); drawPOIs(); }, 2500);
-        if (typeof window.switchTab === 'function') window.switchTab('corse');
         // Rimuovi loading placeholder
         const _mapLoader = document.getElementById('map-loading');
         if (_mapLoader) _mapLoader.remove();
