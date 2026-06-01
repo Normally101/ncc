@@ -167,12 +167,16 @@ window.renderTabHome = function() {
     </div>
 
     <div class="em-card">
-      <div class="em-ch"><span class="t">Aggiornamenti</span><span class="a">${driversOnDuty.length} autisti attivi</span></div>
+      <div class="em-ch"><span class="t">Mondo NCC</span><span class="a" style="color:var(--em-green)">● ${(typeof window._worldOnline==='function')?window._worldOnline():0} online</span></div>
+      ${(typeof window.renderWorldFeedHTML==='function') ? window.renderWorldFeedHTML(7) : notifRows}
+    </div>
+
+    <div class="em-card" style="margin-top:7px">
+      <div class="em-ch"><span class="t">La tua azienda</span><span class="a">${driversOnDuty.length} autisti attivi</span></div>
       <div class="em-contract">
         <div class="ct">Contratto del giorno</div><div class="cs">Transfer premium aeroportuale</div>
         <div class="cr"><span class="cc">0 / 25</span><button class="em-bbtn" style="margin-left:auto" onclick="switchTab('b2b')">Accetta →</button></div>
       </div>
-      ${notifRows}
       ${driverMiniSection}
     </div>
 
