@@ -67,7 +67,8 @@ window.wakeDriverDC = function(driverId) {
 // ── BOOSTER: ENERGIA CEO ──────────────────────────────────────────
 window.energyBoostDC = function() {
     const cost = 4;
-    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
+    if ((gameState.energy || 0) >= 100) { showNotification('Energia CEO già al massimo.', 'info'); return; }
+    if ((gameState.driverCoins || 0) < cost) { showNotification(`Servono ${cost} DC — acquistali nell'Executive Club.`, 'error'); if (typeof switchTab === 'function') switchTab('store'); return; }
     gameState.driverCoins -= cost;
     gameState.energy = 100;
     logToMap(`⚡ Energia CEO ripristinata al 100%! (${cost} DC)`);

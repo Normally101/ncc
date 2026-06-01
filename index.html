@@ -120,10 +120,11 @@
 
       <!-- Resource chips -->
       <div class="emc-chips">
-        <div class="emc-chip" onclick="openHotelModal && openHotelModal()" title="Energia">
+        <div class="emc-chip" onclick="openHotelModal && openHotelModal()" title="Energia CEO — clicca per recuperare">
           <span class="emc-ico" style="background:#e7f6ee;color:#1aa06a">⚡</span>
           <span class="emc-eb"><i id="tb-energy-bar" style="width:100%"></i></span>
           <span id="tb-energy-text">100%</span>
+          <button class="emc-eplus" onclick="event.stopPropagation(); window.energyBoostDC && window.energyBoostDC()" title="Ricarica istantanea al 100% (4 DC)">+</button>
         </div>
         <div class="emc-chip" title="Reputazione">
           <span class="emc-ico" style="background:#f6edd2;color:#c79a2a">★</span>
@@ -618,7 +619,7 @@
   <script defer src="engine-finance.js?v=6"></script>
   <script defer src="engine-drivers.js?v=6"></script>
   <script defer src="engine-fleet.js?v=6"></script>
-  <script defer src="engine-store.js?v=6"></script>
+  <script defer src="engine-store.js?v=10"></script>
   <script defer src="engine-holding.js?v=6"></script>
   <script defer src="engine-rivals.js?v=6"></script>
   <script defer src="engine-events.js?v=6"></script>
