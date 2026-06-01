@@ -155,6 +155,7 @@ window.renderTabHome = function() {
         <div><div class="bt">Sfida Settimanale</div><h2>Corse Premium</h2><div class="pb"><i style="width:55%"></i></div></div>
         <div class="cd"><div class="n">02:22:39</div><div class="l">al prossimo premio</div></div>
       </div>
+      <div style="margin-top:7px">${(typeof window.renderDailyOrdersHTML==='function') ? window.renderDailyOrdersHTML() : ''}</div>
       <div class="em-card" style="margin-top:7px">
         <div class="em-ch"><span class="t">Corse in Corso</span><span class="a">● Live</span></div>
         ${ridesEmpty || ridesRows}
