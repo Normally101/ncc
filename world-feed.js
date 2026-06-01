@@ -150,6 +150,49 @@
             </div>`).join('');
     };
 
+    // ── Conflitto del giorno (minaccia/opportunità) ───────────────────
+    // NPC-driven ma agganciato allo stato reale del giocatore → urgenza + FOMO.
+    window.renderConflictHTML = function () {
+        const gs = window.gameState; if (!gs) return '';
+        const hubs   = (gs.ownedHubs || []).length;
+        const myDrv  = (gs.drivers || []).filter(d => d.id !== 'ceo');
+        const best   = myDrv.slice().sort((a, b) => (b.level || 0) - (a.level || 0) || (b.xp || 0) - (a.xp || 0))[0];
+        const rival  = pick(NPC);
+        const prov   = pick(PROV);
+        const hrs    = rnd(3, 9);
+
+        // scegli lo scenario in base a cosa il giocatore ha da perdere/guadagnare
+        let scn;
+        const roll = (gs.day || 1) % 3;
+        if (hubs > 0 && roll === 0) {
+            scn = { type: 'threat', ic: '⚔️', accent: '#db5746', bg: 'linear-gradient(120deg,#2a1714,#3a1c18)',
+                kicker: 'Minaccia in arrivo', title: `${esc(rival)} prepara un'OPA ostile su un tuo hub`,
+                sub: `Hai ~${hrs}h per rinforzare la posizione prima dell'offerta.`,
+                cta: `Difendi nella War Room →`, tab: 'provinces' };
+        } else if (best && roll === 1) {
+            scn = { type: 'poach', ic: '🎯', accent: '#e0922e', bg: 'linear-gradient(120deg,#2a2114,#3a2c18)',
+                kicker: 'Caccia ai talenti', title: `${esc(rival)} ha messo gli occhi su ${esc(best.name)}`,
+                sub: `Aumenta morale/stipendio o rischi di perderlo a fine giornata.`,
+                cta: `Gestisci lo staff →`, tab: 'staff' };
+        } else {
+            scn = { type: 'opp', ic: '🏴', accent: '#c79a2a', bg: 'linear-gradient(120deg,#1c2433,#243043)',
+                kicker: 'Opportunità del giorno', title: `${rnd(2, 6)} province libere intorno a ${prov}`,
+                sub: `Conquista territorio ora: incassi una % su ogni corsa che vi transita.`,
+                cta: `Espanditi nella War Room →`, tab: 'provinces' };
+        }
+
+        return `
+        <div style="border-radius:9px;background:${scn.bg};border:1px solid ${scn.accent}55;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;gap:13px;color:#fff;position:relative;overflow:hidden">
+            <div style="font-size:26px;line-height:1;flex-shrink:0">${scn.ic}</div>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:${scn.accent}">${scn.kicker}</div>
+                <div style="font-size:14px;font-weight:800;margin-top:1px;line-height:1.2">${scn.title}</div>
+                <div style="font-size:10.5px;color:#c4cdd8;margin-top:2px">${scn.sub}</div>
+            </div>
+            <button onclick="switchTab('${scn.tab}')" style="flex-shrink:0;background:${scn.accent};color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">${scn.cta}</button>
+        </div>`;
+    };
+
     // ── Avvio ─────────────────────────────────────────────────────────
     function boot() { loadReal(); startNPC(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

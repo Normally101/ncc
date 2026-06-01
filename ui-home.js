@@ -50,7 +50,12 @@ window.renderTabHome = function() {
     const totalPending = pendingRides.length;
 
     const rep      = (gs.reputation || 0).toFixed(2);
-    const repTrend = gs.reputation >= 4.5 ? 'stabile' : (gs.reputation >= 3.5 ? 'in crescita' : 'in calo');
+    // sub costruttivo: niente "in calo" demotivante in apertura — mostra il prossimo traguardo
+    const _r = gs.reputation || 0;
+    const repTrend = _r >= 4.5 ? '★ Eccellente'
+                   : _r >= 3.5 ? 'Sblocca clienti VIP'
+                   : _r >= 2.5 ? 'Obiettivo 3.5★ → VIP'
+                   : 'Punta a 3★ con corse top';
     const level    = _homeLevel(gs.prestige);
     const driversOnDuty = (gs.drivers||[]).filter(d => d.status === 'busy' || d.status === 'idle');
 
@@ -144,9 +149,11 @@ window.renderTabHome = function() {
   <div class="em-kpis">
     <div class="em-kpi"><div class="l">Guadagno Oggi</div><div class="v" style="color:#1aa06a" data-countup="${todayEarn}" data-fmt="eur">${earnFmt}</div><div class="s" style="color:${deltaColor}">${deltaTxt}</div></div>
     <div class="em-kpi"><div class="l">Corse Attive</div><div class="v" data-countup="${totalActive}" data-fmt="int">${totalActive}</div><div class="s">${totalPending} in attesa</div></div>
-    <div class="em-kpi"><div class="l">Rating Medio</div><div class="v" style="color:#c79a2a" data-countup="${gs.reputation||0}" data-fmt="float2">${rep}</div><div class="s">▲ ${repTrend}</div></div>
+    <div class="em-kpi"><div class="l">Rating Medio</div><div class="v" style="color:#c79a2a" data-countup="${gs.reputation||0}" data-fmt="float2">${rep}</div><div class="s" style="color:${_r>=3.5?'var(--em-green)':'var(--em-muted)'}">${repTrend}</div></div>
     <div class="em-kpi"><div class="l">Livello</div><div class="v" style="font-size:17px;color:#2f74c0">${_homeEsc(level.label)}</div><div class="s">${level.next ? 'Prossimo: ' + level.next : 'Massimo'}</div></div>
   </div>
+
+  ${(typeof window.renderConflictHTML==='function') ? window.renderConflictHTML() : ''}
 
   <div class="em-grid2">
 
