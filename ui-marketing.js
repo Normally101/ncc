@@ -51,32 +51,32 @@ function renderTabMarketing() {
     // ─────────────────────────────────────────────────────────────
     let html = `
     <div style="padding:16px 16px 0;max-width:800px">
-    <div style="padding-bottom:16px;border-bottom:1px solid #21262d;margin-bottom:16px">
-        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Marketing & Brand</div>
+    <div style="padding-bottom:16px;border-bottom:1px solid #d6dee8;margin-bottom:16px">
+        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Marketing & Brand</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <div>
-                <div style="font-size:20px;font-weight:700;color:#e6edf3;letter-spacing:-.01em">Brand Intelligence</div>
-                <div style="font-size:11px;color:#8b949e;margin-top:2px">Volume ${bv}/100 · Prestige ${bp}/100 · Campagne ${activeCampaigns.length}/${maxSlots}</div>
+                <div style="font-size:20px;font-weight:700;color:#1f2733;letter-spacing:-.01em">Brand Intelligence</div>
+                <div style="font-size:11px;color:#6a7480;margin-top:2px">Volume ${bv}/100 · Prestige ${bp}/100 · Campagne ${activeCampaigns.length}/${maxSlots}</div>
             </div>
-            ${hasMarkDir ? `<span style="display:inline-flex;padding:2px 8px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;background:#1a160818;border:1px solid #b8962b44;color:#d4af37">MARKETING DIR.</span>` : ''}
+            ${hasMarkDir ? `<span style="display:inline-flex;padding:2px 8px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;background:#fff8e818;border:1px solid #c79a2a44;color:#c79a2a">MARKETING DIR.</span>` : ''}
         </div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Brand Volume</div>
-            <div style="font-size:18px;font-weight:700;color:${bv>=75?'#3fb950':bv>=25?'#d4af37':'#e6edf3'};font-family:monospace">${bv}</div>
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Brand Volume</div>
+            <div style="font-size:18px;font-weight:700;color:${bv>=75?'#1aa06a':bv>=25?'#c79a2a':'#1f2733'};font-family:monospace">${bv}</div>
         </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Prestige</div>
-            <div style="font-size:18px;font-weight:700;color:${bp>=75?'#d4af37':bp>=25?'#58a6ff':'#e6edf3'};font-family:monospace">${bp}</div>
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Prestige</div>
+            <div style="font-size:18px;font-weight:700;color:${bp>=75?'#c79a2a':bp>=25?'#2f74c0':'#1f2733'};font-family:monospace">${bp}</div>
         </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Surge</div>
-            <div style="font-size:12px;font-weight:700;color:${pending>=15?'#f85149':pending>=8?'#f59e0b':'#3fb950'};font-family:monospace">${pending>=15?'+35%':pending>=8?'+15%':'STD'}</div>
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Surge</div>
+            <div style="font-size:12px;font-weight:700;color:${pending>=15?'#db5746':pending>=8?'#e0922e':'#1aa06a'};font-family:monospace">${pending>=15?'+35%':pending>=8?'+15%':'STD'}</div>
         </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Campagne</div>
-            <div style="font-size:18px;font-weight:700;color:${activeCampaigns.length>=maxSlots?'#f85149':'#3fb950'};font-family:monospace">${activeCampaigns.length}<span style="font-size:11px;color:#6b7280">/${maxSlots}</span></div>
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Campagne</div>
+            <div style="font-size:18px;font-weight:700;color:${activeCampaigns.length>=maxSlots?'#db5746':'#1aa06a'};font-family:monospace">${activeCampaigns.length}<span style="font-size:11px;color:#6a7480">/${maxSlots}</span></div>
         </div>
     </div>
     `;
@@ -111,22 +111,22 @@ function renderTabMarketing() {
     // ── 2. SITUAZIONE MERCATO ─────────────────────────────────────
     html += `<div class="mkt-section-header">Situazione Mercato</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;text-align:center">
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px;text-align:center">
             <div style="font-size:22px;margin-bottom:4px">${ws.icon}</div>
-            <div style="font-size:10px;color:#8b949e">${ws.label}</div>
-            <div style="font-size:10px;font-weight:700;color:#f59e0b;margin-top:2px">Tariffe +${Math.round((ws.priceMult - 1) * 100)}%</div>
+            <div style="font-size:10px;color:#6a7480">${ws.label}</div>
+            <div style="font-size:10px;font-weight:700;color:#e0922e;margin-top:2px">Tariffe +${Math.round((ws.priceMult - 1) * 100)}%</div>
         </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;display:flex;flex-direction:column;justify-content:center;text-align:center">
-            <div style="font-size:11px;font-weight:700;color:${pending>=15?'#f85149':pending>=8?'#f59e0b':'#3fb950'}">${surgeLabel}</div>
-            <div style="font-size:9px;color:#6b7280;margin-top:4px;font-family:monospace">Corse in attesa: ${pending}</div>
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px;display:flex;flex-direction:column;justify-content:center;text-align:center">
+            <div style="font-size:11px;font-weight:700;color:${pending>=15?'#db5746':pending>=8?'#e0922e':'#1aa06a'}">${surgeLabel}</div>
+            <div style="font-size:9px;color:#6a7480;margin-top:4px;font-family:monospace">Corse in attesa: ${pending}</div>
         </div>
     </div>`;
 
     const season = typeof _getSeasonalMult === 'function' ? _getSeasonalMult() : null;
     if (season && season.priceMult !== 1.0) {
-        html += `<div style="background:#1a1608;border:1px solid #b8962b;border-radius:6px;padding:10px 12px;margin-bottom:12px">
-            <div style="font-size:9px;color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${season.name}</div>
-            <div style="font-size:10px;color:#8b949e">Tariffe +${Math.round((season.priceMult - 1) * 100)}% · Volume corse ×${season.rideBonus.toFixed(1)}</div>
+        html += `<div style="background:#fff8e8;border:1px solid #c79a2a;border-radius:6px;padding:10px 12px;margin-bottom:12px">
+            <div style="font-size:9px;color:#c79a2a;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${season.name}</div>
+            <div style="font-size:10px;color:#6a7480">Tariffe +${Math.round((season.priceMult - 1) * 100)}% · Volume corse ×${season.rideBonus.toFixed(1)}</div>
         </div>`;
     }
 
@@ -152,7 +152,7 @@ function renderTabMarketing() {
 
     // ── 4. CAMPAGNE ATTIVE ────────────────────────────────────────
     if (activeCampaigns.length > 0) {
-        html += `<div class="mkt-section-header">Campagne Attive <span style="float:right;font-weight:400;color:#6b7280">Slot: ${activeCampaigns.length}/${maxSlots}</span></div>`;
+        html += `<div class="mkt-section-header">Campagne Attive <span style="float:right;font-weight:400;color:#6a7480">Slot: ${activeCampaigns.length}/${maxSlots}</span></div>`;
         activeCampaigns.forEach(ac => {
             const camp = MARKETING_CAMPAIGNS.find(c => c.id === ac.id);
             if (!camp) return;
@@ -173,14 +173,14 @@ function renderTabMarketing() {
                     <div class="campaign-progress-bar" style="width:${progress}%"></div>
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
-                    <div style="font-size:8px;color:#6b7280">Giorno ${daysDone} di ${totalDays} · termina G.${ac.endsDay}</div>
-                    <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
+                    <div style="font-size:8px;color:#6a7480">Giorno ${daysDone} di ${totalDays} · termina G.${ac.endsDay}</div>
+                    <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#db5746;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
                 </div>
             </div>`;
         });
     } else {
-        html += `<div class="mkt-section-header">Campagne Attive <span style="float:right;font-weight:400;color:#6b7280">Slot: 0/${maxSlots}</span></div>
-        <div style="font-size:9px;color:#4b5563;font-style:italic;margin-bottom:10px;padding:8px;background:rgba(0,0,0,0.2);border-radius:6px">Nessuna campagna attiva. Seleziona una campagna qui sotto per avviarla.</div>`;
+        html += `<div class="mkt-section-header">Campagne Attive <span style="float:right;font-weight:400;color:#6a7480">Slot: 0/${maxSlots}</span></div>
+        <div style="font-size:9px;color:#98a1ae;font-style:italic;margin-bottom:10px;padding:8px;background:#f3f6f9;border-radius:6px">Nessuna campagna attiva. Seleziona una campagna qui sotto per avviarla.</div>`;
     }
 
     // ── 5. SELEZIONA CAMPAGNA — tier tabs ─────────────────────────
@@ -267,7 +267,7 @@ function renderTabMarketing() {
             const synCamp = MARKETING_CAMPAIGNS.find(c => c.id === camp.synergy);
             const synActive = activeCampaigns.some(ac => ac.id === camp.synergy);
             if (synCamp) {
-                const synColor = synActive ? '#22c55e' : '#4b5563';
+                const synColor = synActive ? '#1aa06a' : '#98a1ae';
                 html += `<div style="font-size:8px;color:${synColor};margin-bottom:8px">
                     ${synActive ? '⚡' : '○'} Sinergia: ${synCamp.name} +${Math.round(camp.synergyBonus * 100)}%${synActive ? ' (ATTIVA!)' : ''}
                 </div>`;
@@ -281,14 +281,14 @@ function renderTabMarketing() {
             const progress  = totalDays > 0 ? Math.min(100, Math.round((daysDone / totalDays) * 100)) : 0;
             html += `<div class="campaign-progress-wrap"><div class="campaign-progress-bar" style="width:${progress}%"></div></div>
                 <div style="display:flex;justify-content:space-between;align-items:center">
-                    <div style="font-size:8px;color:#4ade80;font-weight:700">▶ ATTIVA — ${daysLeft}g rimanenti</div>
-                    <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#ef4444;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
+                    <div style="font-size:8px;color:#1aa06a;font-weight:700">▶ ATTIVA — ${daysLeft}g rimanenti</div>
+                    <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#db5746;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
                 </div>`;
         } else {
             const slotsFull = activeCampaigns.length >= maxSlots;
             const btnDisabled = slotsFull ? 'opacity:0.5;cursor:not-allowed' : 'cursor:pointer';
             const btnTitle = slotsFull ? `title="Slot pieni (${maxSlots}/${maxSlots})"` : '';
-            html += `<button onclick="${slotsFull ? '' : `window._applyMarketingCampaign('${camp.id}')`}" ${btnTitle} style="width:100%;font-size:9px;font-weight:700;padding:6px;background:rgba(34,197,94,0.12);color:#22c55e;border:1px solid rgba(34,197,94,0.3);border-radius:6px;${btnDisabled}">▶ Avvia Campagna</button>`;
+            html += `<button onclick="${slotsFull ? '' : `window._applyMarketingCampaign('${camp.id}')`}" ${btnTitle} style="width:100%;font-size:9px;font-weight:700;padding:6px;background:rgba(34,197,94,0.12);color:#1aa06a;border:1px solid rgba(34,197,94,0.3);border-radius:6px;${btnDisabled}">▶ Avvia Campagna</button>`;
         }
 
         html += `</div>`;
@@ -300,7 +300,7 @@ function renderTabMarketing() {
 
     const roiEntries = Object.entries(campaignROI).filter(([, v]) => v > 0);
     if (roiEntries.length === 0) {
-        html += `<div style="font-size:9px;color:#6b7280;font-style:italic">Nessun dato ROI disponibile. Avvia una campagna per tracciare il ritorno sull'investimento.</div>`;
+        html += `<div style="font-size:9px;color:#6a7480;font-style:italic">Nessun dato ROI disponibile. Avvia una campagna per tracciare il ritorno sull'investimento.</div>`;
     } else {
         roiEntries.forEach(([campId, revenue]) => {
             const c = MARKETING_CAMPAIGNS.find(x => x.id === campId);
@@ -312,14 +312,14 @@ function renderTabMarketing() {
         });
         const totalROI = roiEntries.reduce((s, [, v]) => s + v, 0);
         html += `<div class="mkt-roi-row" style="border-top:1px solid rgba(34,197,94,0.15);padding-top:6px;margin-top:4px">
-            <span class="mkt-roi-label" style="color:#9ca3af;font-weight:700">TOTALE</span>
+            <span class="mkt-roi-label" style="color:#6a7480;font-weight:700">TOTALE</span>
             <span class="mkt-roi-value" style="font-size:11px">+€${Math.round(totalROI).toLocaleString('it-IT')}</span>
         </div>`;
     }
 
     html += `</div></div>`;
 
-    container.innerHTML = html;
+    container.innerHTML = `<div class="em em-page"><div class="em-wrap">` + html + `</div></div>`;
 }
 
 

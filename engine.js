@@ -935,8 +935,24 @@ function _getItalyTime() {
     };
 }
 
+// Safe cash mutation: ignora importi non finiti (NaN/Infinity) che
+// corromperebbero il saldo propagandosi a tutto lo stato.
+window._addCash = function(amount) {
+    if (Number.isFinite(amount)) gameState.cash += amount;
+    return gameState.cash;
+};
+
 function gameLoop() {
     if (gameState.paused) return;
+
+    // Cash sanity guard: se una mutazione difettosa ha prodotto NaN/Infinity,
+    // ripristina l'ultimo saldo valido invece di propagare la corruzione.
+    if (!Number.isFinite(gameState.cash)) {
+        gameState.cash = (typeof window._lastValidCash === 'number') ? window._lastValidCash : 0;
+        if (typeof showNotification === 'function') showNotification('Saldo non valido corretto automaticamente.', 'error');
+    } else {
+        window._lastValidCash = gameState.cash;
+    }
 
     const _ita      = _getItalyTime();
     const _prevHour = gameState.hour;
@@ -1050,7 +1066,7 @@ function logToMap(msg) {
     const logContainer = document.getElementById('map-log');
     if(!logContainer) return;
     const entry = document.createElement('div');
-    entry.className = "border-b border-white/5 pb-1 mb-1 text-[9px] text-gray-300";
+    entry.style.cssText = "border-bottom:1px solid #161b22;padding-bottom:4px;margin-bottom:4px;font-size:9px;color:#8b949e;font-family:monospace";
     entry.innerText = `[${String(gameState.hour).padStart(2,'0')}:${String(gameState.minute).padStart(2,'0')}] ${msg}`;
     logContainer.prepend(entry);
     if(logContainer.children.length > 15) logContainer.lastChild.remove();

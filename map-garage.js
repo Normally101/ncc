@@ -56,55 +56,55 @@ window.openGarage3D = function(carId) {
            </div>`;
 
     modal.innerHTML = `
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;width:95%;max-width:900px;min-height:500px;overflow:hidden;position:relative;display:flex;flex-direction:row;max-height:90vh">
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:8px;width:95%;max-width:900px;min-height:500px;overflow:hidden;position:relative;display:flex;flex-direction:row;max-height:90vh">
             ${leftPanel}
-            <div style="flex:1;padding:32px;background:#161b22;border-left:1px solid #21262d;display:flex;flex-direction:column;justify-content:space-between;overflow-y:auto">
+            <div style="flex:1;padding:32px;background:#ffffff;border-left:1px solid #d6dee8;display:flex;flex-direction:column;justify-content:space-between;overflow-y:auto">
                 <div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                        <div style="font-size:22px;font-weight:700;color:#e6edf3;text-transform:uppercase;letter-spacing:.06em;line-height:1.2">${car.name}</div>
-                        <span style="background:rgba(255,255,255,0.08);color:#e6edf3;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace;border:1px solid rgba(255,255,255,0.15);margin-left:8px;flex-shrink:0">${car.tier.toUpperCase()}</span>
+                        <div style="font-size:22px;font-weight:700;color:#1f2733;text-transform:uppercase;letter-spacing:.06em;line-height:1.2">${car.name}</div>
+                        <span style="background:#d6dee8;color:#1f2733;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace;border:1px solid rgba(255,255,255,0.15);margin-left:8px;flex-shrink:0">${car.tier.toUpperCase()}</span>
                     </div>
-                    <div style="color:#d4af37;font-size:12px;margin-bottom:24px;font-family:monospace">${vClass.replace(/_/g, ' ').toUpperCase()}</div>
+                    <div style="color:#c79a2a;font-size:12px;margin-bottom:24px;font-family:monospace">${vClass.replace(/_/g, ' ').toUpperCase()}</div>
                     <div style="display:flex;flex-direction:column;gap:16px">
                         <div>
-                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#8b949e">🔧 CONDIZIONE</span><span style="color:#e6edf3">${Math.floor(car.condition)}%</span></div>
-                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
-                                <div style="height:100%;background:${car.condition > 50 ? '#3fb950' : '#f85149'};transition:width 1s ease-out;width:0%" id="anim-cond"></div>
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6a7480">🔧 CONDIZIONE</span><span style="color:#1f2733">${Math.floor(car.condition)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #d6dee8">
+                                <div style="height:100%;background:${car.condition > 50 ? '#1aa06a' : '#db5746'};transition:width 1s ease-out;width:0%" id="anim-cond"></div>
                             </div>
                         </div>
                         <div>
-                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#8b949e">${isElec ? '⚡ BATTERIA' : '⛽ CARBURANTE'}</span><span style="color:#e6edf3">${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%</span></div>
-                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
-                                <div style="height:100%;background:${isElec ? '#3fb950' : '#58a6ff'};transition:width 1s ease-out;width:0%" id="anim-fuel"></div>
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6a7480">${isElec ? '⚡ BATTERIA' : '⛽ CARBURANTE'}</span><span style="color:#1f2733">${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #d6dee8">
+                                <div style="height:100%;background:${isElec ? '#1aa06a' : '#2f74c0'};transition:width 1s ease-out;width:0%" id="anim-fuel"></div>
                             </div>
                         </div>
                         <div>
-                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#8b949e">🛞 PRESSIONE GOMME</span><span style="color:#e6edf3">${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%</span></div>
-                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid rgba(255,255,255,0.08)">
-                                <div style="height:100%;background:#f59e0b;transition:width 1s ease-out;width:0%" id="anim-tire"></div>
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6a7480">🛞 PRESSIONE GOMME</span><span style="color:#1f2733">${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #d6dee8">
+                                <div style="height:100%;background:#e0922e;transition:width 1s ease-out;width:0%" id="anim-tire"></div>
                             </div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
-                            <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px">
+                            <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid #eef1f5;display:flex;align-items:center;gap:12px">
                                 <span style="font-size:22px">💺</span>
-                                <div><div style="font-size:9px;color:#6b7280;font-weight:700">POSTI</div><div style="font-size:16px;font-weight:700;color:#e6edf3">${seats}</div></div>
+                                <div><div style="font-size:9px;color:#6a7480;font-weight:700">POSTI</div><div style="font-size:16px;font-weight:700;color:#1f2733">${seats}</div></div>
                             </div>
-                            <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;gap:12px">
+                            <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid #eef1f5;display:flex;align-items:center;gap:12px">
                                 <span style="font-size:22px">🧳</span>
-                                <div><div style="font-size:9px;color:#6b7280;font-weight:700">BAGAGLI</div><div style="font-size:16px;font-weight:700;color:#e6edf3">${luggage}</div></div>
+                                <div><div style="font-size:9px;color:#6a7480;font-weight:700">BAGAGLI</div><div style="font-size:16px;font-weight:700;color:#1f2733">${luggage}</div></div>
                             </div>
                         </div>
                         <div>
-                            <div style="font-size:9px;color:#6b7280;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Upgrade Installati</div>
+                            <div style="font-size:9px;color:#6a7480;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Upgrade Installati</div>
                             <div style="display:flex;flex-wrap:wrap;gap:6px">
                                 ${upgrades.length > 0
-                                    ? upgrades.map(u => `<span style="background:rgba(88,166,255,0.12);color:#58a6ff;border:1px solid rgba(88,166,255,0.3);font-size:9px;padding:2px 8px;border-radius:4px">${u.replace('upg_','').toUpperCase()}</span>`).join('')
-                                    : '<span style="color:#6b7280;font-size:11px;font-style:italic">Nessun upgrade</span>'}
+                                    ? upgrades.map(u => `<span style="background:rgba(88,166,255,0.12);color:#2f74c0;border:1px solid rgba(88,166,255,0.3);font-size:9px;padding:2px 8px;border-radius:4px">${u.replace('upg_','').toUpperCase()}</span>`).join('')
+                                    : '<span style="color:#6a7480;font-size:11px;font-style:italic">Nessun upgrade</span>'}
                             </div>
                         </div>
                     </div>
                 </div>
-                <button onclick="closeGarage3D()" style="margin-top:24px;width:100%;padding:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:6px;background:rgba(127,29,29,0.3);border:1px solid rgba(185,28,28,0.4);color:#fca5a5;cursor:pointer;transition:all .15s" onmousedown="this.style.background='rgba(127,29,29,0.5)'" onmouseup="this.style.background='rgba(127,29,29,0.3)'" onmouseleave="this.style.background='rgba(127,29,29,0.3)'">✕ Chiudi Ispezione</button>
+                <button onclick="closeGarage3D()" style="margin-top:24px;width:100%;padding:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:6px;background:rgba(127,29,29,0.3);border:1px solid rgba(185,28,28,0.4);color:#db5746;cursor:pointer;transition:all .15s" onmousedown="this.style.background='rgba(127,29,29,0.5)'" onmouseup="this.style.background='rgba(127,29,29,0.3)'" onmouseleave="this.style.background='rgba(127,29,29,0.3)'">✕ Chiudi Ispezione</button>
             </div>
         </div>`;
 
@@ -138,7 +138,7 @@ function _generateVehicleSVG(vClass, upgrades) {
     const paint2     = isArmor ? '#0d0d0e' : '#080a0f';
     const glassColor = isTinted ? '#030303' : '#1e2436';
     const rimColor   = isArmor ? '#333' : '#778090';
-    const neonColor  = hasLivrea ? '#00f2ff' : 'none';
+    const neonColor  = hasLivrea ? '#2f74c0' : 'none';
 
     const wheelY = 250;
     const drawWheel = (cx) => `
@@ -147,7 +147,7 @@ function _generateVehicleSVG(vClass, upgrades) {
         <circle cx="${cx}" cy="${wheelY}" r="26" fill="none" stroke="${rimColor}" stroke-width="4"/>
         <circle cx="${cx}" cy="${wheelY}" r="10" fill="#444"/>
         <path d="M${cx},${wheelY-26} L${cx},${wheelY+26} M${cx-26},${wheelY} L${cx+26},${wheelY} M${cx-18},${wheelY-18} L${cx+18},${wheelY+18} M${cx-18},${wheelY+18} L${cx+18},${wheelY-18}" stroke="${rimColor}" stroke-width="3"/>
-        ${hasLivrea ? `<circle cx="${cx}" cy="${wheelY}" r="46" fill="none" stroke="#00f2ff" stroke-width="1.5" opacity="0.5"/>` : ''}`;
+        ${hasLivrea ? `<circle cx="${cx}" cy="${wheelY}" r="46" fill="none" stroke="#2f74c0" stroke-width="1.5" opacity="0.5"/>` : ''}`;
 
     let bodyPath, windowsPath, details;
 
@@ -158,7 +158,7 @@ function _generateVehicleSVG(vClass, upgrades) {
             <path d="M680,160 L710,175 L700,195 L670,180 Z" fill="#eef" filter="url(#glow)"/>
             <path d="M110,140 L100,150 L100,190 L110,190 Z" fill="#f00" filter="url(#glow)"/>
             <line x1="360" y1="100" x2="360" y2="240" stroke="#111" stroke-width="2"/>
-            ${hasLivrea ? '<line x1="110" y1="248" x2="680" y2="248" stroke="#00f2ff" stroke-width="2" opacity="0.7"/>' : ''}`;
+            ${hasLivrea ? '<line x1="110" y1="248" x2="680" y2="248" stroke="#2f74c0" stroke-width="2" opacity="0.7"/>' : ''}`;
     } else if (vClass === 'mercedes_sprinter') {
         bodyPath    = "M90,250 L90,50 C90,30 110,20 130,20 L520,20 C550,20 620,130 670,160 L710,240 C715,250 700,250 680,250 Z";
         windowsPath = "M520,60 L600,150 L530,150 Z";
@@ -166,7 +166,7 @@ function _generateVehicleSVG(vClass, upgrades) {
             <rect x="130" y="50" width="370" height="180" rx="5" fill="#15171e" stroke="#111" stroke-width="2"/>
             <path d="M670,160 L710,180 L700,200 L660,180 Z" fill="#eef" filter="url(#glow)"/>
             <path d="M90,100 L80,110 L80,200 L90,200 Z" fill="#f00" filter="url(#glow)"/>
-            ${hasLivrea ? '<rect x="91" y="248" width="589" height="2" fill="#00f2ff" opacity="0.7"/>' : ''}`;
+            ${hasLivrea ? '<rect x="91" y="248" width="589" height="2" fill="#2f74c0" opacity="0.7"/>' : ''}`;
     } else if (vClass === 'mercedes_s') {
         bodyPath    = "M70,180 L180,175 L330,120 L530,120 L680,175 L780,190 C790,200 790,240 760,250 L70,250 C50,250 50,190 70,180 Z";
         windowsPath = "M195,175 L335,125 L520,125 L650,175 Z";
@@ -174,19 +174,19 @@ function _generateVehicleSVG(vClass, upgrades) {
             <path d="M70,240 L780,240" stroke="#444" stroke-width="2"/>
             <path d="M760,190 L780,195 L775,205 L755,200 Z" fill="#fff" filter="url(#glow)"/>
             <path d="M70,185 L60,195 L60,205 L70,205 Z" fill="#f00" filter="url(#glow)"/>
-            <rect x="340" y="118" width="170" height="3" rx="1.5" fill="#d4af37" opacity="0.8"/>
-            ${hasLivrea ? '<path d="M70,249 L780,249" stroke="#00f2ff" stroke-width="2" opacity="0.7"/>' : ''}`;
+            <rect x="340" y="118" width="170" height="3" rx="1.5" fill="#c79a2a" opacity="0.8"/>
+            ${hasLivrea ? '<path d="M70,249 L780,249" stroke="#2f74c0" stroke-width="2" opacity="0.7"/>' : ''}`;
     } else if (vClass === 'water_taxi') {
         bodyPath    = "M100,220 C100,250 150,280 200,280 L600,280 C680,280 720,240 750,200 L100,200 Z";
         windowsPath = "M250,200 L300,120 L550,120 L600,200 Z";
         details = `
             <path d="M250,200 L300,120 L550,120 L600,200 Z" fill="#4a2e15" stroke="#2b1a0a" stroke-width="3"/>
             <path d="M280,190 L320,130 L530,130 L570,190 Z" fill="url(#glass)"/>
-            <path d="M80,270 Q425,250 780,270" stroke="#00f2ff" stroke-width="2" stroke-dasharray="12 6" opacity="0.4"/>
+            <path d="M80,270 Q425,250 780,270" stroke="#2f74c0" stroke-width="2" stroke-dasharray="12 6" opacity="0.4"/>
             <path d="M730,200 L745,205 L740,215 L725,210 Z" fill="#fff" filter="url(#glow)"/>
             <path d="M110,205 L100,210 L100,220 L110,215 Z" fill="#f00" filter="url(#glow)"/>
-            <ellipse cx="155" cy="170" rx="25" ry="35" fill="none" stroke="#5a3a1a" stroke-width="3"/>
-            <line x1="155" y1="135" x2="155" y2="100" stroke="#5a3a1a" stroke-width="3"/>`;
+            <ellipse cx="155" cy="170" rx="25" ry="35" fill="none" stroke="#f0d2a8" stroke-width="3"/>
+            <line x1="155" y1="135" x2="155" y2="100" stroke="#f0d2a8" stroke-width="3"/>`;
     } else {
         // Default: mercedes_e sedan
         bodyPath    = "M90,180 L180,175 L310,120 L490,120 L630,175 L740,190 C750,200 750,240 720,250 L90,250 C70,250 70,190 90,180 Z";
@@ -195,7 +195,7 @@ function _generateVehicleSVG(vClass, upgrades) {
             <rect x="420" y="125" width="15" height="50" fill="#111"/>
             <path d="M720,190 L740,195 L735,205 L715,200 Z" fill="#eef" filter="url(#glow)"/>
             <path d="M90,185 L80,195 L80,205 L90,205 Z" fill="#f00" filter="url(#glow)"/>
-            ${hasLivrea ? '<path d="M90,249 L720,249" stroke="#00f2ff" stroke-width="2" opacity="0.7"/>' : ''}`;
+            ${hasLivrea ? '<path d="M90,249 L720,249" stroke="#2f74c0" stroke-width="2" opacity="0.7"/>' : ''}`;
     }
 
     return `<svg viewBox="0 0 850 320" style="width:100%;height:auto" xmlns="http://www.w3.org/2000/svg">

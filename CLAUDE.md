@@ -125,7 +125,7 @@ Font mono:          font-family: monospace
 - KPI strip: `display:grid;grid-template-columns:repeat(4,1fr);gap:8px`
 - Tabelle: `border-collapse:collapse`, TH `font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;padding:7px 14px;border-bottom:1px solid #21262d`
 - TD: `padding:8px 14px;border-bottom:1px solid #161b22;font-size:11px;color:#e6edf3`
-- Micro-interaction obbligatoria su tutti i bottoni: `transition:opacity .15s` + `onmousedown scale(0.97)`
+- Micro-interaction press-feedback: ora GLOBALE via CSS in `style.css` (`button:active:not(:disabled){transform:scale(0.97)}`). Copre tutti i `<button>` automaticamente — non serve più aggiungerla inline su ogni bottone. Vedi DESIGN.md sezione "Micro-interaction rule".
 
 ### Componenti pattern (copy-paste)
 
@@ -428,7 +428,7 @@ vip_clients.js    — SOSTITUITO da vip-buffs.js + vip-clients.js (nuovo)
 p2p_market.js     — SOSTITUITO da p2p-market.js + p2p-render.js
 ```
 
-> **TODO:** Eliminare questi 4 file dal repo — sono confusi e inutili. Un `git rm` è sufficiente.
+> **FATTO (2026-05-29):** Questi 4 file sono già stati rimossi dal repo. Riga storica mantenuta per contesto.
 
 ---
 
@@ -551,7 +551,7 @@ gameState.hqs = {
 gameState.currentHQCity = 'roma';   // città selezionata nella UI
 ```
 
-**Regola critica:** `gameState` è `let` in `engine.js`, NON è `window.gameState`. Tutti i file HQ usano il bare `gameState` (non `window.gameState`).
+**Regola:** `gameState` è `let` in `engine.js` ma è esposto anche come `window.gameState` via getter (engine.js:295). I file HQ usano il bare `gameState`; `window.gameState` è equivalente e ugualmente valido.
 
 ---
 
@@ -903,7 +903,7 @@ Ogni fix significativo va documentato qui con: **cosa è andato storto → perch
 
 **Fix:** Sostituiti tutti i `window.gameState` con bare `gameState` in `contracts.js` (3 occorrenze: `_cCountQualifying`, `_cPlayerScore`, `renderTabContracts`).
 
-**Regola:** Usare sempre `gameState` direttamente (bare variable). `window.gameState` non esiste. Stessa regola vale per tutti i file UI/engine.
+**Regola (SUPERATA il 2026-05-29):** All'epoca `window.gameState` non esisteva. Ora a engine.js:295 c'è un getter `Object.defineProperty(window,'gameState',{get(){return gameState}})`, quindi `window.gameState` e `gameState` bare sono **equivalenti**. Entrambe le forme funzionano; non serve più "correggere" `window.gameState` in bare.
 
 **File:** `contracts.js`
 

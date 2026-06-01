@@ -198,21 +198,21 @@ window.renderTabShadow = function() {
     const nextTier = _DEFENSE_TIERS[defLevel];
 
     const targetsHtml = targets.length === 0
-        ? '<div style="font-size:10px;color:#8b949e;text-align:center;padding:24px 0">Nessun target disponibile.<br>Scala la classifica reputazione per sbloccare competitor.</div>'
+        ? '<div style="font-size:10px;color:#6a7480;text-align:center;padding:24px 0">Nessun target disponibile.<br>Scala la classifica reputazione per sbloccare competitor.</div>'
         : targets.map(t => `
-            <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px">
+            <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px;margin-bottom:8px">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
                 <div>
-                  <div style="font-size:12px;font-weight:700;color:#e6edf3">${t.name || 'Anonimo'}</div>
-                  <div style="font-size:10px;color:#8b949e;margin-top:2px">⭐ ${(t.reputation || 0).toFixed(1)} · Difesa Lv.${t.defense_lvl || 0}</div>
+                  <div style="font-size:12px;font-weight:700;color:#1f2733">${t.name || 'Anonimo'}</div>
+                  <div style="font-size:10px;color:#6a7480;margin-top:2px">⭐ ${(t.reputation || 0).toFixed(1)} · Difesa Lv.${t.defense_lvl || 0}</div>
                 </div>
-                <div style="font-size:9px;color:#6b7280">${t.hq_city || ''}</div>
+                <div style="font-size:9px;color:#6a7480">${t.hq_city || ''}</div>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:4px">
                 ${window.SHADOW_OPS.map(op => `
                   <button onclick="window.shadowExecuteOp('${t.user_id}','${op.id}')"
                     title="${op.desc} — €${op.cost.toLocaleString()}"
-                    style="font-size:8px;background:#0d1117;border:1px solid #21262d;color:#8b949e;border-radius:4px;padding:3px 7px;cursor:pointer;${(gameState.cash||0) < op.cost ? 'opacity:.4' : ''};transition:opacity .15s"
+                    style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;color:#6a7480;border-radius:4px;padding:3px 7px;cursor:pointer;${(gameState.cash||0) < op.cost ? 'opacity:.4' : ''};transition:opacity .15s"
                     onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                     ${op.name.split(' ')[0]} €${Math.round(op.cost/1000)}k
                   </button>`).join('')}
@@ -220,55 +220,55 @@ window.renderTabShadow = function() {
             </div>`).join('');
 
     const logHtml = log.length === 0
-        ? '<div style="font-size:10px;color:#8b949e;text-align:center;padding:16px 0">Nessuna operazione registrata.</div>'
+        ? '<div style="font-size:10px;color:#6a7480;text-align:center;padding:16px 0">Nessuna operazione registrata.</div>'
         : log.slice(0, 15).map(l => {
             const op = window.SHADOW_OPS.find(o => o.id === l.op_type) || {};
             const role = l.is_attacker ? '🗡️ Attacco' : '🛡️ Difesa';
             const status = l.success ? '✅' : l.detected ? '❌ Rilevato' : '❌';
             return `
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:7px 0;border-bottom:1px solid #21262d">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:7px 0;border-bottom:1px solid #d6dee8">
                 <div>
-                  <span style="color:#8b949e">${role}</span>
-                  <span style="color:#e6edf3;margin-left:6px">${op.name || l.op_type}</span>
+                  <span style="color:#6a7480">${role}</span>
+                  <span style="color:#1f2733;margin-left:6px">${op.name || l.op_type}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="color:#6b7280;font-family:monospace">€${(l.op_cost||0).toLocaleString()}</span>
+                  <span style="color:#6a7480;font-family:monospace">€${(l.op_cost||0).toLocaleString()}</span>
                   <span>${status}</span>
                 </div>
               </div>`;
           }).join('');
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8;display:flex;align-items:flex-start;justify-content:space-between">
         <div>
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Operazioni</div>
-            <div style="font-size:20px;font-weight:700;color:#e6edf3">Agenzia Ombra</div>
-            <div style="font-size:11px;color:#8b949e;margin-top:4px">${targets.length} target disponibili · Difesa Lv.${defLevel}/5</div>
+            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Operazioni</div>
+            <div style="font-size:20px;font-weight:700;color:#1f2733">Agenzia Ombra</div>
+            <div style="font-size:11px;color:#6a7480;margin-top:4px">${targets.length} target disponibili · Difesa Lv.${defLevel}/5</div>
         </div>
-        <button onclick="window.shadowRefresh(true).then(()=>window.switchTab('shadow'))" style="background:#161b22;border:1px solid #21262d;color:#8b949e;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">↻ Aggiorna</button>
+        <button onclick="window.shadowRefresh(true).then(()=>window.switchTab('shadow'))" style="background:#ffffff;border:1px solid #d6dee8;color:#6a7480;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">↻ Aggiorna</button>
     </div>
 
-    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:16px">
+    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-size:10px;font-weight:700;color:#e6edf3">🛡️ Difesa Aziendale</div>
-            <div style="font-size:10px;color:#8b949e">Lv.${defLevel}/5</div>
+            <div style="font-size:10px;font-weight:700;color:#1f2733">🛡️ Difesa Aziendale</div>
+            <div style="font-size:10px;color:#6a7480">Lv.${defLevel}/5</div>
         </div>
-        <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.06);overflow:hidden;margin-bottom:8px">
-            <div style="height:100%;width:${Math.round(defLevel/5*100)}%;background:#58a6ff;border-radius:3px;transition:width .3s"></div>
+        <div style="height:6px;border-radius:3px;background:#e6eaf0;overflow:hidden;margin-bottom:8px">
+            <div style="height:100%;width:${Math.round(defLevel/5*100)}%;background:#2f74c0;border-radius:3px;transition:width .3s"></div>
         </div>
         ${nextTier
-            ? `<div style="font-size:9px;color:#8b949e;margin-bottom:8px">Prossimo: ${nextTier.name} — €${nextTier.cost.toLocaleString()}</div>
+            ? `<div style="font-size:9px;color:#6a7480;margin-bottom:8px">Prossimo: ${nextTier.name} — €${nextTier.cost.toLocaleString()}</div>
                <button onclick="window.shadowUpgradeDefense()"
-                 style="width:100%;padding:6px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;${(gameState.cash||0) < nextTier.cost ? 'opacity:.4' : ''};transition:opacity .15s"
+                 style="width:100%;padding:6px;font-size:9px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${(gameState.cash||0) < nextTier.cost ? 'opacity:.4' : ''};transition:opacity .15s"
                  onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                  🛡️ Potenzia Difesa
                </button>`
-            : '<div style="font-size:9px;color:#3fb950">Difesa massima raggiunta!</div>'}
+            : '<div style="font-size:9px;color:#1aa06a">Difesa massima raggiunta!</div>'}
     </div>
 
-    <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">🎯 Target Disponibili</div>
+    <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">🎯 Target Disponibili</div>
     ${targetsHtml}
 
-    <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:.1em;padding-top:12px;margin-top:16px;border-top:1px solid #21262d;margin-bottom:8px">📋 Registro Operazioni</div>
+    <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;padding-top:12px;margin-top:16px;border-top:1px solid #d6dee8;margin-bottom:8px">📋 Registro Operazioni</div>
     ${logHtml}`;
 };
 

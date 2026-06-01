@@ -342,6 +342,16 @@ body {
 .driver-card.dragging-over { background: rgba(0,242,255,0.08) !important; border-color: rgba(0,242,255,0.4) !important; }
 
 /* ── Buttons ─────────────────────────────────────────── */
+/* Global press-feedback micro-interaction (eRepublik flat).
+   Systematic scale(0.97) on press for every <button> across tabs,
+   modals and overlays, so individual call-sites don't each need an
+   inline onmousedown handler. Inline transform handlers still win by
+   specificity; map controls are excluded; reduced-motion is honored. */
+button { transition: transform .09s ease, opacity .15s ease; }
+button:active:not(:disabled) { transform: scale(0.97); }
+.mapboxgl-ctrl button, .mapboxgl-ctrl button:active { transform: none; }
+@media (prefers-reduced-motion: reduce) { button:active { transform: none !important; } }
+
 .btn-blue {
     background: rgba(0,242,255,0.12); color: var(--blue); font-weight: 700;
     padding: 7px 13px; border-radius: 8px; cursor: pointer;
@@ -2472,7 +2482,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     display: flex;
     gap: 4px;
     margin-bottom: 12px;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+    border-bottom: 1px solid #d6dee8;
     padding-bottom: 0;
 }
 
@@ -2486,21 +2496,21 @@ details[open] .finance-section-title { color: #00f2ff; }
     border: 1px solid transparent;
     border-bottom: none;
     cursor: pointer;
-    color: #9ca3af;
+    color: #6a7480;
     background: transparent;
     transition: all 0.15s ease;
     position: relative;
     bottom: -1px;
 }
 .inbox-tab-btn:hover {
-    color: #e5e7eb;
-    background: rgba(255,255,255,0.05);
+    color: #1f2733;
+    background: #eef2f7;
 }
 .inbox-tab-btn.active {
-    color: #fff;
-    background: rgba(255,255,255,0.08);
-    border-color: rgba(255,255,255,0.12);
-    border-bottom-color: #111;
+    color: #1f2733;
+    background: #fff;
+    border-color: #d6dee8;
+    border-bottom-color: #fff;
 }
 .inbox-tab-badge {
     display: inline-flex;
@@ -2521,14 +2531,14 @@ details[open] .finance-section-title { color: #00f2ff; }
 .inbox-tab-badge.badge-blue { background: #2563eb; }
 
 .email-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: #ffffff;
+    border: 1px solid #d6dee8;
     border-radius: 8px;
     padding: 12px 14px;
     margin-bottom: 10px;
     transition: border-color 0.15s ease;
 }
-.email-card:hover { border-color: rgba(255,255,255,0.15); }
+.email-card:hover { border-color: #c2ccd8; }
 .email-card.email-urgent   { border-left: 3px solid #f97316; }
 .email-card.email-red      { border-left: 3px solid #ef4444; }
 .email-card.email-vip      { border-left: 3px solid #a855f7; }
@@ -2561,7 +2571,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 .email-sender-name {
     font-size: 10px;
     font-weight: 700;
-    color: #f3f4f6;
+    color: #1f2733;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2599,20 +2609,20 @@ details[open] .finance-section-title { color: #00f2ff; }
 .email-subject {
     font-size: 11px;
     font-weight: 700;
-    color: #f9fafb;
+    color: #1f2733;
     margin-bottom: 8px;
     line-height: 1.3;
 }
 .email-body {
     font-size: 9px;
-    color: #9ca3af;
+    color: #4d6480;
     line-height: 1.6;
     white-space: pre-line;
     margin-bottom: 8px;
     padding: 8px 10px;
-    background: rgba(0,0,0,0.2);
+    background: #f3f6f9;
     border-radius: 4px;
-    border-left: 2px solid rgba(255,255,255,0.06);
+    border-left: 2px solid #d6dee8;
 }
 .email-signature {
     font-size: 8px;
@@ -2627,7 +2637,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     flex-wrap: wrap;
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid rgba(255,255,255,0.06);
+    border-top: 1px solid #eef1f5;
 }
 .email-expiry {
     font-size: 8px;
@@ -3610,6 +3620,17 @@ details[open] .finance-section-title { color: #00f2ff; }
     background-size: 300% 100%;
 }
 
+/* ── Skeleton shimmer flat (eRepublik) — grigio neutro, zero neon ── */
+@keyframes ceSkelShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+.ce-skel {
+    background: linear-gradient(90deg, #161b22 0%, #1d2531 50%, #161b22 100%);
+    background-size: 200% 100%;
+    animation: ceSkelShimmer 1.3s ease-in-out infinite;
+    border: 1px solid #21262d;
+    border-radius: 6px;
+}
+@media (prefers-reduced-motion: reduce) { .ce-skel { animation: none; } }
+
 /* ── 11. Pill refinements: more padding + depth ─────────────────── */
 .ds-pill { padding: 3px 10px; letter-spacing: 0.08em; }
 
@@ -3664,10 +3685,10 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 /* ── 18. Email cards: depth ─────────────────────────────────────── */
 .email-card {
-    box-shadow: 0 1px 8px rgba(0,0,0,0.3);
+    box-shadow: 0 1px 2px rgba(31,39,51,0.07);
     transition: border-color 0.15s, box-shadow 0.15s;
 }
-.email-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.45); }
+.email-card:hover { box-shadow: 0 3px 10px rgba(31,39,51,0.12); }
 
 /* ── 19. Notification toast: glass ─────────────────────────────── */
 .notif {
@@ -4666,4 +4687,197 @@ select:focus {
 .campaign-card.tier-starter { border-left: none !important; border: 1px solid rgba(34,197,94,0.30); }
 .campaign-card.tier-growth  { border-left: none !important; border: 1px solid rgba(59,130,246,0.30); }
 .campaign-card.tier-empire  { border-left: none !important; border: 1px solid rgba(217,119,6,0.30); }
+
+/* ════════════════════════════════════════════════════════════════════
+   eRepublik-Modern kit — "EM" design system (NUOVA DIREZIONE 2026-05-30)
+   Tutto scopato sotto .em così NON tocca le tab dark esistenti finché
+   non vengono convertite. Vedi DESIGN.md sezione "EM".
+   ════════════════════════════════════════════════════════════════════ */
+.em{
+  --em-card:#ffffff; --em-ink:#1f2733; --em-muted:#6a7480; --em-dim:#98a1ae;
+  --em-line:#d6dee8; --em-line2:#eef1f5;
+  --em-blue:#2f74c0; --em-blue-d:#245d9c; --em-green:#1aa06a; --em-green-d:#15885a;
+  --em-gold:#c79a2a; --em-amber:#e0922e; --em-violet:#7c5fc9; --em-red:#db5746;
+  font-family:'Inter',system-ui,sans-serif; color:var(--em-ink); font-size:12px;
+}
+/* light "sky + skyline" background for the Home content area */
+.em-home{
+  min-height:100%; padding:10px 14px 30px; overflow-y:auto;
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='440'%20height='150'%3E%3Cg%20fill='%23aebfce'%20fill-opacity='0.45'%3E%3Crect%20x='8'%20y='70'%20width='30'%20height='80'/%3E%3Crect%20x='44'%20y='48'%20width='24'%20height='102'/%3E%3Crect%20x='74'%20y='86'%20width='38'%20height='64'/%3E%3Crect%20x='118'%20y='36'%20width='20'%20height='114'/%3E%3Crect%20x='146'%20y='72'%20width='34'%20height='78'/%3E%3Crect%20x='188'%20y='56'%20width='26'%20height='94'/%3E%3Crect%20x='222'%20y='90'%20width='42'%20height='60'/%3E%3Crect%20x='272'%20y='44'%20width='22'%20height='106'/%3E%3Crect%20x='302'%20y='78'%20width='36'%20height='72'/%3E%3Crect%20x='346'%20y='60'%20width='28'%20height='90'/%3E%3Crect%20x='382'%20y='84'%20width='40'%20height='66'/%3E%3C/g%3E%3C/svg%3E") bottom left repeat-x,
+    radial-gradient(1100px 320px at 50% 124%, rgba(255,250,236,.5), transparent 62%),
+    linear-gradient(180deg,#aecbe6 0%, #c2d8ec 30%, #d3e1ed 55%, #dde7ee 100%);
+}
+.em-wrap{max-width:1120px;margin:0 auto}
+.em-card{background:var(--em-card);border:1px solid var(--em-line);border-radius:7px;box-shadow:0 1px 2px rgba(31,39,51,.07);overflow:hidden}
+.em-ch{display:flex;align-items:center;justify-content:space-between;padding:7px 11px;border-bottom:1px solid var(--em-line2)}
+.em-ch .t{font-weight:800;font-size:12.5px}
+.em-ch .a{font-size:10px;color:var(--em-green);font-weight:800;text-transform:uppercase;letter-spacing:.04em}
+.em-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:7px}
+.em-kpi{background:var(--em-card);border:1px solid var(--em-line);border-radius:7px;padding:9px 11px;box-shadow:0 1px 2px rgba(31,39,51,.06)}
+.em-kpi .l{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--em-dim)}
+.em-kpi .v{font-size:21px;font-weight:800;line-height:1;margin-top:6px;font-variant-numeric:tabular-nums}
+.em-kpi .s{font-size:10.5px;color:var(--em-muted);margin-top:5px}
+.em-grid2{display:grid;grid-template-columns:1fr 300px;gap:7px;align-items:start}
+.em-banner{border-radius:7px;background:linear-gradient(120deg,#243243,#19222e);padding:11px 14px;color:#fff;position:relative;overflow:hidden;display:flex;align-items:center;gap:12px;border:1px solid #16202b}
+.em-banner::after{content:"";position:absolute;right:-26px;top:-44px;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(95,224,138,.16),transparent 70%)}
+.em-banner .bt{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#7fd6a0}
+.em-banner h2{font-size:17px;font-weight:800;margin:1px 0 0}
+.em-banner .pb{height:6px;border-radius:4px;background:rgba(255,255,255,.13);margin-top:7px;width:240px;overflow:hidden}
+.em-banner .pb i{display:block;height:100%;background:linear-gradient(90deg,#5fe08a,#2bbf6a);border-radius:4px}
+.em-banner .cd{margin-left:auto;text-align:center}
+.em-banner .cd .n{font-size:18px;font-weight:800;font-variant-numeric:tabular-nums}
+.em-banner .cd .l{font-size:8.5px;color:#9fb1c2;letter-spacing:.09em;text-transform:uppercase;margin-top:1px}
+.em-lrow{display:flex;align-items:center;gap:9px;padding:6px 11px;border-bottom:1px solid var(--em-line2)}
+.em-lrow:last-child{border-bottom:none}
+.em-th{width:34px;height:34px;border-radius:7px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.em-th svg{width:18px;height:18px}
+.em-lt{font-weight:700;font-size:12.5px;color:var(--em-ink)}
+.em-lm{display:flex;align-items:center;gap:8px;color:var(--em-muted);font-size:10.5px;margin-top:2px}
+.em-stars{color:var(--em-gold);letter-spacing:.5px;font-size:11px}
+.em-bd{font-size:8.5px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:2px 6px;border-radius:4px}
+.em-price{font-weight:800;font-size:13px;color:var(--em-green)}
+.em-bar{flex:1;height:5px;border-radius:3px;background:#e2e6ec;overflow:hidden}
+.em-bar i{display:block;height:100%;border-radius:3px}
+.em-gbtn{background:linear-gradient(180deg,#22ab73,#15885a);color:#fff;font-weight:800;border:none;border-radius:7px;padding:8px 14px;box-shadow:0 2px 5px rgba(21,136,90,.26);font-size:12px;cursor:pointer}
+.em-bbtn{background:#fff;color:var(--em-blue);font-weight:800;border:1px solid #cfe0f1;border-radius:7px;padding:7px 13px;font-size:11.5px;cursor:pointer}
+.em-contract{margin:7px;border-radius:7px;background:linear-gradient(120deg,#2f74c0,#245d9c);color:#fff;padding:10px}
+.em-contract .ct{font-weight:800;font-size:12.5px}.em-contract .cs{font-size:10.5px;opacity:.92;margin-top:1px}
+.em-contract .cr{display:flex;align-items:center;gap:8px;margin-top:8px}
+.em-contract .cc{background:rgba(0,0,0,.22);border-radius:5px;padding:3px 8px;font-weight:800}
+.em-ev{display:flex;gap:9px;padding:7px 11px;border-top:1px solid var(--em-line2);align-items:flex-start}
+.em-ev:first-of-type{border-top:none}
+.em-evi{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.em-evi svg{width:14px;height:14px}
+.em-evt{font-weight:700;font-size:11.5px;color:var(--em-ink)}.em-evd{color:var(--em-muted);font-size:10.5px}
+.em-empty{padding:22px;text-align:center;color:var(--em-muted);font-size:12px}
+.em-link{color:var(--em-blue);font-weight:700;cursor:pointer}
+.em-card button:active:not(:disabled),.em-gbtn:active,.em-bbtn:active{transform:scale(0.97)}
+
+/* ── EM kit — shared helpers for FASE 3 tab roll-out ── */
+.em-page{padding:10px 14px 34px;min-height:100%}
+.em-sec{font-size:9.5px;font-weight:800;text-transform:uppercase;letter-spacing:.07em;color:var(--em-dim)}
+.em-kpibar{display:flex;align-items:center;gap:0;flex-wrap:wrap;background:var(--em-card);border:1px solid var(--em-line);border-radius:7px;box-shadow:0 1px 2px rgba(31,39,51,.06);padding:4px 4px;margin-bottom:7px}
+.em-kpibar .k{padding:7px 16px;flex:1;min-width:120px}
+.em-kpibar .k+.k{border-left:1px solid var(--em-line2)}
+.em-kpibar .k .l{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--em-dim)}
+.em-kpibar .k .v{font-size:18px;font-weight:800;line-height:1;margin-top:5px;font-variant-numeric:tabular-nums;color:var(--em-ink)}
+.em-tbl{width:100%;border-collapse:collapse}
+.em-tbl th{padding:7px 12px;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--em-dim);text-align:left;border-bottom:1px solid var(--em-line);white-space:nowrap;background:#f7f9fb}
+.em-tbl th.r{text-align:right}
+.em-tbl td{padding:8px 12px;font-size:11.5px;color:var(--em-ink);border-bottom:1px solid var(--em-line2);vertical-align:middle;white-space:nowrap}
+.em-tbl td.r{text-align:right}
+.em-tbl tbody tr:last-child td{border-bottom:none}
+.em-tbl tbody tr:hover{background:#f5f8fb}
+.em-ghbtn{background:#eef2f7;color:var(--em-muted);font-weight:700;border:1px solid var(--em-line);border-radius:6px;padding:6px 12px;font-size:11px;cursor:pointer}
+.em-goldbtn{background:linear-gradient(180deg,#e3b441,#c79a2a);color:#fff;font-weight:800;border:none;border-radius:7px;padding:7px 13px;font-size:11.5px;cursor:pointer;box-shadow:0 2px 5px rgba(199,154,42,.24)}
+.em-redbtn{background:#fff;color:var(--em-red);font-weight:800;border:1px solid #f0c4bd;border-radius:7px;padding:7px 13px;font-size:11.5px;cursor:pointer}
+.em-pill{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.03em;text-transform:uppercase;padding:3px 8px;border-radius:5px}
+.em-pill--green{background:#e7f6ee;color:var(--em-green-d)}
+.em-pill--blue{background:#e7f0fb;color:var(--em-blue)}
+.em-pill--gold{background:#fff3cf;color:var(--em-gold)}
+.em-pill--red{background:#fde8e4;color:var(--em-red)}
+.em-pill--gray{background:#eef1f5;color:var(--em-muted)}
+.em-pill--violet{background:#ece4f7;color:var(--em-violet)}
+.em-tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px}
+.em-tab{background:var(--em-card);border:1px solid var(--em-line);border-radius:7px;padding:6px 13px;font-size:11.5px;font-weight:700;color:var(--em-muted);cursor:pointer}
+.em-tab.on{background:linear-gradient(180deg,#2f74c0,#245d9c);color:#fff;border-color:#245d9c}
+.em-prog{height:5px;border-radius:3px;background:#e2e6ec;overflow:hidden}
+.em-prog i{display:block;height:100%;border-radius:3px}
+.em-card button.em-ghbtn:active,.em-goldbtn:active,.em-redbtn:active,.em-tab:active{transform:scale(0.97)}
+
+/* ════════════════════════════════════════════════════════════════════
+   EM CHROME — telaio globale eRepublik-Modern (FASE 2, 2026-06-01)
+   Topbar barra-risorse + nav orizzontale a categorie + sfondo cielo.
+   Prefisso .emc-* per non collidere col content-kit .em-* (scoped .em).
+   Attivato da class="em-shell" su #app-body.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* sfondo cielo + skyline globale (sostituisce .app-bg dark) */
+#app-body.em-shell{
+  background:
+    url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='440'%20height='150'%3E%3Cg%20fill='%23aebfce'%20fill-opacity='0.5'%3E%3Crect%20x='8'%20y='70'%20width='30'%20height='80'/%3E%3Crect%20x='44'%20y='48'%20width='24'%20height='102'/%3E%3Crect%20x='74'%20y='86'%20width='38'%20height='64'/%3E%3Crect%20x='118'%20y='36'%20width='20'%20height='114'/%3E%3Crect%20x='146'%20y='72'%20width='34'%20height='78'/%3E%3Crect%20x='188'%20y='56'%20width='26'%20height='94'/%3E%3Crect%20x='222'%20y='90'%20width='42'%20height='60'/%3E%3Crect%20x='272'%20y='44'%20width='22'%20height='106'/%3E%3Crect%20x='302'%20y='78'%20width='36'%20height='72'/%3E%3Crect%20x='346'%20y='60'%20width='28'%20height='90'/%3E%3Crect%20x='382'%20y='84'%20width='40'%20height='66'/%3E%3C/g%3E%3C/svg%3E") bottom left repeat-x,
+    radial-gradient(1300px 340px at 50% 124%, rgba(255,250,236,.55), transparent 62%),
+    linear-gradient(180deg,#a7c8e6 0%, #bcd6ec 28%, #cfe0ed 50%, #dbe6ed 70%, #e4eaee 100%) !important;
+  background-attachment:fixed !important;
+  font-family:'Inter',system-ui,sans-serif;
+}
+#app-body.em-shell::before{display:none !important;}
+
+/* nascondi la vecchia sidebar dark (DOM conservato per cmd-palette/active) */
+.em-shell #sidebar-player{display:none !important;}
+
+/* FASE 3: font Inter di default per tutte le tab nello shell light */
+.em-shell #tab-container{font-family:'Inter',system-ui,sans-serif;}
+/* FASE 3: centra il contenuto di ogni tab nella larghezza della chrome (1130),
+   così le tab convertite via remap (senza .em-wrap) restano allineate alla barra.
+   Le tab che usano già .em/.em-wrap restano centrate ugualmente. */
+.em-shell #tab-container > *{max-width:1158px;margin-left:auto;margin-right:auto;}
+.em-shell #tab-container > .em{max-width:none;}
+
+/* ── CHROME WRAPPER (topbar + nav, unico blocco fisso) ── */
+.em-shell #em-chrome{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  padding-bottom:6px;pointer-events:none;
+}
+.em-shell #em-chrome > *{pointer-events:auto;}
+/* garantisce il posizionamento del pannello a prescindere da Tailwind .fixed */
+.em-shell #main-panel{position:fixed;}
+
+/* ── TOPBAR (barra-risorse, card bianca centrata su cielo) ── */
+.em-shell #top-bar{
+  position:static;display:flex;justify-content:center;align-items:flex-start;
+  padding:7px 12px 0;background:transparent !important;border:none !important;box-shadow:none !important;
+  backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+}
+.em-shell #top-bar::before,.em-shell #top-bar::after{display:none !important;}
+.emc-topbar{
+  width:100%;max-width:1130px;display:flex;align-items:center;gap:9px;
+  background:#fff;border:1px solid #d6dee8;border-radius:7px;padding:5px 10px;
+  box-shadow:0 1px 3px rgba(31,39,51,.12);font-size:11.5px;color:#1f2733;
+}
+.emc-brand{display:flex;align-items:center;gap:7px;font-weight:800;font-size:13px;cursor:pointer;flex-shrink:0}
+.emc-bm{width:24px;height:24px;border-radius:6px;background:linear-gradient(135deg,#2f74c0,#1aa06a);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:11px}
+.emc-bn{white-space:nowrap}
+.emc-meta{display:flex;gap:8px;color:#6a7480;font-size:11px;align-items:center;flex-shrink:0}
+.emc-meta .emc-d{width:1px;height:12px;background:#d6dee8}
+.emc-chips{margin-left:auto;display:flex;gap:5px;align-items:center}
+.emc-chip{display:flex;align-items:center;gap:5px;background:#f3f5f9;border:1px solid #d6dee8;border-radius:7px;padding:4px 8px 4px 5px;font-weight:700;font-size:11.5px;color:#1f2733;cursor:default;font-variant-numeric:tabular-nums}
+.emc-chip[onclick]{cursor:pointer}
+.emc-ico{width:19px;height:19px;border-radius:5px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:11px}
+.emc-eb{width:60px;height:6px;border-radius:4px;background:#e2e6ec;overflow:hidden}
+.emc-eb i{display:block;height:100%;background:linear-gradient(90deg,#3fbf6f,#1aa06a);transition:width .3s}
+.emc-iconbtn{color:#8a95a2;font-size:14px;background:none;border:none;cursor:pointer;padding:2px 4px;flex-shrink:0}
+.emc-iconbtn:hover{color:#1f2733}
+
+/* ── NAV ORIZZONTALE (categorie + dropdown) ── */
+.em-shell #em-nav{
+  position:static;display:flex;justify-content:center;padding:5px 12px 0;
+}
+.emc-nav{width:100%;max-width:1130px;display:flex;gap:4px}
+.emc-tab{
+  position:relative;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:7px 13px;border-radius:7px;background:#fff;border:1px solid #d6dee8;
+  color:#46515f;font-weight:700;font-size:12.5px;box-shadow:0 1px 2px rgba(31,39,51,.06);
+  cursor:pointer;white-space:nowrap;font-family:'Inter',system-ui,sans-serif;
+}
+.emc-tab.fill{flex:1}
+.emc-tab .emc-ti{font-size:14px;line-height:1}
+.emc-tab.active{background:linear-gradient(180deg,#3a80cb,#2f74c0);color:#fff;border-color:#245d9c}
+.emc-tab .emc-cnt{position:absolute;top:-5px;right:-5px;background:#db5746;color:#fff;font-size:9.5px;font-weight:800;border-radius:8px;min-width:16px;text-align:center;padding:0 4px;border:2px solid #e4eaee}
+/* dropdown */
+.emc-menu{
+  position:absolute;top:calc(100% + 4px);left:0;min-width:200px;z-index:55;
+  background:#fff;border:1px solid #d6dee8;border-radius:7px;box-shadow:0 6px 20px rgba(31,39,51,.18);
+  padding:5px;display:none;flex-direction:column;gap:1px;
+}
+.emc-tab:hover > .emc-menu{display:flex}
+.emc-menu::before{content:"";position:absolute;bottom:100%;left:0;right:0;height:6px}
+.emc-menu a{
+  display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:5px;
+  color:#1f2733;font-weight:600;font-size:12px;text-decoration:none;white-space:nowrap;
+}
+.emc-menu a:hover{background:#eef4fb;color:#2f74c0}
+.emc-menu a.active{background:#e7f0fb;color:#2f74c0}
+.emc-tab:active{transform:none}
 

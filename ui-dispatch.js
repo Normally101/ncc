@@ -20,94 +20,75 @@ function renderTabCorse() {
     const strikingDrivers = gs.drivers.filter(d => d.id !== 'ceo' && d.isOnStrike).length;
     const burnoutDrivers  = gs.drivers.filter(d => d.id !== 'ceo' && d.burnout_until && (gs.day * 24 + gs.hour) < d.burnout_until).length;
 
-    const tierColors = { standard:'#6b7280', business:'#4b7ab8', first:'#b8962b', ultra:'#b86b3a', presidential:'#8a5fa0' };
+    // tier accent colors (light theme)
+    const tierColors = { standard:'#6a7480', business:'#2f74c0', first:'#c79a2a', ultra:'#b86b3a', presidential:'#7c5fc9' };
+    const tierBg     = { standard:'#eef1f5', business:'#e7f0fb', first:'#fff3cf', ultra:'#f7e6db', presidential:'#ece4f7' };
     const typeLabel  = { Airport:'AIR', 'City-to-City':'CITY', Rail:'RAIL', Port:'PORT', Boat:'BOAT', Transfer:'TRF' };
 
-    const _TH = t => `<th style="padding:7px 14px;font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d;white-space:nowrap">${t}</th>`;
-    const _THR = t => `<th style="padding:7px 14px;font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;text-align:right;border-bottom:1px solid #21262d;white-space:nowrap">${t}</th>`;
-
-    // ── KPI STRIP ────────────────────────────────────────────────
-    const energyColor = ceoEnergy < 25 ? '#ef4444' : ceoEnergy < 50 ? '#f59e0b' : '#4b8b4f';
+    // ── KPI BAR ────────────────────────────────────────────────
+    const energyColor = ceoEnergy < 25 ? 'var(--em-red)' : ceoEnergy < 50 ? 'var(--em-amber)' : 'var(--em-green)';
     const alerts = [
-        pendingCount >= 5 ? `<span class="ops-alert-pill">${pendingCount} IN ATTESA</span>` : '',
-        strikingDrivers > 0 ? `<span class="ops-alert-pill" style="background:rgba(239,68,68,0.15);border-color:#5a2a2a;color:#ef4444">${strikingDrivers} SCIOPERO</span>` : '',
-        burnoutDrivers  > 0 ? `<span class="ops-alert-pill" style="background:rgba(249,115,22,0.15);border-color:#5a3a1a;color:#f97316">${burnoutDrivers} BURNOUT</span>` : '',
+        pendingCount >= 5 ? `<span class="em-pill em-pill--gold">${pendingCount} in attesa</span>` : '',
+        strikingDrivers > 0 ? `<span class="em-pill em-pill--red">${strikingDrivers} sciopero</span>` : '',
+        burnoutDrivers  > 0 ? `<span class="em-pill" style="background:#fdeede;color:var(--em-amber)">${burnoutDrivers} burnout</span>` : '',
     ].filter(Boolean).join('');
 
     let html = `
-    <div class="ops-kpi-strip" style="background:#0d1117;border:none;border-bottom:1px solid #21262d;border-radius:0;padding:10px 16px;display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-        <div class="ops-kpi">
-            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:2px">Richieste Pendenti</div>
-            <div style="font-size:16px;font-weight:700;font-family:monospace;color:${pendingCount > 0 ? '#d4af37' : '#3d4450'}">${pendingCount}</div>
-        </div>
-        <div style="width:1px;height:30px;background:#21262d"></div>
-        <div class="ops-kpi">
-            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:2px">Autisti Attivi</div>
-            <div style="font-size:16px;font-weight:700;font-family:monospace;color:#4b7ab8">${activeDrivers}<span style="font-size:10px;color:#6b7280">/${gs.drivers.length}</span></div>
-        </div>
-        <div style="width:1px;height:30px;background:#21262d"></div>
-        <div class="ops-kpi">
-            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:2px">Flotta Operativa</div>
-            <div style="font-size:16px;font-weight:700;font-family:monospace;color:#8b949e">${fleetActive} <span style="font-size:10px">veicoli</span></div>
-        </div>
-        <div style="width:1px;height:30px;background:#21262d"></div>
-        <div class="ops-kpi">
-            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:2px">Incasso Oggi</div>
-            <div style="font-size:16px;font-weight:700;font-family:monospace;color:#4b8b4f">€${todayEarnings.toLocaleString('it-IT')}</div>
-        </div>
-        <div style="width:1px;height:30px;background:#21262d"></div>
-        <div class="ops-kpi" style="min-width:120px">
-            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:4px">Energia CEO</div>
-            <div style="display:flex;align-items:center;gap:6px">
-                <div style="flex:1;height:3px;background:#21262d;overflow:hidden">
-                    <div style="height:100%;width:${Math.round(ceoEnergy)}%;background:${energyColor}"></div>
-                </div>
-                <span style="font-size:9px;font-family:monospace;color:${energyColor};flex-shrink:0">${Math.round(ceoEnergy)}%</span>
+    <div class="em em-page"><div class="em-wrap">
+
+    <div class="em-kpibar">
+        <div class="k"><div class="l">Richieste Pendenti</div><div class="v" style="color:${pendingCount > 0 ? 'var(--em-gold)' : 'var(--em-dim)'}">${pendingCount}</div></div>
+        <div class="k"><div class="l">Autisti Attivi</div><div class="v" style="color:var(--em-blue)">${activeDrivers}<span style="font-size:11px;color:var(--em-dim)">/${gs.drivers.length}</span></div></div>
+        <div class="k"><div class="l">Flotta Operativa</div><div class="v">${fleetActive}<span style="font-size:11px;color:var(--em-dim)"> veicoli</span></div></div>
+        <div class="k"><div class="l">Incasso Oggi</div><div class="v" style="color:var(--em-green)">€${todayEarnings.toLocaleString('it-IT')}</div></div>
+        <div class="k" style="min-width:140px">
+            <div class="l">Energia CEO</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+                <span class="em-prog" style="flex:1"><i style="width:${Math.round(ceoEnergy)}%;background:${energyColor}"></i></span>
+                <span style="font-size:10px;font-weight:800;color:${energyColor};flex-shrink:0">${Math.round(ceoEnergy)}%</span>
             </div>
         </div>
-        <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
-            ${alerts}
-            <button onclick="window.openMapOverlay()" class="ops-action-btn ops-action-btn--blue" style="font-size:9px;padding:5px 12px;border:1px solid #21262d;background:#161b22;color:#8b949e;cursor:pointer;font-family:monospace">LIVE MAP</button>
-            <button onclick="assignAllRides()" style="font-size:9px;padding:5px 12px;border:1px solid #b8962b;background:#2a2210;color:#d4af37;cursor:pointer;font-family:monospace;font-weight:700">SMISTA TUTTE</button>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px">
+        ${alerts}
+        <div style="margin-left:auto;display:flex;gap:8px">
+            <button onclick="window.openMapOverlay()" class="em-bbtn">🗺 Live Map</button>
+            <button onclick="assignAllRides()" class="em-goldbtn">Smista tutte</button>
         </div>
     </div>
 
     <!-- MAIN GRID -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;flex:1;overflow:hidden">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px">
 
         <!-- LEFT: INCOMING RIDES -->
-        <div style="display:flex;flex-direction:column;border-right:1px solid #21262d;overflow:hidden">
-            <div style="padding:8px 14px;border-bottom:1px solid #21262d;background:#0d1117;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-                <span style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280">Richieste in Arrivo</span>
-                <span style="font-size:9px;font-family:monospace;color:${pendingCount > 0 ? '#d4af37' : '#30363d'};font-weight:700">${pendingCount}</span>
-            </div>
-            <div style="flex:1;overflow-y:auto">`;
+        <div class="em-card">
+            <div class="em-ch"><span class="t">Richieste in Arrivo</span><span class="a" style="color:${pendingCount > 0 ? 'var(--em-gold)' : 'var(--em-dim)'}">${pendingCount}</span></div>
+            <div style="max-height:62vh;overflow-y:auto">`;
 
     if (pendingCount === 0) {
-        html += `<div style="text-align:center;padding:40px 20px;color:#30363d;font-size:10px;font-family:monospace">IN ATTESA DI CHIAMATE...</div>`;
+        html += `<div class="em-empty">In attesa di chiamate…</div>`;
     } else {
-        html += `<table style="width:100%;border-collapse:collapse">
-            <thead><tr style="background:#0d1117">${_TH('Tipo')}${_TH('Percorso')}${_THR('Prezzo')}</tr></thead>
+        html += `<table class="em-tbl">
+            <thead><tr><th>Tipo</th><th>Percorso</th><th class="r">Prezzo</th></tr></thead>
             <tbody>`;
         gs.pendingRides.forEach(ride => {
             const isContract = ride.isContract;
             const fromName   = ride.originName      || ride.fromPoi?.name || '?';
             const toName     = ride.destinationName || ride.toPoi?.name   || '?';
             const tier       = ride.tier || 'standard';
-            const tColor     = tierColors[tier] || '#6b7280';
+            const tColor     = tierColors[tier] || '#6a7480';
+            const tBg        = tierBg[tier] || '#eef1f5';
             const tLabel     = typeLabel[ride.routeType] || (ride.routeType || 'STD').substring(0, 3).toUpperCase();
             const margin     = (ride.price || 0) - (ride.netCost || 0);
 
-            html += `<tr class="ops-ride-card ce-table-row" draggable="true" data-id="${ride.id}"
-                style="border-bottom:1px solid #21262d;cursor:grab">
-                <td style="padding:9px 14px;white-space:nowrap">
-                    <span style="font-size:8px;font-family:monospace;font-weight:700;padding:2px 7px;border:1px solid ${tColor}40;color:${tColor};background:${tColor}15">${isContract ? 'B2B' : tLabel}</span>
+            html += `<tr class="ops-ride-card" draggable="true" data-id="${ride.id}" style="cursor:grab">
+                <td style="white-space:nowrap"><span class="em-pill" style="background:${tBg};color:${tColor}">${isContract ? 'B2B' : tLabel}</span></td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                    ${fromName} <span style="color:var(--em-dim)">→</span> ${toName}
+                    ${isContract ? `<div style="font-size:9.5px;color:var(--em-muted);margin-top:2px">margine: <span style="color:${margin >= 0 ? 'var(--em-green-d)' : 'var(--em-red)'};font-weight:700">€${margin.toLocaleString('it-IT')}</span></div>` : ''}
                 </td>
-                <td style="padding:9px 14px;font-size:10px;color:#c9d1d9;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-                    ${fromName} <span style="color:#30363d">→</span> ${toName}
-                    ${isContract ? `<div style="font-size:8px;color:#6b7280;margin-top:2px">margine: <span style="color:${margin >= 0 ? '#4b8b4f' : '#8b3a3a'}">€${margin.toLocaleString('it-IT')}</span></div>` : ''}
-                </td>
-                <td style="padding:9px 14px;text-align:right;font-family:monospace;font-weight:700;font-size:11px;color:#4b8b4f;white-space:nowrap">€${(ride.price || 0).toLocaleString('it-IT')}</td>
+                <td class="r em-price" style="white-space:nowrap">€${(ride.price || 0).toLocaleString('it-IT')}</td>
             </tr>`;
         });
         html += `</tbody></table>`;
@@ -116,77 +97,66 @@ function renderTabCorse() {
     html += `</div></div>
 
         <!-- RIGHT: DRIVER STATUS -->
-        <div style="display:flex;flex-direction:column;overflow:hidden">
-            <div style="padding:8px 14px;border-bottom:1px solid #21262d;background:#0d1117;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
-                <span style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280">Stato Autisti</span>
-                <div style="display:flex;gap:10px;font-size:8px;font-family:monospace">
-                    <span style="color:#4b7ab8">${activeDrivers} attivi</span>
-                    <span style="color:#6b5a3a">${restingDrivers} riposo</span>
-                    <span style="color:#4b8b4f">${freeDrivers} liberi</span>
-                </div>
+        <div class="em-card">
+            <div class="em-ch"><span class="t">Stato Autisti</span>
+                <span style="display:flex;gap:8px;font-size:10px;font-weight:700">
+                    <span style="color:var(--em-blue)">${activeDrivers} attivi</span>
+                    <span style="color:var(--em-gold)">${restingDrivers} riposo</span>
+                    <span style="color:var(--em-green)">${freeDrivers} liberi</span>
+                </span>
             </div>
-            <div style="flex:1;overflow-y:auto">
-                <table style="width:100%;border-collapse:collapse">
-                    <thead><tr style="background:#0d1117">${_TH('Autista')}${_TH('Veicolo')}${_TH('Fatica')}${_THR('Stato')}</tr></thead>
-                    <tbody>`;
+            <div style="max-height:62vh;overflow-y:auto">`;
 
     gs.drivers.forEach(driver => {
         const car       = gs.fleet.find(c => c.id === driver.assignedCarId);
         const isResting = driver.status === 'resting';
         const isBusy    = driver.status === 'busy';
         const fatigue   = driver.fatigue || 0;
-        const fatColor  = fatigue >= 85 ? '#8b3a3a' : fatigue >= 60 ? '#8b6a3a' : '#3d5a3e';
-        const statusColor = isResting ? '#6b5a3a' : isBusy ? '#3a5a8b' : '#3d5a3e';
-        const statusText  = isResting ? `RIPOSO −${driver.restHoursLeft}h` : isBusy ? 'IN SERVIZIO' : 'DISPONIBILE';
+        const fatColor  = fatigue >= 85 ? 'var(--em-red)' : fatigue >= 60 ? 'var(--em-amber)' : 'var(--em-green)';
+        const dotColor  = isResting ? 'var(--em-gold)' : isBusy ? 'var(--em-blue)' : 'var(--em-green)';
+        const statusPill = isResting ? `<span class="em-pill em-pill--gold">Riposo −${driver.restHoursLeft}h</span>`
+                          : isBusy ? `<span class="em-pill em-pill--blue">In servizio</span>`
+                          : `<span class="em-pill em-pill--green">Disponibile</span>`;
         const restBtn = (!isResting && !isBusy && driver.id !== 'ceo' && fatigue >= 40)
-            ? `<button onclick="sendDriverToRest('${driver.id}')" style="margin-left:6px;font-size:8px;font-family:monospace;padding:1px 6px;border:1px solid #30363d;background:#161b22;color:#6b7280;cursor:pointer">RIPOSO</button>`
+            ? `<button onclick="sendDriverToRest('${driver.id}')" class="em-ghbtn" style="margin-left:7px;padding:2px 8px;font-size:9.5px">Riposo</button>`
             : '';
 
-        html += `<tr class="ops-driver-row ce-table-row" data-id="${driver.id}"
-            style="border-bottom:1px solid #21262d;${isResting ? 'opacity:0.45' : ''}">
-            <td style="padding:9px 14px">
-                <div style="font-size:10px;font-weight:600;color:#c9d1d9;display:flex;align-items:center">
-                    <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${isResting ? '#6b5a3a' : isBusy ? '#3a5a8b' : '#3d5a3e'};margin-right:7px;flex-shrink:0"></span>
-                    ${driver.name}${restBtn}
-                </div>
-                ${driver.queue.length > 0 ? `<div style="font-size:8px;font-family:monospace;color:#6b7280;margin-top:2px;margin-left:14px">coda: ${driver.queue.length}</div>` : ''}
-            </td>
-            <td style="padding:9px 14px;font-size:9px;color:#6b7280">${car ? car.name : '— nessun veicolo —'}</td>
-            <td style="padding:9px 14px;min-width:90px">
-                ${driver.id !== 'ceo' ? `<div style="display:flex;align-items:center;gap:5px">
-                    <div style="flex:1;height:3px;background:#21262d;overflow:hidden">
-                        <div style="height:100%;width:${fatigue}%;background:${fatColor}"></div>
-                    </div>
-                    <span style="font-size:8px;font-family:monospace;color:${fatColor};width:26px;text-align:right;flex-shrink:0">${Math.round(fatigue)}%</span>
-                </div>` : '<span style="font-size:8px;color:#30363d">—</span>'}
-            </td>
-            <td style="padding:9px 14px;text-align:right">
-                <span style="font-size:8px;font-family:monospace;font-weight:700;padding:2px 8px;border:1px solid ${statusColor};color:${statusColor === '#3d5a3e' ? '#4b8b4f' : statusColor === '#3a5a8b' ? '#4b7ab8' : '#b8962b'};background:${statusColor}20">${statusText}</span>
-            </td>
-        </tr>`;
+        html += `<div class="ops-driver-row em-lrow" data-id="${driver.id}" style="align-items:flex-start;${isResting ? 'opacity:0.5' : ''}">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-top:4px;flex-shrink:0"></span>
+            <div style="flex:1;min-width:0">
+                <div class="em-lt" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${driver.name}${restBtn}</div>
+                <div class="em-lm"><span>${car ? car.name : '— nessun veicolo —'}</span>${driver.queue.length > 0 ? `<span>· coda ${driver.queue.length}</span>` : ''}</div>
+            </div>
+            ${driver.id !== 'ceo' ? `<div style="display:flex;align-items:center;gap:5px;width:88px;flex-shrink:0">
+                <span class="em-prog" style="width:52px"><i style="width:${fatigue}%;background:${fatColor}"></i></span>
+                <span style="font-size:9.5px;font-weight:700;color:${fatColor};width:28px;text-align:right">${Math.round(fatigue)}%</span>
+            </div>` : '<span style="width:88px;flex-shrink:0;color:var(--em-dim);text-align:center">—</span>'}
+            <div style="width:96px;flex-shrink:0;text-align:right">${statusPill}</div>
+        </div>`;
     });
 
-    html += `</tbody></table></div></div></div>`;
+    html += `</div></div></div>`;
 
     // Daily summary
     const _ds = gameState._dailySummary;
     if (_ds) {
-        const netColor = _ds.net >= 0 ? '#4b8b4f' : '#8b3a3a';
+        const netColor = _ds.net >= 0 ? 'var(--em-green-d)' : 'var(--em-red)';
         const netSign  = _ds.net >= 0 ? '+' : '';
         html += `
-        <div style="padding:8px 16px;border-top:1px solid #21262d;background:#0d1117;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:9px;font-family:monospace;flex-shrink:0">
-            <span style="color:#6b7280;text-transform:uppercase;letter-spacing:1px">Giorno ${_ds.day} — Chiusura</span>
-            <span style="color:${netColor};font-weight:700">${netSign}€${_ds.net.toLocaleString('it-IT')} netto</span>
-            <span style="color:#30363d">·</span>
-            <span style="color:#6b7280">Entrate <strong style="color:#4b8b4f">€${_ds.income.toLocaleString('it-IT')}</strong></span>
-            <span style="color:#30363d">·</span>
-            <span style="color:#6b7280">Uscite <strong style="color:#8b3a3a">€${_ds.expenses.toLocaleString('it-IT')}</strong></span>
-            ${_ds.luxuryTax > 0 ? `<span style="color:#30363d">·</span><span style="color:#6b7280">Tax <strong style="color:#8b6a3a">€${_ds.luxuryTax.toLocaleString('it-IT')}</strong></span>` : ''}
-            <span style="color:#30363d">·</span>
-            <span style="color:#6b7280">Cash <strong style="color:#4b7ab8">€${_ds.cash.toLocaleString('it-IT')}</strong></span>
+        <div class="em-card" style="margin-top:7px;padding:9px 14px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-size:11px">
+            <span class="em-sec">Giorno ${_ds.day} — Chiusura</span>
+            <span style="color:${netColor};font-weight:800">${netSign}€${_ds.net.toLocaleString('it-IT')} netto</span>
+            <span style="color:var(--em-dim)">·</span>
+            <span style="color:var(--em-muted)">Entrate <strong style="color:var(--em-green-d)">€${_ds.income.toLocaleString('it-IT')}</strong></span>
+            <span style="color:var(--em-dim)">·</span>
+            <span style="color:var(--em-muted)">Uscite <strong style="color:var(--em-red)">€${_ds.expenses.toLocaleString('it-IT')}</strong></span>
+            ${_ds.luxuryTax > 0 ? `<span style="color:var(--em-dim)">·</span><span style="color:var(--em-muted)">Tax <strong style="color:var(--em-amber)">€${_ds.luxuryTax.toLocaleString('it-IT')}</strong></span>` : ''}
+            <span style="color:var(--em-dim)">·</span>
+            <span style="color:var(--em-muted)">Cash <strong style="color:var(--em-blue)">€${_ds.cash.toLocaleString('it-IT')}</strong></span>
         </div>`;
     }
 
+    html += `</div></div>`;
     container.innerHTML = html;
 }
 

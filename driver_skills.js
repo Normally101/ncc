@@ -10,7 +10,7 @@ window.DRIVER_SKILL_TREE = {
     velocista: {
         label: '🏎️ Velocista',
         desc:  'Velocità e adrenalina — più XP, meno fatica, più rischio.',
-        color: '#f85149',
+        color: '#db5746',
         border: 'rgba(248,81,73,0.35)',
         skills: [
             {
@@ -36,7 +36,7 @@ window.DRIVER_SKILL_TREE = {
     diplomatico: {
         label: '💎 Diplomatico',
         desc:  'Charme e networking — mance più alte, corse VIP prioritarie.',
-        color: '#c084fc',
+        color: '#7c5fc9',
         border: 'rgba(192,132,252,0.35)',
         skills: [
             {
@@ -62,7 +62,7 @@ window.DRIVER_SKILL_TREE = {
     tecnico: {
         label: '⚙️ Tecnico',
         desc:  'Efficienza e manutenzione — meno consumo, meno degrado veicolo.',
-        color: '#3fb950',
+        color: '#1aa06a',
         border: 'rgba(63,185,80,0.35)',
         skills: [
             {
@@ -250,14 +250,14 @@ window.renderDriverSkillModal = function(driverId) {
     // Branch selection
     if (!st.branch) {
         bodyHtml = `
-          <div style="font-size:10px;color:#8b949e;margin-bottom:12px;text-align:center">Scegli il percorso di specializzazione di ${driver.name}.<br>La scelta è permanente.</div>
+          <div style="font-size:10px;color:#6a7480;margin-bottom:12px;text-align:center">Scegli il percorso di specializzazione di ${driver.name}.<br>La scelta è permanente.</div>
           <div style="display:flex;flex-direction:column;gap:8px">
             ${Object.entries(window.DRIVER_SKILL_TREE).map(([key, b]) => `
               <button onclick="window.driverSelectBranch('${driverId}','${key}')"
-                style="width:100%;text-align:left;background:rgba(255,255,255,0.04);border:1px solid ${b.border};border-radius:6px;padding:12px;cursor:pointer;transition:background .15s"
-                onmouseover="this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.background='rgba(255,255,255,0.04)'">
+                style="width:100%;text-align:left;background:#eef1f5;border:1px solid ${b.border};border-radius:6px;padding:12px;cursor:pointer;transition:background .15s"
+                onmouseover="this.style.background='#d6dee8'" onmouseout="this.style.background='#eef1f5'">
                 <div style="font-weight:700;color:${b.color};font-size:13px">${b.label}</div>
-                <div style="font-size:10px;color:#8b949e;margin-top:2px">${b.desc}</div>
+                <div style="font-size:10px;color:#6a7480;margin-top:2px">${b.desc}</div>
               </button>`).join('')}
           </div>`;
     } else {
@@ -265,7 +265,7 @@ window.renderDriverSkillModal = function(driverId) {
         bodyHtml = `
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div style="font-weight:700;color:${branch.color};font-size:13px">${branch.label}</div>
-            <div style="font-size:10px;background:rgba(255,255,255,0.08);border-radius:4px;padding:3px 8px;color:#e6edf3">${st.skill_points || 0} punti disponibili</div>
+            <div style="font-size:10px;background:#d6dee8;border-radius:4px;padding:3px 8px;color:#1f2733">${st.skill_points || 0} punti disponibili</div>
           </div>
           <div style="display:flex;flex-direction:column;gap:8px">
             ${branch.skills.map(skill => {
@@ -274,23 +274,23 @@ window.renderDriverSkillModal = function(driverId) {
                 const canAfford = (st.skill_points || 0) >= skill.cost;
                 const canUnlock = !isUnlocked && reqsMet && canAfford;
                 const locked = !isUnlocked && !reqsMet;
-                const borderC = isUnlocked ? 'rgba(212,175,55,0.35)' : locked ? 'rgba(255,255,255,0.05)' : branch.border;
-                const titleC  = isUnlocked ? '#d4af37' : locked ? '#6b7280' : '#e6edf3';
+                const borderC = isUnlocked ? 'rgba(212,175,55,0.35)' : locked ? '#eef1f5' : branch.border;
+                const titleC  = isUnlocked ? '#c79a2a' : locked ? '#6a7480' : '#1f2733';
 
                 return `
                   <div style="background:rgba(255,255,255,0.03);border:1px solid ${borderC};border-radius:6px;padding:12px">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start">
                       <div>
                         <div style="font-size:13px;font-weight:600;color:${titleC}">${isUnlocked ? '✅ ' : locked ? '🔒 ' : ''}${skill.name}</div>
-                        <div style="font-size:10px;color:#8b949e;margin-top:2px">${skill.desc}</div>
-                        ${skill.requires.length > 0 ? `<div style="font-size:9px;color:#6b7280;margin-top:4px">Richiede: ${skill.requires.join(', ')}</div>` : ''}
+                        <div style="font-size:10px;color:#6a7480;margin-top:2px">${skill.desc}</div>
+                        ${skill.requires.length > 0 ? `<div style="font-size:9px;color:#6a7480;margin-top:4px">Richiede: ${skill.requires.join(', ')}</div>` : ''}
                       </div>
                       <div style="flex-shrink:0;margin-left:8px">
                         ${isUnlocked
-                            ? `<span style="font-size:9px;color:#d4af37">Sbloccata</span>`
+                            ? `<span style="font-size:9px;color:#c79a2a">Sbloccata</span>`
                             : `<button onclick="window.driverUnlockSkill('${driverId}','${skill.id}')"
                                 ${canUnlock ? '' : 'disabled'}
-                                style="padding:4px 8px;font-size:9px;border-radius:4px;cursor:${canUnlock?'pointer':'not-allowed'};background:${canUnlock?'#1a1608':'#374151'};border:1px solid ${canUnlock?'#b8962b':'transparent'};color:${canUnlock?'#d4af37':'#6b7280'};transition:opacity .15s">
+                                style="padding:4px 8px;font-size:9px;border-radius:4px;cursor:${canUnlock?'pointer':'not-allowed'};background:${canUnlock?'#fff8e8':'#6a7480'};border:1px solid ${canUnlock?'#c79a2a':'transparent'};color:${canUnlock?'#c79a2a':'#6a7480'};transition:opacity .15s">
                                 ${skill.cost}pt
                               </button>`
                         }
@@ -301,10 +301,10 @@ window.renderDriverSkillModal = function(driverId) {
           </div>
 
           ${(gameState.driverObituaries?.length > 0) ? `
-          <div style="margin-top:16px;border-top:1px solid rgba(255,255,255,0.05);padding-top:12px">
-            <div style="font-size:9px;color:#8b949e;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🪦 In Memoriam</div>
+          <div style="margin-top:16px;border-top:1px solid #eef1f5;padding-top:12px">
+            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🪦 In Memoriam</div>
             ${(gameState.driverObituaries || []).map(o => `
-              <div style="font-size:9px;color:#6b7280">Day ${o.day}: ${o.name} — Lv.${o.level} ${o.branch ? '(' + o.branch + ')' : ''}</div>
+              <div style="font-size:9px;color:#6a7480">Day ${o.day}: ${o.name} — Lv.${o.level} ${o.branch ? '(' + o.branch + ')' : ''}</div>
             `).join('')}
           </div>` : ''}`;
     }
@@ -313,13 +313,13 @@ window.renderDriverSkillModal = function(driverId) {
     modal.id = 'driver-skill-modal';
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `
-      <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+      <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
           <div>
-            <div style="font-size:13px;font-weight:700;color:#e6edf3">${driver.name}</div>
-            <div style="font-size:10px;color:#8b949e">Lv.${driver.level || 0} ${lvlData.name || 'Rookie'} · ${driver.xp || 0} XP</div>
+            <div style="font-size:13px;font-weight:700;color:#1f2733">${driver.name}</div>
+            <div style="font-size:10px;color:#6a7480">Lv.${driver.level || 0} ${lvlData.name || 'Rookie'} · ${driver.xp || 0} XP</div>
           </div>
-          <button onclick="document.getElementById('driver-skill-modal').remove()" style="background:transparent;border:none;color:#8b949e;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
+          <button onclick="document.getElementById('driver-skill-modal').remove()" style="background:transparent;border:none;color:#6a7480;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
         ${bodyHtml}
       </div>`;

@@ -161,16 +161,16 @@ window.renderTabNemesis = function() {
 
     const criticalNem = nemeses.filter(([, n]) => n.level >= 2).length;
     const _nemBadge = criticalNem > 0
-        ? `<span style="font-size:9px;font-weight:700;color:#f85149;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);border-radius:4px;padding:3px 8px">⚠ GUERRA APERTA</span>`
+        ? `<span style="font-size:9px;font-weight:700;color:#db5746;background:rgba(248,81,73,0.12);border:1px solid rgba(248,81,73,0.3);border-radius:4px;padding:3px 8px">⚠ GUERRA APERTA</span>`
         : nemeses.length > 0
-            ? `<span style="font-size:9px;font-weight:700;color:#f59e0b;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:3px 8px">${nemeses.length} Ostili</span>`
-            : `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">✓ OK</span>`;
-    const _nemEmpty = `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">😇</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun nemico</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Continua a non deludere i VIP.</div></div>`;
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
+            ? `<span style="font-size:9px;font-weight:700;color:#e0922e;background:rgba(245,158,11,0.12);border:1px solid rgba(245,158,11,0.3);border-radius:4px;padding:3px 8px">${nemeses.length} Ostili</span>`
+            : `<span style="font-size:9px;font-weight:700;color:#1aa06a;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">✓ OK</span>`;
+    const _nemEmpty = `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">😇</div><div style="font-size:14px;font-weight:600;color:#1f2733">Nessun nemico</div><div style="font-size:11px;color:#6a7480;margin-top:4px">Continua a non deludere i VIP.</div></div>`;
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8;display:flex;align-items:flex-start;justify-content:space-between">
         <div>
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">VIP Relations</div>
-            <div style="font-size:20px;font-weight:700;color:#e6edf3">Lista Nemici</div>
-            <div style="font-size:11px;color:#8b949e;margin-top:4px">${nemeses.length === 0 ? 'Nessun VIP deluso — ottimo!' : `${nemeses.length} VIP ostili · ${criticalNem > 0 ? criticalNem + ' guerra aperta' : 'Gestibile'}`}</div>
+            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">VIP Relations</div>
+            <div style="font-size:20px;font-weight:700;color:#1f2733">Lista Nemici</div>
+            <div style="font-size:11px;color:#6a7480;margin-top:4px">${nemeses.length === 0 ? 'Nessun VIP deluso — ottimo!' : `${nemeses.length} VIP ostili · ${criticalNem > 0 ? criticalNem + ' guerra aperta' : 'Gestibile'}`}</div>
         </div>
         ${_nemBadge}
     </div>
@@ -188,8 +188,8 @@ function _renderNemesisCard(vipId, nem) {
     const bribeAmt = Math.floor(5000 + (nem.anger / 100) * 45000);
     const borderC  = isWar ? 'rgba(248,81,73,0.3)' : 'rgba(245,158,11,0.25)';
     const bgC      = isWar ? 'rgba(248,81,73,0.04)' : 'rgba(245,158,11,0.04)';
-    const barC     = nem.anger >= 60 ? '#f85149' : '#f59e0b';
-    const lvlColor = isWar ? '#f85149' : '#f59e0b';
+    const barC     = nem.anger >= 60 ? '#db5746' : '#e0922e';
+    const lvlColor = isWar ? '#db5746' : '#e0922e';
     const lvlBg    = isWar ? 'rgba(248,81,73,0.12)' : 'rgba(245,158,11,0.12)';
 
     return `
@@ -198,34 +198,34 @@ function _renderNemesisCard(vipId, nem) {
             <div>
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                     <span style="font-size:18px">${isWar ? '🔥' : '😠'}</span>
-                    <span style="font-size:13px;font-weight:700;color:#e6edf3">${nem.name}</span>
+                    <span style="font-size:13px;font-weight:700;color:#1f2733">${nem.name}</span>
                 </div>
-                <div style="font-size:10px;color:#8b949e">${isWar ? '⚠️ GUERRA APERTA — finanzia i tuoi rivali' : '😤 Deluso — potrebbe agire presto'}</div>
+                <div style="font-size:10px;color:#6a7480">${isWar ? '⚠️ GUERRA APERTA — finanzia i tuoi rivali' : '😤 Deluso — potrebbe agire presto'}</div>
             </div>
             <span style="font-size:9px;font-weight:700;color:${lvlColor};background:${lvlBg};border:1px solid ${lvlColor};border-radius:10px;padding:3px 8px">Livello ${nem.level}</span>
         </div>
 
         <div style="margin-bottom:10px">
-            <div style="display:flex;justify-content:space-between;font-size:9px;color:#8b949e;margin-bottom:4px">
+            <div style="display:flex;justify-content:space-between;font-size:9px;color:#6a7480;margin-bottom:4px">
                 <span>Rabbia</span><span>${angerBar}/100</span>
             </div>
-            <div style="height:6px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden">
+            <div style="height:6px;border-radius:3px;background:#d6dee8;overflow:hidden">
                 <div style="height:100%;width:${angerBar}%;background:${barC};border-radius:3px;transition:width .3s"></div>
             </div>
         </div>
 
-        <div style="font-size:10px;color:#8b949e;margin-bottom:14px">
-            Motivo: <span style="color:#e6edf3">${nem.reason === 'fallita' ? 'Corsa fallita / ritardo' : 'Richiesta ignorata'}</span>
+        <div style="font-size:10px;color:#6a7480;margin-bottom:14px">
+            Motivo: <span style="color:#1f2733">${nem.reason === 'fallita' ? 'Corsa fallita / ritardo' : 'Richiesta ignorata'}</span>
         </div>
 
         <div style="display:flex;gap:8px">
             <button onclick="window._nemesisBribeVip('${vipId}')"
-                style="flex:1;padding:8px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);color:#d4af37;transition:opacity .15s"
+                style="flex:1;padding:8px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);color:#c79a2a;transition:opacity .15s"
                 onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 💰 Corrompi (€${bribeAmt.toLocaleString('it-IT')})
             </button>
             <button onclick="window.hubNavigate('shadow')"
-                style="flex:1;padding:8px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #21262d;color:#8b949e;transition:opacity .15s"
+                style="flex:1;padding:8px;border-radius:4px;font-size:10px;font-weight:700;cursor:pointer;background:#ffffff;border:1px solid #d6dee8;color:#6a7480;transition:opacity .15s"
                 onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 🕵️ Agenzia Ombra
             </button>

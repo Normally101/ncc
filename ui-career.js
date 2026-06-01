@@ -15,7 +15,7 @@ const _CH_NAMES = {
 };
 
 const _TIER_COLOR = {
-    bronze: '#cd7f32', silver: '#b0b8c4', gold: '#d4af37',
+    bronze: '#cd7f32', silver: '#b0b8c4', gold: '#c79a2a',
     diamond: '#7ec8e3', legendary: '#ff6b35',
 };
 
@@ -34,132 +34,132 @@ const _TYPE_LABEL = { tutorial: 'Tutorial', story: 'Storia', raid: 'Raid Boss', 
 #career-modal-wrap { position:relative;width:100%;max-width:820px;max-height:90vh;display:flex;flex-direction:column; }
 #career-modal-close {
     position:absolute;top:-8px;right:-8px;z-index:1;
-    width:24px;height:24px;background:#21262d;border:1px solid #30363d;
-    color:#6b7280;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    width:24px;height:24px;background:#d6dee8;border:1px solid #c2ccd8;
+    color:#6a7480;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;
 }
-#career-modal-close:hover { background:#30363d;color:#c9d1d9; }
+#career-modal-close:hover { background:#c2ccd8;color:#1f2733; }
 #career-modal {
-    background:#161b22;border:1px solid #21262d;border-top:2px solid #b8962b;
+    background:#ffffff;border:1px solid #d6dee8;border-top:2px solid #c79a2a;
     display:grid;grid-template-columns:1fr 240px;max-height:90vh;overflow:hidden;
 }
 .cm-main { display:flex;flex-direction:column;overflow:hidden;min-width:0; }
 .cm-head {
-    padding:14px 16px 12px;border-bottom:1px solid #21262d;background:#0d1117;flex-shrink:0;
+    padding:14px 16px 12px;border-bottom:1px solid #d6dee8;background:#f3f6f9;flex-shrink:0;
 }
-.cm-breadcrumb { font-size:8px;font-family:monospace;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px; }
-.cm-breadcrumb .gold { color:#d4af37; }
-.cm-title { font-size:15px;font-weight:700;color:#e6edf3;margin-bottom:5px; }
-.cm-giver { display:flex;align-items:center;gap:8px;font-size:10px;color:#6b7280; }
-.cm-giver-badge { font-size:9px;font-family:monospace;background:#2a2210;border:1px solid #b8962b;color:#d4af37;padding:1px 8px; }
+.cm-breadcrumb { font-size:8px;font-family:monospace;color:#6a7480;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px; }
+.cm-breadcrumb .gold { color:#c79a2a; }
+.cm-title { font-size:15px;font-weight:700;color:#1f2733;margin-bottom:5px; }
+.cm-giver { display:flex;align-items:center;gap:8px;font-size:10px;color:#6a7480; }
+.cm-giver-badge { font-size:9px;font-family:monospace;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;padding:1px 8px; }
 .cm-timeline {
-    display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #21262d;
-    background:#0d1117;gap:0;overflow-x:auto;flex-shrink:0;
+    display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #d6dee8;
+    background:#f3f6f9;gap:0;overflow-x:auto;flex-shrink:0;
 }
 .cm-tl-node {
     width:22px;height:22px;border:1px solid;display:flex;align-items:center;justify-content:center;
     font-size:8px;font-family:monospace;font-weight:700;flex-shrink:0;position:relative;cursor:default;
 }
-.cm-tl-node.done   { border-color:#3d5a3e;background:#1a2e1a;color:#4b8b4f; }
-.cm-tl-node.active { border-color:#b8962b;background:#2a2210;color:#d4af37; }
-.cm-tl-node.locked { border-color:#21262d;background:#0d1117;color:#30363d; }
+.cm-tl-node.done   { border-color:#3d5a3e;background:#1a2e1a;color:#1aa06a; }
+.cm-tl-node.active { border-color:#c79a2a;background:#fff8e8;color:#c79a2a; }
+.cm-tl-node.locked { border-color:#d6dee8;background:#f3f6f9;color:#c2ccd8; }
 .cm-tl-label {
-    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:#161b22;
-    border:1px solid #30363d;padding:2px 6px;font-size:8px;white-space:nowrap;color:#8b949e;
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:#ffffff;
+    border:1px solid #c2ccd8;padding:2px 6px;font-size:8px;white-space:nowrap;color:#6a7480;
     pointer-events:none;display:none;z-index:10;font-family:monospace;
 }
 .cm-tl-node:hover .cm-tl-label { display:block; }
-.cm-tl-line { flex:1;height:1px;background:#21262d;min-width:10px; }
+.cm-tl-line { flex:1;height:1px;background:#d6dee8;min-width:10px; }
 .cm-tl-line.done { background:#3d5a3e; }
-.cm-tl-next { font-size:8px;font-family:monospace;color:#30363d;margin-left:10px;white-space:nowrap;flex-shrink:0; }
+.cm-tl-next { font-size:8px;font-family:monospace;color:#c2ccd8;margin-left:10px;white-space:nowrap;flex-shrink:0; }
 .cm-status {
-    display:flex;align-items:center;gap:12px;padding:7px 16px;border-bottom:1px solid #21262d;
-    background:#0d1117;flex-shrink:0;
+    display:flex;align-items:center;gap:12px;padding:7px 16px;border-bottom:1px solid #d6dee8;
+    background:#f3f6f9;flex-shrink:0;
 }
 .cm-status-badge {
     font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;
-    padding:2px 8px;border:1px solid #b8962b;color:#d4af37;background:#2a2210;
+    padding:2px 8px;border:1px solid #c79a2a;color:#c79a2a;background:#fff8e8;
 }
-.cm-status-badge.claim { border-color:#3d5a3e;color:#4b8b4f;background:#1a2e1a; }
-.cm-status-sub { font-size:9px;color:#6b7280;font-family:monospace; }
+.cm-status-badge.claim { border-color:#3d5a3e;color:#1aa06a;background:#1a2e1a; }
+.cm-status-sub { font-size:9px;color:#6a7480;font-family:monospace; }
 .cm-lore {
-    padding:12px 16px;border-bottom:1px solid #21262d;border-left:3px solid #b8962b;
-    font-size:11px;color:#8b949e;line-height:1.6;font-style:italic;background:#0d1117;flex-shrink:0;
+    padding:12px 16px;border-bottom:1px solid #d6dee8;border-left:3px solid #c79a2a;
+    font-size:11px;color:#6a7480;line-height:1.6;font-style:italic;background:#f3f6f9;flex-shrink:0;
 }
 .cm-objectives { flex:1;overflow-y:auto; }
 .cm-obj-table { width:100%;border-collapse:collapse; }
-.cm-obj-table thead tr { background:#0d1117; }
+.cm-obj-table thead tr { background:#f3f6f9; }
 .cm-obj-table thead th {
     padding:7px 16px;font-size:8px;font-family:monospace;text-transform:uppercase;
-    letter-spacing:1px;color:#6b7280;text-align:left;font-weight:600;border-bottom:1px solid #21262d;
+    letter-spacing:1px;color:#6a7480;text-align:left;font-weight:600;border-bottom:1px solid #d6dee8;
 }
 .cm-obj-table thead th:last-child { text-align:right; }
-.cm-obj-table tbody tr { border-bottom:1px solid #161b22; }
-.cm-obj-table tbody tr:hover { background:rgba(255,255,255,0.02); }
-.cm-obj-table tbody td { padding:9px 16px;font-size:10px;color:#8b949e;vertical-align:middle; }
+.cm-obj-table tbody tr { border-bottom:1px solid #ffffff; }
+.cm-obj-table tbody tr:hover { background:#f7f9fb; }
+.cm-obj-table tbody td { padding:9px 16px;font-size:10px;color:#6a7480;vertical-align:middle; }
 .cm-obj-status { font-size:8px;font-family:monospace;font-weight:700;white-space:nowrap; }
-.cm-obj-status.done  { color:#4b8b4f; }
-.cm-obj-status.prog  { color:#d4af37; }
-.cm-obj-status.open  { color:#30363d; }
+.cm-obj-status.done  { color:#1aa06a; }
+.cm-obj-status.prog  { color:#c79a2a; }
+.cm-obj-status.open  { color:#c2ccd8; }
 .cm-mbar-wrap { display:flex;align-items:center;gap:8px; }
-.cm-mbar-bg { width:70px;height:3px;background:#21262d;overflow:hidden;flex-shrink:0; }
+.cm-mbar-bg { width:70px;height:3px;background:#d6dee8;overflow:hidden;flex-shrink:0; }
 .cm-mbar-fill { height:100%; }
-.cm-mbar-val { font-size:9px;font-family:monospace;color:#6b7280;white-space:nowrap; }
-.cm-howto { font-size:9px;color:#6b7280;line-height:1.5;margin-top:4px; }
+.cm-mbar-val { font-size:9px;font-family:monospace;color:#6a7480;white-space:nowrap; }
+.cm-howto { font-size:9px;color:#6a7480;line-height:1.5;margin-top:4px; }
 .cm-reward {
-    padding:10px 16px;border-top:1px solid #21262d;background:#0d1117;
+    padding:10px 16px;border-top:1px solid #d6dee8;background:#f3f6f9;
     display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;
 }
-.cm-rlabel { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-right:4px; }
-.cm-chip { font-size:9px;font-family:monospace;padding:3px 10px;border:1px solid #30363d;color:#8b949e;background:#161b22; }
-.cm-chip.gold  { border-color:#b8962b;color:#d4af37;background:#2a2210; }
-.cm-chip.green { border-color:#3d5a3e;color:#4b8b4f;background:#1a2e1a; }
+.cm-rlabel { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6a7480;margin-right:4px; }
+.cm-chip { font-size:9px;font-family:monospace;padding:3px 10px;border:1px solid #c2ccd8;color:#6a7480;background:#ffffff; }
+.cm-chip.gold  { border-color:#c79a2a;color:#c79a2a;background:#fff8e8; }
+.cm-chip.green { border-color:#3d5a3e;color:#1aa06a;background:#1a2e1a; }
 .cm-chip.vtk   { border-color:#4b5a8b;color:#7b9fe0;background:#151c2e; }
 .cm-btn {
-    margin-left:auto;padding:6px 18px;background:#2a2210;border:1px solid #b8962b;
-    color:#d4af37;font-size:9px;font-family:monospace;font-weight:700;text-transform:uppercase;
+    margin-left:auto;padding:6px 18px;background:#fff8e8;border:1px solid #c79a2a;
+    color:#c79a2a;font-size:9px;font-family:monospace;font-weight:700;text-transform:uppercase;
     letter-spacing:1px;cursor:pointer;
 }
 .cm-btn:hover { background:#352c15; }
-.cm-btn.claim { background:#1a2e1a;border-color:#3d5a3e;color:#4b8b4f; }
+.cm-btn.claim { background:#1a2e1a;border-color:#3d5a3e;color:#1aa06a; }
 .cm-btn.claim:hover { background:#223c22; }
-.cm-sidebar { border-left:1px solid #21262d;display:flex;flex-direction:column;background:#0d1117;overflow-y:auto; }
+.cm-sidebar { border-left:1px solid #d6dee8;display:flex;flex-direction:column;background:#f3f6f9;overflow-y:auto; }
 .cm-side-head {
-    padding:8px 12px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;
+    padding:8px 12px;border-bottom:1px solid #d6dee8;display:flex;justify-content:space-between;
     align-items:center;font-size:8px;font-family:monospace;text-transform:uppercase;
-    letter-spacing:1px;color:#6b7280;flex-shrink:0;background:#0d1117;
+    letter-spacing:1px;color:#6a7480;flex-shrink:0;background:#f3f6f9;
 }
-.cm-side-head .gold { color:#d4af37; }
-.cm-node-row { display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #21262d;cursor:default; }
-.cm-node-row.active-row { background:#1a1d23;border-left:2px solid #d4af37;padding-left:10px; }
+.cm-side-head .gold { color:#c79a2a; }
+.cm-node-row { display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #d6dee8;cursor:default; }
+.cm-node-row.active-row { background:#1a1d23;border-left:2px solid #c79a2a;padding-left:10px; }
 .cm-node-num {
     width:18px;height:18px;border:1px solid;display:flex;align-items:center;justify-content:center;
     font-size:8px;font-family:monospace;font-weight:700;flex-shrink:0;
 }
-.cm-node-num.done   { border-color:#3d5a3e;color:#4b8b4f;background:#1a2e1a; }
-.cm-node-num.active { border-color:#b8962b;color:#d4af37;background:#2a2210; }
-.cm-node-num.locked { border-color:#21262d;color:#30363d;background:#0d1117; }
+.cm-node-num.done   { border-color:#3d5a3e;color:#1aa06a;background:#1a2e1a; }
+.cm-node-num.active { border-color:#c79a2a;color:#c79a2a;background:#fff8e8; }
+.cm-node-num.locked { border-color:#d6dee8;color:#c2ccd8;background:#f3f6f9; }
 .cm-node-name { font-size:10px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.cm-node-name.done   { color:#3d4450; }
-.cm-node-name.active { color:#c9d1d9;font-weight:600; }
-.cm-node-name.locked { color:#30363d; }
+.cm-node-name.done   { color:#98a1ae; }
+.cm-node-name.active { color:#1f2733;font-weight:600; }
+.cm-node-name.locked { color:#c2ccd8; }
 .cm-node-tag { font-size:8px;font-family:monospace;flex-shrink:0; }
-.cm-node-tag.ic { border:1px solid #b8962b;color:#d4af37;padding:1px 5px; }
-.cm-node-tag.lock { color:#21262d; }
-.cm-node-tag.date { color:#3d4450; }
-.cm-dots { padding:8px 12px;font-size:10px;color:#21262d;letter-spacing:4px; }
-.cm-arch-section { border-top:1px solid #21262d;flex-shrink:0; }
-.cm-arch-row { display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid #21262d; }
-.cm-arch-name { font-size:9px;color:#3d4450; }
-.cm-arch-date { font-size:8px;font-family:monospace;color:#30363d; }
-.cm-miles-section { padding:12px 16px;border-top:1px solid #21262d;flex-shrink:0; }
-.cm-miles-label { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:8px; }
-.cm-mile-row { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #21262d; }
+.cm-node-tag.ic { border:1px solid #c79a2a;color:#c79a2a;padding:1px 5px; }
+.cm-node-tag.lock { color:#d6dee8; }
+.cm-node-tag.date { color:#98a1ae; }
+.cm-dots { padding:8px 12px;font-size:10px;color:#d6dee8;letter-spacing:4px; }
+.cm-arch-section { border-top:1px solid #d6dee8;flex-shrink:0; }
+.cm-arch-row { display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid #d6dee8; }
+.cm-arch-name { font-size:9px;color:#98a1ae; }
+.cm-arch-date { font-size:8px;font-family:monospace;color:#c2ccd8; }
+.cm-miles-section { padding:12px 16px;border-top:1px solid #d6dee8;flex-shrink:0; }
+.cm-miles-label { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6a7480;margin-bottom:8px; }
+.cm-mile-row { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #d6dee8; }
 .cm-mile-icon { font-size:14px;flex-shrink:0; }
-.cm-mile-name { font-size:10px;color:#8b949e;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.cm-mile-bar-bg { width:50px;height:3px;background:#21262d;overflow:hidden;flex-shrink:0; }
+.cm-mile-name { font-size:10px;color:#6a7480;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.cm-mile-bar-bg { width:50px;height:3px;background:#d6dee8;overflow:hidden;flex-shrink:0; }
 .cm-mile-bar-fill { height:100%; }
-.cm-mile-val { font-size:8px;font-family:monospace;color:#6b7280;white-space:nowrap;flex-shrink:0; }
-.cm-empty { text-align:center;padding:48px 20px;color:#6b7280;font-size:11px; }
+.cm-mile-val { font-size:8px;font-family:monospace;color:#6a7480;white-space:nowrap;flex-shrink:0; }
+.cm-empty { text-align:center;padding:48px 20px;color:#6a7480;font-size:11px; }
     `;
     document.head.appendChild(s);
 })();
@@ -262,7 +262,7 @@ function _buildCareerModal() {
         }
         /* milestone claim banners */
         if (claimMiles.length > 0) {
-            mainHtml += `<div style="border-top:1px solid #21262d">`;
+            mainHtml += `<div style="border-top:1px solid #d6dee8">`;
             for (const q of claimMiles) mainHtml += _buildClaimMile(q);
             mainHtml += `</div>`;
         }
@@ -274,7 +274,7 @@ function _buildCareerModal() {
         <div class="cm-miles-section">
             <div class="cm-miles-label">Traguardi in Corso</div>
             ${activeMiles.slice(0, 4).map(q => _buildMileRow(q, gs)).join('')}
-            ${activeMiles.length > 4 ? `<div style="font-size:9px;color:#374151;padding:6px 0">+${activeMiles.length - 4} altri…</div>` : ''}
+            ${activeMiles.length > 4 ? `<div style="font-size:9px;color:#6a7480;padding:6px 0">+${activeMiles.length - 4} altri…</div>` : ''}
         </div>`;
     }
 
@@ -356,7 +356,7 @@ function _dayCompleted(qid, gs) {
 /* ── Sub-builders ───────────────────────────────────────────── */
 function _buildActiveStory(q, gs, claimable) {
     const isClaim = claimable.includes(q.id);
-    const tc      = _TIER_COLOR[q.tier] || '#d4af37';
+    const tc      = _TIER_COLOR[q.tier] || '#c79a2a';
     let prog = { cur: 0, tgt: 1 };
     try { prog = q.check(gs); } catch(e) {}
     const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
@@ -393,9 +393,9 @@ function _buildActiveStory(q, gs, claimable) {
             </thead>
             <tbody>
                 <tr>
-                    <td><span style="font-size:9px;color:${isClaim ? '#4b8b4f' : pct > 0 ? '#d4af37' : '#30363d'};font-family:monospace">${isClaim ? '✓' : pct > 0 ? '◐' : '○'}</span></td>
+                    <td><span style="font-size:9px;color:${isClaim ? '#1aa06a' : pct > 0 ? '#c79a2a' : '#c2ccd8'};font-family:monospace">${isClaim ? '✓' : pct > 0 ? '◐' : '○'}</span></td>
                     <td>
-                        <div style="${isClaim ? 'text-decoration:line-through;color:#3d4450' : ''}">${q.howTo || q.subtitle || q.title}</div>
+                        <div style="${isClaim ? 'text-decoration:line-through;color:#98a1ae' : ''}">${q.howTo || q.subtitle || q.title}</div>
                     </td>
                     <td>
                         <div class="cm-mbar-wrap">
@@ -425,8 +425,8 @@ function _buildClaimStory(q) {
             <thead><tr><th style="width:22px"></th><th>Obiettivo</th><th></th><th style="text-align:right">Stato</th></tr></thead>
             <tbody>
                 <tr>
-                    <td><span style="font-size:9px;color:#4b8b4f;font-family:monospace">✓</span></td>
-                    <td style="text-decoration:line-through;color:#3d4450">${q.howTo || q.title}</td>
+                    <td><span style="font-size:9px;color:#1aa06a;font-family:monospace">✓</span></td>
+                    <td style="text-decoration:line-through;color:#98a1ae">${q.howTo || q.title}</td>
                     <td></td>
                     <td style="text-align:right"><span class="cm-obj-status done">FATTO</span></td>
                 </tr>
@@ -442,19 +442,19 @@ function _buildClaimStory(q) {
 function _buildClaimMile(q) {
     const rewardChips = _buildRewardChips(q.rewards);
     return `
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #21262d">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #d6dee8">
             <span style="font-size:18px;flex-shrink:0">${q.icon}</span>
             <div style="flex:1;min-width:0">
-                <div style="font-size:8px;font-family:monospace;color:#4b8b4f;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Traguardo completato</div>
-                <div style="font-size:11px;font-weight:600;color:#e6edf3">${q.title}</div>
-                <div style="font-size:9px;color:#6b7280;margin-top:2px">${rewardChips}</div>
+                <div style="font-size:8px;font-family:monospace;color:#1aa06a;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Traguardo completato</div>
+                <div style="font-size:11px;font-weight:600;color:#1f2733">${q.title}</div>
+                <div style="font-size:9px;color:#6a7480;margin-top:2px">${rewardChips}</div>
             </div>
             <button class="cm-btn claim" style="flex-shrink:0" onclick="window.claimQuestReward('${q.id}')">Riscuoti →</button>
         </div>`;
 }
 
 function _buildMileRow(q, gs) {
-    const tc = _TIER_COLOR[q.tier] || '#d4af37';
+    const tc = _TIER_COLOR[q.tier] || '#c79a2a';
     let prog = { cur: 0, tgt: 1 };
     try { prog = q.check(gs); } catch(e) {}
     const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
@@ -473,10 +473,10 @@ function _buildRewardChips(r) {
     if (r.vtk)        chips.push(`<span class="cm-chip vtk">+${r.vtk} VTK</span>`);
     if (r.tc)         chips.push(`<span class="cm-chip gold">+${r.tc} DC</span>`);
     if (r.rep)        chips.push(`<span class="cm-chip gold">+${r.rep}★</span>`);
-    if (r.shadowCoin) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">+${r.shadowCoin.toLocaleString('it')} SC</span>`);
-    if (r.unlock)     chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">${r.unlock}</span>`);
-    if (r.title)      chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">"${r.title}"</span>`);
-    if (chips.length === 0 && r.desc) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#58a6ff;border-radius:4px;padding:2px 6px">${r.desc}</span>`);
+    if (r.shadowCoin) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">+${r.shadowCoin.toLocaleString('it')} SC</span>`);
+    if (r.unlock)     chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">${r.unlock}</span>`);
+    if (r.title)      chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">"${r.title}"</span>`);
+    if (chips.length === 0 && r.desc) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">${r.desc}</span>`);
     return chips.join('');
 }
 
@@ -536,26 +536,26 @@ window._showBivioModal = function(q) {
     document.getElementById('bivio-modal')?.remove();
     const optHtml = q.bivio.options.map(opt => `
         <button onclick="window._applyBivioChoice('${q.id}','${opt.id}')"
-                style="display:block;width:100%;text-align:left;padding:10px 12px;background:#161b22;border:1px solid #21262d;color:#c9d1d9;margin-top:8px;cursor:pointer;font-size:10px">
+                style="display:block;width:100%;text-align:left;padding:10px 12px;background:#ffffff;border:1px solid #d6dee8;color:#1f2733;margin-top:8px;cursor:pointer;font-size:10px">
             <div style="font-weight:700;margin-bottom:2px">${opt.label}</div>
-            <div style="font-size:9px;color:#6b7280">${opt.desc}</div>
+            <div style="font-size:9px;color:#6a7480">${opt.desc}</div>
         </button>`).join('');
 
     const giverLine = q.giver
-        ? `<div style="font-size:9px;color:#6b7280;margin-bottom:10px">${q.giver.name} · ${q.giver.faction}</div>`
+        ? `<div style="font-size:9px;color:#6a7480;margin-bottom:10px">${q.giver.name} · ${q.giver.faction}</div>`
         : '';
 
     const modal = document.createElement('div');
     modal.id = 'bivio-modal';
     modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:20px';
     modal.innerHTML = `
-        <div style="background:#161b22;border:1px solid #21262d;border-top:2px solid #b8962b;padding:20px;max-width:360px;width:100%">
-            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#d4af37;margin-bottom:6px">${q.icon} ${q.title}</div>
+        <div style="background:#ffffff;border:1px solid #d6dee8;border-top:2px solid #c79a2a;padding:20px;max-width:360px;width:100%">
+            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#c79a2a;margin-bottom:6px">${q.icon} ${q.title}</div>
             ${giverLine}
-            <div style="font-size:11px;color:#c9d1d9;font-weight:600;margin-bottom:4px">${q.bivio.prompt}</div>
+            <div style="font-size:11px;color:#1f2733;font-weight:600;margin-bottom:4px">${q.bivio.prompt}</div>
             ${optHtml}
             <button onclick="document.getElementById('bivio-modal').remove()"
-                    style="margin-top:14px;font-size:9px;color:#374151;background:none;border:none;cursor:pointer;width:100%;text-align:center">Annulla</button>
+                    style="margin-top:14px;font-size:9px;color:#6a7480;background:none;border:none;cursor:pointer;width:100%;text-align:center">Annulla</button>
         </div>`;
     document.body.appendChild(modal);
     window._bivioQuestRef = q;

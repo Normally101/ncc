@@ -1,5 +1,9 @@
 # Chauffeur Empire — Design System
 
+> ⚠️ **CAMBIO DI DIREZIONE (2026-05-30):** il gioco sta migrando dallo stile *eRepublik Flat DARK* (documentato qui sotto) a **"eRepublik-Modern"**: tema **chiaro**, denso, chrome con barra-risorse + nav orizzontale + sfondo cielo/skyline. Target bloccato = mockup `_mockups/E4_erepublik_dense.html`. Il nuovo kit di componenti è in `style.css` sotto la classe **`.em`** (font Inter). La Home (`ui-home.js`) è già convertita (Fase 1). Le sezioni dark qui sotto restano valide SOLO per le tab non ancora convertite. Per i nuovi lavori usare il kit `.em`. Dettagli e fasi in `HANDOFF.md`.
+>
+> ✅ **FASE 2 FATTA (2026-06-01) — CHROME GLOBALE.** Telaio eRepublik-Modern attivo: topbar barra-risorse + nav orizzontale a categorie (dropdown) + sfondo cielo globale. Classi prefisso **`.emc-*`** in fondo a style.css (sezione "EM CHROME"), attivate da `class="em-shell"` su `#app-body`. La vecchia sidebar dark è nascosta (`display:none`) ma il DOM è conservato per cmd-palette/active-state. `#main-panel` ora `left:0; top:97px`. Nuovo file `em-chrome.js` (highlight categoria attiva). Preview: `_mockups/chrome_preview.html`. Vincoli: NON rimuovere gli ID `tb-*` (li scrive `updateUI`), NON usare `display:none` su `#panel-title` (rompe innerText/auto-refresh — usare off-screen).
+
 ## Visual Identity
 
 **eRepublik Flat** — dark, minimal, data-dense. Inspired by eRepublik / eRevolution. Zero decoration, maximum information.
@@ -160,13 +164,20 @@ Table TD: `padding:8px 14px;font-size:11px;color:#e6edf3;border-bottom:1px solid
 
 ## Micro-interaction rule
 
-Every interactive element must have:
+Press feedback (`scale(0.97)` on `:active`) is applied **globally** to every
+`<button>` via a single rule in `style.css` (sezione "Buttons"). Non serve più
+aggiungere handler inline `onmousedown` su ogni bottone: la regola CSS li copre
+tutti, anche nei modal e overlay. Esclude i controlli Mapbox e rispetta
+`prefers-reduced-motion`.
+
+```css
+button { transition: transform .09s ease, opacity .15s ease; }
+button:active:not(:disabled) { transform: scale(0.97); }
 ```
-transition:opacity .15s
-onmousedown="this.style.transform='scale(0.97)'"
-onmouseup="this.style.transform=''"
-onmouseleave="this.style.transform=''"
-```
+
+Inline handlers restano supportati (vincono per specificità) ma sono legacy.
+Per elementi cliccabili non-`<button>` (span/link) che vogliono il press,
+usare un `<button>` o aggiungere l'handler inline puntuale.
 
 ## Tab completion status
 

@@ -4,38 +4,21 @@
    ================================================================ */
 
 /* ── 1. TOPBAR ───────────────────────────────────────────────── */
-
-#top-bar {
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-}
-
-#tb-cash  { text-shadow: 0 0 10px rgba(34,197,94,0.5); }
-#tb-rep   { text-shadow: 0 0 10px rgba(212,175,55,0.45); }
+/* EM-shell topbar styling lives in style.css (.em-shell #top-bar).
+   Legacy blur/text-shadow removed — the new bar is a light card. */
 
 /* ── 2. MAIN PANEL SHIFT ─────────────────────────────────────── */
+/* EM chrome: no left sidebar, content sits under topbar(52)+nav(44). */
 
 #main-panel {
-  left: 160px !important;
+  left: 0 !important;
 }
 
-#main-panel > div:first-child {
-  background: rgba(255,255,255,0.03) !important;
-  border-bottom: 1px solid rgba(255,255,255,0.08) !important;
-}
+/* ── 3. CHROME-AWARE OFFSETS (no sidebar) ────────────────────── */
 
-#panel-title {
-  font-family: 'Orbitron', sans-serif !important;
-  font-size: 10px !important;
-  letter-spacing: 0.20em;
-  color: rgba(240,244,255,0.70) !important;
-}
-
-/* ── 3. SIDEBAR-AWARE OFFSETS ────────────────────────────────── */
-
-#news-ticker-wrap { left: 160px !important; }
-#live-map-overlay { left: 176px !important; }
-#map-overlay      { left: 160px !important; }
+#news-ticker-wrap { left: 0 !important; }
+#live-map-overlay { left: 0 !important; }
+#map-overlay      { left: 0 !important; }
 
 /* ── 4. SCROLLBAR (tab container) ────────────────────────────── */
 

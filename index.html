@@ -69,7 +69,7 @@
   </style>
 
 </head>
-<body id="app-body" class="app-bg bg-deepBlack text-gray-200 overflow-hidden font-sans select-none" style="font-size:15px">
+<body id="app-body" class="app-bg em-shell bg-deepBlack text-gray-200 overflow-hidden font-sans select-none" style="font-size:15px">
 
   <!-- MAP OVERLAY: shown only on demand, never on startup -->
   <div id="map-overlay" class="fixed inset-0 z-[400] hidden flex-col" style="top:88px">
@@ -101,66 +101,118 @@
   </div>
 
   <!-- TOP BAR: 1 slim row, 42px -->
-  <header id="top-bar" class="fixed top-0 left-0 right-0 z-50 flex items-center gap-3 px-4 pointer-events-auto"
-          style="height:42px;background:#1e3a5f;border-bottom:1px solid rgba(0,0,0,0.25);box-shadow:0 2px 8px rgba(0,0,0,0.25)">
+  <!-- EM CHROME: wrapper fisso (topbar + nav) — main-panel offset calcolato da em-chrome.js -->
+  <div id="em-chrome">
+  <header id="top-bar" class="pointer-events-auto">
+    <div class="emc-topbar">
 
-    <!-- Logo -->
-    <img src="assets/ce-favicon.png" alt="CE" class="w-6 h-6 rounded-md object-contain flex-shrink-0" onclick="if(typeof switchTab==='function')switchTab('home')" style="cursor:pointer" onerror="this.style.display='none'">
-    <span class="font-display font-bold text-white tracking-widest text-[11px] uppercase flex-shrink-0" style="text-shadow:0 0 8px rgba(201,162,39,0.5);cursor:pointer" onclick="if(typeof switchTab==='function')switchTab('home')">Chauffeur Empire</span>
-
-    <div class="w-px h-5 bg-white/15 flex-shrink-0"></div>
-
-    <!-- Stat pills -->
-    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0">
-      <span class="w-2 h-2 rounded-full bg-green-400 flex-shrink-0"></span>
-      <span id="tb-cash" class="text-white font-mono font-bold text-xs">€0</span>
-    </div>
-    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0">
-      <span class="w-2 h-2 rounded-full bg-yellow-400 flex-shrink-0"></span>
-      <span id="tb-rep" class="text-white font-mono font-bold text-xs">0.0★</span>
-    </div>
-    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 cursor-pointer flex-shrink-0" onclick="openHotelModal && openHotelModal()">
-      <span class="w-2 h-2 rounded-full bg-blue-400 flex-shrink-0"></span>
-      <div class="w-16 h-1.5 bg-white/20 rounded-full overflow-hidden">
-        <div id="tb-energy-bar" class="h-full bg-blue-400 transition-all duration-300" style="width:100%"></div>
+      <!-- Brand -->
+      <div class="emc-brand" onclick="if(typeof switchTab==='function')switchTab('home')">
+        <span class="emc-bm">CE</span><span class="emc-bn">Chauffeur Empire</span>
       </div>
-      <span id="tb-energy-text" class="text-white/70 font-mono text-[10px]">100%</span>
+
+      <!-- Meta: breadcrumb · data · ora -->
+      <div class="emc-meta">
+        <span id="tb-breadcrumb">Dispatch</span><i class="emc-d"></i>
+        <span id="tb-date">Giorno 1 · 1 Gen</span><i class="emc-d"></i>
+        <span id="tb-time">08:00</span>
+      </div>
+
+      <!-- Resource chips -->
+      <div class="emc-chips">
+        <div class="emc-chip" onclick="openHotelModal && openHotelModal()" title="Energia">
+          <span class="emc-ico" style="background:#e7f6ee;color:#1aa06a">⚡</span>
+          <span class="emc-eb"><i id="tb-energy-bar" style="width:100%"></i></span>
+          <span id="tb-energy-text">100%</span>
+        </div>
+        <div class="emc-chip" title="Reputazione">
+          <span class="emc-ico" style="background:#f6edd2;color:#c79a2a">★</span>
+          <span id="tb-rep">0.0 ★</span>
+        </div>
+        <div class="emc-chip" onclick="switchTab('store')" title="Driver Coins">
+          <span class="emc-ico" style="background:#f6edd2;color:#c79a2a">🪙</span>
+          <span id="tb-tc">50</span>
+        </div>
+        <div class="emc-chip" onclick="if(typeof openVTKModal==='function')openVTKModal()" title="Vettura Token — Mercato VTK">
+          <span class="emc-ico" style="background:#e7f0fb;color:#2f74c0">◈</span>
+          <span id="tb-vtk">0</span>
+        </div>
+        <div class="emc-chip" title="Cash">
+          <span class="emc-ico" style="background:#e7f6ee;color:#15885a">€</span>
+          <span id="tb-cash">€0</span>
+        </div>
+        <span id="tb-weather-icon" style="font-size:14px">☀️</span>
+        <span id="tb-weather-label" style="display:none"></span>
+        <span id="tb-surge" class="hidden" style="font-size:9px;font-weight:800;color:#e0871f">⚡ SURGE</span>
+      </div>
+
+      <!-- Actions -->
+      <button id="logout-btn" onclick="window.authLogout && window.authLogout()" title="Esci" class="emc-iconbtn">⏻</button>
+      <button id="sidebar-toggle-btn" onclick="window.openCmdPalette && window.openCmdPalette()" title="Cerca sezione" class="emc-iconbtn">🔍</button>
+      <span id="hub-event-badge" class="hidden"></span>
     </div>
-    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0 cursor-pointer" onclick="switchTab('store')" title="Driver Coins">
-      <span class="text-yellow-400 text-[10px]">🪙</span>
-      <span id="tb-tc" class="text-yellow-300 font-mono font-bold text-xs">50</span>
-    </div>
-    <div class="flex items-center gap-1.5 bg-white/10 rounded-full px-2.5 py-1 flex-shrink-0 cursor-pointer" onclick="if(typeof openVTKModal==='function')openVTKModal()" title="Vettura Token — clicca per Mercato VTK">
-      <span class="text-blue-300 text-[10px]">◈</span>
-      <span id="tb-vtk" class="text-blue-300 font-mono font-bold text-xs">0</span>
-    </div>
-
-    <!-- Weather -->
-    <div class="flex items-center gap-1.5 flex-shrink-0">
-      <span id="tb-weather-icon" class="text-sm">☀️</span>
-      <span id="tb-surge" class="text-[9px] font-bold text-orange-400 hidden">⚡ SURGE</span>
-    </div>
-
-    <div class="flex-1"></div>
-
-    <!-- Breadcrumb -->
-    <span id="tb-breadcrumb" class="text-white/50 text-[10px] uppercase tracking-widest flex-shrink-0">Dispatch</span>
-
-    <div class="w-px h-5 bg-white/15 flex-shrink-0"></div>
-
-    <!-- Time -->
-    <div class="text-right flex-shrink-0">
-      <span id="tb-time" class="text-white font-mono font-bold text-sm block leading-none">08:00</span>
-      <span id="tb-date" class="text-[8px] text-white/50 uppercase">1 Gen</span>
-    </div>
-
-    <!-- Actions -->
-    <button id="logout-btn" onclick="window.authLogout && window.authLogout()" title="Esci" class="text-white/60 hover:text-white text-sm flex-shrink-0">⏻</button>
-    <button id="sidebar-toggle-btn" onclick="window.toggleSidebar && window.toggleSidebar(true)"
-            class="text-white/60 hover:text-white text-sm flex-shrink-0 hidden lg:hidden">☰</button>
-
-    <span id="hub-event-badge" class="hidden"></span>
   </header>
+
+  <!-- EM NAV: horizontal category nav (eRepublik-Modern) -->
+  <nav id="em-nav" class="pointer-events-auto">
+    <div class="emc-nav">
+      <div class="emc-tab" data-tab="home" onclick="switchTab('home')"><span class="emc-ti">🏠</span>Home</div>
+
+      <div class="emc-tab fill" onclick="switchTab('corse')"><span class="emc-ti">🏢</span>Le mie sedi
+        <div class="emc-menu" onclick="event.stopPropagation()">
+          <a href="#" data-tab="corse"    onclick="switchTab('corse');return false">🚕 Dispatch</a>
+          <a href="#" data-tab="fleet"    onclick="switchTab('fleet');return false">🚘 Flotta</a>
+          <a href="#" data-tab="staff"    onclick="switchTab('staff');return false">👔 Staff &amp; HR</a>
+          <a href="#" data-tab="hq"       onclick="switchTab('hq');return false">🏗️ HQ Builder</a>
+          <a href="#" data-tab="showroom" onclick="switchTab('showroom');return false">✨ Showroom</a>
+          <a href="#" data-tab="emails"   onclick="switchTab('emails');return false">📩 Inbox</a>
+        </div>
+      </div>
+
+      <div class="emc-tab fill" onclick="switchTab('market')"><span class="emc-ti">🛒</span>Business
+        <div class="emc-menu" onclick="event.stopPropagation()">
+          <a href="#" data-tab="market"         onclick="switchTab('market');return false">🚗 Mercato Auto</a>
+          <a href="#" data-tab="b2b"            onclick="switchTab('b2b');return false">💼 Contratti B2B</a>
+          <a href="#" data-tab="contracts"      onclick="switchTab('contracts');return false">🤝 Corporate Deals</a>
+          <a href="#" data-tab="tourism"        onclick="switchTab('tourism');return false">🌍 Bandi Turismo</a>
+          <a href="#" data-tab="infrastructure" onclick="switchTab('infrastructure');return false">⛽ Carburante</a>
+          <a href="#" data-tab="auctions"       onclick="switchTab('auctions');return false">⚖️ Aste Giudiziarie</a>
+          <a href="#" data-tab="store"          onclick="switchTab('store');return false">💎 Executive Club</a>
+        </div>
+      </div>
+
+      <div class="emc-tab fill" onclick="switchTab('finance')"><span class="emc-ti">💹</span>Finanza
+        <div class="emc-menu" onclick="event.stopPropagation()">
+          <a href="#" data-tab="finance"    onclick="switchTab('finance');return false">💹 Finanza</a>
+          <a href="#" data-tab="realestate" onclick="switchTab('realestate');return false">🏛️ Real Estate</a>
+          <a href="#" data-tab="crypto"     onclick="switchTab('crypto');return false">₿ Crypto &amp; Offshore</a>
+          <a href="#" data-tab="invest"     onclick="switchTab('invest');return false">📈 Investimenti</a>
+          <a href="#" data-tab="marketing"  onclick="switchTab('marketing');return false">📣 Marketing</a>
+        </div>
+      </div>
+
+      <div class="emc-tab fill" onclick="switchTab('provinces')"><span class="emc-ti">👑</span>Potere
+        <div class="emc-menu" onclick="event.stopPropagation()">
+          <a href="#" data-tab="provinces" onclick="switchTab('provinces');return false">🗺️ War Room</a>
+          <a href="#" data-tab="regions"   onclick="switchTab('regions');return false">🗺️ Regioni</a>
+          <a href="#" data-tab="politics"  onclick="switchTab('politics');return false">🏛️ Politica</a>
+          <a href="#" data-tab="shadow"    onclick="switchTab('shadow');return false">🕵️ Agenzia Ombra</a>
+          <a href="#" data-tab="nemesis"   onclick="switchTab('nemesis');return false">🦹 Nemici VIP</a>
+          <a href="#" data-tab="opa"       onclick="switchTab('opa');return false">🦅 OPA Ostili</a>
+        </div>
+      </div>
+
+      <div class="emc-tab fill" onclick="switchTab('ranking')"><span class="emc-ti">🌐</span>Community
+        <div class="emc-menu" onclick="event.stopPropagation()">
+          <a href="#" data-tab="ranking" onclick="switchTab('ranking');return false">🏆 Classifica</a>
+          <a href="#" data-tab="career"  onclick="switchTab('career');return false">🎯 Missioni</a>
+          <a href="#" data-tab="legal"   onclick="switchTab('legal');return false">⚖️ Ufficio Legale</a>
+          <a href="#" data-tab="help"    onclick="switchTab('help');return false">🆘 Supporto</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+  </div><!-- /#em-chrome -->
 
   <!-- SIDEBAR: dark accordion navigation, 160px -->
   <aside id="sidebar-player" class="fixed z-40 flex flex-col overflow-hidden"
@@ -178,6 +230,15 @@
 
     <!-- Accordion nav -->
     <nav id="sidebar-nav" class="flex-1 overflow-y-auto py-1">
+
+      <!-- COMMAND PALETTE TRIGGER -->
+      <div onclick="window.openCmdPalette&&window.openCmdPalette()" title="Cerca sezione (⌘K / Ctrl+K)"
+        style="margin:6px 8px;padding:7px 10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;color:#6b7280;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;transition:border-color .15s,color .15s"
+        onmouseover="this.style.borderColor='#30363d';this.style.color='#8b949e'"
+        onmouseout="this.style.borderColor='#21262d';this.style.color='#6b7280'">
+        <span>🔍 Cerca sezione…</span>
+        <span style="font-family:monospace;font-size:9px;border:1px solid #21262d;border-radius:3px;padding:1px 5px">⌘K</span>
+      </div>
 
       <!-- HOME -->
       <a class="sidebar-item" data-tab="home" onclick="switchTab('home')" href="#" style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-weight:700;color:rgba(212,175,55,0.85)">🏠 Home</a>
@@ -444,11 +505,9 @@
     </div>
   </div>
 
-  <main id="main-panel" class="fixed right-0 z-40 flex flex-col overflow-hidden" style="top:42px;bottom:0;left:160px;background:var(--panel)">
-    <div class="px-6 py-3 border-b flex items-center gap-4 flex-shrink-0" style="border-color:#cdd6e0;background:#e8eef5">
-      <h2 id="panel-title" class="uppercase font-display font-bold tracking-widest text-sm flex-1" style="color:#1a2744">Centrale Operativa</h2>
-    </div>
-    <div id="tab-container" class="flex-1 overflow-y-auto p-6" style="max-width:1100px;width:100%;margin:0 auto;align-self:center;box-sizing:border-box">
+  <main id="main-panel" class="fixed right-0 z-40 flex flex-col overflow-hidden" style="top:150px;bottom:0;left:0;background:transparent">
+    <h2 id="panel-title" style="position:absolute;left:-9999px;top:0;width:1px;height:1px;overflow:hidden;pointer-events:none">Centrale Operativa</h2>
+    <div id="tab-container" class="flex-1 overflow-y-auto p-6" style="max-width:1130px;width:100%;margin:0 auto;align-self:center;box-sizing:border-box">
     </div>
   </main>
 
@@ -553,7 +612,7 @@
   <script defer src="auth.js?v=6"></script>
   <script defer src="quests-data.js?v=7"></script>
   <script defer src="quests.js?v=9"></script>
-  <script defer src="engine.js?v=8"></script>
+  <script defer src="engine.js?v=9"></script>
   <script defer src="engine-daily.js?v=9"></script>
   <script defer src="engine-rides.js?v=6"></script>
   <script defer src="engine-finance.js?v=6"></script>
@@ -565,56 +624,58 @@
   <script defer src="engine-events.js?v=6"></script>
   <script defer src="vip-buffs.js?v=6"></script>
   <script defer src="vip-clients.js?v=6"></script>
-  <script defer src="war_room.js?v=6"></script>
+  <script defer src="war_room.js?v=10"></script>
   <script defer src="dispatcher.js?v=7"></script>
   <script defer src="map.js?v=7"></script>
   <script defer src="map-router.js?v=6"></script>
-  <script defer src="map-garage.js?v=9"></script>
+  <script defer src="map-garage.js?v=10"></script>
   <script defer src="map-visual.js?v=6"></script>
-  <script defer src="ui-emails.js?v=9"></script>
-  <script defer src="ui-marketing.js?v=9"></script>
-  <script defer src="ui-finance.js?v=7"></script>
-  <script defer src="ui-dispatch.js?v=7"></script>
-  <script defer src="ui-fleet.js?v=9"></script>
-  <script defer src="ui-staff.js?v=9"></script>
-  <script defer src="ui-lifestyle.js?v=6"></script>
-  <script defer src="ui-ops.js?v=9"></script>
-  <script defer src="ui-ranking.js?v=7"></script>
-  <script defer src="ui-investments.js?v=6"></script>
-  <script defer src="ui-legal.js?v=9"></script>
-  <script defer src="ui-politics.js?v=6"></script>
-  <script defer src="ui-career.js?v=9"></script>
-  <script defer src="ui-store.js?v=9"></script>
-  <script defer src="ui-market.js?v=6"></script>
-  <script defer src="ui-home.js?v=6"></script>
-  <script defer src="ui-help.js?v=9"></script>
+  <script defer src="ui-emails.js?v=10"></script>
+  <script defer src="ui-marketing.js?v=10"></script>
+  <script defer src="ui-finance.js?v=10"></script>
+  <script defer src="ui-dispatch.js?v=10"></script>
+  <script defer src="ui-fleet.js?v=10"></script>
+  <script defer src="ui-staff.js?v=10"></script>
+  <script defer src="ui-lifestyle.js?v=10"></script>
+  <script defer src="ui-ops.js?v=10"></script>
+  <script defer src="ui-ranking.js?v=10"></script>
+  <script defer src="ui-investments.js?v=10"></script>
+  <script defer src="ui-legal.js?v=10"></script>
+  <script defer src="ui-politics.js?v=10"></script>
+  <script defer src="ui-career.js?v=10"></script>
+  <script defer src="ui-store.js?v=10"></script>
+  <script defer src="ui-market.js?v=10"></script>
+  <script defer src="ui-home.js?v=9"></script>
+  <script defer src="ui-help.js?v=10"></script>
   <script defer src="ui-hub.js?v=6"></script>
-  <script defer src="ui-realestate.js?v=6"></script>
+  <script defer src="ui-realestate.js?v=10"></script>
   <script defer src="ui-map-utils.js?v=6"></script>
   <script defer src="ui-sidebar.js?v=6"></script>
-  <script defer src="showroom.js?v=6"></script>
-  <script defer src="vtk-market.js?v=1"></script>
+  <script defer src="em-chrome.js?v=3"></script>
+  <script defer src="showroom.js?v=10"></script>
+  <script defer src="vtk-market.js?v=10"></script>
   <script defer src="p2p-market.js?v=6"></script>
-  <script defer src="p2p-render.js?v=9"></script>
-  <script defer src="b2b.js?v=9"></script>
-  <script defer src="auctions.js?v=9"></script>
-  <script defer src="driver_skills.js?v=9"></script>
+  <script defer src="p2p-render.js?v=10"></script>
+  <script defer src="b2b.js?v=10"></script>
+  <script defer src="auctions.js?v=10"></script>
+  <script defer src="driver_skills.js?v=10"></script>
   <script defer src="global_events.js?v=9"></script>
-  <script defer src="black_ops.js?v=9"></script>
-  <script defer src="crypto.js?v=9"></script>
+  <script defer src="black_ops.js?v=10"></script>
+  <script defer src="crypto.js?v=10"></script>
   <script defer src="weather_real.js?v=9"></script>
   <script defer src="hq-data.js?v=6"></script>
-  <script defer src="hq.js?v=9"></script>
+  <script defer src="hq.js?v=10"></script>
   <script defer src="hq-visual.js?v=9"></script>
   <script defer src="mobile_dispatcher.js?v=6"></script>
-  <script defer src="hostile_takeover.js?v=9"></script>
-  <script defer src="nemesis.js?v=9"></script>
-  <script defer src="infrastructure.js?v=9"></script>
-  <script defer src="contracts.js?v=9"></script>
-  <script defer src="tourism.js?v=9"></script>
+  <script defer src="hostile_takeover.js?v=10"></script>
+  <script defer src="nemesis.js?v=10"></script>
+  <script defer src="infrastructure.js?v=10"></script>
+  <script defer src="contracts.js?v=10"></script>
+  <script defer src="tourism.js?v=10"></script>
   <script defer src="tutorial.js?v=6"></script>
   <script defer src="premium-ui.js?v=6"></script>
   <script defer src="motion.js?v=6"></script>
+  <script defer src="cmd-palette.js?v=1"></script>
   <script>
     // onerror runs immediately (before deferred scripts) to catch load-time errors
     window.onerror = function(msg, src, line, col, err) {

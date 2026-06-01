@@ -24,45 +24,33 @@ function renderTabStaff() {
         return s + (role ? role.salary : 0);
     }, 0);
 
-    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
-        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Risorse Umane</div>
-        <div style="font-size:20px;font-weight:700;color:#e6edf3">Gestione Staff</div>
-        <div style="font-size:11px;color:#8b949e;margin-top:4px">${hqName} · ${currentStaff} / ${maxStaff === 99 ? '∞' : maxStaff} posizioni · Stipendi €${monthlyPayroll.toLocaleString()}/mese</div>
+    let html = `<div style="margin-bottom:10px">
+        <div class="em-sec">Risorse Umane</div>
+        <div style="font-size:20px;font-weight:800;margin-top:3px">Gestione Staff</div>
+        <div style="font-size:11px;color:var(--em-muted);margin-top:3px">${hqName} · ${currentStaff} / ${maxStaff === 99 ? '∞' : maxStaff} posizioni · Stipendi €${monthlyPayroll.toLocaleString()}/mese</div>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Staff Ufficio</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${officeStaff > 0 ? '#3fb950' : '#e6edf3'}">${officeStaff}</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Autisti</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${driverCount > 0 ? '#58a6ff' : '#e6edf3'}">${driverCount}</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Capacità</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${staffFull ? '#f85149' : '#3fb950'}">${currentStaff}/${maxStaff===99?'∞':maxStaff}</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Stipendi/mese</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${monthlyPayroll > 0 ? '#f85149' : '#3fb950'}">€${monthlyPayroll.toLocaleString()}</div>
-        </div>
+    <div class="em-kpibar">
+        <div class="k"><div class="l">Staff Ufficio</div><div class="v" style="color:${officeStaff > 0 ? 'var(--em-green)' : 'var(--em-ink)'}">${officeStaff}</div></div>
+        <div class="k"><div class="l">Autisti</div><div class="v" style="color:${driverCount > 0 ? 'var(--em-blue)' : 'var(--em-ink)'}">${driverCount}</div></div>
+        <div class="k"><div class="l">Capacità</div><div class="v" style="color:${staffFull ? 'var(--em-red)' : 'var(--em-green)'}">${currentStaff}/${maxStaff===99?'∞':maxStaff}</div></div>
+        <div class="k"><div class="l">Stipendi/mese</div><div class="v" style="color:${monthlyPayroll > 0 ? 'var(--em-red)' : 'var(--em-green)'}">€${monthlyPayroll.toLocaleString()}</div></div>
     </div>`;
 
-    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px">🏢 Ufficio Centralizzato</div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:24px">`;
+    html += `<div class="em-sec" style="margin:0 0 8px">🏢 Ufficio Centralizzato</div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px">`;
     for(let k in STAFF_ROLES) {
         let s = STAFF_ROLES[k]; let owned = gameState.staff.some(x => x.id === s.id);
-        html += `<div style="background:${owned?'rgba(212,175,55,0.04)':'#161b22'};border:1px solid ${owned?'rgba(212,175,55,0.2)':'#21262d'};border-radius:6px;padding:16px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        html += `<div class="em-card" style="padding:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;${owned ? 'border-color:#ecd9a0' : ''}">
             <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:700;color:${owned?'var(--gold)':'var(--text)'}">${s.name}</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:2px">€${s.salary.toLocaleString()}/mese</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:4px;line-height:1.4">${s.desc}</div>
+                <div style="font-weight:700;color:${owned?'var(--em-gold)':'var(--em-ink)'}">${s.name}</div>
+                <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">€${s.salary.toLocaleString()}/mese</div>
+                <div style="font-size:10.5px;color:var(--em-dim);margin-top:4px;line-height:1.4">${s.desc}</div>
             </div>
             <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
                 ${owned
-                    ? `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:2px 6px;margin-bottom:4px;display:block;width:fit-content">✓ ATTIVO</span>
-                       <button onclick="window.fireStaff('${s.id}')" style="background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Licenzia</button>`
-                    : `<button onclick="hireOfficeStaff('${s.id}')" ${staffFull ? 'disabled' : ''} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s;${staffFull ? 'opacity:.4;cursor:not-allowed' : ''}" onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Assumi</button>`
+                    ? `<span class="em-pill em-pill--green">✓ Attivo</span>
+                       <button onclick="window.fireStaff('${s.id}')" class="em-redbtn" style="padding:4px 11px;font-size:10px">Licenzia</button>`
+                    : `<button onclick="hireOfficeStaff('${s.id}')" ${staffFull ? 'disabled' : ''} class="em-goldbtn" style="${staffFull ? 'opacity:.4;cursor:not-allowed' : ''}">Assumi</button>`
                 }
             </div>
         </div>`;
@@ -81,19 +69,19 @@ function renderTabStaff() {
     html += `</div>`;
 
     // ── HR Automation ───────────────────────────────────────────────────────
-    html += `<div style="background:${hrActive?'rgba(212,175,55,0.04)':'#161b22'};border:1px solid ${hrActive?'rgba(212,175,55,0.2)':'#21262d'};border-radius:6px;padding:16px;margin-bottom:16px">
+    html += `<div class="em-card" style="padding:14px;margin-bottom:16px;${hrActive ? 'border-color:#ecd9a0' : ''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
             <div>
-                <div style="font-size:9px;color:#a855f7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">🤝 Gestione Sindacale HR</div>
-                <div style="font-size:10px;color:var(--text-muted);line-height:1.4;max-width:220px">Gli scioperi vengono risolti automaticamente senza popup bloccanti.</div>
+                <div class="em-sec" style="color:var(--em-violet);margin-bottom:4px">🤝 Gestione Sindacale HR</div>
+                <div style="font-size:10.5px;color:var(--em-muted);line-height:1.4;max-width:240px">Gli scioperi vengono risolti automaticamente senza popup bloccanti.</div>
                 ${hrActive
-                    ? `<div style="font-size:10px;color:var(--green);margin-top:4px;font-weight:700">✅ Attivo — scade tra ${hrTimeLeft}</div>`
-                    : `<div style="font-size:10px;color:var(--text-dim);margin-top:4px">7 giorni · 5 DC</div>`}
+                    ? `<div style="font-size:10.5px;color:var(--em-green-d);margin-top:4px;font-weight:700">✅ Attivo — scade tra ${hrTimeLeft}</div>`
+                    : `<div style="font-size:10.5px;color:var(--em-dim);margin-top:4px">7 giorni · 5 DC</div>`}
             </div>
             <div>
                 ${hrActive
-                    ? `<span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:2px 6px">ATTIVO</span>`
-                    : `<button onclick="window.buyHRAutomation()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🪙 5 DC · 7g</button>`}
+                    ? `<span class="em-pill em-pill--green">Attivo</span>`
+                    : `<button onclick="window.buyHRAutomation()" class="em-goldbtn">🪙 5 DC · 7g</button>`}
             </div>
         </div>
     </div>`;
@@ -101,14 +89,13 @@ function renderTabStaff() {
     // ── I Tuoi Autisti ──────────────────────────────────────────────────────
     const _myDrivers = gameState.drivers.filter(d => d.id !== 'ceo');
     if (_myDrivers.length === 0) {
-        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px">🚗 I Tuoi Autisti</div>` +
-            `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">🚗</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun autista</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Assumi autisti dal Mercato Reclutamento qui sotto</div></div>`;
+        html += `<div class="em-sec" style="margin:0 0 10px">🚗 I Tuoi Autisti</div>` +
+            `<div class="em-empty"><div style="font-size:32px;margin-bottom:10px">🚗</div><div style="font-size:14px;font-weight:700;color:var(--em-ink)">Nessun autista</div><div style="margin-top:4px">Assumi autisti dal Mercato Reclutamento qui sotto</div></div>`;
     } else {
-        const _STH = t => `<th style="padding:8px 14px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--text-dim);font-family:'Roboto Mono',monospace;text-align:left;border-bottom:1px solid rgba(255,255,255,0.05);white-space:nowrap">${t}</th>`;
-        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:0 0 12px">🚗 I Tuoi Autisti <span style="font-size:9px;font-weight:400;color:#6b7280">${_myDrivers.length} totali</span></div>
-        <div class="ce-glass" style="overflow:hidden;margin-bottom:16px">
-            <table style="width:100%;border-collapse:collapse">
-                <thead><tr style="background:rgba(255,255,255,0.02)">${_STH('Autista')}${_STH('Stato')}${_STH('Fatica')}${_STH('Stress')}${_STH('Morale')}${_STH('Veicolo')}<th></th></tr></thead>
+        html += `<div class="em-sec" style="margin:0 0 8px">🚗 I Tuoi Autisti <span style="color:var(--em-muted)">${_myDrivers.length} totali</span></div>
+        <div class="em-card" style="margin-bottom:16px">
+            <table class="em-tbl">
+                <thead><tr><th>Autista</th><th>Stato</th><th>Fatica</th><th>Stress</th><th>Morale</th><th>Veicolo</th><th></th></tr></thead>
                 <tbody>`;
 
         _myDrivers.forEach(d => {
@@ -119,75 +106,69 @@ function renderTabStaff() {
             const isBusy    = d.status === 'busy';
             const isBurnout = d.burnout_until && (gameState.day * 24 + gameState.hour) < d.burnout_until;
 
-            const fatigueColor = fatigue >= 85 ? '#ef4444' : fatigue >= 60 ? '#f59e0b' : '#22c55e';
-            const stressColor  = stress  >= 80 ? '#ef4444' : stress  >= 50 ? '#f59e0b' : '#22c55e';
-            const moraleColor  = morale  < 25  ? '#ef4444' : morale  < 60  ? '#f59e0b' : '#22c55e';
+            const fatigueColor = fatigue >= 85 ? 'var(--em-red)' : fatigue >= 60 ? 'var(--em-amber)' : 'var(--em-green)';
+            const stressColor  = stress  >= 80 ? 'var(--em-red)' : stress  >= 50 ? 'var(--em-amber)' : 'var(--em-green)';
+            const moraleColor  = morale  < 25  ? 'var(--em-red)' : morale  < 60  ? 'var(--em-amber)' : 'var(--em-green)';
 
             const levelData = (DRIVER_LEVELS || [])[d.level || 0] || { name:'Rookie', badge:'lvl-rookie' };
 
-            let statusLabel, statusColor;
-            if (isBurnout)       { statusLabel = '🔥 BURNOUT';    statusColor = '#ef4444'; }
-            else if (d.isOnStrike) { statusLabel = '🪧 SCIOPERO';  statusColor = '#ef4444'; }
-            else if (isResting)  { statusLabel = `☕ Riposo ${d.restHoursLeft}h`; statusColor = '#f97316'; }
-            else if (fatigue >= 85) { statusLabel = '⚠ ESAUSTO';  statusColor = '#f59e0b'; }
-            else if (isBusy)     { statusLabel = '● IN CORSA';    statusColor = '#3b82f6'; }
-            else                 { statusLabel = '● LIBERO';       statusColor = '#22c55e'; }
+            let statusLabel, statusCls;
+            if (isBurnout)       { statusLabel = '🔥 Burnout';    statusCls = 'em-pill--red'; }
+            else if (d.isOnStrike) { statusLabel = '🪧 Sciopero';  statusCls = 'em-pill--red'; }
+            else if (isResting)  { statusLabel = `☕ Riposo ${d.restHoursLeft}h`; statusCls = 'em-pill--gold'; }
+            else if (fatigue >= 85) { statusLabel = '⚠ Esausto';  statusCls = 'em-pill--gold'; }
+            else if (isBusy)     { statusLabel = '● In corsa';    statusCls = 'em-pill--blue'; }
+            else                 { statusLabel = '● Libero';       statusCls = 'em-pill--green'; }
 
             const car = gameState.fleet.find(v => v.id === d.assignedCarId);
             const carLabel = car ? car.name : '—';
 
             const miniBar = (val, color) => `<div style="display:flex;align-items:center;gap:5px">
-                <div style="flex:1;height:4px;border-radius:3px;background:rgba(255,255,255,0.08);min-width:48px;overflow:hidden">
-                    <div style="height:100%;width:${Math.round(val)}%;background:${color};border-radius:3px"></div>
-                </div>
-                <span style="font-size:9px;font-family:monospace;color:${color};width:26px;text-align:right;flex-shrink:0">${Math.floor(val)}%</span>
+                <span class="em-prog" style="width:52px"><i style="width:${Math.round(val)}%;background:${color}"></i></span>
+                <span style="font-size:9.5px;font-weight:700;color:${color};width:26px;text-align:right;flex-shrink:0">${Math.floor(val)}%</span>
             </div>`;
 
             // actions
             const actBtns = [
                 d.isOnStrike && !isBusy
-                    ? `<button onclick="resolveStrike('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(212,175,55,0.4);background:rgba(212,175,55,0.08);color:#d4af37;cursor:pointer">🤝 Accordo</button>`
+                    ? `<button onclick="resolveStrike('${d.id}')" class="em-goldbtn" style="font-size:9.5px;padding:3px 8px">🤝 Accordo</button>`
                     : (!isResting && !isBurnout && !isBusy && (fatigue >= 40 || stress >= 50))
-                        ? `<button onclick="putDriverOnBreak('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(107,114,128,0.4);background:rgba(107,114,128,0.08);color:#9ca3af;cursor:pointer">☕ Pausa</button>`
+                        ? `<button onclick="putDriverOnBreak('${d.id}')" class="em-ghbtn" style="font-size:9.5px;padding:3px 8px">☕ Pausa</button>`
                         : '',
-                `<button onclick="window.renderDriverSkillModal('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(59,130,246,0.4);background:rgba(59,130,246,0.08);color:#60a5fa;cursor:pointer">⭐ Skills</button>`,
-                `<button onclick="fireDriver('${d.id}')" style="font-size:8px;padding:3px 7px;border-radius:5px;border:1px solid rgba(239,68,68,0.3);background:rgba(239,68,68,0.07);color:#f87171;cursor:pointer">Licenzia</button>`,
+                `<button onclick="window.renderDriverSkillModal('${d.id}')" class="em-bbtn" style="font-size:9.5px;padding:3px 8px">⭐ Skills</button>`,
+                `<button onclick="fireDriver('${d.id}')" class="em-redbtn" style="font-size:9.5px;padding:3px 8px">Licenzia</button>`,
             ].filter(Boolean).join(' ');
 
             html += `
             <input type="file" id="avatar-upload-${d.id}" accept="image/*" style="display:none" onchange="window.setDriverAvatar('${d.id}', this)">
-            <tr class="ce-table-row" style="border-bottom:1px solid rgba(255,255,255,0.04)">
-                <td style="padding:11px 14px">
+            <tr>
+                <td style="min-width:175px">
                     <div style="display:flex;align-items:center;gap:8px">
                         ${d.avatarBase64
-                            ? `<img src="${d.avatarBase64}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid rgba(255,255,255,0.12)" onclick="document.getElementById('avatar-upload-${d.id}').click()">`
-                            : `<div style="width:30px;height:30px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:#d4af37;flex-shrink:0" onclick="document.getElementById('avatar-upload-${d.id}').click()">👤</div>`}
+                            ? `<img src="${d.avatarBase64}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid var(--em-line)" onclick="document.getElementById('avatar-upload-${d.id}').click()">`
+                            : `<div style="width:30px;height:30px;border-radius:50%;background:#fff3cf;border:1px solid #ecd9a0;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:var(--em-gold);flex-shrink:0" onclick="document.getElementById('avatar-upload-${d.id}').click()">👤</div>`}
                         <div style="min-width:0">
-                            <div style="font-size:12px;font-weight:700;color:var(--text)">${d.name} <span class="lvl-badge ${levelData.badge}" style="font-size:7px">${levelData.name}</span></div>
-                            <div style="font-size:9px;color:var(--text-dim);margin-top:1px">€${(d.salary||0).toLocaleString()}/mese · XP ${d.xp||0}</div>
-                            ${d.trait ? `<div style="font-size:9px;color:#a855f7;margin-top:1px">${d.trait.name}</div>` : ''}
+                            <div style="font-weight:700">${d.name} <span class="lvl-badge ${levelData.badge}" style="font-size:7px">${levelData.name}</span></div>
+                            <div style="font-size:9.5px;color:var(--em-dim);margin-top:1px">€${(d.salary||0).toLocaleString()}/mese · XP ${d.xp||0}</div>
+                            ${d.trait ? `<div style="font-size:9.5px;color:var(--em-violet);margin-top:1px">${d.trait.name}</div>` : ''}
                         </div>
                     </div>
                 </td>
-                <td style="padding:11px 14px;white-space:nowrap">
-                    <span style="font-size:9px;font-weight:700;color:${statusColor}">${statusLabel}</span>
-                </td>
-                <td style="padding:11px 14px;min-width:110px">${miniBar(fatigue, fatigueColor)}</td>
-                <td style="padding:11px 14px;min-width:110px">
+                <td style="white-space:nowrap"><span class="em-pill ${statusCls}">${statusLabel}</span></td>
+                <td style="min-width:110px">${miniBar(fatigue, fatigueColor)}</td>
+                <td style="min-width:110px">
                     ${miniBar(stress, stressColor)}
                     ${stress >= 50 && !isResting && !isBurnout && !isBusy ? `<div style="margin-top:4px;display:flex;gap:4px">
-                        <button onclick="putDriverOnBreak('${d.id}')" style="font-size:7px;padding:2px 5px;border-radius:4px;border:1px solid rgba(107,114,128,0.35);background:rgba(107,114,128,0.08);color:#9ca3af;cursor:pointer">☕ −40%</button>
-                        <button onclick="payStressClear('${d.id}')" style="font-size:7px;padding:2px 5px;border-radius:4px;border:1px solid rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#22c55e;cursor:pointer">💊 €1k</button>
+                        <button onclick="putDriverOnBreak('${d.id}')" class="em-ghbtn" style="font-size:8.5px;padding:2px 6px">☕ −40%</button>
+                        <button onclick="payStressClear('${d.id}')" class="em-pill em-pill--green" style="border:1px solid #bfe6cd;cursor:pointer;font-size:8.5px;padding:3px 6px">💊 €1k</button>
                     </div>` : ''}
                 </td>
-                <td style="padding:11px 14px;min-width:110px">
+                <td style="min-width:110px">
                     ${miniBar(morale, moraleColor)}
-                    ${morale < 60 ? `<button onclick="payDriverBonus('${d.id}', 500)" style="font-size:7px;padding:2px 5px;border-radius:4px;border:1px solid rgba(34,197,94,0.35);background:rgba(34,197,94,0.08);color:#22c55e;cursor:pointer;margin-top:4px">+€500</button>` : ''}
+                    ${morale < 60 ? `<button onclick="payDriverBonus('${d.id}', 500)" class="em-pill em-pill--green" style="border:1px solid #bfe6cd;cursor:pointer;font-size:8.5px;padding:3px 6px;margin-top:4px">+€500</button>` : ''}
                 </td>
-                <td style="padding:11px 14px">
-                    <div style="font-size:11px;color:${car ? 'var(--text)' : 'var(--text-dim)'}">${carLabel}</div>
-                </td>
-                <td style="padding:11px 14px;text-align:right;white-space:nowrap">${actBtns}</td>
+                <td><div style="color:${car ? 'var(--em-ink)' : 'var(--em-dim)'}">${carLabel}</div></td>
+                <td class="r" style="white-space:nowrap">${actBtns}</td>
             </tr>`;
         });
 
@@ -198,75 +179,75 @@ function renderTabStaff() {
     const _mgStaff = (gameState.staff || []).filter(s => s.skill === 'meetgreet');
     if (_mgStaff.length > 0) {
         const _mgIncome = gameState._lastMgIncome || 0;
-        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:16px 0 12px">🤝 Meet &amp; Greet Aeroportuale</div>
-        <div style="display:flex;flex-direction:column;gap:8px">`;
+        html += `<div class="em-sec" style="margin:16px 0 8px">🤝 Meet &amp; Greet Aeroportuale</div>
+        <div style="display:flex;flex-direction:column;gap:6px">`;
         _mgStaff.forEach(asst => {
-            html += `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px;display:flex;justify-content:space-between;align-items:center">
+            html += `<div class="em-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center">
                 <div>
-                    <div style="font-size:12px;font-weight:700;color:#e6edf3">${asst.name}</div>
-                    <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Aeroporto: ${asst.airport || '—'} · Missioni passive: attive</div>
-                    <div style="font-size:10px;color:var(--green);margin-top:2px">Entrate ultima sessione: +€${(_mgIncome / _mgStaff.length).toFixed(0)}/g</div>
+                    <div style="font-weight:700">${asst.name}</div>
+                    <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">Aeroporto: ${asst.airport || '—'} · Missioni passive: attive</div>
+                    <div style="font-size:10.5px;color:var(--em-green-d);margin-top:2px">Entrate ultima sessione: +€${(_mgIncome / _mgStaff.length).toFixed(0)}/g</div>
                 </div>
-                <span style="font-size:9px;font-weight:700;color:#3fb950;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:2px 6px">✓ ON DUTY</span>
+                <span class="em-pill em-pill--green">✓ On duty</span>
             </div>`;
         });
     }
 
     // ── Mercato Reclutamento ──────────────────────────────────────────────────
     const tierIcon = { standard:'🟢', business:'🔵', vip:'🟣', ultra:'⚫' };
-    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:16px 0 4px">Mercato Reclutamento</div>
-    <div style="font-size:10px;color:var(--text-dim);margin-bottom:12px;font-style:italic">I candidati si aggiornano dopo ogni assunzione.</div>
-    <div style="display:flex;flex-direction:column;gap:8px">`;
+    html += `<div class="em-sec" style="margin:16px 0 4px">Mercato Reclutamento</div>
+    <div style="font-size:10.5px;color:var(--em-dim);margin-bottom:10px;font-style:italic">I candidati si aggiornano dopo ogni assunzione.</div>
+    <div style="display:flex;flex-direction:column;gap:6px">`;
     (gameState.availableRecruits || []).forEach(p => {
-        html += `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px;display:flex;justify-content:space-between;align-items:center">
+        html += `<div class="em-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div style="font-size:12px;font-weight:700;color:#e6edf3">${p.name} <span style="font-size:10px;color:#8b949e">${tierIcon[p.tier] || ''} ${p.tier.toUpperCase()}</span></div>
-                ${p.trait ? `<div style="margin-top:4px">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span style="font-size:9px;color:var(--text-dim)">${p.trait.desc}</span></div>` : ''}
-                <div style="font-size:10px;color:var(--text-dim);margin-top:4px">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
+                <div style="font-weight:700">${p.name} <span style="font-size:10px;color:var(--em-muted)">${tierIcon[p.tier] || ''} ${p.tier.toUpperCase()}</span></div>
+                ${p.trait ? `<div style="margin-top:4px">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span style="font-size:9.5px;color:var(--em-dim)">${p.trait.desc}</span></div>` : ''}
+                <div style="font-size:10.5px;color:var(--em-dim);margin-top:4px">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
             </div>
-            <button onclick="hireDriver('${p.name}', ${p.salary})" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Assumi</button>
+            <button onclick="hireDriver('${p.name}', ${p.salary})" class="em-goldbtn">Assumi</button>
         </div>`;
     });
     if ((gameState.availableRecruits || []).length === 0) {
-        html += `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">👤</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun candidato</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Il mercato si aggiorna ad ogni assunzione</div></div>`;
+        html += `<div class="em-empty"><div style="font-size:32px;margin-bottom:10px">👤</div><div style="font-size:14px;font-weight:700;color:var(--em-ink)">Nessun candidato</div><div style="margin-top:4px">Il mercato si aggiorna ad ogni assunzione</div></div>`;
     }
 
     // ── Driver Academy ────────────────────────────────────────────────────────
     const _academyDrivers  = gameState.drivers.filter(d => d.id !== 'ceo');
     const _inTrainingCount = (gameState.driverAcademy||[]).length;
-    html += `</div><div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 12px">
-        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em">🎓 Accademia Autisti</div>
-        ${_inTrainingCount > 0 ? `<span style="font-size:9px;font-weight:700;color:#d4af37;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:2px 6px">📚 ${_inTrainingCount} in formazione</span>` : ''}
+    html += `</div><div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+        <div class="em-sec">🎓 Accademia Autisti</div>
+        ${_inTrainingCount > 0 ? `<span class="em-pill em-pill--gold">📚 ${_inTrainingCount} in formazione</span>` : ''}
     </div>`;
     if (_academyDrivers.length === 0) {
-        html += `<div style="text-align:center;padding:40px 0"><div style="font-size:32px;margin-bottom:10px">🎓</div><div style="font-size:14px;font-weight:600;color:#e6edf3">Nessun autista</div><div style="font-size:11px;color:#8b949e;margin-top:4px">Assumi almeno un autista per accedere all'Accademia</div></div>`;
+        html += `<div class="em-empty"><div style="font-size:32px;margin-bottom:10px">🎓</div><div style="font-size:14px;font-weight:700;color:var(--em-ink)">Nessun autista</div><div style="margin-top:4px">Assumi almeno un autista per accedere all'Accademia</div></div>`;
     } else {
-        html += `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+        html += `<div class="em-card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
             <div>
-                <div style="font-size:12px;font-weight:700;color:var(--text)">Gestione Corsi</div>
-                <div style="font-size:10px;color:var(--text-dim);margin-top:2px">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
+                <div style="font-weight:700">Gestione Corsi</div>
+                <div style="font-size:10.5px;color:var(--em-dim);margin-top:2px">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
             </div>
-            <button onclick="window.openAcademyModal()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 10px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Apri Accademia →</button>
+            <button onclick="window.openAcademyModal()" class="em-goldbtn">Apri Accademia →</button>
         </div>`;
     }
 
     // ── CEO della Settimana ───────────────────────────────────────────────────
-    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:16px 0 12px">🏆 CEO della Settimana</div>
-    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px">
+    html += `<div class="em-sec" style="margin:16px 0 8px">🏆 CEO della Settimana</div>
+    <div class="em-card" style="padding:14px">
         <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div style="font-size:12px;font-weight:700;color:var(--text)">Settimana in Corso</div>
-                <div style="font-size:10px;color:var(--text-muted);margin-top:2px">Reset domenica · Premio: Driver Coins</div>
+                <div style="font-weight:700">Settimana in Corso</div>
+                <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">Reset domenica · Premio: Driver Coins</div>
             </div>
             <div style="text-align:right">
-                <div style="font-size:14px;font-weight:700;color:var(--gold)">€${(gameState.weeklyEarnings||0).toLocaleString()}</div>
-                <div style="font-size:10px;color:var(--text-dim)">${gameState.weeklyRides||0} corse</div>
+                <div style="font-size:14px;font-weight:800;color:var(--em-gold)">€${(gameState.weeklyEarnings||0).toLocaleString()}</div>
+                <div style="font-size:10.5px;color:var(--em-dim)">${gameState.weeklyRides||0} corse</div>
             </div>
         </div>
-        <div style="font-size:10px;color:var(--text-dim);margin-top:8px;font-style:italic">Il vincitore riceve fino a 50 DC domenica sera.</div>
+        <div style="font-size:10.5px;color:var(--em-dim);margin-top:8px;font-style:italic">Il vincitore riceve fino a 50 DC domenica sera.</div>
     </div>`;
 
-    container.innerHTML = html;
+    container.innerHTML = `<div class="em em-page"><div class="em-wrap">` + html + `</div></div>`;
 }
 
 window.openCarModal = function(carId) {
@@ -282,57 +263,57 @@ window.openCarModal = function(carId) {
     let repairCost = Math.round(Math.max(500, _repMissing * 85) * _repContractDisc * _repMechDisc);
 
     const fuelPct = car.fuel !== undefined ? Math.floor(car.fuel) : 100;
-    const fuelColor = fuelPct < 20 ? '#ff4060' : fuelPct < 50 ? '#f59e0b' : '#00f2ff';
+    const fuelColor = fuelPct < 20 ? '#db5746' : fuelPct < 50 ? '#e0922e' : '#2f74c0';
 
     if (!car.upgrades) car.upgrades = [];
     const installedUpgrades = car.upgrades.map(uid => CAR_UPGRADES.find(u => u.id === uid)?.name || uid).join(', ');
 
     const tirePct2 = car.tirePressure !== undefined ? Math.floor(car.tirePressure) : 100;
-    const tireColor2 = tirePct2 < 20 ? '#ff4060' : tirePct2 < 50 ? '#f59e0b' : '#22c55e';
+    const tireColor2 = tirePct2 < 20 ? '#db5746' : tirePct2 < 50 ? '#e0922e' : '#1aa06a';
     const outReason = car.outOfService;
 
     let html = `<div style="display:flex;flex-direction:column;gap:10px">
-    ${(outReason && !(outReason === 'fuel' && fuelPct > 5)) ? `<div style="padding:8px;border:1px solid rgba(248,81,73,0.4);background:rgba(127,29,29,0.2);border-radius:6px;font-size:9px;color:#fca5a5;font-weight:700">
+    ${(outReason && !(outReason === 'fuel' && fuelPct > 5)) ? `<div style="padding:8px;border:1px solid rgba(248,81,73,0.4);background:rgba(127,29,29,0.2);border-radius:6px;font-size:9px;color:#db5746;font-weight:700">
         🔴 Auto ferma: ${outReason === 'fuel' ? 'serbatoio esaurito — rifornisci qui sotto' : outReason === 'engine' ? 'motore fuso — riparazione urgente' : 'deposito gomme esaurito'}.<br>
-        <span style="color:#6b7280;font-weight:400">${outReason === 'fuel' ? 'Usa "Rifornisci" o "Gasolio Agric." qui sotto per sbloccarla.' : outReason === 'engine' ? 'Usa il pulsante Ripara Motore qui sotto.' : 'Rifornisci il deposito gomme nella schermata Flotta.'}</span>
+        <span style="color:#6a7480;font-weight:400">${outReason === 'fuel' ? 'Usa "Rifornisci" o "Gasolio Agric." qui sotto per sbloccarla.' : outReason === 'engine' ? 'Usa il pulsante Ripara Motore qui sotto.' : 'Rifornisci il deposito gomme nella schermata Flotta.'}</span>
     </div>` : ''}
     <div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:4px"><span>⛽ Carburante</span><span style="color:${fuelColor}">${fuelPct}%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6a7480;margin-bottom:4px"><span>⛽ Carburante</span><span style="color:${fuelColor}">${fuelPct}%</span></div>
         <div class="fuel-bar-bg"><div class="fuel-bar-fill" style="width:${fuelPct}%; background:${fuelColor}"></div></div>
-        <div style="font-size:8px;color:#4b5563;margin-top:2px;text-align:center">Rifornimento automatico via Deposito Aziendale</div>
+        <div style="font-size:8px;color:#98a1ae;margin-top:2px;text-align:center">Rifornimento automatico via Deposito Aziendale</div>
     </div>
     <div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:4px"><span>🔵 Gomme</span><span style="color:${tireColor2}">${tirePct2}%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6a7480;margin-bottom:4px"><span>🔵 Gomme</span><span style="color:${tireColor2}">${tirePct2}%</span></div>
         <div class="fuel-bar-bg"><div class="fuel-bar-fill" style="width:${tirePct2}%; background:${tireColor2}"></div></div>
-        <div style="font-size:8px;color:#4b5563;margin-top:2px;text-align:center">Sostituzione automatica (sotto 20%) via Deposito Aziendale</div>
+        <div style="font-size:8px;color:#98a1ae;margin-top:2px;text-align:center">Sostituzione automatica (sotto 20%) via Deposito Aziendale</div>
     </div>
-    ${car.condition < 100 ? `<button onclick="payToRepairCar('${car.id}')" style="width:100%;background:rgba(30,58,138,0.3);border:1px solid rgba(59,130,246,0.3);color:#93c5fd;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer">🔧 Ripara (€${repairCost})</button>` : ''}
-    <div style="font-size:10px;color:#6b7280;text-transform:uppercase">Upgrade VIP</div>
+    ${car.condition < 100 ? `<button onclick="payToRepairCar('${car.id}')" style="width:100%;background:rgba(30,58,138,0.3);border:1px solid rgba(59,130,246,0.3);color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer">🔧 Ripara (€${repairCost})</button>` : ''}
+    <div style="font-size:10px;color:#6a7480;text-transform:uppercase">Upgrade VIP</div>
     <div style="display:flex;flex-direction:column;gap:4px;max-height:112px;overflow-y:auto">`;
 
     CAR_UPGRADES.forEach(upg => {
         const owned = car.upgrades.includes(upg.id);
-        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;border:1px solid rgba(255,255,255,0.05);border-radius:4px;font-size:9px;${owned ? 'opacity:.5' : ''}">
-            <div><span style="color:#e6edf3;font-weight:700">${upg.name}</span><span style="color:#6b7280;margin-left:4px">${upg.desc}</span></div>
-            ${owned ? '<span class="upgrade-pill">✓</span>' : `<button onclick="buyCARUpgrade('${car.id}','${upg.id}')" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:2px 6px;border-radius:4px;font-size:8px;cursor:pointer">€${upg.price.toLocaleString()}</button>`}
+        html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;border:1px solid #eef1f5;border-radius:4px;font-size:9px;${owned ? 'opacity:.5' : ''}">
+            <div><span style="color:#1f2733;font-weight:700">${upg.name}</span><span style="color:#6a7480;margin-left:4px">${upg.desc}</span></div>
+            ${owned ? '<span class="upgrade-pill">✓</span>' : `<button onclick="buyCARUpgrade('${car.id}','${upg.id}')" style="background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;padding:2px 6px;border-radius:4px;font-size:8px;cursor:pointer">€${upg.price.toLocaleString()}</button>`}
         </div>`;
     });
 
-    html += `</div>${installedUpgrades ? `<div style="font-size:9px;color:#6b7280">Upgrade attivi: <span style="color:#58a6ff;font-weight:700">${installedUpgrades}</span></div>` : ''}
-    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;margin-top:8px">Assegna Autista</div>
+    html += `</div>${installedUpgrades ? `<div style="font-size:9px;color:#6a7480">Upgrade attivi: <span style="color:#2f74c0;font-weight:700">${installedUpgrades}</span></div>` : ''}
+    <div style="font-size:10px;color:#6a7480;text-transform:uppercase;margin-top:8px">Assegna Autista</div>
     <div style="display:flex;flex-direction:column;gap:4px;max-height:112px;overflow-y:auto;padding-right:4px">`;
 
     gameState.drivers.forEach(d => {
         const isSet = d.assignedCarId === car.id;
         const lvl = d.level || 0;
         const driverTier = lvl >= 6 ? 'ULTRA' : lvl >= 4 ? 'VIP' : lvl >= 2 ? 'BUSINESS' : 'STANDARD';
-        const tierColor  = lvl >= 6 ? '#a855f7' : lvl >= 4 ? '#00f2ff' : lvl >= 2 ? '#f59e0b' : '#6b7280';
+        const tierColor  = lvl >= 6 ? '#7c5fc9' : lvl >= 4 ? '#2f74c0' : lvl >= 2 ? '#e0922e' : '#6a7480';
         const specLabel  = d.specialty && d.specialty !== 'none' ? ` · ${d.specialty.replace(/_/g,' ')}` : '';
-        html += `<button onclick="assignCarToDriver('${car.id}','${d.id}')" style="text-align:left;padding:6px;border:1px solid ${isSet?'rgba(212,175,55,0.5)':'rgba(255,255,255,0.1)'};border-radius:4px;font-size:9px;width:100%;background:${isSet?'rgba(212,175,55,0.05)':'transparent'};color:${isSet?'#d4af37':'#e6edf3'};cursor:pointer">
+        html += `<button onclick="assignCarToDriver('${car.id}','${d.id}')" style="text-align:left;padding:6px;border:1px solid ${isSet?'rgba(212,175,55,0.5)':'#d6dee8'};border-radius:4px;font-size:9px;width:100%;background:${isSet?'rgba(212,175,55,0.05)':'transparent'};color:${isSet?'#c79a2a':'#1f2733'};cursor:pointer">
             <span style="font-weight:700">${d.name}</span>
             <span style="font-size:8px;font-weight:700;color:${tierColor};margin-left:4px">[${driverTier}]</span>
-            <span style="font-size:8px;color:#4b5563">${specLabel}</span>
-            ${isSet ? '<span style="font-size:8px;color:#d4af37;margin-left:4px">✓ Assegnato</span>' : ''}
+            <span style="font-size:8px;color:#98a1ae">${specLabel}</span>
+            ${isSet ? '<span style="font-size:8px;color:#c79a2a;margin-left:4px">✓ Assegnato</span>' : ''}
         </button>`;
     });
     // Skin badge
@@ -341,19 +322,19 @@ window.openCarModal = function(carId) {
         html += `<div style="font-size:9px;margin-top:4px;color:${_activeSkin.color}">🎨 Livrea: ${_activeSkin.name}</div>`;
     }
     html += `</div>
-    <button onclick="openGarage3D('${car.id}')" style="width:100%;background:#0d1117;border:1px solid #58a6ff;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🚗 Vista 3D Garage</button>`;
+    <button onclick="openGarage3D('${car.id}')" style="width:100%;background:#f3f6f9;border:1px solid #2f74c0;color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🚗 Vista 3D Garage</button>`;
     // Instant Repair DC
     const condPctModal = Math.floor(car.condition || 0);
     const dcRepairCost = gameState.executivePassActive ? 1 : 2;
     if (condPctModal < 100) {
-        html += `<button onclick="instantRepairDC('${car.id}')" style="width:100%;background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⚡ Ripara Istant. (${dcRepairCost} DC)</button>`;
+        html += `<button onclick="instantRepairDC('${car.id}')" style="width:100%;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⚡ Ripara Istant. (${dcRepairCost} DC)</button>`;
     }
     if(!car.isLease) {
-        html += `<button onclick="sellCar('${car.id}')" style="width:100%;background:rgba(127,29,29,0.2);border:1px solid rgba(127,29,29,0.4);color:#f87171;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">💰 Vendi (usato)</button>`;
+        html += `<button onclick="sellCar('${car.id}')" style="width:100%;background:rgba(127,29,29,0.2);border:1px solid rgba(127,29,29,0.4);color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">💰 Vendi (usato)</button>`;
         const alreadyListed = (gameState.marketplace||[]).some(l => l.carId === car.id);
         if (!alreadyListed) {
             const suggestPrice = Math.round(20000 * ((condPctModal/100)) * (car.tier === 'ultra' ? 5 : car.tier === 'vip' ? 3 : car.tier === 'business' ? 1.8 : 1));
-            html += `<button onclick="listCarForSale('${car.id}', ${suggestPrice}); closeModals();" style="width:100%;background:rgba(88,28,135,0.2);border:1px solid rgba(88,28,135,0.4);color:#d8b4fe;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">🏪 Metti in Mercato (~€${(suggestPrice/1000).toFixed(0)}k)</button>`;
+            html += `<button onclick="listCarForSale('${car.id}', ${suggestPrice}); closeModals();" style="width:100%;background:rgba(88,28,135,0.2);border:1px solid rgba(88,28,135,0.4);color:#7c5fc9;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">🏪 Metti in Mercato (~€${(suggestPrice/1000).toFixed(0)}k)</button>`;
         }
     }
     document.getElementById('car-modal-content').innerHTML = html + `</div>`;
@@ -428,7 +409,7 @@ window.openCarConfigurator = function(carId, type) {
 <div style="display:flex;width:100%;max-width:1020px;height:90vh;border-radius:20px;overflow:hidden;box-shadow:0 60px 120px rgba(0,0,0,0.95)">
 
   <!-- LEFT: full-height photo -->
-  <div style="width:58%;position:relative;flex-shrink:0;background:#080808">
+  <div style="width:58%;position:relative;flex-shrink:0;background:#e8eef5">
     <img src="${carImg}" alt="${carT.name}"
          style="width:100%;height:100%;object-fit:cover;object-position:center;display:block">
     <!-- subtle bottom fade for readability -->
@@ -436,52 +417,52 @@ window.openCarConfigurator = function(carId, type) {
     <!-- car name badge bottom-left -->
     <div style="position:absolute;bottom:28px;left:28px;right:28px">
       <div style="font-size:26px;font-weight:900;color:#fff;letter-spacing:1px;line-height:1.1;text-shadow:0 2px 12px rgba(0,0,0,0.8)">${carT.name}</div>
-      ${isElec ? `<div style="margin-top:10px;display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,0.18);border:1px solid rgba(34,197,94,0.4);color:#4ade80;font-size:9px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:1.5px;backdrop-filter:blur(4px)">⚡ ZERO EMISSIONI</div>` : ''}
+      ${isElec ? `<div style="margin-top:10px;display:inline-flex;align-items:center;gap:5px;background:rgba(34,197,94,0.18);border:1px solid rgba(34,197,94,0.4);color:#1aa06a;font-size:9px;font-weight:800;padding:4px 12px;border-radius:20px;letter-spacing:1.5px;backdrop-filter:blur(4px)">⚡ ZERO EMISSIONI</div>` : ''}
     </div>
   </div>
 
   <!-- RIGHT: config panel -->
-  <div id="cfg-right" style="flex:1;background:#111114;overflow-y:auto;display:flex;flex-direction:column;min-width:0;scrollbar-width:thin;scrollbar-color:#2a2a30 transparent">
+  <div id="cfg-right" style="flex:1;background:#ffffff;overflow-y:auto;display:flex;flex-direction:column;min-width:0;scrollbar-width:thin;scrollbar-color:#cfd8e2 transparent">
 
     <!-- top bar: close -->
     <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 0">
-      <div style="font-size:9px;color:#4b5563;text-transform:uppercase;letter-spacing:3px">Configuratore</div>
+      <div style="font-size:9px;color:#98a1ae;text-transform:uppercase;letter-spacing:3px">Configuratore</div>
       <button onclick="document.getElementById('modal-configurator').remove()"
-        style="width:28px;height:28px;border-radius:50%;border:1px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.04);color:#6b7280;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s"
-        onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='#fff'"
-        onmouseout="this.style.background='rgba(255,255,255,0.04)';this.style.color='#6b7280'">✕</button>
+        style="width:28px;height:28px;border-radius:50%;border:1px solid #d6dee8;background:#eef1f5;color:#6a7480;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s"
+        onmouseover="this.style.background='#d6dee8';this.style.color='#fff'"
+        onmouseout="this.style.background='#eef1f5';this.style.color='#6a7480'">✕</button>
     </div>
 
     <!-- car name + tier + base price block -->
-    <div style="padding:16px 24px 20px;border-bottom:1px solid rgba(255,255,255,0.06)">
-      <div style="font-size:22px;font-weight:800;color:#fff;letter-spacing:0.5px;line-height:1.2">${carT.name}</div>
-      <div style="font-size:9px;color:#d4af37;text-transform:uppercase;letter-spacing:2px;margin-top:4px">${carT.tier}</div>
+    <div style="padding:16px 24px 20px;border-bottom:1px solid #e6eaf0">
+      <div style="font-size:22px;font-weight:800;color:#1f2733;letter-spacing:0.5px;line-height:1.2">${carT.name}</div>
+      <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:2px;margin-top:4px">${carT.tier}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px">
-        <span style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
-        <span style="font-size:24px;font-weight:900;color:#fff;font-family:monospace;letter-spacing:-0.5px">€${carT.price.toLocaleString()}</span>
+        <span style="font-size:10px;color:#6a7480;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
+        <span style="font-size:24px;font-weight:900;color:#1f2733;font-family:monospace;letter-spacing:-0.5px">€${carT.price.toLocaleString()}</span>
       </div>
     </div>
 
     <!-- optional list -->
     <div style="padding:20px 24px;flex:1">
-      <div style="font-size:8px;color:#d4af37;text-transform:uppercase;letter-spacing:3px;margin-bottom:14px">Optional disponibili</div>
+      <div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:3px;margin-bottom:14px">Optional disponibili</div>
       <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:6px">
         ${CAR_UPGRADES.map(u => `
         <div id="cfg-upg-${u.id}" onclick="__cfgToggle('${u.id}')"
-             style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.02);cursor:pointer;user-select:none;transition:all 0.15s">
+             style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid #d6dee8;background:#f7f9fb;cursor:pointer;user-select:none;transition:all 0.15s">
           <div id="cfg-chk-${u.id}"
-               style="width:17px;height:17px;border-radius:4px;border:1.5px solid rgba(255,255,255,0.18);background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#000"></div>
+               style="width:17px;height:17px;border-radius:4px;border:1.5px solid #c2ccd8;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#000"></div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#e5e7eb">${u.name}</div>
-            <div style="font-size:8px;color:#6b7280;margin-top:2px;line-height:1.4">${u.desc}</div>
+            <div style="font-size:11px;font-weight:700;color:#1f2733">${u.name}</div>
+            <div style="font-size:8px;color:#6a7480;margin-top:2px;line-height:1.4">${u.desc}</div>
           </div>
-          <div id="cfg-price-${u.id}" style="font-size:11px;font-family:monospace;color:#6b7280;flex-shrink:0;font-weight:600">+€${u.price.toLocaleString()}</div>
+          <div id="cfg-price-${u.id}" style="font-size:11px;font-family:monospace;color:#6a7480;flex-shrink:0;font-weight:600">+€${u.price.toLocaleString()}</div>
         </div>`).join('')}
       </div>
     </div>
 
     <!-- sticky footer -->
-    <div id="cfg-footer" style="position:sticky;bottom:0;background:#111114;border-top:1px solid rgba(255,255,255,0.07);padding:18px 24px"></div>
+    <div id="cfg-footer" style="position:sticky;bottom:0;background:#ffffff;border-top:1px solid #d6dee8;padding:18px 24px"></div>
   </div>
 </div>`;
 
@@ -492,19 +473,19 @@ window.openCarConfigurator = function(carId, type) {
         const ok      = gameState.cash >= total;
         document.getElementById('cfg-footer').innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
-            <span style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:2px">Totale</span>
-            <span style="font-size:28px;font-family:monospace;font-weight:900;color:${ok ? '#fff' : '#f87171'};letter-spacing:-1px">€${total.toLocaleString()}</span>
+            <span style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:2px">Totale</span>
+            <span style="font-size:28px;font-family:monospace;font-weight:900;color:${ok ? "#1f2733" : "#db5746"};letter-spacing:-1px">€${total.toLocaleString()}</span>
           </div>
-          ${!ok ? `<div style="font-size:9px;color:#f87171;margin-bottom:10px;text-align:right">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
+          ${!ok ? `<div style="font-size:9px;color:#db5746;margin-bottom:10px;text-align:right">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
           <div style="display:flex;gap:10px">
             <button onclick="document.getElementById('modal-configurator').remove()"
-              style="flex:0 0 auto;padding:12px 20px;font-size:10px;border:1px solid rgba(255,255,255,0.1);border-radius:10px;color:#6b7280;background:transparent;cursor:pointer">
+              style="flex:0 0 auto;padding:12px 20px;font-size:10px;border:1px solid #d6dee8;border-radius:10px;color:#6a7480;background:transparent;cursor:pointer">
               Annulla
             </button>
             <button onclick="__cfgConfirm('${carId}','${type}')" ${!ok ? 'disabled' : ''}
               style="flex:1;padding:12px;font-size:11px;font-weight:800;border-radius:10px;cursor:${ok ? 'pointer' : 'not-allowed'};letter-spacing:0.5px;
-                     background:${ok ? 'linear-gradient(135deg,#d4af37,#b8961f)' : 'rgba(255,255,255,0.05)'};
-                     color:${ok ? '#000' : '#4b5563'};border:${ok ? 'none' : '1px solid rgba(255,255,255,0.08)'}">
+                     background:${ok ? 'linear-gradient(135deg,#c79a2a,#b8961f)' : '#eef1f5'};
+                     color:${ok ? '#000' : '#98a1ae'};border:${ok ? 'none' : '1px solid #d6dee8'}">
               ${ok ? '🚗 Conferma & Acquista' : 'Fondi insufficienti'}
             </button>
           </div>`;
@@ -519,15 +500,15 @@ window.openCarConfigurator = function(carId, type) {
         const chk = document.getElementById(`cfg-chk-${uid}`);
         const prc = document.getElementById(`cfg-price-${uid}`);
         if (row) {
-            row.style.borderColor  = on ? 'rgba(212,175,55,0.5)' : 'rgba(255,255,255,0.08)';
-            row.style.background   = on ? 'rgba(212,175,55,0.06)' : 'rgba(0,0,0,0.3)';
+            row.style.borderColor  = on ? 'rgba(212,175,55,0.5)' : '#d6dee8';
+            row.style.background   = on ? 'rgba(212,175,55,0.06)' : '#eef1f5';
         }
         if (chk) {
-            chk.style.background   = on ? '#d4af37' : 'rgba(0,0,0,0.4)';
-            chk.style.borderColor  = on ? '#d4af37' : 'rgba(255,255,255,0.2)';
+            chk.style.background   = on ? '#c79a2a' : '#ffffff';
+            chk.style.borderColor  = on ? '#c79a2a' : '#c2ccd8';
             chk.textContent        = on ? '✓' : '';
         }
-        if (prc) prc.style.color = on ? '#d4af37' : '#9ca3af';
+        if (prc) prc.style.color = on ? '#c79a2a' : '#6a7480';
         _updateSummary();
     };
 

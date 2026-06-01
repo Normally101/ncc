@@ -109,10 +109,10 @@ function _srmVehicle(id) {
 function _srmTierColor(tier) {
     const t = (tier || '').toUpperCase();
     if (t === 'PRESIDENTIAL' || t === 'ULTRA') return '#b040ff';
-    if (t === 'ARMORED')                        return '#ef4444';
-    if (t === 'VIP')                            return '#d4af37';
-    if (t === 'PREMIUM')                        return '#60a5fa';
-    return '#6b7280';
+    if (t === 'ARMORED')                        return '#db5746';
+    if (t === 'VIP')                            return '#c79a2a';
+    if (t === 'PREMIUM')                        return '#2f74c0';
+    return '#6a7480';
 }
 function _srmTotalPrice() {
     const v = _srmVehicle(_srmState.selectedId);
@@ -144,104 +144,105 @@ function _srmInjectStyles() {
     const st = document.createElement('style');
     st.id = 'srm-styles';
     st.textContent = `
-        /* ── Full-screen overlay ── */
+        /* ── Full-screen overlay (light, sky) ── */
         #srm-overlay {
             position:fixed; inset:0; z-index:4500;
-            background:#070c14; display:flex; flex-direction:column;
-            font-family:system-ui,sans-serif;
+            background:linear-gradient(180deg,#aecbe6 0%, #c2d8ec 28%, #d3e1ed 55%, #dde7ee 100%);
+            display:flex; flex-direction:column;
+            font-family:'Inter',system-ui,sans-serif;
         }
         /* ── Gallery top bar ── */
         #srm-gallery-topbar {
             display:flex; align-items:center; justify-content:space-between;
-            padding:14px 24px; border-bottom:1px solid rgba(255,255,255,0.07);
-            background:#08111e; flex-shrink:0;
+            padding:13px 24px; border-bottom:1px solid #d6dee8;
+            background:#ffffff; flex-shrink:0; box-shadow:0 1px 2px rgba(31,39,51,.07);
         }
-        #srm-gallery-topbar .srm-logo { font-size:18px; font-weight:900; color:#e2e8f0; letter-spacing:.04em; }
-        #srm-gallery-topbar .srm-logo span { color:#00d4ff; }
+        #srm-gallery-topbar .srm-logo { font-size:18px; font-weight:900; color:#1f2733; letter-spacing:.04em; }
+        #srm-gallery-topbar .srm-logo span { color:#2f74c0; }
         .srm-close-btn {
-            width:34px; height:34px; border-radius:50%; border:1px solid rgba(255,255,255,0.12);
-            background:transparent; color:#6b7280; font-size:16px; cursor:pointer;
+            width:34px; height:34px; border-radius:50%; border:1px solid #d6dee8;
+            background:#fff; color:#6a7480; font-size:16px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; transition:all .15s;
         }
-        .srm-close-btn:hover { border-color:rgba(255,255,255,0.3); color:#e2e8f0; background:rgba(255,255,255,0.06); }
+        .srm-close-btn:hover { border-color:#c2ccd8; color:#1f2733; background:#eef2f7; }
         /* ── Filter bar ── */
         #srm-filter-bar {
             display:flex; flex-direction:column; gap:0;
-            border-bottom:1px solid rgba(255,255,255,0.05);
-            background:#070c14; flex-shrink:0;
+            border-bottom:1px solid #d6dee8;
+            background:#ffffff; flex-shrink:0;
         }
         .srm-filter-row {
             display:flex; align-items:center; gap:6px;
             padding:8px 24px; flex-wrap:wrap;
         }
-        .srm-filter-row:first-child { border-bottom:1px solid rgba(255,255,255,0.04); }
+        .srm-filter-row:first-child { border-bottom:1px solid #eef1f5; }
         .srm-filter-label {
             font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.12em;
-            color:#374151; margin-right:4px; width:52px; flex-shrink:0;
+            color:#98a1ae; margin-right:4px; width:52px; flex-shrink:0;
         }
         .srm-fbtn {
             padding:5px 14px; border-radius:20px; font-size:11px; font-weight:700;
-            cursor:pointer; border:1px solid rgba(255,255,255,0.1);
-            background:rgba(255,255,255,0.04); color:#6b7280;
+            cursor:pointer; border:1px solid #d6dee8;
+            background:#fff; color:#6a7480;
             transition:all .18s; letter-spacing:.04em;
         }
-        .srm-fbtn:hover  { border-color:rgba(255,255,255,0.25); color:#9ca3af; }
+        .srm-fbtn:hover  { border-color:#c2ccd8; color:#1f2733; }
         /* fuel row active */
-        .srm-filter-row.fuel-row .srm-fbtn.srm-fa { background:rgba(0,212,255,0.12); border-color:rgba(0,212,255,0.4); color:#00d4ff; }
+        .srm-filter-row.fuel-row .srm-fbtn.srm-fa { background:#e7f0fb; border-color:#9cc1e8; color:#2f74c0; }
         /* brand row active */
-        .srm-filter-row.brand-row .srm-fbtn.srm-fa { background:rgba(168,85,247,0.12); border-color:rgba(168,85,247,0.4); color:#c084fc; }
+        .srm-filter-row.brand-row .srm-fbtn.srm-fa { background:#ece4f7; border-color:#cdb8ee; color:#7c5fc9; }
         /* ── Gallery grid ── */
         #srm-grid-wrap { flex:1; overflow-y:auto; }
         #srm-grid {
             display:grid; grid-template-columns:repeat(4,1fr);
-            gap:16px; padding:20px 24px;
+            gap:16px; padding:20px 24px; max-width:1200px; margin:0 auto;
         }
         @media (max-width:1200px) { #srm-grid { grid-template-columns:repeat(3,1fr); } }
         @media (max-width:800px)  { #srm-grid { grid-template-columns:repeat(2,1fr); } }
         .srm-vcard {
             border-radius:12px; overflow:hidden;
-            border:1px solid rgba(255,255,255,0.07);
-            background:#0d1520; cursor:pointer;
+            border:1px solid #d6dee8;
+            background:#ffffff; cursor:pointer; box-shadow:0 1px 3px rgba(31,39,51,.08);
             transition:transform .2s, border-color .2s, box-shadow .2s;
         }
         .srm-vcard:hover {
             transform:translateY(-4px);
-            border-color:rgba(0,212,255,0.4);
-            box-shadow:0 16px 48px rgba(0,0,0,0.7);
+            border-color:#9cc1e8;
+            box-shadow:0 14px 36px rgba(31,39,51,0.18);
         }
-        .srm-vcard-photo { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:#0a0f1e; }
+        .srm-vcard-photo { width:100%; aspect-ratio:16/9; object-fit:cover; display:block; background:#e8eef5; }
         .srm-vcard-body  { padding:14px; }
         .srm-vcard-tier  { font-size:8px; font-weight:800; text-transform:uppercase; letter-spacing:.12em; margin-bottom:3px; }
-        .srm-vcard-name  { font-size:15px; font-weight:700; color:#e2e8f0; margin-bottom:3px; }
-        .srm-vcard-sub   { font-size:10px; color:#6b7280; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
-        .srm-vcard-price { font-size:18px; font-weight:800; color:#fff; letter-spacing:-.02em; }
-        .srm-vcard-cta   { display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid rgba(255,255,255,0.06); }
-        .srm-vcard-btn   { padding:8px 18px; border-radius:8px; font-size:11px; font-weight:700; border:none; cursor:pointer; background:rgba(0,212,255,0.12); color:#00d4ff; transition:all .18s; }
-        .srm-vcard-btn:hover { background:rgba(0,212,255,0.24); }
-        .srm-fuel-ev  { background:rgba(34,211,238,0.12); color:#22d3ee; font-size:8px; font-weight:700; padding:2px 6px; border-radius:4px; }
-        .srm-fuel-gas { background:rgba(251,191,36,0.1);  color:#fbbf24; font-size:8px; font-weight:700; padding:2px 6px; border-radius:4px; }
+        .srm-vcard-name  { font-size:15px; font-weight:700; color:#1f2733; margin-bottom:3px; }
+        .srm-vcard-sub   { font-size:10px; color:#6a7480; margin-bottom:12px; display:flex; align-items:center; gap:6px; }
+        .srm-vcard-price { font-size:18px; font-weight:800; color:#1f2733; letter-spacing:-.02em; }
+        .srm-vcard-cta   { display:flex; align-items:center; justify-content:space-between; margin-top:12px; padding-top:12px; border-top:1px solid #eef1f5; }
+        .srm-vcard-btn   { padding:8px 18px; border-radius:8px; font-size:11px; font-weight:700; border:none; cursor:pointer; background:#e7f0fb; color:#2f74c0; transition:all .18s; }
+        .srm-vcard-btn:hover { background:#d3e4f8; }
+        .srm-fuel-ev  { background:#e7f0fb; color:#2f74c0; font-size:8px; font-weight:700; padding:2px 6px; border-radius:4px; }
+        .srm-fuel-gas { background:#fff3cf;  color:#c79a2a; font-size:8px; font-weight:700; padding:2px 6px; border-radius:4px; }
         /* ── Configurator ── */
         #srm-config { display:flex; flex-direction:column; height:100%; }
         #srm-cfg-topbar {
             display:flex; align-items:center; gap:14px;
-            padding:12px 24px; border-bottom:1px solid rgba(255,255,255,0.07);
-            background:#08111e; flex-shrink:0;
+            padding:12px 24px; border-bottom:1px solid #d6dee8;
+            background:#ffffff; flex-shrink:0; box-shadow:0 1px 2px rgba(31,39,51,.07);
         }
         #srm-cfg-back {
             padding:7px 14px; border-radius:8px; font-size:11px; font-weight:700;
-            border:1px solid rgba(255,255,255,0.1); background:transparent;
-            color:#6b7280; cursor:pointer; transition:all .15s; white-space:nowrap;
+            border:1px solid #d6dee8; background:#fff;
+            color:#6a7480; cursor:pointer; transition:all .15s; white-space:nowrap;
         }
-        #srm-cfg-back:hover { border-color:rgba(255,255,255,0.3); color:#9ca3af; }
+        #srm-cfg-back:hover { border-color:#c2ccd8; color:#1f2733; }
         #srm-cfg-title { flex:1; }
-        #srm-cfg-vname { font-size:17px; font-weight:800; color:#e2e8f0; }
-        #srm-cfg-vsub  { font-size:11px; color:#4b5563; margin-top:2px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-        #srm-cfg-price { font-size:22px; font-weight:900; color:#00d4ff; font-family:monospace; white-space:nowrap; }
+        #srm-cfg-vname { font-size:17px; font-weight:800; color:#1f2733; }
+        #srm-cfg-vsub  { font-size:11px; color:#98a1ae; margin-top:2px; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        #srm-cfg-price { font-size:22px; font-weight:900; color:#2f74c0; font-family:monospace; white-space:nowrap; }
         #srm-cfg-body  { flex:1; display:flex; overflow:hidden; }
         #srm-cfg-sidebar {
             width:180px; flex-shrink:0; padding:12px 8px;
-            border-right:1px solid rgba(255,255,255,0.06);
-            background:#08111e; overflow-y:auto;
+            border-right:1px solid #d6dee8;
+            background:#ffffff; overflow-y:auto;
         }
         .srm-sec-btn {
             width:100%; display:flex; align-items:center; gap:9px;
@@ -249,59 +250,59 @@ function _srmInjectStyles() {
             border:none; background:transparent; cursor:pointer;
             text-align:left; transition:all .15s; position:relative;
         }
-        .srm-sec-btn:hover { background:rgba(255,255,255,0.04); }
-        .srm-sec-btn.srm-active { background:rgba(0,212,255,0.1); }
+        .srm-sec-btn:hover { background:#eef2f7; }
+        .srm-sec-btn.srm-active { background:#e7f0fb; }
         .srm-sec-icon  { font-size:15px; flex-shrink:0; }
-        .srm-sec-label { font-size:12px; font-weight:600; color:#9ca3af; }
-        .srm-sec-btn.srm-active .srm-sec-label { color:#00d4ff; }
+        .srm-sec-label { font-size:12px; font-weight:600; color:#6a7480; }
+        .srm-sec-btn.srm-active .srm-sec-label { color:#2f74c0; }
         .srm-sec-badge {
             position:absolute; right:10px; top:50%; transform:translateY(-50%);
-            background:#00d4ff; color:#000; font-size:8px; font-weight:900;
+            background:#2f74c0; color:#fff; font-size:8px; font-weight:900;
             width:16px; height:16px; border-radius:50%;
             display:flex; align-items:center; justify-content:center;
         }
         #srm-cfg-main { flex:1; display:flex; flex-direction:column; overflow:hidden; }
-        #srm-cfg-photo-wrap { flex-shrink:0; background:#080e1a; overflow:hidden; height:42vh; }
+        #srm-cfg-photo-wrap { flex-shrink:0; background:#e8eef5; overflow:hidden; height:42vh; }
         #srm-cfg-photo { width:100%; height:100%; object-fit:cover; display:block; }
-        #srm-cfg-content { flex:1; overflow-y:auto; padding:20px 24px; }
+        #srm-cfg-content { flex:1; overflow-y:auto; padding:20px 24px; background:#f3f6f9; }
         /* Stats */
         .srm-stat-row   { margin-bottom:12px; }
-        .srm-stat-hd    { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:.07em; display:flex; justify-content:space-between; margin-bottom:4px; }
-        .srm-stat-track { height:5px; background:rgba(255,255,255,0.06); border-radius:3px; overflow:hidden; }
-        .srm-stat-fill  { height:100%; border-radius:3px; transition:width .5s cubic-bezier(.4,0,.2,1); background:#00d4ff; }
+        .srm-stat-hd    { font-size:10px; color:#6a7480; text-transform:uppercase; letter-spacing:.07em; display:flex; justify-content:space-between; margin-bottom:4px; }
+        .srm-stat-track { height:5px; background:#e2e6ec; border-radius:3px; overflow:hidden; }
+        .srm-stat-fill  { height:100%; border-radius:3px; transition:width .5s cubic-bezier(.4,0,.2,1); background:#2f74c0; }
         /* Option cards */
         .srm-opt-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:10px; }
         .srm-opt-card {
             display:flex; align-items:flex-start; gap:12px;
             padding:14px 16px; border-radius:10px;
-            border:1px solid rgba(255,255,255,0.07);
-            background:rgba(255,255,255,0.02); cursor:pointer; transition:all .18s;
+            border:1px solid #d6dee8;
+            background:#fff; cursor:pointer; transition:all .18s;
         }
-        .srm-opt-card:hover { border-color:rgba(0,212,255,0.3); background:rgba(0,40,80,0.28); }
-        .srm-opt-card.srm-sel { border-color:rgba(0,212,255,0.65); background:rgba(0,55,100,0.38); }
+        .srm-opt-card:hover { border-color:#9cc1e8; background:#f3f8fd; }
+        .srm-opt-card.srm-sel { border-color:#2f74c0; background:#e7f0fb; }
         .srm-opt-chk {
             width:20px; height:20px; flex-shrink:0; border-radius:4px; margin-top:2px;
-            border:1.5px solid rgba(255,255,255,0.2); display:flex; align-items:center;
+            border:1.5px solid #c2ccd8; display:flex; align-items:center;
             justify-content:center; font-size:11px; transition:all .15s;
         }
-        .srm-opt-card.srm-sel .srm-opt-chk { background:#00d4ff; border-color:#00d4ff; color:#000; font-weight:900; }
+        .srm-opt-card.srm-sel .srm-opt-chk { background:#2f74c0; border-color:#2f74c0; color:#fff; font-weight:900; }
         .srm-opt-info  { flex:1; }
-        .srm-opt-name  { font-size:12px; font-weight:700; color:#e2e8f0; }
-        .srm-opt-desc  { font-size:10px; color:#6b7280; margin-top:3px; line-height:1.45; }
+        .srm-opt-name  { font-size:12px; font-weight:700; color:#1f2733; }
+        .srm-opt-desc  { font-size:10px; color:#6a7480; margin-top:3px; line-height:1.45; }
         .srm-opt-foot  { display:flex; align-items:center; gap:8px; margin-top:8px; }
-        .srm-opt-price { font-size:13px; font-weight:700; color:#fff; }
-        .srm-opt-mods  { font-size:9px; color:#22d3ee; background:rgba(34,211,238,0.1); padding:2px 7px; border-radius:3px; }
+        .srm-opt-price { font-size:13px; font-weight:700; color:#1f2733; }
+        .srm-opt-mods  { font-size:9px; color:#2f74c0; background:#e7f0fb; padding:2px 7px; border-radius:3px; }
         /* Riepilogo */
-        .srm-recap-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-size:12px; }
+        .srm-recap-row { display:flex; justify-content:space-between; align-items:center; padding:9px 0; border-bottom:1px solid #eef1f5; font-size:12px; }
         .srm-recap-row:last-child { border:none; }
         .srm-buy-btn {
             width:100%; padding:18px; border-radius:12px; font-size:15px; font-weight:800;
             border:none; cursor:pointer; letter-spacing:.08em; text-transform:uppercase;
-            background:linear-gradient(135deg,#0066aa,#0099cc);
-            color:#fff; box-shadow:0 6px 28px rgba(0,120,200,0.3); transition:all .2s; margin-top:18px;
+            background:linear-gradient(135deg,#2f74c0,#245d9c);
+            color:#fff; box-shadow:0 6px 20px rgba(47,116,192,0.28); transition:all .2s; margin-top:18px;
         }
-        .srm-buy-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 36px rgba(0,120,200,0.5); }
-        .srm-buy-btn:disabled { background:rgba(255,255,255,0.05); color:#374151; cursor:not-allowed; box-shadow:none; }
+        .srm-buy-btn:hover:not(:disabled) { transform:translateY(-2px); box-shadow:0 10px 30px rgba(47,116,192,0.4); }
+        .srm-buy-btn:disabled { background:#e2e6ec; color:#98a1ae; cursor:not-allowed; box-shadow:none; }
     `;
     document.head.appendChild(st);
 }
@@ -398,7 +399,7 @@ function _srmRenderGallery(overlay) {
                 <div class="srm-vcard-cta">
                     <div class="srm-vcard-price">€ ${(v.price || 0).toLocaleString('it-IT')}</div>
                     ${locked
-                        ? `<span style="font-size:9px;color:#ef4444;">${locked}</span>`
+                        ? `<span style="font-size:9px;color:#db5746;">${locked}</span>`
                         : `<button class="srm-vcard-btn" onclick="window._srmOpenConfig('${v.id}')">Configura →</button>`
                     }
                 </div>
@@ -413,7 +414,7 @@ function _srmRenderGallery(overlay) {
         </div>
         <div id="srm-filter-bar">${filterHtml}</div>
         <div id="srm-grid-wrap">
-            <div id="srm-grid">${cardsHtml || '<div style="padding:32px;text-align:center;color:#374151;font-size:12px;">Nessun modello disponibile.</div>'}</div>
+            <div id="srm-grid">${cardsHtml || '<div style="padding:32px;text-align:center;color:#6a7480;font-size:12px;">Nessun modello disponibile.</div>'}</div>
         </div>`;
 }
 
@@ -475,7 +476,7 @@ function _srmRenderConfig(overlay) {
                     <span style="color:${tierColor};font-weight:800">${v.tier}</span>
                     · ${meta.bodyLabel || ''}
                     · <span class="${isEV ? 'srm-fuel-ev' : 'srm-fuel-gas'}">${isEV ? '⚡ EV' : '⛽ Benzina'}</span>
-                    ${selCount > 0 ? `<span style="color:#d4af37;margin-left:6px;">+${selCount} optional</span>` : ''}
+                    ${selCount > 0 ? `<span style="color:#c79a2a;margin-left:6px;">+${selCount} optional</span>` : ''}
                 </div>
             </div>
             <div id="srm-cfg-price">€ ${total.toLocaleString('it-IT')}</div>
@@ -505,31 +506,31 @@ function _srmSectionContent(v, meta) {
             const val = stats[k] || 0;
             const pct = Math.min(100, (val / 12) * 100);
             return `<div class="srm-stat-row">
-                <div class="srm-stat-hd"><span>${label}</span><span style="color:#e2e8f0;font-weight:700">${val}</span></div>
+                <div class="srm-stat-hd"><span>${label}</span><span style="color:#1f2733;font-weight:700">${val}</span></div>
                 <div class="srm-stat-track"><div class="srm-stat-fill" style="width:${pct}%"></div></div>
             </div>`;
         }).join('');
 
-        return `<div style="font-size:12px;color:#9ca3af;line-height:1.6;margin-bottom:20px;">${meta.desc || ''}</div>
+        return `<div style="font-size:12px;color:#6a7480;line-height:1.6;margin-bottom:20px;">${meta.desc || ''}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:20px;">
             <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px;">
-                <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Prezzo base</div>
-                <div style="font-size:14px;font-weight:800;color:#fff">€ ${(v.price||0).toLocaleString('it-IT')}</div>
+                <div style="font-size:8px;color:#98a1ae;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Prezzo base</div>
+                <div style="font-size:14px;font-weight:800;color:#1f2733">€ ${(v.price||0).toLocaleString('it-IT')}</div>
             </div>
             <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px;">
-                <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Propulsione</div>
-                <div style="font-size:13px;font-weight:700;color:${v.fuel==='electric'?'#22d3ee':'#fbbf24'}">${v.fuel==='electric'?'⚡ Full Electric':'⛽ Benzina'}</div>
+                <div style="font-size:8px;color:#98a1ae;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Propulsione</div>
+                <div style="font-size:13px;font-weight:700;color:${v.fuel==='electric'?'#2f74c0':'#c79a2a'}">${v.fuel==='electric'?'⚡ Full Electric':'⛽ Benzina'}</div>
             </div>
             ${(v.rideGate||0) > 0 ? `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px;">
-                <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Corse richieste</div>
-                <div style="font-size:13px;font-weight:700;color:#f59e0b">${(v.rideGate||0).toLocaleString()}</div>
+                <div style="font-size:8px;color:#98a1ae;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Corse richieste</div>
+                <div style="font-size:13px;font-weight:700;color:#e0922e">${(v.rideGate||0).toLocaleString()}</div>
             </div>` : ''}
             <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:8px;padding:10px 12px;">
-                <div style="font-size:8px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Classe</div>
+                <div style="font-size:8px;color:#98a1ae;text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px;">Classe</div>
                 <div style="font-size:13px;font-weight:700;color:${_srmTierColor(v.tier)}">${v.tier}</div>
             </div>
         </div>
-        <div style="font-size:9px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Statistiche Operative</div>
+        <div style="font-size:9px;color:#98a1ae;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">Statistiche Operative</div>
         ${statBars}`;
     }
 
@@ -540,23 +541,23 @@ function _srmSectionContent(v, meta) {
 
         const optsHtml = selectedOpts.length > 0
             ? selectedOpts.map(o => `<div class="srm-recap-row">
-                <span style="color:#9ca3af;">${o.name}</span>
-                <span style="color:#e2e8f0;font-weight:700">+€ ${o.price.toLocaleString('it-IT')}</span>
+                <span style="color:#6a7480;">${o.name}</span>
+                <span style="color:#1f2733;font-weight:700">+€ ${o.price.toLocaleString('it-IT')}</span>
               </div>`).join('')
-            : `<div style="font-size:11px;color:#374151;padding:8px 0;">Nessun optional selezionato</div>`;
+            : `<div style="font-size:11px;color:#6a7480;padding:8px 0;">Nessun optional selezionato</div>`;
 
         return `<div style="margin-bottom:16px;">
-            <div style="font-size:9px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Riepilogo Configurazione</div>
+            <div style="font-size:9px;color:#98a1ae;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;">Riepilogo Configurazione</div>
             <div class="srm-recap-row">
-                <span style="color:#9ca3af;">Veicolo base</span>
-                <span style="color:#e2e8f0;font-weight:700">€ ${(v.price||0).toLocaleString('it-IT')}</span>
+                <span style="color:#6a7480;">Veicolo base</span>
+                <span style="color:#1f2733;font-weight:700">€ ${(v.price||0).toLocaleString('it-IT')}</span>
             </div>
             ${optsHtml}
-            <div style="border-top:1px solid rgba(255,255,255,0.12);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
-                <span style="font-size:12px;font-weight:800;color:#e2e8f0;">Totale</span>
-                <span style="font-size:20px;font-weight:900;color:#00d4ff;font-family:monospace;">€ ${total.toLocaleString('it-IT')}</span>
+            <div style="border-top:1px solid #d6dee8;margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center;">
+                <span style="font-size:12px;font-weight:800;color:#1f2733;">Totale</span>
+                <span style="font-size:20px;font-weight:900;color:#2f74c0;font-family:monospace;">€ ${total.toLocaleString('it-IT')}</span>
             </div>
-            ${!canAfford ? `<div style="font-size:10px;color:#ef4444;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:7px;padding:8px 10px;margin-top:10px;">
+            ${!canAfford ? `<div style="font-size:10px;color:#db5746;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:7px;padding:8px 10px;margin-top:10px;">
                 ⚠ Fondi insufficienti. Hai € ${(gameState?.cash||0).toLocaleString('it-IT')}, mancano € ${(total-(gameState?.cash||0)).toLocaleString('it-IT')}.
             </div>` : ''}
         </div>
@@ -567,7 +568,7 @@ function _srmSectionContent(v, meta) {
 
     // Esterni / Interni / Speciali — option cards
     const sectionOpts = _SRM_OPTIONS.filter(o => o.section === section);
-    if (!sectionOpts.length) return `<div style="color:#374151;font-size:11px;text-align:center;padding:24px;">Nessun optional disponibile per questa categoria.</div>`;
+    if (!sectionOpts.length) return `<div style="color:#6a7480;font-size:11px;text-align:center;padding:24px;">Nessun optional disponibile per questa categoria.</div>`;
 
     const cards = sectionOpts.map(o => {
         const sel = _srmState.selectedOpts.has(o.id);
@@ -585,7 +586,7 @@ function _srmSectionContent(v, meta) {
         </div>`;
     }).join('');
 
-    return `<div style="font-size:9px;color:#4b5563;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">${_SRM_SECTIONS.find(s=>s.id===section)?.label || ''}</div>
+    return `<div style="font-size:9px;color:#98a1ae;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px;">${_SRM_SECTIONS.find(s=>s.id===section)?.label || ''}</div>
     <div class="srm-opt-grid">${cards}</div>`;
 }
 
@@ -610,7 +611,7 @@ window._srmSetSection = function(sectionId) {
     document.querySelectorAll('.srm-sec-btn').forEach(btn => {
         const sid = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
         btn.classList.toggle('srm-active', sid === sectionId);
-        btn.querySelector('.srm-sec-label').style.color = sid === sectionId ? '#00d4ff' : '#9ca3af';
+        btn.querySelector('.srm-sec-label').style.color = sid === sectionId ? '#2f74c0' : '#6a7480';
     });
 };
 
@@ -653,7 +654,7 @@ window._srmToggle = function(optId) {
         sub.innerHTML = `<span style="color:${_srmTierColor(v?.tier)};font-weight:800">${v?.tier||''}</span>
             · ${meta.bodyLabel || ''}
             · <span class="${isEV ? 'srm-fuel-ev' : 'srm-fuel-gas'}">${isEV ? '⚡ EV' : '⛽ Benzina'}</span>
-            ${selCount > 0 ? `<span style="color:#d4af37;margin-left:6px;">+${selCount} optional</span>` : ''}`;
+            ${selCount > 0 ? `<span style="color:#c79a2a;margin-left:6px;">+${selCount} optional</span>` : ''}`;
     }
     _srmAnimatePrice(false);
 };
