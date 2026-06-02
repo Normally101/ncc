@@ -1850,6 +1850,9 @@ window.acceptDiamondContract = function(emailId) {
 
 function updateUI() {
     const elCash = document.getElementById('tb-cash'); if(elCash) elCash.innerText = `€${Math.floor(gameState.cash).toLocaleString()}`;
+    // brand reale in topbar (nome azienda + stemma vanity) — non più hardcoded
+    const elBN = document.querySelector('.emc-bn'); if (elBN && gameState.companyName) elBN.innerText = gameState.companyName;
+    const elBM = document.querySelector('.emc-bm'); if (elBM && gameState.companyLogo && gameState.companyLogo !== 'CE') elBM.textContent = gameState.companyLogo;
     const elRep = document.getElementById('tb-rep'); if(elRep) elRep.innerText = `${gameState.reputation.toFixed(1)} ★`;
     const elEBar = document.getElementById('tb-energy-bar'); if (elEBar) elEBar.style.width = `${Math.max(0, gameState.energy)}%`;
     const elEText = document.getElementById('tb-energy-text'); if(elEText) elEText.innerText = `${Math.round(gameState.energy)}%`;

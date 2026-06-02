@@ -4822,7 +4822,8 @@ select:focus {
 }
 .em-shell #em-chrome > *{pointer-events:auto;}
 /* garantisce il posizionamento del pannello a prescindere da Tailwind .fixed */
-.em-shell #main-panel{position:fixed;}
+.em-shell #main-panel{position:fixed;background:transparent !important;}
+/* il contenuto delle tab "galleggia" sul cielo (centro), i lati mostrano lo sfondo */
 
 /* ── TOPBAR (barra-risorse, card bianca centrata su cielo) ── */
 .em-shell #top-bar{

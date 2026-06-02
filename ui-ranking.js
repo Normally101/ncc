@@ -89,6 +89,10 @@ async function renderTabRanking() {
     // ranking per POTERE (metriche server) invece del cash dichiarato dal client
     rows.forEach(r => { r._prov = provCount[r.user_id] || 0; r._contrib = contribByUser[r.user_id] || 0; r._power = _power(r); });
     rows.sort((a, b) => b._power - a._power || (b.liquid_assets || 0) - (a.liquid_assets || 0));
+    // dedup difensivo: una azienda (user_id) compare una sola volta
+    { const _seen = new Set(); rows = rows.filter(r => { if (!r.user_id) return true; if (_seen.has(r.user_id)) return false; _seen.add(r.user_id); return true; }); }
+    // conteggio nomi per disambiguare aziende omonime (es. molte "Chauffeur Empire" di default)
+    const _nameCount = {}; rows.forEach(r => { const n = r.company_name || 'Chauffeur Empire'; _nameCount[n] = (_nameCount[n] || 0) + 1; });
     // presenza reale → alimenta il chip "online" del feed Mondo NCC
     try { window._worldRealOnline = rows.filter(r => r.last_active && (now - new Date(r.last_active).getTime()) < ONLINE_MS).length; } catch (e) {}
 
@@ -170,7 +174,7 @@ async function renderTabRanking() {
             html += `<tr style="border-bottom:1px solid #d6dee8;${rowBg}">
                 <td style="text-align:center;padding:8px;font-size:${pos<=3?'16':'11'}px;color:#6a7480">${medal}</td>
                 <td style="padding:8px">
-                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${r.company_name || 'Chauffeur Empire'}</span>
+                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${(r.company_name || 'Chauffeur Empire')}${_nameCount[r.company_name || 'Chauffeur Empire'] > 1 ? ` <span style="color:#98a1ae;font-weight:500">#${String(r.user_id||'').slice(0,4)}</span>` : ''}</span>
                     ${isMe ? `<span style="font-size:9px;color:#c79a2a;margin-left:6px">(Tu)</span>` : ''}
                     ${online ? `<span style="display:inline-block;width:5px;height:5px;background:#1aa06a;border-radius:50%;margin-left:5px;vertical-align:middle"></span>` : ''}
                 </td>
