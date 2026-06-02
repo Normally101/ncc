@@ -49,6 +49,25 @@ async function renderTabRanking() {
         fetchError = 'Supabase non disponibile';
     }
 
+    // ── Segnali SERVER-AUTHORITATIVE per il Punteggio Potere (anti-cheat) ──
+    // province conquistate (via RPC) e contributi al consorzio (asset-bound):
+    // un client modificato può gonfiare il cash, ma NON questi → non scala in classifica.
+    const provCount = {}, contribByUser = {};
+    if (window.supabaseClient) {
+        try {
+            const { data: pv } = await window.supabaseClient.from('provinces').select('owner_id').not('owner_id', 'is', null);
+            (pv || []).forEach(p => { if (p.owner_id) provCount[p.owner_id] = (provCount[p.owner_id] || 0) + 1; });
+        } catch (e) { /* RLS/offline → degrada con grazia */ }
+        try {
+            const { data: cb } = await window.supabaseClient.from('alliance_members').select('user_id,contribution');
+            (cb || []).forEach(m => { contribByUser[m.user_id] = (contribByUser[m.user_id] || 0) + (m.contribution || 0); });
+        } catch (e) {}
+    }
+    const _power = r => (provCount[r.user_id] || 0) * 100
+                      + Math.floor((contribByUser[r.user_id] || 0) / 10000)
+                      + Math.min(100, (r.fleet_count || 0)) * 3
+                      + Math.round((r.reputation || 0) * 20);
+
     if (renderTabRanking._token !== renderToken) return;
 
     const myId = window.currentUser?.id;
@@ -66,8 +85,12 @@ async function renderTabRanking() {
             last_active:  new Date().toISOString(),
             _injected:    true,
         });
-        rows.sort((a, b) => b.liquid_assets - a.liquid_assets);
     }
+    // ranking per POTERE (metriche server) invece del cash dichiarato dal client
+    rows.forEach(r => { r._prov = provCount[r.user_id] || 0; r._contrib = contribByUser[r.user_id] || 0; r._power = _power(r); });
+    rows.sort((a, b) => b._power - a._power || (b.liquid_assets || 0) - (a.liquid_assets || 0));
+    // presenza reale → alimenta il chip "online" del feed Mondo NCC
+    try { window._worldRealOnline = rows.filter(r => r.last_active && (now - new Date(r.last_active).getTime()) < ONLINE_MS).length; } catch (e) {}
 
     const myRank  = rows.findIndex(r => r.user_id === myId) + 1;
     const total   = rows.length;
@@ -103,14 +126,14 @@ async function renderTabRanking() {
         <div>
             <div style="font-size:9px;color:#6a7480;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
             <div style="font-size:20px;font-weight:700;color:#1f2733;margin-bottom:2px">Classifica Globale</div>
-            <div style="font-size:11px;color:#6a7480">${total} aziende attive · Aggiornato adesso</div>
+            <div style="font-size:11px;color:#6a7480">${total} aziende · classifica per <b style="color:#c79a2a">Potere</b> (province · consorzio · flotta · reputazione) — a prova di cheat</div>
         </div>
         <button onclick="renderTabRanking()" style="background:#ffffff;border:1px solid #d6dee8;border-radius:4px;padding:5px 12px;color:#6a7480;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
         ${_kpi('La Tua Posizione', rankIcon, isTop3 ? 'gold' : '')}
-        ${_kpi('Patrimonio', '€' + Math.floor(myRow?.liquid_assets||gameState.cash||0).toLocaleString('it-IT'), 'green')}
-        ${_kpi('Reputazione', '★' + Number(myRow?.reputation||gameState.reputation||0).toFixed(1), 'blue')}
+        ${_kpi('Punteggio Potere', (myRow?._power||0).toLocaleString('it-IT'), 'gold')}
+        ${_kpi('Province', String(myRow?._prov||0), 'green')}
         ${_kpi('Aziende Globali', total, '')}
     </div>
     ${errBanner}${bonusBanner}`;
@@ -127,6 +150,8 @@ async function renderTabRanking() {
                 <tr style="border-bottom:1px solid #d6dee8">
                     <th style="width:44px;text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">#</th>
                     <th style="text-align:left;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Azienda</th>
+                    <th style="text-align:right;padding:6px 8px;font-size:9px;color:#c79a2a;font-weight:700;text-transform:uppercase;letter-spacing:.08em">Potere</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Prov</th>
                     <th style="text-align:right;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Patrimonio</th>
                     <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Rep</th>
                     <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Flotta</th>
@@ -149,7 +174,9 @@ async function renderTabRanking() {
                     ${isMe ? `<span style="font-size:9px;color:#c79a2a;margin-left:6px">(Tu)</span>` : ''}
                     ${online ? `<span style="display:inline-block;width:5px;height:5px;background:#1aa06a;border-radius:50%;margin-left:5px;vertical-align:middle"></span>` : ''}
                 </td>
-                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:700;font-size:11px;color:#2f74c0">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
+                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:800;font-size:12px;color:#c79a2a">${(r._power||0).toLocaleString('it-IT')}</td>
+                <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:${(r._prov||0)>0?'#1aa06a':'#98a1ae'}">${r._prov||0}</td>
+                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:700;font-size:11px;color:#6a7480">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
                 <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:#6a7480">${Number(r.reputation||0).toFixed(1)}</td>
                 <td style="text-align:center;padding:8px;font-size:11px;color:#6a7480">${r.fleet_count||0}</td>
                 <td style="text-align:center;padding:8px">
