@@ -155,6 +155,19 @@ window.switchTab = function(tab) {
     if (_prevTab === 'provinces' && tab !== 'provinces') {
         window.closeMapOverlay();
     }
+
+    // ── Sblocco progressivo (soft-lock): se la sezione non è ancora sbloccata,
+    //    mostra la schermata "sblocca" e NON aprire mappe/render del tab. ──
+    if (typeof window._tabUnlock === 'function' && !window._tabUnlock(tab).ok) {
+        const _c = document.getElementById('tab-container');
+        const _t = document.getElementById('panel-title');
+        if (_t) _t.innerText = '🔒 Sezione bloccata';
+        document.querySelectorAll('.nav-btn, .top-nav-btn, .sidebar-item').forEach(b => b.classList.remove('active'));
+        const _ab = document.querySelector(`[data-tab="${tab}"]`); if (_ab) _ab.classList.add('active');
+        if (_c && typeof window.renderTabLockHTML === 'function') _c.innerHTML = window.renderTabLockHTML(tab);
+        return;
+    }
+
     // Provinces tab: auto-open map overlay
     if (tab === 'provinces') {
         window.openMapOverlay();

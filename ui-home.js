@@ -153,6 +153,7 @@ window.renderTabHome = function() {
     <div class="em-kpi"><div class="l">Livello</div><div class="v" style="font-size:17px;color:#2f74c0">${_homeEsc(level.label)}</div><div class="s">${level.next ? 'Prossimo: ' + level.next : 'Massimo'}</div></div>
   </div>
 
+  ${(typeof window.renderOnboardingHTML==='function') ? window.renderOnboardingHTML() : ''}
   ${(typeof window.renderConflictHTML==='function') ? window.renderConflictHTML() : ''}
 
   <div class="em-grid2">
