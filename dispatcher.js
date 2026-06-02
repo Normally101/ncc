@@ -116,7 +116,7 @@ const HIGHWAYS = {
 
 // ─── TAB ICON MAP (used by peek tab) ─────────────────────────────
 const _TAB_ICONS = {
-    corse:'🚕', fleet:'🚘', staff:'👔', ranking:'🏆', consorzi:'🛡️', emails:'📩',
+    corse:'🚕', fleet:'🚘', staff:'👔', ranking:'🏆', consorzi:'🛡️', prestigio:'🎖️', emails:'📩',
     regions:'🗺️', invest:'📈', marketing:'📣', legal:'⚖️', finance:'💹',
     lifestyle:'🏰', politics:'🏛️', career:'🎯', store:'🪙', map:'📡',
 };
@@ -208,6 +208,7 @@ window.switchTab = function(tab) {
         case 'corse': title.innerText = "Dispatch Center"; _safeRender(renderTabCorse); break;
         case 'ranking': title.innerText = "Global Ranking"; _safeRender(renderTabRanking); break;
         case 'consorzi': title.innerText = "Consorzi"; _safeRender(window.renderTabConsorzi); break;
+        case 'prestigio': title.innerText = "Vetrina Prestigio"; _safeRender(window.renderTabPrestigio); break;
         case 'staff': title.innerText = "Risorse Umane"; _safeRender(renderTabStaff); break;
         case 'fleet': title.innerText = "Gestione Flotta"; _safeRender(renderTabFleet); break;
         case 'emails': title.innerText = "Inbox CEO"; _safeRender(renderTabEmails); break;

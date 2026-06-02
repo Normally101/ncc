@@ -1934,7 +1934,7 @@ async function _broadcastNews(message, type) {
     if (!window.supabaseClient || !window.currentUser) return;
     try {
         await window.supabaseClient.rpc('rpc_broadcast_news', {
-            p_company_name: gameState.companyName,
+            p_company_name: (gameState.companyLogo && gameState.companyLogo !== 'CE' ? gameState.companyLogo + ' ' : '') + gameState.companyName,
             p_message:      message,
             p_type:         type || 'info',
         });
