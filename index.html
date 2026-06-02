@@ -205,10 +205,11 @@
 
       <div class="emc-tab fill" onclick="switchTab('ranking')"><span class="emc-ti">🌐</span>Community
         <div class="emc-menu" onclick="event.stopPropagation()">
-          <a href="#" data-tab="ranking" onclick="switchTab('ranking');return false">🏆 Classifica</a>
-          <a href="#" data-tab="career"  onclick="switchTab('career');return false">🎯 Missioni</a>
-          <a href="#" data-tab="legal"   onclick="switchTab('legal');return false">⚖️ Ufficio Legale</a>
-          <a href="#" data-tab="help"    onclick="switchTab('help');return false">🆘 Supporto</a>
+          <a href="#" data-tab="ranking"  onclick="switchTab('ranking');return false">🏆 Classifica</a>
+          <a href="#" data-tab="consorzi" onclick="switchTab('consorzi');return false">🛡️ Consorzi</a>
+          <a href="#" data-tab="career"   onclick="switchTab('career');return false">🎯 Missioni</a>
+          <a href="#" data-tab="legal"    onclick="switchTab('legal');return false">⚖️ Ufficio Legale</a>
+          <a href="#" data-tab="help"     onclick="switchTab('help');return false">🆘 Supporto</a>
         </div>
       </div>
     </div>
@@ -321,6 +322,7 @@
         </button>
         <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
           <a class="sidebar-item" data-tab="ranking" onclick="switchTab('ranking')" href="#">🏆 Classifica</a>
+          <a class="sidebar-item" data-tab="consorzi" onclick="switchTab('consorzi')" href="#">🛡️ Consorzi</a>
           <a class="sidebar-item" data-tab="career"  onclick="switchTab('career')"  href="#">🎯 Missioni <span id="career-dot" class="nav-notif hidden">!</span></a>
           <a class="sidebar-item" data-tab="legal"   onclick="switchTab('legal')"   href="#">⚖️ Ufficio Legale <span id="fine-dot" class="nav-notif hidden">!</span></a>
           <a class="sidebar-item" data-tab="help"    onclick="switchTab('help')"    href="#">🆘 Supporto</a>
@@ -640,6 +642,7 @@
   <script defer src="ui-lifestyle.js?v=10"></script>
   <script defer src="ui-ops.js?v=10"></script>
   <script defer src="ui-ranking.js?v=10"></script>
+  <script defer src="alliances.js?v=1"></script>
   <script defer src="ui-investments.js?v=10"></script>
   <script defer src="ui-legal.js?v=10"></script>
   <script defer src="ui-politics.js?v=10"></script>
