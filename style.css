@@ -4797,8 +4797,10 @@ select:focus {
 #app-body.em-shell{
   background:
     url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='440'%20height='150'%3E%3Cg%20fill='%23aebfce'%20fill-opacity='0.5'%3E%3Crect%20x='8'%20y='70'%20width='30'%20height='80'/%3E%3Crect%20x='44'%20y='48'%20width='24'%20height='102'/%3E%3Crect%20x='74'%20y='86'%20width='38'%20height='64'/%3E%3Crect%20x='118'%20y='36'%20width='20'%20height='114'/%3E%3Crect%20x='146'%20y='72'%20width='34'%20height='78'/%3E%3Crect%20x='188'%20y='56'%20width='26'%20height='94'/%3E%3Crect%20x='222'%20y='90'%20width='42'%20height='60'/%3E%3Crect%20x='272'%20y='44'%20width='22'%20height='106'/%3E%3Crect%20x='302'%20y='78'%20width='36'%20height='72'/%3E%3Crect%20x='346'%20y='60'%20width='28'%20height='90'/%3E%3Crect%20x='382'%20y='84'%20width='40'%20height='66'/%3E%3C/g%3E%3C/svg%3E") bottom left repeat-x,
-    radial-gradient(1300px 340px at 50% 124%, rgba(255,250,236,.55), transparent 62%),
-    linear-gradient(180deg,#a7c8e6 0%, #bcd6ec 28%, #cfe0ed 50%, #dbe6ed 70%, #e4eaee 100%) !important;
+    radial-gradient(880px 200px at 17% 21%, rgba(255,255,255,.42), transparent 60%),
+    radial-gradient(640px 150px at 82% 15%, rgba(255,255,255,.30), transparent 60%),
+    radial-gradient(1400px 460px at 50% 122%, rgba(255,240,208,.70), transparent 60%),
+    linear-gradient(180deg,#4f80b9 0%, #6f9ccb 18%, #93bbdf 38%, #b6d2e8 58%, #d2e1ee 78%, #e7eef4 100%) !important;
   background-attachment:fixed !important;
   font-family:'Inter',system-ui,sans-serif;
 }
