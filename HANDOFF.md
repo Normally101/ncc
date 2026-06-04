@@ -1,7 +1,47 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 30 maggio 2026
+> Aggiornato: 3 giugno 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+---
+
+## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
+
+### Cosa è successo nelle ultime sessioni
+1. **FASE 3 COMPLETATA**: tutte le ~29 tab convertite da dark → **eRepublik-Modern light** (kit `.em`). Dettaglio più sotto nella sezione storica. Restano scure SOLO le overlay-flair volute (cmd-palette ⌘K, showBigEvent, tutorial, war-map log).
+2. **PROGRAMMA RETENTION/SOCIAL/MONETIZZAZIONE/ANTI-CHEAT** — tutto **LIVE** (committato + deployato su `gh-pages`, verificato a schermo):
+
+| Feature | File | Cosa fa |
+|---|---|---|
+| **Mondo NCC** (feed vivo) | `world-feed.js` | Feed globale sulla home: eventi REALI cross-player da `global_news` (+realtime) **fusi** con eventi NPC simulati (rivali che conquistano/comprano/OPA/scalano classifica). Presenza "● N online" (curva oraria + `_worldRealOnline` reale da ui-ranking). Esporta `renderWorldFeedHTML()`, `renderConflictHTML()` (striscia conflitto del giorno: OPA/poaching/espansione), `_worldOnline()`. |
+| **Ordini del Giorno** | `daily-orders.js` | 3 task daily deterministici (reset per game-day), progresso su `questStats`/`todayEarnings`, ricompensa DC/cash/rep da ritirare. `renderDailyOrdersHTML()`, `claimDailyOrder(id)`. |
+| **Energia monetizzabile** | `index.html` (`.emc-eplus`) + `engine-store.js` | "+" verde sul chip energia → `energyBoostDC()` refill istantaneo (4 DC); guard se già 100%; se senza DC → switchTab('store'). |
+| **Onboarding + soft-lock** | `onboarding.js` | Tab avanzate restano in nav ma se non sbloccate `switchTab` mostra schermata "Sezione bloccata" (recuperabile, gate PRIMA dell'auto-open mappa province). Gate OR (corse>=X **o** prestige>=Y); `prestige>=1` sblocca tutto (veterani/NG+ mai bloccati). Checklist "Primi Passi" in home per i nuovi. `_tabUnlock(tab)`, `renderTabLockHTML(tab)`, `renderOnboardingHTML()`. |
+| **Consorzi (alleanze)** | `alliances.js` | Tab `consorzi`: crea/sfoglia/entra · roster con ruoli (leader/officer/member) + espelli/promuovi · **tesoro condiviso + donazioni** · **chat realtime**. Su RPC Supabase. Crea/join fanno broadcast in `global_news` → compaiono nel feed Mondo NCC. |
+| **Vetrina Prestigio** (vanity) | `vanity.js` | Tab `prestigio`: cosmetici in DC (stemma/colore/titolo) — puro status. Lo **stemma è prepended in `_broadcastNews`** → visibile agli altri nel feed. Applicato anche al brand topbar. |
+| **Classifica anti-cheat** | `ui-ranking.js` | Rank per **Punteggio Potere** (province×100 + contributi consorzio/10k + flotta×3 + rep×20) = metriche SERVER → il cash falsificato non scala. Dedup per user_id + disambiguazione omonimi `#id`. Setta `window._worldRealOnline`. |
+
+### ⚠️ SQL SUPABASE — stato (il frontend è già live, serve il backend)
+L'utente ha **già eseguito**: (1) schema Consorzi (4 tabelle+RPC+RLS+realtime), (2) hardening (chat anti-flood + donazioni asset-bound), (3) anomaly logging (`cheat_flags`+trigger su `leaderboard`).
+- **DA ESEGUIRE ANCORA (probabilmente non fatto):** SQL per i **perk di consorzio** (così le donazioni SERVONO a qualcosa) — `ALTER TABLE alliances ADD perk_type/perk_until` + `rpc_activate_alliance_perk(p_perk,p_cost,p_hours)`. Il design: il leader spende il tesoro per attivare un perk che **buffa TUTTI i membri** (es. +10% guadagni 48h, −20% OPA, −15% carburante). **Appena eseguito → costruire la "Bottega del Consorzio" in `alliances.js`** (lista perk, spesa tesoro via RPC, lettura `alliances.perk_type/perk_until` lato membri per applicare il buff client-side).
+
+### Bug fix recenti (fatti)
+- **Sfondo nero in quasi tutte le tab** → causa: `#main-panel{background:#0a0c12 !important}` (style.css ~3850) copriva il cielo. Fix: `.em-shell #main-panel{background:transparent !important}`. Ora il contenuto galleggia sul cielo, i lati mostrano lo **skyline di Milano all'alba** (SVG stratificato self-hosted in `#app-body.em-shell`, e `.em-home` reso `background:transparent` per non raddoppiare).
+- **Nome azienda "Chauffeur Empire" ovunque** → la topbar `.emc-bn` era hardcoded; `updateUI` ora scrive `gameState.companyName` + stemma in `.emc-bn/.emc-bm`. NB: se in-game mostra ancora il default, il nome reale non è salvato in quello slot.
+- **3 righe identiche in classifica** = vecchi account di test nella tabella `leaderboard`. Fix display (dedup+`#id`); pulizia vera = `delete from leaderboard where user_id <> 'TUO_ID'` su Supabase.
+
+### TODO / prossimi passi
+1. **Bottega del Consorzio** (perk dal tesoro) — appena l'utente gira l'SQL dei perk. È la cosa che dà SENSO alle donazioni.
+2. **Foto di sfondo reale**: l'utente vuole una vera foto "Skyline Milano all'alba". Per ora c'è lo skyline SVG (bello e affidabile). Quando si vuole una foto: metterla in `assets/` (es. `assets/bg-milano.jpg`) e agganciarla in `#app-body.em-shell` come primo layer `url('assets/bg-milano.jpg') center/cover fixed`. (Image-gen/letture immagini erano KO durante la sessione.)
+3. Anti-cheat avanzato: market/aste sotto RPC validati + rate-limit globale.
+4. Mobile-first + push notifications (ritorno giornaliero).
+
+### Versioni script (giugno 2026)
+Nuovi file: `world-feed.js` v2 · `daily-orders.js` v1 · `onboarding.js` v1 · `alliances.js` v1 · `vanity.js` v1.
+Bumpati: `ui-home.js` v15 · `ui-ranking.js` v12 · `engine.js` v12 · `dispatcher.js` v11 · `engine-store.js` v10. `style.css`/`premium-ui.css` senza `?v=` (hard-refresh per vederli).
+
+### Deploy (IMPORTANTE)
+Workflow live: commit su `main` → `git push origin main` **poi** `git push origin main:gh-pages` (gh-pages è uno snapshot di main; il sito è https://normally101.github.io/ncc/). Niente CI di deploy (solo lint). `cmd-palette.js` + `em-chrome.js` erano untracked e ora committati (servono a index.html).
 
 ---
 
