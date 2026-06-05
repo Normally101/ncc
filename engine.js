@@ -174,7 +174,7 @@ window._stopMarketingCampaign  = _stopMarketingCampaign;
 let tempLeaseTier = null;
 
 let gameState = {
-    cash: 5000, reputation: 0.0, energy: 100,
+    cash: 35000, reputation: 0.0, energy: 100,
     day: 1, month: 1, hour: 8, minute: 0, paused: false,
     todayEarnings: 0,
     fleet: [], drivers: [], staff: [], investments: [],
@@ -841,8 +841,7 @@ function initGame(fresh = true) {
     _gameIntervals.forEach(clearInterval);
     _gameIntervals = [];
     if (fresh) {
-        gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: 'c_loaner', queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
-        gameState.fleet.push({ id: 'c_loaner', name: 'Stellar E-Executive', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [], vehicleClass: 'stellar_e_exec' });
+        gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
         _refreshRecruits();
     } else {
         // Pre-sync clock and process offline income before intervals start (prevents false hourly/daily triggers)
