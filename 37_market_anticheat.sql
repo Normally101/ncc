@@ -180,8 +180,7 @@ GRANT EXECUTE ON FUNCTION public.rpc_place_auction_bid(UUID, BIGINT) TO authenti
 
 -- ── 5. INDICI aggiuntivi ─────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_market_seller_active
-    ON public.market_listings(seller_user_id, expires_at)
-    WHERE expires_at > NOW();
+    ON public.market_listings(seller_user_id, expires_at);
 
 -- ════════════════════════════════════════════════════════════════════════
 -- FINE. Anti-cheat market/aste operativo.
