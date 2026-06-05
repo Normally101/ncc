@@ -292,6 +292,9 @@ async function _onAuthSuccess(user) {
     if (typeof window.hqInit === 'function') window.hqInit();
 
     if (overlay) overlay.remove();
+
+    // Chiama hook opzionali registrati da moduli late-loaded (es. push-notifications.js)
+    (window._onAuthSuccessHooks || []).forEach(fn => { try { fn(user); } catch {} });
 }
 
 // ── LOGOUT ────────────────────────────────────────────────────────

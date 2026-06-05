@@ -1,21 +1,29 @@
 {
   "name": "Chauffeur Empire – Global Tycoon",
-  "short_name": "Chauffeur Empire",
+  "short_name": "CE Empire",
   "description": "Gestisci la tua flotta NCC e costruisci un impero del trasporto di lusso in Italia.",
-  "start_url": "/",
+  "start_url": "/ncc/",
+  "scope": "/ncc/",
   "display": "standalone",
-  "background_color": "#080810",
-  "theme_color": "#00f2ff",
-  "orientation": "portrait-primary",
+  "orientation": "landscape-primary",
+  "background_color": "#b2cfe4",
+  "theme_color": "#2f74c0",
   "lang": "it",
   "categories": ["games", "entertainment"],
   "icons": [
     {
-      "src": "/icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml",
+      "src": "assets/ce-favicon.png",
+      "sizes": "192x192",
+      "type": "image/png",
       "purpose": "any maskable"
+    },
+    {
+      "src": "assets/ce-logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "screenshots": []
+  "screenshots": [],
+  "prefer_related_applications": false
 }
