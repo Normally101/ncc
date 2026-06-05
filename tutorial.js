@@ -214,8 +214,8 @@ function _buildBox(step, target) {
     const total    = _TUT_STEPS.length;
 
     const btnHtml = `<div style="display:flex;gap:8px;align-items:center">
-        <button onclick="window.tutorialSkip()" style="font-size:9px;padding:3px 10px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:#6b7280;border-radius:4px;cursor:pointer">Salta</button>
-        <button onclick="window.tutorialNext()" style="font-size:10px;padding:4px 14px;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.5);color:#d4af37;border-radius:4px;cursor:pointer;font-weight:700">${isLast ? '🚀 Cominciamo!' : isFirst ? 'Inizia →' : 'Avanti →'}</button>
+        <button onclick="window.tutorialSkip()" style="font-size:11px;padding:4px 12px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:#6b7280;border-radius:4px;cursor:pointer">Salta</button>
+        <button onclick="window.tutorialNext()" style="font-size:12px;padding:5px 16px;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.5);color:#d4af37;border-radius:4px;cursor:pointer;font-weight:700">${isLast ? '🚀 Cominciamo!' : isFirst ? 'Inizia →' : 'Avanti →'}</button>
     </div>`;
 
     const dots = Array.from({ length: total }, (_, i) => {
@@ -238,15 +238,15 @@ function _buildBox(step, target) {
     ].join(';');
 
     box.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-            <div style="width:26px;height:26px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.45);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:#d4af37;flex-shrink:0">${sp.initial}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+            <div style="width:32px;height:32px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.45);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#d4af37;flex-shrink:0">${sp.initial}</div>
             <div>
-                <div style="font-size:10px;font-weight:700;color:#d4af37;line-height:1">${sp.name}</div>
-                <div style="font-size:8px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em">${sp.faction}</div>
+                <div style="font-size:12px;font-weight:700;color:#d4af37;line-height:1">${sp.name}</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em">${sp.faction}</div>
             </div>
         </div>
-        <div style="font-size:12px;font-weight:800;color:white;margin-bottom:6px;line-height:1.2">${step.title}</div>
-        <div style="font-size:10.5px;color:#9ca3af;line-height:1.6;margin-bottom:14px">${step.body}</div>
+        <div style="font-size:16px;font-weight:800;color:white;margin-bottom:8px;line-height:1.3">${step.title}</div>
+        <div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:16px">${step.body}</div>
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
             <div style="display:flex;gap:4px;align-items:center">${dots}</div>
             ${btnHtml}

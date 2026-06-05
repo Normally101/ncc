@@ -396,11 +396,11 @@ function showBigEvent(icon, title, body) {
         document.body.appendChild(el);
     }
     el.innerHTML = `
-        <div style="background:#161b22;border:1px solid rgba(212,175,55,0.5);padding:32px;border-radius:16px;max-width:384px;width:100%;text-align:center;margin:0 16px" onclick="event.stopPropagation()">
-            <div style="font-size:48px;margin-bottom:16px">${icon}</div>
-            <h2 style="color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:12px;margin-bottom:12px">${title}</h2>
-            <p style="color:#d1d5db;font-size:11px;line-height:1.5;margin-bottom:24px">${body}</p>
-            <button onclick="document.getElementById('big-event-modal').remove()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:8px 32px;border-radius:4px;font-size:11px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">OK, Capito</button>
+        <div style="background:#161b22;border:1px solid rgba(212,175,55,0.5);padding:40px 32px;border-radius:16px;max-width:420px;width:100%;text-align:center;margin:0 16px" onclick="event.stopPropagation()">
+            <div style="font-size:56px;margin-bottom:20px;line-height:1">${icon}</div>
+            <h2 style="color:#d4af37;font-weight:700;text-transform:uppercase;letter-spacing:.08em;font-size:18px;margin-bottom:14px;line-height:1.3">${title}</h2>
+            <p style="color:#d1d5db;font-size:14px;line-height:1.6;margin-bottom:28px;white-space:pre-wrap">${body}</p>
+            <button onclick="document.getElementById('big-event-modal').remove()" style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:10px 36px;border-radius:4px;font-size:13px;font-weight:600;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">OK, Capito</button>
         </div>`;
     el.style.display = 'flex';
 }
