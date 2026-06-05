@@ -1,6 +1,6 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 3 giugno 2026
+> Aggiornato: 5 giugno 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
@@ -47,11 +47,21 @@ L'utente ha **già eseguito**: (1) schema Consorzi (4 tabelle+RPC+RLS+realtime),
 - **Nome azienda "Chauffeur Empire" ovunque** → la topbar `.emc-bn` era hardcoded; `updateUI` ora scrive `gameState.companyName` + stemma in `.emc-bn/.emc-bm`. NB: se in-game mostra ancora il default, il nome reale non è salvato in quello slot.
 - **3 righe identiche in classifica** = vecchi account di test nella tabella `leaderboard`. Fix display (dedup+`#id`); pulizia vera = `delete from leaderboard where user_id <> 'TUO_ID'` su Supabase.
 
-### TODO / prossimi passi
-1. ✅ **Bottega del Consorzio** — FATTA (frontend `alliances.js` v=2 + hook motore). **Resta SOLO:** l'utente gira `36_alliance_perks.sql` su Supabase → poi io committo + deployo. È la cosa che dà SENSO alle donazioni.
-2. **Foto di sfondo reale**: l'utente vuole una vera foto "Skyline Milano all'alba". Per ora c'è lo skyline SVG (bello e affidabile). Quando si vuole una foto: metterla in `assets/` (es. `assets/bg-milano.jpg`) e agganciarla in `#app-body.em-shell` come primo layer `url('assets/bg-milano.jpg') center/cover fixed`. (Image-gen/letture immagini erano KO durante la sessione.)
-3. Anti-cheat avanzato: market/aste sotto RPC validati + rate-limit globale.
-4. Mobile-first + push notifications (ritorno giornaliero).
+### ✅ TUTTI I TODO PRINCIPALI COMPLETATI (5 giugno 2026)
+
+1. ✅ **Bottega del Consorzio** — `alliances.js` v=2 + `36_alliance_perks.sql` (girato)
+2. ✅ **Sfondo reale Milano** — `bg_milano.jpg` (vista aerea, luce dorata alba) come background. Gradient overlay cielo 5-livelli sopra. SVG rettangoli rimossi.
+3. ✅ **Anti-cheat market/aste** — `37_market_anticheat.sql` (DA GIRARE su Supabase): `cheat_flags` table + `_flag_cheat` helper + `rpc_list_car_for_sale` v2 (€1k–€50M, max 5 listing) + `rpc_place_auction_bid` v2 (rate-limit 10s, cap €100M, spike flag).
+4. ✅ **Mobile-first** — CSS responsive em-chrome: ≤900px nav scroll, ≤600px icons-only, ≤768px bg-attachment:scroll (iOS fix).
+5. ✅ **PWA + push notifications** — `sw.js` (cache-first shell, push server, notificationclick) + `push-notifications.js` (permesso 90s post-login, notifica ritorno +22h, cancella al ritorno) + `manifest.json` (icone reali, theme#2f74c0, landscape) + `auth.js` v=7 (hook `_onAuthSuccessHooks`).
+
+### ⚠️ SQL DA GIRARE SU SUPABASE
+- **`37_market_anticheat.sql`** — anti-cheat market/aste. Idempotente.
+
+### Prossimi step (post-lancio)
+- Espansione lane: taxi/truck/water-taxi (`vehicleClass` su fleet + `requiredClass` su pendingRides)
+- Server push VAPID reale (ora usa solo browser Notifications API locale)
+- HQ multi-città (già strutturato in `hq.js`, serve UI per acquisto sede secondaria)
 
 ### Versioni script (giugno 2026)
 Nuovi file: `world-feed.js` v2 · `daily-orders.js` v1 · `onboarding.js` v1 · `alliances.js` v1 · `vanity.js` v1.
