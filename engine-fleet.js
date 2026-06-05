@@ -174,7 +174,9 @@ window.buyFuelForDepot = function(litres) {
     const depotLvlData   = _DEPOT_LEVELS.find(d => d.level === (gameState.fuelTankLevel || 1)) || _DEPOT_LEVELS[0];
     const depotDiscount  = 1.0 - (depotLvlData.priceDiscount || 0);
     const _consorzioFuelDiscount = ((window._sindacatoState || {}).consorzioMembersCount >= 3) ? 0.95 : 1.0;
-    const fuelDiscount   = lobbyDiscount * depotDiscount * _consorzioFuelDiscount;
+    // Bottega del Consorzio — perk carburante attivo (fuel_save)
+    const _allyFuelDiscount = (typeof window._allyPerkMult === 'function') ? window._allyPerkMult('fuel') : 1.0;
+    const fuelDiscount   = lobbyDiscount * depotDiscount * _consorzioFuelDiscount * _allyFuelDiscount;
     const cost = Math.floor(actual * (gameState.fuelPrice || 1.85) * fuelDiscount);
     if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
     gameState.cash -= cost;

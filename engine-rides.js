@@ -674,7 +674,9 @@ function completeRide(ride, _deferPay = false) {
     // HQ allEarningsMult (Espansione 6: Penthouse CEO)
     const _hqFx  = (typeof window.hqAllEffects === 'function') ? window.hqAllEffects() : {};
     const _hqTip = _hqFx.allEarningsMult || 1.0;
-    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult * _decreeTip * _hqTip) - _fuelDeduction);
+    // Bottega del Consorzio — perk guadagni attivo (boost_income / mega_income)
+    const _allyEarn = (typeof window._allyPerkMult === 'function') ? window._allyPerkMult('earnings') : 1.0;
+    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult * _decreeTip * _hqTip * _allyEarn) - _fuelDeduction);
 
     const prevCash = gameState.cash;
     if (_deferPay) {

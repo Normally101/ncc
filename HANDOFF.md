@@ -23,7 +23,24 @@
 
 ### ⚠️ SQL SUPABASE — stato (il frontend è già live, serve il backend)
 L'utente ha **già eseguito**: (1) schema Consorzi (4 tabelle+RPC+RLS+realtime), (2) hardening (chat anti-flood + donazioni asset-bound), (3) anomaly logging (`cheat_flags`+trigger su `leaderboard`).
-- **DA ESEGUIRE ANCORA (probabilmente non fatto):** SQL per i **perk di consorzio** (così le donazioni SERVONO a qualcosa) — `ALTER TABLE alliances ADD perk_type/perk_until` + `rpc_activate_alliance_perk(p_perk,p_cost,p_hours)`. Il design: il leader spende il tesoro per attivare un perk che **buffa TUTTI i membri** (es. +10% guadagni 48h, −20% OPA, −15% carburante). **Appena eseguito → costruire la "Bottega del Consorzio" in `alliances.js`** (lista perk, spesa tesoro via RPC, lettura `alliances.perk_type/perk_until` lato membri per applicare il buff client-side).
+
+#### 🟡 DA ESEGUIRE: `36_alliance_perks.sql` — Bottega del Consorzio (PRONTO, scritto questa sessione)
+- **File:** `36_alliance_perks.sql` (nella root). Idempotente. **L'utente deve girarlo su Supabase SQL editor.**
+- **Cosa fa:** `ALTER TABLE alliances ADD perk_type/perk_until` + `rpc_activate_alliance_perk(p_perk)`.
+- **Anti-cheat:** la RPC prende SOLO `p_perk`; **costo e durata sono decisi dal server** (catalog `case` in SQL) → un client non può attivare un perk a costo 1 o durata infinita. Verifica `role='leader'`, `FOR UPDATE` sul tesoro (no race su doppia spesa).
+- **Catalogo perk (SQL ↔ `PERKS` in alliances.js devono restare allineati):**
+  - `boost_income` — +12% guadagni corse · 48h · €50k
+  - `fuel_save` — −15% prezzo carburante · 48h · €35k
+  - `mega_income` — +25% guadagni corse · 24h · €120k
+
+#### ✅ Frontend Bottega — FATTO (questa sessione), live appena l'SQL è girato
+- **`alliances.js` v=2:** card "Bottega del Consorzio" nella vista membro (sotto il Tesoro). Il leader vede i bottoni di spesa (disabilitati se tesoro basso o non-leader); tutti i membri vedono il **perk attivo + countdown** ("scade tra Xg Yh").
+- **Buff client-side:** `window._allyPerkMult(kind)` legge `window._allyActivePerk` (cache di `alliances.perk_type/perk_until`). Aggiornata da `window._allyRefreshPerk()` su render tab + in background (`setTimeout 5s` + `setInterval 3min`) → il buff si applica **anche fuori dalla tab Consorzi**.
+- **Hook nel motore:**
+  - `engine-rides.js` v=7: `_allyEarn = _allyPerkMult('earnings')` innestato nella catena `earned`.
+  - `engine-fleet.js` v=7: `_allyFuelDiscount = _allyPerkMult('fuel')` innestato in `fuelDiscount` (acquisto deposito carburante).
+- **Degradazione graziosa:** finché l'SQL non è girato, `al.perk_type` è `undefined` → banner "Nessun perk attivo", nessun crash; cliccare un bottone notifica errore RPC (innocuo).
+- **NON ancora committato/deployato** — aspetto conferma che l'SQL sia stato girato, poi commit + push `main` e `main:gh-pages`.
 
 ### Bug fix recenti (fatti)
 - **Sfondo nero in quasi tutte le tab** → causa: `#main-panel{background:#0a0c12 !important}` (style.css ~3850) copriva il cielo. Fix: `.em-shell #main-panel{background:transparent !important}`. Ora il contenuto galleggia sul cielo, i lati mostrano lo **skyline di Milano all'alba** (SVG stratificato self-hosted in `#app-body.em-shell`, e `.em-home` reso `background:transparent` per non raddoppiare).
@@ -31,7 +48,7 @@ L'utente ha **già eseguito**: (1) schema Consorzi (4 tabelle+RPC+RLS+realtime),
 - **3 righe identiche in classifica** = vecchi account di test nella tabella `leaderboard`. Fix display (dedup+`#id`); pulizia vera = `delete from leaderboard where user_id <> 'TUO_ID'` su Supabase.
 
 ### TODO / prossimi passi
-1. **Bottega del Consorzio** (perk dal tesoro) — appena l'utente gira l'SQL dei perk. È la cosa che dà SENSO alle donazioni.
+1. ✅ **Bottega del Consorzio** — FATTA (frontend `alliances.js` v=2 + hook motore). **Resta SOLO:** l'utente gira `36_alliance_perks.sql` su Supabase → poi io committo + deployo. È la cosa che dà SENSO alle donazioni.
 2. **Foto di sfondo reale**: l'utente vuole una vera foto "Skyline Milano all'alba". Per ora c'è lo skyline SVG (bello e affidabile). Quando si vuole una foto: metterla in `assets/` (es. `assets/bg-milano.jpg`) e agganciarla in `#app-body.em-shell` come primo layer `url('assets/bg-milano.jpg') center/cover fixed`. (Image-gen/letture immagini erano KO durante la sessione.)
 3. Anti-cheat avanzato: market/aste sotto RPC validati + rate-limit globale.
 4. Mobile-first + push notifications (ritorno giornaliero).

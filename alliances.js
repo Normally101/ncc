@@ -10,6 +10,42 @@
     const CREATE_COST = 25000;
     const ST = { chatChan: null, chatAid: null };
 
+    // ── BOTTEGA DEL CONSORZIO — catalogo perk ─────────────────────────
+    // NB: cost/hours sono SOLO per il display. La verità è server-side in
+    // rpc_activate_alliance_perk (36_alliance_perks.sql). Tenerli allineati.
+    const PERKS = [
+        { id: 'boost_income', icon: '💰', name: 'Boost Ricavi',          desc: '+12% guadagni su tutte le corse',   cost: 50000,  hours: 48, kind: 'earnings', mult: 1.12 },
+        { id: 'fuel_save',    icon: '⛽', name: 'Efficienza Carburante',  desc: '−15% sul prezzo del carburante',    cost: 35000,  hours: 48, kind: 'fuel',     mult: 0.85 },
+        { id: 'mega_income',  icon: '🚀', name: 'Mega Ricavi',           desc: '+25% guadagni su tutte le corse',   cost: 120000, hours: 24, kind: 'earnings', mult: 1.25 },
+    ];
+    const _fmtRemain = ms => {
+        const s = Math.max(0, Math.floor((ms - Date.now()) / 1000));
+        const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+        return h >= 24 ? `${Math.floor(h / 24)}g ${h % 24}h` : h > 0 ? `${h}h ${m}m` : `${m}m`;
+    };
+
+    // Buff client-side: il motore (engine-rides/engine-fleet) legge questi.
+    // window._allyActivePerk = { type, until(ISO/ms) } | null
+    window._allyPerkMult = function (kind) {
+        const p = window._allyActivePerk;
+        if (!p || !p.type) return 1.0;
+        if (!(new Date(p.until).getTime() > Date.now())) return 1.0;
+        const def = PERKS.find(x => x.id === p.type);
+        return (def && def.kind === kind) ? def.mult : 1.0;
+    };
+    // Aggiorna la cache del perk leggendo il consorzio del giocatore.
+    // Gira in background (anche fuori dalla tab Consorzi) per applicare il buff.
+    window._allyRefreshPerk = async function () {
+        try {
+            if (!sb() || !uid()) { window._allyActivePerk = null; return; }
+            const { data: m } = await sb().from('alliance_members').select('alliance_id').eq('user_id', uid()).maybeSingle();
+            if (!m || !m.alliance_id) { window._allyActivePerk = null; return; }
+            const { data: a } = await sb().from('alliances').select('perk_type,perk_until').eq('id', m.alliance_id).maybeSingle();
+            window._allyActivePerk = (a && a.perk_type && a.perk_until && new Date(a.perk_until).getTime() > Date.now())
+                ? { type: a.perk_type, until: a.perk_until } : null;
+        } catch (e) { /* offline o colonne perk non ancora migrate (36_alliance_perks.sql) */ }
+    };
+
     const sb  = () => window.supabaseClient;
     const uid = () => window.currentUser && window.currentUser.id;
     const cname = () => (window.gameState && gameState.companyName) || 'Chauffeur Empire';
@@ -77,6 +113,37 @@
             </div>`;
         }).join('');
 
+        // ── Bottega del Consorzio (perk dal tesoro) ───────────────────
+        const _perkActiveMs = (al.perk_type && al.perk_until && new Date(al.perk_until).getTime() > Date.now()) ? new Date(al.perk_until).getTime() : 0;
+        const activePerk = _perkActiveMs ? PERKS.find(p => p.id === al.perk_type) : null;
+        window._allyActivePerk = activePerk ? { type: al.perk_type, until: al.perk_until } : null;
+
+        const perkBanner = activePerk ? `
+            <div style="margin:0 11px 9px;padding:9px 11px;background:linear-gradient(135deg,rgba(26,160,106,.12),rgba(26,160,106,.04));border:1px solid var(--em-green);border-radius:8px">
+                <div style="font-size:11.5px;font-weight:800;color:var(--em-green-d)">${activePerk.icon} ${activePerk.name} · ATTIVO</div>
+                <div style="font-size:10.5px;color:var(--em-muted);margin-top:1px">${activePerk.desc} — scade tra <b>${_fmtRemain(_perkActiveMs)}</b></div>
+            </div>`
+            : `<div style="margin:0 11px 9px;font-size:10.5px;color:var(--em-dim)">Nessun perk attivo. ${isLeader ? 'Spendi il tesoro per buffare tutto il consorzio.' : 'Solo il leader può attivarne uno.'}</div>`;
+
+        const perkRows = PERKS.map(p => {
+            const affordable = (al.treasury || 0) >= p.cost;
+            const dis = !isLeader || !affordable;
+            const hint = !isLeader ? 'Solo leader' : !affordable ? 'Tesoro basso' : `${p.hours}h`;
+            return `<div class="em-lrow">
+                <div style="flex:1;min-width:0">
+                    <div class="em-lt">${p.icon} ${esc(p.name)}</div>
+                    <div class="em-lm"><span>${esc(p.desc)}</span><span>· ${hint}</span></div>
+                </div>
+                <button class="em-goldbtn" style="flex-shrink:0${dis ? ';opacity:.45;cursor:not-allowed' : ''}" ${dis ? 'disabled' : `onclick="window._alPerk('${p.id}')"`}>${fmt(p.cost)}</button>
+            </div>`;
+        }).join('');
+
+        const bottegaCard = `<div class="em-card" style="margin-bottom:7px">
+            <div class="em-ch"><span class="t">Bottega del Consorzio</span><span class="a" style="color:var(--em-muted)">perk a tempo</span></div>
+            ${perkBanner}
+            ${perkRows}
+        </div>`;
+
         const chatRows = chat.length ? chat.map(m => `
             <div style="padding:6px 11px;border-top:1px solid var(--em-line2)">
                 <span style="font-weight:700;font-size:11px;color:${m.user_id === uid() ? 'var(--em-blue)' : 'var(--em-ink)'}">${esc(m.company_name || 'Anon')}</span>
@@ -107,6 +174,7 @@
                         </div>
                         <div style="font-size:10px;color:var(--em-dim);padding:0 11px 10px">Il tuo contributo totale: <b>${fmt((roster.find(m => m.user_id === uid()) || {}).contribution)}</b></div>
                     </div>
+                    ${bottegaCard}
                     <div class="em-card">
                         <div class="em-ch"><span class="t">Membri</span><span class="a">${roster.length}</span></div>
                         ${rosterRows}
@@ -279,4 +347,20 @@
         try { await _rpc('rpc_set_member_role', { p_user_id: userId, p_role: role }); window.renderTabConsorzi(); }
         catch (e) { _notify(e.message, 'error'); }
     };
+
+    // ── BOTTEGA: attiva un perk dal tesoro (solo leader, server-authoritative)
+    window._alPerk = async function (perkId) {
+        const def = PERKS.find(p => p.id === perkId); if (!def) return;
+        if (!confirm(`Attivare "${def.name}" per ${fmt(def.cost)} dal tesoro?\nDurata ${def.hours}h · buffa TUTTI i membri.`)) return;
+        try {
+            const until = await _rpc('rpc_activate_alliance_perk', { p_perk: perkId });
+            if (until) window._allyActivePerk = { type: perkId, until };
+            _notify(`${def.icon} ${def.name} attivato per il consorzio!`, 'success');
+            window.renderTabConsorzi();
+        } catch (e) { _notify(e.message, 'error'); }
+    };
+
+    // Refresh perk in background → il buff si applica anche fuori dalla tab.
+    setTimeout(() => { try { window._allyRefreshPerk(); } catch (e) {} }, 5000);
+    setInterval(() => { try { window._allyRefreshPerk(); } catch (e) {} }, 180000);
 })();
