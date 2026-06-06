@@ -21,6 +21,7 @@ const ServerState = (() => {
     let _trips     = [];     // active_trips rows — server-tracked rides
     let _ready     = false;
     let _tripClaimTimer = null;
+    let _lastServerCash = null;  // baseline for delta-based realtime cash sync (BUG 4)
 
     // ── Public: initialise after login ────────────────────────────────────────
     async function init(supabaseClient) {
@@ -145,8 +146,17 @@ const ServerState = (() => {
     function _onCompanyChange(payload) {
         const { eventType, new: newRow } = payload;
         if (eventType === 'UPDATE' || eventType === 'INSERT') {
+            // BUG 4 fix: apply only the server-side DELTA to local cash. The local
+            // simulation is authoritative for cash (ride earnings, repairs, fines,
+            // fuel are all mutated locally and mirrored to the server via syncCash).
+            // Overwriting local cash here would revert every local earning/spend
+            // accumulated since the last sync. Boot/full bridge stays authoritative.
+            if (window.gameState && Number.isFinite(_lastServerCash) && Number.isFinite(newRow.cash)) {
+                const delta = newRow.cash - _lastServerCash;
+                if (delta !== 0) gameState.cash += delta;
+            }
             _company = newRow;
-            _bridgeToGameState();
+            _bridgeToGameState({ skipCash: true });
             if (typeof updateUI === 'function') updateUI();
         }
     }
@@ -186,11 +196,16 @@ const ServerState = (() => {
     }
 
     // ── Bridge: sync server state → local gameState ────────────────────────────
-    function _bridgeToGameState() {
+    // opts.skipCash=true → update everything EXCEPT cash (used by the realtime
+    // delta handler, which manages cash itself). Always refreshes _lastServerCash
+    // so subsequent realtime deltas are measured from the latest known server value.
+    function _bridgeToGameState(opts) {
         if (!window.gameState || !_company) return;
+        const skipCash = opts && opts.skipCash;
+        _lastServerCash = _company.cash;
 
         // Authoritative financial fields — always trust the server
-        gameState.cash                  = _company.cash;
+        if (!skipCash) gameState.cash   = _company.cash;
         gameState.driverCoins           = (_company.driver_coins  != null) ? _company.driver_coins  : (gameState.driverCoins ?? 0);
         gameState.vtkBalance            = (_company.vtk_balance   != null) ? _company.vtk_balance   : (gameState.vtkBalance  ?? 0);
         const _rep = parseFloat(_company.reputation);
@@ -263,6 +278,7 @@ const ServerState = (() => {
     // Returns the new vehicles row, or null on error (notification already shown).
     async function buyVehicle(modelId, price, hqCity) {
         _assertReady();
+        await _ensureCompany();
         const { data, error } = await _supabase.rpc('rpc_buy_vehicle', {
             v_model_id: modelId,
             v_price:    price,
@@ -303,6 +319,7 @@ const ServerState = (() => {
     async function claimReward(tripServerId) {
         if (!tripServerId) return null;
         _assertReady();
+        await _ensureCompany();
         const { data, error } = await _supabase.rpc('rpc_claim_trip_reward', {
             v_trip_id: tripServerId,
         });
@@ -328,8 +345,31 @@ const ServerState = (() => {
     // The UI must NOT update after success: trust Realtime to fire and sync.
     // ==========================================================================
 
+    // BUG 1+2 fix: guarantee the companies row exists before ANY server mutation.
+    // The financial RPCs (buy/hire/invest/loan…) all require a company row; the
+    // sim blob (game_saves) and the company row can drift out of sync (e.g. after
+    // a DB reset, or a boot branch that loaded a sim without ensuring the row).
+    // This self-heals that drift transparently so no action ever fails with
+    // "azienda non trovata".
+    async function _ensureCompany() {
+        if (_company) return _company;
+        try {
+            const { data } = await _supabase.from('companies').select('*').maybeSingle();
+            if (data) {
+                _company = data;
+                _subscribeRealtime();
+                _bridgeToGameState();
+                return _company;
+            }
+        } catch (e) { /* fall through to create */ }
+        const name = (window.gameState && window.gameState.companyName)
+                   || window._pendingCompanyName || 'Chauffeur Empire';
+        return await initCompany(name);
+    }
+
     async function _rpc(name, params) {
         _assertReady();
+        await _ensureCompany();
         const { data, error } = await _supabase.rpc(name, params);
         if (error) { _handleRpcError(name, error); return null; }
         return data;

@@ -4904,6 +4904,10 @@ select:focus {
   .emc-tab .emc-ti { font-size:12px; }
   /* Dropdown menu: apre verso il basso, largezza fissa */
   .emc-menu { min-width:160px; }
+
+  /* Contenuto: layout a 2 colonne → 1 colonna, niente sidebar laterale */
+  .em-grid2 { grid-template-columns:1fr !important; }
+  .em-kpis  { grid-template-columns:repeat(2,1fr) !important; }
 }
 
 @media (max-width: 600px) {
@@ -4913,8 +4917,13 @@ select:focus {
   .emc-chips .emc-chip:nth-child(n+4) { display:none !important; } /* max 3 chip */
   .emc-chip { padding:3px 6px 3px 4px; font-size:11px; }
   .emc-eb { width:44px; }
-  /* Main panel offset ridotto su phone */
+  /* Main panel offset ridotto su phone (em-chrome.js può comunque sovrascrivere
+     con l'altezza reale misurata della chrome) */
   .em-shell #main-panel { top:120px !important; }
+  /* Contenuto: KPI a colonna singola, padding ridotto, niente overflow orizzontale */
+  .em-kpis { grid-template-columns:1fr 1fr !important; }
+  .em-page, .em-wrap { padding-left:8px !important; padding-right:8px !important; }
+  #main-panel { left:0 !important; }
 }
 
 /* Sfondo: su iOS background-attachment:fixed non funziona bene → scroll */

@@ -177,12 +177,10 @@ window.doBuyRealEstate = async function(listingId) {
 window.addEventListener('DOMContentLoaded', () => {
     setupDragAndDrop();
     _initGlobalNewsFeed();
-    if (_isMobile()) {
-        document.body.classList.add('mobile-mode');
-        const sidebar = document.querySelector('nav.fixed.left-4');
-        if (sidebar) sidebar.style.display = 'none';
-        if (typeof window.renderMobileDispatcher === 'function') {
-            window.renderMobileDispatcher();
-        }
-    }
+    // NOTE: the old mobile hijack here was removed (BUG 5). It referenced an
+    // obsolete sidebar selector (`nav.fixed.left-4`), ran before login when
+    // gameState wasn't ready, and rendered a half-broken overlay on top of the
+    // live desktop chrome. Mobile is now handled purely with responsive CSS in
+    // style.css (the real game UI adapts to narrow screens), so no JS hijack.
+    if (_isMobile()) document.body.classList.add('mobile-mode');
 });

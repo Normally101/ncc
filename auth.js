@@ -36,12 +36,14 @@ async function _mmoBootSequence(userId) {
     // ── Phase 1: Server-Authoritative state (MMO schema) ──────────
     let serverReady = false;
     let hasCompanyRow = false;
+    let companyId = null;
 
     if (window.ServerState) {
         try {
             const state = await window.ServerState.init(window.supabaseClient);
             serverReady = true;
             hasCompanyRow = !!state.company;
+            companyId = state.company?.id || null;
             console.log('[Auth] Phase 1 ✅ ServerState pronto —',
                 hasCompanyRow ? `company: ${state.company.company_name}, cash: €${state.company.cash}` : 'nessuna company row');
 
@@ -50,6 +52,7 @@ async function _mmoBootSequence(userId) {
                 const companyName = window._pendingCompanyName || 'Chauffeur Empire';
                 const created = await window.ServerState.initCompany(companyName);
                 hasCompanyRow = !!created;
+                companyId = created?.id || companyId;
                 console.log('[Auth] Phase 1 → Company creata:', created?.company_name);
             }
         } catch(e) {
@@ -115,9 +118,31 @@ async function _mmoBootSequence(userId) {
         ['chauffeurEmpireSlot_1','chauffeurEmpireSlot_2','chauffeurEmpireSlot_3'].forEach(k => localStorage.removeItem(k));
 
     if (cloudSimState) {
-        // ── Happy path: cloud save exists → load it ──────────────────
-        console.log('[Auth] Phase 4 → Carico save dal cloud.');
-        window._startGameWithSlot(0, false);
+        // ── Cloud save exists ────────────────────────────────────────
+        // Orphaned-sim guard (BUG 2/3): a save stamped with a different company
+        // id than this account's current company belongs to a deleted/reset
+        // company (e.g. the companies table was wiped). Discard it and start
+        // fresh so the player never gets stuck on a stale "ghost" save.
+        const simCompanyId = cloudSimState._companyId || null;
+        if (simCompanyId && companyId && simCompanyId !== companyId) {
+            console.log('[Auth] Phase 4 → Sim orfana (companyId non corrisponde) — scarto e avvio fresca.');
+            _clearLocalCache();
+            window._startGameWithSlot(0, true);
+        } else {
+            // Ensure the company row exists even if Phase 1 failed to create it,
+            // so server actions (buy/hire/…) never fail with "azienda non trovata".
+            if (!hasCompanyRow && window.ServerState) {
+                try {
+                    const c = await window.ServerState.initCompany(
+                        cloudSimState.companyName || window._pendingCompanyName || 'Chauffeur Empire'
+                    );
+                    hasCompanyRow = !!c;
+                    companyId = c?.id || companyId;
+                } catch(e) { console.warn('[Auth] Phase 4 ⚠ initCompany (load path) fallita:', e.message); }
+            }
+            console.log('[Auth] Phase 4 → Carico save dal cloud.');
+            window._startGameWithSlot(0, false);
+        }
 
     } else if (!simLoadError) {
         // ── Cloud responded OK but has no save ───────────────────────
@@ -333,6 +358,9 @@ async function _onAuthSuccess(user) {
 
 // ── LOGOUT ────────────────────────────────────────────────────────
 window.authLogout = async function() {
+    // Block autosave/beforeunload from re-uploading this session during teardown.
+    window._suppressCloudSave = true;
+    try { if (typeof gameState !== 'undefined' && gameState) gameState.paused = true; } catch(e) {}
     await window.supabaseClient.auth.signOut();
     window.currentUser = null;
     // Clear the local cache — next user starts with a clean slate on this device

@@ -87,6 +87,10 @@ window.getSharedSlotRivals = function() {
 // ── SAVE TO CURRENT SLOT ─────────────────────────────────────────
 window.saveCurrentSlot = function() {
     if (window.currentSlotIndex === null) return;
+    // BUG 3 fix: while a reset/logout is in progress, suppress saving so the
+    // beforeunload/autosave handlers can't re-upload the stale state we are
+    // deliberately wiping (the catch-22 that made resets never stick).
+    if (window._suppressCloudSave) return;
     const key = SLOT_KEYS[window.currentSlotIndex];
     try {
         const save = {
@@ -99,6 +103,11 @@ window.saveCurrentSlot = function() {
             }))
         };
         save._saveTimestamp = Date.now();
+        // Stamp the owning company id so boot can detect an orphaned save (one
+        // left behind after the companies row was reset) and discard it.
+        save._companyId = (window.ServerState && window.ServerState.getCompany)
+            ? (window.ServerState.getCompany()?.id || gameState._companyId || null)
+            : (gameState._companyId || null);
         // Ensure cash is always stored as integer to prevent bigint cast errors in SQL
         save.cash = Math.floor(save.cash || 0);
         // Cloud is the single source of truth — no localStorage write
@@ -333,24 +342,34 @@ window.showNewGameSetup = function() {
 };
 
 // ── RESET GAME (accessible from Hub) ─────────────────────────────
-window.resetGame = function() {
+window.resetGame = async function() {
     if (!confirm('Reimposta il tuo Impero? Tutti i progressi verranno eliminati definitivamente.\n\nQuesta azione è irreversibile.')) return;
+    // BUG 3 fix: stop the game loop and block any further saves so the
+    // beforeunload/autosave handlers cannot re-upload the state we are wiping.
+    window._suppressCloudSave = true;
+    try { if (typeof gameState !== 'undefined' && gameState) gameState.paused = true; } catch(e) {}
     // Clear local cache
     localStorage.removeItem('chauffeurEmpireSlot_1');
     localStorage.removeItem('chauffeurEmpireSlot_2');
     localStorage.removeItem('chauffeurEmpireSlot_3');
     localStorage.removeItem('_cloudSyncTs_0');
-    // Delete from cloud then reload
-    if (window.currentUser && window.supabaseClient) {
-        window.supabaseClient.from('game_saves')
-            .delete()
-            .eq('user_id', window.currentUser.id)
-            .eq('slot_index', 0)
-            .then(() => location.reload())
-            .catch(() => location.reload());
-    } else {
-        location.reload();
+    try {
+        if (window.currentUser && window.supabaseClient) {
+            // Delete the simulation blob
+            await window.supabaseClient.from('game_saves')
+                .delete()
+                .eq('user_id', window.currentUser.id)
+                .eq('slot_index', 0);
+            // Reset the authoritative server cash back to the starting amount so
+            // the fresh game doesn't inherit the old company balance.
+            if (window.ServerState && typeof window.ServerState.syncCash === 'function') {
+                try { await window.ServerState.syncCash(35000); } catch(e) {}
+            }
+        }
+    } catch(e) {
+        console.warn('[SaveSystem] resetGame cloud cleanup error:', e);
     }
+    location.reload();
 };
 
 // ── COMPAT STUBS (kept for any lingering references) ──────────────
