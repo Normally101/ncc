@@ -298,7 +298,7 @@ function _showCompanySetup(slotIndex) {
     </div>`;
 }
 
-function _confirmNewGame(slotIndex) {
+async function _confirmNewGame(slotIndex) {
     const nameEl = document.getElementById('ss-company-name');
     const name   = (nameEl?.value?.trim()) || 'Chauffeur Empire';
     const logo   = window._selectedLogoSS || '👁️';
@@ -311,6 +311,12 @@ function _confirmNewGame(slotIndex) {
 
     const overlay = document.getElementById('ss-overlay');
     if (overlay) overlay.remove();
+
+    // Guarantee the Supabase companies row exists before starting — idempotent ON CONFLICT
+    if (window.ServerState) {
+        try { await window.ServerState.initCompany(name); } catch(e) { /* non-fatal */ }
+    }
+
     if (typeof window._startGameWithSlot === 'function') window._startGameWithSlot(slotIndex, true);
 }
 window._confirmNewGame = _confirmNewGame;

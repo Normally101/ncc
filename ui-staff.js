@@ -521,10 +521,15 @@ window.openCarConfigurator = function(carId, type) {
         const upTotal = ups.reduce((s, uid) => { const u = CAR_UPGRADES.find(x => x.id === uid); return s + (u ? u.price : 0); }, 0);
         const total   = car.price + upTotal;
 
+        // Ensure company row exists before purchasing (safety net for edge cases)
+        if (window.ServerState && !window.ServerState.getCompany()) {
+            try { await window.ServerState.initCompany(gameState?.companyName || 'Chauffeur Empire'); } catch(e) {}
+        }
+
         const result = await window.ServerState?.buyVehicle(
             car.vehicleClass || car.id,
             total,
-            ServerState.getCompany()?.hq_city || 'roma'
+            window.ServerState?.getCompany()?.hq_city || 'roma'
         );
         if (!result) return;
 
@@ -559,10 +564,14 @@ window.leaseCar = async function(carId) {
     if (!c) return;
     const upFront = Math.floor(c.price * 0.1);
 
+    if (window.ServerState && !window.ServerState.getCompany()) {
+        try { await window.ServerState.initCompany(gameState?.companyName || 'Chauffeur Empire'); } catch(e) {}
+    }
+
     const result = await window.ServerState?.buyVehicle(
         c.vehicleClass || c.id,
         upFront,
-        ServerState.getCompany()?.hq_city || 'roma'
+        window.ServerState?.getCompany()?.hq_city || 'roma'
     );
     if (!result) return;
 

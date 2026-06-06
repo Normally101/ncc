@@ -112,17 +112,28 @@ async function _mmoBootSequence(userId) {
     // ── Phase 4: Start game engine ─────────────────────────────────
     const hasLocalCache = !!localStorage.getItem('chauffeurEmpireSlot_1');
 
+    const _clearLocalCache = () =>
+        ['chauffeurEmpireSlot_1','chauffeurEmpireSlot_2','chauffeurEmpireSlot_3'].forEach(k => localStorage.removeItem(k));
+
     if (cloudSimState || hasLocalCache) {
         if (!cloudSimState && hasLocalCache) {
-            // Check: if hasCompanyRow but cloudSimState is null, DB was RESET
-            // → discard stale cache, start fresh
             if (hasCompanyRow) {
+                // DB was reset (no game_saves) but company row exists → clear stale cache
                 console.log('[Auth] Phase 4 ✅ Database resettato rilevato — cancello cache locale obsoleta.');
-                ['chauffeurEmpireSlot_1','chauffeurEmpireSlot_2','chauffeurEmpireSlot_3'].forEach(k => localStorage.removeItem(k));
+                _clearLocalCache();
                 window._startGameWithSlot(0, true);
+            } else if (serverReady) {
+                // Online, no company row, but stale localStorage present
+                // → stale data belongs to a different account or DB was fully wiped
+                // → clear and show setup form so player can name their company
+                console.log('[Auth] Phase 4 → Online senza company row — cancello cache obsoleta, mostra setup.');
+                _clearLocalCache();
+                console.groupEnd();
+                if (typeof window.showNewGameSetup === 'function') window.showNewGameSetup();
+                return;
             } else {
-                // Offline or game_saves unavailable — using stale cache as emergency fallback
-                console.warn('[Auth] Phase 4 ⚠ Avvio con cache locale (cloud non disponibile).');
+                // Truly offline — use stale cache as emergency fallback
+                console.warn('[Auth] Phase 4 ⚠ Avvio offline con cache locale.');
                 if (typeof showNotification === 'function') showNotification('⚠ Avvio offline — sincronizza appena possibile.', 'error');
                 window._startGameWithSlot(0, false);
             }
