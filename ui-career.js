@@ -353,6 +353,14 @@ function _dayCompleted(qid, gs) {
     return 'fatto';
 }
 
+// CTA buttons per missioni tutorial che richiedono navigazione a una tab
+const _QUEST_CTA = {
+    't01': { label: '🛒 Vai allo Showroom', tab: 'showroom' },
+    't02': { label: '👔 Vai a Staff',       tab: 'staff'    },
+    't03': { label: '🚕 Vai a Dispatch',    tab: 'corse'    },
+    't04': { label: '🏢 Vai a HQ',          tab: 'hq'       },
+};
+
 /* ── Sub-builders ───────────────────────────────────────────── */
 function _buildActiveStory(q, gs, claimable) {
     const isClaim = claimable.includes(q.id);
@@ -363,6 +371,7 @@ function _buildActiveStory(q, gs, claimable) {
     const alreadyRun = !!(gs.questStats?.missionRuns?.[q.id]);
     const canDispatch = ['story','raid','tutorial'].includes(q.type) && ['t03','t05','t06'].includes(q.id);
     const showDispatch = canDispatch && !isClaim && !alreadyRun;
+    const cta = !isClaim ? _QUEST_CTA[q.id] : null;
 
     const statusBadge = isClaim
         ? `<div class="cm-status-badge claim">Completata — da riscuotere</div>`
@@ -370,6 +379,8 @@ function _buildActiveStory(q, gs, claimable) {
 
     const btn = isClaim
         ? `<button class="cm-btn claim" onclick="window.claimQuestReward('${q.id}')">Riscuoti Ricompensa →</button>`
+        : cta
+        ? `<button class="cm-btn" onclick="document.getElementById('career-modal-overlay')?.remove();if(typeof switchTab==='function')switchTab('${cta.tab}')">${cta.label}</button>`
         : showDispatch
         ? `<button class="cm-btn" onclick="window.startMissionRun('${q.id}')">Avvia Missione →</button>`
         : '';

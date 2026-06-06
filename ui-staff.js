@@ -341,8 +341,8 @@ window.openCarModal = function(carId) {
     document.getElementById('modal-car').style.display = 'flex';
 }
 
-window.closeModals = function() { 
-    document.querySelectorAll('[id^="modal-"]').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); }); 
+window.closeModals = function() {
+    document.querySelectorAll('[id^="modal-"]').forEach(m => { m.classList.add('hidden'); m.classList.remove('flex'); m.style.display = 'none'; });
 }
 
 // --- LOGICHE FINALI ---
@@ -541,7 +541,7 @@ window.openCarConfigurator = function(carId, type) {
             upgrades: ups, vehicleClass: car.vehicleClass || 'mercedes_e',
         });
         document.getElementById('modal-configurator')?.remove();
-        updateUI(); renderTabFleet();
+        updateUI(); if (typeof switchTab === 'function') switchTab('fleet');
         showBigEvent('🚗', `${car.name} Configurata!`, ups.length > 0 ? `${ups.length} optional installati · pronta al servizio.` : 'Veicolo standard pronto per la flotta.');
         if (typeof saveGame === 'function') saveGame();
         if ((car.tier === 'ultra' || car.tier === 'vip') && car.price >= 80000) {

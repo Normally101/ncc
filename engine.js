@@ -1454,8 +1454,8 @@ function assignCarToDriver(carId, driverId) {
     const driver = gameState.drivers.find(d => d.id === driverId);
     if(driver) {
         driver.assignedCarId = carId;
-        if(typeof closeModals === 'function') closeModals();
-        if(typeof renderTabFleet === 'function') renderTabFleet();
+        saveGame();
+        if(typeof openCarModal === 'function') openCarModal(carId);
     }
 }
 
