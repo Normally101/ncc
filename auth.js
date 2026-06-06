@@ -111,45 +111,58 @@ async function _mmoBootSequence(userId) {
 
     // ── Phase 4: Start game engine ─────────────────────────────────
     const hasLocalCache = !!localStorage.getItem('chauffeurEmpireSlot_1');
-
     const _clearLocalCache = () =>
         ['chauffeurEmpireSlot_1','chauffeurEmpireSlot_2','chauffeurEmpireSlot_3'].forEach(k => localStorage.removeItem(k));
 
-    if (cloudSimState || hasLocalCache) {
-        if (!cloudSimState && hasLocalCache) {
-            if (hasCompanyRow) {
-                // DB was reset (no game_saves) but company row exists → clear stale cache
-                console.log('[Auth] Phase 4 ✅ Database resettato rilevato — cancello cache locale obsoleta.');
-                _clearLocalCache();
-                window._startGameWithSlot(0, true);
-            } else if (serverReady) {
-                // Online, no company row, but stale localStorage present
-                // → stale data belongs to a different account or DB was fully wiped
-                // → clear and show setup form so player can name their company
-                console.log('[Auth] Phase 4 → Online senza company row — cancello cache obsoleta, mostra setup.');
-                _clearLocalCache();
-                console.groupEnd();
-                if (typeof window.showNewGameSetup === 'function') window.showNewGameSetup();
-                return;
-            } else {
-                // Truly offline — use stale cache as emergency fallback
-                console.warn('[Auth] Phase 4 ⚠ Avvio offline con cache locale.');
-                if (typeof showNotification === 'function') showNotification('⚠ Avvio offline — sincronizza appena possibile.', 'error');
-                window._startGameWithSlot(0, false);
+    if (cloudSimState) {
+        // ── Happy path: cloud save exists → load it ──────────────────
+        console.log('[Auth] Phase 4 → Carico save dal cloud.');
+        window._startGameWithSlot(0, false);
+
+    } else if (!simLoadError) {
+        // ── Cloud responded OK but has no save ───────────────────────
+        // localStorage cannot be trusted (stale from a previous account/DB state).
+        // Always discard it.
+        _clearLocalCache();
+        console.log('[Auth] Phase 4 → Cloud OK, nessun save — cancello cache locale.');
+
+        // If Phase 1 failed to create the company row, retry now
+        if (!hasCompanyRow && window.ServerState) {
+            try {
+                const created = await window.ServerState.initCompany(
+                    window._pendingCompanyName || 'Chauffeur Empire'
+                );
+                if (created) hasCompanyRow = true;
+                console.log('[Auth] Phase 4 → Company creata (retry):', created?.company_name);
+            } catch(e) {
+                console.warn('[Auth] Phase 4 ⚠ initCompany retry fallita:', e.message);
             }
-        } else {
-            window._startGameWithSlot(0, false);
         }
-    } else if (hasCompanyRow) {
-        // Player has an MMO company but no simulation blob → start fresh simulation
-        console.log('[Auth] Phase 4 → Company MMO esistente, nessuna sim — avvio fresca.');
-        window._startGameWithSlot(0, true);
+
+        if (hasCompanyRow) {
+            console.log('[Auth] Phase 4 → Avvio partita fresca.');
+            window._startGameWithSlot(0, true);
+        } else {
+            console.log('[Auth] Phase 4 → Nessuna company row — mostra setup azienda.');
+            console.groupEnd();
+            if (typeof window.showNewGameSetup === 'function') window.showNewGameSetup();
+            return;
+        }
+
     } else {
-        // Truly new player — show company setup form
-        console.log('[Auth] Phase 4 → Nuovo giocatore — mostra setup azienda.');
-        console.groupEnd();
-        if (typeof window.showNewGameSetup === 'function') window.showNewGameSetup();
-        return;
+        // ── Cloud error (offline / network issue) ────────────────────
+        // Fall back to localStorage as emergency, or show setup if nothing available.
+        if (hasLocalCache) {
+            console.warn('[Auth] Phase 4 ⚠ Avvio offline con cache locale.');
+            if (typeof showNotification === 'function') showNotification('⚠ Avvio offline — sincronizza appena possibile.', 'error');
+            window._startGameWithSlot(0, false);
+        } else if (hasCompanyRow) {
+            window._startGameWithSlot(0, true);
+        } else {
+            console.groupEnd();
+            if (typeof window.showNewGameSetup === 'function') window.showNewGameSetup();
+            return;
+        }
     }
 
     // ── Phase 5: Override simulation cash with authoritative server value ──
