@@ -11,15 +11,15 @@ async function renderTabRanking() {
     // Loading skeleton
     container.innerHTML = `<div class="em em-page"><div class="em-wrap">
     <div style="padding:0 0 16px">
-        <div style="font-size:9px;color:#6a7480;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
-        <div style="font-size:20px;font-weight:700;color:#1f2733;margin-bottom:2px">Classifica Globale</div>
-        <div style="font-size:11px;color:#6a7480">Caricamento dati in tempo reale...</div>
+        <div style="font-size:9px;color:#6b7280;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-bottom:2px">Classifica Globale</div>
+        <div style="font-size:11px;color:#6b7280">Caricamento dati in tempo reale...</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
         ${['La Tua Posizione','Patrimonio','Reputazione','Aziende Globali'].map(l => `
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${l}</div>
-            <div style="font-size:16px;font-weight:700;color:#1f2733;font-family:monospace">—</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${l}</div>
+            <div style="font-size:16px;font-weight:700;color:#e6edf3;font-family:monospace">—</div>
         </div>`).join('')}
     </div>
     ${Array(5).fill(`<div class="ce-skel" style="height:40px;margin-bottom:6px"></div>`).join('')}</div></div>`;
@@ -103,36 +103,36 @@ async function renderTabRanking() {
     const isTop3  = myRank > 0 && myRank <= 3;
 
     function _kpi(label, val, color) {
-        const c = color === 'gold' ? '#c79a2a' : color === 'green' ? '#1aa06a' : color === 'blue' ? '#2f74c0' : '#1f2733';
-        return `<div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${label}</div>
+        const c = color === 'gold' ? '#c79a2a' : color === 'green' ? '#1aa06a' : color === 'blue' ? '#2f74c0' : '#6b7280';
+        return `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${label}</div>
             <div style="font-size:16px;font-weight:700;color:${c};font-family:monospace">${val}</div>
         </div>`;
     }
 
     const bonusBanner = isTop3 ? `
-    <div style="background:#ffffff;border:1px solid #c79a2a;border-radius:6px;padding:12px 16px;margin-bottom:16px">
+    <div style="background:#161b22;border:1px solid #c79a2a;border-radius:6px;padding:12px 16px;margin-bottom:16px">
         <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Bonus Attivo — Top ${myRank}</div>
         <div style="display:flex;gap:16px;flex-wrap:wrap">
-            <span style="font-size:10px;color:#6a7480">Corse Ultra-Luxury sbloccate</span>
-            <span style="font-size:10px;color:#6a7480">Premi assicurativi −15%</span>
-            <span style="font-size:10px;color:#6a7480">POI esclusivi visibili</span>
+            <span style="font-size:10px;color:#6b7280">Corse Ultra-Luxury sbloccate</span>
+            <span style="font-size:10px;color:#6b7280">Premi assicurativi −15%</span>
+            <span style="font-size:10px;color:#6b7280">POI esclusivi visibili</span>
         </div>
     </div>` : '';
 
     const errBanner = fetchError ? `
-    <div style="background:#ffffff;border:1px solid #f0c4bd;border-radius:6px;padding:10px 14px;margin-bottom:12px">
+    <div style="background:#161b22;border:1px solid #f0c4bd;border-radius:6px;padding:10px 14px;margin-bottom:12px">
         <span style="font-size:10px;color:#db5746">⚠ ${fetchError}</span>
     </div>` : '';
 
     let html = `<div class="em em-page"><div class="em-wrap">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 0 16px">
         <div>
-            <div style="font-size:9px;color:#6a7480;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
-            <div style="font-size:20px;font-weight:700;color:#1f2733;margin-bottom:2px">Classifica Globale</div>
-            <div style="font-size:11px;color:#6a7480">${total} aziende · classifica per <b style="color:#c79a2a">Potere</b> (province · consorzio · flotta · reputazione) — a prova di cheat</div>
+            <div style="font-size:9px;color:#6b7280;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-bottom:2px">Classifica Globale</div>
+            <div style="font-size:11px;color:#6b7280">${total} aziende · classifica per <b style="color:#c79a2a">Potere</b> (province · consorzio · flotta · reputazione) — a prova di cheat</div>
         </div>
-        <button onclick="renderTabRanking()" style="background:#ffffff;border:1px solid #d6dee8;border-radius:4px;padding:5px 12px;color:#6a7480;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
+        <button onclick="renderTabRanking()" style="background:#161b22;border:1px solid #21262d;border-radius:4px;padding:5px 12px;color:#6b7280;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
         ${_kpi('La Tua Posizione', rankIcon, isTop3 ? 'gold' : '')}
@@ -143,23 +143,23 @@ async function renderTabRanking() {
     ${errBanner}${bonusBanner}`;
 
     if (rows.length === 0) {
-        html += `<div style="text-align:center;padding:40px;background:#ffffff;border:1px solid #d6dee8;border-radius:6px">
+        html += `<div style="text-align:center;padding:40px;background:#161b22;border:1px solid #21262d;border-radius:6px">
             <div style="font-size:32px;margin-bottom:8px">🏆</div>
-            <div style="font-size:12px;font-weight:700;color:#1f2733;margin-bottom:4px">Classifica vuota</div>
-            <div style="font-size:10px;color:#6a7480">Completa una corsa per comparire nella classifica globale.</div>
+            <div style="font-size:12px;font-weight:700;color:#e6edf3;margin-bottom:4px">Classifica vuota</div>
+            <div style="font-size:10px;color:#6b7280">Completa una corsa per comparire nella classifica globale.</div>
         </div>`;
     } else {
         html += `<table style="width:100%;border-collapse:collapse;margin-bottom:24px">
             <thead>
-                <tr style="border-bottom:1px solid #d6dee8">
-                    <th style="width:44px;text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">#</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Azienda</th>
+                <tr style="border-bottom:1px solid #21262d">
+                    <th style="width:44px;text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">#</th>
+                    <th style="text-align:left;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Azienda</th>
                     <th style="text-align:right;padding:6px 8px;font-size:9px;color:#c79a2a;font-weight:700;text-transform:uppercase;letter-spacing:.08em">Potere</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Prov</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Patrimonio</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Rep</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Flotta</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6a7480;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Status</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Prov</th>
+                    <th style="text-align:right;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Patrimonio</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Rep</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Flotta</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Status</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -170,23 +170,23 @@ async function renderTabRanking() {
             const online = tsMs && (now - tsMs) < ONLINE_MS;
             const medal  = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
             const rowBg  = isMe ? 'background:rgba(212,175,55,0.06);' : '';
-            const nameclr = isMe ? '#c79a2a' : '#1f2733';
-            html += `<tr style="border-bottom:1px solid #d6dee8;${rowBg}">
-                <td style="text-align:center;padding:8px;font-size:${pos<=3?'16':'11'}px;color:#6a7480">${medal}</td>
+            const nameclr = isMe ? '#c79a2a' : '#6b7280';
+            html += `<tr style="border-bottom:1px solid #21262d;${rowBg}">
+                <td style="text-align:center;padding:8px;font-size:${pos<=3?'16':'11'}px;color:#6b7280">${medal}</td>
                 <td style="padding:8px">
-                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${(r.company_name || 'Chauffeur Empire')}${_nameCount[r.company_name || 'Chauffeur Empire'] > 1 ? ` <span style="color:#98a1ae;font-weight:500">#${String(r.user_id||'').slice(0,4)}</span>` : ''}</span>
+                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${(r.company_name || 'Chauffeur Empire')}${_nameCount[r.company_name || 'Chauffeur Empire'] > 1 ? ` <span style="color:#6b7280;font-weight:500">#${String(r.user_id||'').slice(0,4)}</span>` : ''}</span>
                     ${isMe ? `<span style="font-size:9px;color:#c79a2a;margin-left:6px">(Tu)</span>` : ''}
                     ${online ? `<span style="display:inline-block;width:5px;height:5px;background:#1aa06a;border-radius:50%;margin-left:5px;vertical-align:middle"></span>` : ''}
                 </td>
                 <td style="text-align:right;padding:8px;font-family:monospace;font-weight:800;font-size:12px;color:#c79a2a">${(r._power||0).toLocaleString('it-IT')}</td>
                 <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:${(r._prov||0)>0?'#1aa06a':'#98a1ae'}">${r._prov||0}</td>
-                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:700;font-size:11px;color:#6a7480">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
-                <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:#6a7480">${Number(r.reputation||0).toFixed(1)}</td>
-                <td style="text-align:center;padding:8px;font-size:11px;color:#6a7480">${r.fleet_count||0}</td>
+                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:700;font-size:11px;color:#6b7280">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
+                <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:#6b7280">${Number(r.reputation||0).toFixed(1)}</td>
+                <td style="text-align:center;padding:8px;font-size:11px;color:#6b7280">${r.fleet_count||0}</td>
                 <td style="text-align:center;padding:8px">
                     ${online
                         ? `<span style="font-size:9px;color:#1aa06a;border:1px solid #bfe6cd;background:#eafbf1;border-radius:3px;padding:2px 6px">ONLINE</span>`
-                        : `<span style="font-size:9px;color:#98a1ae">—</span>`}
+                        : `<span style="font-size:9px;color:#6b7280">—</span>`}
                 </td>
             </tr>`;
         });
@@ -196,24 +196,24 @@ async function renderTabRanking() {
     // Guerra dei Prezzi
     const activePricewars = gameState.pricewars || [];
     const unlockedRegionIds = (gameState.unlockedRegions||[]).filter(id => REGIONS[id]);
-    html += `<div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">⚔ Guerra dei Prezzi</div>`;
+    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">⚔ Guerra dei Prezzi</div>`;
     activePricewars.forEach(pw => {
         const rname = REGIONS[pw.regionId]?.name || pw.regionId;
         const isMono = !!pw.monopolyEndsDay;
-        html += `<div style="background:#ffffff;border:1px solid ${isMono?'#c79a2a':'#f0c4bd'};border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+        html += `<div style="background:#161b22;border:1px solid ${isMono?'#c79a2a':'#f0c4bd'};border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
             <div>
                 <div style="font-size:11px;font-weight:700;color:${isMono?'#c79a2a':'#db5746'}">${isMono?'MONOPOLIO':'Guerra'}: ${rname}</div>
-                <div style="font-size:9px;color:#6a7480">${isMono?`Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)`:`Fine giorno ${pw.endsDay} (−30% prezzi)`}</div>
+                <div style="font-size:9px;color:#6b7280">${isMono?`Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)`:`Fine giorno ${pw.endsDay} (−30% prezzi)`}</div>
             </div>
             <span style="font-size:9px;font-weight:700;color:${isMono?'#c79a2a':'#db5746'};border:1px solid ${isMono?'#c79a2a':'#f0c4bd'};border-radius:3px;padding:2px 8px">${isMono?'+40%':'−30%'}</span>
         </div>`;
     });
 
     if (unlockedRegionIds.length > 0) {
-        html += `<div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 14px;margin-bottom:16px">
-            <div style="font-size:10px;color:#6a7480;margin-bottom:10px">Attacca una regione: −30% tariffe ai rivali per 3 giorni. Se crollano → <strong style="color:#c79a2a">Monopolio +40% per 7 giorni</strong></div>
+        html += `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 14px;margin-bottom:16px">
+            <div style="font-size:10px;color:#6b7280;margin-bottom:10px">Attacca una regione: −30% tariffe ai rivali per 3 giorni. Se crollano → <strong style="color:#c79a2a">Monopolio +40% per 7 giorni</strong></div>
             <div style="display:flex;gap:8px;align-items:center">
-                <select id="attack-region-select" style="flex:1;font-size:11px;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:5px 8px;color:#1f2733;font-family:monospace">
+                <select id="attack-region-select" style="flex:1;font-size:11px;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;color:#e6edf3;font-family:monospace">
                     ${unlockedRegionIds.map(id => {
                         const r = REGIONS[id];
                         const atWar = activePricewars.some(pw => pw.regionId === id);
@@ -222,7 +222,7 @@ async function renderTabRanking() {
                     }).join('')}
                 </select>
                 <button onclick="attackTerritory(document.getElementById('attack-region-select').value)"
-                    style="background:#ffffff;border:1px solid #8b2020;border-radius:4px;padding:5px 12px;color:#db5746;font-size:10px;cursor:pointer;white-space:nowrap">⚔ Attacca</button>
+                    style="background:#161b22;border:1px solid #8b2020;border-radius:4px;padding:5px 12px;color:#db5746;font-size:10px;cursor:pointer;white-space:nowrap">⚔ Attacca</button>
             </div>
         </div>`;
     }
@@ -230,14 +230,14 @@ async function renderTabRanking() {
     // Achievements
     if (typeof ACHIEVEMENTS !== 'undefined' && ACHIEVEMENTS.length > 0) {
         const earned = gameState.achievements || [];
-        html += `<div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin:24px 0 12px">Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</div>
+        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:24px 0 12px">Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px">`;
         ACHIEVEMENTS.forEach(ach => {
             const done = earned.includes(ach.id);
-            html += `<div style="background:#ffffff;border:1px solid ${done?'#c79a2a':'#d6dee8'};border-radius:6px;padding:12px;text-align:center;opacity:${done?1:0.35}">
+            html += `<div style="background:#161b22;border:1px solid ${done?'#c79a2a':'#d6dee8'};border-radius:6px;padding:12px;text-align:center;opacity:${done?1:0.35}">
                 <div style="font-size:22px;margin-bottom:6px">${ach.icon}</div>
                 <div style="font-size:9px;font-weight:700;color:${done?'#c79a2a':'#6a7480'}">${ach.name}</div>
-                <div style="font-size:8px;color:#98a1ae;margin-top:3px">${ach.desc}</div>
+                <div style="font-size:8px;color:#6b7280;margin-top:3px">${ach.desc}</div>
             </div>`;
         });
         html += `</div>`;
@@ -245,11 +245,11 @@ async function renderTabRanking() {
 
     // New Game+
     if (gameState.reputation >= 4.5) {
-        html += `<div style="background:#ffffff;border:1px solid rgba(168,85,247,0.4);border-radius:6px;padding:20px;text-align:center;margin-top:16px">
+        html += `<div style="background:#161b22;border:1px solid rgba(168,85,247,0.4);border-radius:6px;padding:20px;text-align:center;margin-top:16px">
             <div style="font-size:28px;margin-bottom:10px">♾</div>
             <div style="font-size:12px;font-weight:700;color:#7c5fc9;margin-bottom:6px">NEW GAME+ DISPONIBILE</div>
-            <div style="font-size:10px;color:#6a7480;margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
-            <button onclick="newGamePlus()" style="background:#f3f6f9;border:1px solid #7c5fc9;border-radius:4px;padding:7px 20px;color:#7c5fc9;font-size:10px;cursor:pointer">Inizia New Game+</button>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
+            <button onclick="newGamePlus()" style="background:#0d1117;border:1px solid #7c5fc9;border-radius:4px;padding:7px 20px;color:#7c5fc9;font-size:10px;cursor:pointer">Inizia New Game+</button>
         </div>`;
     }
 

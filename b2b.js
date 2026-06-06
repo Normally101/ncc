@@ -189,52 +189,52 @@ window.b2bOpenAcceptModal = function(contractId) {
     modal.id = 'b2b-select-modal';
     modal.style.cssText = 'position:fixed;inset:0;z-index:110;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;pointer-events:auto';
     modal.innerHTML = `
-    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:8px;width:460px;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;width:460px;max-height:85vh;overflow-y:auto;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,0.6)">
         <div style="font-size:9px;color:#c79a2a;font-weight:700;text-transform:uppercase;letter-spacing:.12em;margin-bottom:4px">💼 Accetta Appalto</div>
-        <div style="font-size:10px;color:#6a7480;margin-bottom:2px">${contract.client_icon} ${contract.client_name}</div>
+        <div style="font-size:10px;color:#6b7280;margin-bottom:2px">${contract.client_icon} ${contract.client_name}</div>
         <div style="font-size:13px;font-weight:700;color:#c79a2a;margin-bottom:16px">${contract.title}</div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
-            <div style="background:#f3f6f9;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px">
-                <div style="font-size:9px;color:#6a7480">Payout giornaliero</div>
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Payout giornaliero</div>
                 <div style="font-size:12px;font-weight:700;color:#1aa06a;font-family:monospace">+€${contract.daily_payout.toLocaleString()}</div>
             </div>
-            <div style="background:#f3f6f9;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px">
-                <div style="font-size:9px;color:#6a7480">Durata</div>
-                <div style="font-size:12px;font-weight:700;color:#1f2733">${contract.duration_days} giorni</div>
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Durata</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">${contract.duration_days} giorni</div>
             </div>
-            <div style="background:#f3f6f9;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px">
-                <div style="font-size:9px;color:#6a7480">Penale rescissione</div>
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Penale rescissione</div>
                 <div style="font-size:12px;font-weight:700;color:#db5746;font-family:monospace">−€${contract.penalty_amount.toLocaleString()}</div>
             </div>
-            <div style="background:#f3f6f9;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px">
-                <div style="font-size:9px;color:#6a7480">Tier richiesto</div>
-                <div style="font-size:12px;font-weight:700;color:#1f2733">${_TIER_LABEL[contract.required_tier]}</div>
+            <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
+                <div style="font-size:9px;color:#6b7280">Tier richiesto</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">${_TIER_LABEL[contract.required_tier]}</div>
             </div>
         </div>
 
-        <div style="font-size:10px;color:#6a7480;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Seleziona ${contract.required_count} veicoli da vincolare:</div>
+        <div style="font-size:10px;color:#6b7280;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Seleziona ${contract.required_count} veicoli da vincolare:</div>
         <div id="b2b-car-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;max-height:192px;overflow-y:auto">
             ${available.map(c => `
-            <label style="display:flex;align-items:center;gap:10px;background:#f3f6f9;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px;cursor:pointer">
+            <label style="display:flex;align-items:center;gap:10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px;cursor:pointer">
                 <input type="checkbox" class="b2b-car-check" style="accent-color:#c79a2a;width:14px;height:14px;flex-shrink:0" value="${c.id}" onchange="b2bCheckLimit(${contract.required_count})">
                 <div style="flex:1;min-width:0">
-                    <div style="font-size:10px;font-weight:700;color:#1f2733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
-                    <div style="font-size:9px;color:#6a7480">${_TIER_LABEL[(c.tier||'').toUpperCase()] || c.tier} · Cond. ${c.condition||100}%</div>
+                    <div style="font-size:10px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+                    <div style="font-size:9px;color:#6b7280">${_TIER_LABEL[(c.tier||'').toUpperCase()] || c.tier} · Cond. ${c.condition||100}%</div>
                 </div>
             </label>`).join('')}
         </div>
 
-        <div style="font-size:10px;color:#6a7480;margin-bottom:12px">
+        <div style="font-size:10px;color:#6b7280;margin-bottom:12px">
             <span id="b2b-sel-count">0</span>/${contract.required_count} selezionati
         </div>
 
         <div style="display:flex;gap:8px">
             <button onclick="document.getElementById('b2b-select-modal').remove()"
-                style="flex:1;padding:8px;border-radius:4px;font-size:11px;cursor:pointer;background:#ffffff;border:1px solid #d6dee8;color:#6a7480">Annulla</button>
+                style="flex:1;padding:8px;border-radius:4px;font-size:11px;cursor:pointer;background:#161b22;border:1px solid #21262d;color:#6b7280">Annulla</button>
             <button id="b2b-confirm-btn" onclick="b2bConfirmAccept('${contractId}', ${contract.required_count})"
                 disabled
-                style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;cursor:not-allowed;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;opacity:.4;transition:all .15s"
+                style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;cursor:not-allowed;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;opacity:.4;transition:all .15s"
                 data-req="${contract.required_count}">
                 Firma Contratto
             </button>
@@ -292,33 +292,33 @@ function renderTabB2B() {
     const _kpiC = c => c === 'green' ? '#1aa06a' : c === 'gold' ? '#c79a2a' : c === 'red' ? '#db5746' : c === 'blue' ? '#2f74c0' : c === 'orange' ? '#e0922e' : '#1f2733';
     let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8;display:flex;align-items:flex-start;justify-content:space-between">
         <div>
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Corporate</div>
-            <div style="font-size:20px;font-weight:700;color:#1f2733">Contratti B2B</div>
-            <div style="font-size:11px;color:#6a7480;margin-top:4px">${active ? `Contratto attivo: ${active.contract_title} · €${(active.daily_payout||0).toLocaleString()}/g` : `${contracts.length} contratti disponibili · Reputazione ${rep.toFixed(1)}★`}</div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Corporate</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Contratti B2B</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px">${active ? `Contratto attivo: ${active.contract_title} · €${(active.daily_payout||0).toLocaleString()}/g` : `${contracts.length} contratti disponibili · Reputazione ${rep.toFixed(1)}★`}</div>
         </div>
         ${active ? `<span style="font-size:9px;font-weight:700;color:#1aa06a;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">ATTIVO</span>` : ''}
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratto</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratto</div>
             <div style="font-size:14px;font-weight:700;font-family:monospace;color:${active ? '#c79a2a' : '#1f2733'}">${active ? active.contract_icon + ' ' + (active.contract_client || '—') : '—'}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Entrate/g</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Entrate/g</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active ? '#1aa06a' : '#1f2733'}">${active ? '+€' + (active.daily_payout||0).toLocaleString() : '—'}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Giorni rimasti</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Giorni rimasti</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active && active.days_remaining <= 3 ? '#db5746' : '#1f2733'}">${active ? active.days_remaining : '—'}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">SLA Score</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">SLA Score</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active && (active.sla_score ?? 100) >= 90 ? '#1aa06a' : '#e0922e'}">${active ? Math.round(active.sla_score ?? 100) + '%' : '—'}</div>
         </div>
     </div>`;
 
     if (!uid) {
-        container.innerHTML = html + `<div style="font-size:9px;color:#6a7480;font-style:italic;text-align:center;margin-top:32px">Accedi per visualizzare i contratti disponibili.</div>`;
+        container.innerHTML = html + `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;margin-top:32px">Accedi per visualizzare i contratti disponibili.</div>`;
         return;
     }
 
@@ -337,40 +337,40 @@ function renderTabB2B() {
         <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:16px;margin-bottom:16px">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
                 <div>
-                    <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratto Attivo</div>
+                    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratto Attivo</div>
                     <div style="font-size:11px;font-weight:700;color:#c79a2a">${active.contract_icon||'💼'} ${active.contract_title}</div>
-                    <div style="font-size:9px;color:#6a7480;margin-top:2px">${active.contract_client}</div>
+                    <div style="font-size:9px;color:#6b7280;margin-top:2px">${active.contract_client}</div>
                 </div>
                 <div style="text-align:right">
                     <div style="font-size:10px;font-weight:700;color:#1aa06a;font-family:monospace">+€${(active.daily_payout||0).toLocaleString()}/g</div>
-                    <div style="font-size:8px;color:#6a7480;margin-top:2px">${active.days_remaining} giorni rimanenti</div>
+                    <div style="font-size:8px;color:#6b7280;margin-top:2px">${active.days_remaining} giorni rimanenti</div>
                 </div>
             </div>
             <div style="margin-bottom:10px">
-                <div style="display:flex;justify-content:space-between;font-size:8px;color:#6a7480;margin-bottom:4px"><span>Progresso</span><span>${pct}%</span></div>
-                <div style="height:5px;border-radius:3px;background:#d6dee8"><div style="height:100%;width:${pct}%;background:#c79a2a;border-radius:3px;transition:width .3s"></div></div>
+                <div style="display:flex;justify-content:space-between;font-size:8px;color:#6b7280;margin-bottom:4px"><span>Progresso</span><span>${pct}%</span></div>
+                <div style="height:5px;border-radius:3px;background:#21262d"><div style="height:100%;width:${pct}%;background:#c79a2a;border-radius:3px;transition:width .3s"></div></div>
             </div>
             <div style="margin-bottom:10px">
-                <div style="display:flex;justify-content:space-between;font-size:8px;margin-bottom:4px"><span style="color:#6a7480">SLA Score</span><span style="color:${slaColor};font-family:monospace;font-weight:700">${Math.round(sla)}%</span></div>
-                <div style="height:4px;border-radius:3px;background:#d6dee8"><div style="height:100%;width:${Math.round(sla)}%;background:${slaColor};border-radius:3px;transition:width .3s"></div></div>
-                <div style="font-size:7px;color:#6a7480;margin-top:3px">SLA &lt; 50%: contratto rescisso automaticamente</div>
+                <div style="display:flex;justify-content:space-between;font-size:8px;margin-bottom:4px"><span style="color:#6b7280">SLA Score</span><span style="color:${slaColor};font-family:monospace;font-weight:700">${Math.round(sla)}%</span></div>
+                <div style="height:4px;border-radius:3px;background:#21262d"><div style="height:100%;width:${Math.round(sla)}%;background:${slaColor};border-radius:3px;transition:width .3s"></div></div>
+                <div style="font-size:7px;color:#6b7280;margin-top:3px">SLA &lt; 50%: contratto rescisso automaticamente</div>
             </div>
-            <div style="font-size:8px;color:#6a7480;margin-bottom:12px">🔒 Veicoli bloccati: <span style="color:#6a7480">${lockedNames}</span></div>
+            <div style="font-size:8px;color:#6b7280;margin-bottom:12px">🔒 Veicoli bloccati: <span style="color:#6b7280">${lockedNames}</span></div>
             <button onclick="b2bTerminateContract('${active.id}')"
-                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s"
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s"
                 onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 ⚠️ Rescindi Anticipatamente (penale −€${(active.penalty_amount||0).toLocaleString()})
             </button>
         </div>`;
     } else {
-        html += `<div style="background:rgba(63,185,80,0.04);border:1px solid rgba(63,185,80,0.15);border-radius:6px;padding:14px;margin-bottom:16px;text-align:center;font-size:9px;color:#6a7480">Nessun contratto attivo. Scegli un appalto qui sotto per iniziare il farming passivo.</div>`;
+        html += `<div style="background:rgba(63,185,80,0.04);border:1px solid rgba(63,185,80,0.15);border-radius:6px;padding:14px;margin-bottom:16px;text-align:center;font-size:9px;color:#6b7280">Nessun contratto attivo. Scegli un appalto qui sotto per iniziare il farming passivo.</div>`;
     }
 
     // ── CONTRATTI DISPONIBILI ──
-    html += `<div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #d6dee8">Appalti Disponibili</div>`;
+    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #d6dee8">Appalti Disponibili</div>`;
 
     if (contracts.length === 0) {
-        html += `<div style="font-size:9px;color:#6a7480;font-style:italic;text-align:center;padding:16px 0">Nessun appalto disponibile al momento. Riprova più tardi.</div>`;
+        html += `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;padding:16px 0">Nessun appalto disponibile al momento. Riprova più tardi.</div>`;
     } else {
         contracts.forEach(c => {
             const locked       = !!active;
@@ -386,30 +386,30 @@ function renderTabB2B() {
             const roi = c.penalty_amount > 0 ? ((totalPayout / c.penalty_amount) * 100).toFixed(0) : '∞';
 
             html += `
-            <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:8px;${!repOk || !carsOk ? 'opacity:.5' : ''}">
+            <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:8px;${!repOk || !carsOk ? 'opacity:.5' : ''}">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
                     <div style="flex:1;min-width:0">
                         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
                             <span style="font-size:16px">${c.client_icon}</span>
                             <div>
-                                <div style="font-size:11px;font-weight:700;color:#1f2733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
-                                <div style="font-size:9px;color:#6a7480">${c.client_name}</div>
+                                <div style="font-size:11px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
+                                <div style="font-size:9px;color:#6b7280">${c.client_name}</div>
                             </div>
                         </div>
                         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-                            <span style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;padding:2px 6px;border-radius:4px;color:#6a7480">${_TIER_LABEL[c.required_tier]} ×${c.required_count}</span>
-                            ${c.province_id ? `<span style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;padding:2px 6px;border-radius:4px;color:#6a7480">📍 ${c.province_id.replace('prov_','')}</span>` : ''}
-                            <span style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;padding:2px 6px;border-radius:4px;color:#6a7480">⭐ min ${c.min_reputation}★</span>
+                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">${_TIER_LABEL[c.required_tier]} ×${c.required_count}</span>
+                            ${c.province_id ? `<span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">📍 ${c.province_id.replace('prov_','')}</span>` : ''}
+                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">⭐ min ${c.min_reputation}★</span>
                         </div>
                     </div>
                     <div style="text-align:right;margin-left:8px;flex-shrink:0">
                         <div style="font-size:11px;font-weight:700;color:#1aa06a;font-family:monospace">+€${c.daily_payout.toLocaleString()}/g</div>
-                        <div style="font-size:8px;color:#6a7480">${c.duration_days}g · tot. €${(totalPayout/1000).toFixed(0)}k</div>
-                        <div style="font-size:8px;color:#6a7480">ROI vs penale: ${roi}%</div>
+                        <div style="font-size:8px;color:#6b7280">${c.duration_days}g · tot. €${(totalPayout/1000).toFixed(0)}k</div>
+                        <div style="font-size:8px;color:#6b7280">ROI vs penale: ${roi}%</div>
                     </div>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:10px">
-                    <span style="color:#6a7480">Penale rescissione:</span>
+                    <span style="color:#6b7280">Penale rescissione:</span>
                     <span style="color:#db5746;font-family:monospace">−€${c.penalty_amount.toLocaleString()}</span>
                 </div>
                 ${!repOk ? `<div style="font-size:9px;color:#db5746;margin-bottom:4px">🔒 Reputazione insufficiente (serve ${c.min_reputation}★, hai ${rep.toFixed(1)}★)</div>` : ''}
@@ -417,7 +417,7 @@ function renderTabB2B() {
                 ${locked ? `<div style="font-size:9px;color:#e0922e;margin-bottom:4px">⏳ Hai già un contratto attivo</div>` : ''}
                 <button onclick="b2bOpenAcceptModal('${c.id}')"
                     ${canAccept ? '' : 'disabled'}
-                    style="width:100%;padding:7px;font-size:9px;font-weight:700;border-radius:4px;cursor:${canAccept?'pointer':'not-allowed'};background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;transition:opacity .15s;${canAccept ? '' : 'opacity:.4'}"
+                    style="width:100%;padding:7px;font-size:9px;font-weight:700;border-radius:4px;cursor:${canAccept?'pointer':'not-allowed'};background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;transition:opacity .15s;${canAccept ? '' : 'opacity:.4'}"
                     onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                     💼 Accetta Appalto
                 </button>

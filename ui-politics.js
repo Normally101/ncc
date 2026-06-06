@@ -28,10 +28,10 @@ function renderTabPolitics() {
         const owned     = active.includes(l.id);
         const canAfford = points >= l.pointsCost && (gameState.cash || 0) >= (l.cashCost || 0);
         return `
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:#ffffff;border:1px solid ${owned?'#c79a2a':'#d6dee8'};border-radius:6px;gap:12px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:#161b22;border:1px solid ${owned?'#c79a2a':'#d6dee8'};border-radius:6px;gap:12px">
             <div style="flex:1;min-width:0">
                 <div style="font-size:12px;font-weight:700;color:${owned?'#c79a2a':'#1f2733'}">${l.icon} ${l.name}${owned?' ✓':''}</div>
-                <div style="font-size:10px;color:#6a7480;margin-top:3px;line-height:1.4">${l.desc}</div>
+                <div style="font-size:10px;color:#6b7280;margin-top:3px;line-height:1.4">${l.desc}</div>
                 <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
                     ${_pill(l.pointsCost + ' pt', points >= l.pointsCost ? '#c79a2a' : '#6a7480')}
                     ${l.cashCost ? _pill('€'+l.cashCost.toLocaleString(), (gameState.cash||0)>=l.cashCost?'#1aa06a':'#db5746') : ''}
@@ -46,56 +46,56 @@ function renderTabPolitics() {
     container.innerHTML = `
 <div style="padding:16px;max-width:800px">
 
-    <div style="padding-bottom:16px;border-bottom:1px solid #d6dee8;margin-bottom:16px">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Lobbying & Economia</div>
+    <div style="padding-bottom:16px;border-bottom:1px solid #21262d;margin-bottom:16px">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Lobbying & Economia</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <div>
-                <div style="font-size:20px;font-weight:700;color:#1f2733;letter-spacing:-.01em">Politica & Decreti</div>
-                <div style="font-size:11px;color:#6a7480;margin-top:2px">${activeLaws} leggi attive · ${points} punti lobbying</div>
+                <div style="font-size:20px;font-weight:700;color:#e6edf3;letter-spacing:-.01em">Politica & Decreti</div>
+                <div style="font-size:11px;color:#6b7280;margin-top:2px">${activeLaws} leggi attive · ${points} punti lobbying</div>
             </div>
-            <button onclick="window.decreesRefresh(true).then(()=>window.renderTabPolitics())" style="background:#ffffff;border:1px solid #d6dee8;color:#6a7480;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace">↻ DECRETI</button>
+            <button onclick="window.decreesRefresh(true).then(()=>window.renderTabPolitics())" style="background:#161b22;border:1px solid #21262d;color:#6b7280;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace">↻ DECRETI</button>
         </div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Inflazione</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Inflazione</div>
             <div style="font-size:18px;font-weight:700;color:${_inflColor};font-family:monospace">${inflPct}%</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Tasso BCE</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Tasso BCE</div>
             <div style="font-size:18px;font-weight:700;color:${_rateColor};font-family:monospace">${ratePct}%</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Pt Lobbying</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Pt Lobbying</div>
             <div style="font-size:18px;font-weight:700;color:${points>0?'#c79a2a':'#1f2733'};font-family:monospace">${points}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Leggi Attive</div>
-            <div style="font-size:18px;font-weight:700;color:${activeLaws>0?'#1aa06a':'#1f2733'};font-family:monospace">${activeLaws}<span style="font-size:11px;color:#6a7480">/${laws.length}</span></div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Leggi Attive</div>
+            <div style="font-size:18px;font-weight:700;color:${activeLaws>0?'#1aa06a':'#1f2733'};font-family:monospace">${activeLaws}<span style="font-size:11px;color:#6b7280">/${laws.length}</span></div>
         </div>
     </div>
 
-    <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Finanziamento Politico</div>
-    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:20px">
+    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Finanziamento Politico</div>
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:20px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div>
-                <div style="font-size:12px;font-weight:700;color:#1f2733">Donazione Politica</div>
-                <div style="font-size:10px;color:#6a7480;margin-top:2px">1.000€ = 1 punto lobbying</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">Donazione Politica</div>
+                <div style="font-size:10px;color:#6b7280;margin-top:2px">1.000€ = 1 punto lobbying</div>
             </div>
             <div style="font-size:22px;font-weight:700;font-family:monospace;color:#c79a2a">${points} pt</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
             <input id="lobby-donate-amt" type="number" min="1000" step="5000" value="10000"
-                style="flex:1;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:8px 12px;color:#1f2733;font-family:monospace;font-size:11px"
+                style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 12px;color:#e6edf3;font-family:monospace;font-size:11px"
                 placeholder="€ donazione">
             ${_btn('Dona', "donateToLobby(document.getElementById('lobby-donate-amt').value)", 'gold', false)}
         </div>
     </div>
 
-    <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Leggi Disponibili</div>
+    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Leggi Disponibili</div>
     ${laws.length === 0
-        ? `<div style="text-align:center;padding:20px;color:#6a7480;font-size:11px">Nessuna legge disponibile.</div>`
+        ? `<div style="text-align:center;padding:20px;color:#6b7280;font-size:11px">Nessuna legge disponibile.</div>`
         : `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px" class="ce-stagger">${lawsHtml}</div>`}
 
     ${_renderDecreesSection(points)}
@@ -119,14 +119,14 @@ function _renderDecreesSection(lobbyPoints) {
     <div style="background:#0d2116;border:1px solid #1a4731;border-radius:6px;padding:14px;margin-bottom:12px">
         <div style="font-size:9px;color:#1aa06a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Decreti Attivi (${passed.length})</div>
         ${passed.map(d => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(63,185,80,0.12)">
-            <span style="font-size:11px;color:#1f2733">${d.icon} ${d.title}</span>
-            <span style="font-size:9px;color:#6a7480;font-family:monospace">${d.ends_at ? new Date(d.ends_at).toLocaleDateString('it-IT') : 'Permanente'}</span>
+            <span style="font-size:11px;color:#e6edf3">${d.icon} ${d.title}</span>
+            <span style="font-size:9px;color:#6b7280;font-family:monospace">${d.ends_at ? new Date(d.ends_at).toLocaleDateString('it-IT') : 'Permanente'}</span>
         </div>`).join('')}
     </div>`;
 
     let votingHtml = '';
     if (decrees.length === 0) {
-        votingHtml = `<div style="text-align:center;padding:20px;color:#6a7480;font-size:11px;background:#ffffff;border:1px solid #d6dee8;border-radius:6px">Nessun decreto in votazione — aggiorna tra qualche minuto.</div>`;
+        votingHtml = `<div style="text-align:center;padding:20px;color:#6b7280;font-size:11px;background:#161b22;border:1px solid #21262d;border-radius:6px">Nessun decreto in votazione — aggiorna tra qualche minuto.</div>`;
     } else {
         votingHtml = decrees.map(d => {
             const isPassed  = d.status === 'passed';
@@ -159,11 +159,11 @@ function _renderDecreesSection(lobbyPoints) {
             const barColor = isPassed ? '#1aa06a' : '#c79a2a';
 
             return `
-            <div style="background:#ffffff;border:1px solid ${isPassed?'#1a4731':'#d6dee8'};border-radius:6px;padding:14px;margin-bottom:8px">
+            <div style="background:#161b22;border:1px solid ${isPassed?'#1a4731':'#d6dee8'};border-radius:6px;padding:14px;margin-bottom:8px">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
                     <div style="flex:1;min-width:0">
                         <div style="font-size:11px;font-weight:700;color:${isPassed?'#1aa06a':'#1f2733'}">${d.icon} ${d.title}${isPassed?' ✓':''}</div>
-                        <div style="font-size:10px;color:#6a7480;margin-top:3px;line-height:1.4">${d.description||''}</div>
+                        <div style="font-size:10px;color:#6b7280;margin-top:3px;line-height:1.4">${d.description||''}</div>
                         ${fxBadges.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${fxBadges.map(b => _pill(b, '#2f74c0')).join('')}</div>` : ''}
                     </div>
                     <div style="flex-shrink:0;text-align:right">
@@ -174,17 +174,17 @@ function _renderDecreesSection(lobbyPoints) {
                     </div>
                 </div>
                 <div style="margin-bottom:${isPassed?'0':'10px'}">
-                    <div style="display:flex;justify-content:space-between;font-size:9px;color:#6a7480;margin-bottom:4px;font-family:monospace">
+                    <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:4px;font-family:monospace">
                         <span>${d.votes_current}/${d.votes_required} voti</span>
                         <span>${pct}%</span>
                     </div>
-                    <div style="height:3px;background:#d6dee8;border-radius:2px;overflow:hidden">
+                    <div style="height:3px;background:#21262d;border-radius:2px;overflow:hidden">
                         <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width .3s"></div>
                     </div>
                 </div>
                 ${!isPassed ? `<div style="display:flex;gap:8px;align-items:center">
                     <input id="${inputId}" type="number" min="1" max="${lobbyPoints}" value="1"
-                        style="flex:1;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:7px 10px;color:#1f2733;font-family:monospace;font-size:11px"
+                        style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:7px 10px;color:#e6edf3;font-family:monospace;font-size:11px"
                         placeholder="punti">
                     ${_btn('Vota', `window.voteServerDecree('${d.id}', document.getElementById('${inputId}').value)`, 'gold', lobbyPoints < 1)}
                 </div>` : ''}
@@ -221,8 +221,8 @@ function _renderDecreesSection(lobbyPoints) {
     });
 
     return `
-    <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Decreti Server — Votazione Globale</div>
-    <div style="font-size:11px;color:#6a7480;margin-bottom:12px;line-height:1.5">Vota con i tuoi punti lobbying. Al raggiungimento della soglia, l'effetto si applica a <strong style="color:#1f2733">tutti</strong> i giocatori.</div>
+    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Decreti Server — Votazione Globale</div>
+    <div style="font-size:11px;color:#6b7280;margin-bottom:12px;line-height:1.5">Vota con i tuoi punti lobbying. Al raggiungimento della soglia, l'effetto si applica a <strong style="color:#e6edf3">tutti</strong> i giocatori.</div>
     ${passedHtml}
     <div>${votingHtml}</div>`;
 }

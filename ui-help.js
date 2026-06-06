@@ -17,36 +17,36 @@ function renderTabHelp() {
     const generalSubject = encodeURIComponent(`Supporto — ${companyName}`);
     const build = new Date().toLocaleDateString('it-IT', { month:'short', year:'numeric' });
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Centro Assistenza</div>
-        <div style="font-size:20px;font-weight:700;color:#1f2733">Supporto &amp; Documentazione</div>
-        <div style="font-size:11px;color:#6a7480;margin-top:4px">Risposta garantita entro 24h · Build ${build}</div>
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Centro Assistenza</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3">Supporto &amp; Documentazione</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px">Risposta garantita entro 24h · Build ${build}</div>
     </div>` + `
 
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
 
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Contatto Diretto</div>
-            <div style="font-size:13px;font-weight:700;color:#1f2733;margin-bottom:6px">📧 Email Ufficiale</div>
-            <div style="font-size:11px;color:#6a7480;margin-bottom:12px">Il team risponde entro 24h nei giorni lavorativi. Includi sempre il tuo ID compagnia.</div>
-            <a href="mailto:${email}" style="display:inline-flex;text-decoration:none;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Contatto Diretto</div>
+            <div style="font-size:13px;font-weight:700;color:#e6edf3;margin-bottom:6px">📧 Email Ufficiale</div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:12px">Il team risponde entro 24h nei giorni lavorativi. Includi sempre il tuo ID compagnia.</div>
+            <a href="mailto:${email}" style="display:inline-flex;text-decoration:none;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer">
                 ✉ ${email}
             </a>
         </div>
 
         <div style="background:rgba(248,81,73,0.04);border:1px solid rgba(248,81,73,0.2);border-radius:6px;padding:16px">
             <div style="font-size:9px;color:#db5746;text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px">Segnalazione Bug</div>
-            <div style="font-size:13px;font-weight:700;color:#1f2733;margin-bottom:6px">🐛 Report Tecnico</div>
-            <div style="font-size:11px;color:#6a7480;margin-bottom:8px">ID Compagnia pre-compilato nell'oggetto. Descrivi il bug nella mail.</div>
-            <div style="font-size:9px;font-family:monospace;color:#6a7480;margin-bottom:12px;word-break:break-all">${userId}</div>
-            <a href="mailto:${email}?subject=${bugSubject}" style="display:inline-flex;text-decoration:none;width:100%;justify-content:center;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;box-sizing:border-box">
+            <div style="font-size:13px;font-weight:700;color:#e6edf3;margin-bottom:6px">🐛 Report Tecnico</div>
+            <div style="font-size:11px;color:#6b7280;margin-bottom:8px">ID Compagnia pre-compilato nell'oggetto. Descrivi il bug nella mail.</div>
+            <div style="font-size:9px;font-family:monospace;color:#6b7280;margin-bottom:12px;word-break:break-all">${userId}</div>
+            <a href="mailto:${email}?subject=${bugSubject}" style="display:inline-flex;text-decoration:none;width:100%;justify-content:center;background:#161b22;border:1px solid #f0c4bd;color:#db5746;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;box-sizing:border-box">
                 🐛 Apri Email — Segnala Bug
             </a>
         </div>
     </div>
 
-    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:16px;margin-bottom:20px">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Domande Frequenti</div>
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px;margin-bottom:20px">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">Domande Frequenti</div>
         <div style="display:flex;flex-direction:column;gap:0">
             ${[
                 { q:'Come recupero la password?',  a:`Usa il link "Password dimenticata" nella schermata di login. Il link è valido 30 minuti.` },
@@ -66,7 +66,7 @@ function renderTabHelp() {
         </div>
     </div>
 
-    <div style="text-align:center;padding:16px;background:#f7f9fb;border-radius:10px;border:1px solid var(--border-sub)">
+    <div style="text-align:center;padding:16px;background:#161b22;border-radius:10px;border:1px solid #21262d">
         <div style="font-size:9px;color:var(--text-dim);font-family:var(--font-mono)">
             CHAUFFEUR EMPIRE · ${cfg.GAME_URL || 'chauffeurempire.com'} · Build ${build}
         </div>

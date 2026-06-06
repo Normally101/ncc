@@ -199,37 +199,37 @@ window.renderVTKModal = function() {
     const shopContent   = subTab === 'shop'   ? _vtkRenderShop(vtk) : '';
 
     overlay.innerHTML = `
-    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:8px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;position:relative">
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;position:relative">
         <!-- Header -->
-        <div style="padding:16px 20px;border-bottom:1px solid #d6dee8;display:flex;align-items:center;justify-content:space-between">
+        <div style="padding:16px 20px;border-bottom:1px solid #21262d;display:flex;align-items:center;justify-content:space-between">
             <div>
-                <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">VTK Economy</div>
-                <div style="font-size:18px;font-weight:700;color:#1f2733">Vettura Token</div>
+                <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">VTK Economy</div>
+                <div style="font-size:18px;font-weight:700;color:#e6edf3">Vettura Token</div>
             </div>
             <div style="display:flex;align-items:center;gap:16px">
                 <div style="text-align:center">
-                    <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.06em">VTK</div>
+                    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em">VTK</div>
                     <div style="font-size:16px;font-weight:700;color:#2f74c0;font-family:monospace">◈ ${vtk}</div>
                 </div>
                 <div style="text-align:center">
-                    <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.06em">DC</div>
+                    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em">DC</div>
                     <div style="font-size:16px;font-weight:700;color:#c79a2a;font-family:monospace">🪙 ${dc}</div>
                 </div>
                 <button onclick="document.getElementById('vtk-modal').remove()"
-                    style="background:transparent;border:1px solid #d6dee8;color:#6a7480;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:14px;line-height:1">✕</button>
+                    style="background:transparent;border:1px solid #21262d;color:#6b7280;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:14px;line-height:1">✕</button>
             </div>
         </div>
 
         <!-- Sub-tab bar -->
-        <div style="display:flex;gap:0;border-bottom:1px solid #d6dee8">
+        <div style="display:flex;gap:0;border-bottom:1px solid #21262d">
             <button onclick="window._vtkState._subTab='market';window.renderVTKModal()"
                 style="flex:1;padding:10px;font-size:10px;font-weight:600;cursor:pointer;border:none;transition:all .15s;
-                    ${subTab==='market' ? 'background:#1a1a2a;color:#2f74c0;border-bottom:2px solid #2f74c0' : 'background:transparent;color:#6a7480;border-bottom:2px solid transparent'}">
+                    ${subTab==='market' ? 'background:#1a1a2a;color:#2f74c0;border-bottom:2px solid #2f74c0' : 'background:transparent;color:#6b7280;border-bottom:2px solid transparent'}">
                 📈 Mercato P2P
             </button>
             <button onclick="window._vtkState._subTab='shop';window.renderVTKModal()"
                 style="flex:1;padding:10px;font-size:10px;font-weight:600;cursor:pointer;border:none;transition:all .15s;
-                    ${subTab==='shop' ? 'background:#1a1a2a;color:#c79a2a;border-bottom:2px solid #c79a2a' : 'background:transparent;color:#6a7480;border-bottom:2px solid transparent'}">
+                    ${subTab==='shop' ? 'background:#1a1a2a;color:#c79a2a;border-bottom:2px solid #c79a2a' : 'background:transparent;color:#6b7280;border-bottom:2px solid transparent'}">
                 🛒 VTK Shop
             </button>
         </div>
@@ -250,18 +250,18 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
     </div>
 
     <!-- Create sell order -->
-    <div style="background:#f3f6f9;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:16px">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Crea Ordine di Vendita</div>
+    <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:16px">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Crea Ordine di Vendita</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
             <div>
-                <div style="font-size:9px;color:#6a7480;margin-bottom:4px">VTK da vendere</div>
+                <div style="font-size:9px;color:#6b7280;margin-bottom:4px">VTK da vendere</div>
                 <input id="vtk-sell-amount" type="number" min="1" max="${vtk}" step="10" value="50"
-                    style="width:100%;background:#ffffff;border:1px solid #d6dee8;border-radius:4px;padding:6px 8px;font-size:11px;color:#1f2733;outline:none;box-sizing:border-box">
+                    style="width:100%;background:#161b22;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:11px;color:#e6edf3;outline:none;box-sizing:border-box">
             </div>
             <div>
-                <div style="font-size:9px;color:#6a7480;margin-bottom:4px">Prezzo (DC totale)</div>
+                <div style="font-size:9px;color:#6b7280;margin-bottom:4px">Prezzo (DC totale)</div>
                 <input id="vtk-sell-price" type="number" min="1" step="1" value="10"
-                    style="width:100%;background:#ffffff;border:1px solid #d6dee8;border-radius:4px;padding:6px 8px;font-size:11px;color:#1f2733;outline:none;box-sizing:border-box">
+                    style="width:100%;background:#161b22;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:11px;color:#e6edf3;outline:none;box-sizing:border-box">
             </div>
         </div>
         <button onclick="window.vtkPlaceSellOrder(document.getElementById('vtk-sell-amount').value, document.getElementById('vtk-sell-price').value)"
@@ -274,16 +274,16 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
     <!-- My orders -->
     ${myOrders.length > 0 ? `
     <div style="margin-bottom:16px">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">I Tuoi Ordini Attivi</div>
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">I Tuoi Ordini Attivi</div>
         ${myOrders.map(o => `
-        <div style="background:#ffffff;border:1px solid rgba(212,175,55,0.2);border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
-            <div style="font-size:11px;color:#1f2733">
+        <div style="background:#161b22;border:1px solid rgba(212,175,55,0.2);border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+            <div style="font-size:11px;color:#e6edf3">
                 <span style="color:#2f74c0;font-family:monospace">◈ ${o.vtk_amount} VTK</span>
-                <span style="color:#6a7480;margin:0 8px">→</span>
+                <span style="color:#6b7280;margin:0 8px">→</span>
                 <span style="color:#c79a2a;font-family:monospace">🪙 ${o.dc_price} DC</span>
             </div>
             <button onclick="window.vtkCancelOrder('${o.id}')"
-                style="font-size:9px;padding:3px 8px;cursor:pointer;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
+                style="font-size:9px;padding:3px 8px;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
                 Annulla
             </button>
         </div>`).join('')}
@@ -291,24 +291,24 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
 
     <!-- Other orders -->
     <div>
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Ordini Disponibili</div>
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">Ordini Disponibili</div>
         ${otherOrders.length === 0
-            ? `<div style="text-align:center;padding:24px 0;font-size:10px;color:#6a7480;font-style:italic">Nessun ordine disponibile al momento.</div>`
+            ? `<div style="text-align:center;padding:24px 0;font-size:10px;color:#6b7280;font-style:italic">Nessun ordine disponibile al momento.</div>`
             : otherOrders.map(o => `
-            <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
+            <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between">
                 <div>
-                    <div style="font-size:11px;color:#1f2733">
+                    <div style="font-size:11px;color:#e6edf3">
                         <span style="color:#2f74c0;font-family:monospace">◈ ${o.vtk_amount} VTK</span>
-                        <span style="color:#6a7480;margin:0 8px">→</span>
+                        <span style="color:#6b7280;margin:0 8px">→</span>
                         <span style="color:#c79a2a;font-family:monospace">🪙 ${o.dc_price} DC</span>
                     </div>
-                    <div style="font-size:9px;color:#6a7480;margin-top:2px">
+                    <div style="font-size:9px;color:#6b7280;margin-top:2px">
                         ${(o.dc_price / o.vtk_amount).toFixed(2)} DC/VTK · da ${o.seller_name || 'Anonimo'}
                     </div>
                 </div>
                 <button onclick="window.vtkFillOrder('${o.id}', ${o.dc_price})"
                     ${dc < o.dc_price ? 'disabled' : ''}
-                    style="font-size:9px;padding:5px 12px;cursor:${dc < o.dc_price ? 'not-allowed' : 'pointer'};background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${dc < o.dc_price ? 'opacity:.4' : ''};transition:opacity .15s"
+                    style="font-size:9px;padding:5px 12px;cursor:${dc < o.dc_price ? 'not-allowed' : 'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${dc < o.dc_price ? 'opacity:.4' : ''};transition:opacity .15s"
                     onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                     Acquista
                 </button>
@@ -325,13 +325,13 @@ function _vtkRenderShop(vtk) {
     ${VTK_SHOP_ITEMS.map(item => {
         const canBuy = vtk >= item.cost;
         return `
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;gap:12px">
             <div style="flex:1">
                 <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
                     <span style="font-size:20px">${item.icon}</span>
-                    <span style="font-size:12px;font-weight:700;color:#1f2733">${item.name}</span>
+                    <span style="font-size:12px;font-weight:700;color:#e6edf3">${item.name}</span>
                 </div>
-                <div style="font-size:10px;color:#6a7480;margin-left:28px">${item.desc}</div>
+                <div style="font-size:10px;color:#6b7280;margin-left:28px">${item.desc}</div>
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
                 <div style="font-size:12px;font-weight:700;color:#2f74c0;font-family:monospace">◈ ${item.cost}</div>

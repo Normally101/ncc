@@ -14,15 +14,15 @@ window.renderP2PMarketSection = function() {
     const uid      = _uid();
     const listings = window._p2pMarket.listings || [];
 
-    if (!uid) return `<div style="font-size:9px;color:#6a7480;font-style:italic;margin-bottom:12px">Accedi per vedere il mercato P2P reale.</div>`;
+    if (!uid) return `<div style="font-size:9px;color:#6b7280;font-style:italic;margin-bottom:12px">Accedi per vedere il mercato P2P reale.</div>`;
 
     const myListings    = listings.filter(l => l.seller_user_id === uid);
     const otherListings = listings.filter(l => l.seller_user_id !== uid);
 
-    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #d6dee8;padding-bottom:4px;margin-bottom:8px;margin-top:16px">🌐 Mercato P2P Reale (${otherListings.length} annunci)</div>`;
+    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #21262d;padding-bottom:4px;margin-bottom:8px;margin-top:16px">🌐 Mercato P2P Reale (${otherListings.length} annunci)</div>`;
 
     if (otherListings.length === 0) {
-        html += `<div style="font-size:9px;color:#6a7480;font-style:italic;margin-bottom:12px">Nessun annuncio al momento. Sii il primo!</div>`;
+        html += `<div style="font-size:9px;color:#6b7280;font-style:italic;margin-bottom:12px">Nessun annuncio al momento. Sii il primo!</div>`;
     } else {
         otherListings.slice(0, 20).forEach(l => {
             const car  = l.car_snapshot || {};
@@ -30,11 +30,11 @@ window.renderP2PMarketSection = function() {
             const condColor = cond > 70 ? '#1aa06a' : cond > 40 ? '#e0922e' : '#db5746';
             const canBuy = (gameState.cash || 0) >= l.ask_price;
             html += `
-            <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px;margin-bottom:6px">
+            <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px 12px;margin-bottom:6px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div style="min-width:0;flex:1">
-                        <div style="font-size:10px;font-weight:700;color:#1f2733;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${car.name || 'Auto sconosciuta'}</div>
-                        <div style="font-size:8px;color:#6a7480">da <span style="color:#c79a2a">${l.seller_name}</span> ·
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${car.name || 'Auto sconosciuta'}</div>
+                        <div style="font-size:8px;color:#6b7280">da <span style="color:#c79a2a">${l.seller_name}</span> ·
                             <span style="color:${condColor}">Cond. ${cond}%</span> ·
                             ${car.mileage ? Math.round(car.mileage/1000)+'k km' : '—'}</div>
                     </div>
@@ -42,7 +42,7 @@ window.renderP2PMarketSection = function() {
                         <div style="font-size:11px;font-weight:700;font-family:monospace;color:${canBuy ? '#e0922e' : '#6a7480'}">€${l.ask_price.toLocaleString()}</div>
                         <button onclick="buyP2PCar('${l.id}')"
                             ${canBuy ? '' : 'disabled'}
-                            style="margin-top:4px;padding:2px 8px;font-size:8px;font-weight:700;cursor:${canBuy?'pointer':'not-allowed'};background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${canBuy?'':'opacity:.4'};transition:opacity .15s"
+                            style="margin-top:4px;padding:2px 8px;font-size:8px;font-weight:700;cursor:${canBuy?'pointer':'not-allowed'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${canBuy?'':'opacity:.4'};transition:opacity .15s"
                             onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                             Compra
                         </button>
@@ -53,17 +53,17 @@ window.renderP2PMarketSection = function() {
     }
 
     if (myListings.length > 0) {
-        html += `<div style="font-size:8px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #d6dee8;padding-bottom:4px;margin-bottom:8px;margin-top:12px">I Miei Annunci</div>`;
+        html += `<div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;border-bottom:1px solid #21262d;padding-bottom:4px;margin-bottom:8px;margin-top:12px">I Miei Annunci</div>`;
         myListings.forEach(l => {
             const car = l.car_snapshot || {};
             html += `
             <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.2);border-radius:6px;padding:8px 12px;margin-bottom:6px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#1f2733">${car.name || '?'}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${car.name || '?'}</div>
                         <div style="font-size:8px;color:#e0922e;font-family:monospace">€${l.ask_price.toLocaleString()} · In vendita</div>
                     </div>
-                    <button onclick="cancelP2PListing('${l.id}')" style="padding:3px 8px;font-size:8px;font-weight:700;cursor:pointer;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Ritira</button>
+                    <button onclick="cancelP2PListing('${l.id}')" style="padding:3px 8px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Ritira</button>
                 </div>
             </div>`;
         });
@@ -84,7 +84,7 @@ window.renderP2PSharesSection = function() {
         <div style="margin-top:8px">`;
 
     if (shares.length === 0) {
-        html += `<div style="font-size:9px;color:#6a7480;font-style:italic">Nessuna azienda quotata. Sii il primo!</div>`;
+        html += `<div style="font-size:9px;color:#6b7280;font-style:italic">Nessuna azienda quotata. Sii il primo!</div>`;
     } else {
         shares.forEach(s => {
             const isMe = s.issuer_user_id === uid;
@@ -95,12 +95,12 @@ window.renderP2PSharesSection = function() {
             <div class="finance-stock-card" style="margin-bottom:8px">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#1f2733">${s.company_name}${isMe ? ' <span style="font-size:7px;color:#c79a2a">TUA</span>' : ''}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${s.company_name}${isMe ? ' <span style="font-size:7px;color:#c79a2a">TUA</span>' : ''}</div>
                         <div style="font-size:8px;color:${isUp?'#1aa06a':'#db5746'}">${isUp ? '▲' : '▼'} ${Math.abs(pct).toFixed(1)}% da IPO</div>
                     </div>
                     <div style="text-align:right">
-                        <div style="font-size:13px;font-weight:700;font-family:monospace;color:#1f2733">€${s.current_price.toLocaleString()}</div>
-                        <div style="font-size:8px;color:#6a7480">${s.shares_available} disp. / ${s.shares_total} tot.</div>
+                        <div style="font-size:13px;font-weight:700;font-family:monospace;color:#e6edf3">€${s.current_price.toLocaleString()}</div>
+                        <div style="font-size:8px;color:#6b7280">${s.shares_available} disp. / ${s.shares_total} tot.</div>
                     </div>
                 </div>
                 ${myH && myH.shares_owned > 0 ? `
@@ -110,14 +110,14 @@ window.renderP2PSharesSection = function() {
                 ${!isMe ? `
                 <div style="display:flex;gap:4px">
                     ${s.shares_available > 0 ? `
-                    <button onclick="buyCompanyShares('${s.id}', 10)" style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 10 (€${(s.current_price * 10).toLocaleString()})</button>
-                    <button onclick="buyCompanyShares('${s.id}', 50)" style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 50</button>
-                    ` : '<span style="font-size:8px;color:#6a7480;font-style:italic">Esaurito</span>'}
+                    <button onclick="buyCompanyShares('${s.id}', 10)" style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 10 (€${(s.current_price * 10).toLocaleString()})</button>
+                    <button onclick="buyCompanyShares('${s.id}', 50)" style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 50</button>
+                    ` : '<span style="font-size:8px;color:#6b7280;font-style:italic">Esaurito</span>'}
                     ${myH && myH.shares_owned > 0 ? `
                     <button onclick="sellCompanyShares('${s.id}', ${Math.min(10, myH.shares_owned)})"
-                        style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Vendi ${Math.min(10, myH.shares_owned)}</button>
+                        style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Vendi ${Math.min(10, myH.shares_owned)}</button>
                     ` : ''}
-                </div>` : '<div style="font-size:8px;color:#6a7480;font-style:italic">La tua azienda</div>'}
+                </div>` : '<div style="font-size:8px;color:#6b7280;font-style:italic">La tua azienda</div>'}
             </div>`;
         });
     }
@@ -133,16 +133,16 @@ window.renderP2PHoldingsSection = function() {
 
     if (!uid) return '';
 
-    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #d6dee8;padding-bottom:4px;margin-bottom:12px;margin-top:16px">⚔️ Sindacati P2P Reali</div>`;
+    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #21262d;padding-bottom:4px;margin-bottom:12px;margin-top:16px">⚔️ Sindacati P2P Reali</div>`;
 
     if (myH) {
         const myRole = myH.holding_members?.find(m => m.user_id === uid)?.role || 'member';
         html += `
         <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:14px;margin-bottom:12px">
             <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🏢 ${myH.name}</div>
-            <div style="font-size:8px;color:#6a7480;margin-bottom:4px">${myH.description || 'Nessuna descrizione'}</div>
-            <div style="font-size:8px;color:#6a7480">Cassa: <span style="color:#e0922e;font-family:monospace">€${(myH.treasury || 0).toLocaleString()}</span> · Ruolo: <span style="color:#1f2733;text-transform:capitalize">${myRole}</span></div>
-            <div style="font-size:8px;color:#6a7480;margin-top:4px">Membri (${myH.holding_members?.length || 0}/${myH.max_members}):</div>
+            <div style="font-size:8px;color:#6b7280;margin-bottom:4px">${myH.description || 'Nessuna descrizione'}</div>
+            <div style="font-size:8px;color:#6b7280">Cassa: <span style="color:#e0922e;font-family:monospace">€${(myH.treasury || 0).toLocaleString()}</span> · Ruolo: <span style="color:#e6edf3;text-transform:capitalize">${myRole}</span></div>
+            <div style="font-size:8px;color:#6b7280;margin-top:4px">Membri (${myH.holding_members?.length || 0}/${myH.max_members}):</div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
                 ${(myH.holding_members || []).map(m => `
                 <span style="font-size:7px;padding:2px 6px;border-radius:4px;border:1px solid ${m.role==='leader'?'rgba(212,175,55,0.3)':'#d6dee8'};color:${m.role==='leader'?'#c79a2a':'#6a7480'}">
@@ -151,38 +151,38 @@ window.renderP2PHoldingsSection = function() {
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
                 <input id="hld-contrib-amt" type="number" min="1000" step="1000" placeholder="Contributo €"
-                    style="flex:1;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:5px 8px;font-size:9px;color:#1f2733;outline:none">
+                    style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:9px;color:#e6edf3;outline:none">
                 <button onclick="contributeHoldingTreasury('${myH.id}', parseInt(document.getElementById('hld-contrib-amt').value)||0)"
-                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Contribuisci</button>
+                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Contribuisci</button>
                 <button onclick="leaveHolding('${myH.id}')"
-                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
+                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
                     ${myRole === 'leader' ? 'Sciogli' : 'Esci'}
                 </button>
             </div>
         </div>`;
     } else {
         html += `
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:12px">
-            <div style="font-size:9px;font-weight:700;color:#1f2733;margin-bottom:8px">Crea il tuo Sindacato</div>
-            <input id="hld-name" placeholder="Nome sindacato..." style="width:100%;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:6px 8px;font-size:9px;color:#1f2733;outline:none;margin-bottom:6px;box-sizing:border-box">
-            <input id="hld-desc" placeholder="Descrizione (opzionale)" style="width:100%;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:6px 8px;font-size:9px;color:#1f2733;outline:none;margin-bottom:8px;box-sizing:border-box">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#e6edf3;margin-bottom:8px">Crea il tuo Sindacato</div>
+            <input id="hld-name" placeholder="Nome sindacato..." style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:6px;box-sizing:border-box">
+            <input id="hld-desc" placeholder="Descrizione (opzionale)" style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:8px;box-sizing:border-box">
             <button onclick="createHolding(document.getElementById('hld-name').value, document.getElementById('hld-desc').value)"
-                style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">⚔️ Fonda il Sindacato</button>
+                style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">⚔️ Fonda il Sindacato</button>
         </div>`;
 
         if (holdings.length > 0) {
-            html += `<div style="font-size:8px;color:#6a7480;text-transform:uppercase;margin-bottom:8px">Sindacati disponibili</div>`;
+            html += `<div style="font-size:8px;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Sindacati disponibili</div>`;
             holdings.slice(0, 10).forEach(h => {
                 const cnt  = h.holding_members?.length || 0;
                 const full = cnt >= h.max_members;
                 html += `
-                <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+                <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#1f2733">${h.name}</div>
-                        <div style="font-size:8px;color:#6a7480">${cnt}/${h.max_members} membri · Cassa €${(h.treasury||0).toLocaleString()}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${h.name}</div>
+                        <div style="font-size:8px;color:#6b7280">${cnt}/${h.max_members} membri · Cassa €${(h.treasury||0).toLocaleString()}</div>
                     </div>
                     <button onclick="joinHolding('${h.id}')" ${full ? 'disabled' : ''}
-                        style="padding:5px 10px;font-size:8px;font-weight:700;cursor:${full?'not-allowed':'pointer'};background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${full?'opacity:.4':''}">
+                        style="padding:5px 10px;font-size:8px;font-weight:700;cursor:${full?'not-allowed':'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${full?'opacity:.4':''}">
                         ${full ? 'Pieno' : 'Unisciti'}
                     </button>
                 </div>`;
@@ -207,10 +207,10 @@ window.renderBarometroWidget = function() {
             <div style="font-size:10px;font-weight:700;color:${barColor}">🌡️ Barometro della Collera</div>
             <div style="font-size:9px;font-family:monospace;font-weight:700;color:${barColor}">${Math.round(t)}% — ${label}</div>
         </div>
-        <div style="height:8px;border-radius:4px;background:#d6dee8;overflow:hidden;margin-bottom:4px">
+        <div style="height:8px;border-radius:4px;background:#21262d;overflow:hidden;margin-bottom:4px">
             <div style="height:100%;width:${Math.round(t)}%;background:${barColor};border-radius:4px;transition:width .5s"></div>
         </div>
-        <div style="font-size:8px;color:#6a7480">Contribuisci alla cassa del tuo Sindacato per abbassare la tensione · €10.000 = −1 punto</div>`;
+        <div style="font-size:8px;color:#6b7280">Contribuisci alla cassa del tuo Sindacato per abbassare la tensione · €10.000 = −1 punto</div>`;
 
     if (ss.strikeActive) {
         const endsAt    = ss.strikeEndsAt ? new Date(ss.strikeEndsAt) : null;
@@ -219,7 +219,7 @@ window.renderBarometroWidget = function() {
         <div style="margin-top:8px;padding:8px;border-radius:4px;background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.35)">
             <div style="font-size:10px;font-weight:700;color:#db5746">🚨 SCIOPERO NAZIONALE IN CORSO</div>
             <div style="font-size:8px;color:#db5746;margin-top:2px">Tutti i redditi NCC −30% · Termina tra ~${remaining}h</div>
-            <div style="font-size:8px;color:#6a7480;margin-top:2px">Puoi assumere crumiri nell'Ispettorato per mantenere i redditi</div>
+            <div style="font-size:8px;color:#6b7280;margin-top:2px">Puoi assumere crumiri nell'Ispettorato per mantenere i redditi</div>
         </div>`;
     }
 
@@ -235,19 +235,19 @@ window.renderP2PConsorziSection = function() {
     const myC         = window._p2pMarket.myConsorzio;
     const memberCount = myC?.consorzio_members?.length || 0;
 
-    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #d6dee8;padding-bottom:4px;margin-bottom:12px;margin-top:16px">🤝 Consorzi — Gilde Cooperative</div>`;
+    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #21262d;padding-bottom:4px;margin-bottom:12px;margin-top:16px">🤝 Consorzi — Gilde Cooperative</div>`;
 
     const fuelBonus   = memberCount >= 3;
     const incomeBonus = memberCount >= 5;
     html += `
     <div style="display:flex;gap:8px;margin-bottom:12px">
-        <div style="flex:1;background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:6px;text-align:center">
+        <div style="flex:1;background:#161b22;border:1px solid #21262d;border-radius:6px;padding:6px;text-align:center">
             <div style="font-size:8px;color:${fuelBonus?'#1aa06a':'#6a7480'}">⛽ −5% carburante</div>
-            <div style="font-size:7px;color:#6a7480">${fuelBonus ? '✅ Attivo' : '≥3 membri'}</div>
+            <div style="font-size:7px;color:#6b7280">${fuelBonus ? '✅ Attivo' : '≥3 membri'}</div>
         </div>
-        <div style="flex:1;background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:6px;text-align:center">
+        <div style="flex:1;background:#161b22;border:1px solid #21262d;border-radius:6px;padding:6px;text-align:center">
             <div style="font-size:8px;color:${incomeBonus?'#1aa06a':'#6a7480'}">💰 +8% redditi</div>
-            <div style="font-size:7px;color:#6a7480">${incomeBonus ? '✅ Attivo' : '≥5 membri'}</div>
+            <div style="font-size:7px;color:#6b7280">${incomeBonus ? '✅ Attivo' : '≥5 membri'}</div>
         </div>
     </div>`;
 
@@ -256,9 +256,9 @@ window.renderP2PConsorziSection = function() {
         html += `
         <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:14px;margin-bottom:12px">
             <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🤝 ${myC.name}</div>
-            <div style="font-size:8px;color:#6a7480;margin-bottom:4px">${myC.description || ''}</div>
-            <div style="font-size:8px;color:#6a7480">Cassa: <span style="color:#e0922e;font-family:monospace">€${(myC.treasury || 0).toLocaleString()}</span> · Ruolo: <span style="color:#1f2733;text-transform:capitalize">${myRole}</span></div>
-            <div style="font-size:8px;color:#6a7480;margin-top:4px">Membri (${memberCount}/${myC.max_members}):</div>
+            <div style="font-size:8px;color:#6b7280;margin-bottom:4px">${myC.description || ''}</div>
+            <div style="font-size:8px;color:#6b7280">Cassa: <span style="color:#e0922e;font-family:monospace">€${(myC.treasury || 0).toLocaleString()}</span> · Ruolo: <span style="color:#e6edf3;text-transform:capitalize">${myRole}</span></div>
+            <div style="font-size:8px;color:#6b7280;margin-top:4px">Membri (${memberCount}/${myC.max_members}):</div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
                 ${(myC.consorzio_members || []).map(m => `
                 <span style="font-size:7px;padding:2px 6px;border-radius:4px;border:1px solid ${m.role==='leader'?'rgba(212,175,55,0.3)':'#d6dee8'};color:${m.role==='leader'?'#c79a2a':'#6a7480'}">
@@ -267,40 +267,40 @@ window.renderP2PConsorziSection = function() {
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
                 <input id="cso-contrib-amt" type="number" min="5000" step="5000" placeholder="Contributo €"
-                    style="flex:1;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:5px 8px;font-size:9px;color:#1f2733;outline:none">
+                    style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:9px;color:#e6edf3;outline:none">
                 <button onclick="contributeConsorzio('${myC.id}', parseInt(document.getElementById('cso-contrib-amt').value)||0)"
-                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Versa</button>
+                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Versa</button>
                 <button onclick="leaveConsorzio('${myC.id}')"
-                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
+                    style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
                     ${myRole === 'leader' ? 'Sciogli' : 'Esci'}
                 </button>
             </div>
         </div>`;
     } else {
         html += `
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:12px">
-            <div style="font-size:9px;font-weight:700;color:#1f2733;margin-bottom:8px">Fonda il tuo Consorzio</div>
-            <input id="cso-name" placeholder="Nome consorzio..." style="width:100%;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:6px 8px;font-size:9px;color:#1f2733;outline:none;margin-bottom:6px;box-sizing:border-box">
-            <input id="cso-desc" placeholder="Descrizione (opzionale)" style="width:100%;background:#f3f6f9;border:1px solid #d6dee8;border-radius:4px;padding:6px 8px;font-size:9px;color:#1f2733;outline:none;margin-bottom:8px;box-sizing:border-box">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:12px">
+            <div style="font-size:9px;font-weight:700;color:#e6edf3;margin-bottom:8px">Fonda il tuo Consorzio</div>
+            <input id="cso-name" placeholder="Nome consorzio..." style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:6px;box-sizing:border-box">
+            <input id="cso-desc" placeholder="Descrizione (opzionale)" style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:8px;box-sizing:border-box">
             <button onclick="createConsorzio(document.getElementById('cso-name').value, document.getElementById('cso-desc').value)"
-                style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">🤝 Fonda il Consorzio</button>
+                style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">🤝 Fonda il Consorzio</button>
         </div>`;
 
         if (consorzi.length > 0) {
-            html += `<div style="font-size:8px;color:#6a7480;text-transform:uppercase;margin-bottom:8px">Consorzi disponibili</div>`;
+            html += `<div style="font-size:8px;color:#6b7280;text-transform:uppercase;margin-bottom:8px">Consorzi disponibili</div>`;
             consorzi.slice(0, 8).forEach(c => {
                 const cnt  = c.consorzio_members?.length || 0;
                 const full = cnt >= c.max_members;
                 const fb   = cnt >= 3 ? '<span style="color:#1aa06a">⛽</span> ' : '';
                 const ib   = cnt >= 5 ? '<span style="color:#e0922e">💰</span> ' : '';
                 html += `
-                <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
+                <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#1f2733">${c.name} ${fb}${ib}</div>
-                        <div style="font-size:8px;color:#6a7480">${cnt}/${c.max_members} membri · Cassa €${(c.treasury||0).toLocaleString()}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${c.name} ${fb}${ib}</div>
+                        <div style="font-size:8px;color:#6b7280">${cnt}/${c.max_members} membri · Cassa €${(c.treasury||0).toLocaleString()}</div>
                     </div>
                     <button onclick="joinConsorzio('${c.id}')" ${full ? 'disabled' : ''}
-                        style="padding:5px 10px;font-size:8px;font-weight:700;cursor:${full?'not-allowed':'pointer'};background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${full?'opacity:.4':''}">
+                        style="padding:5px 10px;font-size:8px;font-weight:700;cursor:${full?'not-allowed':'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${full?'opacity:.4':''}">
                         ${full ? 'Pieno' : 'Unisciti'}
                     </button>
                 </div>`;
@@ -324,15 +324,15 @@ window.renderIspettoratoSection = function() {
     const riskColor = risk >= 70 ? '#db5746' : risk >= 40 ? '#e0922e' : '#1aa06a';
     const riskLabel = risk >= 70 ? 'ALTA — Rischi ispezione' : risk >= 40 ? 'Moderato' : 'Basso';
 
-    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #d6dee8;padding-bottom:4px;margin-bottom:12px;margin-top:16px">🔍 Ispettorato del Lavoro</div>`;
+    let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #21262d;padding-bottom:4px;margin-bottom:12px;margin-top:16px">🔍 Ispettorato del Lavoro</div>`;
 
     html += `
-    <div style="background:#ffffff;border:1px solid ${riskColor}22;border-radius:6px;padding:14px;margin-bottom:12px">
+    <div style="background:#161b22;border:1px solid ${riskColor}22;border-radius:6px;padding:14px;margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <div style="font-size:9px;font-weight:700;color:#1f2733">🚔 Rischio GdF</div>
+            <div style="font-size:9px;font-weight:700;color:#e6edf3">🚔 Rischio GdF</div>
             <div style="font-size:9px;font-family:monospace;font-weight:700;color:${riskColor}">${risk}% — ${riskLabel}</div>
         </div>
-        <div style="height:6px;border-radius:3px;background:#d6dee8;overflow:hidden;margin-bottom:6px">
+        <div style="height:6px;border-radius:3px;background:#21262d;overflow:hidden;margin-bottom:6px">
             <div style="height:100%;width:${risk}%;background:${riskColor};border-radius:3px;transition:width .5s"></div>
         </div>`;
 
@@ -352,10 +352,10 @@ window.renderIspettoratoSection = function() {
         <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:14px;margin-bottom:12px">
             <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🤵 Don Carmine</div>
             <div style="font-size:8px;color:#4d6480;margin-bottom:8px;font-style:italic">"Ho parlato con i giusti uffici. Il tuo dossier può sparire."</div>
-            <div style="font-size:8px;color:#6a7480;margin-bottom:8px">Azzera il rischio GdF · Immunità 24 ore · Costo: <span style="color:#e0922e;font-family:monospace">€50.000</span></div>
+            <div style="font-size:8px;color:#6b7280;margin-bottom:8px">Azzera il rischio GdF · Immunità 24 ore · Costo: <span style="color:#e0922e;font-family:monospace">€50.000</span></div>
             <button onclick="payDonCarmine()"
                 ${canAfford && !immActive ? '' : 'disabled'}
-                style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:${canAfford&&!immActive?'pointer':'not-allowed'};background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${!canAfford||immActive?'opacity:.4':''}">
+                style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:${canAfford&&!immActive?'pointer':'not-allowed'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${!canAfford||immActive?'opacity:.4':''}">
                 ${immActive ? '🛡️ Immunità già attiva' : canAfford ? '🤵 Chiama Don Carmine (€50.000)' : '💸 Fondi insufficienti'}
             </button>
         </div>`;

@@ -7,11 +7,11 @@ window.renderTabOPA = async function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8;display:flex;align-items:flex-start;justify-content:space-between">
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
         <div>
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">M&amp;A</div>
-            <div style="font-size:20px;font-weight:700;color:#1f2733">OPA Ostili</div>
-            <div style="font-size:11px;color:#6a7480;margin-top:4px">Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto</div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">M&amp;A</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">OPA Ostili</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px">Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto</div>
         </div>
         <span style="font-size:9px;font-weight:700;color:#c79a2a;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:3px 8px">51% → Controllo</span>
     </div>` + `<div>
@@ -49,7 +49,7 @@ async function _loadOPAList() {
         list.innerHTML = `
         <div style="text-align:center;padding:48px 0">
           <div style="font-size:48px;margin-bottom:12px">🤝</div>
-          <div style="color:#6a7480;font-size:12px">Nessuna OPA in corso.<br>
+          <div style="color:#6b7280;font-size:12px">Nessuna OPA in corso.<br>
           Compra azioni di un rivale dal tab Finance → Borsa per iniziare.</div>
         </div>`;
         return;
@@ -67,7 +67,7 @@ function _renderOPACard(opa) {
         ? '<span style="background:rgba(239,68,68,0.2);color:#db5746;border:1px solid rgba(239,68,68,0.3);font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700">⚠️ Sei il TARGET</span>'
         : isRaider
         ? '<span style="background:rgba(34,197,94,0.2);color:#1aa06a;border:1px solid rgba(34,197,94,0.3);font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700">🦅 Sei il RAIDER</span>'
-        : '<span style="background:rgba(107,114,128,0.2);color:#6a7480;border:1px solid rgba(107,114,128,0.3);font-size:11px;padding:2px 8px;border-radius:99px">👁 Osservatore</span>';
+        : '<span style="background:rgba(107,114,128,0.2);color:#6b7280;border:1px solid rgba(107,114,128,0.3);font-size:11px;padding:2px 8px;border-radius:99px">👁 Osservatore</span>';
 
     const buybackBtn = isTarget ? `
     <button
@@ -84,34 +84,34 @@ function _renderOPACard(opa) {
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
         <div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-            <span style="color:#1f2733;font-weight:700;font-size:12px">${opa.raider_company}</span>
-            <span style="color:#6a7480;font-size:11px">vs</span>
-            <span style="color:#1f2733;font-weight:700;font-size:12px">${opa.target_company}</span>
+            <span style="color:#e6edf3;font-weight:700;font-size:12px">${opa.raider_company}</span>
+            <span style="color:#6b7280;font-size:11px">vs</span>
+            <span style="color:#e6edf3;font-weight:700;font-size:12px">${opa.target_company}</span>
           </div>
-          <div style="font-size:11px;color:#6a7480">In corso dal ${since}</div>
+          <div style="font-size:11px;color:#6b7280">In corso dal ${since}</div>
         </div>
         ${roleLabel}
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-        <div style="background:#eef1f5;border-radius:6px;padding:12px;text-align:center">
+        <div style="background:#21262d;border-radius:6px;padding:12px;text-align:center">
           <div style="font-size:18px;font-weight:700;color:#e0922e">${Number(opa.raider_pct).toFixed(1)}%</div>
-          <div style="font-size:11px;color:#6a7480;margin-top:2px">Quota raider</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Quota raider</div>
         </div>
-        <div style="background:#eef1f5;border-radius:6px;padding:12px;text-align:center">
+        <div style="background:#21262d;border-radius:6px;padding:12px;text-align:center">
           <div style="font-size:18px;font-weight:700;color:#1aa06a">€${Number(opa.total_dividends || 0).toLocaleString('it-IT')}</div>
-          <div style="font-size:11px;color:#6a7480;margin-top:2px">Dividendi totali</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Dividendi totali</div>
         </div>
-        <div style="background:#eef1f5;border-radius:6px;padding:12px;text-align:center">
+        <div style="background:#21262d;border-radius:6px;padding:12px;text-align:center">
           <div style="font-size:18px;font-weight:700;color:#2f74c0">€${Number(opa.buyback_price).toLocaleString('it-IT')}</div>
-          <div style="font-size:11px;color:#6a7480;margin-top:2px">Prezzo buyback</div>
+          <div style="font-size:11px;color:#6b7280;margin-top:2px">Prezzo buyback</div>
         </div>
       </div>
 
-      <div style="font-size:11px;color:#6a7480;background:#f3f6f9;border-radius:6px;padding:10px">
+      <div style="font-size:11px;color:#6b7280;background:#0d1117;border-radius:6px;padding:10px">
         💸 <strong style="color:#facc15">20%</strong> di ogni corsa completata da
-        <span style="color:#1f2733">${opa.target_company}</span>
-        va automaticamente a <span style="color:#1f2733">${opa.raider_company}</span>
+        <span style="color:#e6edf3">${opa.target_company}</span>
+        va automaticamente a <span style="color:#e6edf3">${opa.raider_company}</span>
       </div>
 
       ${buybackBtn}

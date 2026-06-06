@@ -223,55 +223,55 @@ window.renderTabTourism = function() {
     const openCount        = tenders.filter(t => t.status === 'open_bidding').length;
     const bestScore        = myBids.length > 0 ? Math.max(...myBids.map(t => t.my_bid_score || 0)) : null;
 
-    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8;display:flex;align-items:flex-start;justify-content:space-between">
+    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
         <div>
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Mercato · PvP</div>
-            <div style="font-size:20px;font-weight:700;color:#1f2733">Bandi Turismo B2B</div>
-            <div style="font-size:11px;color:#6a7480;margin-top:4px">${myActive.length > 0 ? `${myActive.length} contratto/i attivo/i · +€${totalDailyPayout.toLocaleString()}/giorno` : `${openCount} bandi aperti · Compete con altri operatori`}</div>
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Mercato · PvP</div>
+            <div style="font-size:20px;font-weight:700;color:#e6edf3">Bandi Turismo B2B</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px">${myActive.length > 0 ? `${myActive.length} contratto/i attivo/i · +€${totalDailyPayout.toLocaleString()}/giorno` : `${openCount} bandi aperti · Compete con altri operatori`}</div>
         </div>
         ${myActive.length > 0 ? `<span style="font-size:9px;font-weight:700;color:#1aa06a;background:rgba(63,185,80,0.12);border:1px solid rgba(63,185,80,0.3);border-radius:4px;padding:3px 8px">${myActive.length} ATTIVO</span>` : ''}
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratti Attivi</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratti Attivi</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${myActive.length > 0 ? '#1aa06a' : '#1f2733'}">${myActive.length > 0 ? myActive.length : '—'}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Entrate/Giorno</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Entrate/Giorno</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${totalDailyPayout > 0 ? '#1aa06a' : '#1f2733'}">${totalDailyPayout > 0 ? '+€' + totalDailyPayout.toLocaleString() : '—'}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offerte in Corsa</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offerte in Corsa</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${myBids.length > 0 ? '#c79a2a' : '#1f2733'}">${myBids.length > 0 ? myBids.length : '—'}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Miglior Score</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Miglior Score</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${bestScore !== null && bestScore >= 70 ? '#1aa06a' : '#e0922e'}">${bestScore !== null ? bestScore.toFixed(0) : '—'}</div>
         </div>
     </div>`;
 
     if (!uid) {
-        container.innerHTML = html + `<div style="font-size:9px;color:#6a7480;font-style:italic;text-align:center;margin-top:32px">Accedi per partecipare ai bandi turismo.</div>`;
+        container.innerHTML = html + `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;margin-top:32px">Accedi per partecipare ai bandi turismo.</div>`;
         return;
     }
 
     // ── SUB-TAB SWITCHER ──
     html += `
-    <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid #d6dee8;padding-bottom:10px;align-items:center">
+    <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid #21262d;padding-bottom:10px;align-items:center">
         <button onclick="window._tourismState._subTab='open'; window.renderTabTourism();"
             style="padding:5px 12px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;border-radius:4px;cursor:pointer;transition:all .15s;${subTab === 'open'
-                ? 'background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;font-weight:700'
-                : 'background:transparent;border:1px solid transparent;color:#6a7480'}">
+                ? 'background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;font-weight:700'
+                : 'background:transparent;border:1px solid transparent;color:#6b7280'}">
             Bandi Aperti <span style="opacity:.6;margin-left:4px">${openCount}</span>
         </button>
         <button onclick="window._tourismState._subTab='mine'; window.renderTabTourism();"
             style="padding:5px 12px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;border-radius:4px;cursor:pointer;transition:all .15s;${subTab === 'mine'
-                ? 'background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;font-weight:700'
-                : 'background:transparent;border:1px solid transparent;color:#6a7480'}">
+                ? 'background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;font-weight:700'
+                : 'background:transparent;border:1px solid transparent;color:#6b7280'}">
             I Miei Contratti <span style="opacity:.6;margin-left:4px">${myActive.length}</span>
         </button>
         <button onclick="window.tourismRefresh(true).then(()=>window.renderTabTourism())"
-            style="margin-left:auto;padding:4px 8px;font-size:8px;color:#6a7480;background:transparent;border:1px solid transparent;border-radius:4px;cursor:pointer;transition:all .15s"
+            style="margin-left:auto;padding:4px 8px;font-size:8px;color:#6b7280;background:transparent;border:1px solid transparent;border-radius:4px;cursor:pointer;transition:all .15s"
             title="Aggiorna" onmouseenter="this.style.color='#6a7480'" onmouseleave="this.style.color='#6a7480'">
             ↺ Aggiorna
         </button>
@@ -288,7 +288,7 @@ window.renderTabTourism = function() {
 
 function _tRenderOpenBids(tenders, uid) {
     if (tenders.length === 0) {
-        return `<div style="font-size:9px;color:#6a7480;font-style:italic;text-align:center;padding:32px 0">Caricamento bandi… clicca ↺ Aggiorna.</div>`;
+        return `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;padding:32px 0">Caricamento bandi… clicca ↺ Aggiorna.</div>`;
     }
 
     const open     = tenders.filter(t => t.status === 'open_bidding');
@@ -298,18 +298,18 @@ function _tRenderOpenBids(tenders, uid) {
     let html = '';
 
     if (open.length === 0) {
-        html += `<div style="font-size:9px;color:#6a7480;font-style:italic;text-align:center;padding:16px;border:1px solid #d6dee8;border-radius:6px;margin-bottom:16px">Nessun bando aperto al momento.</div>`;
+        html += `<div style="font-size:9px;color:#6b7280;font-style:italic;text-align:center;padding:16px;border:1px solid #21262d;border-radius:6px;margin-bottom:16px">Nessun bando aperto al momento.</div>`;
     } else {
         open.forEach(t => { html += _tRenderOpenCard(t); });
     }
 
     if (active.length > 0) {
-        html += `<div style="font-size:8px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 8px;padding-top:12px;border-top:1px solid #d6dee8">In Uso — ${active.length} contratto/i</div>`;
+        html += `<div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 8px;padding-top:12px;border-top:1px solid #21262d">In Uso — ${active.length} contratto/i</div>`;
         active.forEach(t => { html += _tRenderLockedCard(t); });
     }
 
     if (cooldown.length > 0) {
-        html += `<div style="font-size:8px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px;padding-top:12px;border-top:1px solid #d6dee8">In Cooldown — ${cooldown.length}</div>`;
+        html += `<div style="font-size:8px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:16px 0 8px;padding-top:12px;border-top:1px solid #21262d">In Cooldown — ${cooldown.length}</div>`;
         cooldown.forEach(t => { html += _tRenderCooldownCard(t); });
     }
 
@@ -330,30 +330,30 @@ function _tRenderOpenCard(t) {
     const dailyPay = t.daily_payout || (t.base_payout_per_hour || 0) * 16;
 
     return `
-    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:10px;${!reqs.ok && !hasBid ? 'opacity:.6' : ''}">
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:10px;${!reqs.ok && !hasBid ? 'opacity:.6' : ''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
             <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">
                 <span style="font-size:20px;flex-shrink:0">${t.icon || '✈️'}</span>
                 <div style="min-width:0">
                     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:3px">
-                        <span style="font-size:11px;font-weight:700;color:#1f2733">${t.name}</span>
+                        <span style="font-size:11px;font-weight:700;color:#e6edf3">${t.name}</span>
                         ${tierBadge}
                     </div>
-                    <div style="font-size:9px;color:#6a7480;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.company_type || ''} · ${t.clientele || ''}</div>
-                    <div style="font-size:9px;color:#6a7480;font-style:italic;margin-top:2px">${(t.lore || '').substring(0,80)}${(t.lore||'').length>80?'…':''}</div>
+                    <div style="font-size:9px;color:#6b7280;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.company_type || ''} · ${t.clientele || ''}</div>
+                    <div style="font-size:9px;color:#6b7280;font-style:italic;margin-top:2px">${(t.lore || '').substring(0,80)}${(t.lore||'').length>80?'…':''}</div>
                 </div>
             </div>
             <div style="text-align:right;margin-left:8px;flex-shrink:0">
                 <div style="font-size:10px;font-weight:700;color:#1aa06a;font-family:monospace">+€${dailyPay.toLocaleString()}/g</div>
-                <div style="font-size:8px;color:#6a7480">${t.duration_days || 14}g</div>
+                <div style="font-size:8px;color:#6b7280">${t.duration_days || 14}g</div>
             </div>
         </div>
 
         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">
-            <span style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;padding:2px 5px;border-radius:4px;color:#6a7480">${reqTier} ×${reqCount}</span>
-            <span style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;padding:2px 5px;border-radius:4px;color:#6a7480">⭐ ${minRep}★</span>
-            <span style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;padding:2px 5px;border-radius:4px;color:#6a7480">👥 ${t.bid_count || 0} offert${t.bid_count === 1 ? 'a' : 'e'}</span>
-            <span style="font-size:8px;background:#f3f6f9;border:1px solid #d6dee8;padding:2px 5px;border-radius:4px;color:#6a7480">⏱ ${_tCountdown(t.bidding_ends_at)}</span>
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#6b7280">${reqTier} ×${reqCount}</span>
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#6b7280">⭐ ${minRep}★</span>
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#6b7280">👥 ${t.bid_count || 0} offert${t.bid_count === 1 ? 'a' : 'e'}</span>
+            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 5px;border-radius:4px;color:#6b7280">⏱ ${_tCountdown(t.bidding_ends_at)}</span>
         </div>
 
         ${!reqs.ok && !hasBid ? `<div style="font-size:9px;color:#db5746;margin-bottom:8px">🔒 ${reqs.reason}</div>` : ''}
@@ -367,9 +367,9 @@ function _tRenderOpenCard(t) {
             </button>
         </div>
         ` : reqs.ok ? `
-        <div style="border-top:1px solid #d6dee8;padding-top:10px;margin-top:4px">
+        <div style="border-top:1px solid #21262d;padding-top:10px;margin-top:4px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                <span style="font-size:8px;color:#6a7480">Pledge (max €100k)</span>
+                <span style="font-size:8px;color:#6b7280">Pledge (max €100k)</span>
                 <span style="font-size:8px;color:#c79a2a;font-family:monospace" id="t-pledge-val-${t.id}">€0</span>
             </div>
             <input type="range" min="0" max="100000" step="1000"
@@ -378,19 +378,19 @@ function _tRenderOpenCard(t) {
                 oninput="window._tSetPledge('${t.id}', this.value)">
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-                <div style="font-size:8px;font-family:monospace;color:#6a7480">
-                    REP <span id="t-sc-rep-${t.id}" style="color:#6a7480">${sc.rep}</span>
-                    &nbsp;FLEET <span id="t-sc-fleet-${t.id}" style="color:#6a7480">${sc.fleet}</span>
-                    &nbsp;PLEDGE <span id="t-sc-pledge-${t.id}" style="color:#6a7480">${sc.pledge}</span>
+                <div style="font-size:8px;font-family:monospace;color:#6b7280">
+                    REP <span id="t-sc-rep-${t.id}" style="color:#6b7280">${sc.rep}</span>
+                    &nbsp;FLEET <span id="t-sc-fleet-${t.id}" style="color:#6b7280">${sc.fleet}</span>
+                    &nbsp;PLEDGE <span id="t-sc-pledge-${t.id}" style="color:#6b7280">${sc.pledge}</span>
                 </div>
                 <span style="font-size:10px;font-weight:700;font-family:monospace;color:${barColor}" id="t-score-${t.id}">${sc.total}</span>
             </div>
-            <div style="height:4px;border-radius:2px;background:#d6dee8;margin-bottom:8px">
+            <div style="height:4px;border-radius:2px;background:#21262d;margin-bottom:8px">
                 <div id="t-bar-${t.id}" style="height:100%;border-radius:2px;width:${sc.total}%;background:${barColor};transition:width .3s"></div>
             </div>
 
             <button onclick="window.tourismSubmitBid('${t.id}')"
-                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
                 onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 🌍 Fai Offerta
             </button>
@@ -401,34 +401,34 @@ function _tRenderOpenCard(t) {
 
 function _tRenderLockedCard(t) {
     return `
-    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 14px;margin-bottom:6px;opacity:.4">
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 14px;margin-bottom:6px;opacity:.4">
         <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:18px">${t.icon || '✈️'}</span>
             <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                    <span style="font-size:9px;font-weight:700;color:#1f2733">${t.name}</span>
+                    <span style="font-size:9px;font-weight:700;color:#e6edf3">${t.name}</span>
                     ${_tTierBadge(t.tier)}
                     <span style="font-size:7px;font-family:monospace;color:#c79a2a;border:1px solid rgba(212,175,55,0.3);padding:1px 5px;border-radius:4px">IN USO</span>
                 </div>
-                <div style="font-size:8px;color:#6a7480;margin-top:2px">${t.owner_company_name || 'altro operatore'} · Scade: ${_tCountdown(t.expires_at)}</div>
+                <div style="font-size:8px;color:#6b7280;margin-top:2px">${t.owner_company_name || 'altro operatore'} · Scade: ${_tCountdown(t.expires_at)}</div>
             </div>
-            <div style="font-size:9px;font-family:monospace;color:#6a7480;flex-shrink:0">+€${(t.daily_payout || 0).toLocaleString()}/g</div>
+            <div style="font-size:9px;font-family:monospace;color:#6b7280;flex-shrink:0">+€${(t.daily_payout || 0).toLocaleString()}/g</div>
         </div>
     </div>`;
 }
 
 function _tRenderCooldownCard(t) {
     return `
-    <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 14px;margin-bottom:6px;opacity:.3">
+    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 14px;margin-bottom:6px;opacity:.3">
         <div style="display:flex;align-items:center;gap:8px">
             <span style="font-size:18px">${t.icon || '✈️'}</span>
             <div style="flex:1;min-width:0">
                 <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-                    <span style="font-size:9px;font-weight:700;color:#1f2733">${t.name}</span>
+                    <span style="font-size:9px;font-weight:700;color:#e6edf3">${t.name}</span>
                     ${_tTierBadge(t.tier)}
-                    <span style="font-size:7px;font-family:monospace;color:#6a7480;border:1px solid rgba(107,114,128,0.3);padding:1px 5px;border-radius:4px">COOLDOWN</span>
+                    <span style="font-size:7px;font-family:monospace;color:#6b7280;border:1px solid rgba(107,114,128,0.3);padding:1px 5px;border-radius:4px">COOLDOWN</span>
                 </div>
-                <div style="font-size:8px;color:#6a7480;margin-top:2px">Disponibile tra: ${_tCountdown(t.cooldown_until)}</div>
+                <div style="font-size:8px;color:#6b7280;margin-top:2px">Disponibile tra: ${_tCountdown(t.cooldown_until)}</div>
             </div>
         </div>
     </div>`;
@@ -441,8 +441,8 @@ function _tRenderMyContracts(myActive) {
         return `
         <div style="text-align:center;padding:32px 0">
             <div style="font-size:32px;margin-bottom:10px">🌍</div>
-            <div style="font-size:9px;color:#6a7480">Nessun contratto turismo attivo.</div>
-            <div style="font-size:8px;color:#6a7480;margin-top:4px">Partecipa ai bandi aperti per iniziare a guadagnare.</div>
+            <div style="font-size:9px;color:#6b7280">Nessun contratto turismo attivo.</div>
+            <div style="font-size:8px;color:#6b7280;margin-top:4px">Partecipa ai bandi aperti per iniziare a guadagnare.</div>
         </div>`;
     }
 
@@ -461,30 +461,30 @@ function _tRenderMyContracts(myActive) {
                             <span style="font-size:11px;font-weight:700;color:#c79a2a">${t.name}</span>
                             ${_tTierBadge(t.tier)}
                         </div>
-                        <div style="font-size:8px;color:#6a7480">${t.company_type || ''}</div>
-                        <div style="font-size:8px;color:#6a7480">Round #${t.round_number || 1}</div>
+                        <div style="font-size:8px;color:#6b7280">${t.company_type || ''}</div>
+                        <div style="font-size:8px;color:#6b7280">Round #${t.round_number || 1}</div>
                     </div>
                 </div>
                 <div style="text-align:right">
                     <div style="font-size:10px;font-weight:700;color:#1aa06a;font-family:monospace">+€${(t.daily_payout || 0).toLocaleString()}/g</div>
-                    <div style="font-size:8px;color:#6a7480;margin-top:2px">Scade: ${_tCountdown(t.expires_at)}</div>
-                    <div style="font-size:8px;color:#6a7480">Totale: €${(t.total_paid || 0).toLocaleString()}</div>
+                    <div style="font-size:8px;color:#6b7280;margin-top:2px">Scade: ${_tCountdown(t.expires_at)}</div>
+                    <div style="font-size:8px;color:#6b7280">Totale: €${(t.total_paid || 0).toLocaleString()}</div>
                 </div>
             </div>
 
             <div style="margin-bottom:12px">
                 <div style="display:flex;justify-content:space-between;font-size:8px;margin-bottom:4px">
-                    <span style="color:#6a7480">SLA Score</span>
+                    <span style="color:#6b7280">SLA Score</span>
                     <span style="color:${slaColor};font-family:monospace;font-weight:700">${Math.round(sla)}%</span>
                 </div>
-                <div style="height:4px;border-radius:2px;background:#d6dee8">
+                <div style="height:4px;border-radius:2px;background:#21262d">
                     <div style="height:100%;border-radius:2px;width:${Math.round(sla)}%;background:${slaColor};transition:width .3s"></div>
                 </div>
-                <div style="font-size:7px;color:#6a7480;margin-top:3px">SLA &lt; 50%: rescissione automatica</div>
+                <div style="font-size:7px;color:#6b7280;margin-top:3px">SLA &lt; 50%: rescissione automatica</div>
             </div>
 
             <button onclick="window.tourismTerminate('${t.id}')"
-                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#ffffff;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s"
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s"
                 onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
                 ⚠️ Rescindi Anticipatamente (−${repPenalty}★ reputazione)
             </button>

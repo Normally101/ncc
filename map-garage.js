@@ -56,50 +56,50 @@ window.openGarage3D = function(carId) {
            </div>`;
 
     modal.innerHTML = `
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:8px;width:95%;max-width:900px;min-height:500px;overflow:hidden;position:relative;display:flex;flex-direction:row;max-height:90vh">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;width:95%;max-width:900px;min-height:500px;overflow:hidden;position:relative;display:flex;flex-direction:row;max-height:90vh">
             ${leftPanel}
-            <div style="flex:1;padding:32px;background:#ffffff;border-left:1px solid #d6dee8;display:flex;flex-direction:column;justify-content:space-between;overflow-y:auto">
+            <div style="flex:1;padding:32px;background:#161b22;border-left:1px solid #d6dee8;display:flex;flex-direction:column;justify-content:space-between;overflow-y:auto">
                 <div>
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                        <div style="font-size:22px;font-weight:700;color:#1f2733;text-transform:uppercase;letter-spacing:.06em;line-height:1.2">${car.name}</div>
-                        <span style="background:#d6dee8;color:#1f2733;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace;border:1px solid rgba(255,255,255,0.15);margin-left:8px;flex-shrink:0">${car.tier.toUpperCase()}</span>
+                        <div style="font-size:22px;font-weight:700;color:#e6edf3;text-transform:uppercase;letter-spacing:.06em;line-height:1.2">${car.name}</div>
+                        <span style="background:#21262d;color:#e6edf3;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace;border:1px solid rgba(255,255,255,0.15);margin-left:8px;flex-shrink:0">${car.tier.toUpperCase()}</span>
                     </div>
                     <div style="color:#c79a2a;font-size:12px;margin-bottom:24px;font-family:monospace">${vClass.replace(/_/g, ' ').toUpperCase()}</div>
                     <div style="display:flex;flex-direction:column;gap:16px">
                         <div>
-                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6a7480">🔧 CONDIZIONE</span><span style="color:#1f2733">${Math.floor(car.condition)}%</span></div>
-                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #d6dee8">
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6b7280">🔧 CONDIZIONE</span><span style="color:#e6edf3">${Math.floor(car.condition)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #21262d">
                                 <div style="height:100%;background:${car.condition > 50 ? '#1aa06a' : '#db5746'};transition:width 1s ease-out;width:0%" id="anim-cond"></div>
                             </div>
                         </div>
                         <div>
-                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6a7480">${isElec ? '⚡ BATTERIA' : '⛽ CARBURANTE'}</span><span style="color:#1f2733">${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%</span></div>
-                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #d6dee8">
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6b7280">${isElec ? '⚡ BATTERIA' : '⛽ CARBURANTE'}</span><span style="color:#e6edf3">${isElec ? Math.floor(car.chargeLevel ?? 100) : Math.floor(car.fuel || 100)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #21262d">
                                 <div style="height:100%;background:${isElec ? '#1aa06a' : '#2f74c0'};transition:width 1s ease-out;width:0%" id="anim-fuel"></div>
                             </div>
                         </div>
                         <div>
-                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6a7480">🛞 PRESSIONE GOMME</span><span style="color:#1f2733">${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%</span></div>
-                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #d6dee8">
+                            <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:5px;font-weight:700"><span style="color:#6b7280">🛞 PRESSIONE GOMME</span><span style="color:#e6edf3">${Math.floor(car.tirePressure !== undefined ? car.tirePressure : 100)}%</span></div>
+                            <div style="height:10px;border-radius:5px;background:rgba(0,0,0,0.5);overflow:hidden;border:1px solid #21262d">
                                 <div style="height:100%;background:#e0922e;transition:width 1s ease-out;width:0%" id="anim-tire"></div>
                             </div>
                         </div>
                         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:4px">
                             <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid #eef1f5;display:flex;align-items:center;gap:12px">
                                 <span style="font-size:22px">💺</span>
-                                <div><div style="font-size:9px;color:#6a7480;font-weight:700">POSTI</div><div style="font-size:16px;font-weight:700;color:#1f2733">${seats}</div></div>
+                                <div><div style="font-size:9px;color:#6b7280;font-weight:700">POSTI</div><div style="font-size:16px;font-weight:700;color:#e6edf3">${seats}</div></div>
                             </div>
                             <div style="background:rgba(0,0,0,0.35);padding:12px;border-radius:6px;border:1px solid #eef1f5;display:flex;align-items:center;gap:12px">
                                 <span style="font-size:22px">🧳</span>
-                                <div><div style="font-size:9px;color:#6a7480;font-weight:700">BAGAGLI</div><div style="font-size:16px;font-weight:700;color:#1f2733">${luggage}</div></div>
+                                <div><div style="font-size:9px;color:#6b7280;font-weight:700">BAGAGLI</div><div style="font-size:16px;font-weight:700;color:#e6edf3">${luggage}</div></div>
                             </div>
                         </div>
                         <div>
-                            <div style="font-size:9px;color:#6a7480;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Upgrade Installati</div>
+                            <div style="font-size:9px;color:#6b7280;font-weight:700;margin-bottom:8px;text-transform:uppercase;letter-spacing:.08em">Upgrade Installati</div>
                             <div style="display:flex;flex-wrap:wrap;gap:6px">
                                 ${upgrades.length > 0
                                     ? upgrades.map(u => `<span style="background:rgba(88,166,255,0.12);color:#2f74c0;border:1px solid rgba(88,166,255,0.3);font-size:9px;padding:2px 8px;border-radius:4px">${u.replace('upg_','').toUpperCase()}</span>`).join('')
-                                    : '<span style="color:#6a7480;font-size:11px;font-style:italic">Nessun upgrade</span>'}
+                                    : '<span style="color:#6b7280;font-size:11px;font-style:italic">Nessun upgrade</span>'}
                             </div>
                         </div>
                     </div>

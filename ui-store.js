@@ -19,10 +19,10 @@ function renderTabPremiumStore() {
         st.id = 'ec-style';
         st.textContent = `
             .ec-tab { padding:8px 20px;font-size:11px;font-weight:700;letter-spacing:.08em;
-                border-bottom:2px solid transparent;color:#6a7480;cursor:pointer;
+                border-bottom:2px solid transparent;color:#6b7280;cursor:pointer;
                 transition:color .15s,border-color .15s;user-select:none;text-transform:uppercase; }
             .ec-tab.active { color:#d4af37;border-bottom-color:#d4af37; }
-            .ec-tab:hover:not(.active) { color:#1f2733; }
+            .ec-tab:hover:not(.active) { color:#e6edf3; }
 
             .ec-pack-card {
                 border-radius:14px;padding:0;overflow:hidden;position:relative;
@@ -53,14 +53,14 @@ function renderTabPremiumStore() {
                 transition:all .15s ease;margin-top:auto;
             }
             .ec-buy-btn:hover:not(:disabled) { filter:brightness(1.12);transform:translateY(-1px); }
-            .ec-buy-btn:disabled { opacity:.35;cursor:not-allowed;background:#e2e6ec!important;color:#98a1ae!important; }
+            .ec-buy-btn:disabled { opacity:.35;cursor:not-allowed;background:#21262d!important;color:#6b7280!important; }
 
             .ec-service-card {
-                background:#ffffff;border:1px solid #d6dee8;
+                background:#161b22;border:1px solid #21262d;
                 border-radius:12px;padding:14px 16px;display:flex;align-items:center;
                 gap:14px;transition:background .15s,border-color .15s;
             }
-            .ec-service-card:hover:not(.ec-disabled) { background:#f3f8fd;border-color:rgba(199,154,42,0.4); }
+            .ec-service-card:hover:not(.ec-disabled) { background:#1a2535;border-color:rgba(199,154,42,0.4); }
             .ec-service-card.ec-disabled { opacity:.45; }
             .ec-service-icon {
                 width:44px;height:44px;border-radius:10px;display:flex;align-items:center;
@@ -72,7 +72,7 @@ function renderTabPremiumStore() {
                 background:linear-gradient(135deg,#c9a227,#d4af37);color:#000;
             }
             .ec-svc-btn:hover:not(:disabled) { background:linear-gradient(135deg,#d4af37,#edd97a);box-shadow:0 4px 12px rgba(212,175,55,0.3); }
-            .ec-svc-btn:disabled { opacity:.4;cursor:not-allowed;background:#e2e6ec!important;color:#98a1ae!important; }
+            .ec-svc-btn:disabled { opacity:.4;cursor:not-allowed;background:#21262d!important;color:#6b7280!important; }
             .ec-cat-head {
                 font-size:9px;font-weight:700;letter-spacing:.14em;color:rgba(212,175,55,0.65);
                 text-transform:uppercase;padding-bottom:8px;margin-bottom:10px;margin-top:20px;
@@ -125,7 +125,7 @@ function renderTabPremiumStore() {
     ];
 
     const _packCard = (p) => `
-<div class="ec-pack-card${p.featured?' featured':''}" style="border:1px solid ${p.border};background:#ffffff">
+<div class="ec-pack-card${p.featured?' featured':''}" style="border:1px solid ${p.border};background:#161b22">
   ${p.badge ? `<div class="ec-badge ${p.badge.cls}">${p.badge.txt}</div>` : ''}
   <div class="ec-pack-art" style="background:${p.artBg}">
     <div style="font-size:44px;line-height:1;filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6))">${p.art}</div>
@@ -244,7 +244,7 @@ function renderTabPremiumStore() {
   </div>
 
   <!-- Tabs -->
-  <div style="display:flex;border-bottom:1px solid #d6dee8;background:#ffffff;padding:0 16px">
+  <div style="display:flex;border-bottom:1px solid #21262d;background:#161b22;padding:0 16px">
     <div class="ec-tab ${_ecActiveTab==='acquire'?'active':''}" onclick="window._ecSwitchTab('acquire')">💳 Acquista DC</div>
     <div class="ec-tab ${_ecActiveTab==='services'?'active':''}" onclick="window._ecSwitchTab('services')">⚡ Servizi Esclusivi</div>
   </div>

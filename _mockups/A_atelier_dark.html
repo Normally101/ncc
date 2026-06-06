@@ -1,0 +1,125 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#13110d; --bg2:#181510; --panel:#1c1812; --panel2:#211c15;
+    --line:#2b2419; --line2:#352d1f;
+    --text:#ece5d6; --muted:#a89c87; --dim:#7a7060;
+    --gold:#cda965; --gold-soft:#e0c489; --green:#7bbf7e; --red:#d98a7a;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:
+      radial-gradient(1200px 400px at 75% -5%, rgba(205,169,101,0.08), transparent 60%),
+      var(--bg);
+    color:var(--text);font-family:'Inter',system-ui,sans-serif;width:1080px}
+  .wrap{padding:26px 30px 36px}
+  .eyebrow{font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  .h1{font-family:'Playfair Display',Georgia,serif;font-size:30px;font-weight:600;letter-spacing:.01em;margin:6px 0 0;color:#f4eede}
+  .sub{font-size:12.5px;color:var(--muted);margin-top:5px}
+  .rule{height:1px;background:linear-gradient(90deg,var(--gold),transparent 70%);margin:18px 0 22px;opacity:.5}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+  .kpi{background:linear-gradient(180deg,var(--panel2),var(--panel));padding:18px 20px}
+  .kpi .ic{width:22px;height:22px;color:var(--gold);opacity:.85}
+  .kpi .lab{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:11px 0 7px;font-weight:600}
+  .kpi .val{font-family:'Playfair Display',serif;font-size:30px;font-weight:600;line-height:1;color:#f6f0e2}
+  .kpi .val.g{color:var(--gold-soft)}
+  .kpi .delta{font-size:11.5px;margin-top:8px;color:var(--muted)}
+  .kpi .delta b{color:var(--green);font-weight:600}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;margin-top:18px;overflow:hidden}
+  .ph{display:flex;align-items:center;justify-content:space-between;padding:13px 18px;border-bottom:1px solid var(--line)}
+  .ph .t{font-family:'Playfair Display',serif;font-size:15px;color:#f0e9d8;font-weight:600}
+  .live{font-size:9px;letter-spacing:.12em;color:var(--green);border:1px solid rgba(123,191,126,.35);padding:3px 9px;border-radius:20px;display:flex;align-items:center;gap:6px}
+  .live i{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600;padding:11px 18px;border-bottom:1px solid var(--line)}
+  td{padding:13px 18px;border-bottom:1px solid rgba(43,36,25,.5);font-size:13px}
+  tr:last-child td{border-bottom:none}
+  .drv{font-weight:600;color:#f0e9d8}
+  .car{font-size:11px;color:var(--dim);margin-top:2px}
+  .route{color:var(--muted)} .route b{color:var(--text);font-weight:500}
+  .tag{font-size:9px;letter-spacing:.08em;font-weight:700;padding:3px 9px;border-radius:5px;text-transform:uppercase}
+  .tag.u{color:#e8c07a;background:rgba(205,169,101,.12);border:1px solid rgba(205,169,101,.3)}
+  .tag.v{color:#c9a9e0;background:rgba(180,150,210,.12);border:1px solid rgba(180,150,210,.3)}
+  .tag.b{color:#8fb8d8;background:rgba(120,160,200,.12);border:1px solid rgba(120,160,200,.3)}
+  .price{font-variant-numeric:tabular-nums;font-weight:600;color:var(--gold-soft)}
+  .bar{height:4px;border-radius:3px;background:rgba(255,255,255,.07);overflow:hidden;width:120px}
+  .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold-soft));border-radius:3px}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:18px}
+  .row{display:flex;align-items:center;gap:12px;padding:12px 18px;border-bottom:1px solid rgba(43,36,25,.5)}
+  .row:last-child{border-bottom:none}
+  .av{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#1a1610;flex-shrink:0}
+  .nm{font-weight:600;font-size:13px}.st{font-size:11px;color:var(--dim);margin-top:1px}
+  .pill{margin-left:auto;font-size:10px;font-weight:600;padding:3px 10px;border-radius:5px}
+  .nrow{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid rgba(43,36,25,.5);align-items:flex-start}
+  .nrow:last-child{border-bottom:none}
+  .ni{width:30px;height:30px;border-radius:7px;background:rgba(205,169,101,.1);border:1px solid rgba(205,169,101,.2);display:flex;align-items:center;justify-content:center;color:var(--gold);flex-shrink:0}
+  .ni svg{width:16px;height:16px}
+  .nt{font-size:12.5px;color:var(--text);font-weight:600}.nd{font-size:11.5px;color:var(--muted);margin-top:1px}
+</style></head>
+<body><div class="wrap">
+  <div class="eyebrow">Command Center</div>
+  <div class="h1">Buongiorno, Direttore</div>
+  <div class="sub">Chauffeur Empire · Lazio · martedì 29, 21:07</div>
+  <div class="rule"></div>
+
+  <div class="kpis">
+    <div class="kpi">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 9a4 4 0 1 0 0 6M5 10.5h7M5 13.5h7"/></svg>
+      <div class="lab">Guadagno Oggi</div><div class="val g">€12.4k</div>
+      <div class="delta"><b>▲ +18%</b> vs ieri</div>
+    </div>
+    <div class="kpi">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 11l1.5-4.2A2 2 0 0 1 8.4 5.4h7.2a2 2 0 0 1 1.9 1.4L19 11M5.5 11h13v4.5h-13zM7 15.5V17M17 15.5V17"/><circle cx="8" cy="13.2" r="1"/><circle cx="16" cy="13.2" r="1"/></svg>
+      <div class="lab">Corse Attive</div><div class="val">3</div>
+      <div class="delta">2 in attesa</div>
+    </div>
+    <div class="kpi">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 3.5l2.5 5 5.5.8-4 3.9.95 5.5L12 16.1 7.1 18.7 8 13.2 4 9.3l5.5-.8z"/></svg>
+      <div class="lab">Rating Medio</div><div class="val">4.62</div>
+      <div class="delta">▲ stabile</div>
+    </div>
+    <div class="kpi">
+      <svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M7 4.5h10v3.5a5 5 0 0 1-10 0zM7 6.2H4.2v1.6A2.8 2.8 0 0 0 7 10.6M17 6.2h2.8v1.6A2.8 2.8 0 0 1 17 10.6M9.5 15.5h5M12 15.5v3M8.5 20h7"/></svg>
+      <div class="lab">Livello</div><div class="val">Direttore</div>
+      <div class="delta">Prossimo: Magnate</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="ph"><span class="t">Corse in Corso</span><span class="live"><i></i>LIVE</span></div>
+    <table>
+      <thead><tr><th>Autista</th><th>Percorso</th><th>Tier</th><th>Valore</th><th>Avanzamento</th></tr></thead>
+      <tbody>
+        <tr><td><div class="drv">Marco Bianchi</div><div class="car">Mercedes S-Class</div></td>
+          <td class="route">Roma FCO<br><b>→ Hotel Hassler</b></td>
+          <td><span class="tag u">Ultra</span></td><td class="price">€2.400</td>
+          <td><div class="bar"><i style="width:90%"></i></div></td></tr>
+        <tr><td><div class="drv">Luca Ferrari</div><div class="car">BMW Serie 7</div></td>
+          <td class="route">Milano Centro<br><b>→ Malpensa MXP</b></td>
+          <td><span class="tag v">VIP</span></td><td class="price">€760</td>
+          <td><div class="bar"><i style="width:32%"></i></div></td></tr>
+        <tr><td><div class="drv">Anna Russo</div><div class="car">Audi A8</div></td>
+          <td class="route">Firenze SMN<br><b>→ Borgo Egnazia</b></td>
+          <td><span class="tag b">Business</span></td><td class="price">€540</td>
+          <td><div class="bar"><i style="width:64%"></i></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cols">
+    <div class="panel" style="margin-top:0">
+      <div class="ph"><span class="t">Autisti</span><span style="font-size:10px;color:var(--green);font-weight:600">2 ATTIVI</span></div>
+      <div class="row"><div class="av" style="background:linear-gradient(135deg,#d9b877,#b8935a)">MB</div><div><div class="nm">Marco Bianchi</div><div class="st">Stanchezza 38%</div></div><span class="pill" style="color:var(--green);background:rgba(123,191,126,.12)">In corsa</span></div>
+      <div class="row"><div class="av" style="background:linear-gradient(135deg,#c6a3d6,#9d7bb5)">LF</div><div><div class="nm">Luca Ferrari</div><div class="st">Stanchezza 62%</div></div><span class="pill" style="color:var(--green);background:rgba(123,191,126,.12)">In corsa</span></div>
+      <div class="row"><div class="av" style="background:linear-gradient(135deg,#8fb8d8,#6790b5)">SC</div><div><div class="nm">Sofia Conti</div><div class="st">Stanchezza 12%</div></div><span class="pill" style="color:#8fb8d8;background:rgba(120,160,200,.12)">Libero</span></div>
+    </div>
+    <div class="panel" style="margin-top:0">
+      <div class="ph"><span class="t">Notifiche</span><span style="font-size:10px;color:var(--dim)">Oggi</span></div>
+      <div class="nrow"><div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 7h8M8 11h8M8 15h5M5 4h14v16l-3-2-2 2-2-2-2 2-2-2-3 2z"/></svg></div><div><div class="nt">Contratto</div><div class="nd">Nuovo contratto B2B disponibile</div></div></div>
+      <div class="nrow"><div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3.5l2.5 5 5.5.8-4 3.9.95 5.5L12 16.1 7.1 18.7 8 13.2 4 9.3l5.5-.8z"/></svg></div><div><div class="nt">VIP</div><div class="nd">Cliente VIP soddisfatto</div></div></div>
+      <div class="nrow"><div class="ni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 3l9 16H3zM12 9v5M12 16.5v.5"/></svg></div><div><div class="nt">Multa</div><div class="nd">Multa autovelox A1</div></div></div>
+    </div>
+  </div>
+</div></body></html>

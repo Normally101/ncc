@@ -1,0 +1,48 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<!-- carica il CSS VERO del gioco -->
+<link rel="stylesheet" href="../style.css">
+<style>html,body{height:100%;margin:0;background:#0a0c12}#tab-container{height:100vh;overflow:hidden}</style>
+</head><body>
+<!-- titolo che il timer di ui-home.js cerca -->
+<div id="panel-title" style="display:none">🏠 Command Center</div>
+<div id="tab-container"></div>
+
+<script>
+  function switchTab(t){ console.log('switchTab →', t); }
+  window.switchTab = switchTab;
+  var gameState = {
+    todayEarnings: 12440, yesterdayEarnings: 10550, cash: 284000,
+    reputation: 4.62, prestige: 18,
+    pendingRides: [
+      { tier:'ultra',    fromPoi:{name:'Porto Cervo'}, toPoi:{name:'Aeroporto Olbia'}, sellingPrice:3100 },
+      { tier:'vip',      fromPoi:{name:'Napoli'},      toPoi:{name:'Amalfi'},          sellingPrice:980  },
+      { tier:'business', fromPoi:{name:'Venezia'},     toPoi:{name:'Cortina'},         sellingPrice:1450 },
+    ], activeTrips: [],
+    activeRides: [
+      { driverId:'d1', tier:'ultra',    fromPoi:{name:'Roma FCO'},     toPoi:{name:'Hotel Hassler'},  sellingPrice:2400, duration:600000, elapsed:540000 },
+      { driverId:'d2', tier:'vip',      fromPoi:{name:'Milano Centro'}, toPoi:{name:'Malpensa MXP'},   sellingPrice:760,  duration:540000, elapsed:170000 },
+      { driverId:'d3', tier:'business', fromPoi:{name:'Firenze SMN'},   toPoi:{name:'Borgo Egnazia'},  sellingPrice:540,  duration:720000, elapsed:460000 },
+      { driverId:'d4', tier:'standard', fromPoi:{name:'Napoli'},        toPoi:{name:'Sorrento'},        sellingPrice:210,  duration:480000, elapsed:120000 },
+    ],
+    drivers: [
+      { id:'d1', name:'Marco Bianchi', status:'busy' }, { id:'d2', name:'Luca Ferrari', status:'busy' },
+      { id:'d3', name:'Anna Russo', status:'busy' },    { id:'d4', name:'Sofia Conti', status:'idle' },
+      { id:'d5', name:'Giorgio Galli', status:'resting' },
+    ],
+    fleet: [],
+    emails: [
+      { subject:'Cliente VIP soddisfatto', hour:12, minute:30 },
+      { subject:'Nuovo contratto B2B disponibile', hour:11, minute:4 },
+      { subject:'Multa autovelox A1', hour:10, minute:12 },
+      { subject:'Borsa: $CEMP +4.2%', hour:9, minute:40 },
+      { subject:'Provincia Lazio: nuova offerta', hour:8, minute:55 },
+    ],
+  };
+  window.gameState = gameState;
+</script>
+<script src="../ui-home.js"></script>
+<script>window.renderTabHome();</script>
+</body></html>

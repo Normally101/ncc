@@ -25,32 +25,32 @@ function renderTabInvestments() {
         const tc = c==='gold'?'#c79a2a':c==='green'?'#1aa06a':c==='red'?'#db5746':c==='blue'?'#2f74c0':'#6a7480';
         return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
     };
-    const _SEC = t => `<div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px;font-weight:600">${t}</div>`;
+    const _SEC = t => `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px;font-weight:600">${t}</div>`;
 
     let html = `
 <div style="padding:16px;max-width:800px">
 
-    <div style="padding-bottom:16px;border-bottom:1px solid #d6dee8;margin-bottom:16px">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Patrimonio & Asset</div>
-        <div style="font-size:20px;font-weight:700;color:#1f2733;letter-spacing:-.01em">Portfolio Investimenti</div>
-        <div style="font-size:11px;color:#6a7480;margin-top:2px">${ownedCount} / ${totalInvs} asset · Reddito passivo +€${passiveTotal.toLocaleString()}/g</div>
+    <div style="padding-bottom:16px;border-bottom:1px solid #21262d;margin-bottom:16px">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Patrimonio & Asset</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3;letter-spacing:-.01em">Portfolio Investimenti</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">${ownedCount} / ${totalInvs} asset · Reddito passivo +€${passiveTotal.toLocaleString()}/g</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Asset Attivi</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Asset Attivi</div>
             <div style="font-size:18px;font-weight:700;color:${ownedCount>0?'#1aa06a':'#1f2733'};font-family:monospace">${ownedCount}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Reddito Passivo</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Reddito Passivo</div>
             <div style="font-size:18px;font-weight:700;color:#1aa06a;font-family:monospace">€${passiveTotal.toLocaleString()}<span style="font-size:10px">/g</span></div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Debito Attivo</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Debito Attivo</div>
             <div style="font-size:18px;font-weight:700;color:${activeLoansTotal>0?'#db5746':'#1aa06a'};font-family:monospace">€${activeLoansTotal.toLocaleString()}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Budget</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Budget</div>
             <div style="font-size:18px;font-weight:700;color:#2f74c0;font-family:monospace">€${((gameState.cash||0)/1000).toFixed(0)}k</div>
         </div>
     </div>`;
@@ -73,10 +73,10 @@ function renderTabInvestments() {
             const reqMet   = !i.reqRides || (gameState.questStats?.totalRides||0) >= i.reqRides;
 
             html += `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:#ffffff;border:1px solid ${owned?'#c79a2a':'#d6dee8'};border-radius:6px;gap:12px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:#161b22;border:1px solid ${owned?'#c79a2a':'#d6dee8'};border-radius:6px;gap:12px">
                 <div style="flex:1;min-width:0">
                     <div style="font-size:12px;font-weight:700;color:${owned?'#c79a2a':'#1f2733'}">${i.name}</div>
-                    <div style="font-size:10px;color:#6a7480;margin-top:3px;line-height:1.4">${i.desc}</div>
+                    <div style="font-size:10px;color:#6b7280;margin-top:3px;line-height:1.4">${i.desc}</div>
                     <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">
                         ${i.passive     ? _pill('+€'+i.passive.toLocaleString()+'/g', '#1aa06a')  : ''}
                         ${i.dailyUpkeep ? _pill('−€'+i.dailyUpkeep.toLocaleString()+'/g', '#db5746') : ''}
@@ -110,26 +110,26 @@ function renderTabInvestments() {
         const debtPct      = Math.min(100, (totalDebt/500000)*100);
 
         html += `${_SEC('Linea di Credito')}
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;font-size:10px;color:#6a7480;margin-bottom:10px">
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:10px">
                 <span>Debito: <span style="color:#db5746;font-weight:700;font-family:monospace">€${totalDebt.toLocaleString()}</span></span>
-                <span>Tasso: <span style="color:${rateColor};font-weight:700">${ratePct}%</span> <span style="color:#6a7480">(Rep. ${(gameState.reputation||0).toFixed(1)}★)</span></span>
+                <span>Tasso: <span style="color:${rateColor};font-weight:700">${ratePct}%</span> <span style="color:#6b7280">(Rep. ${(gameState.reputation||0).toFixed(1)}★)</span></span>
             </div>
-            <div style="height:4px;background:#d6dee8;border-radius:2px;overflow:hidden;margin-bottom:14px">
+            <div style="height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-bottom:14px">
                 <div style="height:100%;width:${debtPct}%;background:#db5746;border-radius:2px;transition:width .3s"></div>
             </div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
                 ${[50000, 100000, 250000, 500000].map(amt => `
                 <button onclick="takeLoan(${amt})" ${totalDebt >= 500000 ? 'disabled' : ''}
-                    style="background:#f3f6f9;border:1px solid #1e3a5f;color:#2f74c0;padding:8px 6px;border-radius:4px;font-family:monospace;font-size:9px;font-weight:700;cursor:${totalDebt>=500000?'not-allowed':'pointer'};opacity:${totalDebt>=500000?.35:1};text-align:center">
+                    style="background:#0d1117;border:1px solid #1e3a5f;color:#2f74c0;padding:8px 6px;border-radius:4px;font-family:monospace;font-size:9px;font-weight:700;cursor:${totalDebt>=500000?'not-allowed':'pointer'};opacity:${totalDebt>=500000?.35:1};text-align:center">
                     Prestito €${(amt/1000).toFixed(0)}k<br><span style="opacity:.6;font-size:8px">Rata: €${Math.ceil(amt*dynRate).toLocaleString()}/mese</span>
                 </button>`).join('')}
             </div>
         </div>
         ${activeLoans.length > 0 ? `<div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
             ${activeLoans.map(l => `
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:9px;padding:6px 12px;background:#ffffff;border:1px solid #d6dee8;border-radius:4px">
-                <span style="color:#6a7480;font-family:monospace">Prestito #${l.id}</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:9px;padding:6px 12px;background:#161b22;border:1px solid #21262d;border-radius:4px">
+                <span style="color:#6b7280;font-family:monospace">Prestito #${l.id}</span>
                 <span style="color:#db5746;font-family:monospace">Residuo: €${l.amount.toLocaleString()} (${((l.rate||0.08)*100).toFixed(0)}%/mese)</span>
                 ${_btn('Salda', `repayLoan(${l.id})`, 'gold', gameState.cash < l.amount)}
             </div>`).join('')}
@@ -151,13 +151,13 @@ function renderTabInvestments() {
             const costFor10   = Math.floor(agency.valuation * 10 / 100);
 
             html += `
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:#ffffff;border:1px solid #d6dee8;border-radius:6px;gap:12px;opacity:${locked?.5:1}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:#161b22;border:1px solid #21262d;border-radius:6px;gap:12px;opacity:${locked?.5:1}">
                 <div style="flex:1;min-width:0">
-                    <div style="font-size:12px;font-weight:700;color:#1f2733">${agency.icon} ${agency.name}</div>
-                    <div style="font-size:10px;color:#6a7480;margin-top:2px;line-height:1.3">${agency.desc}</div>
+                    <div style="font-size:12px;font-weight:700;color:#e6edf3">${agency.icon} ${agency.name}</div>
+                    <div style="font-size:10px;color:#6b7280;margin-top:2px;line-height:1.3">${agency.desc}</div>
                     <div style="display:flex;gap:12px;margin-top:6px;font-size:9px;font-family:monospace">
-                        <span style="color:#6a7480">Val: <span style="color:#1f2733">€${(agency.valuation/1e6).toFixed(1)}M</span></span>
-                        <span style="color:#6a7480">+€${agency.dailyIncome.toLocaleString()}/g</span>
+                        <span style="color:#6b7280">Val: <span style="color:#e6edf3">€${(agency.valuation/1e6).toFixed(1)}M</span></span>
+                        <span style="color:#6b7280">+€${agency.dailyIncome.toLocaleString()}/g</span>
                         <span style="color:${riskColor}">${agency.riskLevel.toUpperCase()}</span>
                     </div>
                     ${locked ? `<div style="font-size:9px;color:#db5746;margin-top:4px">Min. ${agency.minRep}★ · €${agency.minCash.toLocaleString()}</div>` : ''}
@@ -191,20 +191,20 @@ function renderTabInvestments() {
     if (!holdingIncorporated) {
         const canFound = (gameState.reputation||0) >= 4.0 && gameState.cash >= 200000;
         html += `
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:14px;margin-bottom:12px">
-            <div style="font-size:12px;font-weight:700;color:#1f2733;margin-bottom:6px">Costituisci una Holding</div>
-            <div style="font-size:10px;color:#6a7480;line-height:1.5;margin-bottom:8px">Fondare una holding ti permette di acquisire aziende sussidiarie che generano reddito passivo ogni giorno, indipendentemente dalle tue corse.</div>
-            <div style="font-size:10px;color:#6a7480;margin-bottom:12px;font-family:monospace">Requisiti: <span style="color:#c79a2a">4.0★</span> reputazione · <span style="color:#c79a2a">€200.000</span></div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:12px">
+            <div style="font-size:12px;font-weight:700;color:#e6edf3;margin-bottom:6px">Costituisci una Holding</div>
+            <div style="font-size:10px;color:#6b7280;line-height:1.5;margin-bottom:8px">Fondare una holding ti permette di acquisire aziende sussidiarie che generano reddito passivo ogni giorno, indipendentemente dalle tue corse.</div>
+            <div style="font-size:10px;color:#6b7280;margin-bottom:12px;font-family:monospace">Requisiti: <span style="color:#c79a2a">4.0★</span> reputazione · <span style="color:#c79a2a">€200.000</span></div>
             ${_btn('Fondazione Holding — €200.000', 'incorporateHolding()', 'gold', !canFound)}
         </div>`;
     } else {
         html += `
         <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 14px;background:#0d2116;border:1px solid #1a4731;border-radius:6px;margin-bottom:10px">
             <div>
-                <div style="font-size:12px;font-weight:700;color:#1f2733">Holding Attiva</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">Holding Attiva</div>
                 <div style="font-size:10px;color:#1aa06a;font-family:monospace;margin-top:2px">+€${holdingDailyIncome.toLocaleString()}/g dividendi</div>
             </div>
-            <div style="font-size:10px;color:#6a7480;font-family:monospace">${(gameState.holding.subsidiaries||[]).length} sussidiarie</div>
+            <div style="font-size:10px;color:#6b7280;font-family:monospace">${(gameState.holding.subsidiaries||[]).length} sussidiarie</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:12px" class="ce-stagger">
         ${subTemplates.map(sub => {
@@ -213,7 +213,7 @@ function renderTabInvestments() {
             <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:${owned?'#0d2116':'#ffffff'};border:1px solid ${owned?'#1a4731':'#d6dee8'};border-radius:6px;gap:12px">
                 <div style="flex:1;min-width:0">
                     <div style="font-size:12px;font-weight:700;color:${owned?'#1aa06a':'#1f2733'}">${sub.name}</div>
-                    <div style="font-size:10px;color:#6a7480;margin-top:2px;line-height:1.3">${sub.desc}</div>
+                    <div style="font-size:10px;color:#6b7280;margin-top:2px;line-height:1.3">${sub.desc}</div>
                     <div style="font-size:10px;color:#1aa06a;font-family:monospace;margin-top:4px">+€${sub.dailyIncome.toLocaleString()}/g</div>
                 </div>
                 <div style="flex-shrink:0;margin-top:2px">

@@ -146,7 +146,7 @@ function renderTabStaff() {
                     <div style="display:flex;align-items:center;gap:8px">
                         ${d.avatarBase64
                             ? `<img src="${d.avatarBase64}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid var(--em-line)" onclick="document.getElementById('avatar-upload-${d.id}').click()">`
-                            : `<div style="width:30px;height:30px;border-radius:50%;background:#fff3cf;border:1px solid #ecd9a0;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:var(--em-gold);flex-shrink:0" onclick="document.getElementById('avatar-upload-${d.id}').click()">👤</div>`}
+                            : `<div style="width:30px;height:30px;border-radius:50%;background:#161b223cf;border:1px solid #ecd9a0;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:var(--em-gold);flex-shrink:0" onclick="document.getElementById('avatar-upload-${d.id}').click()">👤</div>`}
                         <div style="min-width:0">
                             <div style="font-weight:700">${d.name} <span class="lvl-badge ${levelData.badge}" style="font-size:7px">${levelData.name}</span></div>
                             <div style="font-size:9.5px;color:var(--em-dim);margin-top:1px">€${(d.salary||0).toLocaleString()}/mese · XP ${d.xp||0}</div>
@@ -275,32 +275,32 @@ window.openCarModal = function(carId) {
     let html = `<div style="display:flex;flex-direction:column;gap:10px">
     ${(outReason && !(outReason === 'fuel' && fuelPct > 5)) ? `<div style="padding:8px;border:1px solid rgba(248,81,73,0.4);background:rgba(127,29,29,0.2);border-radius:6px;font-size:9px;color:#db5746;font-weight:700">
         🔴 Auto ferma: ${outReason === 'fuel' ? 'serbatoio esaurito — rifornisci qui sotto' : outReason === 'engine' ? 'motore fuso — riparazione urgente' : 'deposito gomme esaurito'}.<br>
-        <span style="color:#6a7480;font-weight:400">${outReason === 'fuel' ? 'Usa "Rifornisci" o "Gasolio Agric." qui sotto per sbloccarla.' : outReason === 'engine' ? 'Usa il pulsante Ripara Motore qui sotto.' : 'Rifornisci il deposito gomme nella schermata Flotta.'}</span>
+        <span style="color:#6b7280;font-weight:400">${outReason === 'fuel' ? 'Usa "Rifornisci" o "Gasolio Agric." qui sotto per sbloccarla.' : outReason === 'engine' ? 'Usa il pulsante Ripara Motore qui sotto.' : 'Rifornisci il deposito gomme nella schermata Flotta.'}</span>
     </div>` : ''}
     <div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6a7480;margin-bottom:4px"><span>⛽ Carburante</span><span style="color:${fuelColor}">${fuelPct}%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:4px"><span>⛽ Carburante</span><span style="color:${fuelColor}">${fuelPct}%</span></div>
         <div class="fuel-bar-bg"><div class="fuel-bar-fill" style="width:${fuelPct}%; background:${fuelColor}"></div></div>
-        <div style="font-size:8px;color:#98a1ae;margin-top:2px;text-align:center">Rifornimento automatico via Deposito Aziendale</div>
+        <div style="font-size:8px;color:#6b7280;margin-top:2px;text-align:center">Rifornimento automatico via Deposito Aziendale</div>
     </div>
     <div>
-        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6a7480;margin-bottom:4px"><span>🔵 Gomme</span><span style="color:${tireColor2}">${tirePct2}%</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:4px"><span>🔵 Gomme</span><span style="color:${tireColor2}">${tirePct2}%</span></div>
         <div class="fuel-bar-bg"><div class="fuel-bar-fill" style="width:${tirePct2}%; background:${tireColor2}"></div></div>
-        <div style="font-size:8px;color:#98a1ae;margin-top:2px;text-align:center">Sostituzione automatica (sotto 20%) via Deposito Aziendale</div>
+        <div style="font-size:8px;color:#6b7280;margin-top:2px;text-align:center">Sostituzione automatica (sotto 20%) via Deposito Aziendale</div>
     </div>
     ${car.condition < 100 ? `<button onclick="payToRepairCar('${car.id}')" style="width:100%;background:rgba(30,58,138,0.3);border:1px solid rgba(59,130,246,0.3);color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer">🔧 Ripara (€${repairCost})</button>` : ''}
-    <div style="font-size:10px;color:#6a7480;text-transform:uppercase">Upgrade VIP</div>
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase">Upgrade VIP</div>
     <div style="display:flex;flex-direction:column;gap:4px;max-height:112px;overflow-y:auto">`;
 
     CAR_UPGRADES.forEach(upg => {
         const owned = car.upgrades.includes(upg.id);
         html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;border:1px solid #eef1f5;border-radius:4px;font-size:9px;${owned ? 'opacity:.5' : ''}">
-            <div><span style="color:#1f2733;font-weight:700">${upg.name}</span><span style="color:#6a7480;margin-left:4px">${upg.desc}</span></div>
-            ${owned ? '<span class="upgrade-pill">✓</span>' : `<button onclick="buyCARUpgrade('${car.id}','${upg.id}')" style="background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;padding:2px 6px;border-radius:4px;font-size:8px;cursor:pointer">€${upg.price.toLocaleString()}</button>`}
+            <div><span style="color:#e6edf3;font-weight:700">${upg.name}</span><span style="color:#6b7280;margin-left:4px">${upg.desc}</span></div>
+            ${owned ? '<span class="upgrade-pill">✓</span>' : `<button onclick="buyCARUpgrade('${car.id}','${upg.id}')" style="background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:2px 6px;border-radius:4px;font-size:8px;cursor:pointer">€${upg.price.toLocaleString()}</button>`}
         </div>`;
     });
 
-    html += `</div>${installedUpgrades ? `<div style="font-size:9px;color:#6a7480">Upgrade attivi: <span style="color:#2f74c0;font-weight:700">${installedUpgrades}</span></div>` : ''}
-    <div style="font-size:10px;color:#6a7480;text-transform:uppercase;margin-top:8px">Assegna Autista</div>
+    html += `</div>${installedUpgrades ? `<div style="font-size:9px;color:#6b7280">Upgrade attivi: <span style="color:#2f74c0;font-weight:700">${installedUpgrades}</span></div>` : ''}
+    <div style="font-size:10px;color:#6b7280;text-transform:uppercase;margin-top:8px">Assegna Autista</div>
     <div style="display:flex;flex-direction:column;gap:4px;max-height:112px;overflow-y:auto;padding-right:4px">`;
 
     gameState.drivers.forEach(d => {
@@ -312,7 +312,7 @@ window.openCarModal = function(carId) {
         html += `<button onclick="assignCarToDriver('${car.id}','${d.id}')" style="text-align:left;padding:6px;border:1px solid ${isSet?'rgba(212,175,55,0.5)':'#d6dee8'};border-radius:4px;font-size:9px;width:100%;background:${isSet?'rgba(212,175,55,0.05)':'transparent'};color:${isSet?'#c79a2a':'#1f2733'};cursor:pointer">
             <span style="font-weight:700">${d.name}</span>
             <span style="font-size:8px;font-weight:700;color:${tierColor};margin-left:4px">[${driverTier}]</span>
-            <span style="font-size:8px;color:#98a1ae">${specLabel}</span>
+            <span style="font-size:8px;color:#6b7280">${specLabel}</span>
             ${isSet ? '<span style="font-size:8px;color:#c79a2a;margin-left:4px">✓ Assegnato</span>' : ''}
         </button>`;
     });
@@ -322,12 +322,12 @@ window.openCarModal = function(carId) {
         html += `<div style="font-size:9px;margin-top:4px;color:${_activeSkin.color}">🎨 Livrea: ${_activeSkin.name}</div>`;
     }
     html += `</div>
-    <button onclick="openGarage3D('${car.id}')" style="width:100%;background:#f3f6f9;border:1px solid #2f74c0;color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🚗 Vista 3D Garage</button>`;
+    <button onclick="openGarage3D('${car.id}')" style="width:100%;background:#0d1117;border:1px solid #2f74c0;color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🚗 Vista 3D Garage</button>`;
     // Instant Repair DC
     const condPctModal = Math.floor(car.condition || 0);
     const dcRepairCost = gameState.executivePassActive ? 1 : 2;
     if (condPctModal < 100) {
-        html += `<button onclick="instantRepairDC('${car.id}')" style="width:100%;background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⚡ Ripara Istant. (${dcRepairCost} DC)</button>`;
+        html += `<button onclick="instantRepairDC('${car.id}')" style="width:100%;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⚡ Ripara Istant. (${dcRepairCost} DC)</button>`;
     }
     if(!car.isLease) {
         html += `<button onclick="sellCar('${car.id}')" style="width:100%;background:rgba(127,29,29,0.2);border:1px solid rgba(127,29,29,0.4);color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">💰 Vendi (usato)</button>`;
@@ -422,24 +422,24 @@ window.openCarConfigurator = function(carId, type) {
   </div>
 
   <!-- RIGHT: config panel -->
-  <div id="cfg-right" style="flex:1;background:#ffffff;overflow-y:auto;display:flex;flex-direction:column;min-width:0;scrollbar-width:thin;scrollbar-color:#cfd8e2 transparent">
+  <div id="cfg-right" style="flex:1;background:#161b22;overflow-y:auto;display:flex;flex-direction:column;min-width:0;scrollbar-width:thin;scrollbar-color:#cfd8e2 transparent">
 
     <!-- top bar: close -->
     <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 0">
-      <div style="font-size:9px;color:#98a1ae;text-transform:uppercase;letter-spacing:3px">Configuratore</div>
+      <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:3px">Configuratore</div>
       <button onclick="document.getElementById('modal-configurator').remove()"
-        style="width:28px;height:28px;border-radius:50%;border:1px solid #d6dee8;background:#eef1f5;color:#6a7480;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s"
+        style="width:28px;height:28px;border-radius:50%;border:1px solid #21262d;background:#21262d;color:#6b7280;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s"
         onmouseover="this.style.background='#d6dee8';this.style.color='#fff'"
         onmouseout="this.style.background='#eef1f5';this.style.color='#6a7480'">✕</button>
     </div>
 
     <!-- car name + tier + base price block -->
     <div style="padding:16px 24px 20px;border-bottom:1px solid #e6eaf0">
-      <div style="font-size:22px;font-weight:800;color:#1f2733;letter-spacing:0.5px;line-height:1.2">${carT.name}</div>
+      <div style="font-size:22px;font-weight:800;color:#e6edf3;letter-spacing:0.5px;line-height:1.2">${carT.name}</div>
       <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:2px;margin-top:4px">${carT.tier}</div>
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:16px">
-        <span style="font-size:10px;color:#6a7480;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
-        <span style="font-size:24px;font-weight:900;color:#1f2733;font-family:monospace;letter-spacing:-0.5px">€${carT.price.toLocaleString()}</span>
+        <span style="font-size:10px;color:#6b7280;text-transform:uppercase;letter-spacing:1px">Prezzo base</span>
+        <span style="font-size:24px;font-weight:900;color:#e6edf3;font-family:monospace;letter-spacing:-0.5px">€${carT.price.toLocaleString()}</span>
       </div>
     </div>
 
@@ -449,20 +449,20 @@ window.openCarConfigurator = function(carId, type) {
       <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:6px">
         ${CAR_UPGRADES.map(u => `
         <div id="cfg-upg-${u.id}" onclick="__cfgToggle('${u.id}')"
-             style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid #d6dee8;background:#f7f9fb;cursor:pointer;user-select:none;transition:all 0.15s">
+             style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid #21262d;background:#161b22;cursor:pointer;user-select:none;transition:all 0.15s">
           <div id="cfg-chk-${u.id}"
                style="width:17px;height:17px;border-radius:4px;border:1.5px solid #c2ccd8;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#000"></div>
           <div style="flex:1;min-width:0">
-            <div style="font-size:11px;font-weight:700;color:#1f2733">${u.name}</div>
-            <div style="font-size:8px;color:#6a7480;margin-top:2px;line-height:1.4">${u.desc}</div>
+            <div style="font-size:11px;font-weight:700;color:#e6edf3">${u.name}</div>
+            <div style="font-size:8px;color:#6b7280;margin-top:2px;line-height:1.4">${u.desc}</div>
           </div>
-          <div id="cfg-price-${u.id}" style="font-size:11px;font-family:monospace;color:#6a7480;flex-shrink:0;font-weight:600">+€${u.price.toLocaleString()}</div>
+          <div id="cfg-price-${u.id}" style="font-size:11px;font-family:monospace;color:#6b7280;flex-shrink:0;font-weight:600">+€${u.price.toLocaleString()}</div>
         </div>`).join('')}
       </div>
     </div>
 
     <!-- sticky footer -->
-    <div id="cfg-footer" style="position:sticky;bottom:0;background:#ffffff;border-top:1px solid #d6dee8;padding:18px 24px"></div>
+    <div id="cfg-footer" style="position:sticky;bottom:0;background:#161b22;border-top:1px solid #21262d;padding:18px 24px"></div>
   </div>
 </div>`;
 
@@ -473,13 +473,13 @@ window.openCarConfigurator = function(carId, type) {
         const ok      = gameState.cash >= total;
         document.getElementById('cfg-footer').innerHTML = `
           <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px">
-            <span style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:2px">Totale</span>
+            <span style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:2px">Totale</span>
             <span style="font-size:28px;font-family:monospace;font-weight:900;color:${ok ? "#1f2733" : "#db5746"};letter-spacing:-1px">€${total.toLocaleString()}</span>
           </div>
           ${!ok ? `<div style="font-size:9px;color:#db5746;margin-bottom:10px;text-align:right">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
           <div style="display:flex;gap:10px">
             <button onclick="document.getElementById('modal-configurator').remove()"
-              style="flex:0 0 auto;padding:12px 20px;font-size:10px;border:1px solid #d6dee8;border-radius:10px;color:#6a7480;background:transparent;cursor:pointer">
+              style="flex:0 0 auto;padding:12px 20px;font-size:10px;border:1px solid #21262d;border-radius:10px;color:#6b7280;background:transparent;cursor:pointer">
               Annulla
             </button>
             <button onclick="__cfgConfirm('${carId}','${type}')" ${!ok ? 'disabled' : ''}

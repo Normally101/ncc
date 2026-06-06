@@ -315,44 +315,44 @@ window.renderTabContracts = function() {
     const pending   = tenders.filter(t => t.playerBid);
     const daysNext  = Math.max(0, (gs.nextTenderDay || 0) - gs.day);
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Corporate Deals</div>
-        <div style="font-size:20px;font-weight:700;color:#1f2733">Bandi &amp; Contratti Aziendali</div>
-        <div style="font-size:11px;color:#6a7480;margin-top:4px">Vinci bandi d'appalto contro rivali AI — incassa reddito passivo per ogni contratto attivo</div>
+    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Corporate Deals</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3">Bandi &amp; Contratti Aziendali</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px">Vinci bandi d'appalto contro rivali AI — incassa reddito passivo per ogni contratto attivo</div>
     </div>` + `
     <div>
 
     <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratti Attivi</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Contratti Attivi</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${active.length > 0 ? '#1aa06a' : '#1f2733'}">${active.length}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Ricavo Giornaliero</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Ricavo Giornaliero</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${dailyRev > 0 ? '#1aa06a' : '#1f2733'}">€${dailyRev.toLocaleString('it-IT')}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Bandi Aperti</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Bandi Aperti</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${tenders.length > 0 ? '#2f74c0' : '#1f2733'}">${tenders.length}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Prossimo Batch</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#1f2733">${daysNext}gg</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Prossimo Batch</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#e6edf3">${daysNext}gg</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offerte Inviate</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offerte Inviate</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${pending.length > 0 ? '#2f74c0' : '#1f2733'}">${pending.length}</div>
         </div>
     </div>
 
     <!-- ── Open Tenders ── -->
     <div style="font-size:9px;font-weight:700;color:#2f74c0;text-transform:uppercase;letter-spacing:.08em;margin:0 0 10px">
-      Bandi Aperti ${tenders.length > 0 ? `<span style="color:#6a7480;font-weight:400;text-transform:none;letter-spacing:0">— scadono dopo ${OPEN_DAYS_LABEL} giorni</span>` : ''}
+      Bandi Aperti ${tenders.length > 0 ? `<span style="color:#6b7280;font-weight:400;text-transform:none;letter-spacing:0">— scadono dopo ${OPEN_DAYS_LABEL} giorni</span>` : ''}
     </div>
 
     ${tenders.length === 0 ? `
-      <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:24px;text-align:center;color:#6a7480;font-size:11px;margin-bottom:16px">
-        Nessun bando disponibile — il prossimo batch tra <strong style="color:#1f2733">${daysNext} giorni</strong>
+      <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:24px;text-align:center;color:#6b7280;font-size:11px;margin-bottom:16px">
+        Nessun bando disponibile — il prossimo batch tra <strong style="color:#e6edf3">${daysNext} giorni</strong>
       </div>
     ` : tenders.map(t => _renderTenderCard(t)).join('')}
 
@@ -364,15 +364,15 @@ window.renderTabContracts = function() {
 
     <!-- ── History ── -->
     ${history.length > 0 ? `
-      <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px">Storico Bandi</div>
-      <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;overflow:hidden;margin-bottom:16px">
+      <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin:20px 0 10px">Storico Bandi</div>
+      <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;overflow:hidden;margin-bottom:16px">
         <table style="width:100%;border-collapse:collapse">
           <thead><tr>
-            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6a7480;font-weight:600;text-align:left;border-bottom:1px solid #d6dee8">Azienda</th>
-            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6a7480;font-weight:600;text-align:left;border-bottom:1px solid #d6dee8">Tier</th>
-            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6a7480;font-weight:600;text-align:left;border-bottom:1px solid #d6dee8">Esito</th>
-            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6a7480;font-weight:600;text-align:right;border-bottom:1px solid #d6dee8">Score</th>
-            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6a7480;font-weight:600;text-align:right;border-bottom:1px solid #d6dee8">Payout/gg</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d">Azienda</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d">Tier</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d">Esito</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:right;border-bottom:1px solid #21262d">Score</th>
+            <th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:right;border-bottom:1px solid #21262d">Payout/gg</th>
           </tr></thead>
           <tbody>
             ${[...history].reverse().map(t => {
@@ -385,7 +385,7 @@ window.renderTabContracts = function() {
               const _tc    = _TIER_COLORS[_tier] || 'gray';
               const _tc2   = _tc === 'gold' ? '#c79a2a' : _tc === 'blue' ? '#2f74c0' : _tc === 'green' ? '#1aa06a' : '#6a7480';
               return `<tr style="border-bottom:1px solid #ffffff">
-                <td style="padding:8px 14px;font-size:11px;color:#1f2733">${_name}</td>
+                <td style="padding:8px 14px;font-size:11px;color:#e6edf3">${_name}</td>
                 <td style="padding:8px 14px"><span style="font-size:9px;font-weight:700;color:${_tc2};background:${_tc2}1a;border:1px solid ${_tc2}4d;border-radius:4px;padding:2px 6px">T${_tier}</span></td>
                 <td style="padding:8px 14px"><span style="font-size:9px;font-weight:700;color:${_won?'#1aa06a':'#db5746'};background:${_won?'rgba(63,185,80,0.12)':'rgba(248,81,73,0.12)'};border:1px solid ${_won?'rgba(63,185,80,0.3)':'rgba(248,81,73,0.3)'};border-radius:4px;padding:2px 6px">${_won?'VINTO':'PERSO'}</span></td>
                 <td style="padding:8px 14px;font-size:11px;color:${_won?'#1aa06a':'#db5746'};text-align:right;font-family:monospace">${_pScore} vs ${_aiScore}</td>
@@ -434,24 +434,24 @@ function _renderTenderCard(tender) {
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div style="flex:1;min-width:0;padding-right:12px">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700;color:#1f2733">${co.company_name}</span>
+            <span style="font-size:13px;font-weight:700;color:#e6edf3">${co.company_name}</span>
             <span style="font-size:11px;color:${tierTxtC}">${stars}</span>
             <span style="font-size:9px;font-weight:700;color:${tierTxtC};border:1px solid ${tierTxtC};border-radius:4px;padding:2px 5px">T${co.tier}</span>
             <span style="font-size:9px;font-weight:700;color:#2f74c0;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);border-radius:4px;padding:2px 5px">${co.industry}</span>
           </div>
-          <div style="font-size:10px;color:#6a7480;font-style:italic;line-height:1.4">${co.lore_description}</div>
+          <div style="font-size:10px;color:#6b7280;font-style:italic;line-height:1.4">${co.lore_description}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:13px;font-weight:700;color:#1aa06a">€${daily.toLocaleString('it-IT')}<span style="font-size:9px;color:#6a7480;font-weight:400">/gg</span></div>
-          <div style="font-size:10px;color:#6a7480">${co.contract_duration_days}gg · €${(daily * co.contract_duration_days).toLocaleString('it-IT')} tot</div>
+          <div style="font-size:13px;font-weight:700;color:#1aa06a">€${daily.toLocaleString('it-IT')}<span style="font-size:9px;color:#6b7280;font-weight:400">/gg</span></div>
+          <div style="font-size:10px;color:#6b7280">${co.contract_duration_days}gg · €${(daily * co.contract_duration_days).toLocaleString('it-IT')} tot</div>
           <div style="font-size:10px;color:#db5746;margin-top:2px">scade tra ${daysLeft}gg</div>
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:10px;margin-bottom:10px;padding-top:8px;border-top:1px solid #d6dee8">
-        <div style="color:${repOk ? '#1aa06a' : '#db5746'}">${repOk?'✓':'✗'} Rep: ${req.min_reputation}% <span style="color:#6a7480">(tua ${playerRepPct}%)</span></div>
-        <div style="color:${fleetOk ? '#1aa06a' : '#db5746'}">${fleetOk?'✓':'✗'} Flotta: ${req.min_fleet_size} <span style="color:#6a7480">(tua ${qualifying})</span></div>
-        <div style="color:#6a7480">🚗 ${req.required_vehicle_type.replace(/_/g,' ')}</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:10px;margin-bottom:10px;padding-top:8px;border-top:1px solid #21262d">
+        <div style="color:${repOk ? '#1aa06a' : '#db5746'}">${repOk?'✓':'✗'} Rep: ${req.min_reputation}% <span style="color:#6b7280">(tua ${playerRepPct}%)</span></div>
+        <div style="color:${fleetOk ? '#1aa06a' : '#db5746'}">${fleetOk?'✓':'✗'} Flotta: ${req.min_fleet_size} <span style="color:#6b7280">(tua ${qualifying})</span></div>
+        <div style="color:#6b7280">🚗 ${req.required_vehicle_type.replace(/_/g,' ')}</div>
       </div>
 
       ${pb ? `
@@ -465,14 +465,14 @@ function _renderTenderCard(tender) {
       </div>
       ` : `
       <div>
-        <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:#6a7480;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:10px;color:#6b7280;margin-bottom:8px">
           <span>Score stimato:</span>
           <strong style="color:#2f74c0" id="bid-score-${tender.id}">${baseScore}</strong>
-          <span style="color:#6a7480">/100</span>
-          <span style="margin-left:auto;color:#6a7480">pledge opzionale (boost +20%)</span>
+          <span style="color:#6b7280">/100</span>
+          <span style="margin-left:auto;color:#6b7280">pledge opzionale (boost +20%)</span>
         </div>
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
-          <span style="font-size:10px;color:#6a7480;width:48px;flex-shrink:0">Pledge:</span>
+          <span style="font-size:10px;color:#6b7280;width:48px;flex-shrink:0">Pledge:</span>
           <input type="range" min="0" max="50000" step="1000" value="0"
             id="pledge-${tender.id}"
             oninput="CE_updateBidPreview('${tender.id}', this.value)"
@@ -504,21 +504,21 @@ function _renderContractCard(c) {
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-            <span style="font-size:13px;font-weight:700;color:#1f2733">🤝 ${co.company_name}</span>
+            <span style="font-size:13px;font-weight:700;color:#e6edf3">🤝 ${co.company_name}</span>
             <span style="font-size:9px;font-weight:700;color:${tierTxtC};border:1px solid ${tierTxtC};border-radius:4px;padding:2px 5px">T${co.tier}</span>
           </div>
-          <div style="font-size:10px;color:#6a7480;margin-top:2px">${co.industry}</div>
+          <div style="font-size:10px;color:#6b7280;margin-top:2px">${co.industry}</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:13px;font-weight:700;color:#1aa06a">€${c.dailyPayout.toLocaleString('it-IT')}<span style="font-size:9px;color:#6a7480">/gg</span></div>
+          <div style="font-size:13px;font-weight:700;color:#1aa06a">€${c.dailyPayout.toLocaleString('it-IT')}<span style="font-size:9px;color:#6b7280">/gg</span></div>
           <div style="font-size:10px;color:#1aa06a">+€${c.totalEarned.toLocaleString('it-IT')} incassato</div>
         </div>
       </div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <div style="flex:1;height:6px;border-radius:3px;background:#d6dee8;overflow:hidden"><div style="height:100%;width:${pct}%;background:#1aa06a;border-radius:3px;transition:width .3s"></div></div>
-        <span style="font-size:10px;color:#6a7480;flex-shrink:0">${remain}gg rimasti</span>
+        <div style="flex:1;height:6px;border-radius:3px;background:#21262d;overflow:hidden"><div style="height:100%;width:${pct}%;background:#1aa06a;border-radius:3px;transition:width .3s"></div></div>
+        <span style="font-size:10px;color:#6b7280;flex-shrink:0">${remain}gg rimasti</span>
       </div>
-      <div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#6a7480">
+      <div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:#6b7280">
         <span>Valore totale: €${total.toLocaleString('it-IT')}</span>
         <button onclick="CE_terminateContract('${c.id}')"
           style="font-size:10px;color:#db5746;background:transparent;border:none;cursor:pointer">Termina</button>

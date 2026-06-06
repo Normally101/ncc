@@ -16,33 +16,33 @@ function renderTabRegions() {
     const coveragePct = totalRegions > 0 ? Math.round(totalOwned / totalRegions * 100) : 0;
 
     const _kpiColor = (c) => c === 'green' ? '#1aa06a' : c === 'gold' ? '#c79a2a' : c === 'red' ? '#db5746' : c === 'blue' ? '#2f74c0' : '#1f2733';
-    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Espansione Territoriale</div>
-        <div style="font-size:20px;font-weight:700;color:#1f2733">Licenze Regionali</div>
-        <div style="font-size:11px;color:#6a7480;margin-top:4px">${totalOwned} / ${totalRegions} regioni attive · Copertura nazionale ${coveragePct}%</div>
+    let html = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Espansione Territoriale</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3">Licenze Regionali</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:4px">${totalOwned} / ${totalRegions} regioni attive · Copertura nazionale ${coveragePct}%</div>
     </div>`;
 
     html += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Regioni Attive</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Regioni Attive</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${totalOwned > 0 ? '#1aa06a' : '#1f2733'}">${totalOwned}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Copertura</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Copertura</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:${coveragePct >= 50 ? '#c79a2a' : '#1f2733'}">${coveragePct}%</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Reputazione CEO</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#1f2733">${(gameState.reputation||0)}★</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Reputazione CEO</div>
+            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#e6edf3">${(gameState.reputation||0)}★</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Budget Disponibile</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Budget Disponibile</div>
             <div style="font-size:20px;font-weight:700;font-family:monospace;color:#1aa06a">€${((gameState.cash||0)/1000).toFixed(0)}k</div>
         </div>
     </div>`;
 
     GROUPS.forEach(group => {
-        html += `<div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">${group.icon} ${group.label}</div>
+        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 10px">${group.icon} ${group.label}</div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;margin-bottom:8px">`;
 
         group.ids.forEach(rid => {
@@ -64,13 +64,13 @@ function renderTabRegions() {
                 <div style="font-size:9px;color:${hasRep ? '#6a7480' : '#db5746'};font-family:var(--font-mono)">
                     ${r.repReq}★ richiesta
                 </div>
-                ${r.bonusDesc ? `<div style="font-size:9px;color:#98a1ae">${r.bonusDesc}</div>` : ''}
+                ${r.bonusDesc ? `<div style="font-size:9px;color:#6b7280">${r.bonusDesc}</div>` : ''}
                 <div style="margin-top:auto">
                     ${owned
                         ? `<div style="font-size:9px;color:#1aa06a;font-weight:700;font-family:var(--font-mono)">✓ Licenza operativa</div>`
                         : r.price === 0 ? ''
                         : `<button onclick="buyRegion('${r.id}')"
-                            style="width:100%;justify-content:center;padding:6px;font-size:10px;border-radius:4px;cursor:pointer;${canBuy ? 'background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a' : 'background:#ffffff;border:1px solid #d6dee8;color:#6a7480;opacity:.6'}"
+                            style="width:100%;justify-content:center;padding:6px;font-size:10px;border-radius:4px;cursor:pointer;${canBuy ? 'background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a' : 'background:#161b22;border:1px solid #21262d;color:#6b7280;opacity:.6'}"
                             ${!canBuy ? 'disabled' : ''}>
                             ${!hasRep ? '🔒 ' : ''}€${(r.price/1000).toFixed(0)}k
                            </button>`
@@ -87,7 +87,7 @@ function renderTabRegions() {
 
 async function renderTabProvinces() {
     const container = document.getElementById('tab-container');
-    container.innerHTML = `<div style="font-size:10px;color:#6a7480;text-align:center;padding:24px 0">Caricamento mappa territoriale…</div>`;
+    container.innerHTML = `<div style="font-size:10px;color:#6b7280;text-align:center;padding:24px 0">Caricamento mappa territoriale…</div>`;
 
     let provinces = [], regions = [], influence = {};
     try {
@@ -126,8 +126,8 @@ async function renderTabProvinces() {
     let html = `
     <div style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.3);border-radius:6px;padding:12px 16px;margin-bottom:12px">
         <div style="font-size:10px;color:#c79a2a;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">🏴 Guerra Territoriale</div>
-        <div style="font-size:9px;color:#6a7480;line-height:1.5">
-            Ogni corsa che parte o arriva in una provincia ti guadagna <b style="color:#1f2733">+10 Punti Influenza</b>.
+        <div style="font-size:9px;color:#6b7280;line-height:1.5">
+            Ogni corsa che parte o arriva in una provincia ti guadagna <b style="color:#e6edf3">+10 Punti Influenza</b>.
             Raggiungi la soglia per lanciare un'OPA (120% del valore). Chi controlla &gt;50% delle province di una regione
             diventa <b style="color:#c79a2a">Governatore</b> e percepisce l'1% su ogni corsa nella regione.
         </div>
@@ -141,13 +141,13 @@ async function renderTabProvinces() {
         const amGov    = reg.governor_company === myCompanyName;
         const govLabel = reg.governor_company
             ? `<span style="color:#c79a2a">👑 ${reg.governor_company}</span>`
-            : `<span style="color:#98a1ae">— nessun governatore</span>`;
+            : `<span style="color:#6b7280">— nessun governatore</span>`;
 
         html += `
         <div style="margin-bottom:16px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding:0 4px">
                 <div style="font-size:9px;font-weight:700;color:#4d6480;text-transform:uppercase;letter-spacing:.08em">${reg.name}</div>
-                <div style="font-size:8px;color:#6a7480">
+                <div style="font-size:8px;color:#6b7280">
                     ${govLabel}
                     ${amGov ? ' <span style="font-size:7px;background:rgba(234,179,8,0.2);color:#facc15;border:1px solid rgba(234,179,8,0.3);padding:1px 4px;border-radius:3px">TU SEI GOVERNATORE</span>' : ''}
                     · ${myCount}/${total} province
@@ -166,31 +166,31 @@ async function renderTabProvinces() {
             const taxPct    = ((p.transit_tax_pct || 0.025) * 100).toFixed(1);
 
             html += `
-            <div style="background:#ffffff;border:1px solid ${isOwned ? 'rgba(212,175,55,0.6)' : isFree ? 'rgba(63,185,80,0.3)' : '#d6dee8'};border-radius:6px;padding:12px 14px;${isOwned ? 'background:rgba(212,175,55,0.05)' : isFree ? 'background:rgba(0,63,30,0.1)' : ''}">
+            <div style="background:#161b22;border:1px solid ${isOwned ? 'rgba(212,175,55,0.6)' : isFree ? 'rgba(63,185,80,0.3)' : '#d6dee8'};border-radius:6px;padding:12px 14px;${isOwned ? 'background:rgba(212,175,55,0.05)' : isFree ? 'background:rgba(0,63,30,0.1)' : ''}">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
                     <div>
-                        <span style="font-size:10px;font-weight:700;color:#1f2733">${p.name}</span>
+                        <span style="font-size:10px;font-weight:700;color:#e6edf3">${p.name}</span>
                         ${isOwned ? '<span style="margin-left:4px;font-size:7px;background:rgba(212,175,55,0.2);color:#c79a2a;border:1px solid rgba(212,175,55,0.3);padding:1px 4px;border-radius:3px">TUA</span>' : ''}
                         ${isFree  ? '<span style="margin-left:4px;font-size:7px;background:rgba(63,185,80,0.2);color:#1aa06a;border:1px solid rgba(63,185,80,0.3);padding:1px 4px;border-radius:3px">LIBERA</span>' : ''}
                         ${amGov && !isOwned ? '<span style="margin-left:4px;font-size:7px;background:rgba(234,179,8,0.1);color:#c79a2a;border:1px solid rgba(234,179,8,0.3);padding:1px 4px;border-radius:3px">+1% regionale</span>' : ''}
                     </div>
                     <div style="text-align:right">
                         <div style="font-size:10px;font-weight:700;color:#c79a2a">€${(p.current_value||0).toLocaleString()}</div>
-                        <div style="font-size:7px;color:#98a1ae">tassa: ${taxPct}%</div>
+                        <div style="font-size:7px;color:#6b7280">tassa: ${taxPct}%</div>
                     </div>
                 </div>
 
-                ${!isOwned && !isFree ? `<div style="font-size:8px;color:#6a7480;margin-bottom:4px">Proprietario: <span style="color:#2f74c0">${p.owner_company}</span></div>` : ''}
+                ${!isOwned && !isFree ? `<div style="font-size:8px;color:#6b7280;margin-bottom:4px">Proprietario: <span style="color:#2f74c0">${p.owner_company}</span></div>` : ''}
 
                 <div style="margin-bottom:4px">
-                    <div style="display:flex;justify-content:space-between;font-size:7px;color:#6a7480;margin-bottom:2px">
+                    <div style="display:flex;justify-content:space-between;font-size:7px;color:#6b7280;margin-bottom:2px">
                         <span>Influenza</span>
                         <span style="color:${infUnlocked ? '#1aa06a' : '#6a7480'}">${myInf}/${threshold} ${infUnlocked ? '✅' : ''}</span>
                     </div>
                     <div class="fuel-bar-bg">
                         <div class="fuel-bar-fill" style="width:${infPct}%;background:${infUnlocked ? '#1aa06a' : infPct > 60 ? '#e0922e' : '#6a7480'}"></div>
                     </div>
-                    ${!infUnlocked ? `<div style="font-size:7px;color:#98a1ae;margin-top:2px">Completa corse da/verso questa provincia per aumentare l'influenza</div>` : ''}
+                    ${!infUnlocked ? `<div style="font-size:7px;color:#6b7280;margin-top:2px">Completa corse da/verso questa provincia per aumentare l'influenza</div>` : ''}
                 </div>
 
                 ${isOwned ? `
@@ -199,12 +199,12 @@ async function renderTabProvinces() {
                 </div>` : infUnlocked ? `
                 <div style="display:flex;gap:4px;margin-top:4px">
                     <input id="offer-${p.id}" type="number" min="${minOffer}" step="10000"
-                        style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:4px 8px;font-size:8px;color:#1f2733"
+                        style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:4px 8px;font-size:8px;color:#e6edf3"
                         placeholder="Offerta min. €${minOffer.toLocaleString()}">
-                    <button onclick="window.doAcquireProvince('${p.id}')" style="background:#fff8e8;border:1px solid #c79a2a;color:#c79a2a;padding:4px 8px;border-radius:4px;font-size:7px;cursor:pointer;white-space:nowrap">🏴 OPA</button>
+                    <button onclick="window.doAcquireProvince('${p.id}')" style="background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:4px 8px;border-radius:4px;font-size:7px;cursor:pointer;white-space:nowrap">🏴 OPA</button>
                 </div>
-                <div style="font-size:7px;color:#98a1ae;margin-top:2px">Min: €${minOffer.toLocaleString()} · Vecchio proprietario riceve 80%</div>` : `
-                <div style="font-size:7px;color:#98a1ae;margin-top:4px;font-style:italic">🔒 Raggiungi ${threshold} punti influenza per sbloccare l'OPA</div>`}
+                <div style="font-size:7px;color:#6b7280;margin-top:2px">Min: €${minOffer.toLocaleString()} · Vecchio proprietario riceve 80%</div>` : `
+                <div style="font-size:7px;color:#6b7280;margin-top:4px;font-style:italic">🔒 Raggiungi ${threshold} punti influenza per sbloccare l'OPA</div>`}
             </div>`;
         });
 

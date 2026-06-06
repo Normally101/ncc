@@ -15,12 +15,12 @@ function renderTabLifestyle() {
 
     const _pill = (t, c) => `<span style="display:inline-flex;padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;background:${c}18;border:1px solid ${c}44;color:${c}">${t}</span>`;
     const _btn  = (t, fn, c, dis) => {
-        const bg = c==='gold'?'#fff8e8':'#ffffff';
-        const bd = c==='gold'?'#c79a2a':'#d6dee8';
-        const tc = c==='gold'?'#c79a2a':'#6a7480';
+        const bg = c==='gold'?'#1a1608':'#161b22';
+        const bd = c==='gold'?'#c79a2a':'#21262d';
+        const tc = c==='gold'?'#c79a2a':'#6b7280';
         return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
     };
-    const _SEC = t => `<div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px;font-weight:600">${t}</div>`;
+    const _SEC = t => `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px;font-weight:600">${t}</div>`;
 
     const _LIFESTYLE_IMG = {
         attico_milano:       'assets/lifestyle/attico-citylife.jpg',
@@ -68,7 +68,7 @@ function renderTabLifestyle() {
                 </div>
             </div>`}
             <div style="padding:12px 14px">
-                <div style="font-size:9px;color:#6a7480;line-height:1.5;margin-bottom:10px">${a.desc}</div>
+                <div style="font-size:9px;color:#6b7280;line-height:1.5;margin-bottom:10px">${a.desc}</div>
                 <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:12px">${badges}</div>
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div style="font-size:13px;font-weight:700;color:#c79a2a;font-family:monospace">€${a.price.toLocaleString('it-IT')}</div>
@@ -87,28 +87,28 @@ function renderTabLifestyle() {
     let html = `
 <div style="padding:16px;max-width:800px">
 
-    <div style="padding-bottom:16px;border-bottom:1px solid #d6dee8;margin-bottom:16px">
-        <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Lifestyle & Status</div>
-        <div style="font-size:20px;font-weight:700;color:#1f2733;letter-spacing:-.01em">Empire Portfolio</div>
-        <div style="font-size:11px;color:#6a7480;margin-top:2px">${owned.length} asset · Rendita +€${dailyPassive.toLocaleString()}/g${intlUnlocked?' · Tratte internazionali attive':''}</div>
+    <div style="padding-bottom:16px;border-bottom:1px solid #21262d;margin-bottom:16px">
+        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Lifestyle & Status</div>
+        <div style="font-size:20px;font-weight:700;color:#e6edf3;letter-spacing:-.01em">Empire Portfolio</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px">${owned.length} asset · Rendita +€${dailyPassive.toLocaleString()}/g${intlUnlocked?' · Tratte internazionali attive':''}</div>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Status CEO</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Status CEO</div>
             <div style="font-size:16px;font-weight:700;color:${statusColor};font-family:monospace">${statusLabel}</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Valore Portfolio</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Valore Portfolio</div>
             <div style="font-size:16px;font-weight:700;color:#c79a2a;font-family:monospace">€${(portfolioValue/1000).toFixed(0)}k</div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Rendita Passiva</div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Rendita Passiva</div>
             <div style="font-size:16px;font-weight:700;color:#1aa06a;font-family:monospace">+€${dailyPassive.toLocaleString()}<span style="font-size:10px">/g</span></div>
         </div>
-        <div style="background:#ffffff;border:1px solid #d6dee8;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6a7480;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Asset Posseduti</div>
-            <div style="font-size:16px;font-weight:700;color:#1f2733;font-family:monospace">${owned.length}<span style="font-size:11px;color:#6a7480">/${assets.length}</span></div>
+        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Asset Posseduti</div>
+            <div style="font-size:16px;font-weight:700;color:#e6edf3;font-family:monospace">${owned.length}<span style="font-size:11px;color:#6b7280">/${assets.length}</span></div>
         </div>
     </div>
 
@@ -122,12 +122,12 @@ function renderTabLifestyle() {
         ${eliteVehicles.map(_lifestyleCard).join('')}
     </div>
 
-    <div style="background:#ffffff;border:1px solid #c79a2a;border-radius:6px;padding:14px;margin-top:20px">
+    <div style="background:#161b22;border:1px solid #c79a2a;border-radius:6px;padding:14px;margin-top:20px">
         <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Diamond Contracts</div>
-        <div style="font-size:10px;color:#6a7480;line-height:1.5;margin-bottom:8px">Contratti ultra-premium riservati ai CEO con asset Lifestyle specifici. Pagamento da €20.000 a €80.000 per singolo contratto.</div>
+        <div style="font-size:10px;color:#6b7280;line-height:1.5;margin-bottom:8px">Contratti ultra-premium riservati ai CEO con asset Lifestyle specifici. Pagamento da €20.000 a €80.000 per singolo contratto.</div>
         ${diamondEligible && (gameState.reputation||0) >= 4.5
             ? `<div style="font-size:10px;color:#1aa06a;font-weight:700">✓ Sei eleggibile — Contratti in arrivo via Inbox</div>`
-            : `<div style="font-size:10px;color:#6a7480">Requisiti: asset Lifestyle + reputazione ≥ 4.5★ + Elite Wealth Manager</div>`}
+            : `<div style="font-size:10px;color:#6b7280">Requisiti: asset Lifestyle + reputazione ≥ 4.5★ + Elite Wealth Manager</div>`}
     </div>
 
 </div>`;

@@ -169,7 +169,7 @@
                         <div class="em-ch"><span class="t">Tesoro del Consorzio</span><span class="a" style="color:var(--em-green)">${fmt(al.treasury)}</span></div>
                         <div style="padding:11px;display:flex;gap:8px;align-items:center">
                             <input id="al-donate" type="number" min="1000" step="1000" placeholder="Importo da donare"
-                                style="flex:1;background:#f3f6f9;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
+                                style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
                             <button class="em-gbtn" onclick="window._alDonate()">Dona</button>
                         </div>
                         <div style="font-size:10px;color:var(--em-dim);padding:0 11px 10px">Il tuo contributo totale: <b>${fmt((roster.find(m => m.user_id === uid()) || {}).contribution)}</b></div>
@@ -186,7 +186,7 @@
                     <div id="al-chat-scroll" style="flex:1;overflow-y:auto;min-height:200px">${chatRows}</div>
                     <div style="display:flex;gap:6px;padding:9px 11px;border-top:1px solid var(--em-line2)">
                         <input id="al-chat-input" maxlength="500" placeholder="Scrivi al consorzio…" onkeydown="if(event.key==='Enter')window._alChat()"
-                            style="flex:1;background:#f3f6f9;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
+                            style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
                         <button class="em-bbtn" onclick="window._alChat()">Invia</button>
                     </div>
                 </div>
@@ -227,12 +227,12 @@
             <div class="em-card" style="margin-bottom:10px">
                 <div class="em-ch"><span class="t">Fonda un Consorzio</span><span class="a" style="color:var(--em-muted)">Costo ${fmt(CREATE_COST)}</span></div>
                 <div style="padding:12px;display:grid;grid-template-columns:1fr 110px;gap:8px">
-                    <input id="al-name" maxlength="40" placeholder="Nome consorzio" style="background:#f3f6f9;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
-                    <input id="al-tag" maxlength="6" placeholder="TAG" style="background:#f3f6f9;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none;text-transform:uppercase">
-                    <input id="al-desc" maxlength="120" placeholder="Descrizione (facoltativa)" style="grid-column:span 2;background:#f3f6f9;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
+                    <input id="al-name" maxlength="40" placeholder="Nome consorzio" style="background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
+                    <input id="al-tag" maxlength="6" placeholder="TAG" style="background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none;text-transform:uppercase">
+                    <input id="al-desc" maxlength="120" placeholder="Descrizione (facoltativa)" style="grid-column:span 2;background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
                     <div style="display:flex;align-items:center;gap:8px">
                         <span style="font-size:11px;color:var(--em-muted)">Emblema</span>
-                        <input id="al-emblem" maxlength="2" value="🛡️" style="width:46px;text-align:center;background:#f3f6f9;border:1px solid var(--em-line);border-radius:7px;padding:8px;font-size:14px;outline:none">
+                        <input id="al-emblem" maxlength="2" value="🛡️" style="width:46px;text-align:center;background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px;font-size:14px;outline:none">
                         <label style="font-size:11px;color:var(--em-muted);display:flex;align-items:center;gap:5px;cursor:pointer"><input id="al-open" type="checkbox" checked> Aperto a tutti</label>
                     </div>
                     <button class="em-goldbtn" style="grid-column:2" onclick="window._alCreate()">Fonda</button>

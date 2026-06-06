@@ -180,13 +180,13 @@ function _wrInjectStyles() {
             position:fixed; inset:0; z-index:4500;
             display:flex; flex-direction:column;
             font-family:'Inter',system-ui,sans-serif;
-            background:linear-gradient(180deg,#aecbe6 0%, #c2d8ec 30%, #d3e1ed 60%, #dde7ee 100%);
+            background:#0a0c12;
         }
         #wr-header {
             display:flex; align-items:center; justify-content:space-between;
             padding:9px 16px; flex-shrink:0;
-            background:#ffffff;
-            border-bottom:1px solid #d6dee8; box-shadow:0 1px 2px rgba(31,39,51,.07);
+            background:#161b22;
+            border-bottom:1px solid #21262d; box-shadow:0 1px 2px rgba(0,0,0,.4);
         }
         #wr-body { flex:1; display:flex; overflow:hidden; }
         #wr-map-pane {
@@ -195,8 +195,8 @@ function _wrInjectStyles() {
         }
         #wr-map-pane svg { height:100%; max-height:calc(100vh - 56px); width:auto; display:block; }
         #wr-sidebar {
-            width:300px; flex-shrink:0; background:#ffffff;
-            border-left:1px solid #d6dee8;
+            width:300px; flex-shrink:0; background:#161b22;
+            border-left:1px solid #21262d;
             display:flex; flex-direction:column; overflow:hidden;
         }
         #wr-sidebar-inner { flex:1; overflow-y:auto; padding:12px; }
@@ -206,31 +206,31 @@ function _wrInjectStyles() {
         .wr-region.wr-sel path { filter:brightness(1.16) drop-shadow(0 0 6px rgba(199,154,42,0.6)); }
         .wr-close-btn {
             width:30px; height:30px; border-radius:50%;
-            border:1px solid #d6dee8; background:#fff;
-            color:#6a7480; font-size:14px; cursor:pointer;
+            border:1px solid #21262d; background:#161b22;
+            color:#6b7280; font-size:14px; cursor:pointer;
             display:flex; align-items:center; justify-content:center; transition:all .15s;
         }
-        .wr-close-btn:hover { border-color:#c2ccd8; color:#1f2733; }
+        .wr-close-btn:hover { border-color:#30363d; color:#e6edf3; }
         .wr-prov-card {
-            background:#ffffff; border:1px solid #d6dee8;
-            border-radius:8px; padding:10px; margin-bottom:6px; box-shadow:0 1px 2px rgba(31,39,51,.06);
+            background:#161b22; border:1px solid #21262d;
+            border-radius:8px; padding:10px; margin-bottom:6px; box-shadow:0 1px 2px rgba(0,0,0,.3);
         }
-        .wr-prov-card.is-mine  { border-color:#ecd9a0; background:#fff8e8; }
-        .wr-prov-card.is-free  { border-color:#bfe6cd; background:#f1faf4; }
-        .wr-prov-card.is-enemy { border-color:#f0c4bd; background:#fdf3f1; }
-        .wr-inf-track { height:3px; background:#e2e6ec; border-radius:2px; overflow:hidden; margin:4px 0 2px; }
+        .wr-prov-card.is-mine  { border-color:#d4af37; background:#1a1608; }
+        .wr-prov-card.is-free  { border-color:#3fb950; background:#0d1a12; }
+        .wr-prov-card.is-enemy { border-color:#f85149; background:#1a0d0d; }
+        .wr-inf-track { height:3px; background:#21262d; border-radius:2px; overflow:hidden; margin:4px 0 2px; }
         .wr-inf-fill  { height:100%; border-radius:2px; transition:width .5s; }
         .wr-btn { padding:6px 13px; border:none; border-radius:6px; font-size:11px;
                   font-weight:800; cursor:pointer; transition:filter .15s; white-space:nowrap; }
         .wr-btn-green { background:linear-gradient(180deg,#22ab73,#15885a); color:#fff; }
         .wr-btn-red   { background:linear-gradient(135deg,#db5746,#b8392b); color:#fff; }
         .wr-btn-green:hover,.wr-btn-red:hover { filter:brightness(1.08); }
-        .wr-btn-lock { background:#eef1f5; color:#98a1ae; border:1px solid #d6dee8; cursor:not-allowed; }
+        .wr-btn-lock { background:#21262d; color:#6b7280; border:1px solid #30363d; cursor:not-allowed; }
         .wr-offer-inp {
-            flex:1; background:#f3f6f9; border:1px solid #d6dee8;
-            border-radius:6px; padding:6px 9px; font-size:11px; color:#1f2733; outline:none; min-width:0;
+            flex:1; background:#0d1117; border:1px solid #21262d;
+            border-radius:6px; padding:6px 9px; font-size:11px; color:#e6edf3; outline:none; min-width:0;
         }
-        .wr-offer-inp:focus { border-color:#2f74c0; }
+        .wr-offer-inp:focus { border-color:#58a6ff; }
         @keyframes wrFadeIn { from{opacity:0} to{opacity:1} }
     `;
     document.head.appendChild(st);
@@ -255,7 +255,7 @@ async function renderTabWarRoom() {
         <div style="color:#2f74c0;font-size:13px;letter-spacing:.18em;animation:wrFadeIn .3s">
             CARICAMENTO MAPPA…
         </div>
-        <div style="font-size:10px;color:#6a7480;">Scaricamento confini regionali…</div>
+        <div style="font-size:10px;color:#6b7280;">Scaricamento confini regionali…</div>
     </div>`;
 
     // ── Parallel fetch: territory data + GeoJSON ──
@@ -303,7 +303,7 @@ async function renderTabWarRoom() {
         ? _wrGeoToSVG(geo, svgOwn)
         : `<div style="color:#db5746;font-size:11px;padding:20px;text-align:center;">
               ⚠ Impossibile caricare la mappa geografica.<br>
-              <span style="color:#6a7480;font-size:9px;">Verifica connessione internet e riprova.</span>
+              <span style="color:#6b7280;font-size:9px;">Verifica connessione internet e riprova.</span>
            </div>`;
 
     overlay.innerHTML = `
@@ -317,7 +317,7 @@ async function renderTabWarRoom() {
             <div style="display:flex;align-items:center;gap:18px;">
                 <div>
                     <span style="font-size:16px;font-weight:900;color:#c79a2a;">${totalMine}</span>
-                    <span style="font-size:10px;color:#98a1ae;"> / ${provinces.length} province</span>
+                    <span style="font-size:10px;color:#6b7280;"> / ${provinces.length} province</span>
                 </div>
                 <button class="wr-close-btn" onclick="window._wrClose()">✕</button>
             </div>
@@ -325,15 +325,15 @@ async function renderTabWarRoom() {
         <div id="wr-body">
             <div id="wr-map-pane">${mapSvg}</div>
             <div id="wr-sidebar">
-                <div style="padding:10px 12px;border-bottom:1px solid #eef1f5;flex-shrink:0;">
+                <div style="padding:10px 12px;border-bottom:1px solid #21262d;flex-shrink:0;">
                     <div style="display:flex;gap:12px;flex-wrap:wrap;">
-                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6a7480;">
+                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6b7280;">
                             <div style="width:11px;height:11px;background:#B8920A;border:1.5px solid #c79a2a;border-radius:2px;"></div> Mio
                         </div>
-                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6a7480;">
+                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6b7280;">
                             <div style="width:11px;height:11px;background:#A02020;border:1.5px solid #db5746;border-radius:2px;"></div> Nemico
                         </div>
-                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6a7480;">
+                        <div style="display:flex;align-items:center;gap:5px;font-size:9px;color:#6b7280;">
                             <div style="width:11px;height:11px;background:#3A68A0;border:1px solid rgba(255,255,255,0.2);border-radius:2px;"></div> Libero
                         </div>
                     </div>
@@ -341,8 +341,8 @@ async function renderTabWarRoom() {
                 <div id="wr-sidebar-inner">
                     <div style="text-align:center;padding:40px 14px;animation:wrFadeIn .3s;">
                         <div style="font-size:30px;margin-bottom:10px;">🗺</div>
-                        <div style="font-size:11px;color:#6a7480;letter-spacing:.08em;text-transform:uppercase;">Clicca su una regione</div>
-                        <div style="font-size:10px;color:#6a7480;margin-top:4px;line-height:1.5;">Seleziona una regione sulla mappa per vedere le province e conquistarle</div>
+                        <div style="font-size:11px;color:#6b7280;letter-spacing:.08em;text-transform:uppercase;">Clicca su una regione</div>
+                        <div style="font-size:10px;color:#6b7280;margin-top:4px;line-height:1.5;">Seleziona una regione sulla mappa per vedere le province e conquistarle</div>
                     </div>
                 </div>
             </div>
@@ -390,7 +390,7 @@ function _wrShowSidebar(svgId, regionName, regionData, provs) {
 
     let provHtml = '';
     if (!provs.length) {
-        provHtml = `<div style="color:#6a7480;font-size:11px;text-align:center;padding:24px 0;">Nessuna provincia mappata.</div>`;
+        provHtml = `<div style="color:#6b7280;font-size:11px;text-align:center;padding:24px 0;">Nessuna provincia mappata.</div>`;
     } else {
         provs.forEach(p => {
             const isOwned = p.owner_company === myCompany;
@@ -426,7 +426,7 @@ function _wrShowSidebar(svgId, regionName, regionData, provs) {
                         class="wr-offer-inp" placeholder="Min €${minOpa.toLocaleString()}">
                     <button class="wr-btn wr-btn-green" onclick="window._wrAcquire('${p.id}')">🏴 OPA</button>
                 </div>
-                <div style="font-size:9px;color:#6a7480;">Min €${minOpa.toLocaleString()}</div>`;
+                <div style="font-size:9px;color:#6b7280;">Min €${minOpa.toLocaleString()}</div>`;
             } else {
                 ctaHtml = `<div style="display:flex;gap:5px;align-items:center;margin-bottom:3px;">
                     <input id="wri-${p.id}" type="number" min="${hostOpa}" step="5000"
@@ -434,18 +434,18 @@ function _wrShowSidebar(svgId, regionName, regionData, provs) {
                         placeholder="Min €${hostOpa.toLocaleString()}">
                     <button class="wr-btn wr-btn-red" onclick="window._wrAcquire('${p.id}')">⚔ Ostile</button>
                 </div>
-                <div style="font-size:9px;color:#6a7480;">+130% · Min €${hostOpa.toLocaleString()}</div>`;
+                <div style="font-size:9px;color:#6b7280;">+130% · Min €${hostOpa.toLocaleString()}</div>`;
             }
 
             provHtml += `<div class="wr-prov-card ${cls}">
                 <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:5px;">
                     <div>
                         <div style="font-size:12px;font-weight:800;color:#e2e8f0;">${p.name}</div>
-                        <div style="font-size:9px;color:#6a7480;margin-top:1px;">${badge} · ${taxPct}% tassa</div>
+                        <div style="font-size:9px;color:#6b7280;margin-top:1px;">${badge} · ${taxPct}% tassa</div>
                     </div>
                     <div style="font-size:12px;font-weight:900;color:#c79a2a;flex-shrink:0;">€${val.toLocaleString()}</div>
                 </div>
-                <div style="display:flex;justify-content:space-between;font-size:9px;color:#98a1ae;">
+                <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;">
                     <span>Influenza</span>
                     <span style="color:${infCol};font-weight:700;">${myInf.toLocaleString()} / ${thresh.toLocaleString()} ${unl?'✅':''}</span>
                 </div>
@@ -459,13 +459,13 @@ function _wrShowSidebar(svgId, regionName, regionData, provs) {
         <div style="margin-bottom:10px;">
             <div style="font-size:8px;letter-spacing:.15em;color:#2a8f8f;text-transform:uppercase;font-weight:800;margin-bottom:1px;">REGIONE</div>
             <div style="font-size:15px;font-weight:900;color:#2f74c0;">${regionName}</div>
-            <div style="font-size:9px;color:#98a1ae;margin-top:2px;">
+            <div style="font-size:9px;color:#6b7280;margin-top:2px;">
                 Gov: <span style="color:${govCompany?'#c79a2a':'#6a7480'};font-weight:700;">${govCompany||'Nessuno'}</span>
-                · Tassa: <span style="color:#6a7480;font-weight:700;">${taxReg}%</span>
+                · Tassa: <span style="color:#6b7280;font-weight:700;">${taxReg}%</span>
                 ${amGov ? `<span style="color:#c79a2a;"> · 👑 SEI GOVERNATORE</span>` : ''}
             </div>
         </div>
-        <div style="font-size:9px;color:#6a7480;background:#eef7f7;border:1px solid #cfeaea;
+        <div style="font-size:9px;color:#6b7280;background:#0d1a12;border:1px solid #1a4731;
             border-radius:6px;padding:6px 10px;margin-bottom:10px;line-height:1.5;">
             ${provs.length} province · >50% = Governatore + ${taxReg}% su corse regionali
         </div>

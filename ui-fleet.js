@@ -188,7 +188,7 @@ function renderTabFleet() {
                 const _mgCondColor = _mgAvgCond < 40 ? 'var(--em-red)' : _mgAvgCond < 70 ? 'var(--em-amber)' : 'var(--em-green)';
                 const _mgNeedsRepair = _mg.some(c => (c.condition || 0) < 90);
                 const _mgRepairIds = JSON.stringify(_mg.filter(c => (c.condition || 0) < 100).map(c => c.id));
-                html += `<tr style="background:#f3f6f9"><td colspan="7" style="padding:6px 12px">
+                html += `<tr style="background:#0d1117"><td colspan="7" style="padding:6px 12px">
                     <div style="display:flex;align-items:center;justify-content:space-between">
                         <span style="font-size:11px;font-weight:800;color:var(--em-ink)">${_carModel} <span style="font-weight:500;color:var(--em-muted)">${_mg.length}× · cond. media <span style="color:${_mgCondColor};font-weight:700">${_mgAvgCond}%</span></span></span>
                         ${_mgNeedsRepair ? `<button onclick="window.bulkRepairFleet(${_mgRepairIds})" class="em-goldbtn" style="font-size:9.5px;padding:3px 9px">🔧 Ripara gruppo</button>` : ''}
@@ -309,7 +309,7 @@ function renderTabFleet() {
 
     html += `
     <div onclick="window.hubNavigate('showroom')" class="em-card"
-         style="margin-bottom:7px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-color:#cfe0f1;background:#f3f8fd">
+         style="margin-bottom:7px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-color:#1a2535;background:#0d1a2a">
         <div>
             <div style="font-size:12.5px;font-weight:800;color:var(--em-blue)">🚘 Acquisto Veicoli</div>
             <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">Vai allo Showroom per configurare e acquistare nuovi veicoli</div>

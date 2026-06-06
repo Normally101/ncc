@@ -60,7 +60,7 @@
             const owned = gs.ownedColors.includes(it.v);
             const equipped = gs.companyColor === it.v;
             return `<button onclick="window._vanityColor('${it.v}')"
-                style="border-radius:9px;border:2px solid ${equipped ? 'var(--em-ink)' : 'var(--em-line)'};background:#fff;cursor:pointer;padding:8px;display:flex;align-items:center;gap:8px">
+                style="border-radius:9px;border:2px solid ${equipped ? 'var(--em-ink)' : 'var(--em-line)'};background:#161b22;cursor:pointer;padding:8px;display:flex;align-items:center;gap:8px">
                 <span style="width:22px;height:22px;border-radius:6px;background:${it.v};flex-shrink:0;border:1px solid rgba(0,0,0,.1)"></span>
                 <span style="flex:1;text-align:left"><span style="font-weight:700;font-size:11.5px;color:var(--em-ink)">${it.n}</span></span>
                 <span style="font-size:9px;font-weight:800;color:${equipped ? 'var(--em-ink)' : owned ? 'var(--em-green-d)' : 'var(--em-muted)'}">${equipped ? 'IN USO' : owned ? '✓' : '🪙 ' + it.c}</span>
