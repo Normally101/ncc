@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS public.companies (
     id              uuid        PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id         uuid        NOT NULL UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
     company_name    text        NOT NULL DEFAULT 'Nuova Azienda',
-    cash            bigint      NOT NULL DEFAULT 15000 CHECK (cash >= 0),
+    cash            bigint      NOT NULL DEFAULT 35000 CHECK (cash >= 0),
     titan_coins     int         NOT NULL DEFAULT 0    CHECK (titan_coins >= 0),
     reputation      numeric(10,2) NOT NULL DEFAULT 0.0,
     hq_city         text        NOT NULL DEFAULT 'roma',
@@ -167,7 +167,7 @@ BEGIN
     END IF;
 
     INSERT INTO public.companies (user_id, company_name, cash, hq_city)
-    VALUES (v_user_id, v_company_name, 15000, 'roma')
+    VALUES (v_user_id, v_company_name, 35000, 'roma')
     ON CONFLICT (user_id) DO UPDATE
         SET company_name = EXCLUDED.company_name,
             updated_at   = now()
