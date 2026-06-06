@@ -114,11 +114,21 @@ async function _mmoBootSequence(userId) {
 
     if (cloudSimState || hasLocalCache) {
         if (!cloudSimState && hasLocalCache) {
-            // Offline or game_saves unavailable — using stale cache as emergency fallback
-            console.warn('[Auth] Phase 4 ⚠ Avvio con cache locale (cloud non disponibile).');
-            if (typeof showNotification === 'function') showNotification('⚠ Avvio offline — sincronizza appena possibile.', 'error');
+            // Check: if hasCompanyRow but cloudSimState is null, DB was RESET
+            // → discard stale cache, start fresh
+            if (hasCompanyRow) {
+                console.log('[Auth] Phase 4 ✅ Database resettato rilevato — cancello cache locale obsoleta.');
+                ['chauffeurEmpireSlot_1','chauffeurEmpireSlot_2','chauffeurEmpireSlot_3'].forEach(k => localStorage.removeItem(k));
+                window._startGameWithSlot(0, true);
+            } else {
+                // Offline or game_saves unavailable — using stale cache as emergency fallback
+                console.warn('[Auth] Phase 4 ⚠ Avvio con cache locale (cloud non disponibile).');
+                if (typeof showNotification === 'function') showNotification('⚠ Avvio offline — sincronizza appena possibile.', 'error');
+                window._startGameWithSlot(0, false);
+            }
+        } else {
+            window._startGameWithSlot(0, false);
         }
-        window._startGameWithSlot(0, false);
     } else if (hasCompanyRow) {
         // Player has an MMO company but no simulation blob → start fresh simulation
         console.log('[Auth] Phase 4 → Company MMO esistente, nessuna sim — avvio fresca.');
