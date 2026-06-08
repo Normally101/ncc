@@ -1534,8 +1534,18 @@ window.foundCompany = function(lng, lat, customName) {
     gameState.hq.region = nearestRegion;
     gameState.hq.name   = customName || 'Sede Principale';
     gameState.hq.level  = 0;
+
+    // Fresh-game: give CEO a loaner car so they can start taking rides immediately
+    const _ceoDrv = gameState.drivers.find(d => d.id === 'ceo');
+    if (_ceoDrv && !_ceoDrv.assignedCarId && !gameState.fleet.some(c => c.id === 'c_loaner')) {
+        gameState.fleet.push({ id: 'c_loaner', name: 'Berlina Base', tier: 'standard', condition: 100, isLease: true, dailyCost: 40, leaseDuration: 12, leaseElapsedDays: 0, fuel: 100, mileage: 0, tirePressure: 100, upgrades: [], vehicleClass: 'mercedes_e' });
+        _ceoDrv.assignedCarId = 'c_loaner';
+    }
+
     for (let i = 0; i < 3; i++) if (typeof generatePOIRide === 'function') generatePOIRide('standard');
     if (typeof showBigEvent === 'function') showBigEvent('🏢', 'Agenzia Fondata!', `La tua sede è ora operativa in ${nearestRegion}. Regione sbloccata gratuitamente. Le prime corse ti attendono!`);
+    // Launch tutorial on first-ever company founding
+    if (typeof window._maybeLaunchTutorial === 'function') window._maybeLaunchTutorial();
     if (typeof _updateHQMarker === 'function') _updateHQMarker();
     if (typeof drawHighways === 'function') drawHighways();
     if (typeof drawPOIs === 'function') drawPOIs();

@@ -366,8 +366,16 @@ function startNextRide(driver) {
 
     const car = gameState.fleet.find(c => c.id === driver.assignedCarId);
     if (!car || car.condition <= 10) {
+        // Drain stuck queued rides back to pending so they can be re-assigned
+        while (driver.queue.length > 0) {
+            const _r = driver.queue.shift();
+            delete _r.driverId;
+            gameState.pendingRides.push(_r);
+        }
         driver.status = 'idle';
-        if (car && car.condition <= 10 && typeof showNotification === 'function') {
+        if (!driver.assignedCarId && typeof showNotification === 'function') {
+            showNotification(`⚠️ ${driver.name}: nessun veicolo assegnato! Assegna un auto dalla tab Flotta.`, 'error');
+        } else if (car && car.condition <= 10 && typeof showNotification === 'function') {
             showNotification(`🔧 ${car.name}: condizione critica! Vai in Officina.`, 'error');
         }
         return;

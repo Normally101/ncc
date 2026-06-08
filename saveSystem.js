@@ -351,6 +351,9 @@ window.resetGame = async function() {
     // Clear local cache
     localStorage.removeItem('chauffeurEmpireSlot_1');
     localStorage.removeItem('chauffeurEmpireSlot_2');
+    // Clear tutorial key so it shows again after reset
+    localStorage.removeItem('chauffeurEmpireTutorialDone_v3');
+    localStorage.removeItem('chauffeurEmpireTutorialDone_v2');
     localStorage.removeItem('chauffeurEmpireSlot_3');
     localStorage.removeItem('_cloudSyncTs_0');
     try {
