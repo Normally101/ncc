@@ -84,14 +84,14 @@
         if (done === steps.length) return '';
 
         const rows = steps.map(s => `
-            <div style="display:flex;align-items:center;gap:10px;padding:7px 11px;border-top:1px solid var(--em-line2)">
-                <div class="em-evi" style="background:${s.ok ? '#e7f6ee' : '#eef1f5'};font-size:14px;line-height:1">${s.ok ? '✅' : s.ic}</div>
-                <div style="flex:1;font-weight:700;font-size:12px;color:${s.ok ? 'var(--em-dim)' : 'var(--em-ink)'};${s.ok ? 'text-decoration:line-through' : ''}">${s.t}</div>
+            <div style="display:flex;align-items:center;gap:10px;padding:7px 11px;border-top:1px solid #21262d">
+                <div class="em-evi" style="background:${s.ok ? '#0d2217' : '#21262d'};font-size:14px;line-height:1">${s.ok ? '✅' : s.ic}</div>
+                <div style="flex:1;font-weight:700;font-size:12px;color:${s.ok ? '#6b7280' : '#e6edf3'};${s.ok ? 'text-decoration:line-through' : ''}">${s.t}</div>
                 ${s.ok ? '<span class="em-pill em-pill--green">Fatto</span>' : `<button class="em-bbtn" style="padding:5px 11px" onclick="switchTab('${s.cta}')">Vai →</button>`}
             </div>`).join('');
 
-        return `<div class="em-card" style="margin-bottom:7px;border-color:#cfe0f1;background:#f7fbff">
-            <div class="em-ch"><span class="t">🎯 Primi Passi</span><span class="a" style="color:var(--em-blue)">${done}/${steps.length}</span></div>
+        return `<div class="em-card" style="margin-bottom:7px;border-color:#21262d;background:#161b22">
+            <div class="em-ch"><span class="t">🎯 Primi Passi</span><span class="a" style="color:#58a6ff">${done}/${steps.length}</span></div>
             ${rows}
         </div>`;
     };
