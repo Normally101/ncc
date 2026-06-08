@@ -545,6 +545,7 @@ window.openCarConfigurator = function(carId, type) {
             isLease: false, fuel: 100, mileage: 0, tirePressure: 100,
             upgrades: ups, vehicleClass: car.vehicleClass || 'mercedes_e',
         });
+        gameState.cash = Math.max(0, (gameState.cash || 0) - total);
         document.getElementById('modal-configurator')?.remove();
         updateUI(); if (typeof switchTab === 'function') switchTab('fleet');
         showBigEvent('🚗', `${car.name} Configurata!`, ups.length > 0 ? `${ups.length} optional installati · pronta al servizio.` : 'Veicolo standard pronto per la flotta.');
@@ -583,6 +584,7 @@ window.leaseCar = async function(carId) {
         vehicleClass: c.vehicleClass || 'mercedes_e',
         fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [],
     });
+    gameState.cash = Math.max(0, (gameState.cash || 0) - upFront);
     updateUI(); renderTabFleet();
     showNotification('Contratto Leasing approvato!', 'success');
 };

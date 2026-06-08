@@ -713,6 +713,7 @@ window._srmPurchase = async function() {
         tirePressure: 100, engineHealth: 100, outOfService: false,
         upgrades: opts, vehicleClass: v.id,
     });
+    gameState.cash = Math.max(0, (gameState.cash || 0) - total);
     _srmState.selectedOpts.clear();
     updateUI();
     if (typeof saveGame === 'function') saveGame();
