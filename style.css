@@ -4790,18 +4790,12 @@ select:focus {
    Attivato da class="em-shell" su #app-body.
    ════════════════════════════════════════════════════════════════════ */
 
-/* sfondo cielo + skyline globale (sostituisce .app-bg dark) */
+/* sfondo garage — dark Bloomberg aesthetic */
 #app-body.em-shell{
   background:
-    linear-gradient(180deg,
-      rgba(80,140,200,0.72) 0%,
-      rgba(140,190,225,0.50) 18%,
-      rgba(210,230,245,0.28) 42%,
-      rgba(245,248,252,0.10) 65%,
-      transparent 82%
-    ),
-    url('assets/cities/bg_milano.jpg') bottom center / cover fixed no-repeat !important;
-  background-color:#b2cfe4 !important;
+    linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 100%),
+    url('assets/bg_garage.png') center center / cover fixed no-repeat !important;
+  background-color:#0a0c12 !important;
   font-family:'Inter',system-ui,sans-serif;
 }
 #app-body.em-shell::before{display:none !important;}
