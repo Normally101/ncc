@@ -5,14 +5,12 @@
    ================================================================ */
 
 window._auctionsState = {
-    auctions:    [],  // open auctions from rpc_get_judicial_auctions
-    wonAuctions: [],  // won but not yet acknowledged
-    myBids:      [],  // rpc_get_my_bids
+    auctions:    [],
+    wonAuctions: [],
+    myBids:      [],
     _lastFetch:  0,
     _sub:        null,
 };
-
-// ── HELPERS ──────────────────────────────────────────────────────────────────
 
 function _aErr(prefix, err) {
     const email = (window.GAME_CONFIG || {}).SUPPORT_EMAIL || 'support@chauffeurempire.com';
@@ -35,20 +33,20 @@ function _countdown(endsAt) {
     return `${m}m ${s}s`;
 }
 
-// Tier label + color
 function _tierBadge(tier) {
-    const map = {
-        BUSINESS:    { label: 'Business',     color: '#2f74c0',  bg: 'rgba(88,166,255,0.12)' },
-        PREMIUM:     { label: 'Premium',      color: '#7c5fc9',  bg: 'rgba(192,132,252,0.12)' },
-        PRESIDENTIAL:{ label: 'Presidential', color: '#e0922e',  bg: 'rgba(245,158,11,0.12)' },
-        ARMORED:     { label: 'Armored',      color: '#db5746',  bg: 'rgba(248,81,73,0.12)' },
-        ULTRA:       { label: 'Ultra',        color: '#c79a2a',  bg: 'rgba(212,175,55,0.12)' },
+    const cls = {
+        BUSINESS:    'em-pill--blue',
+        PREMIUM:     'em-pill--violet',
+        PRESIDENTIAL:'em-pill--gold',
+        ARMORED:     'em-pill--red',
+        ULTRA:       'em-pill--gold',
+    }[tier] || 'em-pill--gray';
+    const labels = {
+        BUSINESS:'Business', PREMIUM:'Premium', PRESIDENTIAL:'Presidential',
+        ARMORED:'Armored', ULTRA:'Ultra',
     };
-    const t = map[tier] || { label: tier || '?', color: '#6a7480', bg: 'rgba(139,148,158,0.12)' };
-    return `<span style="font-size:9px;font-weight:700;color:${t.color};background:${t.bg};border:1px solid ${t.color};border-radius:4px;padding:2px 6px">${t.label}</span>`;
+    return `<span class="em-pill ${cls}">${labels[tier] || tier || '?'}</span>`;
 }
-
-// ── DATA LAYER ────────────────────────────────────────────────────────────────
 
 window.auctionsRefresh = async function(force = false) {
     const now = Date.now();
@@ -79,12 +77,10 @@ window.auctionsPlaceBid = async function(auctionId, amount) {
     });
     if (error) return { error: _aErr('Offerta fallita', error) };
 
-    window._auctionsState._lastFetch = 0; // force refresh
+    window._auctionsState._lastFetch = 0;
     if (typeof window.auctionsRefresh === 'function') await window.auctionsRefresh(true);
     return { data };
 };
-
-// ── BID MODAL ─────────────────────────────────────────────────────────────────
 
 window.auctionsOpenBidModal = function(auctionId) {
     const auction = window._auctionsState.auctions.find(a => a.id === auctionId);
@@ -129,12 +125,10 @@ window.auctionsOpenBidModal = function(auctionId) {
         <div id="bid-error" style="color:#db5746;font-size:10px;margin-bottom:8px;display:none"></div>
 
         <button id="bid-confirm-btn" onclick="window.auctionsConfirmBid('${auctionId}')"
-          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
-          onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#e3b441,#c79a2a);color:#fff;border:none;border-radius:7px;box-shadow:0 2px 5px rgba(199,154,42,.24)">
           🔨 Piazza Offerta
         </button>
-      </div>
-    `;
+      </div>`;
     document.body.appendChild(modal);
     modal.querySelector('#bid-amount-input').focus();
 };
@@ -169,8 +163,6 @@ window.auctionsConfirmBid = async function(auctionId) {
     if (typeof showNotification === 'function') showNotification(`✅ Offerta di ${_fmtCurrency(amount)} registrata!`, 'success');
     if (typeof window.switchTab === 'function') window.switchTab('auctions');
 };
-
-// ── WON AUCTION REVEAL ────────────────────────────────────────────────────────
 
 window.auctionsRevealWon = function(auctionId) {
     const won = window._auctionsState.wonAuctions.find(a => a.id === auctionId);
@@ -218,144 +210,136 @@ window.auctionsRevealWon = function(auctionId) {
         </div>
         ${contentHtml}
         <button onclick="document.getElementById('auction-won-modal').remove()"
-          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
-          onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">Chiudi</button>
-      </div>
-    `;
+          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#e3b441,#c79a2a);color:#fff;border:none;border-radius:7px;box-shadow:0 2px 5px rgba(199,154,42,.24)">
+          Chiudi
+        </button>
+      </div>`;
     document.body.appendChild(modal);
 };
-
-// ── TAB RENDERER ──────────────────────────────────────────────────────────────
 
 window.renderTabAuctions = function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    const state = window._auctionsState;
+    const state    = window._auctionsState;
     const auctions = state.auctions;
-    const won = state.wonAuctions;
-    const myBids = state.myBids;
+    const won      = state.wonAuctions;
+    const myBids   = state.myBids;
 
-    let wonBanner = '';
-    if (won.length > 0) {
-        wonBanner = `
-          <div style="background:rgba(212,175,55,0.08);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:14px;margin-bottom:16px">
-            <div style="font-size:11px;font-weight:700;color:#c79a2a;margin-bottom:10px">🏆 Aste Vinte — Da Ritirare</div>
+    const wonBanner = won.length > 0 ? `
+        <div class="em-card" style="padding:14px;margin-bottom:16px;border-color:rgba(199,154,42,.35)">
+            <div style="font-size:11px;font-weight:700;color:var(--em-gold);margin-bottom:10px">🏆 Aste Vinte — Da Ritirare</div>
             ${won.map(w => `
               <div style="display:flex;align-items:center;justify-content:space-between;background:#0d1117;border-radius:4px;padding:8px 12px;margin-bottom:6px">
-                <div style="font-size:11px;color:#e6edf3">${w.icon} ${w.title}</div>
-                <button onclick="window.auctionsRevealWon('${w.id}')"
-                  style="padding:4px 10px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
-                  onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🎁 Ritira</button>
+                <div style="font-size:11px;color:var(--em-ink)">${w.icon} ${w.title}</div>
+                <button class="em-goldbtn" onclick="window.auctionsRevealWon('${w.id}')" style="font-size:9px;padding:4px 10px">🎁 Ritira</button>
               </div>`).join('')}
-          </div>`;
-    }
+        </div>` : '';
 
-    let auctionsHtml = '';
-    if (auctions.length === 0) {
-        auctionsHtml = `<div style="text-align:center;color:#6b7280;padding:40px 0;font-size:13px">Nessuna asta aperta al momento.<br><span style="font-size:10px">Torna più tardi per nuovi lotti giudiziari.</span></div>`;
-    } else {
-        auctionsHtml = auctions.map(a => {
+    const auctionsHtml = auctions.length === 0
+        ? `<div class="em-empty">Nessuna asta aperta al momento.<br><span style="font-size:10px">Torna più tardi per nuovi lotti giudiziari.</span></div>`
+        : auctions.map(a => {
             const isContainer = a.lot_type === 'container';
             const isFleetPack = a.lot_type === 'fleet_pack';
-            const vd = a.vehicle_data || {};
-            const myBid = a.my_bid;
-            const topBid = a.top_bid;
+            const vd       = a.vehicle_data || {};
+            const myBid    = a.my_bid;
+            const topBid   = a.top_bid;
             const isLeading = myBid && topBid && myBid >= topBid;
-            const isOutbid = myBid && topBid && myBid < topBid;
-            const ends = _countdown(a.auction_ends_at);
-            const urgent = new Date(a.auction_ends_at) - Date.now() < 3600000;
+            const isOutbid  = myBid && topBid && myBid < topBid;
+            const ends     = _countdown(a.auction_ends_at);
+            const urgent   = new Date(a.auction_ends_at) - Date.now() < 3600000;
 
             return `
-              <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:10px">
+              <div class="em-card" style="padding:14px;margin-bottom:10px">
                 <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
                   <div>
-                    <div style="font-size:13px;font-weight:700;color:#e6edf3">${a.icon} ${a.title}</div>
-                    ${isContainer ? '<div style="font-size:10px;color:#e0922e;margin-top:3px">📦 Contenuto sconosciuto</div>' : ''}
-                    ${isFleetPack ? '<div style="font-size:10px;color:#2f74c0;margin-top:3px">🚐 Lotto multiplo</div>' : ''}
-                    ${vd.tier ? `<div style="margin-top:6px;display:flex;align-items:center;gap:6px">${_tierBadge(vd.tier)}${vd.condition ? `<span style="font-size:9px;color:#6b7280">Condiz. ${vd.condition}%</span>` : ''}${vd.km ? `<span style="font-size:9px;color:#6b7280">${Number(vd.km).toLocaleString()} km</span>` : ''}</div>` : ''}
+                    <div style="font-size:13px;font-weight:700;margin-bottom:3px">${a.icon} ${a.title}</div>
+                    ${isContainer ? '<div style="font-size:10px;color:var(--em-amber);margin-top:3px">📦 Contenuto sconosciuto</div>' : ''}
+                    ${isFleetPack ? '<div style="font-size:10px;color:var(--em-blue);margin-top:3px">🚐 Lotto multiplo</div>' : ''}
+                    ${vd.tier ? `<div style="margin-top:6px;display:flex;align-items:center;gap:6px">${_tierBadge(vd.tier)}${vd.condition ? `<span style="font-size:9px;color:var(--em-muted)">Condiz. ${vd.condition}%</span>` : ''}${vd.km ? `<span style="font-size:9px;color:var(--em-muted)">${Number(vd.km).toLocaleString()} km</span>` : ''}</div>` : ''}
                   </div>
                   <div style="text-align:right;flex-shrink:0;margin-left:8px">
-                    <div style="font-size:10px;color:${urgent ? '#db5746' : '#6a7480'}">⏱ ${ends}</div>
-                    <div style="font-size:9px;color:#6b7280;margin-top:2px">${a.bid_count || 0} offerte</div>
+                    <div style="font-size:10px;color:${urgent ? 'var(--em-red)' : 'var(--em-muted)'}">⏱ ${ends}</div>
+                    <div style="font-size:9px;color:var(--em-muted);margin-top:2px">${a.bid_count || 0} offerte</div>
                   </div>
                 </div>
 
-                <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
-                  <div style="background:#0d1117;border-radius:4px;padding:6px;text-align:center">
-                    <div style="font-size:9px;color:#6b7280">Min</div>
-                    <div style="font-size:10px;font-family:monospace;color:#e6edf3">${_fmtCurrency(a.min_bid)}</div>
+                <div class="em-kpibar" style="margin-bottom:10px">
+                  <div class="k" style="text-align:center">
+                    <div class="l">Min</div>
+                    <div class="v" style="font-size:10px;font-family:monospace">${_fmtCurrency(a.min_bid)}</div>
                   </div>
-                  <div style="background:#0d1117;border-radius:4px;padding:6px;text-align:center">
-                    <div style="font-size:9px;color:#6b7280">Top bid</div>
-                    <div style="font-size:10px;font-family:monospace;color:#c79a2a">${topBid ? _fmtCurrency(topBid) : '—'}</div>
+                  <div class="k" style="text-align:center">
+                    <div class="l">Top bid</div>
+                    <div class="v" style="font-size:10px;font-family:monospace;color:var(--em-gold)">${topBid ? _fmtCurrency(topBid) : '—'}</div>
                   </div>
-                  <div style="background:#0d1117;border-radius:4px;padding:6px;text-align:center">
-                    <div style="font-size:9px;color:#6b7280">La tua</div>
-                    <div style="font-size:10px;font-family:monospace;color:${isLeading ? '#1aa06a' : isOutbid ? '#db5746' : '#6a7480'}">${myBid ? _fmtCurrency(myBid) : '—'}</div>
+                  <div class="k" style="text-align:center">
+                    <div class="l">La tua</div>
+                    <div class="v" style="font-size:10px;font-family:monospace;color:${isLeading ? 'var(--em-green)' : isOutbid ? 'var(--em-red)' : 'var(--em-muted)'}">${myBid ? _fmtCurrency(myBid) : '—'}</div>
                   </div>
                 </div>
 
-                ${isOutbid ? '<div style="font-size:10px;color:#db5746;margin-bottom:8px">⚠️ Sei stato superato! Rilancia per vincere.</div>' : ''}
-                ${isLeading ? '<div style="font-size:10px;color:#1aa06a;margin-bottom:8px">✅ Sei in testa — mantieni la posizione.</div>' : ''}
+                ${isOutbid ? '<div style="font-size:10px;color:var(--em-red);margin-bottom:8px">⚠️ Sei stato superato! Rilancia per vincere.</div>' : ''}
+                ${isLeading ? '<div style="font-size:10px;color:var(--em-green);margin-bottom:8px">✅ Sei in testa — mantieni la posizione.</div>' : ''}
 
-                <button onclick="window.auctionsOpenBidModal('${a.id}')"
-                  style="width:100%;padding:7px;font-size:11px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
-                  onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                <button class="em-goldbtn" onclick="window.auctionsOpenBidModal('${a.id}')" style="width:100%">
                   🔨 ${myBid ? 'Rilancia Offerta' : 'Fai Offerta'}
                 </button>
               </div>`;
         }).join('');
-    }
 
-    let myBidsHtml = '';
-    if (myBids.length > 0) {
-        myBidsHtml = `
-          <div style="margin-top:24px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">📋 Storico Offerte</div>
-            ${myBids.slice(0, 10).map(b => `
-              <div style="display:flex;align-items:center;justify-content:space-between;background:#161b22;border-radius:4px;padding:8px 12px;margin-bottom:6px;font-size:11px">
-                <div>
-                  <span style="color:#e6edf3">${b.auction_icon} ${b.auction_title}</span>
-                  <span style="color:#6b7280;margin-left:8px">${b.auction_status === 'closed' ? (b.is_winner ? '✅ Vinta' : '❌ Persa') : b.auction_status === 'cancelled' ? '🚫 Annullata' : '🟡 Aperta'}</span>
-                </div>
-                <span style="color:#c79a2a;font-family:monospace">${_fmtCurrency(b.amount)}</span>
-              </div>`).join('')}
-          </div>`;
-    }
+    const myBidsHtml = myBids.length > 0 ? `
+        <div style="margin-top:16px">
+            <div class="em-sec" style="margin-bottom:10px">📋 Storico Offerte</div>
+            <div class="em-card">
+              ${myBids.slice(0, 10).map(b => `
+                <div class="em-lrow" style="font-size:10px">
+                  <div style="flex:1">
+                    <span>${b.auction_icon} ${b.auction_title}</span>
+                    <span style="color:var(--em-muted);margin-left:8px">${b.auction_status === 'closed' ? (b.is_winner ? '✅ Vinta' : '❌ Persa') : b.auction_status === 'cancelled' ? '🚫 Annullata' : '🟡 Aperta'}</span>
+                  </div>
+                  <span style="color:var(--em-gold);font-family:monospace">${_fmtCurrency(b.amount)}</span>
+                </div>`).join('')}
+            </div>
+        </div>` : '';
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8;display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
-        <div>
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Aste</div>
-            <div style="font-size:20px;font-weight:700;color:#e6edf3">Aste Giudiziarie</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:4px">${auctions.length} lotti aperti · ${myBids.length} tue offerte · ${won.length > 0 ? won.length + ' da ritirare' : 'Nessun premio in attesa'}</div>
+    container.innerHTML = `<div class="em"><div class="em-page em-wrap">
+        <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--em-line);display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+            <div>
+                <div class="em-sec" style="margin-bottom:4px">Aste</div>
+                <div style="font-size:20px;font-weight:800;margin-bottom:2px">Aste Giudiziarie</div>
+                <div style="font-size:11px;color:var(--em-muted)">${auctions.length} lotti aperti · ${myBids.length} tue offerte · ${won.length > 0 ? won.length + ' da ritirare' : 'Nessun premio in attesa'}</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px">
+                ${won.length > 0 ? `<span class="em-pill em-pill--gold">${won.length} Da Ritirare</span>` : ''}
+                <button class="em-ghbtn" onclick="window.auctionsRefresh(true).then(()=>window.switchTab('auctions'))">↻ Aggiorna</button>
+            </div>
         </div>
-        <div style="display:flex;align-items:center;gap:8px">
-            ${won.length > 0 ? `<span style="font-size:9px;font-weight:700;color:#c79a2a;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:3px 8px">${won.length} Da Ritirare</span>` : ''}
-            <button onclick="window.auctionsRefresh(true).then(()=>window.switchTab('auctions'))" style="background:#161b22;border:1px solid #21262d;color:#6b7280;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">↻ Aggiorna</button>
+
+        <div class="em-kpis" style="margin-bottom:16px">
+            <div class="em-kpi">
+                <div class="l">Lotti Aperti</div>
+                <div class="v" style="color:${auctions.length > 0 ? 'var(--em-blue)' : 'var(--em-muted)'}">${auctions.length}</div>
+            </div>
+            <div class="em-kpi">
+                <div class="l">Tue Offerte</div>
+                <div class="v" style="color:${myBids.length > 0 ? 'var(--em-gold)' : 'var(--em-muted)'}">${myBids.length}</div>
+            </div>
+            <div class="em-kpi">
+                <div class="l">Da Ritirare</div>
+                <div class="v" style="color:${won.length > 0 ? 'var(--em-green)' : 'var(--em-muted)'}">${won.length}</div>
+            </div>
+            <div class="em-kpi">
+                <div class="l">Attive in Top</div>
+                <div class="v" style="color:var(--em-gold)">${auctions.filter(a => a.my_bid && a.top_bid && a.my_bid >= a.top_bid).length}</div>
+            </div>
         </div>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Lotti Aperti</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${auctions.length > 0 ? '#2f74c0' : '#1f2733'}">${auctions.length}</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Tue Offerte</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${myBids.length > 0 ? '#c79a2a' : '#1f2733'}">${myBids.length}</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Da Ritirare</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${won.length > 0 ? '#1aa06a' : '#1f2733'}">${won.length}</div>
-        </div>
-    </div>` + `<div>
+
         ${wonBanner}
         ${auctionsHtml}
         ${myBidsHtml}
-      </div>`;
+    </div></div>`;
 };
-
-// ── REALTIME ──────────────────────────────────────────────────────────────────
 
 function _auctionsSubscribeRealtime() {
     const sb = window.supabaseClient;
@@ -366,8 +350,7 @@ function _auctionsSubscribeRealtime() {
         .on('postgres_changes', { event: '*', schema: 'public', table: 'judicial_auctions' }, () => {
             window._auctionsState._lastFetch = 0;
             if (document.getElementById('tab-container') && typeof window.switchTab === 'function') {
-                const activeTab = window._activeTab || '';
-                if (activeTab === 'auctions') {
+                if ((window._activeTab || '') === 'auctions') {
                     window.auctionsRefresh(true).then(() => window.renderTabAuctions());
                 }
             }
@@ -375,13 +358,10 @@ function _auctionsSubscribeRealtime() {
         .subscribe();
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-
 window.auctionsInit = async function() {
     await window.auctionsRefresh(true);
     _auctionsSubscribeRealtime();
 
-    // Notify user of pending won auctions
     if (window._auctionsState.wonAuctions.length > 0) {
         if (typeof showNotification === 'function') {
             showNotification(`🏆 Hai ${window._auctionsState.wonAuctions.length} asta/e vinta/e da ritirare!`, 'info');

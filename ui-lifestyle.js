@@ -174,7 +174,7 @@ window.voteServerDecree = async function(decreeId, points) {
     const sb = window.supabaseClient;
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_vote_server_decree', { v_decree_id: decreeId, v_points_spent: pts });
-    if (error) { if (typeof showNotification==='function') showNotification('Voto fallito: ' + error.message, 'error'); return; }
+    if (error) { if (typeof showNotification==='function') showNotification(window.CE_Sec.userError('Voto non riuscito', error), 'error'); return; }
     gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) - pts;
     if (typeof saveGame === 'function') saveGame();
     if (data.passed) {

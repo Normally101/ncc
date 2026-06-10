@@ -5,19 +5,20 @@
    ================================================================ */
 
 window._cryptoState = {
-    market:    [],  // crypto_market rows
-    portfolio: [],  // user holdings with PnL
-    offshore:  [],  // offshore accounts
+    market:    [],
+    portfolio: [],
+    offshore:  [],
     txLog:     [],
     _lastFetch: 0,
     _sub:      null,
 };
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-
 function _cErr(prefix, err) {
-    const email = (window.GAME_CONFIG || {}).SUPPORT_EMAIL || 'support@chauffeurempire.com';
-    return `${prefix}: ${(err && err.message) || err || 'errore'} — ${email}`;
+    if (window.CE_Sec && typeof window.CE_Sec.userError === 'function') {
+        return window.CE_Sec.userError(prefix, err, { support: true });
+    }
+    try { console.warn('[CRYPTO]', prefix, err && (err.message || err)); } catch {}
+    return `${prefix}, riprova.`;
 }
 
 function _fmt(n, dec = 2) {
@@ -31,7 +32,6 @@ function _fmtCoin(n) {
     return _fmt(n, n < 1 ? 6 : 3);
 }
 
-// AMM price impact estimate
 function _priceImpact(coin, eurIn) {
     const k = coin.reserve_eur * coin.supply;
     const newRes = coin.reserve_eur + eurIn * 0.995;
@@ -40,9 +40,7 @@ function _priceImpact(coin, eurIn) {
     const avgPrice = eurIn / coinsOut;
     const priceImpact = ((avgPrice - coin.price_eur) / coin.price_eur) * 100;
     return { coinsOut, avgPrice, priceImpact };
-};
-
-// ── DATA LAYER ────────────────────────────────────────────────────────────────
+}
 
 window.cryptoRefresh = async function(force = false) {
     const now = Date.now();
@@ -145,8 +143,6 @@ window.cryptoWithdrawOffshore = async function(jurisdiction, eurAmount) {
     if (typeof window.switchTab === 'function') window.switchTab('crypto');
 };
 
-// ── TRADE MODAL ───────────────────────────────────────────────────────────────
-
 window.cryptoOpenTradeModal = function(coinId, side) {
     const coin = window._cryptoState.market.find(c => c.id === coinId);
     const holding = window._cryptoState.portfolio.find(p => p.coin_id === coinId);
@@ -162,7 +158,7 @@ window.cryptoOpenTradeModal = function(coinId, side) {
     modal.id = 'crypto-trade-modal';
     modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
     modal.innerHTML = `
-      <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);box-shadow:0 20px 60px rgba(0,0,0,0.6)">
+      <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);box-shadow:0 20px 60px rgba(0,0,0,.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
           <div style="font-size:13px;font-weight:700;color:#e6edf3">${coin.icon} ${coin.name} — ${isBuy ? 'ACQUISTO' : 'VENDITA'}</div>
           <button onclick="document.getElementById('crypto-trade-modal').remove()" style="background:transparent;border:none;color:#6b7280;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
@@ -187,8 +183,7 @@ window.cryptoOpenTradeModal = function(coinId, side) {
 
         <button id="crypto-trade-btn"
           onclick="${isBuy ? `window.cryptoBuy('${coinId}', document.getElementById('${inputId}').value)` : `window.cryptoSell('${coinId}', document.getElementById('${inputId}').value)`}"
-          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
-          onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+          style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#e3b441,#c79a2a);color:#fff;border:none;border-radius:7px;box-shadow:0 2px 5px rgba(199,154,42,.24)">
           ${isBuy ? '💰 Acquista' : '💵 Vendi'}
         </button>
       </div>`;
@@ -214,16 +209,14 @@ window._cryptoUpdatePreview = function(coinId, side, val) {
     }
 };
 
-// ── TAB RENDERER ──────────────────────────────────────────────────────────────
-
 window.renderTabCrypto = function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    const state = window._cryptoState;
-    const market = state.market;
+    const state     = window._cryptoState;
+    const market    = state.market;
     const portfolio = state.portfolio;
-    const offshore = state.offshore;
+    const offshore  = state.offshore;
 
     const portfolioValue = portfolio.reduce((s, p) => s + (p.value_eur || 0), 0);
     const offshoreTotal  = offshore.reduce((s, o) => s + (o.balance || 0), 0);
@@ -231,97 +224,92 @@ window.renderTabCrypto = function() {
     const marketHtml = market.map(coin => {
         const holding = portfolio.find(p => p.coin_id === coin.id);
         return `
-          <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px">
+          <div class="em-card" style="padding:12px;margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${holding ? 8 : 10}px">
-              <div style="font-size:13px;font-weight:700;color:#e6edf3">${coin.icon} ${coin.name} <span style="font-size:9px;color:#6b7280">${coin.id}</span></div>
-              <div style="font-family:monospace;font-size:13px;color:#e6edf3">€${_fmt(coin.price_eur)}</div>
+              <div style="font-size:13px;font-weight:700">${coin.icon} ${coin.name} <span style="font-size:9px;color:var(--em-muted)">${coin.id}</span></div>
+              <div style="font-family:monospace;font-size:13px">€${_fmt(coin.price_eur)}</div>
             </div>
             ${holding ? `
-              <div style="font-size:10px;color:#6b7280;margin-bottom:10px">
-                In portafoglio: <span style="color:#e6edf3">${_fmtCoin(holding.amount)} (€${_fmt(holding.value_eur)})</span>
-                — PnL: <span style="color:${(holding.pnl_pct||0)>=0?'#1aa06a':'#db5746'}">${(holding.pnl_pct||0).toFixed(2)}%</span>
+              <div style="font-size:10px;color:var(--em-muted);margin-bottom:10px">
+                In portafoglio: <span style="color:var(--em-ink)">${_fmtCoin(holding.amount)} (€${_fmt(holding.value_eur)})</span>
+                — PnL: <span style="color:${(holding.pnl_pct||0)>=0?'var(--em-green)':'var(--em-red)'}">${(holding.pnl_pct||0).toFixed(2)}%</span>
               </div>` : ''}
             <div style="display:flex;gap:8px">
-              <button onclick="window.cryptoOpenTradeModal('${coin.id}','buy')"
-                style="flex:1;padding:5px 0;font-size:10px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
-                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">💰 Acquista</button>
-              ${holding ? `<button onclick="window.cryptoOpenTradeModal('${coin.id}','sell')"
-                style="flex:1;padding:5px 0;font-size:10px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s"
-                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">💵 Vendi</button>` : ''}
+              <button class="em-goldbtn" onclick="window.cryptoOpenTradeModal('${coin.id}','buy')" style="flex:1;padding:5px 0;font-size:10px">💰 Acquista</button>
+              ${holding ? `<button class="em-redbtn" onclick="window.cryptoOpenTradeModal('${coin.id}','sell')" style="flex:1;padding:5px 0;font-size:10px">💵 Vendi</button>` : ''}
             </div>
           </div>`;
     }).join('');
 
     const offshoreJurisdictions = [
-        { id: 'cayman', name: 'Cayman Islands', icon: '🏝️', risk: '8%' },
-        { id: 'switzerland', name: 'Svizzera', icon: '🇨🇭', risk: '5%' },
-        { id: 'dubai', name: 'Dubai', icon: '🇦🇪', risk: '6%' },
+        { id: 'cayman',      name: 'Cayman Islands', icon: '🏝️', risk: '8%' },
+        { id: 'switzerland', name: 'Svizzera',        icon: '🇨🇭', risk: '5%' },
+        { id: 'dubai',       name: 'Dubai',           icon: '🇦🇪', risk: '6%' },
     ];
 
     const offshoreHtml = offshoreJurisdictions.map(j => {
-        const acc = offshore.find(o => o.jurisdiction === j.id);
+        const acc       = offshore.find(o => o.jurisdiction === j.id);
         const depInputId = `off-dep-${j.id}`;
         const wdInputId  = `off-wd-${j.id}`;
 
         return `
-          <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px">
+          <div class="em-card" style="padding:12px;margin-bottom:8px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-              <div style="font-size:13px;font-weight:700;color:#e6edf3">${j.icon} ${j.name}</div>
-              <div style="font-size:10px;color:#6b7280">Rischio GdF: ${j.risk}</div>
+              <div style="font-size:13px;font-weight:700">${j.icon} ${j.name}</div>
+              <span class="em-pill em-pill--gray">Rischio GdF: ${j.risk}</span>
             </div>
-            ${acc ? `<div style="font-size:11px;color:#6b7280;margin-bottom:8px">💰 Saldo: <span style="color:#e6edf3;font-family:monospace">€${acc.balance.toLocaleString()}</span></div>` : '<div style="font-size:10px;color:#6b7280;margin-bottom:8px">Conto non aperto</div>'}
+            ${acc ? `<div style="font-size:11px;color:var(--em-muted);margin-bottom:8px">💰 Saldo: <span style="font-family:monospace">€${acc.balance.toLocaleString()}</span></div>` : '<div style="font-size:10px;color:var(--em-muted);margin-bottom:8px">Conto non aperto</div>'}
             <div style="display:flex;gap:8px;margin-bottom:6px">
               <input id="${depInputId}" type="number" min="10000" step="10000" value="50000"
-                style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:10px;color:#e6edf3;outline:none" placeholder="€ deposito">
-              <button onclick="window.cryptoDepositOffshore('${j.id}', document.getElementById('${depInputId}').value)"
-                style="padding:5px 10px;font-size:9px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;white-space:nowrap;transition:opacity .15s"
-                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⬇️ Deposita</button>
+                style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:4px;padding:5px 8px;font-size:10px;color:var(--em-ink);outline:none" placeholder="€ deposito">
+              <button class="em-goldbtn" onclick="window.cryptoDepositOffshore('${j.id}', document.getElementById('${depInputId}').value)" style="font-size:9px;white-space:nowrap">⬇️ Deposita</button>
             </div>
             ${acc && acc.balance > 0 ? `
             <div style="display:flex;gap:8px">
               <input id="${wdInputId}" type="number" min="1000" max="${acc.balance}" step="10000"
-                style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:10px;color:#e6edf3;outline:none" placeholder="€ prelievo">
-              <button onclick="window.cryptoWithdrawOffshore('${j.id}', document.getElementById('${wdInputId}').value)"
-                style="padding:5px 10px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1a08;border:1px solid #9a7b1a;color:#e0922e;border-radius:4px;white-space:nowrap;transition:opacity .15s"
-                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⬆️ Preleva</button>
+                style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:4px;padding:5px 8px;font-size:10px;color:var(--em-ink);outline:none" placeholder="€ prelievo">
+              <button class="em-ghbtn" onclick="window.cryptoWithdrawOffshore('${j.id}', document.getElementById('${wdInputId}').value)" style="font-size:9px;white-space:nowrap;color:var(--em-amber)">⬆️ Preleva</button>
             </div>` : ''}
           </div>`;
     }).join('');
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
-        <div>
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Finanza Alternativa</div>
-            <div style="font-size:20px;font-weight:700;color:#e6edf3">Crypto &amp; Offshore</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:4px">Portfolio €${Math.floor(portfolioValue).toLocaleString()} · Offshore €${offshoreTotal.toLocaleString()}</div>
+    container.innerHTML = `<div class="em"><div class="em-page em-wrap">
+        <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--em-line);display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+                <div class="em-sec" style="margin-bottom:4px">Finanza Alternativa</div>
+                <div style="font-size:20px;font-weight:800;margin-bottom:2px">Crypto &amp; Offshore</div>
+                <div style="font-size:11px;color:var(--em-muted)">Portfolio €${Math.floor(portfolioValue).toLocaleString()} · Offshore €${offshoreTotal.toLocaleString()}</div>
+            </div>
+            <button class="em-ghbtn" onclick="window.cryptoRefresh(true).then(()=>window.switchTab('crypto'))">↻ Aggiorna</button>
         </div>
-        <button onclick="window.cryptoRefresh(true).then(()=>window.switchTab('crypto'))" style="background:#161b22;border:1px solid #21262d;color:#6b7280;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">↻ Aggiorna</button>
-    </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Portfolio Crypto</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${portfolioValue > 0 ? '#c79a2a' : '#1f2733'}">€${Math.floor(portfolioValue/1000)}k</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Offshore</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${offshoreTotal > 0 ? '#1aa06a' : '#1f2733'}">${offshoreTotal > 0 ? '€' + Math.floor(offshoreTotal/1000) + 'k' : '—'}</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Coin Detenute</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:${portfolio.length > 0 ? '#2f74c0' : '#1f2733'}">${portfolio.length}</div>
-        </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Conti Aperti</div>
-            <div style="font-size:20px;font-weight:700;font-family:monospace;color:#c79a2a">${offshore.filter(o => o.balance > 0).length}</div>
-        </div>
-    </div>` + `
-    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">📈 Mercato Crypto</div>
-    ${marketHtml}
-    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-top:20px;margin-bottom:8px;padding-top:16px;border-top:1px solid #21262d">🏦 Conti Offshore</div>
-    <div style="font-size:10px;color:#6b7280;margin-bottom:12px">Fondi offshore non visibili al fisco. Prelievo soggetto a rischio sequestro GdF.</div>
-    ${offshoreHtml}`;
-};
 
-// ── REALTIME ──────────────────────────────────────────────────────────────────
+        <div class="em-kpis" style="margin-bottom:16px">
+            <div class="em-kpi">
+                <div class="l">Portfolio Crypto</div>
+                <div class="v" style="color:${portfolioValue > 0 ? 'var(--em-gold)' : 'var(--em-muted)'}">€${Math.floor(portfolioValue/1000)}k</div>
+            </div>
+            <div class="em-kpi">
+                <div class="l">Offshore</div>
+                <div class="v" style="color:${offshoreTotal > 0 ? 'var(--em-green)' : 'var(--em-muted)'}">${offshoreTotal > 0 ? '€' + Math.floor(offshoreTotal/1000) + 'k' : '—'}</div>
+            </div>
+            <div class="em-kpi">
+                <div class="l">Coin Detenute</div>
+                <div class="v" style="color:${portfolio.length > 0 ? 'var(--em-blue)' : 'var(--em-muted)'}">${portfolio.length}</div>
+            </div>
+            <div class="em-kpi">
+                <div class="l">Conti Aperti</div>
+                <div class="v" style="color:var(--em-gold)">${offshore.filter(o => o.balance > 0).length}</div>
+            </div>
+        </div>
+
+        <div class="em-sec" style="margin-bottom:10px">📈 Mercato Crypto</div>
+        ${marketHtml}
+
+        <div class="em-sec" style="margin-bottom:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--em-line)">🏦 Conti Offshore</div>
+        <div style="font-size:10px;color:var(--em-muted);margin-bottom:12px">Fondi offshore non visibili al fisco. Prelievo soggetto a rischio sequestro GdF.</div>
+        ${offshoreHtml}
+    </div></div>`;
+};
 
 function _cryptoSubscribeRealtime() {
     const sb = window.supabaseClient;
@@ -337,8 +325,6 @@ function _cryptoSubscribeRealtime() {
         })
         .subscribe();
 }
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
 
 window.cryptoInit = async function() {
     await window.cryptoRefresh(true);

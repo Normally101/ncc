@@ -1,6 +1,6 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 5 giugno 2026
+> Aggiornato: 10 giugno 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
@@ -46,6 +46,50 @@ L'utente ha **già eseguito**: (1) schema Consorzi (4 tabelle+RPC+RLS+realtime),
 - **Sfondo nero in quasi tutte le tab** → causa: `#main-panel{background:#0a0c12 !important}` (style.css ~3850) copriva il cielo. Fix: `.em-shell #main-panel{background:transparent !important}`. Ora il contenuto galleggia sul cielo, i lati mostrano lo **skyline di Milano all'alba** (SVG stratificato self-hosted in `#app-body.em-shell`, e `.em-home` reso `background:transparent` per non raddoppiare).
 - **Nome azienda "Chauffeur Empire" ovunque** → la topbar `.emc-bn` era hardcoded; `updateUI` ora scrive `gameState.companyName` + stemma in `.emc-bn/.emc-bm`. NB: se in-game mostra ancora il default, il nome reale non è salvato in quello slot.
 - **3 righe identiche in classifica** = vecchi account di test nella tabella `leaderboard`. Fix display (dedup+`#id`); pulizia vera = `delete from leaderboard where user_id <> 'TUO_ID'` su Supabase.
+
+### 🔒 SECURITY HARDENING (10 giugno 2026, sessione 2)
+
+Audit completo su 50 punti + **test live dall'esterno con la anon key**. Esito e fix:
+
+**RISULTATO CHIAVE — RLS è SANA (allarme critico iniziale smentito dai test reali):**
+- Tutte le INSERT anonime → bloccate (`42501 violates row-level security`) su game_saves, leaderboard, provinces, cheat_flags, alliance_members, real_estate_listings, global_news.
+- UPDATE anonima su leaderboard → tocca **0 righe** (policy filtra per `auth.uid()`).
+- `game_saves`/`profiles` → **0 righe leggibili** dagli anonimi.
+- Trigger `validate_*` cappano già liquid_assets/cash > 500M (verificato: insert da 999M respinto).
+- Unica esposizione in lettura: `leaderboard` mostra gli `user_id` (UUID auth) → accettabile per classifica pubblica, scritture protette.
+
+**FIX APPLICATI nel codice (tutti committabili subito):**
+1. **#12/#35 — Leak di errori DB azzerato.** Nuovo `CE_Sec.userError(prefix, err, opts)` in `security.js`: mostra messaggi generici, logga il dettaglio solo in console; i RAISE di gioco (P0001) restano visibili. Sostituiti `error.message` in 13 file: vtk-market, infrastructure, hostile_takeover, b2b, tourism, p2p-market (`_p2pErrMsg`), crypto (`_cErr`), black_ops (`_sErr`), ui-realestate, dispatcher, war_room, ui-lifestyle, nemesis, ui-ops.
+2. **#35 — `client_error_log` redatto.** `security.js` ora applica `_redact()` (JWT/email/UUID/token→placeholder) prima di loggare.
+3. **#29 — `_mockups/` rimosso dal repo.** `git rm --cached` + `.gitignore` (4.5M, 22 file, anteprime reali dell'app non più servite pubblicamente). File ancora in locale.
+4. **#46 — Security headers** in index.html: `<meta name="referrer" strict-origin-when-cross-origin>` + CSP estesa (`frame-ancestors 'none'`, `form-action 'self'`, `upgrade-insecure-requests`).
+5. **#14 — Mapbox token RISOLTO (non più pending).** Il vecchio token era il **Default Public Token**, che Mapbox **non permette di restringere** ("Default tokens cannot be updated" — ecco perché il dashboard sembrava bloccato). Via API (sk. temporaneo, poi revocato) ho **creato un token nuovo dedicato `chauffeur-empire-web`** con `allowedUrls` = normally101.github.io / chauffeurempire.com / www. / localhost, scope read-only. `map.js` v9 ora usa il nuovo token. **Verificato dal vivo:** i tile/render danno **403 ai domini non autorizzati**, 200 ai domini reali → niente furto di quota. Endpoint di metadata (style JSON, fonts) restano 200 anche da fuori ma sono innocui senza i tile.
+   - **Residuo minore:** il vecchio Default token resta non-ristretto e presente nella git history (read-only). Opzionale: ruotarlo dal dashboard Mapbox se vuoi invalidarlo del tutto. Basso rischio (non più usato dal gioco dopo il deploy di map.js v9).
+
+**⚠️ SQL DA GIRARE — `38_security_hardening.sql` (NUOVO, idempotente):**
+- `client_error_log` (mancava → il logger client falliva in 404) con RLS insert-own, zero SELECT via API.
+- `security_audit_log` + trigger anti-anomalia su leaderboard (+20M/update) e game_saves (+50M cash/save) → audit trail (#42).
+- `_ce_rate_limit(action,max,window)` + `rate_limit_buckets` → rate-limit server-side riutilizzabile (#28).
+- Sezione 4 **COMPLETA** (non più template): hardening `rpc_award_mission_vtk`. Scoperto lo schema reale in `21_vtk_token.sql` (companies.vtk_balance/vtk_earned_today/vtk_today_reset, **cap server 500/giorno già esistente** → l'exploit "client manda 999999" era già limitato a 500/g dal server con `LEAST(amount, cap-earned)`). Due fix veri: (a) **mismatch di firma** — la funzione era `(v_mission_id, v_vtk_amount)` ma il frontend chiamava col solo `v_vtk_amount` → il sync FALLIVA in silenzio (ecco il "client is source of truth"); ora `v_mission_id` è opzionale e il sync funziona; (b) aggiunti rate-limit (30/min) + audit su importi fuori range. `quests.js` v10 ora passa `v_mission_id` e riconcilia il saldo locale con l'`awarded` autoritativo del server (cap-aware).
+
+**Non rimossi (verificato, basso rischio):** `slot_*.json` tracciati → contengono solo game state (nessun user_id/email/token reale), tenuti per sync cross-device intenzionale.
+
+**Bonus — bug critico trovato e fixato:** `contracts.js:380` aveva un replacement rovinato della sessione em-kit (`['',' + "'em-pill--gray'..." + ']`) → **SyntaxError** che faceva crashare l'INTERA tab Contratti. Riparato (`['','em-pill--gray',...]`). `node --check` ora passa su TUTTI i .js del progetto. Bumpato a v14.
+
+**Versioni bumpate:** security v7, vtk-market v12, infrastructure v13, hostile_takeover v13, b2b v13, tourism v13, p2p-market v7, crypto v13, black_ops v13, ui-realestate v13, dispatcher v12, war_room v12, ui-lifestyle v12, nemesis v14, ui-ops v12, map v8, contracts v14, quests v10.
+
+### ✅ FATTO IN QUESTA SESSIONE (10 giugno 2026)
+
+1. **Fase 3 em-kit COMPLETATA** — migrazione completa di tutte le tab "solo-remap" al kit `.em` pieno:
+   - `crypto.js` v=12 — KPI, market coin cards, offshore jurisdiction cards, trade modal dark (overlay)
+   - `auctions.js` v=12 — tier badges `.em-pill`, KPIs, won banner, auction cards, bid history, bid/won modal dark
+   - `hq.js` v=13 — city selector, room cards, upgrade buttons, active effects
+   - `contracts.js` v=13 — 5-col kpibar, tender cards, contract cards, history table
+   - `ui-politics.js` v=13, `ui-help.js` v=13, `black_ops.js` v=12, `infrastructure.js` v=12, `nemesis.js` v=13, `hostile_takeover.js` v=12 — tutti al kit pieno
+
+2. **Streak UI visibile** — `ui-home.js` v=16: card `🔥 Streak N Giorni` con 7 dot progress (ciclo settimanale), prossimo premio, badge "Torna oggi!" o "tra Xh". Inserita tra la striscia conflitto e il grid principale.
+
+3. **gameLoop dirty-check** — `engine.js` v=17: `updateUI()` in gameLoop ora saltato se il fingerprint `cash|energy|rep|hour|minute|weather|driverCoins|vtk|claimableQuests|pendingRides|outOfService` non è cambiato → elimina ~90% dei DOM write ogni 600ms.
 
 ### ✅ TUTTI I TODO PRINCIPALI COMPLETATI (5 giugno 2026)
 
@@ -254,18 +298,23 @@ Aree **A, B, C, D completate**. Resta solo, rimandata esplicitamente dall'utente
 
 | File | Versione |
 |---|---|
-| `engine.js` | v=9 (logToMap flat + cash guard) |
-| `ui-ranking.js` | v=8 (skeleton) |
-| `ui-realestate.js` | v=7 (skeleton) |
-| `showroom.js` | v=7 (cyan→blu flat) |
-| `war_room.js` | v=7 (accenti→flat) |
-| `cmd-palette.js` | v=1 (NUOVO — command palette ⌘K) |
-| `em-chrome.js` | v=3 (NUOVO — chrome EM: highlight nav + offset dinamico main-panel) |
-| `ui-home.js` | v=9 (kit `.em` — FASE 1) |
-| `map.js` | v=7 |
-| `vtk-market.js` | v=1 |
-| Altri UI/engine | v=9 |
-| File non toccati | v=6 |
+| `engine.js` | v=17 (dirty-check updateUI in gameLoop) |
+| `ui-home.js` | v=16 (streak card 🔥 + dirty-check) |
+| `crypto.js` | v=12 (em-kit pieno) |
+| `auctions.js` | v=12 (em-kit pieno) |
+| `hq.js` | v=13 (em-kit pieno) |
+| `contracts.js` | v=13 (em-kit pieno) |
+| `ui-politics.js` | v=13 (em-kit pieno) |
+| `ui-help.js` | v=13 (em-kit pieno) |
+| `black_ops.js` | v=12 (em-kit pieno) |
+| `infrastructure.js` | v=12 (em-kit pieno) |
+| `nemesis.js` | v=13 (em-kit pieno) |
+| `hostile_takeover.js` | v=12 (em-kit pieno) |
+| `ui-ranking.js` | v=12 |
+| `showroom.js` | v=10 |
+| `war_room.js` | v=10 |
+| `cmd-palette.js` | v=1 |
+| `em-chrome.js` | v=3 |
 
 `style.css` e `DESIGN.md` modificati (style.css non ha `?v=`, è caricato senza cache-busting).
 

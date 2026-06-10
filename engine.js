@@ -1056,7 +1056,10 @@ function gameLoop() {
 
     // Day/night cycle update
     if (typeof _updateDayNight === 'function') _updateDayNight();
-    updateUI();
+
+    // Dirty-check: skip DOM writes when nothing display-relevant changed
+    const _snap = `${Math.floor(gameState.cash)}|${gameState.energy|0}|${gameState.reputation.toFixed(1)}|${gameState.hour}|${gameState.minute}|${gameState.weather}|${gameState.driverCoins|0}|${gameState.vtkBalance|0}|${(gameState.claimableQuests||[]).length}|${gameState.pendingRides.length}|${gameState.fleet.filter(c=>c.outOfService).length}`;
+    if (_snap !== window._gameLoopUiSnap) { window._gameLoopUiSnap = _snap; updateUI(); }
 }
 
 

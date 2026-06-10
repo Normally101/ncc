@@ -46,6 +46,25 @@ window.CE_Sec = {
             .replace(/javascript:/gi, '')
             .trim();
     },
+
+    // Build a SAFE user-facing error message. Never leaks DB internals
+    // (table/column names, Postgres constraint text, stack traces) to the UI.
+    // The raw error is logged to the console for debugging only.
+    // Postgres custom RAISE messages (code P0001) are game-domain and safe to show.
+    userError(prefix, err, opts) {
+        const o = opts || {};
+        try { if (err) console.warn('[CE]', prefix, err.code || '', err.message || err); } catch {}
+        let detail = '';
+        // PostgREST/Postgres "raise exception" (P0001) = intentional game-rule message → safe
+        const code = err && err.code;
+        const msg  = err && (err.message || '');
+        if (code === 'P0001' && msg && !/relation|column|schema|syntax|permission denied|violates/i.test(msg)) {
+            detail = ': ' + msg;
+        }
+        const support = (window.GAME_CONFIG || {}).SUPPORT_EMAIL;
+        const tail = o.support && support ? ` — Se il problema persiste scrivi a ${support}` : '';
+        return `${prefix}${detail || ', riprova'}${tail}`;
+    },
 };
 
 // ── 2. CLIENT-SIDE RATE LIMITER ──────────────────────────────────
@@ -118,6 +137,16 @@ window.CE_Sec = {
     const _errBuffer = [];
     let   _flushing  = false;
 
+    // Redact anything that looks like a secret or PII before it ever leaves the
+    // browser: JWTs, bearer tokens, emails, UUIDs, long hex/base64 blobs.
+    function _redact(s) {
+        return String(s || '')
+            .replace(/eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}/g, '[jwt]')
+            .replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, '[email]')
+            .replace(/\b[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\b/gi, '[uuid]')
+            .replace(/\b(?:token|bearer|apikey|password|secret)\b[=:]\s*\S+/gi, '$1=[redacted]');
+    }
+
     async function _flush() {
         if (_flushing || !_errBuffer.length) return;
         if (!window.supabaseClient || !window.currentUser) return;
@@ -127,8 +156,8 @@ window.CE_Sec = {
             await window.supabaseClient.from('client_error_log').insert(
                 batch.map(e => ({
                     user_id:    window.currentUser?.id || null,
-                    error_msg:  e.msg.slice(0, 500),
-                    error_src:  (e.src || '').slice(0, 200),
+                    error_msg:  _redact(e.msg).slice(0, 500),
+                    error_src:  _redact(e.src).slice(0, 200),
                     error_line: e.line,
                     user_agent: navigator.userAgent.slice(0, 300),
                 }))

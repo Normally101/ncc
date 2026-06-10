@@ -56,11 +56,20 @@ window.claimQuestReward = function(questId) {
   const r = q.rewards;
   if (r.cash)       { gs.cash += r.cash; gs.annualProfitTracker = (gs.annualProfitTracker || 0) + r.cash; }
   if (r.vtk) {
-    gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;
-    // VTK-5: sync server-side balance (fire-and-forget, client is source of truth for now)
+    gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;   // optimistic
+    // VTK-5: il server applica il cap giornaliero (500) ed è autoritativo.
+    // Passiamo anche il mission_id per l'audit; riconciliamo il saldo locale con
+    // quanto il server ha REALMENTE accreditato (se cap raggiunto, < r.vtk).
     if (window.supabaseClient && window.currentUser?.id) {
-      window.supabaseClient.rpc('rpc_award_mission_vtk', { v_vtk_amount: r.vtk })
-        .then(({ error }) => { if (error) console.warn('[VTK-5] rpc_award_mission_vtk error:', error.message); });
+      window.supabaseClient.rpc('rpc_award_mission_vtk', { v_vtk_amount: r.vtk, v_mission_id: questId })
+        .then(({ data, error }) => {
+          if (error) { console.warn('[VTK-5] award error:', error.code || '', error.message || error); return; }
+          const awarded = data && typeof data.awarded === 'number' ? data.awarded : r.vtk;
+          if (awarded !== r.vtk) {                  // cap colpito → correggi l'ottimismo
+            gs.vtkBalance = Math.max(0, (gs.vtkBalance || 0) - (r.vtk - awarded));
+            if (typeof updateUI === 'function') updateUI();
+          }
+        });
     }
   }
   if (r.tc)         gs.driverCoins = (gs.driverCoins || 0) + r.tc;

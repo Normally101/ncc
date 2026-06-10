@@ -8,7 +8,12 @@
    ================================================================ */
 
 // ─── MAPBOX GL JS MAP ────────────────────────────────────────────
-const MAPBOX_TOKEN = 'pk.eyJ1IjoiZm9yZWlzYmFieSIsImEiOiJjbW9ocG14djEwN29tMnFzOTMzMDZjcjBtIn0.0SOq8l2z-w9M22v1s-fYKw';
+// Token PUBBLICO 'pk.' dedicato "chauffeur-empire-web", RISTRETTO PER DOMINIO
+// (allowedUrls: normally101.github.io, chauffeurempire.com, www., localhost).
+// Verificato: i domini non autorizzati ricevono 403 sui tile/render → niente
+// furto di quota. Scope read-only (styles/fonts/tiles/datasets/vision read).
+// Se aggiungi un nuovo dominio di hosting, aggiorna gli allowedUrls del token su Mapbox.
+const MAPBOX_TOKEN = 'pk.eyJ1IjoiZm9yZWlzYmFieSIsImEiOiJjbXE4anVidzAwOXRnMnNzZDF0cTljdHFhIn0.xQWjWXFRai5EgZA6Ah_V_g';
 var map = null; // var so window.map is accessible from all scripts (ui-meta.js etc.)
 let _mapReady = false;
 let _cantiereMarkers = {};

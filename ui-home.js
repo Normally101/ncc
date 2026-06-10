@@ -26,6 +26,41 @@ function _homeCashFmt(n) {
     return '€' + Math.floor(n);
 }
 
+function _homeStreakCard(gs) {
+    const streak = gs.loginStreak || 0;
+    const elapsed = Date.now() - (gs.lastDailyClaim || 0);
+    const cooldownMs = 20 * 3600 * 1000;
+    const canClaim = !gs.lastDailyClaim || elapsed >= cooldownMs;
+    const hoursLeft = canClaim ? 0 : Math.ceil((cooldownMs - elapsed) / 3600000);
+
+    const TIERS = [
+        { days:1,  cash:500,   tc:0  },
+        { days:2,  cash:1000,  tc:0  },
+        { days:3,  cash:1500,  tc:1  },
+        { days:5,  cash:2500,  tc:2  },
+        { days:7,  cash:5000,  tc:5  },
+        { days:14, cash:10000, tc:10 },
+        { days:30, cash:25000, tc:25 },
+    ];
+    const nextTier = TIERS.find(r => r.days > streak);
+    const nextFmt  = nextTier
+        ? `€${nextTier.cash.toLocaleString('it-IT')}${nextTier.tc ? ` +${nextTier.tc}DC` : ''}`
+        : `+${10 + Math.floor(Math.max(0,streak-7)/7)*10}% bonus`;
+    const nextInfo = nextTier ? `ancora ${nextTier.days - streak}g → ${nextFmt}` : `+10% ogni 7 giorni`;
+
+    const cycleDay = streak > 0 ? ((streak - 1) % 7) + 1 : 0;
+    const dots = Array.from({ length: 7 }, (_, i) => {
+        const on = i < cycleDay;
+        return `<span style="width:9px;height:9px;border-radius:50%;background:${on?'#c79a2a':'var(--em-line)'};border:1.5px solid ${on?'#c79a2a':'var(--em-muted)'}"></span>`;
+    }).join('');
+
+    const badge = canClaim
+        ? `<span class="em-pill em-pill--green" style="font-size:10px">Torna oggi!</span>`
+        : `<span class="em-pill em-pill--gray" style="font-size:10px">tra ${hoursLeft}h</span>`;
+
+    return `<div class="em-card" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px;padding:9px 14px;flex-wrap:wrap"><div style="font-size:22px;line-height:1">🔥</div><div><div style="font-size:13px;font-weight:700;color:var(--em-ink)">Streak ${streak} Giorni</div><div style="font-size:10px;color:var(--em-muted)">${nextInfo}</div></div><div style="display:flex;gap:4px;align-items:center;margin-left:4px">${dots}</div><div style="margin-left:auto">${badge}</div></div></div>`;
+}
+
 // ── main render — eRepublik-modern "EM" kit (vedi style.css .em*) ──────
 window.renderTabHome = function() {
     const c = document.getElementById('tab-container');
@@ -155,6 +190,8 @@ window.renderTabHome = function() {
 
   ${(typeof window.renderOnboardingHTML==='function') ? window.renderOnboardingHTML() : ''}
   ${(typeof window.renderConflictHTML==='function') ? window.renderConflictHTML() : ''}
+
+  ${_homeStreakCard(gs)}
 
   <div class="em-grid2">
 

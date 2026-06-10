@@ -8,9 +8,14 @@
    ================================================================ */
 
 // ── HELPER ERRORI ──────────────────────────────────────────────────────────────
+// Delega al sanitizzatore centrale: nessun dettaglio DB (tabelle/colonne/constraint)
+// raggiunge la UI; i messaggi di gioco intenzionali (P0001) restano visibili.
 function _p2pErrMsg(prefix, err) {
-    const se = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com';
-    return `${prefix}: ${err.message} — Se il problema persiste scrivi a ${se}`;
+    if (window.CE_Sec && typeof window.CE_Sec.userError === 'function') {
+        return window.CE_Sec.userError(prefix, err, { support: true });
+    }
+    try { console.warn('[P2P]', prefix, err && (err.message || err)); } catch {}
+    return `${prefix}, riprova.`;
 }
 
 // ── STATO LOCALE CACHE ─────────────────────────────────────────────────────────

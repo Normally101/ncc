@@ -76,8 +76,7 @@ window.b2bAcceptContract = async function(contractId, vehicleIds, driverIds) {
     });
 
     if (error) {
-        const se = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com';
-        showNotification(`Contratto non accettato: ${error.message} — Se il problema persiste scrivi a ${se}`, 'error');
+        showNotification(window.CE_Sec.userError('Contratto non accettato', error, { support: true }), 'error');
         return;
     }
 
@@ -109,8 +108,7 @@ window.b2bTerminateContract = async function(activeId) {
     });
 
     if (error) {
-        const se = (window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com';
-        showNotification(`Errore terminazione: ${error.message} — Se il problema persiste scrivi a ${se}`, 'error');
+        showNotification(window.CE_Sec.userError('Terminazione non riuscita', error, { support: true }), 'error');
         return;
     }
 

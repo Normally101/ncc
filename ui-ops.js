@@ -97,7 +97,8 @@ async function renderTabProvinces() {
         regions   = snap.regions   || [];
         influence = snap.influence  || {};
     } catch(e) {
-        container.innerHTML = `<div style="color:#db5746;font-size:11px;padding:16px">Errore caricamento territorio: ${e.message}</div>`;
+        try { console.warn('[Ops] territory load error', e && (e.message || e)); } catch {}
+        container.innerHTML = `<div style="color:#db5746;font-size:11px;padding:16px">Impossibile caricare il territorio, riprova.</div>`;
         return;
     }
 

@@ -110,7 +110,7 @@ window.tourismSubmitBid = async function(tenderId) {
         v_qualifying_vehicles: qv,
         v_pledge_cash:         pledgeAmt,
     });
-    if (error) { showNotification(`Errore offerta: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(window.CE_Sec.userError('Offerta non inviata', error), 'error'); return; }
     showNotification(`✅ Offerta inviata! Score: ${data.score}`, 'success');
     logToMap(`🌍 Offerta turismo inviata per "${tender.name}" — score ${data.score}`);
     await window.tourismRefresh(true);
@@ -120,7 +120,7 @@ window.tourismSubmitBid = async function(tenderId) {
 window.tourismCancelBid = async function(tenderId) {
     if (!_tUid()) return;
     const { error } = await _tSb().rpc('rpc_cancel_tourism_bid', { v_tender_id: tenderId });
-    if (error) { showNotification(`Errore: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(window.CE_Sec.userError('Annullamento non riuscito', error), 'error'); return; }
     showNotification('Offerta annullata.', 'info');
     await window.tourismRefresh(true);
     window.renderTabTourism();
@@ -133,7 +133,7 @@ window.tourismTerminate = async function(tenderId) {
     if (!confirm(`Terminare anticipatamente il contratto? Penale reputazione: −${repPenalty}★`)) return;
 
     const { data, error } = await _tSb().rpc('rpc_terminate_tourism_contract', { v_tender_id: tenderId });
-    if (error) { showNotification(`Errore: ${error.message}`, 'error'); return; }
+    if (error) { showNotification(window.CE_Sec.userError('Terminazione non riuscita', error), 'error'); return; }
 
     if (!window.ServerState?.isReady()) {
         gameState.reputation = Math.max(0, (gameState.reputation || 0) - (data.rep_penalty || 0));

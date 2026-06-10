@@ -13,93 +13,97 @@ function renderTabPolitics() {
     const inflVal   = parseFloat(inflPct);
     const rateVal   = parseFloat(ratePct);
 
-    const _inflColor = inflVal > 5 ? '#db5746' : inflVal < 2 ? '#1aa06a' : '#c79a2a';
-    const _rateColor = rateVal > 7 ? '#db5746' : rateVal < 3 ? '#1aa06a' : '#c79a2a';
+    const _inflColor = inflVal > 5 ? 'var(--em-red)' : inflVal < 2 ? 'var(--em-green)' : 'var(--em-gold)';
+    const _rateColor = rateVal > 7 ? 'var(--em-red)' : rateVal < 3 ? 'var(--em-green)' : 'var(--em-gold)';
 
-    const _pill = (t, c) => `<span style="display:inline-flex;padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;background:${c}18;border:1px solid ${c}44;color:${c}">${t}</span>`;
-    const _btn  = (t, fn, c, dis) => {
-        const bg = c==='gold'?'#fff8e8':c==='green'?'#0d2116':c==='red'?'#1e0d0d':'#ffffff';
-        const bd = c==='gold'?'#c79a2a':c==='green'?'#1a4731':c==='red'?'#471a1a':'#d6dee8';
-        const tc = c==='gold'?'#c79a2a':c==='green'?'#1aa06a':c==='red'?'#db5746':'#6a7480';
-        return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
+    const _pill = (t, c) => {
+        const cls = c==='#c79a2a'||c==='gold' ? 'em-pill--gold'
+            : c==='#1aa06a'||c==='green' ? 'em-pill--green'
+            : c==='#db5746'||c==='red'   ? 'em-pill--red'
+            : c==='#2f74c0'||c==='blue'  ? 'em-pill--blue'
+            : 'em-pill--gray';
+        return `<span class="em-pill ${cls}">${t}</span>`;
     };
 
     const lawsHtml = laws.map(l => {
         const owned     = active.includes(l.id);
         const canAfford = points >= l.pointsCost && (gameState.cash || 0) >= (l.cashCost || 0);
         return `
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:12px;background:#161b22;border:1px solid ${owned?'#c79a2a':'#d6dee8'};border-radius:6px;gap:12px">
-            <div style="flex:1;min-width:0">
-                <div style="font-size:12px;font-weight:700;color:${owned?'#c79a2a':'#1f2733'}">${l.icon} ${l.name}${owned?' ✓':''}</div>
-                <div style="font-size:10px;color:#6b7280;margin-top:3px;line-height:1.4">${l.desc}</div>
-                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-                    ${_pill(l.pointsCost + ' pt', points >= l.pointsCost ? '#c79a2a' : '#6a7480')}
-                    ${l.cashCost ? _pill('€'+l.cashCost.toLocaleString(), (gameState.cash||0)>=l.cashCost?'#1aa06a':'#db5746') : ''}
+        <div class="em-card" style="padding:12px;margin-bottom:6px${owned ? ';border-color:rgba(199,154,42,.5)' : ''}">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+                <div style="flex:1;min-width:0">
+                    <div style="font-size:12px;font-weight:700;margin-bottom:3px;color:${owned?'var(--em-gold)':'var(--em-ink)'}">${l.icon} ${l.name}${owned?' ✓':''}</div>
+                    <div style="font-size:10px;color:var(--em-muted);line-height:1.4;margin-bottom:8px">${l.desc}</div>
+                    <div style="display:flex;gap:6px;flex-wrap:wrap">
+                        ${_pill(l.pointsCost + ' pt', points >= l.pointsCost ? '#c79a2a' : '#6a7480')}
+                        ${l.cashCost ? _pill('€'+l.cashCost.toLocaleString('it'), (gameState.cash||0)>=l.cashCost?'#1aa06a':'#db5746') : ''}
+                    </div>
                 </div>
-            </div>
-            <div style="flex-shrink:0;margin-top:2px">
-                ${owned ? _pill('ATTIVA', '#1aa06a') : _btn('Approva', `passLobbyLaw('${l.id}')`, 'gold', !canAfford)}
+                <div style="flex-shrink:0;margin-top:2px">
+                    ${owned
+                        ? _pill('ATTIVA', '#1aa06a')
+                        : `<button class="em-goldbtn" onclick="passLobbyLaw('${l.id}')" ${canAfford?'':'disabled'} style="${canAfford?'':'opacity:.45;cursor:not-allowed'}">Approva</button>`}
+                </div>
             </div>
         </div>`;
     }).join('');
 
-    container.innerHTML = `
-<div style="padding:16px;max-width:800px">
+    container.innerHTML = `<div class="em"><div class="em-page em-wrap">
 
-    <div style="padding-bottom:16px;border-bottom:1px solid #21262d;margin-bottom:16px">
-        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Lobbying & Economia</div>
+    <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--em-line)">
+        <div class="em-sec" style="margin-bottom:4px">Lobbying &amp; Economia</div>
         <div style="display:flex;align-items:center;justify-content:space-between;gap:12px">
             <div>
-                <div style="font-size:20px;font-weight:700;color:#e6edf3;letter-spacing:-.01em">Politica & Decreti</div>
-                <div style="font-size:11px;color:#6b7280;margin-top:2px">${activeLaws} leggi attive · ${points} punti lobbying</div>
+                <div style="font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:2px">Politica &amp; Decreti</div>
+                <div style="font-size:11px;color:var(--em-muted)">${activeLaws} leggi attive · ${points} punti lobbying</div>
             </div>
-            <button onclick="window.decreesRefresh(true).then(()=>window.renderTabPolitics())" style="background:#161b22;border:1px solid #21262d;color:#6b7280;padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;font-family:monospace">↻ DECRETI</button>
+            <button class="em-ghbtn" onclick="window.decreesRefresh(true).then(()=>window.renderTabPolitics())" style="font-family:monospace">↻ DECRETI</button>
         </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Inflazione</div>
-            <div style="font-size:18px;font-weight:700;color:${_inflColor};font-family:monospace">${inflPct}%</div>
+    <div class="em-kpis" style="margin-bottom:16px">
+        <div class="em-kpi">
+            <div class="l">Inflazione</div>
+            <div class="v" style="color:${_inflColor}">${inflPct}%</div>
         </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Tasso BCE</div>
-            <div style="font-size:18px;font-weight:700;color:${_rateColor};font-family:monospace">${ratePct}%</div>
+        <div class="em-kpi">
+            <div class="l">Tasso BCE</div>
+            <div class="v" style="color:${_rateColor}">${ratePct}%</div>
         </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Pt Lobbying</div>
-            <div style="font-size:18px;font-weight:700;color:${points>0?'#c79a2a':'#1f2733'};font-family:monospace">${points}</div>
+        <div class="em-kpi">
+            <div class="l">Pt Lobbying</div>
+            <div class="v" style="color:${points>0?'var(--em-gold)':'var(--em-muted)'}">${points}</div>
         </div>
-        <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Leggi Attive</div>
-            <div style="font-size:18px;font-weight:700;color:${activeLaws>0?'#1aa06a':'#1f2733'};font-family:monospace">${activeLaws}<span style="font-size:11px;color:#6b7280">/${laws.length}</span></div>
+        <div class="em-kpi">
+            <div class="l">Leggi Attive</div>
+            <div class="v" style="color:${activeLaws>0?'var(--em-green)':'var(--em-muted)'}">${activeLaws}<span style="font-size:11px;color:var(--em-muted)">/${laws.length}</span></div>
         </div>
     </div>
 
-    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Finanziamento Politico</div>
-    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:20px">
+    <div class="em-sec" style="margin-bottom:8px">Finanziamento Politico</div>
+    <div class="em-card" style="padding:14px;margin-bottom:16px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
             <div>
-                <div style="font-size:12px;font-weight:700;color:#e6edf3">Donazione Politica</div>
-                <div style="font-size:10px;color:#6b7280;margin-top:2px">1.000€ = 1 punto lobbying</div>
+                <div style="font-size:12px;font-weight:700;margin-bottom:2px">Donazione Politica</div>
+                <div style="font-size:10px;color:var(--em-muted)">1.000€ = 1 punto lobbying</div>
             </div>
-            <div style="font-size:22px;font-weight:700;font-family:monospace;color:#c79a2a">${points} pt</div>
+            <div style="font-size:22px;font-weight:800;font-family:monospace;color:var(--em-gold)">${points} pt</div>
         </div>
         <div style="display:flex;gap:8px;align-items:center">
             <input id="lobby-donate-amt" type="number" min="1000" step="5000" value="10000"
-                style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 12px;color:#e6edf3;font-family:monospace;font-size:11px"
+                style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:5px;padding:8px 12px;color:var(--em-ink);font-family:monospace;font-size:11px"
                 placeholder="€ donazione">
-            ${_btn('Dona', "donateToLobby(document.getElementById('lobby-donate-amt').value)", 'gold', false)}
+            <button class="em-goldbtn" onclick="donateToLobby(document.getElementById('lobby-donate-amt').value)">Dona</button>
         </div>
     </div>
 
-    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Leggi Disponibili</div>
+    <div class="em-sec" style="margin-bottom:8px">Leggi Disponibili</div>
     ${laws.length === 0
-        ? `<div style="text-align:center;padding:20px;color:#6b7280;font-size:11px">Nessuna legge disponibile.</div>`
-        : `<div style="display:flex;flex-direction:column;gap:6px;margin-bottom:24px" class="ce-stagger">${lawsHtml}</div>`}
+        ? `<div class="em-empty">Nessuna legge disponibile.</div>`
+        : `<div style="margin-bottom:20px">${lawsHtml}</div>`}
 
     ${_renderDecreesSection(points)}
-</div>`;
+</div></div>`;
 }
 window.renderTabPolitics = renderTabPolitics;
 
@@ -107,26 +111,18 @@ function _renderDecreesSection(lobbyPoints) {
     const decrees = window._decreesState?.decrees || [];
     const passed  = window._decreesState?.activeDecrees || [];
 
-    const _pill = (t, c) => `<span style="display:inline-flex;padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;background:${c}18;border:1px solid ${c}44;color:${c}">${t}</span>`;
-    const _btn  = (t, fn, c, dis) => {
-        const bg = c==='gold'?'#fff8e8':'#ffffff';
-        const bd = c==='gold'?'#c79a2a':'#d6dee8';
-        const tc = c==='gold'?'#c79a2a':'#6a7480';
-        return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit">${t}</button>`;
-    };
-
     const passedHtml = passed.length === 0 ? '' : `
-    <div style="background:#0d2116;border:1px solid #1a4731;border-radius:6px;padding:14px;margin-bottom:12px">
-        <div style="font-size:9px;color:#1aa06a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Decreti Attivi (${passed.length})</div>
-        ${passed.map(d => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(63,185,80,0.12)">
-            <span style="font-size:11px;color:#e6edf3">${d.icon} ${d.title}</span>
-            <span style="font-size:9px;color:#6b7280;font-family:monospace">${d.ends_at ? new Date(d.ends_at).toLocaleDateString('it-IT') : 'Permanente'}</span>
+    <div class="em-card" style="padding:14px;margin-bottom:12px;border-color:rgba(26,160,106,.4)">
+        <div class="em-sec" style="margin-bottom:8px;color:var(--em-green)">Decreti Attivi (${passed.length})</div>
+        ${passed.map(d => `<div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(26,160,106,.12)">
+            <span style="font-size:11px">${d.icon} ${d.title}</span>
+            <span style="font-size:9px;color:var(--em-muted);font-family:monospace">${d.ends_at ? new Date(d.ends_at).toLocaleDateString('it-IT') : 'Permanente'}</span>
         </div>`).join('')}
     </div>`;
 
     let votingHtml = '';
     if (decrees.length === 0) {
-        votingHtml = `<div style="text-align:center;padding:20px;color:#6b7280;font-size:11px;background:#161b22;border:1px solid #21262d;border-radius:6px">Nessun decreto in votazione — aggiorna tra qualche minuto.</div>`;
+        votingHtml = `<div class="em-empty">Nessun decreto in votazione — aggiorna tra qualche minuto.</div>`;
     } else {
         votingHtml = decrees.map(d => {
             const isPassed  = d.status === 'passed';
@@ -135,7 +131,7 @@ function _renderDecreesSection(lobbyPoints) {
             const inputId   = `decree-pts-${d.id.substring(0, 8)}`;
             const countdownId = `decree-cd-${d.id.substring(0, 8)}`;
             const msLeft    = Math.max(0, new Date(d.expires_at) - Date.now());
-            const cdColor   = msLeft < 3600000 ? '#db5746' : msLeft < 86400000 ? '#e0922e' : '#6a7480';
+            const cdColor   = msLeft < 3600000 ? 'var(--em-red)' : msLeft < 86400000 ? 'var(--em-amber)' : 'var(--em-muted)';
 
             const _fmtMs = ms => {
                 const d2 = Math.floor(ms / 86400000), h2 = Math.floor((ms % 86400000) / 3600000), m2 = Math.floor((ms % 3600000) / 60000);
@@ -156,37 +152,35 @@ function _renderDecreesSection(lobbyPoints) {
                 return null;
             }).filter(Boolean);
 
-            const barColor = isPassed ? '#1aa06a' : '#c79a2a';
-
             return `
-            <div style="background:#161b22;border:1px solid ${isPassed?'#1a4731':'#d6dee8'};border-radius:6px;padding:14px;margin-bottom:8px">
+            <div class="em-card" style="padding:14px;margin-bottom:8px${isPassed?';border-color:rgba(26,160,106,.4)':''}">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:10px">
                     <div style="flex:1;min-width:0">
-                        <div style="font-size:11px;font-weight:700;color:${isPassed?'#1aa06a':'#1f2733'}">${d.icon} ${d.title}${isPassed?' ✓':''}</div>
-                        <div style="font-size:10px;color:#6b7280;margin-top:3px;line-height:1.4">${d.description||''}</div>
-                        ${fxBadges.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${fxBadges.map(b => _pill(b, '#2f74c0')).join('')}</div>` : ''}
+                        <div style="font-size:11px;font-weight:700;color:${isPassed?'var(--em-green)':'var(--em-ink)'};margin-bottom:3px">${d.icon} ${d.title}${isPassed?' ✓':''}</div>
+                        <div style="font-size:10px;color:var(--em-muted);line-height:1.4">${d.description||''}</div>
+                        ${fxBadges.length ? `<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${fxBadges.map(b => `<span class="em-pill em-pill--blue">${b}</span>`).join('')}</div>` : ''}
                     </div>
                     <div style="flex-shrink:0;text-align:right">
                         ${isPassed
-                            ? _pill('APPROVATO', '#1aa06a')
+                            ? `<span class="em-pill em-pill--green">APPROVATO</span>`
                             : `<div id="${countdownId}" style="font-size:9px;color:${cdColor};font-family:monospace">${_fmtMs(msLeft)}</div>
-                               ${myVotes > 0 ? `<div style="font-size:9px;color:#2f74c0;margin-top:2px;font-family:monospace">Votato: ${myVotes}pt</div>` : ''}`}
+                               ${myVotes > 0 ? `<div style="font-size:9px;color:var(--em-blue);margin-top:2px;font-family:monospace">Votato: ${myVotes}pt</div>` : ''}`}
                     </div>
                 </div>
                 <div style="margin-bottom:${isPassed?'0':'10px'}">
-                    <div style="display:flex;justify-content:space-between;font-size:9px;color:#6b7280;margin-bottom:4px;font-family:monospace">
+                    <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--em-muted);margin-bottom:4px;font-family:monospace">
                         <span>${d.votes_current}/${d.votes_required} voti</span>
                         <span>${pct}%</span>
                     </div>
-                    <div style="height:3px;background:#21262d;border-radius:2px;overflow:hidden">
-                        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:2px;transition:width .3s"></div>
+                    <div class="em-prog">
+                        <i style="width:${pct}%;background:${isPassed?'var(--em-green)':'var(--em-gold)'};transition:width .3s"></i>
                     </div>
                 </div>
                 ${!isPassed ? `<div style="display:flex;gap:8px;align-items:center">
                     <input id="${inputId}" type="number" min="1" max="${lobbyPoints}" value="1"
-                        style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:7px 10px;color:#e6edf3;font-family:monospace;font-size:11px"
+                        style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:5px;padding:7px 10px;color:var(--em-ink);font-family:monospace;font-size:11px"
                         placeholder="punti">
-                    ${_btn('Vota', `window.voteServerDecree('${d.id}', document.getElementById('${inputId}').value)`, 'gold', lobbyPoints < 1)}
+                    <button class="em-goldbtn" onclick="window.voteServerDecree('${d.id}', document.getElementById('${inputId}').value)" ${lobbyPoints < 1 ? 'disabled style="opacity:.45;cursor:not-allowed"' : ''}>Vota</button>
                 </div>` : ''}
             </div>`;
         }).join('');
@@ -209,10 +203,10 @@ function _renderDecreesSection(lobbyPoints) {
                 const ms = Math.max(0, expires - now);
                 const d2 = Math.floor(ms / 86400000), h2 = Math.floor((ms % 86400000) / 3600000), m2 = Math.floor((ms % 3600000) / 60000);
                 let txt, col;
-                if (d2 > 0)      { txt = `${d2}g ${h2}h rimasti`; col = '#6a7480'; }
-                else if (h2 > 0) { txt = `${h2}h ${m2}m rimasti`; col = '#e0922e'; }
-                else if (m2 > 0) { txt = `⚠ ${m2}m rimasti`;      col = '#db5746'; }
-                else             { txt = `⚠ scade ora`;            col = '#db5746'; }
+                if (d2 > 0)      { txt = `${d2}g ${h2}h rimasti`; col = 'var(--em-muted)'; }
+                else if (h2 > 0) { txt = `${h2}h ${m2}m rimasti`; col = 'var(--em-amber)'; }
+                else if (m2 > 0) { txt = `⚠ ${m2}m rimasti`;      col = 'var(--em-red)'; }
+                else             { txt = `⚠ scade ora`;            col = 'var(--em-red)'; }
                 el.textContent = txt;
                 el.style.color = col;
             });
@@ -221,8 +215,8 @@ function _renderDecreesSection(lobbyPoints) {
     });
 
     return `
-    <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;font-weight:600">Decreti Server — Votazione Globale</div>
-    <div style="font-size:11px;color:#6b7280;margin-bottom:12px;line-height:1.5">Vota con i tuoi punti lobbying. Al raggiungimento della soglia, l'effetto si applica a <strong style="color:#e6edf3">tutti</strong> i giocatori.</div>
+    <div class="em-sec" style="margin-bottom:8px">Decreti Server — Votazione Globale</div>
+    <div style="font-size:11px;color:var(--em-muted);margin-bottom:12px;line-height:1.5">Vota con i tuoi punti lobbying. Al raggiungimento della soglia, l'effetto si applica a <strong>tutti</strong> i giocatori.</div>
     ${passedHtml}
     <div>${votingHtml}</div>`;
 }

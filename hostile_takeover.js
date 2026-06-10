@@ -7,24 +7,28 @@ window.renderTabOPA = async function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
-        <div>
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">M&amp;A</div>
-            <div style="font-size:20px;font-weight:700;color:#e6edf3">OPA Ostili</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:4px">Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto</div>
+    container.innerHTML = `<div class="em"><div class="em-page em-wrap">
+        <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--em-line);display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+                <div class="em-sec" style="margin-bottom:4px">M&amp;A</div>
+                <div style="font-size:20px;font-weight:800;margin-bottom:2px">OPA Ostili</div>
+                <div style="font-size:11px;color:var(--em-muted)">Rastrella il 51% delle azioni di un rivale per diventarne il padrone occulto</div>
+            </div>
+            <span class="em-pill em-pill--gold">51% → Controllo</span>
         </div>
-        <span style="font-size:9px;font-weight:700;color:#c79a2a;background:rgba(212,175,55,0.12);border:1px solid rgba(212,175,55,0.3);border-radius:4px;padding:3px 8px">51% → Controllo</span>
-    </div>` + `<div>
-      <div style="background:rgba(234,179,8,0.04);border:1px solid rgba(234,179,8,0.3);border-radius:6px;padding:16px;margin-bottom:16px;font-size:11px;color:#fde68a;line-height:1.5">
-        <strong>Come funziona:</strong> Compra azioni di un rivale quotato in borsa dal tab Finance.
-        Quando raggiungi il <strong>51%</strong>, scatta l'OPA ostile: il <strong>20%</strong> di ogni sua corsa
-        futura finisce nelle tue tasche come dividendo.
-      </div>
 
-      <div id="opa-list" style="display:flex;flex-direction:column;gap:12px">
-        <div style="text-align:center;padding:32px 0;color:var(--text-dim);font-size:11px">Caricamento…</div>
-      </div>
-    </div>`;
+        <div class="em-card" style="padding:14px;margin-bottom:14px;border-color:rgba(199,154,42,.35)">
+            <div style="font-size:11px;color:var(--em-gold);line-height:1.5">
+                <strong>Come funziona:</strong> Compra azioni di un rivale quotato in borsa dal tab Finance.
+                Quando raggiungi il <strong>51%</strong>, scatta l'OPA ostile: il <strong>20%</strong> di ogni sua corsa
+                futura finisce nelle tue tasche come dividendo.
+            </div>
+        </div>
+
+        <div id="opa-list" style="display:flex;flex-direction:column;gap:10px">
+            <div class="em-empty">Caricamento…</div>
+        </div>
+    </div></div>`;
 
     await _loadOPAList();
 };
@@ -41,15 +45,16 @@ async function _loadOPAList() {
     } catch(e) { error = e; }
 
     if (error) {
-        list.innerHTML = `<div style="color:#db5746;font-size:12px;padding:16px">Errore: ${error.message || error}</div>`;
+        try { console.warn('[OPA] load error', error.code || '', error.message || error); } catch {}
+        list.innerHTML = `<div style="color:var(--em-red);font-size:12px;padding:16px">Impossibile caricare le acquisizioni, riprova.</div>`;
         return;
     }
 
     if (!data || !data.length) {
         list.innerHTML = `
-        <div style="text-align:center;padding:48px 0">
+        <div style="text-align:center;padding:40px 0">
           <div style="font-size:48px;margin-bottom:12px">🤝</div>
-          <div style="color:#6b7280;font-size:12px">Nessuna OPA in corso.<br>
+          <div class="em-empty">Nessuna OPA in corso.<br>
           Compra azioni di un rivale dal tab Finance → Borsa per iniziare.</div>
         </div>`;
         return;
@@ -64,54 +69,54 @@ function _renderOPACard(opa) {
     const since    = new Date(opa.triggered_at).toLocaleDateString('it-IT');
 
     const roleLabel = isTarget
-        ? '<span style="background:rgba(239,68,68,0.2);color:#db5746;border:1px solid rgba(239,68,68,0.3);font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700">⚠️ Sei il TARGET</span>'
+        ? `<span class="em-pill em-pill--red">⚠️ Sei il TARGET</span>`
         : isRaider
-        ? '<span style="background:rgba(34,197,94,0.2);color:#1aa06a;border:1px solid rgba(34,197,94,0.3);font-size:11px;padding:2px 8px;border-radius:99px;font-weight:700">🦅 Sei il RAIDER</span>'
-        : '<span style="background:rgba(107,114,128,0.2);color:#6b7280;border:1px solid rgba(107,114,128,0.3);font-size:11px;padding:2px 8px;border-radius:99px">👁 Osservatore</span>';
+        ? `<span class="em-pill em-pill--green">🦅 Sei il RAIDER</span>`
+        : `<span class="em-pill em-pill--gray">👁 Osservatore</span>`;
 
     const buybackBtn = isTarget ? `
-    <button
-      onclick="window._opaRequestBuyback('${opa.opa_id}', ${opa.buyback_price})"
-      style="width:100%;margin-top:12px;padding:12px;border-radius:6px;font-weight:700;font-size:12px;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.4);color:#2f74c0;cursor:pointer">
+    <button class="em-bbtn" onclick="window._opaRequestBuyback('${opa.opa_id}', ${opa.buyback_price})"
+      style="width:100%;margin-top:12px;box-sizing:border-box">
       🛡️ Riacquista maggioranza — €${Number(opa.buyback_price).toLocaleString('it-IT')}
     </button>` : '';
 
-    const borderClr = isTarget ? 'rgba(239,68,68,0.3)' : isRaider ? 'rgba(34,197,94,0.3)' : '#d6dee8';
-    const bgClr     = isTarget ? 'rgba(239,68,68,0.05)' : isRaider ? 'rgba(34,197,94,0.05)' : '#eef1f5';
+    const borderC = isTarget ? 'rgba(219,87,70,.35)' : isRaider ? 'rgba(26,160,106,.35)' : 'var(--em-line)';
 
     return `
-    <div style="background:${bgClr};border:1px solid ${borderClr};border-radius:6px;padding:20px">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px">
+    <div class="em-card" style="padding:16px;border-color:${borderC}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px">
         <div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
-            <span style="color:#e6edf3;font-weight:700;font-size:12px">${opa.raider_company}</span>
-            <span style="color:#6b7280;font-size:11px">vs</span>
-            <span style="color:#e6edf3;font-weight:700;font-size:12px">${opa.target_company}</span>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap">
+            <span style="font-weight:700;font-size:12px">${opa.raider_company}</span>
+            <span style="color:var(--em-muted);font-size:11px">vs</span>
+            <span style="font-weight:700;font-size:12px">${opa.target_company}</span>
           </div>
-          <div style="font-size:11px;color:#6b7280">In corso dal ${since}</div>
+          <div style="font-size:11px;color:var(--em-muted)">In corso dal ${since}</div>
         </div>
         ${roleLabel}
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-        <div style="background:#21262d;border-radius:6px;padding:12px;text-align:center">
-          <div style="font-size:18px;font-weight:700;color:#e0922e">${Number(opa.raider_pct).toFixed(1)}%</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px">Quota raider</div>
+      <div class="em-kpibar" style="margin-bottom:12px">
+        <div class="k" style="text-align:center">
+          <div class="l">Quota raider</div>
+          <div class="v" style="color:var(--em-amber)">${Number(opa.raider_pct).toFixed(1)}%</div>
         </div>
-        <div style="background:#21262d;border-radius:6px;padding:12px;text-align:center">
-          <div style="font-size:18px;font-weight:700;color:#1aa06a">€${Number(opa.total_dividends || 0).toLocaleString('it-IT')}</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px">Dividendi totali</div>
+        <div class="k" style="text-align:center">
+          <div class="l">Dividendi totali</div>
+          <div class="v" style="color:var(--em-green)">€${Number(opa.total_dividends || 0).toLocaleString('it-IT')}</div>
         </div>
-        <div style="background:#21262d;border-radius:6px;padding:12px;text-align:center">
-          <div style="font-size:18px;font-weight:700;color:#2f74c0">€${Number(opa.buyback_price).toLocaleString('it-IT')}</div>
-          <div style="font-size:11px;color:#6b7280;margin-top:2px">Prezzo buyback</div>
+        <div class="k" style="text-align:center">
+          <div class="l">Prezzo buyback</div>
+          <div class="v" style="color:var(--em-blue)">€${Number(opa.buyback_price).toLocaleString('it-IT')}</div>
         </div>
       </div>
 
-      <div style="font-size:11px;color:#6b7280;background:#0d1117;border-radius:6px;padding:10px">
-        💸 <strong style="color:#facc15">20%</strong> di ogni corsa completata da
-        <span style="color:#e6edf3">${opa.target_company}</span>
-        va automaticamente a <span style="color:#e6edf3">${opa.raider_company}</span>
+      <div class="em-card" style="padding:9px 12px">
+        <span style="font-size:11px;color:var(--em-muted)">💸 </span><strong style="color:var(--em-gold)">20%</strong>
+        <span style="font-size:11px;color:var(--em-muted)"> di ogni corsa completata da </span>
+        <span style="font-size:11px;font-weight:700">${opa.target_company}</span>
+        <span style="font-size:11px;color:var(--em-muted)"> va a </span>
+        <span style="font-size:11px;font-weight:700">${opa.raider_company}</span>
       </div>
 
       ${buybackBtn}
@@ -145,7 +150,7 @@ window._opaRequestBuyback = async function(opaId, price) {
         await _loadOPAList();
     } catch(e) {
         if (typeof showNotification === 'function') {
-            showNotification('❌ Errore buyback: ' + (e.message || e), 'error');
+            showNotification('❌ ' + window.CE_Sec.userError('Buyback non riuscito', e), 'error');
         }
     }
 };

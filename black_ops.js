@@ -10,8 +10,6 @@ window._shadowState = {
     _lastFetch: 0,
 };
 
-// ── OP DEFINITIONS ────────────────────────────────────────────────────────────
-
 window.SHADOW_OPS = [
     {
         id:    'spy_fleet',
@@ -19,7 +17,6 @@ window.SHADOW_OPS = [
         desc:  'Rivela dimensione e tier massimo della flotta nemica.',
         cost:  15000,
         risk:  'Basso',
-        riskCls: 'text-green-400',
         successMsg: (r) => `Flotta rivelata: ${r.fleet_size || '?'} veicoli, tier max: ${r.top_tier || '?'}`,
     },
     {
@@ -28,7 +25,6 @@ window.SHADOW_OPS = [
         desc:  'Ottieni una stima del cash e dei ricavi giornalieri del target.',
         cost:  20000,
         risk:  'Basso',
-        riskCls: 'text-green-400',
         successMsg: () => 'Report finanziario acquisito.',
     },
     {
@@ -37,7 +33,6 @@ window.SHADOW_OPS = [
         desc:  'Pubblica recensioni negative. Il target perde −0.15 reputazione.',
         cost:  25000,
         risk:  'Medio',
-        riskCls: 'text-yellow-400',
         successMsg: () => '−0.15★ reputazione inflitta al target.',
     },
     {
@@ -46,7 +41,6 @@ window.SHADOW_OPS = [
         desc:  'Sottrarre un cliente VIP al competitor. Aumenta le tue corse VIP per 24h.',
         cost:  40000,
         risk:  'Medio',
-        riskCls: 'text-yellow-400',
         successMsg: () => '+30% corse VIP per 24h.',
     },
     {
@@ -55,7 +49,6 @@ window.SHADOW_OPS = [
         desc:  'Corrompi un autista del target. Viene bloccato per 8h.',
         cost:  50000,
         risk:  'Alto',
-        riskCls: 'text-orange-400',
         successMsg: () => 'Autista del target bloccato per 8h.',
     },
     {
@@ -64,7 +57,6 @@ window.SHADOW_OPS = [
         desc:  'Causa danno fisico a un veicolo casuale del target (−20 condizione).',
         cost:  80000,
         risk:  'Molto Alto',
-        riskCls: 'text-red-400',
         successMsg: (r) => `Veicolo sabotato: −${r.condition_damage || 20} condizione.`,
     },
     {
@@ -73,12 +65,10 @@ window.SHADOW_OPS = [
         desc:  'Intercetta una corsa premium del target e divertila a te.',
         cost:  60000,
         risk:  'Alto',
-        riskCls: 'text-orange-400',
         successMsg: () => 'Corsa premium intercettata.',
     },
 ];
 
-// Defense upgrade tiers
 const _DEFENSE_TIERS = [
     { level: 1, name: 'Guardia Base',     cost: 50000,  desc: '−8% successo operazioni nemiche' },
     { level: 2, name: 'Controspionaggio', cost: 100000, desc: '−16% successo; avviso attacchi rilevati' },
@@ -87,14 +77,13 @@ const _DEFENSE_TIERS = [
     { level: 5, name: 'Fortezza Ombra',  cost: 800000, desc: 'Massima protezione. −40% su tutto.' },
 ];
 
-// ── HELPERS ───────────────────────────────────────────────────────────────────
-
 function _sErr(prefix, err) {
-    const email = (window.GAME_CONFIG || {}).SUPPORT_EMAIL || 'support@chauffeurempire.com';
-    return `${prefix}: ${(err && err.message) || err || 'errore'} — ${email}`;
+    if (window.CE_Sec && typeof window.CE_Sec.userError === 'function') {
+        return window.CE_Sec.userError(prefix, err, { support: true });
+    }
+    try { console.warn('[SHADOW]', prefix, err && (err.message || err)); } catch {}
+    return `${prefix}, riprova.`;
 }
-
-// ── DATA LAYER ────────────────────────────────────────────────────────────────
 
 window.shadowRefresh = async function(force = false) {
     const now = Date.now();
@@ -143,7 +132,6 @@ window.shadowExecuteOp = async function(targetId, opId) {
         if(typeof showNotification==='function') showNotification(`✅ ${op.name}: ${msg}`, 'success');
         if(typeof logToMap==='function') logToMap(`🕵️ Op. Ombra riuscita: ${op.name} su ${target.name || 'target'}.`);
 
-        // Apply local effects for buy_off_client (VIP ride bonus)
         if (opId === 'buy_off_client' && typeof gameState !== 'undefined') {
             gameState.activeDynamicEvent = {
                 ...(gameState.activeDynamicEvent || {}),
@@ -165,7 +153,6 @@ window.shadowExecuteOp = async function(targetId, opId) {
 window.shadowUpgradeDefense = async function() {
     const sb = window.supabaseClient;
     if (!sb) return;
-    // Get current defense level from log (most recent op received)
     const currentLevel = gameState._shadowDefenseLevel || 0;
     const tier = _DEFENSE_TIERS[currentLevel];
     if (!tier) { if(typeof showNotification==='function') showNotification('Difesa già al massimo!', 'error'); return; }
@@ -185,8 +172,6 @@ window.shadowUpgradeDefense = async function() {
     if (typeof window.switchTab === 'function') window.switchTab('shadow');
 };
 
-// ── TAB RENDERER ──────────────────────────────────────────────────────────────
-
 window.renderTabShadow = function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
@@ -198,81 +183,78 @@ window.renderTabShadow = function() {
     const nextTier = _DEFENSE_TIERS[defLevel];
 
     const targetsHtml = targets.length === 0
-        ? '<div style="font-size:10px;color:#6b7280;text-align:center;padding:24px 0">Nessun target disponibile.<br>Scala la classifica reputazione per sbloccare competitor.</div>'
+        ? `<div class="em-empty">Nessun target disponibile.<br>Scala la classifica reputazione per sbloccare competitor.</div>`
         : targets.map(t => `
-            <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px">
+            <div class="em-card" style="padding:12px;margin-bottom:8px">
               <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
                 <div>
-                  <div style="font-size:12px;font-weight:700;color:#e6edf3">${t.name || 'Anonimo'}</div>
-                  <div style="font-size:10px;color:#6b7280;margin-top:2px">⭐ ${(t.reputation || 0).toFixed(1)} · Difesa Lv.${t.defense_lvl || 0}</div>
+                  <div style="font-size:12px;font-weight:700;margin-bottom:2px">${t.name || 'Anonimo'}</div>
+                  <div style="font-size:10px;color:var(--em-muted)">⭐ ${(t.reputation || 0).toFixed(1)} · Difesa Lv.${t.defense_lvl || 0}</div>
                 </div>
-                <div style="font-size:9px;color:#6b7280">${t.hq_city || ''}</div>
+                <div style="font-size:9px;color:var(--em-muted)">${t.hq_city || ''}</div>
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:4px">
                 ${window.SHADOW_OPS.map(op => `
-                  <button onclick="window.shadowExecuteOp('${t.user_id}','${op.id}')"
+                  <button class="em-ghbtn" onclick="window.shadowExecuteOp('${t.user_id}','${op.id}')"
                     title="${op.desc} — €${op.cost.toLocaleString()}"
-                    style="font-size:8px;background:#0d1117;border:1px solid #21262d;color:#6b7280;border-radius:4px;padding:3px 7px;cursor:pointer;${(gameState.cash||0) < op.cost ? 'opacity:.4' : ''};transition:opacity .15s"
-                    onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                    style="font-size:8px;padding:3px 7px;${(gameState.cash||0) < op.cost ? 'opacity:.4' : ''}">
                     ${op.name.split(' ')[0]} €${Math.round(op.cost/1000)}k
                   </button>`).join('')}
               </div>
             </div>`).join('');
 
     const logHtml = log.length === 0
-        ? '<div style="font-size:10px;color:#6b7280;text-align:center;padding:16px 0">Nessuna operazione registrata.</div>'
+        ? `<div class="em-empty">Nessuna operazione registrata.</div>`
         : log.slice(0, 15).map(l => {
             const op = window.SHADOW_OPS.find(o => o.id === l.op_type) || {};
-            const role = l.is_attacker ? '🗡️ Attacco' : '🛡️ Difesa';
+            const role   = l.is_attacker ? '🗡️ Attacco' : '🛡️ Difesa';
             const status = l.success ? '✅' : l.detected ? '❌ Rilevato' : '❌';
             return `
-              <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;padding:7px 0;border-bottom:1px solid #21262d">
-                <div>
-                  <span style="color:#6b7280">${role}</span>
-                  <span style="color:#e6edf3;margin-left:6px">${op.name || l.op_type}</span>
+              <div class="em-lrow" style="font-size:10px">
+                <div style="flex:1">
+                  <span style="color:var(--em-muted)">${role}</span>
+                  <span style="margin-left:6px">${op.name || l.op_type}</span>
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
-                  <span style="color:#6b7280;font-family:monospace">€${(l.op_cost||0).toLocaleString()}</span>
+                  <span style="color:var(--em-muted);font-family:monospace">€${(l.op_cost||0).toLocaleString()}</span>
                   <span>${status}</span>
                 </div>
               </div>`;
           }).join('');
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
-        <div>
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Operazioni</div>
-            <div style="font-size:20px;font-weight:700;color:#e6edf3">Agenzia Ombra</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:4px">${targets.length} target disponibili · Difesa Lv.${defLevel}/5</div>
+    container.innerHTML = `<div class="em"><div class="em-page em-wrap">
+        <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--em-line);display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+                <div class="em-sec" style="margin-bottom:4px">Operazioni</div>
+                <div style="font-size:20px;font-weight:800;margin-bottom:2px">Agenzia Ombra</div>
+                <div style="font-size:11px;color:var(--em-muted)">${targets.length} target disponibili · Difesa Lv.${defLevel}/5</div>
+            </div>
+            <button class="em-ghbtn" onclick="window.shadowRefresh(true).then(()=>window.switchTab('shadow'))">↻ Aggiorna</button>
         </div>
-        <button onclick="window.shadowRefresh(true).then(()=>window.switchTab('shadow'))" style="background:#161b22;border:1px solid #21262d;color:#6b7280;padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">↻ Aggiorna</button>
-    </div>
 
-    <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:16px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-size:10px;font-weight:700;color:#e6edf3">🛡️ Difesa Aziendale</div>
-            <div style="font-size:10px;color:#6b7280">Lv.${defLevel}/5</div>
+        <div class="em-card" style="padding:14px;margin-bottom:16px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <div style="font-size:11px;font-weight:700">🛡️ Difesa Aziendale</div>
+                <div style="font-size:10px;color:var(--em-muted)">Lv.${defLevel}/5</div>
+            </div>
+            <div class="em-prog" style="margin-bottom:8px">
+                <i style="width:${Math.round(defLevel/5*100)}%;background:var(--em-blue);transition:width .3s"></i>
+            </div>
+            ${nextTier
+                ? `<div style="font-size:9px;color:var(--em-muted);margin-bottom:8px">Prossimo: ${nextTier.name} — €${nextTier.cost.toLocaleString()}</div>
+                   <button class="em-goldbtn" onclick="window.shadowUpgradeDefense()" style="width:100%;${(gameState.cash||0) < nextTier.cost ? 'opacity:.45;cursor:not-allowed' : ''}">🛡️ Potenzia Difesa</button>`
+                : `<div style="font-size:9px;color:var(--em-green)">Difesa massima raggiunta!</div>`}
         </div>
-        <div style="height:6px;border-radius:3px;background:#e6eaf0;overflow:hidden;margin-bottom:8px">
-            <div style="height:100%;width:${Math.round(defLevel/5*100)}%;background:#2f74c0;border-radius:3px;transition:width .3s"></div>
+
+        <div class="em-sec" style="margin-bottom:10px;color:var(--em-gold)">🎯 Target Disponibili</div>
+        ${targetsHtml}
+
+        <div class="em-sec" style="margin-bottom:8px;margin-top:16px">📋 Registro Operazioni</div>
+        <div class="em-card">
+            ${logHtml}
         </div>
-        ${nextTier
-            ? `<div style="font-size:9px;color:#6b7280;margin-bottom:8px">Prossimo: ${nextTier.name} — €${nextTier.cost.toLocaleString()}</div>
-               <button onclick="window.shadowUpgradeDefense()"
-                 style="width:100%;padding:6px;font-size:9px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${(gameState.cash||0) < nextTier.cost ? 'opacity:.4' : ''};transition:opacity .15s"
-                 onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
-                 🛡️ Potenzia Difesa
-               </button>`
-            : '<div style="font-size:9px;color:#1aa06a">Difesa massima raggiunta!</div>'}
-    </div>
-
-    <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">🎯 Target Disponibili</div>
-    ${targetsHtml}
-
-    <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;padding-top:12px;margin-top:16px;border-top:1px solid #21262d;margin-bottom:8px">📋 Registro Operazioni</div>
-    ${logHtml}`;
+    </div></div>`;
 };
-
-// ── INIT ──────────────────────────────────────────────────────────────────────
 
 window.shadowInit = async function() {
     if (!gameState._shadowDefenseLevel) gameState._shadowDefenseLevel = 0;

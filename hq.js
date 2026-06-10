@@ -191,15 +191,13 @@ window.hqSwitchCity = function(cityId) {
 window.renderTabHQ = function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
-    
-    // Ensure initialized
+
     if (!gameState.hqs) window.hqInit();
 
     const currentCityId = gameState.currentHQCity || 'roma';
     const cityData = window.HQ_CITIES.find(c => c.id === currentCityId);
-    
+
     let totalScore = 0;
-    // Calculate total score across all cities
     for (const cid of Object.keys(gameState.hqs)) {
         const rooms = gameState.hqs[cid].rooms || {};
         for (const [rId, lvl] of Object.entries(rooms)) {
@@ -212,50 +210,45 @@ window.renderTabHQ = function() {
             }
         }
     }
-    
+
     const fx = window.hqAllEffects();
 
-    // City Selector Tabs
     const cityTabsHtml = window.HQ_CITIES.map(c => `
         <button onclick="window.hqSwitchCity('${c.id}')"
-                style="padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;border:1px solid ${c.id === currentCityId ? '#c79a2a' : '#d6dee8'};background:${c.id === currentCityId ? '#fff8e8' : '#f3f6f9'};color:${c.id === currentCityId ? '#c79a2a' : '#6a7480'};cursor:pointer;transition:opacity .15s">
+                class="${c.id === currentCityId ? 'em-goldbtn' : 'em-ghbtn'}"
+                style="font-size:11px;white-space:nowrap">
             ${c.icon} ${c.name}
         </button>
     `).join('');
 
-    // Room List for Current City
-    const cityRooms = window.hqGetCityRooms(currentCityId);
+    const cityRooms    = window.hqGetCityRooms(currentCityId);
     const availableRooms = window.HQ_ROOMS.filter(r => (!r.citySpecific || r.citySpecific.includes(currentCityId)));
-    
+
     let roomListHtml = '';
-    
     for (const r of availableRooms) {
-        const currentLevel = cityRooms[r.id] || 0;
-        const nextTier = r.tiers.find(t => t.level === currentLevel + 1);
-        const isMaxLevel = !nextTier;
-        
-        const isLocked = currentLevel === 0 && !r.prereqs.every(p => window.hqHasRoomInCity(currentCityId, p));
-        
-        const tDef = currentLevel > 0 ? r.tiers.find(t => t.level === currentLevel) : null;
-        
+        const currentLevel    = cityRooms[r.id] || 0;
+        const nextTier        = r.tiers.find(t => t.level === currentLevel + 1);
+        const isMaxLevel      = !nextTier;
+        const isLocked        = currentLevel === 0 && !r.prereqs.every(p => window.hqHasRoomInCity(currentCityId, p));
         const canAffordUpgrade = nextTier && (gameState.cash||0) >= nextTier.cost && (gameState.reputation||0) >= nextTier.reqRep;
+
         roomListHtml += `
-          <div style="background:rgba(255,255,255,0.03);border:1px solid ${isLocked ? '#eef1f5' : '#d6dee8'};border-radius:6px;padding:12px;margin-bottom:8px;${isLocked ? 'opacity:.5' : ''}">
+          <div class="em-card" style="padding:12px;margin-bottom:8px;${isLocked ? 'opacity:.5' : ''}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start">
               <div style="flex:1">
-                <div style="font-size:12px;font-weight:700;color:${isLocked ? '#98a1ae' : '#1f2733'}">${r.icon} ${r.name} <span style="font-size:11px;color:#c79a2a;margin-left:4px">Lvl ${currentLevel}</span></div>
-                <div style="font-size:10px;color:#6b7280;margin-top:2px">${r.desc}</div>
-                ${isLocked ? `<div style="font-size:9px;color:#6b7280;margin-top:4px">🔒 Richiede: ${r.prereqs.map(p=>window.HQ_ROOMS.find(x=>x.id===p)?.name||p).join(', ')}</div>` : ''}
-                ${!isMaxLevel && !isLocked ? `<div style="font-size:9px;color:#2f74c0;margin-top:4px">Prossimo Livello: Richiede ${nextTier.reqRep}⭐ reputazione.</div>` : ''}
+                <div style="font-size:12px;font-weight:700;margin-bottom:2px">${r.icon} ${r.name} <span class="em-pill em-pill--${currentLevel > 0 ? 'gold' : 'gray'}" style="font-size:8px">Lv ${currentLevel}</span></div>
+                <div style="font-size:10px;color:var(--em-muted)">${r.desc}</div>
+                ${isLocked ? `<div style="font-size:9px;color:var(--em-muted);margin-top:4px">🔒 Richiede: ${r.prereqs.map(p=>window.HQ_ROOMS.find(x=>x.id===p)?.name||p).join(', ')}</div>` : ''}
+                ${!isMaxLevel && !isLocked ? `<div style="font-size:9px;color:var(--em-blue);margin-top:4px">Prossimo Livello: Richiede ${nextTier.reqRep}⭐ reputazione.</div>` : ''}
               </div>
               <div style="flex-shrink:0;margin-left:8px;text-align:right">
-                ${isMaxLevel ? `<div style="font-size:10px;color:#1aa06a;font-family:monospace">Max Level</div>` : `
-                    <div style="font-size:10px;color:#c79a2a;font-family:monospace">€${nextTier.cost.toLocaleString()}</div>
-                    ${!isLocked ? `<button onclick="${currentLevel === 0 ? `window._hqBuildFromList('${r.id}')` : `window.hqUpgradeRoom('${currentCityId}', '${r.id}')`}"
-                      style="background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:4px 8px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;${!canAffordUpgrade ? 'opacity:.4' : ''}">
-                      ${currentLevel === 0 ? '🏗️ Costruisci' : '⬆️ Migliora'}
-                    </button>` : ''}
-                `}
+                ${isMaxLevel
+                    ? `<span class="em-pill em-pill--green" style="font-size:8px">Max</span>`
+                    : `<div style="font-size:10px;color:var(--em-gold);font-family:monospace;margin-bottom:4px">€${nextTier.cost.toLocaleString()}</div>
+                       ${!isLocked ? `<button class="em-goldbtn" onclick="${currentLevel === 0 ? `window._hqBuildFromList('${r.id}')` : `window.hqUpgradeRoom('${currentCityId}', '${r.id}')`}"
+                         style="font-size:9px;${!canAffordUpgrade ? 'opacity:.4;cursor:not-allowed' : ''}">
+                         ${currentLevel === 0 ? '🏗️ Costruisci' : '⬆️ Migliora'}
+                       </button>` : ''}`}
               </div>
             </div>
           </div>`;
@@ -280,39 +273,44 @@ window.renderTabHQ = function() {
             default:                           return null;
         }
     };
-    
+
     const fxItems = Object.entries(fx)
         .filter(([k]) => !['reputationBonus', 'shadowDefenseBonus'].includes(k))
         .map(([k, v]) => _hqFxLabel(k, v))
         .filter(Boolean);
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #21262d;display:flex;align-items:flex-start;justify-content:space-between">
-        <div>
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Quartier Generale</div>
-            <div style="font-size:20px;font-weight:700;color:#e6edf3">HQ Base Builder</div>
-            <div style="font-size:11px;color:#6b7280;margin-top:4px">Score Globale ⭐ ${totalScore} · Sedi: ${Object.keys(gameState.hqs).length}</div>
+    container.innerHTML = `<div class="em"><div class="em-page em-wrap">
+        <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--em-line);display:flex;align-items:flex-start;justify-content:space-between">
+            <div>
+                <div class="em-sec" style="margin-bottom:4px">Quartier Generale</div>
+                <div style="font-size:20px;font-weight:800;margin-bottom:2px">HQ Base Builder</div>
+                <div style="font-size:11px;color:var(--em-muted)">Score Globale ⭐ ${totalScore} · Sedi: ${Object.keys(gameState.hqs).length}</div>
+            </div>
+            <span class="em-pill ${totalScore >= 50 ? 'em-pill--gold' : 'em-pill--blue'}">Score ${totalScore}</span>
         </div>
-        <span style="font-size:9px;font-weight:700;color:${totalScore >= 50 ? '#c79a2a' : '#2f74c0'};background:${totalScore >= 50 ? 'rgba(212,175,55,0.12)' : 'rgba(88,166,255,0.12)'};border:1px solid ${totalScore >= 50 ? 'rgba(212,175,55,0.3)' : 'rgba(88,166,255,0.3)'};border-radius:4px;padding:3px 8px">Score ${totalScore}</span>
-    </div>
-    <div style="display:flex;gap:6px;padding:8px 0;overflow-x:auto;margin-bottom:8px;border-bottom:1px solid #21262d">
-        ${cityTabsHtml}
-    </div>
-    <div style="padding:8px 0;margin-bottom:8px">
-        <div style="font-size:14px;font-weight:700;color:#c79a2a">${cityData.icon} Sede di ${cityData.name}</div>
-        <div style="font-size:10px;color:#6b7280;margin-top:2px">${cityData.desc}</div>
-    </div>
-    <div id="hq-visual-placeholder" style="margin-bottom:16px"></div>
 
-    ${fxItems.length > 0 ? `
-      <div style="background:rgba(212,175,55,0.05);border:1px solid rgba(212,175,55,0.2);border-radius:6px;padding:12px;margin-bottom:16px">
-        <div style="font-size:9px;color:#c79a2a;font-weight:700;text-transform:uppercase;margin-bottom:8px">⚡ Effetti Globali Attivi</div>
-        <div style="display:flex;flex-wrap:wrap;gap:4px">
-          ${fxItems.map(f => `<span style="font-size:8px;background:#21262d;border-radius:4px;padding:2px 6px;color:#4d6480">${f}</span>`).join('')}
+        <div style="display:flex;gap:6px;padding:8px 0;overflow-x:auto;margin-bottom:12px;border-bottom:1px solid var(--em-line)">
+            ${cityTabsHtml}
         </div>
-      </div>` : ''}
 
-    <div style="font-size:10px;color:#c79a2a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px">🏢 Gestione Strutture</div>
-    ${roomListHtml}`;
+        <div style="padding:6px 0;margin-bottom:10px">
+            <div style="font-size:14px;font-weight:700;color:var(--em-gold)">${cityData.icon} Sede di ${cityData.name}</div>
+            <div style="font-size:10px;color:var(--em-muted);margin-top:2px">${cityData.desc}</div>
+        </div>
+
+        <div id="hq-visual-placeholder" style="margin-bottom:16px"></div>
+
+        ${fxItems.length > 0 ? `
+          <div class="em-card" style="padding:12px;margin-bottom:16px;border-color:rgba(199,154,42,.3)">
+            <div class="em-sec" style="color:var(--em-gold);margin-bottom:8px">⚡ Effetti Globali Attivi</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              ${fxItems.map(f => `<span class="em-pill em-pill--gray" style="font-size:9px">${f}</span>`).join('')}
+            </div>
+          </div>` : ''}
+
+        <div class="em-sec" style="margin-bottom:10px;color:var(--em-gold)">🏢 Gestione Strutture</div>
+        ${roomListHtml}
+    </div></div>`;
 
     // Render visual diorama campus
     if (typeof window.renderHQCampus === 'function') {

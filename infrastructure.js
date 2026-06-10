@@ -15,14 +15,15 @@ window.renderTabInfrastructure = async function() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    container.innerHTML = `<div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #d6dee8">
-        <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Monopoli</div>
-        <div style="font-size:20px;font-weight:700;color:#e6edf3">Infrastrutture Carburante</div>
-        <div style="font-size:11px;color:#6b7280;margin-top:4px">Acquista depositi carburante nelle province — riscuoti un levy su tutte le corse</div>
-    </div>` + `<div>
-      <div id="infra-loading" style="text-align:center;padding:32px 0;color:#6b7280;font-size:11px">Caricamento depositi…</div>
-      <div id="infra-content" style="display:none"></div>
-    </div>`;
+    container.innerHTML = `<div class="em"><div class="em-page em-wrap">
+        <div style="margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--em-line)">
+            <div class="em-sec" style="margin-bottom:4px">Monopoli</div>
+            <div style="font-size:20px;font-weight:800;margin-bottom:2px">Infrastrutture Carburante</div>
+            <div style="font-size:11px;color:var(--em-muted)">Acquista depositi carburante nelle province — riscuoti un levy su tutte le corse</div>
+        </div>
+        <div id="infra-loading" class="em-empty">Caricamento depositi…</div>
+        <div id="infra-content" style="display:none"></div>
+    </div></div>`;
 
     try {
         const { data: depots, error } = await window.supabaseClient.rpc('rpc_get_fuel_depots');
@@ -30,7 +31,7 @@ window.renderTabInfrastructure = async function() {
         _renderInfraContent(depots || []);
     } catch(e) {
         const el = document.getElementById('infra-loading');
-        if (el) el.textContent = 'Errore caricamento: ' + (e.message || e);
+        if (el) el.textContent = window.CE_Sec.userError('Errore caricamento depositi', e);
     }
 };
 
@@ -44,96 +45,92 @@ function _renderInfraContent(depots) {
     const depotByProv = {};
     depots.forEach(d => { depotByProv[d.province_id] = d; });
 
-    const myDepots = depots.filter(d => d.is_mine);
+    const myDepots    = depots.filter(d =>  d.is_mine);
     const otherDepots = depots.filter(d => !d.is_mine);
 
     content.innerHTML = `
     ${myDepots.length > 0 ? `
-      <div style="margin-bottom:24px">
-        <div style="font-size:11px;font-weight:700;color:#1aa06a;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">I Tuoi Depositi</div>
+      <div style="margin-bottom:20px">
+        <div class="em-sec" style="margin-bottom:10px;color:var(--em-green)">I Tuoi Depositi</div>
         ${myDepots.map(d => _renderMyDepotCard(d)).join('')}
       </div>
     ` : ''}
 
-    <div style="margin-bottom:24px">
-      <div style="font-size:11px;font-weight:700;color:#2f74c0;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Province Disponibili</div>
+    <div style="margin-bottom:20px">
+      <div class="em-sec" style="margin-bottom:10px;color:var(--em-blue)">Province Disponibili</div>
       ${_INFRA_PROVINCES.map(prov => {
           const depot = depotByProv[prov.id];
           if (depot && !depot.is_mine) return _renderOccupiedCard(prov, depot);
-          if (depot && depot.is_mine) return '';
+          if (depot && depot.is_mine)  return '';
           return _renderAvailableCard(prov);
       }).join('')}
     </div>
 
     ${otherDepots.length > 0 ? `
-      <div style="margin-bottom:24px">
-        <div style="font-size:11px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px">Depositi Rivali</div>
+      <div style="margin-bottom:20px">
+        <div class="em-sec" style="margin-bottom:10px">Depositi Rivali</div>
         ${otherDepots.map(d => _renderRivalCard(d)).join('')}
       </div>
     ` : ''}
 
-    <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.2);border-radius:6px;padding:16px;font-size:11px;color:#2f74c0;margin-top:16px">
-      <strong>Come funziona:</strong> Ogni volta che un concorrente completa una corsa in una tua provincia,
-      paga un <strong>levy carburante</strong> basato sul tuo markup (0–50%).
-      Il costo del deposito è <strong>€300.000</strong>. Solo un deposito per provincia.
+    <div class="em-card" style="padding:14px;border-color:rgba(47,116,192,.4);margin-top:4px">
+      <div style="font-size:11px;color:var(--em-blue);line-height:1.5">
+        <strong>Come funziona:</strong> Ogni volta che un concorrente completa una corsa in una tua provincia,
+        paga un <strong>levy carburante</strong> basato sul tuo markup (0–50%).
+        Il costo del deposito è <strong>€300.000</strong>. Solo un deposito per provincia.
+      </div>
     </div>`;
 }
 
 function _renderMyDepotCard(d) {
     return `
-    <div style="border:1px solid rgba(34,197,94,0.3);background:rgba(34,197,94,0.05);border-radius:6px;padding:20px;margin-bottom:12px">
+    <div class="em-card" style="padding:16px;margin-bottom:10px;border-color:rgba(26,160,106,.4)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
         <div>
-          <div style="color:#e6edf3;font-weight:700">⛽ ${d.province_name}</div>
-          <div style="font-size:11px;color:#1aa06a;margin-top:2px">Il tuo deposito · Incassato: €${(d.total_earned||0).toLocaleString('it-IT')}</div>
+          <div style="font-weight:700;margin-bottom:2px">⛽ ${d.province_name}</div>
+          <div style="font-size:11px;color:var(--em-green)">Il tuo deposito · Incassato: €${(d.total_earned||0).toLocaleString('it-IT')}</div>
         </div>
-        <span style="font-size:11px;padding:4px 8px;border-radius:99px;background:rgba(34,197,94,0.2);color:#1aa06a;font-weight:700">${Math.round(d.markup_pct)}% markup</span>
+        <span class="em-pill em-pill--green">${Math.round(d.markup_pct)}% markup</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;margin-top:12px">
-        <label style="font-size:11px;color:#6b7280;flex-shrink:0">Markup:</label>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:10px">
+        <label style="font-size:11px;color:var(--em-muted);flex-shrink:0">Markup:</label>
         <input type="range" min="0" max="50" step="1" value="${Math.round(d.markup_pct)}"
                id="markup-slider-${d.province_id}"
                oninput="document.getElementById('markup-val-${d.province_id}').textContent=this.value+'%'"
-               style="flex:1;accent-color:#1aa06a">
-        <span id="markup-val-${d.province_id}" style="font-size:11px;color:#1aa06a;width:40px;text-align:right">${Math.round(d.markup_pct)}%</span>
-        <button onclick="_infraSetMarkup('${d.province_id}')"
-          style="padding:6px 12px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(34,197,94,0.2);border:1px solid rgba(34,197,94,0.3);color:#86efac;cursor:pointer">
-          Salva
-        </button>
+               style="flex:1;accent-color:var(--em-green)">
+        <span id="markup-val-${d.province_id}" style="font-size:11px;color:var(--em-green);width:40px;text-align:right">${Math.round(d.markup_pct)}%</span>
+        <button class="em-gbtn" onclick="_infraSetMarkup('${d.province_id}')">Salva</button>
       </div>
     </div>`;
 }
 
 function _renderAvailableCard(prov) {
     return `
-    <div style="border:1px solid #d6dee8;background:rgba(255,255,255,0.03);border-radius:6px;padding:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between">
+    <div class="em-card" style="padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div style="color:#e6edf3;font-weight:600;font-size:12px">${prov.name}</div>
-        <div style="font-size:11px;color:#6b7280">${prov.region} · Libero</div>
+        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${prov.name}</div>
+        <div style="font-size:11px;color:var(--em-muted)">${prov.region} · Libero</div>
       </div>
-      <button onclick="_infraBuyDepot('${prov.id}','${prov.name}')"
-        style="padding:8px 16px;border-radius:4px;font-size:11px;font-weight:700;background:rgba(59,130,246,0.2);border:1px solid rgba(59,130,246,0.3);color:#2f74c0;cursor:pointer">
-        Acquista €300k
-      </button>
+      <button class="em-bbtn" onclick="_infraBuyDepot('${prov.id}','${prov.name}')">Acquista €300k</button>
     </div>`;
 }
 
 function _renderOccupiedCard(prov, d) {
     return `
-    <div style="border:1px solid rgba(239,68,68,0.2);background:rgba(239,68,68,0.03);border-radius:6px;padding:16px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;opacity:.6">
+    <div class="em-card" style="padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;opacity:.6;border-color:rgba(219,87,70,.3)">
       <div>
-        <div style="color:#e6edf3;font-weight:600;font-size:12px">${prov.name}</div>
-        <div style="font-size:11px;color:#db5746">${prov.region} · Occupato da ${d.owner_company}</div>
+        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${prov.name}</div>
+        <div style="font-size:11px;color:var(--em-red)">${prov.region} · Occupato da ${d.owner_company}</div>
       </div>
-      <span style="font-size:11px;color:#db5746;font-weight:700">${d.markup_pct}% markup</span>
+      <span class="em-pill em-pill--red">${d.markup_pct}% markup</span>
     </div>`;
 }
 
 function _renderRivalCard(d) {
     return `
-    <div style="border:1px solid rgba(107,114,128,0.2);border-radius:6px;padding:12px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:12px;color:#4d6480">${d.province_name}</div>
-      <div style="font-size:11px;color:#6b7280">${d.owner_company} · ${d.markup_pct}% · incassato €${(d.total_earned||0).toLocaleString('it-IT')}</div>
+    <div class="em-card" style="padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:12px;font-weight:600">${d.province_name}</div>
+      <div style="font-size:11px;color:var(--em-muted)">${d.owner_company} · ${d.markup_pct}% · incassato €${(d.total_earned||0).toLocaleString('it-IT')}</div>
     </div>`;
 }
 
@@ -153,7 +150,7 @@ window._infraBuyDepot = async function(provinceId, provinceName) {
         if (typeof saveGame === 'function') saveGame();
         window.renderTabInfrastructure();
     } catch(e) {
-        if (typeof showNotification === 'function') showNotification('Errore: ' + (e.message || e), 'error');
+        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Acquisto deposito non riuscito', e), 'error');
     }
 };
 
@@ -165,11 +162,11 @@ window._infraSetMarkup = async function(provinceId) {
     try {
         const { error } = await window.supabaseClient.rpc('rpc_set_fuel_markup', {
             v_province_id: provinceId,
-            v_markup_pct: markup
+            v_markup_pct:  markup
         });
         if (error) throw error;
         if (typeof showNotification === 'function') showNotification(`Markup aggiornato a ${markup}%`, 'success');
     } catch(e) {
-        if (typeof showNotification === 'function') showNotification('Errore: ' + (e.message || e), 'error');
+        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Aggiornamento markup non riuscito', e), 'error');
     }
 };

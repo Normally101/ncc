@@ -52,7 +52,8 @@ async function renderTabRealEstate() {
         listings = lRes.data || [];
         owned    = oRes.data || [];
     } catch(e) {
-        container.innerHTML = `<div style="padding:16px;color:#db5746;font-size:12px">Errore caricamento immobili: ${e.message}</div>`;
+        try { console.warn('[RealEstate] load error', e && (e.message || e)); } catch {}
+        container.innerHTML = `<div style="padding:16px;color:#db5746;font-size:12px">Impossibile caricare gli immobili, riprova.</div>`;
         return;
     }
 

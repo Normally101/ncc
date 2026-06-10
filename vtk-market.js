@@ -95,7 +95,7 @@ window.vtkPlaceSellOrder = async function(vtkAmount, dcPrice) {
     if (!sb) return;
     const { error } = await sb.rpc('rpc_place_vtk_sell_order', { v_vtk_amount: vtk, v_dc_price: dc });
     if (error) {
-        if (typeof showNotification === 'function') showNotification('Errore: ' + (error.message || error), 'error');
+        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Ordine non riuscito', error), 'error');
         return;
     }
 
@@ -118,7 +118,7 @@ window.vtkFillOrder = async function(orderId, dcCost) {
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_fill_vtk_order', { v_order_id: orderId });
     if (error) {
-        if (typeof showNotification === 'function') showNotification('Errore acquisto: ' + (error.message || error), 'error');
+        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Acquisto non riuscito', error), 'error');
         return;
     }
 
@@ -137,7 +137,7 @@ window.vtkCancelOrder = async function(orderId) {
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_cancel_vtk_order', { v_order_id: orderId });
     if (error) {
-        if (typeof showNotification === 'function') showNotification('Errore: ' + (error.message || error), 'error');
+        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Annullamento non riuscito', error), 'error');
         return;
     }
 
