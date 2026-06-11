@@ -47,6 +47,13 @@ L'utente ha **già eseguito**: (1) schema Consorzi (4 tabelle+RPC+RLS+realtime),
 - **Nome azienda "Chauffeur Empire" ovunque** → la topbar `.emc-bn` era hardcoded; `updateUI` ora scrive `gameState.companyName` + stemma in `.emc-bn/.emc-bm`. NB: se in-game mostra ancora il default, il nome reale non è salvato in quello slot.
 - **3 righe identiche in classifica** = vecchi account di test nella tabella `leaderboard`. Fix display (dedup+`#id`); pulizia vera = `delete from leaderboard where user_id <> 'TUO_ID'` su Supabase.
 
+### 🔒 PRIVACY + OPSEC + FONTS (11 giugno 2026)
+- **Privacy policy GDPR** (`privacy.html` v1.1): titolare = **Olga Vision** (scelta utente — marchio pre-costituzione, persona fisica resta titolare reale finché non apre P.IVA; nota interna in HTML per aggiornare con ragione sociale+P.IVA al momento della costituzione). Aggiunti sub-processor reali (Mapbox, Google Fonts→poi self-hosted, GitHub Pages, jsDelivr), push notification, breach art. 33 (Garante 72h) + 34 (utente). Contatto: support@chauffeurempire.com (VERIFICARE che la casella riceva davvero).
+- **Monetizzazione/fiscale**: confermato che il gioco NON ha pagamenti reali cablati (no Stripe/PayPal, no dominio pagamento in CSP). Path deciso: **lancio gratuito ora** (solo GDPR, utente come privato) → P.IVA + IVA/OSS quando si accendono i pagamenti reali (apertura Olga Vision, con commercialista). La "ritenuta d'acconto fino a 4800" NON calza con vendita digitale B2C continuativa.
+- **Self-host Google Fonts**: scaricati 33 woff2 (Cinzel/Orbitron/Roboto Mono/Inter/Montserrat, latin+latin-ext) in `assets/fonts/`, generato `fonts.css`, rimosso il `<link>` Google + i preconnect, **tolto Google da CSP** (`style-src` e `font-src` ora senza fonts.googleapis/gstatic). Zero leak IP verso Google.
+- **Opsec/account** (lato utente, NON automatizzabile): 2FA assente su tutti gli account, password DB attuale debole e riusata → punch-list in `SECURITY_PRELAUNCH.md`. Rimossa la password DB in chiaro da `~/.claude.json` (tolto MCP postgres rotto).
+- **Nuovi artefatti**: `backup_supabase.sh` (backup DB via env var + pooler), `SECURITY_PRELAUNCH.md` (punch-list), `fonts.css` + `assets/fonts/`. Rimosso `preview-midnight.html` dal repo (orfano). Checklist generale di sicurezza in memoria globale (`security_checklist.md`).
+
 ### 🔒 SECURITY HARDENING (10 giugno 2026, sessione 2)
 
 Audit completo su 50 punti + **test live dall'esterno con la anon key**. Esito e fix:

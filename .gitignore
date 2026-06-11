@@ -25,3 +25,6 @@ _mockups/
 
 # Save files ARE tracked intentionally for cross-device sync:
 # slot_1.json, slot_2.json, slot_3.json → commit these!
+
+# Dev preview pages — non servire pubblicamente
+preview-*.html
