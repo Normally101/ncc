@@ -170,14 +170,12 @@ Audit completo su 50 punti + **test live dall'esterno con la anon key**. Esito e
 Nuovi file: `world-feed.js` v2 · `daily-orders.js` v1 · `onboarding.js` v1 · `alliances.js` v1 · `vanity.js` v1.
 Bumpati: `ui-home.js` v15 · `ui-ranking.js` v12 · `engine.js` v12 · `dispatcher.js` v11 · `engine-store.js` v10. `style.css`/`premium-ui.css` senza `?v=` (hard-refresh per vederli).
 
-### Deploy (IMPORTANTE — cambiato il 15/06/26)
-**NON usare più `git push main:gh-pages`** — pubblicava l'INTERO repo, inclusi i `*.sql` (architettura di sicurezza), `CLAUDE.md`, `HANDOFF.md` → leak pubblico confermato su chauffeurempire.com (HTTP 200).
+### Deploy (IMPORTANTE — CORRETTO il 15/06/26)
+⚠️ I doc vecchi dicevano "GitHub Pages" ma è **SBAGLIATO**. Il sito pubblico **chauffeurempire.com è su VERCEL**. GitHub Pages è **disattivo** sul repo `ncc` (`/pages` API → 404); il branch `gh-pages` è **morto/inutilizzato** (ignoralo).
 
-Workflow corretto:
-1. `git push origin main` → backup nel repo **privato** (tutti i file, ok).
-2. `./deploy.sh` → pubblica su `gh-pages` **solo i file dell'app**; doc/SQL/script/`supabase/` restano solo su main. Il sito è il dominio custom **chauffeurempire.com** (gh-pages non ha CNAME — dominio gestito dalle Settings del repo).
-
-`deploy.sh` ricostruisce gh-pages da main escludendo: `*.md *.sql *.py *.sh supabase/ docs/ .github/ .agents/ .claude/ _mockups/ tailwind.input.css tailwind.config.js package*.json skills-lock.json .gitignore`.
+- **Come si deploya:** Vercel fa **auto-deploy** del repo `ncc`. **Push su `main` → deploy di Produzione** automatico (progetto Vercel `ncc`, account djblade594). Niente comandi manuali, niente `git push main:gh-pages`.
+- **Sicurezza (leak chiuso 15/06):** `.vercelignore` esclude dal deploy pubblico `*.sql *.md *.py *.sh supabase/ docs/ .github/ .agents/ .claude/ _mockups/`. Restano nel repo privato (backup) ma danno **404** sul sito. **NON rimuovere `.vercelignore`** o si riapre il leak.
+- **Verifica:** `curl -I https://www.chauffeurempire.com/38_security_hardening.sql` deve dare **404**; `…/index.html` deve dare **200**.
 
 ---
 

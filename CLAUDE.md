@@ -4,7 +4,7 @@ Browser MMO gestionale di auto di lusso. Vanilla HTML/CSS/JS puro. Nessun framew
 
 > **Nota per l'AI:** Questo file è la fonte di verità del progetto. Aggiornarlo dopo ogni sessione di lavoro significativa. Leggilo sempre per intero prima di fare modifiche.
 
-> **AGGIORNAMENTO GIUGNO 2026 (dettagli in HANDOFF.md):** Tutte le tab sono ora **light** (kit `.em`, Fase 3 completata). Aggiunto lo strato **MMO/retention/social/anti-cheat**, tutto live: nuovi file `world-feed.js` (feed Mondo NCC reale+NPC + striscia conflitto), `daily-orders.js`, `onboarding.js` (soft-lock progressivo + checklist), `alliances.js` (tab **`consorzi`** su RPC Supabase: roster/tesoro/chat realtime), `vanity.js` (tab **`prestigio`**: cosmetici DC). `ui-ranking.js` rank per **Punteggio Potere** (metriche server = anti-cheat). Sfondo globale = skyline Milano su `#app-body.em-shell` (main-panel trasparente). Deploy: push su `main` **e** `main:gh-pages`. Nuove route `switchTab`: `consorzi`→renderTabConsorzi, `prestigio`→renderTabPrestigio. SQL ancora da eseguire su Supabase: perk di consorzio (ALTER alliances + rpc_activate_alliance_perk) per dare senso alle donazioni.
+> **AGGIORNAMENTO GIUGNO 2026 (dettagli in HANDOFF.md):** Tutte le tab sono ora **light** (kit `.em`, Fase 3 completata). Aggiunto lo strato **MMO/retention/social/anti-cheat**, tutto live: nuovi file `world-feed.js` (feed Mondo NCC reale+NPC + striscia conflitto), `daily-orders.js`, `onboarding.js` (soft-lock progressivo + checklist), `alliances.js` (tab **`consorzi`** su RPC Supabase: roster/tesoro/chat realtime), `vanity.js` (tab **`prestigio`**: cosmetici DC). `ui-ranking.js` rank per **Punteggio Potere** (metriche server = anti-cheat). Sfondo globale = skyline Milano su `#app-body.em-shell` (main-panel trasparente). Deploy: **Vercel auto-deploy da `main`** (NON GitHub Pages; `.vercelignore` esclude i file interni). Nuove route `switchTab`: `consorzi`→renderTabConsorzi, `prestigio`→renderTabPrestigio. SQL ancora da eseguire su Supabase: perk di consorzio (ALTER alliances + rpc_activate_alliance_perk) per dare senso alle donazioni.
 
 ---
 
@@ -180,7 +180,7 @@ const _THR = t => `<th style="padding:7px 14px;font-size:9px;font-family:monospa
 | Backend | Supabase (Postgres + Auth + Realtime + RPC) |
 | Mappa | Mapbox GL JS v3.6 |
 | Font | Montserrat (UI), Roboto Mono (numeri), Cinzel (titoli) |
-| Deploy | GitHub Pages (`gh-pages` branch) → `https://normally101.github.io/ncc/` |
+| Deploy | **Vercel** (auto-deploy da `main`) → `https://www.chauffeurempire.com` · `.vercelignore` esclude i file interni (NON è GitHub Pages) |
 | Repo | `https://github.com/Normally101/ncc` (branch `main`) |
 
 ---
