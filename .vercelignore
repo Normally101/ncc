@@ -1,0 +1,23 @@
+# File interni che NON devono finire sul sito pubblico (Vercel).
+# Restano nel repo privato (backup) ma esclusi dal deploy → 404 sul sito.
+# ⚠️ Il sito è su VERCEL (non GitHub Pages), deploy da branch main.
+
+# Migrazioni SQL — espongono l'architettura di sicurezza (RLS, anti-cheat, rate-limit)
+*.sql
+
+# Documentazione interna (architettura, handoff, decisioni)
+*.md
+
+# Script interni
+*.py
+*.sh
+
+# Edge Functions server-side (codice backend, mai pubblico)
+supabase
+
+# Cartelle interne / tooling
+docs
+.github
+.agents
+.claude
+_mockups
