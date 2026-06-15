@@ -170,8 +170,14 @@ Audit completo su 50 punti + **test live dall'esterno con la anon key**. Esito e
 Nuovi file: `world-feed.js` v2 · `daily-orders.js` v1 · `onboarding.js` v1 · `alliances.js` v1 · `vanity.js` v1.
 Bumpati: `ui-home.js` v15 · `ui-ranking.js` v12 · `engine.js` v12 · `dispatcher.js` v11 · `engine-store.js` v10. `style.css`/`premium-ui.css` senza `?v=` (hard-refresh per vederli).
 
-### Deploy (IMPORTANTE)
-Workflow live: commit su `main` → `git push origin main` **poi** `git push origin main:gh-pages` (gh-pages è uno snapshot di main; il sito è https://normally101.github.io/ncc/). Niente CI di deploy (solo lint). `cmd-palette.js` + `em-chrome.js` erano untracked e ora committati (servono a index.html).
+### Deploy (IMPORTANTE — cambiato il 15/06/26)
+**NON usare più `git push main:gh-pages`** — pubblicava l'INTERO repo, inclusi i `*.sql` (architettura di sicurezza), `CLAUDE.md`, `HANDOFF.md` → leak pubblico confermato su chauffeurempire.com (HTTP 200).
+
+Workflow corretto:
+1. `git push origin main` → backup nel repo **privato** (tutti i file, ok).
+2. `./deploy.sh` → pubblica su `gh-pages` **solo i file dell'app**; doc/SQL/script/`supabase/` restano solo su main. Il sito è il dominio custom **chauffeurempire.com** (gh-pages non ha CNAME — dominio gestito dalle Settings del repo).
+
+`deploy.sh` ricostruisce gh-pages da main escludendo: `*.md *.sql *.py *.sh supabase/ docs/ .github/ .agents/ .claude/ _mockups/ tailwind.input.css tailwind.config.js package*.json skills-lock.json .gitignore`.
 
 ---
 
