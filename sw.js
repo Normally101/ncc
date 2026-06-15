@@ -66,11 +66,12 @@ self.addEventListener('push', e => {
 // ── Notification click: apri / focalizza la finestra del gioco ────────────────
 self.addEventListener('notificationclick', e => {
   e.notification.close();
+  const target = (e.notification.data && e.notification.data.url) || './';
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(clients => {
       const existing = clients.find(c => c.url.includes(self.location.origin));
-      if (existing) return existing.focus();
-      return self.clients.openWindow('/');
+      if (existing) { existing.focus(); return; }
+      return self.clients.openWindow(target);
     })
   );
 });

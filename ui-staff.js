@@ -12,6 +12,9 @@
 
 function renderTabStaff() {
     const container = document.getElementById('tab-container');
+    // Zero-to-Hero: sotto le 25 corse lo Staff è in fase transitoria
+    // (solo "Ragazzo di Quartiere", niente HR/Accademia). Veterani esenti.
+    const _z2hLite = (typeof window._z2hRestricted === 'function') && window._z2hRestricted();
     const hqLvl      = typeof HQ_LEVELS !== 'undefined' ? HQ_LEVELS.find(l => l.level === (gameState.hqLevel || 0)) : null;
     const maxStaff   = hqLvl ? hqLvl.maxStaff : 2;
     const officeStaff= gameState.staff.length;
@@ -68,8 +71,8 @@ function renderTabStaff() {
     })() : null;
     html += `</div>`;
 
-    // ── HR Automation ───────────────────────────────────────────────────────
-    html += `<div class="em-card" style="padding:14px;margin-bottom:16px;${hrActive ? 'border-color:#ecd9a0' : ''}">
+    // ── HR Automation (nascosta in fase Zero-to-Hero) ─────────────────────────
+    if (!_z2hLite) html += `<div class="em-card" style="padding:14px;margin-bottom:16px;${hrActive ? 'border-color:#ecd9a0' : ''}">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
             <div>
                 <div class="em-sec" style="color:var(--em-violet);margin-bottom:4px">🤝 Gestione Sindacale HR</div>
@@ -198,37 +201,56 @@ function renderTabStaff() {
     html += `<div class="em-sec" style="margin:16px 0 4px">Mercato Reclutamento</div>
     <div style="font-size:10.5px;color:var(--em-dim);margin-bottom:10px;font-style:italic">I candidati si aggiornano dopo ogni assunzione.</div>
     <div style="display:flex;flex-direction:column;gap:6px">`;
-    (gameState.availableRecruits || []).forEach(p => {
+    if (_z2hLite) {
+        // Fase transitoria: unico assumibile = Ragazzo di Quartiere (ingaggio gratis).
+        const _kidHired = (gameState.drivers || []).some(d => d.name === 'Ragazzo di Quartiere');
         html += `<div class="em-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center">
             <div>
-                <div style="font-weight:700">${p.name} <span style="font-size:10px;color:var(--em-muted)">${tierIcon[p.tier] || ''} ${p.tier.toUpperCase()}</span></div>
-                ${p.trait ? `<div style="margin-top:4px">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span style="font-size:9.5px;color:var(--em-dim)">${p.trait.desc}</span></div>` : ''}
-                <div style="font-size:10.5px;color:var(--em-dim);margin-top:4px">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
+                <div style="font-weight:700">Ragazzo di Quartiere <span style="font-size:10px;color:var(--em-muted)">🟢 STANDARD</span></div>
+                <div style="font-size:9.5px;color:var(--em-dim);margin-top:4px">Sveglio ma acerbo. Statistiche mediocri, ma costa pochissimo.</div>
+                <div style="font-size:10.5px;color:var(--em-green-d);margin-top:4px">Stipendio: €40/mese | Anticipo: €0</div>
             </div>
-            <button onclick="hireDriver('${p.name}', ${p.salary})" class="em-goldbtn">Assumi</button>
+            ${_kidHired
+                ? `<span class="em-pill em-pill--green">✓ Assunto</span>`
+                : `<button onclick="window.hireNeighborhoodKid()" class="em-goldbtn">Assumi · Gratis</button>`}
         </div>`;
-    });
-    if ((gameState.availableRecruits || []).length === 0) {
-        html += `<div class="em-empty"><div style="font-size:32px;margin-bottom:10px">👤</div><div style="font-size:14px;font-weight:700;color:var(--em-ink)">Nessun candidato</div><div style="margin-top:4px">Il mercato si aggiorna ad ogni assunzione</div></div>`;
+    } else {
+        (gameState.availableRecruits || []).forEach(p => {
+            html += `<div class="em-card" style="padding:14px;display:flex;justify-content:space-between;align-items:center">
+                <div>
+                    <div style="font-weight:700">${p.name} <span style="font-size:10px;color:var(--em-muted)">${tierIcon[p.tier] || ''} ${p.tier.toUpperCase()}</span></div>
+                    ${p.trait ? `<div style="margin-top:4px">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span style="font-size:9.5px;color:var(--em-dim)">${p.trait.desc}</span></div>` : ''}
+                    <div style="font-size:10.5px;color:var(--em-dim);margin-top:4px">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
+                </div>
+                <button onclick="hireDriver('${p.name}', ${p.salary})" class="em-goldbtn">Assumi</button>
+            </div>`;
+        });
+        if ((gameState.availableRecruits || []).length === 0) {
+            html += `<div class="em-empty"><div style="font-size:32px;margin-bottom:10px">👤</div><div style="font-size:14px;font-weight:700;color:var(--em-ink)">Nessun candidato</div><div style="margin-top:4px">Il mercato si aggiorna ad ogni assunzione</div></div>`;
+        }
     }
 
-    // ── Driver Academy ────────────────────────────────────────────────────────
-    const _academyDrivers  = gameState.drivers.filter(d => d.id !== 'ceo');
-    const _inTrainingCount = (gameState.driverAcademy||[]).length;
-    html += `</div><div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
-        <div class="em-sec">🎓 Accademia Autisti</div>
-        ${_inTrainingCount > 0 ? `<span class="em-pill em-pill--gold">📚 ${_inTrainingCount} in formazione</span>` : ''}
-    </div>`;
-    if (_academyDrivers.length === 0) {
-        html += `<div class="em-empty"><div style="font-size:32px;margin-bottom:10px">🎓</div><div style="font-size:14px;font-weight:700;color:var(--em-ink)">Nessun autista</div><div style="margin-top:4px">Assumi almeno un autista per accedere all'Accademia</div></div>`;
-    } else {
-        html += `<div class="em-card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
-            <div>
-                <div style="font-weight:700">Gestione Corsi</div>
-                <div style="font-size:10.5px;color:var(--em-dim);margin-top:2px">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
-            </div>
-            <button onclick="window.openAcademyModal()" class="em-goldbtn">Apri Accademia →</button>
+    html += `</div>`; // chiude il contenitore del Mercato Reclutamento
+
+    // ── Driver Academy (nascosta in fase Zero-to-Hero) ────────────────────────
+    if (!_z2hLite) {
+        const _academyDrivers  = gameState.drivers.filter(d => d.id !== 'ceo');
+        const _inTrainingCount = (gameState.driverAcademy||[]).length;
+        html += `<div style="display:flex;align-items:center;justify-content:space-between;margin:16px 0 8px">
+            <div class="em-sec">🎓 Accademia Autisti</div>
+            ${_inTrainingCount > 0 ? `<span class="em-pill em-pill--gold">📚 ${_inTrainingCount} in formazione</span>` : ''}
         </div>`;
+        if (_academyDrivers.length === 0) {
+            html += `<div class="em-empty"><div style="font-size:32px;margin-bottom:10px">🎓</div><div style="font-size:14px;font-weight:700;color:var(--em-ink)">Nessun autista</div><div style="margin-top:4px">Assumi almeno un autista per accedere all'Accademia</div></div>`;
+        } else {
+            html += `<div class="em-card" style="padding:14px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px">
+                <div>
+                    <div style="font-weight:700">Gestione Corsi</div>
+                    <div style="font-size:10.5px;color:var(--em-dim);margin-top:2px">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
+                </div>
+                <button onclick="window.openAcademyModal()" class="em-goldbtn">Apri Accademia →</button>
+            </div>`;
+        }
     }
 
     // ── CEO della Settimana ───────────────────────────────────────────────────

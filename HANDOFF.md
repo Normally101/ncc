@@ -1,11 +1,65 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 10 giugno 2026
+> Aggiornato: 15 giugno 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
+
+### 🔔 SERVER PUSH VAPID (15 giugno 2026) — CODICE PRONTO, da deployare
+
+Sostituito il push "finto" (solo Notification API locale + setTimeout, moriva a browser chiuso) con **Web Push VAPID reale** che funziona anche a browser chiuso. Server = Edge Function Supabase schedulata con cron.
+
+**File toccati/nuovi (committabili):**
+- `39_push_subscriptions.sql` (NUOVO, idempotente) — tabella `push_subscriptions` (endpoint/p256dh/auth/last_seen/last_notified_at) + RLS per-utente + `rpc_due_push_subscriptions(idle_h, cooldown_h, max_idle_d)` SECURITY DEFINER (solo service_role) che ritorna gli inattivi da notificare (join `companies` per nome+cassa).
+- `supabase/functions/send-push/index.ts` (NUOVO) — Deno + `npm:web-push@3.6.7`. Legge i target via RPC, invia push firmate VAPID, setta `last_notified_at`, cancella endpoint 404/410. Auth opzionale via header `x-cron-secret`.
+- `push-notifications.js` v2 — riscritto: ① server push (subscribe + upsert subscription su Supabase + heartbeat `last_seen` su login/ritorno tab); ② fallback locale se il server push non è disponibile (permesso negato / no VAPID / iOS non installato / subscribe fallito). SW registrato con path **relativo** (`sw.js`) → ok sia root che /ncc/.
+- `config.js` v7 — aggiunta `VAPID_PUBLIC_KEY` (pubblica, ok nel repo).
+- `sw.js` — `notificationclick` ora apre `notification.data.url`.
+- `index.html` — bump `config.js?v=7`, `push-notifications.js?v=2`.
+
+**Chiave VAPID pubblica (già in config.js):** `BE9VSQn6J3eKQxtTKFzoBKzGp9Bkmy8aBHkRQdQkYGmSUgdjyv62SIKsnhjs0-ZN7feMw9ed98miJdIF38QZs5c`
+La **privata NON è nel repo** — generata in locale, va messa SOLO come segreto Supabase (vedi checklist). Se l'hai persa, rigenerala: serve nuova coppia (cambia anche la pubblica in config.js).
+
+**⚠️ CHECKLIST DEPLOY (🧑 lato tuo — io non ho accesso al tuo Supabase):**
+1. **SQL:** gira `39_push_subscriptions.sql` nel SQL editor Supabase.
+2. **Segreti Edge Function** (Dashboard → Edge Functions → Secrets, o `supabase secrets set`):
+   - `VAPID_PUBLIC_KEY` = (la pubblica qui sopra)
+   - `VAPID_PRIVATE_KEY` = (la privata che hai salvato)
+   - `VAPID_SUBJECT` = `mailto:support@chauffeurempire.com`
+   - (opz.) `PUSH_CRON_SECRET` = stringa random; se la setti, il cron deve mandare header `x-cron-secret`
+3. **Deploy function:** `supabase functions deploy send-push` (serve Supabase CLI: `brew install supabase/tap/supabase` + `supabase login` + `supabase link`).
+4. **Cron orario:** abilita estensioni `pg_cron` + `pg_net` (Dashboard → Database → Extensions), poi il `cron.schedule(...)` in fondo a `39_push_subscriptions.sql` (sostituisci `<PROJECT_REF>` e `<SERVICE_ROLE_KEY>`). Alternativa più semplice: Dashboard → Edge Functions → send-push → Cron.
+5. **Test:** in gioco accetta il permesso notifiche → controlla che compaia una riga in `push_subscriptions`. Poi invoca la function a mano con un `last_seen` finto vecchio per vedere arrivare la notifica.
+
+**Note tecniche:**
+- "Inattivo" = `last_seen < now()-22h`, non rinotificato entro 20h, non più vecchio di 7g. Heartbeat aggiorna `last_seen` su login e a ogni ritorno alla tab.
+- iOS/Safari: il web push funziona SOLO se la PWA è "Aggiungi a Home" (installata). Altrove fallback locale.
+- Se `npm:web-push` desse problemi nel runtime Edge, alternativa = implementazione pura Web Crypto (aes128gcm + VAPID JWT) — non fatta perché web-push è lo standard documentato per Supabase.
+
+### 🎮 ZERO-TO-HERO — Modalità Sopravvivenza iniziale (15 giugno 2026)
+
+Implementata la spec `zero_to_hero_design.md` (di Gemini/antigravity). Onboarding narrativo "povero→ricco":
+- **< 10 corse → SURVIVAL** ("Il fondo del barile"): la tab Corse è sostituita dalla **guida manuale** (bottone pulse-gold: −10% energia, +15€). Nessun chrome (nav/topbar/ticker/kpibar nascosti via `body.theme-survival`). Bottone "Dormi in auto" quando energia <10.
+- **== 10 corse → evento "SVEGLIATI, SCHIAVO"**: overlay full-screen (copy esatta della spec) → "diventa manager" → sblocca Staff.
+- **10–24 corse → nav ridotta**: visibili SOLO "Corse" e "Staff" (sidebar items `display:none` sugli altri).
+- **< 25 corse → Staff in fase transitoria**: unico assumibile = **"Ragazzo di Quartiere"** (ingaggio €0, salario €40, stat mediocri). HR Automation + Accademia nascoste.
+- **Veterani (prestige > 0 / NG+) → ESENTI** da tutto (scelta mia: non intrappolare chi ha già un impero — coerente con la filosofia di `onboarding.js`).
+
+**File:** `zero-to-hero.js` (NUOVO, tutta la logica) · `ui-dispatch.js` v11 (gate in cima a `renderTabCorse`) · `ui-staff.js` v15 (recruit ridotto + HR/Accademia gated) · `style.css` (tema survival in coda) · `index.html` (script + bump).
+
+**Globals nuove:** `_z2hState()` ('survival'|'restricted'|'free'), `_z2hRestricted()`, `_z2hApplyNav()`, `renderManualSurvivalMode()`, `executeManualDrive()`, `executeSleepInCar()`, `triggerCapitalismEvent()`, `_ceCapitalismAck()`, `hireNeighborhoodKid()`. `switchTab` ri-patchato (in survival ogni destinazione → 'corse').
+
+**Verifica:** `node --check` su tutti i .js OK + harness logico node (10 drive→150€, evento, ack→staff, kid hire no-dup, soglie 25/veterano) → tutti i test passati.
+
+**⚠️ DEVIAZIONI consapevoli dalla spec (e perché):**
+1. **`executeSleepInCar` NON avanza `gameState.hour += 8`** → l'orologio è sincronizzato col tempo reale italiano nel `gameLoop` (sovrascriverebbe il +8h al tick dopo). Effetto reale = ripristino energia. Bottone "Dormi in auto (Recupera Energia)" (testo dalla sezione "Testi Esatti", non "(8 ore)" dello pseudo-codice).
+2. **"Ragazzo di Quartiere" usa `hireNeighborhoodKid()` dedicata, non `hireDriver()`** → `hireDriver` deduce `salary×2` d'anticipo, incompatibile con l'ingaggio €0 richiesto.
+3. **Aggiunte CSS oltre la spec** (hide `#top-bar`/`#news-ticker-wrap`, azzero offset `#main-panel`) per un vero full-screen; le classi della spec sono riprodotte verbatim.
+4. **"uffici/bonus" (sez. 5) interpretati come HR Automation + Accademia** (gated). Lasciati visibili Ufficio Centralizzato + "CEO della Settimana" per non rischiare sbilanciamenti di layout — dimmi se vuoi nascondere anche quelli.
+
+**✅ CASSA INIZIALE RISOLTA:** una partita NUOVA ora parte da **€0** (`initGame` ramo `if (fresh)` in engine.js v18) → 10 guidate manuali = €150, coerente col modal "Hai 150€ in tasca ora". I salvataggi esistenti NON sono toccati (caricano la loro cassa). Il default literal di `gameState` resta 35000 (usato solo come fallback prima di initGame). ⚠️ Da testare: se un confine di giorno reale scatta durante la fase survival, `processDailyRoutines` può dedurre il leasing del loaner (€40/g) → cassa negativa breve; innocuo ma da verificare a schermo.
 
 ### Cosa è successo nelle ultime sessioni
 1. **FASE 3 COMPLETATA**: tutte le ~29 tab convertite da dark → **eRepublik-Modern light** (kit `.em`). Dettaglio più sotto nella sezione storica. Restano scure SOLO le overlay-flair volute (cmd-palette ⌘K, showBigEvent, tutorial, war-map log).

@@ -841,6 +841,9 @@ function initGame(fresh = true) {
     _gameIntervals.forEach(clearInterval);
     _gameIntervals = [];
     if (fresh) {
+        // Zero-to-Hero: una partita nuova parte dal "fondo del barile".
+        // 10 guidate manuali (+15€) = 150€, coerente col modal "Hai 150€ in tasca ora".
+        gameState.cash = 0;
         gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
         _refreshRecruits();
     } else {

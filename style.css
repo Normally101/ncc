@@ -4928,3 +4928,78 @@ select:focus {
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   ZERO-TO-HERO — TEMA SOPRAVVIVENZA (Corse < 10)
+   Vedi zero-to-hero.js. Sotto le 10 corse: niente chrome, solo guida manuale.
+   ════════════════════════════════════════════════════════════════════════════ */
+body.theme-survival {
+  background: #050508 !important; /* Nero/Blu abissale */
+}
+body.theme-survival #sidebar-player,
+body.theme-survival #em-nav,
+body.theme-survival .em-kpibar,
+body.theme-survival .em-card .em-ch .a,
+body.theme-survival #hub-modal {
+  display: none !important;
+}
+/* Complemento per il full-screen: nascondo topbar/ticker e azzero l'offset del pannello */
+body.theme-survival #top-bar,
+body.theme-survival #news-ticker-wrap {
+  display: none !important;
+}
+body.theme-survival #main-panel {
+  left: 0 !important;
+  top: 0 !important;
+}
+
+/* CONTENITORE GUIDA MANUALE */
+#manual-drive-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 80vh;
+  text-align: center;
+}
+#manual-drive-btn {
+  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
+  color: #000;
+  font-weight: 900;
+  font-size: 24px;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+  cursor: pointer;
+  border: 2px solid #fff;
+  transition: transform 0.1s, box-shadow 0.2s;
+  animation: pulse-gold 2s infinite;
+}
+#manual-drive-btn:active {
+  transform: scale(0.95);
+}
+#manual-drive-btn:disabled {
+  background: #333;
+  color: #666;
+  box-shadow: none;
+  border-color: #444;
+  cursor: not-allowed;
+  animation: none;
+}
+#sleep-car-btn {
+  margin-top: 20px;
+  background: #1a2c45;
+  color: #fff;
+  padding: 15px 30px;
+  border-radius: 8px;
+  font-weight: bold;
+  border: 1px solid #2f74c0;
+  cursor: pointer;
+}
+
+/* ANIMAZIONE PULSE */
+@keyframes pulse-gold {
+  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
+  70% { box-shadow: 0 0 0 20px rgba(212, 175, 55, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+}
+

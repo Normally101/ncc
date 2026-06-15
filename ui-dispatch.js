@@ -3,6 +3,11 @@
 
 function renderTabCorse() {
     const container = document.getElementById('tab-container');
+    // Zero-to-Hero: sotto le 10 corse la tab Corse è sostituita dalla guida manuale.
+    if (typeof window._z2hState === 'function' && window._z2hState() === 'survival'
+        && typeof window.renderManualSurvivalMode === 'function') {
+        return window.renderManualSurvivalMode();
+    }
     const _sig = (gameState.pendingRides.map(r => r.id).join(',')) + '|' +
                  (gameState.drivers.map(d => d.id + ':' + d.status + ':' + (d.queue?.length || 0) + ':' + (d.restHoursLeft | 0)).join(',')) + '|' +
                  (gameState._dailySummary ? gameState._dailySummary.day : 0);
