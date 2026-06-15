@@ -22,16 +22,14 @@ Sostituito il push "finto" (solo Notification API locale + setTimeout, moriva a 
 **Chiave VAPID pubblica (già in config.js):** `BE9VSQn6J3eKQxtTKFzoBKzGp9Bkmy8aBHkRQdQkYGmSUgdjyv62SIKsnhjs0-ZN7feMw9ed98miJdIF38QZs5c`
 La **privata NON è nel repo** — generata in locale, va messa SOLO come segreto Supabase (vedi checklist). Se l'hai persa, rigenerala: serve nuova coppia (cambia anche la pubblica in config.js).
 
-**⚠️ CHECKLIST DEPLOY (🧑 lato tuo — io non ho accesso al tuo Supabase):**
-1. **SQL:** gira `39_push_subscriptions.sql` nel SQL editor Supabase.
-2. **Segreti Edge Function** (Dashboard → Edge Functions → Secrets, o `supabase secrets set`):
-   - `VAPID_PUBLIC_KEY` = (la pubblica qui sopra)
-   - `VAPID_PRIVATE_KEY` = (la privata che hai salvato)
-   - `VAPID_SUBJECT` = `mailto:support@chauffeurempire.com`
-   - (opz.) `PUSH_CRON_SECRET` = stringa random; se la setti, il cron deve mandare header `x-cron-secret`
-3. **Deploy function:** `supabase functions deploy send-push` (serve Supabase CLI: `brew install supabase/tap/supabase` + `supabase login` + `supabase link`).
-4. **Cron orario:** abilita estensioni `pg_cron` + `pg_net` (Dashboard → Database → Extensions), poi il `cron.schedule(...)` in fondo a `39_push_subscriptions.sql` (sostituisci `<PROJECT_REF>` e `<SERVICE_ROLE_KEY>`). Alternativa più semplice: Dashboard → Edge Functions → send-push → Cron.
-5. **Test:** in gioco accetta il permesso notifiche → controlla che compaia una riga in `push_subscriptions`. Poi invoca la function a mano con un `last_seen` finto vecchio per vedere arrivare la notifica.
+**✅ DEPLOYATO (15 giu 2026, da Claude via Supabase access token temporaneo, poi da revocare):**
+1. ✅ **SQL** `39_push_subscriptions.sql` girato via Management API → `push_subscriptions` + RLS + RPC creati e verificati.
+2. ✅ **Segreti** `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` / `VAPID_SUBJECT` settati (`supabase secrets set`, count 3). `PUSH_CRON_SECRET` NON settato (cron usa solo anon JWT).
+3. ✅ **Function** `send-push` deployata (`supabase functions deploy`, project `twstjbykstaioaahfqbe`).
+4. ✅ **Cron** `ce-send-push` (`0 * * * *`, active) via `pg_cron`+`pg_net`, header `Authorization: Bearer <anon>` (anon è pubblica → nessun segreto nel DB).
+5. ✅ **Smoke test**: `POST /send-push` → `{"ok":true,"candidates":0,"sent":0,"expired":0}` (web-push gira nel runtime Deno, RPC+segreti OK).
+   - **Resta solo il test umano:** in gioco accettare le notifiche → verificare una riga in `push_subscriptions`, poi (per vedere la notifica) mettere a mano `last_seen` a >22h fa e invocare la function.
+   - 🔑 **Vlad: REVOCA l'access token `sbp_…`** usato per il deploy (Dashboard → Account → Access Tokens).
 
 **Note tecniche:**
 - "Inattivo" = `last_seen < now()-22h`, non rinotificato entro 20h, non più vecchio di 7g. Heartbeat aggiorna `last_seen` su login e a ogni ritorno alla tab.
