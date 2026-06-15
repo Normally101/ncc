@@ -7,6 +7,18 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### ✅ TEST LIVE END-TO-END (16 giugno 2026, via Chrome automation su chauffeurempire.com)
+Testato sul sito vero con un account loggato (djbladestudio@gmail.com):
+- **Zero-to-Hero**: survival render OK · 10 guidate manuali (+15€/-10 energia, esatti) · sleep ripristina energia · evento "SVEGLIATI, SCHIAVO" al 10° · click → Staff, tema rimosso · sidebar ridotta a **solo corse+staff** · "Ragazzo di Quartiere" assunto gratis (stat 35/30/38). **Tutto funziona.**
+- **Push VAPID**: subscribe reale (endpoint FCM) → riga in `push_subscriptions` → `send-push` `{sent:1}` → **notifica ricevuta e mostrata dal SW** ("🚗 Il tuo impero ti aspetta", personalizzata con cassa). **Tutto funziona.**
+
+**🐛 BUG TROVATO E FIXATO (solo grazie al test live): CSP bloccava il service worker.**
+`worker-src` era `blob:` (solo Mapbox) → `register('sw.js')` falliva con "violates Content Security Policy" → **il push non avrebbe MAI funzionato**. Fix in `index.html`: `worker-src 'self' blob:`. Committato e deployato.
+
+**⚠️ DECISIONE APERTA — cassa iniziale (il fix client da solo NON basta):**
+La mia `gameState.cash=0` in `initGame(fresh)` non ha effetto sugli account reali: `rpc_init_company` (01_mmo_migration.sql:170) inserisce `cash=35000` server-side. Per partire da 0 va cambiato LÌ (+ default colonna). **MA** il test ha rivelato un effetto a catena: dopo aver assunto il ragazzo, serve un'auto per lui; con ~150€ non te la compri e l'unica è quella del CEO → rischio soft-lock. Decisione di game-design di Vlad (vedi spec Gemini). Nota minore: `companies.cash` (599) ≠ `gameState.cash` client (35150) → sync client-server da verificare separatamente.
+
+
 ### 🔔 SERVER PUSH VAPID (15 giugno 2026) — CODICE PRONTO, da deployare
 
 Sostituito il push "finto" (solo Notification API locale + setTimeout, moriva a browser chiuso) con **Web Push VAPID reale** che funziona anche a browser chiuso. Server = Edge Function Supabase schedulata con cron.
