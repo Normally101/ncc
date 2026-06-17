@@ -54,7 +54,10 @@ window.claimQuestReward = function(questId) {
   gs.completedQuests.push(questId);
 
   const r = q.rewards;
-  if (r.cash)       { gs.cash += r.cash; gs.annualProfitTracker = (gs.annualProfitTracker || 0) + r.cash; }
+  if (r.cash)       { gs.cash += r.cash; gs.annualProfitTracker = (gs.annualProfitTracker || 0) + r.cash;
+    // Server-authoritative mirror (come per il VTK sotto): senza questo il reward cash
+    // resta solo locale e al prossimo bridge col server viene sovrascritto → desync/exploit.
+    if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function') window.ServerState.syncCash(gs.cash).catch(() => {}); }
   if (r.vtk) {
     gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;   // optimistic
     // VTK-5: il server applica il cap giornaliero (500) ed è autoritativo.

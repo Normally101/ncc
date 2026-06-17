@@ -171,7 +171,7 @@ function _render() {
 function _buildBackdrop(target, isCenter) {
     const overlay = document.createElement('div');
     overlay.id = 'tut-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9980;pointer-events:all;background:rgba(0,0,0,0.78)';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9500;pointer-events:all;background:rgba(0,0,0,0.78)';
     document.body.appendChild(overlay);
     _tutOverlay = overlay;
 
@@ -179,7 +179,7 @@ function _buildBackdrop(target, isCenter) {
 
     const cv = document.createElement('canvas');
     cv.id = 'tut-canvas';
-    cv.style.cssText = 'position:fixed;inset:0;z-index:9981;pointer-events:none;';
+    cv.style.cssText = 'position:fixed;inset:0;z-index:9501;pointer-events:none;';
     cv.width  = window.innerWidth;
     cv.height = window.innerHeight;
     const ctx = cv.getContext('2d');
@@ -197,7 +197,7 @@ function _buildBackdrop(target, isCenter) {
         target.dataset.tutOrigZ   = target.style.zIndex || '';
         target.dataset.tutOrigPos = target.style.position || '';
         target.style.position = 'relative';
-        target.style.zIndex   = '9990';
+        target.style.zIndex   = '9510';
     }
 
     document.body.appendChild(cv);
@@ -227,7 +227,7 @@ function _buildBox(step, target) {
     const box = document.createElement('div');
     box.id = 'tut-box';
     box.style.cssText = [
-        'position:fixed', 'z-index:9999',
+        'position:fixed', 'z-index:9520',
         'background:#0d1117',
         'border:1px solid rgba(212,175,55,0.45)',
         'border-radius:12px',

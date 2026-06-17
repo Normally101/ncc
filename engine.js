@@ -174,7 +174,7 @@ window._stopMarketingCampaign  = _stopMarketingCampaign;
 let tempLeaseTier = null;
 
 let gameState = {
-    cash: 35000, reputation: 0.0, energy: 100,
+    cash: 0, reputation: 0.0, energy: 100,
     day: 1, month: 1, hour: 8, minute: 0, paused: false,
     todayEarnings: 0,
     fleet: [], drivers: [], staff: [], investments: [],
@@ -845,6 +845,16 @@ function initGame(fresh = true) {
         // 10 guidate manuali (+15€) = 150€, coerente col modal "Hai 150€ in tasca ora".
         gameState.cash = 0;
         gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
+        // Auto "riscattata dal pignoramento": berlina starter tier 'standard' (sotto il
+        // listino showroom, che parte da 'business'). Resta NON assegnata in survival
+        // (guidi a mano); il Ragazzo di Quartiere ne eredita le chiavi quando lo assumi
+        // (hireNeighborhoodKid) → l'idle parte senza dover comprare un'auto a €0 in cassa.
+        gameState.fleet.push({
+            id: 'c_starter', _serverId: null, name: 'Berlina (riscattata)', tier: 'standard',
+            vehicleClass: 'volt_3_urban', isStarter: true, condition: 62, isLease: false,
+            fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100,
+            outOfService: null, upgrades: [], protoId: null
+        });
         _refreshRecruits();
     } else {
         // Pre-sync clock and process offline income before intervals start (prevents false hourly/daily triggers)
@@ -1972,7 +1982,9 @@ window._startGameWithSlot = function(slotIndex, fresh) {
     if (!fresh) {
         const loaded = loadGame();
         initGame(!loaded);
-        setTimeout(_processOfflineCatchup, 800);
+        // Offline catch-up è GIÀ gestito da initGame (loop su _offlineDays in base a gameDay,
+        // riga ~857). Il vecchio setTimeout(_processOfflineCatchup) lo rifaceva una seconda
+        // volta → redditi/spese giornaliere contati due volte al ritorno. Rimosso.
     } else {
         initGame(true);
     }

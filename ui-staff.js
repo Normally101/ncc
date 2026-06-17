@@ -421,7 +421,7 @@ window.openCarConfigurator = function(carId, type) {
 
     const modal = document.createElement('div');
     modal.id = 'modal-configurator';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:var(--z-modal);background:rgba(0,0,0,0.6);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:16px';
     document.body.appendChild(modal);
 
     const sel = new Set();

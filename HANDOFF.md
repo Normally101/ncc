@@ -1,11 +1,21 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 15 giugno 2026
+> Aggiornato: 17 giugno 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
+
+### ✅ 17 giugno 2026 — Fix P0 economia/onboarding (server-authoritative)
+Audit del codice → 5 bug P0/P1 affrontati. Decisioni prese con Vlad: **cassa server-authoritative** · **start €0 + il Ragazzo eredita l'auto del CEO**.
+- **Cassa = server-authoritative (mirror).** Ogni guadagno locale fa ora mirror via `rpc_sync_cash`: aggiunto in `zero-to-hero.js` (executeManualDrive) e `quests.js` (reward cash) — prima mutavano `gs.cash` senza avvisare il server → al bridge venivano azzerati (causa soft-lock onboarding + desync 599 vs 35150). *(Hardening futuro: sostituire il mirror con RPC a delta server-side per anti-cheat puro.)*
+- **Cassa iniziale €0** riconciliata su 3 fonti: `engine.js` default + `saveSystem.js` reset + **`rpc_init_company`** (SQL `40_init_company_zero_cash.sql`, **GIÀ APPLICATA al DB prod**; ON CONFLICT non tocca le aziende esistenti). 10 guidate ×15€ = 150€, coerente col modal.
+- **Anti-soft-lock:** `engine.js` fresh crea una berlina starter tier `standard` ("riscattata dal pignoramento"); `hireNeighborhoodKid` la assegna al Ragazzo → l'auto-dispatch (gameLoop) lo manda in strada da solo: idle funzionante a €0, senza comprare auto.
+- **Doppio offline-catchup rimosso** (`engine.js`: `_processOfflineCatchup` era chiamato OLTRE al loop in `initGame` → redditi/spese contati 2×).
+- Falso positivo audit: `assignRideToDriver` è già protetto dallo splice sincrono → non toccato.
+- `node --check` OK su tutti i file. Cache-bust: engine v19, quests v11, saveSystem v10, zero-to-hero v2.
+- **⚠️ DA FARE — deploy front-end:** la SQL è live ma il client NON è ancora pushato. Finché non deployi (Vercel auto-deploy da `main`), un nuovo signup avrebbe server €0 con client vecchio. Decidere: `git push` ora vs revert temporaneo della SQL.
 
 ### ✅ TEST LIVE END-TO-END (16 giugno 2026, via Chrome automation su chauffeurempire.com)
 Testato sul sito vero con un account loggato (djbladestudio@gmail.com):
@@ -15,8 +25,7 @@ Testato sul sito vero con un account loggato (djbladestudio@gmail.com):
 **🐛 BUG TROVATO E FIXATO (solo grazie al test live): CSP bloccava il service worker.**
 `worker-src` era `blob:` (solo Mapbox) → `register('sw.js')` falliva con "violates Content Security Policy" → **il push non avrebbe MAI funzionato**. Fix in `index.html`: `worker-src 'self' blob:`. Committato e deployato.
 
-**⚠️ DECISIONE APERTA — cassa iniziale (il fix client da solo NON basta):**
-La mia `gameState.cash=0` in `initGame(fresh)` non ha effetto sugli account reali: `rpc_init_company` (01_mmo_migration.sql:170) inserisce `cash=35000` server-side. Per partire da 0 va cambiato LÌ (+ default colonna). **MA** il test ha rivelato un effetto a catena: dopo aver assunto il ragazzo, serve un'auto per lui; con ~150€ non te la compri e l'unica è quella del CEO → rischio soft-lock. Decisione di game-design di Vlad (vedi spec Gemini). Nota minore: `companies.cash` (599) ≠ `gameState.cash` client (35150) → sync client-server da verificare separatamente.
+**✅ DECISIONE PRESA (17 giu 2026) — cassa iniziale:** €0 + il Ragazzo eredita l'auto del CEO (berlina starter tier `standard`). Riconciliata client+server (vedi entry "17 giugno" sopra). Il sync client-server (599 vs 35150) è risolto col modello **server-authoritative + mirror `syncCash`** su ogni guadagno locale.
 
 
 ### 🔔 SERVER PUSH VAPID (15 giugno 2026) — CODICE PRONTO, da deployare

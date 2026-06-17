@@ -1,4 +1,15 @@
 :root {
+    /* ── Z-INDEX SCALE (layer coerenti, anti-collisione overlay) ── */
+    --z-map:        400;
+    --z-dropdown:   1000;
+    --z-sticky:     1500;
+    --z-alert:      6000;
+    --z-backdrop:   8000;
+    --z-modal:      9000;   /* modali bloccanti */
+    --z-cmdpalette: 9300;   /* command palette */
+    --z-spotlight:  9500;   /* tutorial */
+    --z-takeover:   9800;   /* takeover a schermo intero: capitalism, lightbox */
+    --z-toast:      9900;   /* notifiche, sempre in cima */
     /* ── MIDNIGHT EMPIRE THEME ── */
     --gold:        #d4af37;
     --gold-light:  #f0d060;
@@ -662,7 +673,7 @@ details[open] .finance-section-title { color: #00f2ff; }
    SAVE SYSTEM — Slot Selector Landing Page
    ================================================================ */
 #ss-overlay {
-    position: fixed; inset: 0; z-index: 9999;
+    position: fixed; inset: 0; z-index: var(--z-modal);
     display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,0.92);
     backdrop-filter: blur(16px) saturate(1.4);
@@ -987,7 +998,7 @@ details[open] .finance-section-title { color: #00f2ff; }
    SMART HUB MODAL
    ================================================================ */
 .hub-modal {
-    position: fixed; inset: 0; z-index: 8000;
+    position: fixed; inset: 0; z-index: var(--z-modal);
     display: flex; align-items: center; justify-content: center;
     background: rgba(0,0,0,0.65);
     backdrop-filter: blur(8px);
@@ -1144,7 +1155,7 @@ details[open] .finance-section-title { color: #00f2ff; }
    ══════════════════════════════════════════════════════════════ */
 
 #auth-overlay {
-    position: fixed; inset: 0; z-index: 10000;
+    position: fixed; inset: 0; z-index: var(--z-modal);
     overflow-y: auto;
     font-family: 'Montserrat', 'Inter', sans-serif;
     background-image:
@@ -1591,7 +1602,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 .lp-showcase-slot:hover .lp-sc-expand { opacity: 1; color: rgba(212,175,55,0.9); }
 
 /* ── SHOWCASE LIGHTBOX ── */
-#lp-lightbox { position: fixed; inset: 0; z-index: 99999; }
+#lp-lightbox { position: fixed; inset: 0; z-index: var(--z-takeover); }
 .lp-lb-backdrop {
     position: absolute; inset: 0;
     background: rgba(0,0,0,0.82);
@@ -1797,7 +1808,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 /* ── Daily Reward Modal ──────────────────────────────────────── */
 #daily-reward-modal {
-    position: fixed; inset: 0; z-index: 10000;
+    position: fixed; inset: 0; z-index: var(--z-modal);
     background: rgba(0,0,0,0.82); backdrop-filter: blur(8px);
     display: flex; align-items: center; justify-content: center;
     animation: fadeIn .25s ease;
@@ -3396,7 +3407,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 /* ── DS: Notification Toast ─────────────────────────────────── */
 .ds-toast {
-    position: fixed; bottom: 32px; right: 20px; z-index: 10000;
+    position: fixed; bottom: 32px; right: 20px; z-index: var(--z-toast);
     display: flex; align-items: flex-start; gap: 12px;
     padding: 14px 18px; border-radius: var(--r-lg);
     min-width: 280px; max-width: 420px;
@@ -3443,7 +3454,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 /* ── DS: Notification Panel (urgent alerts) ──────────────────── */
 .ds-alert-panel {
-    position: fixed; top: 96px; right: 16px; z-index: 800;
+    position: fixed; top: 96px; right: 16px; z-index: var(--z-alert);
     display: flex; flex-direction: column; gap: 6px;
     pointer-events: none; max-width: 320px;
 }

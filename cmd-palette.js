@@ -32,7 +32,7 @@
         _selIdx = 0;
         const ov = document.createElement('div');
         ov.id = 'cmdp-overlay';
-        ov.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(1,4,9,0.72);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:var(--z-cmdpalette);background:rgba(1,4,9,0.72);display:flex;align-items:flex-start;justify-content:center;padding-top:12vh';
         ov.innerHTML = `
           <div style="width:90%;max-width:460px;background:#161b22;border:1px solid #30363d;border-radius:8px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.6)">
             <input id="cmdp-input" type="text" placeholder="Cerca una sezione…" autocomplete="off" spellcheck="false"

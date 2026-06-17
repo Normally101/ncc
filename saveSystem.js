@@ -363,10 +363,11 @@ window.resetGame = async function() {
                 .delete()
                 .eq('user_id', window.currentUser.id)
                 .eq('slot_index', 0);
-            // Reset the authoritative server cash back to the starting amount so
-            // the fresh game doesn't inherit the old company balance.
+            // Reset the authoritative server cash back to the starting amount (€0 —
+            // Zero-to-Hero "fondo del barile") so the fresh game doesn't inherit the
+            // old company balance. Must match engine.js default + rpc_init_company.
             if (window.ServerState && typeof window.ServerState.syncCash === 'function') {
-                try { await window.ServerState.syncCash(35000); } catch(e) {}
+                try { await window.ServerState.syncCash(0); } catch(e) {}
             }
         }
     } catch(e) {

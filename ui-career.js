@@ -29,7 +29,7 @@ const _TYPE_LABEL = { tutorial: 'Tutorial', story: 'Storia', raid: 'Raid Boss', 
     s.textContent = `
 #career-modal-overlay {
     position:fixed;inset:0;background:rgba(7,9,15,0.82);
-    z-index:9500;display:flex;align-items:center;justify-content:center;padding:20px;
+    z-index:var(--z-modal);display:flex;align-items:center;justify-content:center;padding:20px;
 }
 #career-modal-wrap { position:relative;width:100%;max-width:820px;max-height:90vh;display:flex;flex-direction:column; }
 #career-modal-close {
@@ -558,7 +558,7 @@ window._showBivioModal = function(q) {
 
     const modal = document.createElement('div');
     modal.id = 'bivio-modal';
-    modal.style.cssText = 'position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:20px';
+    modal.style.cssText = 'position:fixed;inset:0;z-index:var(--z-modal);display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:20px';
     modal.innerHTML = `
         <div style="background:#161b22;border:1px solid #21262d;border-top:2px solid #c79a2a;padding:20px;max-width:360px;width:100%">
             <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#c79a2a;margin-bottom:6px">${q.icon} ${q.title}</div>

@@ -87,6 +87,11 @@
         } catch (e) {}
 
         if (typeof window.saveGame === 'function') window.saveGame();
+        // Server-authoritative mirror: persisti SUBITO il guadagno. Senza questo, al
+        // reload il bridge col server (che parte a 0) azzererebbe i 150€ guadagnati
+        // → soft-lock dell'onboarding (non raggiungi mai il passo "assumi il ragazzo").
+        if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
+            window.ServerState.syncCash(gs.cash).catch(() => {});
 
         if (gs.questStats.totalRides === 10) {
             window.triggerCapitalismEvent();
@@ -117,7 +122,7 @@
         if (document.getElementById('z2h-capitalism')) return;
         const ov = document.createElement('div');
         ov.id = 'z2h-capitalism';
-        ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(2,3,8,0.96);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+        ov.style.cssText = 'position:fixed;inset:0;z-index:var(--z-takeover);background:rgba(2,3,8,0.96);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
         ov.innerHTML = `
         <div style="max-width:560px;background:#0b0d14;border:1px solid #d4af37;border-radius:14px;padding:34px 30px;text-align:center;box-shadow:0 0 60px rgba(212,175,55,0.25)">
             <h1 style="color:#d4af37;font-size:26px;letter-spacing:4px;margin:0 0 18px;font-weight:900">SVEGLIATI, SCHIAVO.</h1>
@@ -156,8 +161,16 @@
             skill_efficiency: 35, skill_charisma: 30, skill_speed: 38,
             stress_level: 0, burnout_until: null,
         });
+        // Il Ragazzo eredita le chiavi della berlina starter del CEO: così guida e genera
+        // reddito SENZA dover comprare un'auto (impossibile con €0) → niente soft-lock.
+        // L'auto-dispatch nel gameLoop lo manda in strada da solo.
+        const _kid     = gs.drivers[gs.drivers.length - 1];
+        const _starter = (gs.fleet || []).find(c => c.isStarter) || (gs.fleet || [])[0];
+        if (_kid && _starter) _kid.assignedCarId = _starter.id;
         if (typeof window.showNotification === 'function')
-            window.showNotification('Ragazzo di Quartiere assunto! Mettilo al volante e vai a dormire.', 'success');
+            window.showNotification(_starter
+                ? 'Ragazzo di Quartiere al volante della tua berlina. Vai a dormire: i soldi arrivano da soli.'
+                : 'Ragazzo di Quartiere assunto! Assegnagli un’auto e vai a dormire.', 'success');
         if (typeof window.updateUI === 'function') window.updateUI();
         if (typeof window.saveGame === 'function') window.saveGame();
         if (typeof window.renderTabStaff === 'function') window.renderTabStaff();
