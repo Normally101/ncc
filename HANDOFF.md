@@ -7,6 +7,13 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### ✅ 17 giugno 2026 (cont.) — Grafica z-index + Tracker Obiettivi + DEPLOY
+- **DEPLOYATO** su Vercel (P0 economia/onboarding + grafica + tracker). Site 200; `40_*.sql` → 404 (no leak). Client e DB ora allineati (€0).
+- **Grafica — scala z-index** coerente in `:root` (alert/backdrop/modal/cmdpalette/spotlight/takeover/toast); overlay CSS+JS migrati ai token → fine collisioni (toast sopra i modali, tutorial sotto takeover/toast, via i `99999`). Verificato in Chrome (0 errori, toast>modal).
+- **Tutorial/Missioni — backbone pezzo 1: Tracker Obiettivi** (`objective-tracker.js`): barra diegetica fissa che mostra UN prossimo passo, click→naviga; additiva (legge z2h/quests/gates), nascosta in survival/per veterani. Risolve "quest invisibili" + "lasciato solo dopo SVEGLIATI". Verificato 5 scenari in Chrome.
+- Audit grafica: 1 fix reale (z-index); **empty-states e overflow sovrastimati** (finance ha già il vuoto, store sono cataloghi statici; layout già responsive con più breakpoint + auto-fit) → nessuna modifica speculativa.
+- **Prossimi pezzi backbone tutorial** (da fare): (2) unificare i 3 sistemi onboarding in una macchina a stati; (3) tutorial action-gated (step completati FACENDO, non "Avanti"); (4) Vittorio meccanica (debito reale, SMS, ripaga/ignora/ribalta); (5) demo idle "hai guadagnato mentre riposavi".
+
 ### ✅ 17 giugno 2026 — Fix P0 economia/onboarding (server-authoritative)
 Audit del codice → 5 bug P0/P1 affrontati. Decisioni prese con Vlad: **cassa server-authoritative** · **start €0 + il Ragazzo eredita l'auto del CEO**.
 - **Cassa = server-authoritative (mirror).** Ogni guadagno locale fa ora mirror via `rpc_sync_cash`: aggiunto in `zero-to-hero.js` (executeManualDrive) e `quests.js` (reward cash) — prima mutavano `gs.cash` senza avvisare il server → al bridge venivano azzerati (causa soft-lock onboarding + desync 599 vs 35150). *(Hardening futuro: sostituire il mirror con RPC a delta server-side per anti-cheat puro.)*
@@ -15,7 +22,7 @@ Audit del codice → 5 bug P0/P1 affrontati. Decisioni prese con Vlad: **cassa s
 - **Doppio offline-catchup rimosso** (`engine.js`: `_processOfflineCatchup` era chiamato OLTRE al loop in `initGame` → redditi/spese contati 2×).
 - Falso positivo audit: `assignRideToDriver` è già protetto dallo splice sincrono → non toccato.
 - `node --check` OK su tutti i file. Cache-bust: engine v19, quests v11, saveSystem v10, zero-to-hero v2.
-- **⚠️ DA FARE — deploy front-end:** la SQL è live ma il client NON è ancora pushato. Finché non deployi (Vercel auto-deploy da `main`), un nuovo signup avrebbe server €0 con client vecchio. Decidere: `git push` ora vs revert temporaneo della SQL.
+- **✅ Deployato (17 giu):** client + SQL allineati in prod (vedi entry "(cont.)" sopra). Risolto il disallineamento temporaneo SQL-live / client-vecchio.
 
 ### ✅ TEST LIVE END-TO-END (16 giugno 2026, via Chrome automation su chauffeurempire.com)
 Testato sul sito vero con un account loggato (djbladestudio@gmail.com):
