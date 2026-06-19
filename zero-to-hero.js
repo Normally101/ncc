@@ -47,7 +47,8 @@
         if (!container) return;
         const gs     = window.gameState || {};
         const energy = (gs.energy == null) ? 100 : gs.energy;
-        const debt   = Math.max(0, 500 - (_rides() * 50)); // illusione di debito
+        const _vd    = (typeof window._vittorioDebt === 'function') ? window._vittorioDebt() : null;
+        const debt   = _vd ? _vd.outstanding : 500; // debito REALE (vittorio.js)
 
         let html = `
         <div id="manual-drive-container">
@@ -55,7 +56,7 @@
             <div style="background: #111; border-left: 4px solid #d4af37; padding: 15px; margin: 20px; max-width: 500px; text-align: left; font-style: italic; color: #ccc;">
                 "Ti ho prestato i soldi per riscattare l'auto dal pignoramento. Ora hai un debito con me. Muoviti, accendi il motore e lavora. Non mi importa se sei stanco." <br><b style="color:#d4af37">- Vittorio</b>
             </div>
-            <div style="color: #666; margin-bottom: 20px;">Debito stimato residuo: <b style="color:red">-${debt}€</b></div>
+            <div style="color: #666; margin-bottom: 20px;">Debito con Vittorio: <b style="color:red">€${(debt||0).toLocaleString('it-IT')}</b> <span style="font-size:10px;color:#555">(guadagna e ripagalo)</span></div>
 
             <div style="margin-bottom: 10px; font-weight: bold; color: ${energy < 10 ? 'red' : '#22c55e'};">Energia: ${Math.round(energy)}%</div>
         `;

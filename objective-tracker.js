@@ -50,6 +50,12 @@
         // 2) Catena onboarding "povero → ricco"
         if (nDrivers() < 1)
             return { icon: '👔', text: 'Assumi il Ragazzo di Quartiere (gratis): guida la tua auto e incassa mentre riposi', tab: 'staff' };
+
+        // 2b) Vittorio: ripaga il debito quando hai contanti (o se ha perso la pazienza)
+        const vd = (typeof window._vittorioDebt === 'function') ? window._vittorioDebt() : null;
+        if (vd && vd.status === 'active' && ((gs().cash || 0) >= 80 || vd.finalNoticeShown))
+            return { icon: '📵', text: `Ripaga Vittorio — devi €${(vd.outstanding || 0).toLocaleString('it-IT')}`, action: 'vittorio', glow: !!vd.finalNoticeShown };
+
         if (nFleet() < 2)
             return { icon: '🚘', text: 'Espandi la flotta: compra un secondo veicolo', tab: 'showroom' };
 
@@ -114,7 +120,10 @@ body.theme-survival #obj-tracker{ display:none !important; }
             `<span class="ot-label">Prossimo</span>` +
             `<span class="ot-text">${o.text}</span>` +
             `<span class="ot-go">Vai →</span>`;
-        el.onclick = function () { if (typeof window.switchTab === 'function') window.switchTab(o.tab); };
+        el.onclick = function () {
+            if (o.action === 'vittorio' && typeof window.openVittorioModal === 'function') { window.openVittorioModal(); return; }
+            if (typeof window.switchTab === 'function') window.switchTab(o.tab);
+        };
     };
 
     // Aggancia updateUI così la barra si aggiorna ad ogni refresh della UI.
