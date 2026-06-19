@@ -12,7 +12,9 @@
 - **Grafica — scala z-index** coerente in `:root` (alert/backdrop/modal/cmdpalette/spotlight/takeover/toast); overlay CSS+JS migrati ai token → fine collisioni (toast sopra i modali, tutorial sotto takeover/toast, via i `99999`). Verificato in Chrome (0 errori, toast>modal).
 - **Tutorial/Missioni — backbone pezzo 1: Tracker Obiettivi** (`objective-tracker.js`): barra diegetica fissa che mostra UN prossimo passo, click→naviga; additiva (legge z2h/quests/gates), nascosta in survival/per veterani. Risolve "quest invisibili" + "lasciato solo dopo SVEGLIATI". Verificato 5 scenari in Chrome.
 - Audit grafica: 1 fix reale (z-index); **empty-states e overflow sovrastimati** (finance ha già il vuoto, store sono cataloghi statici; layout già responsive con più breakpoint + auto-fit) → nessuna modifica speculativa.
-- **Prossimi pezzi backbone tutorial** (da fare): (2) unificare i 3 sistemi onboarding in una macchina a stati; (3) tutorial action-gated (step completati FACENDO, non "Avanti"); (4) Vittorio meccanica (debito reale, SMS, ripaga/ignora/ribalta); (5) demo idle "hai guadagnato mentre riposavi".
+- **Tutorial/Missioni — backbone pezzo 4: Vittorio** (`vittorio.js`): il debito è ora meccanica reale (€500, +3%/giorno, SMS, bivio Ripaga/Più tardi/Ribalta→socio se prestige≥1); agganciato al Tracker ("Ripaga Vittorio €X") e alla schermata survival (debito vero). Verificato in Chrome (init/repay/flip/veteran/tracker/survival, 0 errori).
+- **Backbone tutorial — fatto:** pezzo 1 Tracker + pezzo 4 Vittorio. **Da fare:** (2) unificare i 3 sistemi onboarding in una macchina a stati; (3) tutorial action-gated; (5) demo idle "hai guadagnato mentre riposavi".
+- **🧠 Cervello Obsidian — grafo riorganizzato:** `.obsidian/graph.json` con gruppi-colore per area + filtri (nasconde canvas/base/Templates) + forze più larghe. Vault: 99 note, 0 orfane/ghost.
 
 ### ✅ 17 giugno 2026 — Fix P0 economia/onboarding (server-authoritative)
 Audit del codice → 5 bug P0/P1 affrontati. Decisioni prese con Vlad: **cassa server-authoritative** · **start €0 + il Ragazzo eredita l'auto del CEO**.
