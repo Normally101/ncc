@@ -7,6 +7,20 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### 🔐 17 giugno 2026 — Audit di sicurezza completo (2 subagent + checklist agentskills)
+**✅ Ondata 1 (sicura) FATTA e deployata** (`bda625f`):
+- **XSS (P0) chiuso** sui sink multiplayer: nome/descrizione di sindacati/consorzi + `company_name` in classifica avvolti in `CE_Sec.escHtml` (`p2p-render.js`, `ui-ranking.js`). Era un vero stored/DOM XSS (descrizione consorzio con `<img onerror>` → eseguiva nel contesto della vittima).
+- **`vercel.json`** con header HTTP (HSTS, X-Frame-Options DENY, X-Content-Type-Options, Referrer-Policy, Permissions-Policy, COOP).
+- **`slot_*.json`** esclusi dal deploy (`.vercelignore`).
+- **Segreti: CLEAN** — nessuna chiave privata nel client (anon key/VAPID public/Mapbox = pubbliche per design; service-role/VAPID-private solo nelle Edge Function via env).
+
+**🔴 DEBITO DI SICUREZZA #1 — economia client-authoritative (NON ancora risolto).**
+La cassa è decisa dal client e il server la rispecchia → un giocatore tecnico può darsi soldi infiniti per **3 vie**: (1) upsert diretto del blob `game_saves` con `cash` arbitrario (`saveSystem.js:131`, letto come verità dal P2P); (2) `rpc_sync_cash(v_cash)` che SETtа `companies.cash` al valore client (`10_sync_cash.sql:20`); (3) `rpc_add_driver_coins(p_amount)` conia valuta premium senza validazione (`06_mmo_bugfix_driver_coins.sql:40`). I trigger anti-cheat (`38_security_hardening.sql`) **loggano ma NON bloccano** (`RETURN NEW`).
+- **DECISIONE PRESA (giu 2026):** NON applicare blocchi/ceiling al volo in prod → i guadagni legittimi (offline, contratti, late-game a magnitudine assurda) sono salti grossi indistinguibili dai cheat, e la scala economica legittima non è decisa (`Decisioni Aperte #6`). Un blocco mal tarato bloccherebbe giocatori veri.
+- **FIX VERO = progetto "economia server-authoritative"** (da fare insieme alla scelta della scala economica): ledger unico, ogni guadagno via RPC validato a **delta** (non set assoluto), niente scrittura cassa dal client, `liquid_assets` derivato lato server, trigger `BEFORE` che `RAISE EXCEPTION`. Vedi vault *Anti-Cheat Economico* + *Bilanciamento Economico (spec)*.
+
+**Follow-up minori (sicuri, non urgenti):** XSS escape anche in `ui-emails.js` (contenuto generato dal gioco, rischio basso); SRI + versioni pinnate sui CDN (`@supabase/supabase-js@2`, Mapbox) in `index.html`; richiedere `PUSH_CRON_SECRET` nella Edge Function `send-push`; togliere `script-src 'unsafe-inline'` dalla CSP (refactor: 296 onclick inline → event delegation). Repo skill di sicurezza clonato in `~/sec-skills` (754 skill = checklist di copertura).
+
 ### ✅ 17 giugno 2026 (cont.) — Grafica z-index + Tracker Obiettivi + DEPLOY
 - **DEPLOYATO** su Vercel (P0 economia/onboarding + grafica + tracker). Site 200; `40_*.sql` → 404 (no leak). Client e DB ora allineati (€0).
 - **Grafica — scala z-index** coerente in `:root` (alert/backdrop/modal/cmdpalette/spotlight/takeover/toast); overlay CSS+JS migrati ai token → fine collisioni (toast sopra i modali, tutorial sotto takeover/toast, via i `99999`). Verificato in Chrome (0 errori, toast>modal).
