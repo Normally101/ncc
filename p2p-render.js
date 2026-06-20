@@ -95,7 +95,7 @@ window.renderP2PSharesSection = function() {
             <div class="finance-stock-card" style="margin-bottom:8px">
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${s.company_name}${isMe ? ' <span style="font-size:7px;color:#c79a2a">TUA</span>' : ''}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${CE_Sec.escHtml(s.company_name)}${isMe ? ' <span style="font-size:7px;color:#c79a2a">TUA</span>' : ''}</div>
                         <div style="font-size:8px;color:${isUp?'#1aa06a':'#db5746'}">${isUp ? '▲' : '▼'} ${Math.abs(pct).toFixed(1)}% da IPO</div>
                     </div>
                     <div style="text-align:right">
@@ -139,14 +139,14 @@ window.renderP2PHoldingsSection = function() {
         const myRole = myH.holding_members?.find(m => m.user_id === uid)?.role || 'member';
         html += `
         <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:14px;margin-bottom:12px">
-            <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🏢 ${myH.name}</div>
-            <div style="font-size:8px;color:#6b7280;margin-bottom:4px">${myH.description || 'Nessuna descrizione'}</div>
+            <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🏢 ${CE_Sec.escHtml(myH.name)}</div>
+            <div style="font-size:8px;color:#6b7280;margin-bottom:4px">${CE_Sec.escHtml(myH.description || 'Nessuna descrizione')}</div>
             <div style="font-size:8px;color:#6b7280">Cassa: <span style="color:#e0922e;font-family:monospace">€${(myH.treasury || 0).toLocaleString()}</span> · Ruolo: <span style="color:#e6edf3;text-transform:capitalize">${myRole}</span></div>
             <div style="font-size:8px;color:#6b7280;margin-top:4px">Membri (${myH.holding_members?.length || 0}/${myH.max_members}):</div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
                 ${(myH.holding_members || []).map(m => `
                 <span style="font-size:7px;padding:2px 6px;border-radius:4px;border:1px solid ${m.role==='leader'?'rgba(212,175,55,0.3)':'#d6dee8'};color:${m.role==='leader'?'#c79a2a':'#6a7480'}">
-                    ${m.company_name} ${m.role === 'leader' ? '👑' : ''}
+                    ${CE_Sec.escHtml(m.company_name)} ${m.role === 'leader' ? '👑' : ''}
                 </span>`).join('')}
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
@@ -178,7 +178,7 @@ window.renderP2PHoldingsSection = function() {
                 html += `
                 <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${h.name}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${CE_Sec.escHtml(h.name)}</div>
                         <div style="font-size:8px;color:#6b7280">${cnt}/${h.max_members} membri · Cassa €${(h.treasury||0).toLocaleString()}</div>
                     </div>
                     <button onclick="joinHolding('${h.id}')" ${full ? 'disabled' : ''}
@@ -255,14 +255,14 @@ window.renderP2PConsorziSection = function() {
         const myRole = myC.consorzio_members?.find(m => m.user_id === uid)?.role || 'member';
         html += `
         <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.25);border-radius:6px;padding:14px;margin-bottom:12px">
-            <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🤝 ${myC.name}</div>
-            <div style="font-size:8px;color:#6b7280;margin-bottom:4px">${myC.description || ''}</div>
+            <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🤝 ${CE_Sec.escHtml(myC.name)}</div>
+            <div style="font-size:8px;color:#6b7280;margin-bottom:4px">${CE_Sec.escHtml(myC.description || '')}</div>
             <div style="font-size:8px;color:#6b7280">Cassa: <span style="color:#e0922e;font-family:monospace">€${(myC.treasury || 0).toLocaleString()}</span> · Ruolo: <span style="color:#e6edf3;text-transform:capitalize">${myRole}</span></div>
             <div style="font-size:8px;color:#6b7280;margin-top:4px">Membri (${memberCount}/${myC.max_members}):</div>
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
                 ${(myC.consorzio_members || []).map(m => `
                 <span style="font-size:7px;padding:2px 6px;border-radius:4px;border:1px solid ${m.role==='leader'?'rgba(212,175,55,0.3)':'#d6dee8'};color:${m.role==='leader'?'#c79a2a':'#6a7480'}">
-                    ${m.company_name} ${m.role === 'leader' ? '👑' : ''}
+                    ${CE_Sec.escHtml(m.company_name)} ${m.role === 'leader' ? '👑' : ''}
                 </span>`).join('')}
             </div>
             <div style="display:flex;gap:8px;margin-top:8px">
@@ -296,7 +296,7 @@ window.renderP2PConsorziSection = function() {
                 html += `
                 <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${c.name} ${fb}${ib}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${CE_Sec.escHtml(c.name)} ${fb}${ib}</div>
                         <div style="font-size:8px;color:#6b7280">${cnt}/${c.max_members} membri · Cassa €${(c.treasury||0).toLocaleString()}</div>
                     </div>
                     <button onclick="joinConsorzio('${c.id}')" ${full ? 'disabled' : ''}

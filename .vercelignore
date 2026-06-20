@@ -21,3 +21,6 @@ docs
 .agents
 .claude
 _mockups
+
+# Save di gioco (struttura dati interna / potenziale PII futura) — non servono pubblici
+slot_*.json

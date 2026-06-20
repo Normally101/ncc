@@ -174,7 +174,7 @@ async function renderTabRanking() {
             html += `<tr style="border-bottom:1px solid #21262d;${rowBg}">
                 <td style="text-align:center;padding:8px;font-size:${pos<=3?'16':'11'}px;color:#6b7280">${medal}</td>
                 <td style="padding:8px">
-                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${(r.company_name || 'Chauffeur Empire')}${_nameCount[r.company_name || 'Chauffeur Empire'] > 1 ? ` <span style="color:#6b7280;font-weight:500">#${String(r.user_id||'').slice(0,4)}</span>` : ''}</span>
+                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${CE_Sec.escHtml(r.company_name || 'Chauffeur Empire')}${_nameCount[r.company_name || 'Chauffeur Empire'] > 1 ? ` <span style="color:#6b7280;font-weight:500">#${String(r.user_id||'').slice(0,4)}</span>` : ''}</span>
                     ${isMe ? `<span style="font-size:9px;color:#c79a2a;margin-left:6px">(Tu)</span>` : ''}
                     ${online ? `<span style="display:inline-block;width:5px;height:5px;background:#1aa06a;border-radius:50%;margin-left:5px;vertical-align:middle"></span>` : ''}
                 </td>
