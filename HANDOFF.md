@@ -7,15 +7,18 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
-### 🛠️ 21 giugno 2026 — "Risolvi tutto": follow-up sicurezza + refactor CSP (IN CORSO) + onboarding/economia (da fare)
-Sessione di lavoro su più fronti. **Working tree con modifiche NON committate, NON deployato.**
+### ✅ 22 giugno 2026 — CSP refactor DEPLOYATO in produzione (chiuso il debito `unsafe-inline`)
+Ripreso il branch `security-csp-refactor` (1 commit sopra main). **Scan statico esaustivo `on*=` → trovato 1 handler inline sfuggito** in `alliances.js:137` (bottone "compra perk" della Bottega, dentro un ternario `${dis?...:...}` → saltato dal convertitore auto; la headless-senza-login NON poteva beccarlo perché la Bottega rende solo con login+consorzio). Convertito a `ceAct('_alPerk',[p.id])` + bump `alliances.js v5`. Riscan: **0 handler inline residui** ovunque (.js + index, doppi/singoli apici, tutti gli eventi). `node --check` verde, boot headless **0 violazioni CSP / 0 errori JS**. **Merge ff in `main` + push (`74fd0bd`) → Vercel deployato. Verificato LIVE:** CSP `script-src 'self' …` (niente più `unsafe-inline`) · `.sql` → 404 (no leak) · `events.js` → 200. Branch `security-csp-refactor` ora mergiato (eliminabile). **DA FARE ancora:** onboarding (unificare i 4 sistemi) + economia server-authoritative (spec+scaffolding) — vedi entry 21 giu sotto.
+
+### 🛠️ 21 giugno 2026 — "Risolvi tutto": follow-up sicurezza + refactor CSP + onboarding/economia (da fare)
+Sessione di lavoro su più fronti. **CSP refactor ora committato + deployato (vedi entry 22 giu sopra).**
 
 **✅ FATTO e verificato (3 follow-up sicurezza minori):**
 1. **XSS escape `ui-emails.js`** — 9 sink avvolti in `CE_Sec.escHtml` (subject ×2, body, signature, eventData.desc, choice text, rivalName, driverName, brokerRisk). Bump `ui-emails.js?v=12` in index.html.
 2. **SRI + pin CDN** in index.html — `@supabase/supabase-js` pinnato a **2.108.2** (era range `@2`) + `integrity` sha384 + `crossorigin`; `mapbox-gl.js`/`.css` v3.6.0 + SRI (CORS Mapbox = `*`, verificato).
 3. **`PUSH_CRON_SECRET`** — settato in prod sulla function `send-push` + cron `ce-send-push` (jobid 2) ora invia header `x-cron-secret`. Verificato: anon SENZA secret → **403**, cron CON secret → **200**. Sequenza no-downtime (cron aggiornato prima del secret). La function già supportava il check (riga 47).
 
-**✅ COMPLETO (21 giu, verificato headless) — CSP: rimosso `script-src 'unsafe-inline'`** (decisione Vlad: "fallo completo"). NON ancora deployato.
+**✅ COMPLETO (21 giu, verificato headless) — CSP: rimosso `script-src 'unsafe-inline'`** (decisione Vlad: "fallo completo"). Deployato il 22 giu (vedi entry sopra).
 Refactor grande: ~486 handler inline (296 onclick nei .js + 124 in index.html + micro/altri) tutti convertiti a event-delegation. Metodo:
 - **Infra: `events.js`** (NUOVO, caricato dopo security.js) — event-delegation. Helper `ceAct(fn, args[, evento])` genera `data-ce-act`/`data-ce-args` (JSON); listener delegato su document (click/change/input/submit) chiama `window[fn].apply(elemento, args)`. Micro-interazioni `this.style.transform` rimosse (coperte da CSS `button:active`).
 - **Convertitore riusabile: `_mockups/convert-handlers.mjs`** (escluso dal deploy) — converte gli handler "chiamata singola sicura" (anche `window.fn(...)`, anche arg-stringa), gestisce `'${expr}'`, **rifiuta** letture DOM al click-time (`getElementById().value` → vanno a funzione nominata) e ha **self-check** (node --check post-conversione → ripristina il file se rompe la sintassi).
