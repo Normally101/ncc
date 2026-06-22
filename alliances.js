@@ -134,7 +134,7 @@
                     <div class="em-lt">${p.icon} ${esc(p.name)}</div>
                     <div class="em-lm"><span>${esc(p.desc)}</span><span>· ${hint}</span></div>
                 </div>
-                <button class="em-goldbtn" style="flex-shrink:0${dis ? ';opacity:.45;cursor:not-allowed' : ''}" ${dis ? 'disabled' : `onclick="window._alPerk('${p.id}')"`}>${fmt(p.cost)}</button>
+                <button class="em-goldbtn" style="flex-shrink:0${dis ? ';opacity:.45;cursor:not-allowed' : ''}" ${dis ? 'disabled' : ceAct('_alPerk', [p.id])}>${fmt(p.cost)}</button>
             </div>`;
         }).join('');
 
