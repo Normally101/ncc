@@ -9,43 +9,11 @@
             window.renderOnboardingHTML()
    ════════════════════════════════════════════════════════════════════ */
 (function () {
-    // tab → requisito. ok se (corse >= rides) OPPURE (prestigio >= prestige).
-    // Tutto ciò che NON è qui è sempre aperto (home, corse, fleet, staff,
-    // emails, ranking, consorzi, store, help, career, showroom, marketing…).
-    const GATES = {
-        finance:        { rides: 5 },
-        market:         { rides: 8 },
-        b2b:            { rides: 12 },
-        regions:        { rides: 12 },
-        hq:             { rides: 15 },
-        invest:         { rides: 15, prestige: 1 },
-        realestate:     { rides: 15, prestige: 1 },
-        contracts:      { rides: 18 },
-        infrastructure: { rides: 25 },
-        tourism:        { rides: 30 },
-        lifestyle:      { rides: 30 },
-        auctions:       { rides: 30 },
-        provinces:      { rides: 40, prestige: 3 },
-        politics:       { rides: 40, prestige: 3 },
-        crypto:         { rides: 45, prestige: 4 },
-        shadow:         { rides: 60, prestige: 5 },
-        nemesis:        { rides: 60, prestige: 5 },
-        opa:            { rides: 80, prestige: 6 },
-    };
-
-    function _rides() { const gs = window.gameState; return (gs && gs.questStats && gs.questStats.totalRides) || 0; }
-    function _prestige() { const gs = window.gameState; return (gs && gs.prestige) || 0; }
-
-    window._tabUnlock = function (tab) {
-        const g = GATES[tab];
-        if (!g) return { ok: true };
-        if (_prestige() >= 1) return { ok: true };   // veterani/NG+ sbloccano sempre tutto
-        const rides = _rides(), prestige = _prestige();
-        let ok = false;
-        if (g.rides != null && rides >= g.rides) ok = true;
-        if (g.prestige != null && prestige >= g.prestige) ok = true;
-        return { ok, rides, prestige, needRides: g.rides, needPrestige: g.prestige };
-    };
+    // Gate di sblocco + stato → sorgente unica (onboarding-core.js).
+    // Il catalogo GATES e la logica di sblocco vivono in window.ceOnb.
+    function _rides()    { return window.ceOnb.rides(); }
+    function _prestige() { return window.ceOnb.prestige(); }
+    window._tabUnlock = function (tab) { return window.ceOnb.tabUnlock(tab); };
 
     window.renderTabLockHTML = function (tab) {
         const u = window._tabUnlock(tab);

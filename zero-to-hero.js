@@ -12,19 +12,15 @@
    Caricato DOPO dispatcher.js + ui-sidebar.js (patcha switchTab a valle dei loro).
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
-    function _rides()    { const gs = window.gameState; return (gs && gs.questStats && gs.questStats.totalRides) || 0; }
-    function _veteran()  { const gs = window.gameState; return !!(gs && gs.prestige > 0); }
+    // Stato derivato dalla sorgente unica (onboarding-core.js). Wrapper locali mantenuti
+    // perché usati internamente (executeManualDrive, switchTab patch, render).
+    function _rides()    { return window.ceOnb.rides(); }
+    function _veteran()  { return window.ceOnb.veteran(); }
 
-    // Stato Zero-to-Hero corrente.
-    window._z2hState = function () {
-        if (_veteran()) return 'free';
-        const r = _rides();
-        if (r < 10) return 'survival';
-        if (r < 25) return 'restricted';
-        return 'free';
-    };
+    // Stato Zero-to-Hero corrente (alias storico → ceOnb.phase()).
+    window._z2hState = function () { return window.ceOnb.phase(); };
     // Per ui-staff.js: fase transitoria (recruit ridotto, niente HR/Academy).
-    window._z2hRestricted = function () { return !_veteran() && _rides() < 25; };
+    window._z2hRestricted = function () { return window.ceOnb.restricted(); };
 
     const ALLOWED_RESTRICTED = ['corse', 'staff'];
 

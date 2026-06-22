@@ -13,10 +13,10 @@
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
     function gs()        { return window.gameState; }
-    function rides()     { const g = gs(); return (g && g.questStats && g.questStats.totalRides) || 0; }
+    function rides()     { return window.ceOnb.rides(); }     // sorgente unica (onboarding-core.js)
     function nDrivers()  { const g = gs(); return ((g && g.drivers) || []).filter(d => d.id !== 'ceo').length; }
     function nFleet()    { const g = gs(); return ((g && g.fleet) || []).length; }
-    function prestige()  { const g = gs(); return (g && g.prestige) || 0; }
+    function prestige()  { return window.ceOnb.prestige(); }  // sorgente unica
 
     // Gate di sblocco precoci (specchio leggero di onboarding.js GATES) per indicare
     // il prossimo traguardo una volta superato l'onboarding base.

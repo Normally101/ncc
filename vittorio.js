@@ -27,7 +27,7 @@
     // Inizializza (idempotente) e restituisce lo stato debito. null per i veterani.
     function ensureDebt() {
         var g = gs(); if (!g) return null;
-        if ((g.prestige || 0) > 0) return null;          // veterani/NG+: niente debito
+        if (window.ceOnb.veteran()) return null;         // veterani/NG+: niente debito (sorgente unica)
         if (!g.vittorioDebt) {
             g.vittorioDebt = {
                 principal: PRINCIPAL, outstanding: PRINCIPAL, status: 'active',
