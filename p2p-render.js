@@ -40,10 +40,9 @@ window.renderP2PMarketSection = function() {
                     </div>
                     <div style="text-align:right;margin-left:8px;flex-shrink:0">
                         <div style="font-size:11px;font-weight:700;font-family:monospace;color:${canBuy ? '#e0922e' : '#6a7480'}">€${l.ask_price.toLocaleString()}</div>
-                        <button onclick="buyP2PCar('${l.id}')"
+                        <button ${ceAct('buyP2PCar', [l.id])}
                             ${canBuy ? '' : 'disabled'}
-                            style="margin-top:4px;padding:2px 8px;font-size:8px;font-weight:700;cursor:${canBuy?'pointer':'not-allowed'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${canBuy?'':'opacity:.4'};transition:opacity .15s"
-                            onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                            style="margin-top:4px;padding:2px 8px;font-size:8px;font-weight:700;cursor:${canBuy?'pointer':'not-allowed'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${canBuy?'':'opacity:.4'};transition:opacity .15s">
                             Compra
                         </button>
                     </div>
@@ -63,7 +62,7 @@ window.renderP2PMarketSection = function() {
                         <div style="font-size:10px;font-weight:700;color:#e6edf3">${car.name || '?'}</div>
                         <div style="font-size:8px;color:#e0922e;font-family:monospace">€${l.ask_price.toLocaleString()} · In vendita</div>
                     </div>
-                    <button onclick="cancelP2PListing('${l.id}')" style="padding:3px 8px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Ritira</button>
+                    <button ${ceAct('cancelP2PListing', [l.id])} style="padding:3px 8px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Ritira</button>
                 </div>
             </div>`;
         });
@@ -110,11 +109,11 @@ window.renderP2PSharesSection = function() {
                 ${!isMe ? `
                 <div style="display:flex;gap:4px">
                     ${s.shares_available > 0 ? `
-                    <button onclick="buyCompanyShares('${s.id}', 10)" style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 10 (€${(s.current_price * 10).toLocaleString()})</button>
-                    <button onclick="buyCompanyShares('${s.id}', 50)" style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 50</button>
+                    <button ${ceAct('buyCompanyShares', [s.id, 10])} style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 10 (€${(s.current_price * 10).toLocaleString()})</button>
+                    <button ${ceAct('buyCompanyShares', [s.id, 50])} style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Compra 50</button>
                     ` : '<span style="font-size:8px;color:#6b7280;font-style:italic">Esaurito</span>'}
                     ${myH && myH.shares_owned > 0 ? `
-                    <button onclick="sellCompanyShares('${s.id}', ${Math.min(10, myH.shares_owned)})"
+                    <button ${ceAct('sellCompanyShares', [s.id, Math.min(10, myH.shares_owned)])}
                         style="flex:1;padding:5px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Vendi ${Math.min(10, myH.shares_owned)}</button>
                     ` : ''}
                 </div>` : '<div style="font-size:8px;color:#6b7280;font-style:italic">La tua azienda</div>'}
@@ -152,9 +151,9 @@ window.renderP2PHoldingsSection = function() {
             <div style="display:flex;gap:8px;margin-top:8px">
                 <input id="hld-contrib-amt" type="number" min="1000" step="1000" placeholder="Contributo €"
                     style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:9px;color:#e6edf3;outline:none">
-                <button onclick="contributeHoldingTreasury('${myH.id}', parseInt(document.getElementById('hld-contrib-amt').value)||0)"
+                <button ${ceAct('ceHoldingContribute', [myH.id])}
                     style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Contribuisci</button>
-                <button onclick="leaveHolding('${myH.id}')"
+                <button ${ceAct('leaveHolding', [myH.id])}
                     style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
                     ${myRole === 'leader' ? 'Sciogli' : 'Esci'}
                 </button>
@@ -166,7 +165,7 @@ window.renderP2PHoldingsSection = function() {
             <div style="font-size:9px;font-weight:700;color:#e6edf3;margin-bottom:8px">Crea il tuo Sindacato</div>
             <input id="hld-name" placeholder="Nome sindacato..." style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:6px;box-sizing:border-box">
             <input id="hld-desc" placeholder="Descrizione (opzionale)" style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:8px;box-sizing:border-box">
-            <button onclick="createHolding(document.getElementById('hld-name').value, document.getElementById('hld-desc').value)"
+            <button ${ceAct('ceCreateHolding', [])}
                 style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">⚔️ Fonda il Sindacato</button>
         </div>`;
 
@@ -181,7 +180,7 @@ window.renderP2PHoldingsSection = function() {
                         <div style="font-size:10px;font-weight:700;color:#e6edf3">${CE_Sec.escHtml(h.name)}</div>
                         <div style="font-size:8px;color:#6b7280">${cnt}/${h.max_members} membri · Cassa €${(h.treasury||0).toLocaleString()}</div>
                     </div>
-                    <button onclick="joinHolding('${h.id}')" ${full ? 'disabled' : ''}
+                    <button ${ceAct('joinHolding', [h.id])} ${full ? 'disabled' : ''}
                         style="padding:5px 10px;font-size:8px;font-weight:700;cursor:${full?'not-allowed':'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${full?'opacity:.4':''}">
                         ${full ? 'Pieno' : 'Unisciti'}
                     </button>
@@ -268,9 +267,9 @@ window.renderP2PConsorziSection = function() {
             <div style="display:flex;gap:8px;margin-top:8px">
                 <input id="cso-contrib-amt" type="number" min="5000" step="5000" placeholder="Contributo €"
                     style="flex:1;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;font-size:9px;color:#e6edf3;outline:none">
-                <button onclick="contributeConsorzio('${myC.id}', parseInt(document.getElementById('cso-contrib-amt').value)||0)"
+                <button ${ceAct('ceConsorzioContribute', [myC.id])}
                     style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">Versa</button>
-                <button onclick="leaveConsorzio('${myC.id}')"
+                <button ${ceAct('leaveConsorzio', [myC.id])}
                     style="padding:5px 10px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
                     ${myRole === 'leader' ? 'Sciogli' : 'Esci'}
                 </button>
@@ -282,7 +281,7 @@ window.renderP2PConsorziSection = function() {
             <div style="font-size:9px;font-weight:700;color:#e6edf3;margin-bottom:8px">Fonda il tuo Consorzio</div>
             <input id="cso-name" placeholder="Nome consorzio..." style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:6px;box-sizing:border-box">
             <input id="cso-desc" placeholder="Descrizione (opzionale)" style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:9px;color:#e6edf3;outline:none;margin-bottom:8px;box-sizing:border-box">
-            <button onclick="createConsorzio(document.getElementById('cso-name').value, document.getElementById('cso-desc').value)"
+            <button ${ceAct('ceCreateConsorzio', [])}
                 style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px">🤝 Fonda il Consorzio</button>
         </div>`;
 
@@ -299,7 +298,7 @@ window.renderP2PConsorziSection = function() {
                         <div style="font-size:10px;font-weight:700;color:#e6edf3">${CE_Sec.escHtml(c.name)} ${fb}${ib}</div>
                         <div style="font-size:8px;color:#6b7280">${cnt}/${c.max_members} membri · Cassa €${(c.treasury||0).toLocaleString()}</div>
                     </div>
-                    <button onclick="joinConsorzio('${c.id}')" ${full ? 'disabled' : ''}
+                    <button ${ceAct('joinConsorzio', [c.id])} ${full ? 'disabled' : ''}
                         style="padding:5px 10px;font-size:8px;font-weight:700;cursor:${full?'not-allowed':'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${full?'opacity:.4':''}">
                         ${full ? 'Pieno' : 'Unisciti'}
                     </button>
@@ -353,7 +352,7 @@ window.renderIspettoratoSection = function() {
             <div style="font-size:10px;font-weight:700;color:#c79a2a;margin-bottom:4px">🤵 Don Carmine</div>
             <div style="font-size:8px;color:#4d6480;margin-bottom:8px;font-style:italic">"Ho parlato con i giusti uffici. Il tuo dossier può sparire."</div>
             <div style="font-size:8px;color:#6b7280;margin-bottom:8px">Azzera il rischio GdF · Immunità 24 ore · Costo: <span style="color:#e0922e;font-family:monospace">€50.000</span></div>
-            <button onclick="payDonCarmine()"
+            <button ${ceAct('payDonCarmine', [])}
                 ${canAfford && !immActive ? '' : 'disabled'}
                 style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:${canAfford&&!immActive?'pointer':'not-allowed'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${!canAfford||immActive?'opacity:.4':''}">
                 ${immActive ? '🛡️ Immunità già attiva' : canAfford ? '🤵 Chiama Don Carmine (€50.000)' : '💸 Fondi insufficienti'}
@@ -370,7 +369,7 @@ window.renderIspettoratoSection = function() {
                 <div style="font-size:8px;color:#1aa06a">✅ +50% redditi per 48h</div>
                 <div style="font-size:8px;color:#db5746">⚠️ +25 Rischio GdF</div>
             </div>
-            <button onclick="hireCrumiri()"
+            <button ${ceAct('hireCrumiri', [])}
                 ${crumiriActive ? 'disabled' : ''}
                 style="width:100%;padding:7px;font-size:8px;font-weight:700;cursor:${crumiriActive?'not-allowed':'pointer'};background:${crumiriActive?'#ffffff':'rgba(127,79,29,0.3)'};border:1px solid ${crumiriActive?'#d6dee8':'rgba(249,115,22,0.4)'};color:${crumiriActive?'#6a7480':'#e0922e'};border-radius:4px;${crumiriActive?'opacity:.4':''}">
                 ${crumiriActive ? '👷 Crumiri già operativi' : '👷 Assumi i Crumiri'}

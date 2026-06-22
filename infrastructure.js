@@ -96,10 +96,10 @@ function _renderMyDepotCard(d) {
         <label style="font-size:11px;color:var(--em-muted);flex-shrink:0">Markup:</label>
         <input type="range" min="0" max="50" step="1" value="${Math.round(d.markup_pct)}"
                id="markup-slider-${d.province_id}"
-               oninput="document.getElementById('markup-val-${d.province_id}').textContent=this.value+'%'"
+               ${ceAct('ceMarkupPreview', [d.province_id], 'input')}
                style="flex:1;accent-color:var(--em-green)">
         <span id="markup-val-${d.province_id}" style="font-size:11px;color:var(--em-green);width:40px;text-align:right">${Math.round(d.markup_pct)}%</span>
-        <button class="em-gbtn" onclick="_infraSetMarkup('${d.province_id}')">Salva</button>
+        <button class="em-gbtn" ${ceAct('_infraSetMarkup', [d.province_id])}>Salva</button>
       </div>
     </div>`;
 }
@@ -111,7 +111,7 @@ function _renderAvailableCard(prov) {
         <div style="font-weight:700;font-size:12px;margin-bottom:2px">${prov.name}</div>
         <div style="font-size:11px;color:var(--em-muted)">${prov.region} · Libero</div>
       </div>
-      <button class="em-bbtn" onclick="_infraBuyDepot('${prov.id}','${prov.name}')">Acquista €300k</button>
+      <button class="em-bbtn" ${ceAct('_infraBuyDepot', [prov.id,prov.name])}>Acquista €300k</button>
     </div>`;
 }
 

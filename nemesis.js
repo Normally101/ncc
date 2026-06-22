@@ -211,10 +211,10 @@ function _renderNemesisCard(vipId, nem) {
         </div>
 
         <div style="display:flex;gap:8px">
-            <button class="em-goldbtn" onclick="window._nemesisBribeVip('${vipId}')" style="flex:1">
+            <button class="em-goldbtn" ${ceAct('_nemesisBribeVip', [vipId])} style="flex:1">
                 💰 Corrompi (€${bribeAmt.toLocaleString('it-IT')})
             </button>
-            <button class="em-ghbtn" onclick="window.hubNavigate('shadow')" style="flex:1">
+            <button class="em-ghbtn" ${ceAct('hubNavigate', ['shadow'])} style="flex:1">
                 🕵️ Agenzia Ombra
             </button>
         </div>

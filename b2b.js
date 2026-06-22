@@ -215,7 +215,7 @@ window.b2bOpenAcceptModal = function(contractId) {
         <div id="b2b-car-list" style="display:flex;flex-direction:column;gap:4px;margin-bottom:16px;max-height:192px;overflow-y:auto">
             ${available.map(c => `
             <label style="display:flex;align-items:center;gap:10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px;cursor:pointer">
-                <input type="checkbox" class="b2b-car-check" style="accent-color:#c79a2a;width:14px;height:14px;flex-shrink:0" value="${c.id}" onchange="b2bCheckLimit(${contract.required_count})">
+                <input type="checkbox" class="b2b-car-check" style="accent-color:#c79a2a;width:14px;height:14px;flex-shrink:0" value="${c.id}" ${ceAct('b2bCheckLimit', [contract.required_count], 'change')}>
                 <div style="flex:1;min-width:0">
                     <div style="font-size:10px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
                     <div style="font-size:9px;color:#6b7280">${_TIER_LABEL[(c.tier||'').toUpperCase()] || c.tier} · Cond. ${c.condition||100}%</div>
@@ -228,9 +228,9 @@ window.b2bOpenAcceptModal = function(contractId) {
         </div>
 
         <div style="display:flex;gap:8px">
-            <button onclick="document.getElementById('b2b-select-modal').remove()"
+            <button ${ceAct('ceRemove', ['b2b-select-modal'])}
                 style="flex:1;padding:8px;border-radius:4px;font-size:11px;cursor:pointer;background:#161b22;border:1px solid #21262d;color:#6b7280">Annulla</button>
-            <button id="b2b-confirm-btn" onclick="b2bConfirmAccept('${contractId}', ${contract.required_count})"
+            <button id="b2b-confirm-btn" ${ceAct('b2bConfirmAccept', [contractId, contract.required_count])}
                 disabled
                 style="flex:1;padding:8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;cursor:not-allowed;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;opacity:.4;transition:all .15s"
                 data-req="${contract.required_count}">
@@ -354,9 +354,8 @@ function renderTabB2B() {
                 <div style="font-size:7px;color:#6b7280;margin-top:3px">SLA &lt; 50%: contratto rescisso automaticamente</div>
             </div>
             <div style="font-size:8px;color:#6b7280;margin-bottom:12px">🔒 Veicoli bloccati: <span style="color:#6b7280">${lockedNames}</span></div>
-            <button onclick="b2bTerminateContract('${active.id}')"
-                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s"
-                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+            <button ${ceAct('b2bTerminateContract', [active.id])}
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s">
                 ⚠️ Rescindi Anticipatamente (penale −€${(active.penalty_amount||0).toLocaleString()})
             </button>
         </div>`;
@@ -413,10 +412,9 @@ function renderTabB2B() {
                 ${!repOk ? `<div style="font-size:9px;color:#db5746;margin-bottom:4px">🔒 Reputazione insufficiente (serve ${c.min_reputation}★, hai ${rep.toFixed(1)}★)</div>` : ''}
                 ${!carsOk ? `<div style="font-size:9px;color:#db5746;margin-bottom:4px">🔒 Veicoli insufficienti (serve ×${c.required_count} ${_TIER_LABEL[c.required_tier]}, disponibili ${eligibleCars.length})</div>` : ''}
                 ${locked ? `<div style="font-size:9px;color:#e0922e;margin-bottom:4px">⏳ Hai già un contratto attivo</div>` : ''}
-                <button onclick="b2bOpenAcceptModal('${c.id}')"
+                <button ${ceAct('b2bOpenAcceptModal', [c.id])}
                     ${canAccept ? '' : 'disabled'}
-                    style="width:100%;padding:7px;font-size:9px;font-weight:700;border-radius:4px;cursor:${canAccept?'pointer':'not-allowed'};background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;transition:opacity .15s;${canAccept ? '' : 'opacity:.4'}"
-                    onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                    style="width:100%;padding:7px;font-size:9px;font-weight:700;border-radius:4px;cursor:${canAccept?'pointer':'not-allowed'};background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;transition:opacity .15s;${canAccept ? '' : 'opacity:.4'}">
                     💼 Accetta Appalto
                 </button>
             </div>`;

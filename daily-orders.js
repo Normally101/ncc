@@ -149,7 +149,7 @@
             const cta = claimed
                 ? `<span class="em-pill em-pill--green" style="flex-shrink:0">✓ Ritirato</span>`
                 : done
-                    ? `<button class="em-goldbtn" style="flex-shrink:0;padding:5px 12px" onclick="window.claimDailyOrder('${pick.id}')">Ritira ${rwLabel(rw)}</button>`
+                    ? `<button class="em-goldbtn" style="flex-shrink:0;padding:5px 12px" ${ceAct('claimDailyOrder', [pick.id])}>Ritira ${rwLabel(rw)}</button>`
                     : `<span style="flex-shrink:0;font-size:10px;font-weight:800;color:var(--em-gold)">${rwLabel(rw)}</span>`;
             return `
             <div style="display:flex;align-items:center;gap:10px;padding:8px 11px;border-top:1px solid var(--em-line2)">

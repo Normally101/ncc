@@ -18,7 +18,7 @@ function renderTabLifestyle() {
         const bg = c==='gold'?'#1a1608':'#161b22';
         const bd = c==='gold'?'#c79a2a':'#21262d';
         const tc = c==='gold'?'#c79a2a':'#6b7280';
-        return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
+        return `<button ${dis?'':fn} ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
     };
     const _SEC = t => `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px;font-weight:600">${t}</div>`;
 
@@ -74,7 +74,7 @@ function renderTabLifestyle() {
                     <div style="font-size:13px;font-weight:700;color:#c79a2a;font-family:monospace">€${a.price.toLocaleString('it-IT')}</div>
                     ${isOwned
                         ? `<span style="font-size:9px;font-weight:700;color:#1aa06a;font-family:monospace">✓ NEL PORTFOLIO</span>`
-                        : _btn('Acquista', `buyLifestyleAsset('${a.id}')`, 'gold', !canAfford)}
+                        : _btn('Acquista', ceAct('buyLifestyleAsset', [a.id]), 'gold', !canAfford)}
                 </div>
             </div>
         </div>`;

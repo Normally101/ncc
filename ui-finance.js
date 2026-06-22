@@ -54,7 +54,7 @@ function renderTabFinance() {
                     <span>${f.icon}</span><span style="font-size:11px;color:#6b7280">${f.text}</span>
                 </div>`).join('')}
             </div>
-            <button onclick="switchTab('staff')" style="background:#1a1608;border:1px solid #b8962b;border-radius:4px;padding:7px 18px;color:#d4af37;font-size:11px;cursor:pointer">Vai allo Staff →</button>
+            <button ${ceAct('switchTab', ['staff'])} style="background:#1a1608;border:1px solid #b8962b;border-radius:4px;padding:7px 18px;color:#d4af37;font-size:11px;cursor:pointer">Vai allo Staff →</button>
         </div></div></div>`;
         return;
     }
@@ -176,10 +176,10 @@ function renderTabFinance() {
                 </div>` : ''}
                 <div style="display:flex;gap:4px;margin-top:3px">
                     <input id="stock-qty-${t.id}" type="number" min="1" value="10" style="width:50px;background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:3px 5px;color:#e6edf3;font-size:9px;font-family:monospace">
-                    <button onclick="buyStocks('${t.id}', parseInt(document.getElementById('stock-qty-${t.id}').value)||1)" style="background:#1a1608;border:1px solid #b8962b;border-radius:3px;padding:3px 7px;color:#d4af37;font-size:9px;cursor:pointer">Compra</button>
-                    ${holding.shares > 0 ? `<button onclick="sellStocks('${t.id}', parseInt(document.getElementById('stock-qty-${t.id}').value)||1)" style="background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:3px 7px;color:#58a6ff;font-size:9px;cursor:pointer">Vendi</button>` : ''}
-                    <button onclick="shortSell('${t.id}', parseInt(document.getElementById('stock-qty-${t.id}').value)||1)" style="background:#2d0d0d;border:1px solid #5a1a1a;border-radius:3px;padding:3px 7px;color:#f85149;font-size:9px;cursor:pointer">Short↓</button>
-                    ${shortPos ? `<button onclick="coverShort('${t.id}', parseInt(document.getElementById('stock-qty-${t.id}').value)||1)" style="background:#1a0d2e;border:1px solid #6d3fc0;border-radius:3px;padding:3px 7px;color:#a78bfa;font-size:9px;cursor:pointer">Copri</button>` : ''}
+                    <button ${ceAct('ceStockAction', ['buyStocks', t.id])} style="background:#1a1608;border:1px solid #b8962b;border-radius:3px;padding:3px 7px;color:#d4af37;font-size:9px;cursor:pointer">Compra</button>
+                    ${holding.shares > 0 ? `<button ${ceAct('ceStockAction', ['sellStocks', t.id])} style="background:#0d1117;border:1px solid #21262d;border-radius:3px;padding:3px 7px;color:#58a6ff;font-size:9px;cursor:pointer">Vendi</button>` : ''}
+                    <button ${ceAct('ceStockAction', ['shortSell', t.id])} style="background:#2d0d0d;border:1px solid #5a1a1a;border-radius:3px;padding:3px 7px;color:#f85149;font-size:9px;cursor:pointer">Short↓</button>
+                    ${shortPos ? `<button ${ceAct('ceStockAction', ['coverShort', t.id])} style="background:#1a0d2e;border:1px solid #6d3fc0;border-radius:3px;padding:3px 7px;color:#a78bfa;font-size:9px;cursor:pointer">Copri</button>` : ''}
                 </div>
             </td>
         </tr>`;
@@ -221,7 +221,7 @@ function renderTabFinance() {
         <label style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Profilo di Rischio</label>
         <div style="display:flex;gap:6px">
             ${PROFILES.map(p => `
-            <button onclick="document.querySelectorAll('.fi-risk-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active');window._brokerRisk='${p.id}';"
+            <button ${ceAct('ceSetActive', ['_brokerRisk', null, p.id, '.fi-risk-btn'])}
                 class="fi-risk-btn" data-risk="${p.id}">
                 <div style="font-size:14px;margin-bottom:2px">${p.icon}</div>
                 <div style="font-size:9px;font-weight:700;color:${p.color}">${p.name}</div>
@@ -232,12 +232,12 @@ function renderTabFinance() {
     <div style="margin-bottom:12px">
         <label style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;display:block;margin-bottom:6px">Durata</label>
         <div style="display:flex;gap:6px">
-            <button onclick="window._brokerDur=1;  document.querySelectorAll('.fi-dur-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" class="fi-dur-btn">1h</button>
-            <button onclick="window._brokerDur=6;  document.querySelectorAll('.fi-dur-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" class="fi-dur-btn">6h</button>
-            <button onclick="window._brokerDur=24; document.querySelectorAll('.fi-dur-btn').forEach(b=>b.classList.remove('active'));this.classList.add('active')" class="fi-dur-btn">24h</button>
+            <button ${ceAct('ceSetActive', ['_brokerDur', null, 1, '.fi-dur-btn'])} class="fi-dur-btn">1h</button>
+            <button ${ceAct('ceSetActive', ['_brokerDur', null, 6, '.fi-dur-btn'])} class="fi-dur-btn">6h</button>
+            <button ${ceAct('ceSetActive', ['_brokerDur', null, 24, '.fi-dur-btn'])} class="fi-dur-btn">24h</button>
         </div>
     </div>
-    <button onclick="placeBrokerInvestment(document.getElementById('broker-capital').value, window._brokerRisk||'low', window._brokerDur||6)"
+    <button ${ceAct('cePlaceBroker', [])}
         style="width:100%;background:#1a1608;border:1px solid #b8962b;border-radius:4px;padding:8px;color:#d4af37;font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;cursor:pointer">
         💼 Piazza Investimento
     </button>`;
@@ -271,14 +271,14 @@ function renderTabFinance() {
             loansHtml += `<div style="background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:6px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px">
                 <span style="font-size:9px;color:#6b7280">Prestito #${l.id}</span>
                 <span style="font-size:9px;color:#f85149;font-family:monospace;flex:1;text-align:right">€${l.amount.toLocaleString()}</span>
-                <button onclick="repayLoan(${l.id})" ${canRepay ? '' : 'disabled'}
+                <button ${ceAct('repayLoan', [l.id])} ${canRepay ? '' : 'disabled'}
                     style="background:#1a1608;border:1px solid #b8962b;border-radius:3px;padding:3px 8px;color:#d4af37;font-size:8px;cursor:${canRepay?'pointer':'default'};flex-shrink:0;opacity:${canRepay?1:0.4}">Salda</button>
             </div>`;
         });
     }
 
     loansHtml += `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px">
-        ${loanAmounts.map(a => `<button onclick="takeLoan(${a})" style="background:#1a1608;border:1px solid #b8962b;border-radius:3px;padding:4px 10px;color:#d4af37;font-size:9px;cursor:pointer">+€${(a/1000).toFixed(0)}k</button>`).join('')}
+        ${loanAmounts.map(a => `<button ${ceAct('takeLoan', [a])} style="background:#1a1608;border:1px solid #b8962b;border-radius:3px;padding:4px 10px;color:#d4af37;font-size:9px;cursor:pointer">+€${(a/1000).toFixed(0)}k</button>`).join('')}
     </div>`;
 
     // $CEMP section
@@ -319,14 +319,14 @@ function renderTabFinance() {
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px">
                 ${[50,100,500,1000].map(qty => {
                     const cost = Math.round(cp * qty);
-                    return `<button onclick="buyCempShares(${qty})" style="background:#1a1608;border:1px solid #b8962b;border-radius:4px;padding:6px 4px;color:#d4af37;font-size:9px;cursor:pointer;text-align:center;line-height:1.6">
+                    return `<button ${ceAct('buyCempShares', [qty])} style="background:#1a1608;border:1px solid #b8962b;border-radius:4px;padding:6px 4px;color:#d4af37;font-size:9px;cursor:pointer;text-align:center;line-height:1.6">
                         Compra ${qty}<br><span style="font-size:8px;opacity:.6">€${cost.toLocaleString()}</span></button>`;
                 }).join('')}
             </div>
             ${owned > 0 ? `<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px">
                 ${[Math.min(50,owned), Math.min(owned, Math.floor(owned/2))].filter((v,i,a)=>a.indexOf(v)===i && v>0).map(qty => {
                     const rev = Math.round(cp * qty);
-                    return `<button onclick="sellCempShares(${qty})" style="background:#2d0d0d;border:1px solid #5a1a1a;border-radius:4px;padding:6px 4px;color:#f85149;font-size:9px;cursor:pointer;text-align:center;line-height:1.6">
+                    return `<button ${ceAct('sellCempShares', [qty])} style="background:#2d0d0d;border:1px solid #5a1a1a;border-radius:4px;padding:6px 4px;color:#f85149;font-size:9px;cursor:pointer;text-align:center;line-height:1.6">
                         Vendi ${qty}<br><span style="font-size:8px;opacity:.6">+€${rev.toLocaleString()}</span></button>`;
                 }).join('')}
             </div>` : ''}
@@ -354,7 +354,7 @@ function renderTabFinance() {
                         <span style="color:${ok?'#e6edf3':'#f85149'}">${val}</span>
                     </div>`).join('')}
                 </div>
-                <button onclick="listCompanyIPO()" ${canList ? '' : 'disabled'}
+                <button ${ceAct('listCompanyIPO', [])} ${canList ? '' : 'disabled'}
                     style="width:100%;background:${canList?'#1a1608':'#161b22'};border:1px solid ${canList?'#b8962b':'#21262d'};border-radius:4px;padding:7px;color:${canList?'#d4af37':'#6b7280'};font-size:10px;cursor:${canList?'pointer':'not-allowed'};text-transform:uppercase;letter-spacing:.08em">
                     📈 Quota ${gameState.companyName || 'Chauffeur Empire'} in Borsa
                 </button>
@@ -432,7 +432,7 @@ function renderTabFinance() {
     <div style="background:#2d0d0d;border:1px solid #5a1a1a;border-radius:6px;padding:16px;text-align:center;margin-top:12px">
         <div style="font-size:9px;color:#f85149;opacity:.7;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px">Exit Strategy</div>
         <div style="font-size:9px;color:#6b7280;margin-bottom:10px">Vendi l'azienda a un fondo e ricomincia con un vantaggio enorme</div>
-        <button onclick="sellCompanyNGP()" style="font-size:9px;border:1px solid #f0c4bd;color:#db5746;opacity:.7;background:none;border-radius:3px;padding:4px 12px;cursor:pointer">Avvia Exit Strategy ↗</button>
+        <button ${ceAct('sellCompanyNGP', [])} style="font-size:9px;border:1px solid #f0c4bd;color:#db5746;opacity:.7;background:none;border-radius:3px;padding:4px 12px;cursor:pointer">Avvia Exit Strategy ↗</button>
     </div></div></div>`;
 
     // Price flash animations

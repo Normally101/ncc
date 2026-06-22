@@ -258,21 +258,21 @@ window.renderTabTourism = function() {
     // ── SUB-TAB SWITCHER ──
     html += `
     <div style="display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid #21262d;padding-bottom:10px;align-items:center">
-        <button onclick="window._tourismState._subTab='open'; window.renderTabTourism();"
+        <button ${ceAct('ceSetRender', ['_tourismState', '_subTab', 'open', 'renderTabTourism'])}
             style="padding:5px 12px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;border-radius:4px;cursor:pointer;transition:all .15s;${subTab === 'open'
                 ? 'background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;font-weight:700'
                 : 'background:transparent;border:1px solid transparent;color:#6b7280'}">
             Bandi Aperti <span style="opacity:.6;margin-left:4px">${openCount}</span>
         </button>
-        <button onclick="window._tourismState._subTab='mine'; window.renderTabTourism();"
+        <button ${ceAct('ceSetRender', ['_tourismState', '_subTab', 'mine', 'renderTabTourism'])}
             style="padding:5px 12px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;border-radius:4px;cursor:pointer;transition:all .15s;${subTab === 'mine'
                 ? 'background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;font-weight:700'
                 : 'background:transparent;border:1px solid transparent;color:#6b7280'}">
             I Miei Contratti <span style="opacity:.6;margin-left:4px">${myActive.length}</span>
         </button>
-        <button onclick="window.tourismRefresh(true).then(()=>window.renderTabTourism())"
+        <button ${ceAct('ceThen', ['tourismRefresh', 'renderTabTourism'])}
             style="margin-left:auto;padding:4px 8px;font-size:8px;color:#6b7280;background:transparent;border:1px solid transparent;border-radius:4px;cursor:pointer;transition:all .15s"
-            title="Aggiorna" onmouseenter="this.style.color='#6a7480'" onmouseleave="this.style.color='#6a7480'">
+            title="Aggiorna">
             ↺ Aggiorna
         </button>
     </div>`;
@@ -361,7 +361,7 @@ function _tRenderOpenCard(t) {
         ${hasBid ? `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:rgba(63,185,80,0.06);border:1px solid rgba(63,185,80,0.2);border-radius:4px;margin-bottom:6px">
             <div style="font-size:9px;color:#1aa06a">✅ Offerta inviata — Score: <strong>${(t.my_bid_score || 0).toFixed(1)}</strong> · Pledge: €${(t.my_bid_pledge || 0).toLocaleString()}</div>
-            <button onclick="window.tourismCancelBid('${t.id}')"
+            <button ${ceAct('tourismCancelBid', [t.id])}
                 style="font-size:8px;color:#db5746;background:transparent;border:1px solid rgba(248,81,73,0.3);padding:2px 7px;border-radius:4px;cursor:pointer">
                 Ritira
             </button>
@@ -375,7 +375,7 @@ function _tRenderOpenCard(t) {
             <input type="range" min="0" max="100000" step="1000"
                 value="${pledge}"
                 style="width:100%;height:4px;margin-bottom:8px;cursor:pointer;accent-color:#c79a2a"
-                oninput="window._tSetPledge('${t.id}', this.value)">
+                ${ceAct('ceTPledge', [t.id], 'input')}>
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                 <div style="font-size:8px;font-family:monospace;color:#6b7280">
@@ -389,9 +389,8 @@ function _tRenderOpenCard(t) {
                 <div id="t-bar-${t.id}" style="height:100%;border-radius:2px;width:${sc.total}%;background:${barColor};transition:width .3s"></div>
             </div>
 
-            <button onclick="window.tourismSubmitBid('${t.id}')"
-                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s"
-                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+            <button ${ceAct('tourismSubmitBid', [t.id])}
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;transition:opacity .15s">
                 🌍 Fai Offerta
             </button>
         </div>
@@ -483,9 +482,8 @@ function _tRenderMyContracts(myActive) {
                 <div style="font-size:7px;color:#6b7280;margin-top:3px">SLA &lt; 50%: rescissione automatica</div>
             </div>
 
-            <button onclick="window.tourismTerminate('${t.id}')"
-                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s"
-                onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+            <button ${ceAct('tourismTerminate', [t.id])}
+                style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px;transition:opacity .15s">
                 ⚠️ Rescindi Anticipatamente (−${repPenalty}★ reputazione)
             </button>
         </div>`;

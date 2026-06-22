@@ -128,7 +128,7 @@ window.renderTabHome = function() {
     }).join('');
 
     const ridesEmpty = totalActive === 0
-        ? `<div class="em-empty">Nessuna corsa attiva — vai al <span class="em-link" onclick="switchTab('corse')">Dispatch Center</span> per assegnare corse</div>`
+        ? `<div class="em-empty">Nessuna corsa attiva — vai al <span class="em-link" ${ceAct('switchTab', ['corse'])}>Dispatch Center</span> per assegnare corse</div>`
         : '';
 
     // notifications feed
@@ -163,7 +163,7 @@ window.renderTabHome = function() {
 </div>`;
         }).join('');
     const queueCard = totalPending > 0
-        ? `<div class="em-card" style="margin-top:7px"><div class="em-ch"><span class="t">In coda</span><span class="a" style="color:var(--em-muted)">${totalPending} corse</span></div>${queueRows}<div style="padding:8px 11px;border-top:1px solid var(--em-line2)"><span class="em-link" onclick="switchTab('corse')">Vai al Dispatch →</span></div></div>`
+        ? `<div class="em-card" style="margin-top:7px"><div class="em-ch"><span class="t">In coda</span><span class="a" style="color:var(--em-muted)">${totalPending} corse</span></div>${queueRows}<div style="padding:8px 11px;border-top:1px solid var(--em-line2)"><span class="em-link" ${ceAct('switchTab', ['corse'])}>Vai al Dispatch →</span></div></div>`
         : '';
 
     // drivers mini-section — right card, real data
@@ -205,8 +205,8 @@ window.renderTabHome = function() {
         <div class="em-ch"><span class="t">Corse in Corso</span><span class="a">● Live</span></div>
         ${ridesEmpty || ridesRows}
         <div style="display:flex;gap:8px;padding:9px 11px;border-top:1px solid var(--em-line2)">
-          <button class="em-gbtn" style="flex:1" onclick="switchTab('corse')">Assegna corse</button>
-          <button class="em-bbtn" onclick="switchTab('corse')">Vedi tutte</button>
+          <button class="em-gbtn" style="flex:1" ${ceAct('switchTab', ['corse'])}>Assegna corse</button>
+          <button class="em-bbtn" ${ceAct('switchTab', ['corse'])}>Vedi tutte</button>
         </div>
       </div>
       ${queueCard}
@@ -221,7 +221,7 @@ window.renderTabHome = function() {
       <div class="em-ch"><span class="t">La tua azienda</span><span class="a">${driversOnDuty.length} autisti attivi</span></div>
       <div class="em-contract">
         <div class="ct">Contratto del giorno</div><div class="cs">Transfer premium aeroportuale</div>
-        <div class="cr"><span class="cc">0 / 25</span><button class="em-bbtn" style="margin-left:auto" onclick="switchTab('b2b')">Accetta →</button></div>
+        <div class="cr"><span class="cc">0 / 25</span><button class="em-bbtn" style="margin-left:auto" ${ceAct('switchTab', ['b2b'])}>Accetta →</button></div>
       </div>
       ${driverMiniSection}
     </div>

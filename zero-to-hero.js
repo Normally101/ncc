@@ -62,10 +62,10 @@
         `;
 
         if (energy >= 10) {
-            html += `<button id="manual-drive-btn" onclick="executeManualDrive()">[🕹️] GUIDA MANUALMENTE<br><span style="font-size:12px; font-weight:normal;">(-10% Energia, +15€)</span></button>`;
+            html += `<button id="manual-drive-btn" ${ceAct('executeManualDrive', [])}>[🕹️] GUIDA MANUALMENTE<br><span style="font-size:12px; font-weight:normal;">(-10% Energia, +15€)</span></button>`;
         } else {
             html += `<button id="manual-drive-btn" disabled>SEI TROPPO STANCO</button>
-                     <button id="sleep-car-btn" onclick="executeSleepInCar()">Dormi in auto (Recupera Energia)</button>`;
+                     <button id="sleep-car-btn" ${ceAct('executeSleepInCar', [])}>Dormi in auto (Recupera Energia)</button>`;
         }
 
         html += `</div>`;
@@ -128,7 +128,7 @@
         <div style="max-width:560px;background:#0b0d14;border:1px solid #d4af37;border-radius:14px;padding:34px 30px;text-align:center;box-shadow:0 0 60px rgba(212,175,55,0.25)">
             <h1 style="color:#d4af37;font-size:26px;letter-spacing:4px;margin:0 0 18px;font-weight:900">SVEGLIATI, SCHIAVO.</h1>
             <p style="color:#cbd2dc;font-size:15px;line-height:1.7;margin:0 0 26px">Non diventerai mai ricco se usi il tuo tempo. I ricchi usano il tempo degli altri. Hai 150€ in tasca ora. Nel tab STAFF c'è un ragazzino di quartiere che cerca lavoro. Assumilo, metti lui al volante, tu vai a dormire e guarda i soldi arrivare da soli.</p>
-            <button onclick="window._ceCapitalismAck()" style="background:linear-gradient(135deg,#d4af37 0%,#b8860b 100%);color:#000;font-weight:900;font-size:16px;padding:16px 26px;border-radius:10px;border:2px solid #fff;cursor:pointer">Ho capito. Fammi diventare un manager.</button>
+            <button ${ceAct('_ceCapitalismAck', [])} style="background:linear-gradient(135deg,#d4af37 0%,#b8860b 100%);color:#000;font-weight:900;font-size:16px;padding:16px 26px;border-radius:10px;border:2px solid #fff;cursor:pointer">Ho capito. Fammi diventare un manager.</button>
         </div>`;
         document.body.appendChild(ov);
     };

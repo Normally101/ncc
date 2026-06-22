@@ -122,7 +122,7 @@
         ov.id = 'vittorio-modal';
         ov.style.cssText = 'position:fixed;inset:0;z-index:var(--z-modal,9000);background:rgba(2,3,8,0.9);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
         var flipBtn = (g.prestige || 0) >= 1
-            ? '<button onclick="window.flipVittorio()" style="background:linear-gradient(135deg,#d4af37,#b8860b);color:#000;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:pointer">🤝 Ribalta Vittorio (diventa tuo socio)</button>'
+            ? '<button data-ce-act="flipVittorio" style="background:linear-gradient(135deg,#d4af37,#b8860b);color:#000;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:pointer">🤝 Ribalta Vittorio (diventa tuo socio)</button>'
             : '';
         ov.innerHTML =
             '<div style="max-width:480px;background:#0b0d14;border:1px solid #b91c1c;border-radius:14px;padding:30px;text-align:center;box-shadow:0 0 50px rgba(185,28,28,0.25)">'
@@ -132,9 +132,9 @@
           +   '<div style="font-size:30px;font-weight:900;color:#ef4444;margin:12px 0 2px">€' + fmt(d.outstanding) + '</div>'
           +   '<div style="font-size:11px;color:#6b7280;margin-bottom:18px">Interesse +' + (DAILY_INTEREST * 100) + '%/giorno · Cassa: €' + fmt(g.cash || 0) + '</div>'
           +   '<div style="display:flex;flex-direction:column;gap:8px">'
-          +     '<button onclick="window.repayVittorio()" ' + (canPay > 0 ? '' : 'disabled') + ' style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:' + (canPay > 0 ? 'pointer' : 'not-allowed') + ';opacity:' + (canPay > 0 ? 1 : 0.5) + '">💸 Ripaga ' + (canPay >= d.outstanding ? 'tutto (€' + fmt(d.outstanding) + ')' : '€' + fmt(canPay)) + '</button>'
+          +     '<button data-ce-act="repayVittorio" ' + (canPay > 0 ? '' : 'disabled') + ' style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:' + (canPay > 0 ? 'pointer' : 'not-allowed') + ';opacity:' + (canPay > 0 ? 1 : 0.5) + '">💸 Ripaga ' + (canPay >= d.outstanding ? 'tutto (€' + fmt(d.outstanding) + ')' : '€' + fmt(canPay)) + '</button>'
           +     flipBtn
-          +     '<button onclick="window._closeVittorioModal()" style="background:transparent;border:1px solid #30363d;color:#9ca3af;padding:10px;border-radius:8px;cursor:pointer">Più tardi (gli interessi salgono)</button>'
+          +     '<button data-ce-act="_closeVittorioModal" style="background:transparent;border:1px solid #30363d;color:#9ca3af;padding:10px;border-radius:8px;cursor:pointer">Più tardi (gli interessi salgono)</button>'
           +   '</div>'
           + '</div>';
         ov.addEventListener('click', function (e) { if (e.target === ov) closeModal(); });

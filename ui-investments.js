@@ -23,7 +23,7 @@ function renderTabInvestments() {
         const bg = c==='gold'?'#fff8e8':c==='green'?'#0d2116':c==='red'?'#1e0d0d':c==='blue'?'#f3f6f9':'#ffffff';
         const bd = c==='gold'?'#c79a2a':c==='green'?'#1a4731':c==='red'?'#471a1a':c==='blue'?'#1e3a5f':'#d6dee8';
         const tc = c==='gold'?'#c79a2a':c==='green'?'#1aa06a':c==='red'?'#db5746':c==='blue'?'#2f74c0':'#6a7480';
-        return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
+        return `<button ${dis?'':fn} ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
     };
     const _SEC = t => `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px;font-weight:600">${t}</div>`;
 
@@ -87,13 +87,13 @@ function renderTabInvestments() {
                 <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px;margin-top:2px">
                     ${owned
                         ? `${_pill('✓ ATTIVO', '#1aa06a')}
-                           ${_btn('Vendi 40%', `window.sellInvestment('${i.id}')`, 'red', false)}`
+                           ${_btn('Vendi 40%', ceAct('sellInvestment', [i.id]), 'red', false)}`
                         : uc
                             ? `<div style="text-align:center">
                                  <div style="font-size:11px;font-weight:700;color:#e0922e;font-family:monospace">${daysLeft}g rimasti</div>
-                                 ${_btn('⚡ '+dcCost+' DC', `window.speedUpConstruction('${i.id}')`, 'gold', false)}
+                                 ${_btn('⚡ '+dcCost+' DC', ceAct('speedUpConstruction', [i.id]), 'gold', false)}
                                </div>`
-                            : _btn('€'+i.price.toLocaleString(), `buyInvestment('${i.id}')`, 'gold', !reqMet)}
+                            : _btn('€'+i.price.toLocaleString(), ceAct('buyInvestment', [i.id]), 'gold', !reqMet)}
                 </div>
             </div>`;
         });
@@ -120,7 +120,7 @@ function renderTabInvestments() {
             </div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
                 ${[50000, 100000, 250000, 500000].map(amt => `
-                <button onclick="takeLoan(${amt})" ${totalDebt >= 500000 ? 'disabled' : ''}
+                <button ${ceAct('takeLoan', [amt])} ${totalDebt >= 500000 ? 'disabled' : ''}
                     style="background:#0d1117;border:1px solid #1e3a5f;color:#2f74c0;padding:8px 6px;border-radius:4px;font-family:monospace;font-size:9px;font-weight:700;cursor:${totalDebt>=500000?'not-allowed':'pointer'};opacity:${totalDebt>=500000?.35:1};text-align:center">
                     Prestito €${(amt/1000).toFixed(0)}k<br><span style="opacity:.6;font-size:8px">Rata: €${Math.ceil(amt*dynRate).toLocaleString()}/mese</span>
                 </button>`).join('')}
@@ -131,7 +131,7 @@ function renderTabInvestments() {
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:9px;padding:6px 12px;background:#161b22;border:1px solid #21262d;border-radius:4px">
                 <span style="color:#6b7280;font-family:monospace">Prestito #${l.id}</span>
                 <span style="color:#db5746;font-family:monospace">Residuo: €${l.amount.toLocaleString()} (${((l.rate||0.08)*100).toFixed(0)}%/mese)</span>
-                ${_btn('Salda', `repayLoan(${l.id})`, 'gold', gameState.cash < l.amount)}
+                ${_btn('Salda', ceAct('repayLoan', [l.id]), 'gold', gameState.cash < l.amount)}
             </div>`).join('')}
         </div>` : ''}`;
     }
@@ -168,9 +168,9 @@ function renderTabInvestments() {
                         <div style="font-size:10px;color:#1aa06a;font-family:monospace">+€${dailyReturn}/g</div>
                     </div>` : ''}
                     ${!locked ? `<div style="display:flex;flex-direction:column;gap:4px">
-                        ${_btn('+5% · €'+costFor5.toLocaleString(), `window.acquireVentureStake('${agency.id}',5)`, 'blue', gameState.cash<costFor5)}
-                        ${_btn('+10% · €'+costFor10.toLocaleString(), `window.acquireVentureStake('${agency.id}',10)`, 'gold', gameState.cash<costFor10)}
-                        ${stake ? _btn('Vendi 75%', `window.divestVentureStake('${agency.id}')`, 'red', false) : ''}
+                        ${_btn('+5% · €'+costFor5.toLocaleString(), ceAct('acquireVentureStake', [agency.id, 5]), 'blue', gameState.cash<costFor5)}
+                        ${_btn('+10% · €'+costFor10.toLocaleString(), ceAct('acquireVentureStake', [agency.id, 10]), 'gold', gameState.cash<costFor10)}
+                        ${stake ? _btn('Vendi 75%', ceAct('divestVentureStake', [agency.id]), 'red', false) : ''}
                     </div>` : ''}
                 </div>
             </div>`;
@@ -195,7 +195,7 @@ function renderTabInvestments() {
             <div style="font-size:12px;font-weight:700;color:#e6edf3;margin-bottom:6px">Costituisci una Holding</div>
             <div style="font-size:10px;color:#6b7280;line-height:1.5;margin-bottom:8px">Fondare una holding ti permette di acquisire aziende sussidiarie che generano reddito passivo ogni giorno, indipendentemente dalle tue corse.</div>
             <div style="font-size:10px;color:#6b7280;margin-bottom:12px;font-family:monospace">Requisiti: <span style="color:#c79a2a">4.0★</span> reputazione · <span style="color:#c79a2a">€200.000</span></div>
-            ${_btn('Fondazione Holding — €200.000', 'incorporateHolding()', 'gold', !canFound)}
+            ${_btn('Fondazione Holding — €200.000', ceAct('incorporateHolding', []), 'gold', !canFound)}
         </div>`;
     } else {
         html += `
@@ -218,8 +218,8 @@ function renderTabInvestments() {
                 </div>
                 <div style="flex-shrink:0;margin-top:2px">
                     ${owned
-                        ? _btn('Cedi 60%', `divestSubsidiary('${sub.id}')`, 'red', false)
-                        : _btn('€'+Math.round(sub.cost/1000)+'k', `acquireSubsidiary('${sub.id}')`, 'gold', gameState.cash<sub.cost)}
+                        ? _btn('Cedi 60%', ceAct('divestSubsidiary', [sub.id]), 'red', false)
+                        : _btn('€'+Math.round(sub.cost/1000)+'k', ceAct('acquireSubsidiary', [sub.id]), 'gold', gameState.cash<sub.cost)}
                 </div>
             </div>`;
         }).join('')}

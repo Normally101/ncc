@@ -214,7 +214,7 @@ window.renderTabHQ = function() {
     const fx = window.hqAllEffects();
 
     const cityTabsHtml = window.HQ_CITIES.map(c => `
-        <button onclick="window.hqSwitchCity('${c.id}')"
+        <button ${ceAct('hqSwitchCity', [c.id])}
                 class="${c.id === currentCityId ? 'em-goldbtn' : 'em-ghbtn'}"
                 style="font-size:11px;white-space:nowrap">
             ${c.icon} ${c.name}
@@ -245,7 +245,7 @@ window.renderTabHQ = function() {
                 ${isMaxLevel
                     ? `<span class="em-pill em-pill--green" style="font-size:8px">Max</span>`
                     : `<div style="font-size:10px;color:var(--em-gold);font-family:monospace;margin-bottom:4px">€${nextTier.cost.toLocaleString()}</div>
-                       ${!isLocked ? `<button class="em-goldbtn" onclick="${currentLevel === 0 ? `window._hqBuildFromList('${r.id}')` : `window.hqUpgradeRoom('${currentCityId}', '${r.id}')`}"
+                       ${!isLocked ? `<button class="em-goldbtn" ${currentLevel === 0 ? ceAct('_hqBuildFromList', [r.id]) : ceAct('hqUpgradeRoom', [currentCityId, r.id])}
                          style="font-size:9px;${!canAffordUpgrade ? 'opacity:.4;cursor:not-allowed' : ''}">
                          ${currentLevel === 0 ? '🏗️ Costruisci' : '⬆️ Migliora'}
                        </button>` : ''}`}
@@ -338,13 +338,13 @@ window.hqOpenBuildModal = function(roomId) {
       <div style="background:#1a1a2e;border:1px solid #21262d;border-radius:6px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);max-height:80vh;overflow-y:auto">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
           <div style="font-size:12px;font-weight:700;color:#e6edf3">🏗️ Scegli lo slot per ${window.HQ_ROOMS.find(r=>r.id===roomId).name}</div>
-          <button onclick="document.getElementById('hq-build-modal').remove()" style="color:#6b7280;background:none;border:none;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>
+          <button ${ceAct('ceRemove', ['hq-build-modal'])} style="color:#6b7280;background:none;border:none;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
         ${emptySlots.length === 0
             ? '<div style="font-size:10px;color:#6b7280;text-align:center;padding:16px 0">Nessuno slot libero in questa città.</div>'
             : emptySlots.map(slot => `
               <div style="background:rgba(255,255,255,0.03);border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer"
-                   onclick="document.getElementById('hq-build-modal').remove(); window.hqUpgradeRoom('${currentCityId}', '${roomId}', ${slot})">
+                   ${ceAct('ceHqBuildConfirm', ['hq-build-modal', currentCityId, roomId, slot])}>
                 <div style="font-weight:700;color:#e6edf3;font-size:12px">Slot #${slot}</div>
                 <div style="color:#c79a2a;font-size:11px;font-family:monospace">Posiziona qui</div>
               </div>`).join('')}

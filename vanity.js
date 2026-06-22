@@ -50,7 +50,7 @@
         const emblemCell = it => {
             const owned = gs.ownedEmblems.includes(it.e);
             const equipped = gs.companyLogo === it.e;
-            return `<button onclick="window._vanityEmblem('${it.e}')"
+            return `<button ${ceAct('_vanityEmblem', [it.e])}
                 style="aspect-ratio:1;border-radius:10px;border:2px solid ${equipped ? 'var(--em-gold)' : 'var(--em-line)'};background:${equipped ? '#fff8e8' : '#fff'};font-size:24px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;position:relative">
                 ${it.e}
                 <span style="font-size:8px;font-weight:800;color:${equipped ? 'var(--em-gold)' : owned ? 'var(--em-green-d)' : 'var(--em-muted)'}">${equipped ? 'IN USO' : owned ? 'Equipaggia' : '🪙 ' + it.c}</span>
@@ -59,7 +59,7 @@
         const colorCell = it => {
             const owned = gs.ownedColors.includes(it.v);
             const equipped = gs.companyColor === it.v;
-            return `<button onclick="window._vanityColor('${it.v}')"
+            return `<button ${ceAct('_vanityColor', [it.v])}
                 style="border-radius:9px;border:2px solid ${equipped ? 'var(--em-ink)' : 'var(--em-line)'};background:#161b22;cursor:pointer;padding:8px;display:flex;align-items:center;gap:8px">
                 <span style="width:22px;height:22px;border-radius:6px;background:${it.v};flex-shrink:0;border:1px solid rgba(0,0,0,.1)"></span>
                 <span style="flex:1;text-align:left"><span style="font-weight:700;font-size:11.5px;color:var(--em-ink)">${it.n}</span></span>
@@ -69,7 +69,7 @@
         const titleCell = it => {
             const owned = gs.ownedTitles.includes(it.t);
             const equipped = gs.companyTitle === it.t;
-            return `<button onclick="window._vanityTitle('${it.t.replace(/'/g, "\\'")}')"
+            return `<button ${ceAct('_vanityTitle', [it.t])}
                 style="border-radius:9px;border:2px solid ${equipped ? 'var(--em-gold)' : 'var(--em-line)'};background:${equipped ? '#fff8e8' : '#fff'};cursor:pointer;padding:9px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
                 <span style="font-weight:800;font-size:12px;color:${equipped ? 'var(--em-gold)' : 'var(--em-ink)'}">${it.t}</span>
                 <span style="font-size:9px;font-weight:800;color:${equipped ? 'var(--em-gold)' : owned ? 'var(--em-green-d)' : 'var(--em-muted)'}">${equipped ? 'IN USO' : owned ? 'Equipaggia' : '🪙 ' + it.c}</span>
@@ -114,10 +114,10 @@
                 <div><div style="font-weight:700">🏴 Targa Nera Presidenziale</div><div style="font-size:10.5px;color:var(--em-muted);margin-top:1px">${gameState.hasPrestigiousPlate ? 'Già applicata — prestigio massimo.' : 'Cosmetico esclusivo · sblocca clienti d\'élite.'}</div></div>
                 ${gameState.hasPrestigiousPlate
                     ? `<span class="em-pill em-pill--gold">Posseduta</span>`
-                    : `<button class="em-goldbtn" onclick="window._ecTargaPresidenziale ? window._ecTargaPresidenziale() : switchTab('store')">🪙 500 DC</button>`}
+                    : `<button class="em-goldbtn" ${ceAct('ceTargaPresidenziale', [])}>🪙 500 DC</button>`}
             </div>
 
-            <div style="text-align:center;font-size:10px;color:var(--em-dim);margin-top:10px">I cosmetici sono puro status: nessun vantaggio di gioco. Servono DC — acquistabili nell'<span class="em-link" onclick="switchTab('store')">Executive Club</span>.</div>
+            <div style="text-align:center;font-size:10px;color:var(--em-dim);margin-top:10px">I cosmetici sono puro status: nessun vantaggio di gioco. Servono DC — acquistabili nell'<span class="em-link" ${ceAct('switchTab', ['store'])}>Executive Club</span>.</div>
         </div></div>`;
     };
 

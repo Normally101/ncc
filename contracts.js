@@ -449,7 +449,7 @@ function _renderTenderCard(tender) {
           ✅ Offerta inviata · Score: <strong>${pb.score}/100</strong>
           ${pb.pledgedCash > 0 ? `· Pledge: <span style="color:var(--em-amber)">€${pb.pledgedCash.toLocaleString('it-IT')}</span>` : ''}
         </div>
-        <button onclick="CE_cancelBid('${tender.id}')"
+        <button ${ceAct('CE_cancelBid', [tender.id])}
           class="em-redbtn" style="font-size:9px;padding:2px 8px;margin-left:12px;flex-shrink:0">Annulla</button>
       </div>
       ` : `
@@ -464,11 +464,11 @@ function _renderTenderCard(tender) {
           <span style="font-size:10px;color:var(--em-muted);width:48px;flex-shrink:0">Pledge:</span>
           <input type="range" min="0" max="50000" step="1000" value="0"
             id="pledge-${tender.id}"
-            oninput="CE_updateBidPreview('${tender.id}', this.value)"
+            ${ceAct('ceBidPreview', [tender.id], 'input')}
             style="flex:1;accent-color:var(--em-blue)">
           <span id="bid-pledge-val-${tender.id}" style="font-size:10px;color:var(--em-blue);width:56px;text-align:right;flex-shrink:0">€0</span>
         </div>
-        <button class="em-bbtn" onclick="CE_placeBid('${tender.id}', document.getElementById('pledge-${tender.id}').value)"
+        <button class="em-bbtn" ${ceAct('cePlaceBid', [tender.id])}
           style="width:100%">
           📤 Invia Offerta
         </button>
@@ -505,7 +505,7 @@ function _renderContractCard(c) {
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;font-size:10px;color:var(--em-muted)">
         <span>${remain}gg rimasti · Valore: €${total.toLocaleString('it-IT')}</span>
-        <button onclick="CE_terminateContract('${c.id}')"
+        <button ${ceAct('CE_terminateContract', [c.id])}
           class="em-redbtn" style="font-size:9px;padding:2px 8px">Termina</button>
       </div>
     </div>`;

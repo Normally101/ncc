@@ -102,8 +102,8 @@
             const me = m.user_id === uid();
             const ctrl = (isOfficer && !me && m.role !== 'leader') ? `
                 <div style="display:flex;gap:4px;flex-shrink:0">
-                    ${isLeader ? `<button class="em-ghbtn" style="padding:3px 8px;font-size:9.5px" onclick="window._alSetRole('${m.user_id}','${m.role === 'officer' ? 'member' : 'officer'}')">${m.role === 'officer' ? '↓ Membro' : '↑ Officer'}</button>` : ''}
-                    <button class="em-redbtn" style="padding:3px 8px;font-size:9.5px" onclick="window._alKick('${m.user_id}')">Espelli</button>
+                    ${isLeader ? `<button class="em-ghbtn" style="padding:3px 8px;font-size:9.5px" ${ceAct('_alSetRole', [m.user_id,m.role === 'officer' ? 'member' : 'officer'])}>${m.role === 'officer' ? '↓ Membro' : '↑ Officer'}</button>` : ''}
+                    <button class="em-redbtn" style="padding:3px 8px;font-size:9.5px" ${ceAct('_alKick', [m.user_id])}>Espelli</button>
                 </div>` : '';
             return `<div class="em-lrow">
                 <div style="flex:1;min-width:0">
@@ -159,8 +159,8 @@
                     ${al.description ? `<div style="font-size:10.5px;color:var(--em-dim);margin-top:3px">${esc(al.description)}</div>` : ''}
                 </div>
                 ${isLeader
-                    ? `<button class="em-redbtn" style="flex-shrink:0" onclick="window._alDisband()">Sciogli</button>`
-                    : `<button class="em-ghbtn" style="flex-shrink:0" onclick="window._alLeave()">Esci</button>`}
+                    ? `<button class="em-redbtn" style="flex-shrink:0" ${ceAct('_alDisband', [])}>Sciogli</button>`
+                    : `<button class="em-ghbtn" style="flex-shrink:0" ${ceAct('_alLeave', [])}>Esci</button>`}
             </div>
 
             <div style="display:grid;grid-template-columns:1fr 360px;gap:7px;align-items:start">
@@ -170,7 +170,7 @@
                         <div style="padding:11px;display:flex;gap:8px;align-items:center">
                             <input id="al-donate" type="number" min="1000" step="1000" placeholder="Importo da donare"
                                 style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
-                            <button class="em-gbtn" onclick="window._alDonate()">Dona</button>
+                            <button class="em-gbtn" ${ceAct('_alDonate', [])}>Dona</button>
                         </div>
                         <div style="font-size:10px;color:var(--em-dim);padding:0 11px 10px">Il tuo contributo totale: <b>${fmt((roster.find(m => m.user_id === uid()) || {}).contribution)}</b></div>
                     </div>
@@ -185,9 +185,9 @@
                     <div class="em-ch"><span class="t">Chat del Consorzio</span><span class="a" style="color:var(--em-green)">● live</span></div>
                     <div id="al-chat-scroll" style="flex:1;overflow-y:auto;min-height:200px">${chatRows}</div>
                     <div style="display:flex;gap:6px;padding:9px 11px;border-top:1px solid var(--em-line2)">
-                        <input id="al-chat-input" maxlength="500" placeholder="Scrivi al consorzio…" onkeydown="if(event.key==='Enter')window._alChat()"
+                        <input id="al-chat-input" maxlength="500" placeholder="Scrivi al consorzio…" ${ceAct('ceAlChatEnter', [], 'keydown')}
                             style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px 10px;font-size:12px;color:var(--em-ink);outline:none">
-                        <button class="em-bbtn" onclick="window._alChat()">Invia</button>
+                        <button class="em-bbtn" ${ceAct('_alChat', [])}>Invia</button>
                     </div>
                 </div>
             </div>
@@ -214,7 +214,7 @@
                     <div style="font-size:10.5px;color:var(--em-muted)">${a.member_count} membri · Tesoro ${fmt(a.treasury)} · ${a.is_open ? 'Aperto' : 'Su richiesta'}</div>
                     ${a.description ? `<div style="font-size:10px;color:var(--em-dim);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(a.description)}</div>` : ''}
                 </div>
-                <button class="em-gbtn" style="flex-shrink:0" onclick="window._alJoin('${a.id}')">${a.is_open ? 'Entra' : 'Richiedi'}</button>
+                <button class="em-gbtn" style="flex-shrink:0" ${ceAct('_alJoin', [a.id])}>${a.is_open ? 'Entra' : 'Richiedi'}</button>
             </div>`).join('') : `<div class="em-empty">Nessun consorzio ancora. Fonda il primo! 🛡️</div>`;
 
         c.innerHTML = `<div class="em em-page"><div class="em-wrap">
@@ -235,7 +235,7 @@
                         <input id="al-emblem" maxlength="2" value="🛡️" style="width:46px;text-align:center;background:#0d1117;border:1px solid var(--em-line);border-radius:7px;padding:8px;font-size:14px;outline:none">
                         <label style="font-size:11px;color:var(--em-muted);display:flex;align-items:center;gap:5px;cursor:pointer"><input id="al-open" type="checkbox" checked> Aperto a tutti</label>
                     </div>
-                    <button class="em-goldbtn" style="grid-column:2" onclick="window._alCreate()">Fonda</button>
+                    <button class="em-goldbtn" style="grid-column:2" ${ceAct('_alCreate', [])}>Fonda</button>
                 </div>
             </div>
 

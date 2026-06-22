@@ -258,7 +258,7 @@ function _showOfflineGainsModal(gains) {
             <div style="color:#22c55e;font-size:26px;font-weight:700;font-family:'Orbitron',sans-serif">+€${cash.toLocaleString('it-IT')}</div>
             ${energyLine}
         </div>
-        <button onclick="document.getElementById('offline-gains-modal').remove()"
+        <button ${ceAct('ceRemove', ['offline-gains-modal'])}
             style="background:linear-gradient(135deg,#d4af37,#b8962e);color:#000;border:none;
             border-radius:10px;padding:10px 28px;font-weight:700;font-size:12px;
             cursor:pointer;width:100%;font-family:'Orbitron',sans-serif;letter-spacing:0.05em">

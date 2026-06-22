@@ -28,11 +28,11 @@ window.renderMobileDispatcher = function() {
       <div class="mobile-empty">Nessuna corsa disponibile</div>
     </div>
     <nav class="mobile-bottom-nav">
-      <button onclick="window.mobTab('dispatch')" class="mob-nav-btn active" data-mob-tab="dispatch"><span>🚕</span><span>Dispatch</span></button>
-      <button onclick="window.mobTab('fleet')" class="mob-nav-btn" data-mob-tab="fleet"><span>🚘</span><span>Flotta</span></button>
-      <button onclick="window.mobTab('finance')" class="mob-nav-btn" data-mob-tab="finance"><span>💹</span><span>Finanza</span></button>
-      <button onclick="window.mobTab('ranking')" class="mob-nav-btn" data-mob-tab="ranking"><span>🏆</span><span>Ranking</span></button>
-      <button onclick="window.mobTab('hub')" class="mob-nav-btn" data-mob-tab="hub"><span>☰</span><span>Hub</span></button>
+      <button ${ceAct('mobTab', ['dispatch'])} class="mob-nav-btn active" data-mob-tab="dispatch"><span>🚕</span><span>Dispatch</span></button>
+      <button ${ceAct('mobTab', ['fleet'])} class="mob-nav-btn" data-mob-tab="fleet"><span>🚘</span><span>Flotta</span></button>
+      <button ${ceAct('mobTab', ['finance'])} class="mob-nav-btn" data-mob-tab="finance"><span>💹</span><span>Finanza</span></button>
+      <button ${ceAct('mobTab', ['ranking'])} class="mob-nav-btn" data-mob-tab="ranking"><span>🏆</span><span>Ranking</span></button>
+      <button ${ceAct('mobTab', ['hub'])} class="mob-nav-btn" data-mob-tab="hub"><span>☰</span><span>Hub</span></button>
     </nav>`;
 
     _mobUpdateStats();
@@ -74,8 +74,8 @@ function _mobRefreshRides() {
         ${r.vipClient ? '<span class="mob-vip">👑 VIP</span>' : ''}
       </div>
       <div class="mob-ride-actions">
-        <button class="mob-btn-reject" onclick="window._mobRejectRide(${i})">✕ Passa</button>
-        <button class="mob-btn-accept" onclick="window._mobAcceptRide(${i})">✓ Accetta</button>
+        <button class="mob-btn-reject" ${ceAct('_mobRejectRide', [i])}>✕ Passa</button>
+        <button class="mob-btn-accept" ${ceAct('_mobAcceptRide', [i])}>✓ Accetta</button>
       </div>
     </div>`).join('');
 }

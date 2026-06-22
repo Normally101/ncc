@@ -264,7 +264,7 @@ function _showCompanySetup(slotIndex) {
 
     const logoGrid = SLOT_LOGOS.map((l, i) =>
         `<button class="logo-opt-btn ${i === 0 ? 'active' : ''}"
-            onclick="window._selectedLogoSS='${l}'; document.querySelectorAll('.logo-opt-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active')">
+            ${ceAct('ceSetActive', ['_selectedLogoSS', null, l, '.logo-opt-btn'])}>
             ${l}
         </button>`
     ).join('');
@@ -273,7 +273,7 @@ function _showCompanySetup(slotIndex) {
         `<button class="brand-color-btn ${i === 0 ? 'active' : ''}"
             style="background:${c.value}"
             title="${c.name}"
-            onclick="window._selectedColorSS='${c.value}'; document.querySelectorAll('.brand-color-btn').forEach(b=>b.classList.remove('active')); this.classList.add('active'); document.getElementById('ss-color-preview').style.color='${c.value}'">
+            ${ceAct('ceSetBrandColor', [c.value])}>
         </button>`
     ).join('');
 
@@ -300,8 +300,8 @@ function _showCompanySetup(slotIndex) {
             </div>
 
             <div class="ss-btn-row">
-                <button onclick="window.authLogout()" class="ss-btn-secondary">← Logout</button>
-                <button onclick="_confirmNewGame(0)" class="ss-btn-primary">Fonda Azienda →</button>
+                <button ${ceAct('authLogout', [])} class="ss-btn-secondary">← Logout</button>
+                <button ${ceAct('_confirmNewGame', [0])} class="ss-btn-primary">Fonda Azienda →</button>
             </div>
         </div>
     </div>`;

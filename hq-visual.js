@@ -46,7 +46,7 @@ window.renderHQCampus = function() {
                 html += `
                 <div class="hq-building-wrapper"
                      style="position:absolute;left:${slotDef.left};top:${slotDef.top};transform:translate(-50%,-100%);cursor:pointer;transition:transform 0.2s;"
-                     onclick="window.hqShowInfoPanel('${roomId}')">
+                     ${ceAct('hqShowInfoPanel', [roomId])}>
                      
                      <!-- Placeholder visibile solo se l'immagine manca -->
                      <div style="display:none; width:128px; height:128px; border:2px dashed rgba(212,175,55,0.4); background:rgba(0,0,0,0.4); border-radius:6px; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:8px; position:absolute; bottom:0; left:50%; transform:translateX(-50%);">
@@ -57,7 +57,7 @@ window.renderHQCampus = function() {
                      <img src="assets/buildings/${roomId}_lvl${level}.png"
                           alt="${roomName}"
                           style="position:relative; z-index:10; max-height:200px; width:auto; filter:drop-shadow(0 4px 12px rgba(0,0,0,0.6));"
-                          onerror="this.style.display='none'; this.previousElementSibling.style.display='flex'">
+                          data-ce-imgerr="hideShowPrev">
 
                      <!-- Label Livello (visibile su hover) -->
                      <div class="hq-building-label" style="position:absolute; top:-24px; left:50%; transform:translateX(-50%); background:rgba(0,0,0,0.85); border:1px solid rgba(212,175,55,0.3); color:#d4af37; font-size:9px; font-family:monospace; padding:2px 8px; border-radius:4px; opacity:0; transition:opacity 0.2s; white-space:nowrap; z-index:20; pointer-events:none;">
@@ -69,10 +69,9 @@ window.renderHQCampus = function() {
                 html += `
                 <div class="hq-slot-pulse"
                      style="position:absolute;left:${slotDef.left};top:${slotDef.top};transform:translate(-50%,-50%);cursor:pointer;">
-                     <div onclick="window.hqOpenBuildModal('${currentCityId}', ${slotId})"
+                     <div ${ceAct('hqOpenBuildModal', [currentCityId, slotId])}
                           style="width:56px; height:32px; border:2px dashed rgba(212,175,55,0.5); background:rgba(212,175,55,0.06); border-radius:999px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
-                          onmouseover="this.style.background='rgba(212,175,55,0.2)'; this.style.borderColor='rgba(212,175,55,0.9)'"
-                          onmouseout="this.style.background='rgba(212,175,55,0.06)'; this.style.borderColor='rgba(212,175,55,0.5)'">
+                         >
                         <span style="color:#d4af37; font-weight:bold; font-size:18px; line-height:1">+</span>
                      </div>
                      <div style="text-align:center; margin-top:4px; font-size:9px; color:rgba(212,175,55,0.8); background:rgba(0,0,0,0.5); padding:1px 4px; border-radius:3px; white-space:nowrap">Lotto Libero</div>
@@ -112,7 +111,7 @@ window.hqOpenBuildModal = function(cityId, slotIndex) {
       <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.1);border-radius:6px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);max-height:80vh;overflow-y:auto">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
           <div style="font-size:12px;font-weight:700;color:#e6edf3">🏗️ Costruisci (Lotto ${slotIndex})</div>
-          <button onclick="document.getElementById('hq-build-modal').remove()" style="color:#6b7280;background:none;border:none;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>
+          <button ${ceAct('ceRemove', ['hq-build-modal'])} style="color:#6b7280;background:none;border:none;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
         ${unlockedRooms.length === 0
             ? '<div style="font-size:10px;color:#6b7280;text-align:center;padding:16px 0">Nessuna struttura disponibile per questo lotto. Costruisci prima i prerequisiti.</div>'
@@ -125,7 +124,7 @@ window.hqOpenBuildModal = function(cityId, slotIndex) {
                 <div style="font-size:10px;color:#8b949e;margin:4px 0 8px">${r.desc}</div>
                 <div style="display:flex;justify-content:space-between;align-items:center">
                   <span style="color:#d4af37;font-size:11px;font-family:monospace">€${tDef.cost.toLocaleString()}</span>
-                  <button onclick="document.getElementById('hq-build-modal').remove(); window.hqUpgradeRoom('${cityId}', '${r.id}', ${slotIndex})"
+                  <button ${ceAct('ceHqBuildConfirm', ['hq-build-modal', cityId, r.id, slotIndex])}
                     style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 8px;border-radius:4px;font-size:9px;cursor:pointer;${!canAfford ? 'opacity:.4' : ''}">
                     Costruisci qui
                   </button>
@@ -169,7 +168,7 @@ window.hqShowInfoPanel = function(roomId) {
                     <div style="color:#d4af37;font-size:11px;font-family:monospace">€${nextTier.cost.toLocaleString()}</div>
                     ${nextTier.reqRep > 0 ? `<div style="color:#60a5fa;font-size:9px">Req: ${nextTier.reqRep}⭐</div>` : ''}
                 </div>
-                <button onclick="document.getElementById('hq-info-panel').remove(); window.hqUpgradeRoom('${currentCityId}', '${roomId}')"
+                <button ${ceAct('ceHqBuildConfirm', ['hq-info-panel', currentCityId, roomId])}
                     style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:4px 12px;border-radius:4px;font-size:10px;cursor:pointer;${!canAfford ? 'opacity:.4' : ''}">
                     ⬆️ Migliora
                 </button>
@@ -192,7 +191,7 @@ window.hqShowInfoPanel = function(roomId) {
                 <div style="color:#e6edf3;font-weight:700;font-size:12px">${room.icon} ${room.name}</div>
                 <div style="font-size:11px;color:#d4af37;font-family:monospace;text-transform:uppercase">Livello ${currentLevel}</div>
             </div>
-            <button onclick="document.getElementById('hq-info-panel').remove()" style="color:#8b949e;background:none;border:none;margin-left:16px;cursor:pointer;font-size:16px;padding:0;line-height:1">✕</button>
+            <button ${ceAct('ceRemove', ['hq-info-panel'])} style="color:#8b949e;background:none;border:none;margin-left:16px;cursor:pointer;font-size:16px;padding:0;line-height:1">✕</button>
         </div>
         <p style="font-size:11px;color:#d1d5db;margin-bottom:12px">${room.desc}</p>
         <div style="margin-bottom:12px">

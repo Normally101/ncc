@@ -104,7 +104,7 @@ window.auctionsOpenBidModal = function(auctionId) {
             ${isContainer ? '<div style="font-size:10px;color:#e0922e;margin-top:3px">📦 Contenuto rivelato solo al vincitore</div>' : ''}
             ${auction.vehicle_data?.tier ? `<div style="margin-top:6px">${_tierBadge(auction.vehicle_data.tier)}</div>` : ''}
           </div>
-          <button onclick="document.getElementById('auction-bid-modal').remove()" style="background:transparent;border:none;color:#6b7280;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">✕</button>
+          <button ${ceAct('ceRemove', ['auction-bid-modal'])} style="background:transparent;border:none;color:#6b7280;font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0">✕</button>
         </div>
 
         <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:16px">
@@ -124,7 +124,7 @@ window.auctionsOpenBidModal = function(auctionId) {
 
         <div id="bid-error" style="color:#db5746;font-size:10px;margin-bottom:8px;display:none"></div>
 
-        <button id="bid-confirm-btn" onclick="window.auctionsConfirmBid('${auctionId}')"
+        <button id="bid-confirm-btn" ${ceAct('auctionsConfirmBid', [auctionId])}
           style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#e3b441,#c79a2a);color:#fff;border:none;border-radius:7px;box-shadow:0 2px 5px rgba(199,154,42,.24)">
           🔨 Piazza Offerta
         </button>
@@ -209,7 +209,7 @@ window.auctionsRevealWon = function(auctionId) {
           <div style="font-size:10px;color:#6b7280;margin-top:4px">Aggiudicato per ${_fmtCurrency(won.winning_bid)}</div>
         </div>
         ${contentHtml}
-        <button onclick="document.getElementById('auction-won-modal').remove()"
+        <button ${ceAct('ceRemove', ['auction-won-modal'])}
           style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#e3b441,#c79a2a);color:#fff;border:none;border-radius:7px;box-shadow:0 2px 5px rgba(199,154,42,.24)">
           Chiudi
         </button>
@@ -232,7 +232,7 @@ window.renderTabAuctions = function() {
             ${won.map(w => `
               <div style="display:flex;align-items:center;justify-content:space-between;background:#0d1117;border-radius:4px;padding:8px 12px;margin-bottom:6px">
                 <div style="font-size:11px;color:var(--em-ink)">${w.icon} ${w.title}</div>
-                <button class="em-goldbtn" onclick="window.auctionsRevealWon('${w.id}')" style="font-size:9px;padding:4px 10px">🎁 Ritira</button>
+                <button class="em-goldbtn" ${ceAct('auctionsRevealWon', [w.id])} style="font-size:9px;padding:4px 10px">🎁 Ritira</button>
               </div>`).join('')}
         </div>` : '';
 
@@ -282,7 +282,7 @@ window.renderTabAuctions = function() {
                 ${isOutbid ? '<div style="font-size:10px;color:var(--em-red);margin-bottom:8px">⚠️ Sei stato superato! Rilancia per vincere.</div>' : ''}
                 ${isLeading ? '<div style="font-size:10px;color:var(--em-green);margin-bottom:8px">✅ Sei in testa — mantieni la posizione.</div>' : ''}
 
-                <button class="em-goldbtn" onclick="window.auctionsOpenBidModal('${a.id}')" style="width:100%">
+                <button class="em-goldbtn" ${ceAct('auctionsOpenBidModal', [a.id])} style="width:100%">
                   🔨 ${myBid ? 'Rilancia Offerta' : 'Fai Offerta'}
                 </button>
               </div>`;
@@ -312,7 +312,7 @@ window.renderTabAuctions = function() {
             </div>
             <div style="display:flex;align-items:center;gap:8px">
                 ${won.length > 0 ? `<span class="em-pill em-pill--gold">${won.length} Da Ritirare</span>` : ''}
-                <button class="em-ghbtn" onclick="window.auctionsRefresh(true).then(()=>window.switchTab('auctions'))">↻ Aggiorna</button>
+                <button class="em-ghbtn" ${ceAct('ceThen', ['auctionsRefresh', 'switchTab', 'auctions'])}>↻ Aggiorna</button>
             </div>
         </div>
 

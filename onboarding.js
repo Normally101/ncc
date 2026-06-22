@@ -61,7 +61,7 @@
                     Sblocca completando <b style="color:var(--em-ink)">${reqs.join(' ')}</b>.<br>
                     Fai crescere l'impero con le corse: ogni sezione si apre man mano che sali.</div>
                 ${u.needRides ? `<div class="em-prog" style="max-width:280px;margin:0 auto 14px;height:7px"><i style="width:${pct}%;background:var(--em-blue)"></i></div>` : ''}
-                <button class="em-gbtn" onclick="switchTab('corse')">Vai a guadagnare →</button>
+                <button class="em-gbtn" ${ceAct('switchTab', ['corse'])}>Vai a guadagnare →</button>
             </div>
         </div></div>`;
     };
@@ -87,7 +87,7 @@
             <div style="display:flex;align-items:center;gap:10px;padding:7px 11px;border-top:1px solid #21262d">
                 <div class="em-evi" style="background:${s.ok ? '#0d2217' : '#21262d'};font-size:14px;line-height:1">${s.ok ? '✅' : s.ic}</div>
                 <div style="flex:1;font-weight:700;font-size:12px;color:${s.ok ? '#6b7280' : '#e6edf3'};${s.ok ? 'text-decoration:line-through' : ''}">${s.t}</div>
-                ${s.ok ? '<span class="em-pill em-pill--green">Fatto</span>' : `<button class="em-bbtn" style="padding:5px 11px" onclick="switchTab('${s.cta}')">Vai →</button>`}
+                ${s.ok ? '<span class="em-pill em-pill--green">Fatto</span>' : `<button class="em-bbtn" style="padding:5px 11px" ${ceAct('switchTab', [s.cta])}>Vai →</button>`}
             </div>`).join('');
 
         return `<div class="em-card" style="margin-bottom:7px;border-color:#21262d;background:#161b22">

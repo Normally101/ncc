@@ -56,7 +56,7 @@ window.DS = {
     btn({ label = 'OK', color = 'blue', onclick = '', icon = '', disabled = false, size = '' } = {}) {
         const disAttr = disabled ? ' disabled' : '';
         const sizeStyle = size === 'sm' ? ' style="padding:5px 10px;font-size:9px"' : '';
-        return `<button class="ds-btn ds-btn--${color}"${disAttr}${sizeStyle}${onclick ? ` onclick="${onclick}"` : ''}>${icon ? `${icon} ` : ''}${_dsEsc(label)}</button>`;
+        return `<button class="ds-btn ds-btn--${color}"${disAttr}${sizeStyle}${onclick ? ` ${onclick}` : ''}>${icon ? `${icon} ` : ''}${_dsEsc(label)}</button>`;
     },
 
     // ── Progress Bar ──────────────────────────────────────────────

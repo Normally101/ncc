@@ -52,7 +52,7 @@ function renderTabFleet() {
             </div>
             ${outCount > 0 ? `<div style="font-size:11px;color:var(--em-red);font-weight:700;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between;gap:4px">
                 <span>🔴 ${outCount} auto ferme — deposito esaurito</span>
-                <button onclick="window.emergencyRefuel()" class="em-redbtn" style="padding:3px 9px;font-size:9.5px">🚨 Rifornimento Emergenza (3×)</button>
+                <button ${ceAct('emergencyRefuel', [])} class="em-redbtn" style="padding:3px 9px;font-size:9.5px">🚨 Rifornimento Emergenza (3×)</button>
             </div>` : ''}
             <div class="em-sec" style="margin-bottom:4px">Gasolio</div>
             <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
@@ -60,18 +60,18 @@ function renderTabFleet() {
                 <span style="font-size:11px;font-weight:700;color:${tankColor}">${tank.toLocaleString()}/${cap.toLocaleString()}L</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:12px">
-                <button onclick="buyFuelForDepot(5000)"  class="em-bbtn" style="text-align:center;padding:5px">+5k L<br><span style="font-size:9px;opacity:.7">€${Math.floor(5000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
-                <button onclick="buyFuelForDepot(15000)" class="em-bbtn" style="text-align:center;padding:5px">+15k L<br><span style="font-size:9px;opacity:.7">€${Math.floor(15000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
-                <button onclick="buyFuelForDepot(${cap})" class="em-goldbtn" style="text-align:center;padding:5px">Fill<br><span style="font-size:9px;opacity:.8">€${Math.floor((cap-tank)*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
+                <button ${ceAct('buyFuelForDepot', [5000])}  class="em-bbtn" style="text-align:center;padding:5px">+5k L<br><span style="font-size:9px;opacity:.7">€${Math.floor(5000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
+                <button ${ceAct('buyFuelForDepot', [15000])} class="em-bbtn" style="text-align:center;padding:5px">+15k L<br><span style="font-size:9px;opacity:.7">€${Math.floor(15000*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
+                <button ${ceAct('buyFuelForDepot', [cap])} class="em-goldbtn" style="text-align:center;padding:5px">Fill<br><span style="font-size:9px;opacity:.8">€${Math.floor((cap-tank)*(gameState.fuelPrice||1.85)).toLocaleString()}</span></button>
             </div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
                 <div class="em-sec">Treni di Gomme</div>
                 <span style="font-size:12px;font-weight:800;color:${gommeColor}">${gomme} set</span>
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:12px">
-                <button onclick="buyTiresForDepot(1)"  class="em-bbtn" style="text-align:center;padding:5px">+1 set<br><span style="font-size:9px;opacity:.7">€800</span></button>
-                <button onclick="buyTiresForDepot(5)"  class="em-bbtn" style="text-align:center;padding:5px">+5 set<br><span style="font-size:9px;opacity:.7">€3.500</span></button>
-                <button onclick="buyTiresForDepot(10)" class="em-goldbtn" style="text-align:center;padding:5px">+10 set<br><span style="font-size:9px;opacity:.8">€6.000</span></button>
+                <button ${ceAct('buyTiresForDepot', [1])}  class="em-bbtn" style="text-align:center;padding:5px">+1 set<br><span style="font-size:9px;opacity:.7">€800</span></button>
+                <button ${ceAct('buyTiresForDepot', [5])}  class="em-bbtn" style="text-align:center;padding:5px">+5 set<br><span style="font-size:9px;opacity:.7">€3.500</span></button>
+                <button ${ceAct('buyTiresForDepot', [10])} class="em-goldbtn" style="text-align:center;padding:5px">+10 set<br><span style="font-size:9px;opacity:.8">€6.000</span></button>
             </div>
             ${(() => {
                 const lvl = gameState.fuelTankLevel || 1;
@@ -88,7 +88,7 @@ function renderTabFleet() {
                 return `<div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--em-line2);padding-top:8px;margin-top:4px">
                     <div style="font-size:10px;color:var(--em-muted)">🏗️ ${cur.name} <span style="color:var(--em-blue);font-weight:700">Lv.${lvl}</span></div>
                     ${next
-                        ? `<button onclick="upgradeFuelDepot()" class="em-goldbtn" style="font-size:9.5px;padding:3px 8px">Upgrade → ${next.name} · €${upgCost.toLocaleString()}</button>`
+                        ? `<button ${ceAct('upgradeFuelDepot', [])} class="em-goldbtn" style="font-size:9.5px;padding:3px 8px">Upgrade → ${next.name} · €${upgCost.toLocaleString()}</button>`
                         : `<span class="em-pill em-pill--green">MAX</span>`
                     }
                 </div>`;
@@ -122,23 +122,23 @@ function renderTabFleet() {
         ${allBrands.length > 1 ? `
         <div class="em-sec" style="margin-bottom:6px">Produttore</div>
         <div class="em-tabs" style="margin-bottom:10px">
-            <button onclick="window._fleetFilter.brand=null;renderTabFleet()" class="em-tab${!activeBrand ? ' on' : ''}">🚗 Tutti <span style="opacity:.7">${gameState.fleet.length}</span></button>
+            <button ${ceAct('ceSetRender', ['_fleetFilter', 'brand', null, 'renderTabFleet'])} class="em-tab${!activeBrand ? ' on' : ''}">🚗 Tutti <span style="opacity:.7">${gameState.fleet.length}</span></button>
             ${allBrands.map(b => {
                 const cnt = gameState.fleet.filter(c => _getBrand(c) === b).length;
                 const isActive = activeBrand === b;
                 const brandVal = isActive ? 'null' : `'${b}'`;
-                return `<button onclick="window._fleetFilter.brand=${brandVal};renderTabFleet()" class="em-tab${isActive ? ' on' : ''}">${b} <span style="opacity:.7">${cnt}</span></button>`;
+                return `<button ${ceAct('ceSetRender', ['_fleetFilter', 'brand', brandVal, 'renderTabFleet'])} class="em-tab${isActive ? ' on' : ''}">${b} <span style="opacity:.7">${cnt}</span></button>`;
             }).join('')}
         </div>` : ''}
         ${allTiers.length > 1 ? `
         <div class="em-sec" style="margin-bottom:6px">Categoria</div>
         <div class="em-tabs">
-            <button onclick="window._fleetFilter.tier=null;renderTabFleet()" class="em-tab${!activeTier ? ' on' : ''}">Tutte</button>
+            <button ${ceAct('ceSetRender', ['_fleetFilter', 'tier', null, 'renderTabFleet'])} class="em-tab${!activeTier ? ' on' : ''}">Tutte</button>
             ${allTiers.map(t => {
                 const cnt = gameState.fleet.filter(c => c.tier === t).length;
                 const isActive = activeTier === t;
                 const tierVal = isActive ? 'null' : `'${t}'`;
-                return `<button onclick="window._fleetFilter.tier=${tierVal};renderTabFleet()" class="em-tab${isActive ? ' on' : ''}">${tierLabels[t]||t} <span style="opacity:.7">${cnt}</span></button>`;
+                return `<button ${ceAct('ceSetRender', ['_fleetFilter', 'tier', tierVal, 'renderTabFleet'])} class="em-tab${isActive ? ' on' : ''}">${tierLabels[t]||t} <span style="opacity:.7">${cnt}</span></button>`;
             }).join('')}
         </div>` : ''}
     </div>` : '';
@@ -191,7 +191,7 @@ function renderTabFleet() {
                 html += `<tr style="background:#0d1117"><td colspan="7" style="padding:6px 12px">
                     <div style="display:flex;align-items:center;justify-content:space-between">
                         <span style="font-size:11px;font-weight:800;color:var(--em-ink)">${_carModel} <span style="font-weight:500;color:var(--em-muted)">${_mg.length}× · cond. media <span style="color:${_mgCondColor};font-weight:700">${_mgAvgCond}%</span></span></span>
-                        ${_mgNeedsRepair ? `<button onclick="window.bulkRepairFleet(${_mgRepairIds})" class="em-goldbtn" style="font-size:9.5px;padding:3px 9px">🔧 Ripara gruppo</button>` : ''}
+                        ${_mgNeedsRepair ? `<button ${ceAct('bulkRepairFleet', [_mgRepairIds])} class="em-goldbtn" style="font-size:9.5px;padding:3px 9px">🔧 Ripara gruppo</button>` : ''}
                     </div>
                 </td></tr>`;
             }
@@ -286,9 +286,9 @@ function renderTabFleet() {
                 </td>
                 <td style="white-space:nowrap"><span class="em-pill ${statusCls}">${statusLabel}</span></td>
                 <td class="r" style="white-space:nowrap">
-                    ${condPct < 100 ? `<button onclick="repairVehicle('${car.id}')" class="em-goldbtn" style="font-size:9.5px;padding:3px 8px;margin-right:5px" title="Ripara carrozzeria">🔧 €${repairCostCond.toLocaleString()}</button>` : ''}
-                    ${eh < 70 ? `<button onclick="window.repairEngine('${car.id}')" class="em-pill" style="border:1px solid #f0d2a8;background:#fdeede;color:var(--em-amber);cursor:pointer;font-size:9.5px;padding:4px 8px;margin-right:5px" title="Ripara motore">⚙ €${repairCostEng.toLocaleString()}</button>` : ''}
-                    <button onclick="openCarModal('${car.id}')" class="em-bbtn" style="padding:5px 11px">Gestisci →</button>
+                    ${condPct < 100 ? `<button ${ceAct('repairVehicle', [car.id])} class="em-goldbtn" style="font-size:9.5px;padding:3px 8px;margin-right:5px" title="Ripara carrozzeria">🔧 €${repairCostCond.toLocaleString()}</button>` : ''}
+                    ${eh < 70 ? `<button ${ceAct('repairEngine', [car.id])} class="em-pill" style="border:1px solid #f0d2a8;background:#fdeede;color:var(--em-amber);cursor:pointer;font-size:9.5px;padding:4px 8px;margin-right:5px" title="Ripara motore">⚙ €${repairCostEng.toLocaleString()}</button>` : ''}
+                    <button ${ceAct('openCarModal', [car.id])} class="em-bbtn" style="padding:5px 11px">Gestisci →</button>
                 </td>
             </tr>`;
         });
@@ -308,7 +308,7 @@ function renderTabFleet() {
     }
 
     html += `
-    <div onclick="window.hubNavigate('showroom')" class="em-card"
+    <div ${ceAct('hubNavigate', ['showroom'])} class="em-card"
          style="margin-bottom:7px;padding:14px 16px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;border-color:#1a2535;background:#0d1a2a">
         <div>
             <div style="font-size:12.5px;font-weight:800;color:var(--em-blue)">🚘 Acquisto Veicoli</div>
@@ -346,7 +346,7 @@ function renderTabFleet() {
                     ${isOwned
                         ? `<span class="em-pill em-pill--green">✓ In Flotta</span>`
                         : canBuy
-                            ? `<button onclick="buyPrototypeCar('${c.id}')" class="em-goldbtn">€${c.price.toLocaleString()}</button>`
+                            ? `<button ${ceAct('buyPrototypeCar', [c.id])} class="em-goldbtn">€${c.price.toLocaleString()}</button>`
                             : `<span style="font-size:13px;color:var(--em-dim);padding:0 8px">🔒</span>`
                     }
                 </div>
@@ -369,7 +369,7 @@ function renderTabFleet() {
             </div>
             ${contractActive
                 ? '<span class="em-pill em-pill--green">Attivo</span>'
-                : `<button onclick="buyMaintenanceContract()" class="em-goldbtn">€10.000 / 7g</button>`}
+                : `<button ${ceAct('buyMaintenanceContract', [])} class="em-goldbtn">€10.000 / 7g</button>`}
         </div>
     </div>`;
 
@@ -391,8 +391,8 @@ function renderTabFleet() {
                     <div style="font-size:10px;color:var(--em-muted)">${hub.region} · +5% tassa corse · €${Math.round(cost/1000)}k</div>
                 </div>
                 ${owned
-                    ? `<button onclick="sellHub('${id}')" class="em-redbtn" style="padding:4px 10px;font-size:10px">Cedi</button>`
-                    : `<button onclick="buyHub('${id}')" ${canBuy ? '' : 'disabled'} class="em-goldbtn" style="${canBuy ? '' : 'opacity:.4;cursor:not-allowed'}">€${Math.round(cost/1000)}k</button>`
+                    ? `<button ${ceAct('sellHub', [id])} class="em-redbtn" style="padding:4px 10px;font-size:10px">Cedi</button>`
+                    : `<button ${ceAct('buyHub', [id])} ${canBuy ? '' : 'disabled'} class="em-goldbtn" style="${canBuy ? '' : 'opacity:.4;cursor:not-allowed'}">€${Math.round(cost/1000)}k</button>`
                 }
             </div>`;
         });

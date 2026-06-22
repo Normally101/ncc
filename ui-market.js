@@ -18,7 +18,7 @@ function renderTabMarket() {
         const bg = c==='gold'?'#1a1608':c==='red'?'#1e0d0d':'#161b22';
         const bd = c==='gold'?'#c79a2a':c==='red'?'#471a1a':'#21262d';
         const tc = c==='gold'?'#c79a2a':c==='red'?'#db5746':'#6b7280';
-        return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
+        return `<button ${dis?'':fn} ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
     };
     const _SEC = t => `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:20px 0 8px;font-weight:600">${t}</div>`;
 
@@ -76,7 +76,7 @@ function renderTabMarket() {
             </div>
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
                 ${bids.map(bid => `
-                <button onclick="bidOnAuction(${bid})" style="background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;padding:8px 6px;border-radius:4px;cursor:pointer;font-family:monospace;font-weight:700;font-size:9px;display:flex;flex-direction:column;align-items:center;gap:2px">
+                <button ${ceAct('bidOnAuction', [bid])} style="background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;padding:8px 6px;border-radius:4px;cursor:pointer;font-family:monospace;font-weight:700;font-size:9px;display:flex;flex-direction:column;align-items:center;gap:2px">
                     <span>+€${(bid-auc.currentBid).toLocaleString()}</span>
                     <span style="opacity:.6;font-size:8px">tot €${bid.toLocaleString()}</span>
                 </button>`).join('')}
@@ -107,7 +107,7 @@ function renderTabMarket() {
                 </div>
                 <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
                     <div style="font-size:14px;font-weight:700;color:#c79a2a;font-family:monospace">€${l.price.toLocaleString()}</div>
-                    ${_btn('Acquista', `buyNpcCar('${l.id}')`, canBuy?'gold':'', !canBuy)}
+                    ${_btn('Acquista', ceAct('buyNpcCar', [l.id]), canBuy?'gold':'', !canBuy)}
                 </div>
             </div>`;
         });
@@ -128,7 +128,7 @@ function renderTabMarket() {
                     <div style="font-size:12px;font-weight:700;color:#e6edf3">${l.car.name}</div>
                     <div style="font-size:10px;color:#6b7280;margin-top:2px;font-family:monospace">€${l.askPrice.toLocaleString()} · ${daysLeft > 0 ? `Acquirente ~${daysLeft}g` : 'Vendita in corso…'}</div>
                 </div>
-                ${_btn('Ritira', `cancelListing('${l.id}')`, 'red', false)}
+                ${_btn('Ritira', ceAct('cancelListing', [l.id]), 'red', false)}
             </div>`;
         });
         html += `</div>`;
@@ -152,7 +152,7 @@ function renderTabMarket() {
                     <div style="font-size:12px;font-weight:700;color:#e6edf3">${car.name}</div>
                     <div style="font-size:10px;color:#6b7280;margin-top:2px;font-family:monospace">${car.tier.toUpperCase()} · ${condPct}% · Stima <span style="color:#1aa06a">~€${suggest.toLocaleString()}</span></div>
                 </div>
-                ${_btn(`Vendi ~€${(suggest/1000).toFixed(0)}k`, `listCarForSale('${car.id}', ${suggest})`, 'gold', false)}
+                ${_btn(`Vendi ~€${(suggest/1000).toFixed(0)}k`, ceAct('listCarForSale', [car.id, suggest]), 'gold', false)}
             </div>`;
         });
         html += `</div>`;

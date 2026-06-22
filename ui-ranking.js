@@ -132,7 +132,7 @@ async function renderTabRanking() {
             <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-bottom:2px">Classifica Globale</div>
             <div style="font-size:11px;color:#6b7280">${total} aziende · classifica per <b style="color:#c79a2a">Potere</b> (province · consorzio · flotta · reputazione) — a prova di cheat</div>
         </div>
-        <button onclick="renderTabRanking()" style="background:#161b22;border:1px solid #21262d;border-radius:4px;padding:5px 12px;color:#6b7280;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
+        <button ${ceAct('renderTabRanking', [])} style="background:#161b22;border:1px solid #21262d;border-radius:4px;padding:5px 12px;color:#6b7280;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
         ${_kpi('La Tua Posizione', rankIcon, isTop3 ? 'gold' : '')}
@@ -221,7 +221,7 @@ async function renderTabRanking() {
                         return `<option value="${id}" ${atWar?'disabled':''}>${r.name}${atWar?' (guerra)':''} — €${warCost.toLocaleString()}</option>`;
                     }).join('')}
                 </select>
-                <button onclick="attackTerritory(document.getElementById('attack-region-select').value)"
+                <button ${ceAct('ceAttackTerritory', [])}
                     style="background:#161b22;border:1px solid #8b2020;border-radius:4px;padding:5px 12px;color:#db5746;font-size:10px;cursor:pointer;white-space:nowrap">⚔ Attacca</button>
             </div>
         </div>`;
@@ -249,7 +249,7 @@ async function renderTabRanking() {
             <div style="font-size:28px;margin-bottom:10px">♾</div>
             <div style="font-size:12px;font-weight:700;color:#7c5fc9;margin-bottom:6px">NEW GAME+ DISPONIBILE</div>
             <div style="font-size:10px;color:#6b7280;margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
-            <button onclick="newGamePlus()" style="background:#0d1117;border:1px solid #7c5fc9;border-radius:4px;padding:7px 20px;color:#7c5fc9;font-size:10px;cursor:pointer">Inizia New Game+</button>
+            <button ${ceAct('newGamePlus', [])} style="background:#0d1117;border:1px solid #7c5fc9;border-radius:4px;padding:7px 20px;color:#7c5fc9;font-size:10px;cursor:pointer">Inizia New Game+</button>
         </div>`;
     }
 

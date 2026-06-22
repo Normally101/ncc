@@ -253,9 +253,8 @@ window.renderDriverSkillModal = function(driverId) {
           <div style="font-size:10px;color:#6b7280;margin-bottom:12px;text-align:center">Scegli il percorso di specializzazione di ${driver.name}.<br>La scelta è permanente.</div>
           <div style="display:flex;flex-direction:column;gap:8px">
             ${Object.entries(window.DRIVER_SKILL_TREE).map(([key, b]) => `
-              <button onclick="window.driverSelectBranch('${driverId}','${key}')"
-                style="width:100%;text-align:left;background:#21262d;border:1px solid ${b.border};border-radius:6px;padding:12px;cursor:pointer;transition:background .15s"
-                onmouseover="this.style.background='#d6dee8'" onmouseout="this.style.background='#eef1f5'">
+              <button ${ceAct('driverSelectBranch', [driverId,key])}
+                style="width:100%;text-align:left;background:#21262d;border:1px solid ${b.border};border-radius:6px;padding:12px;cursor:pointer;transition:background .15s">
                 <div style="font-weight:700;color:${b.color};font-size:13px">${b.label}</div>
                 <div style="font-size:10px;color:#6b7280;margin-top:2px">${b.desc}</div>
               </button>`).join('')}
@@ -288,7 +287,7 @@ window.renderDriverSkillModal = function(driverId) {
                       <div style="flex-shrink:0;margin-left:8px">
                         ${isUnlocked
                             ? `<span style="font-size:9px;color:#c79a2a">Sbloccata</span>`
-                            : `<button onclick="window.driverUnlockSkill('${driverId}','${skill.id}')"
+                            : `<button ${ceAct('driverUnlockSkill', [driverId,skill.id])}
                                 ${canUnlock ? '' : 'disabled'}
                                 style="padding:4px 8px;font-size:9px;border-radius:4px;cursor:${canUnlock?'pointer':'not-allowed'};background:${canUnlock?'#fff8e8':'#6a7480'};border:1px solid ${canUnlock?'#c79a2a':'transparent'};color:${canUnlock?'#c79a2a':'#6a7480'};transition:opacity .15s">
                                 ${skill.cost}pt
@@ -319,7 +318,7 @@ window.renderDriverSkillModal = function(driverId) {
             <div style="font-size:13px;font-weight:700;color:#e6edf3">${driver.name}</div>
             <div style="font-size:10px;color:#6b7280">Lv.${driver.level || 0} ${lvlData.name || 'Rookie'} · ${driver.xp || 0} XP</div>
           </div>
-          <button onclick="document.getElementById('driver-skill-modal').remove()" style="background:transparent;border:none;color:#6b7280;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
+          <button ${ceAct('ceRemove', ['driver-skill-modal'])} style="background:transparent;border:none;color:#6b7280;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
         ${bodyHtml}
       </div>`;

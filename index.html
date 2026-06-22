@@ -9,7 +9,7 @@
   <!-- Content Security Policy -->
   <meta http-equiv="Content-Security-Policy" content="
     default-src 'self';
-    script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://api.mapbox.com;
+    script-src 'self' https://cdn.jsdelivr.net https://api.mapbox.com;
     style-src 'self' 'unsafe-inline' https://api.mapbox.com;
     font-src 'self';
     img-src 'self' data: blob: https:;
@@ -38,13 +38,13 @@
   <meta property="og:url" content="https://www.chauffeurempire.com">
   <meta property="og:site_name" content="Chauffeur Empire">
 
-  <link href='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css' rel='stylesheet' />
+  <link href='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.css' rel='stylesheet' integrity="sha384-u+wVUwl2ZXoPOrUMU3wYTEFmS6t764q435vp50Tj0SzRboIuzorj6aGCzOsK/YyR" crossorigin="anonymous" />
   <link rel="stylesheet" href="tailwind.min.css">
   <!-- Font self-hosted (no IP leak verso Google) — vedi fonts.css + assets/fonts/ -->
-  <link rel="stylesheet" href="fonts.css?v=1">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="fonts.css?v=2">
+  <link rel="stylesheet" href="style.css?v=8">
   <link rel="stylesheet" href="premium-ui.css">
-  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.2" integrity="sha384-JWEyvHh+lRf0sN/WWY+QTQwX+CyWqmNg4tkc8GQzAMEtR2wGNrCJlvnu1lHD1kDm" crossorigin="anonymous"></script>
   <style>
     @keyframes moneyFly {
       0%   { transform: translateY(0) scale(1); opacity: 1; }
@@ -85,7 +85,7 @@
         </div>
       </div>
     </div>
-    <button onclick="window.closeMapOverlay()" class="absolute top-3 right-4 z-10 flex items-center gap-2 bg-black/80 border border-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-red-900/60 hover:border-red-500/50 transition-all" style="backdrop-filter:blur(8px)">✕ Chiudi Mappa</button>
+    <button data-ce-act="closeMapOverlay" class="absolute top-3 right-4 z-10 flex items-center gap-2 bg-black/80 border border-white/20 text-white text-xs font-bold px-3 py-1.5 rounded-lg hover:bg-red-900/60 hover:border-red-500/50 transition-all" style="backdrop-filter:blur(8px)">✕ Chiudi Mappa</button>
     <div id="live-map-overlay-modal" class="absolute top-4 left-4 z-10 pointer-events-none flex-col gap-2 hidden">
       <div class="bg-black/60 backdrop-blur-md border border-white/10 p-3 rounded-xl w-64">
         <h3 class="text-[10px] text-gold uppercase tracking-widest border-b border-white/10 pb-1 mb-2">Live Dispatch Log</h3>
@@ -111,7 +111,7 @@
     <div class="emc-topbar">
 
       <!-- Brand -->
-      <div class="emc-brand" onclick="if(typeof switchTab==='function')switchTab('home')">
+      <div class="emc-brand" data-ce-act="switchTab" data-ce-args='["home"]'>
         <span class="emc-bm">CE</span><span class="emc-bn">Chauffeur Empire</span>
       </div>
 
@@ -124,21 +124,21 @@
 
       <!-- Resource chips -->
       <div class="emc-chips">
-        <div class="emc-chip" onclick="openHotelModal && openHotelModal()" title="Energia CEO — clicca per recuperare">
+        <div class="emc-chip" data-ce-act="openHotelModal" title="Energia CEO — clicca per recuperare">
           <span class="emc-ico" style="background:#e7f6ee;color:#1aa06a">⚡</span>
           <span class="emc-eb"><i id="tb-energy-bar" style="width:100%"></i></span>
           <span id="tb-energy-text">100%</span>
-          <button class="emc-eplus" onclick="event.stopPropagation(); window.energyBoostDC && window.energyBoostDC()" title="Ricarica istantanea al 100% (4 DC)">+</button>
+          <button class="emc-eplus" data-ce-act="energyBoostDC" title="Ricarica istantanea al 100% (4 DC)">+</button>
         </div>
         <div class="emc-chip" title="Reputazione">
           <span class="emc-ico" style="background:#f6edd2;color:#c79a2a">★</span>
           <span id="tb-rep">0.0 ★</span>
         </div>
-        <div class="emc-chip" onclick="switchTab('store')" title="Driver Coins">
+        <div class="emc-chip" data-ce-act="switchTab" data-ce-args='["store"]' title="Driver Coins">
           <span class="emc-ico" style="background:#f6edd2;color:#c79a2a">🪙</span>
           <span id="tb-tc">50</span>
         </div>
-        <div class="emc-chip" onclick="if(typeof openVTKModal==='function')openVTKModal()" title="Vettura Token — Mercato VTK">
+        <div class="emc-chip" data-ce-act="openVTKModal" title="Vettura Token — Mercato VTK">
           <span class="emc-ico" style="background:#e7f0fb;color:#2f74c0">◈</span>
           <span id="tb-vtk">0</span>
         </div>
@@ -152,8 +152,8 @@
       </div>
 
       <!-- Actions -->
-      <button id="logout-btn" onclick="window.authLogout && window.authLogout()" title="Esci" class="emc-iconbtn">⏻</button>
-      <button id="sidebar-toggle-btn" onclick="window.openCmdPalette && window.openCmdPalette()" title="Cerca sezione" class="emc-iconbtn">🔍</button>
+      <button id="logout-btn" data-ce-act="authLogout" title="Esci" class="emc-iconbtn">⏻</button>
+      <button id="sidebar-toggle-btn" data-ce-act="openCmdPalette" title="Cerca sezione" class="emc-iconbtn">🔍</button>
       <span id="hub-event-badge" class="hidden"></span>
     </div>
   </header>
@@ -161,60 +161,60 @@
   <!-- EM NAV: horizontal category nav (eRepublik-Modern) -->
   <nav id="em-nav" class="pointer-events-auto">
     <div class="emc-nav">
-      <div class="emc-tab" data-tab="home" onclick="switchTab('home')"><span class="emc-ti">🏠</span>Home</div>
+      <div class="emc-tab" data-tab="home" data-ce-act="switchTab" data-ce-args='["home"]'><span class="emc-ti">🏠</span>Home</div>
 
-      <div class="emc-tab fill" onclick="switchTab('corse')"><span class="emc-ti">🏢</span>Le mie sedi
-        <div class="emc-menu" onclick="event.stopPropagation()">
-          <a href="#" data-tab="corse"    onclick="switchTab('corse');return false">🚕 Dispatch</a>
-          <a href="#" data-tab="fleet"    onclick="switchTab('fleet');return false">🚘 Flotta</a>
-          <a href="#" data-tab="staff"    onclick="switchTab('staff');return false">👔 Staff &amp; HR</a>
-          <a href="#" data-tab="hq"       onclick="switchTab('hq');return false">🏗️ HQ Builder</a>
-          <a href="#" data-tab="showroom" onclick="switchTab('showroom');return false">✨ Showroom</a>
-          <a href="#" data-tab="emails"   onclick="switchTab('emails');return false">📩 Inbox</a>
+      <div class="emc-tab fill" data-ce-act="switchTab" data-ce-args='["corse"]'><span class="emc-ti">🏢</span>Le mie sedi
+        <div class="emc-menu" data-ce-act="ceNoop">
+          <a href="#" data-tab="corse"    data-ce-act="switchTab" data-ce-args='["corse"]'>🚕 Dispatch</a>
+          <a href="#" data-tab="fleet"    data-ce-act="switchTab" data-ce-args='["fleet"]'>🚘 Flotta</a>
+          <a href="#" data-tab="staff"    data-ce-act="switchTab" data-ce-args='["staff"]'>👔 Staff &amp; HR</a>
+          <a href="#" data-tab="hq"       data-ce-act="switchTab" data-ce-args='["hq"]'>🏗️ HQ Builder</a>
+          <a href="#" data-tab="showroom" data-ce-act="switchTab" data-ce-args='["showroom"]'>✨ Showroom</a>
+          <a href="#" data-tab="emails"   data-ce-act="switchTab" data-ce-args='["emails"]'>📩 Inbox</a>
         </div>
       </div>
 
-      <div class="emc-tab fill" onclick="switchTab('market')"><span class="emc-ti">🛒</span>Business
-        <div class="emc-menu" onclick="event.stopPropagation()">
-          <a href="#" data-tab="market"         onclick="switchTab('market');return false">🚗 Mercato Auto</a>
-          <a href="#" data-tab="b2b"            onclick="switchTab('b2b');return false">💼 Contratti B2B</a>
-          <a href="#" data-tab="contracts"      onclick="switchTab('contracts');return false">🤝 Corporate Deals</a>
-          <a href="#" data-tab="tourism"        onclick="switchTab('tourism');return false">🌍 Bandi Turismo</a>
-          <a href="#" data-tab="infrastructure" onclick="switchTab('infrastructure');return false">⛽ Carburante</a>
-          <a href="#" data-tab="auctions"       onclick="switchTab('auctions');return false">⚖️ Aste Giudiziarie</a>
-          <a href="#" data-tab="store"          onclick="switchTab('store');return false">💎 Executive Club</a>
+      <div class="emc-tab fill" data-ce-act="switchTab" data-ce-args='["market"]'><span class="emc-ti">🛒</span>Business
+        <div class="emc-menu" data-ce-act="ceNoop">
+          <a href="#" data-tab="market"         data-ce-act="switchTab" data-ce-args='["market"]'>🚗 Mercato Auto</a>
+          <a href="#" data-tab="b2b"            data-ce-act="switchTab" data-ce-args='["b2b"]'>💼 Contratti B2B</a>
+          <a href="#" data-tab="contracts"      data-ce-act="switchTab" data-ce-args='["contracts"]'>🤝 Corporate Deals</a>
+          <a href="#" data-tab="tourism"        data-ce-act="switchTab" data-ce-args='["tourism"]'>🌍 Bandi Turismo</a>
+          <a href="#" data-tab="infrastructure" data-ce-act="switchTab" data-ce-args='["infrastructure"]'>⛽ Carburante</a>
+          <a href="#" data-tab="auctions"       data-ce-act="switchTab" data-ce-args='["auctions"]'>⚖️ Aste Giudiziarie</a>
+          <a href="#" data-tab="store"          data-ce-act="switchTab" data-ce-args='["store"]'>💎 Executive Club</a>
         </div>
       </div>
 
-      <div class="emc-tab fill" onclick="switchTab('finance')"><span class="emc-ti">💹</span>Finanza
-        <div class="emc-menu" onclick="event.stopPropagation()">
-          <a href="#" data-tab="finance"    onclick="switchTab('finance');return false">💹 Finanza</a>
-          <a href="#" data-tab="realestate" onclick="switchTab('realestate');return false">🏛️ Real Estate</a>
-          <a href="#" data-tab="crypto"     onclick="switchTab('crypto');return false">₿ Crypto &amp; Offshore</a>
-          <a href="#" data-tab="invest"     onclick="switchTab('invest');return false">📈 Investimenti</a>
-          <a href="#" data-tab="marketing"  onclick="switchTab('marketing');return false">📣 Marketing</a>
+      <div class="emc-tab fill" data-ce-act="switchTab" data-ce-args='["finance"]'><span class="emc-ti">💹</span>Finanza
+        <div class="emc-menu" data-ce-act="ceNoop">
+          <a href="#" data-tab="finance"    data-ce-act="switchTab" data-ce-args='["finance"]'>💹 Finanza</a>
+          <a href="#" data-tab="realestate" data-ce-act="switchTab" data-ce-args='["realestate"]'>🏛️ Real Estate</a>
+          <a href="#" data-tab="crypto"     data-ce-act="switchTab" data-ce-args='["crypto"]'>₿ Crypto &amp; Offshore</a>
+          <a href="#" data-tab="invest"     data-ce-act="switchTab" data-ce-args='["invest"]'>📈 Investimenti</a>
+          <a href="#" data-tab="marketing"  data-ce-act="switchTab" data-ce-args='["marketing"]'>📣 Marketing</a>
         </div>
       </div>
 
-      <div class="emc-tab fill" onclick="switchTab('provinces')"><span class="emc-ti">👑</span>Potere
-        <div class="emc-menu" onclick="event.stopPropagation()">
-          <a href="#" data-tab="provinces" onclick="switchTab('provinces');return false">🗺️ War Room</a>
-          <a href="#" data-tab="regions"   onclick="switchTab('regions');return false">🗺️ Regioni</a>
-          <a href="#" data-tab="politics"  onclick="switchTab('politics');return false">🏛️ Politica</a>
-          <a href="#" data-tab="shadow"    onclick="switchTab('shadow');return false">🕵️ Agenzia Ombra</a>
-          <a href="#" data-tab="nemesis"   onclick="switchTab('nemesis');return false">🦹 Nemici VIP</a>
-          <a href="#" data-tab="opa"       onclick="switchTab('opa');return false">🦅 OPA Ostili</a>
+      <div class="emc-tab fill" data-ce-act="switchTab" data-ce-args='["provinces"]'><span class="emc-ti">👑</span>Potere
+        <div class="emc-menu" data-ce-act="ceNoop">
+          <a href="#" data-tab="provinces" data-ce-act="switchTab" data-ce-args='["provinces"]'>🗺️ War Room</a>
+          <a href="#" data-tab="regions"   data-ce-act="switchTab" data-ce-args='["regions"]'>🗺️ Regioni</a>
+          <a href="#" data-tab="politics"  data-ce-act="switchTab" data-ce-args='["politics"]'>🏛️ Politica</a>
+          <a href="#" data-tab="shadow"    data-ce-act="switchTab" data-ce-args='["shadow"]'>🕵️ Agenzia Ombra</a>
+          <a href="#" data-tab="nemesis"   data-ce-act="switchTab" data-ce-args='["nemesis"]'>🦹 Nemici VIP</a>
+          <a href="#" data-tab="opa"       data-ce-act="switchTab" data-ce-args='["opa"]'>🦅 OPA Ostili</a>
         </div>
       </div>
 
-      <div class="emc-tab fill" onclick="switchTab('ranking')"><span class="emc-ti">🌐</span>Community
-        <div class="emc-menu" onclick="event.stopPropagation()">
-          <a href="#" data-tab="ranking"  onclick="switchTab('ranking');return false">🏆 Classifica</a>
-          <a href="#" data-tab="consorzi" onclick="switchTab('consorzi');return false">🛡️ Consorzi</a>
-          <a href="#" data-tab="prestigio" onclick="switchTab('prestigio');return false">🎖️ Prestigio</a>
-          <a href="#" data-tab="career"   onclick="switchTab('career');return false">🎯 Missioni</a>
-          <a href="#" data-tab="legal"    onclick="switchTab('legal');return false">⚖️ Ufficio Legale</a>
-          <a href="#" data-tab="help"     onclick="switchTab('help');return false">🆘 Supporto</a>
+      <div class="emc-tab fill" data-ce-act="switchTab" data-ce-args='["ranking"]'><span class="emc-ti">🌐</span>Community
+        <div class="emc-menu" data-ce-act="ceNoop">
+          <a href="#" data-tab="ranking"  data-ce-act="switchTab" data-ce-args='["ranking"]'>🏆 Classifica</a>
+          <a href="#" data-tab="consorzi" data-ce-act="switchTab" data-ce-args='["consorzi"]'>🛡️ Consorzi</a>
+          <a href="#" data-tab="prestigio" data-ce-act="switchTab" data-ce-args='["prestigio"]'>🎖️ Prestigio</a>
+          <a href="#" data-tab="career"   data-ce-act="switchTab" data-ce-args='["career"]'>🎯 Missioni</a>
+          <a href="#" data-tab="legal"    data-ce-act="switchTab" data-ce-args='["legal"]'>⚖️ Ufficio Legale</a>
+          <a href="#" data-tab="help"     data-ce-act="switchTab" data-ce-args='["help"]'>🆘 Supporto</a>
         </div>
       </div>
     </div>
@@ -239,110 +239,108 @@
     <nav id="sidebar-nav" class="flex-1 overflow-y-auto py-1">
 
       <!-- COMMAND PALETTE TRIGGER -->
-      <div onclick="window.openCmdPalette&&window.openCmdPalette()" title="Cerca sezione (⌘K / Ctrl+K)"
-        style="margin:6px 8px;padding:7px 10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;color:#6b7280;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;transition:border-color .15s,color .15s"
-        onmouseover="this.style.borderColor='#30363d';this.style.color='#8b949e'"
-        onmouseout="this.style.borderColor='#21262d';this.style.color='#6b7280'">
+      <div data-ce-act="openCmdPalette" title="Cerca sezione (⌘K / Ctrl+K)"
+        style="margin:6px 8px;padding:7px 10px;background:#0d1117;border:1px solid #21262d;border-radius:6px;color:#6b7280;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:6px;transition:border-color .15s,color .15s">
         <span>🔍 Cerca sezione…</span>
         <span style="font-family:monospace;font-size:9px;border:1px solid #21262d;border-radius:3px;padding:1px 5px">⌘K</span>
       </div>
 
       <!-- HOME -->
-      <a class="sidebar-item" data-tab="home" onclick="switchTab('home')" href="#" style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-weight:700;color:rgba(212,175,55,0.85)">🏠 Home</a>
+      <a class="sidebar-item" data-tab="home" data-ce-act="switchTab" data-ce-args='["home"]' href="#" style="padding:8px 12px;border-bottom:1px solid rgba(255,255,255,0.05);font-size:11px;font-weight:700;color:rgba(212,175,55,0.85)">🏠 Home</a>
 
       <!-- OPERATIVO -->
       <div class="sidebar-group" data-group="operativo">
-        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('operativo')">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" data-ce-act="_sidebarToggle" data-ce-args='["operativo"]'>
           <span class="text-sm">🚕</span>
           <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Operativo</span>
           <span class="sidebar-chev text-[8px] text-white/30">▶</span>
         </button>
         <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
-          <a class="sidebar-item" data-tab="corse"     onclick="switchTab('corse')"     href="#">🚕 Dispatch</a>
-          <a class="sidebar-item" data-tab="fleet"     onclick="switchTab('fleet')"     href="#">🚘 Flotta</a>
-          <a class="sidebar-item" data-tab="staff"     onclick="switchTab('staff')"     href="#">👔 Staff & HR</a>
-          <a class="sidebar-item" data-tab="hq"        onclick="switchTab('hq')"        href="#">🏗️ HQ Builder</a>
-          <a class="sidebar-item" data-tab="showroom"  onclick="switchTab('showroom')"  href="#">✨ Showroom</a>
-          <a class="sidebar-item" data-tab="emails"    onclick="switchTab('emails')"    href="#">📩 Inbox <span id="mail-dot" class="nav-notif hidden">!</span></a>
+          <a class="sidebar-item" data-tab="corse"     data-ce-act="switchTab" data-ce-args='["corse"]'     href="#">🚕 Dispatch</a>
+          <a class="sidebar-item" data-tab="fleet"     data-ce-act="switchTab" data-ce-args='["fleet"]'     href="#">🚘 Flotta</a>
+          <a class="sidebar-item" data-tab="staff"     data-ce-act="switchTab" data-ce-args='["staff"]'     href="#">👔 Staff & HR</a>
+          <a class="sidebar-item" data-tab="hq"        data-ce-act="switchTab" data-ce-args='["hq"]'        href="#">🏗️ HQ Builder</a>
+          <a class="sidebar-item" data-tab="showroom"  data-ce-act="switchTab" data-ce-args='["showroom"]'  href="#">✨ Showroom</a>
+          <a class="sidebar-item" data-tab="emails"    data-ce-act="switchTab" data-ce-args='["emails"]'    href="#">📩 Inbox <span id="mail-dot" class="nav-notif hidden">!</span></a>
         </div>
       </div>
 
       <!-- BUSINESS -->
       <div class="sidebar-group" data-group="business">
-        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('business')">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" data-ce-act="_sidebarToggle" data-ce-args='["business"]'>
           <span class="text-sm">💼</span>
           <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Business</span>
           <span class="sidebar-chev text-[8px] text-white/30">▶</span>
         </button>
         <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
-          <a class="sidebar-item" data-tab="b2b"            onclick="switchTab('b2b')"            href="#">💼 Contratti B2B</a>
-          <a class="sidebar-item" data-tab="contracts"      onclick="switchTab('contracts')"      href="#">🤝 Corporate Deals</a>
-          <a class="sidebar-item" data-tab="tourism"        onclick="switchTab('tourism')"        href="#">🌍 Bandi Turismo</a>
-          <a class="sidebar-item" data-tab="infrastructure" onclick="switchTab('infrastructure')" href="#">⛽ Carburante</a>
-          <a class="sidebar-item" data-tab="store"          onclick="switchTab('store')"          href="#">💎 Executive Club</a>
-          <a class="sidebar-item" data-tab="auctions"       onclick="switchTab('auctions')"       href="#">⚖️ Aste Giudiziarie</a>
-          <a class="sidebar-item" data-tab="market"         onclick="switchTab('market')"         href="#">🚗 Mercato Auto</a>
+          <a class="sidebar-item" data-tab="b2b"            data-ce-act="switchTab" data-ce-args='["b2b"]'            href="#">💼 Contratti B2B</a>
+          <a class="sidebar-item" data-tab="contracts"      data-ce-act="switchTab" data-ce-args='["contracts"]'      href="#">🤝 Corporate Deals</a>
+          <a class="sidebar-item" data-tab="tourism"        data-ce-act="switchTab" data-ce-args='["tourism"]'        href="#">🌍 Bandi Turismo</a>
+          <a class="sidebar-item" data-tab="infrastructure" data-ce-act="switchTab" data-ce-args='["infrastructure"]' href="#">⛽ Carburante</a>
+          <a class="sidebar-item" data-tab="store"          data-ce-act="switchTab" data-ce-args='["store"]'          href="#">💎 Executive Club</a>
+          <a class="sidebar-item" data-tab="auctions"       data-ce-act="switchTab" data-ce-args='["auctions"]'       href="#">⚖️ Aste Giudiziarie</a>
+          <a class="sidebar-item" data-tab="market"         data-ce-act="switchTab" data-ce-args='["market"]'         href="#">🚗 Mercato Auto</a>
         </div>
       </div>
 
       <!-- FINANZA -->
       <div class="sidebar-group" data-group="finanza">
-        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('finanza')">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" data-ce-act="_sidebarToggle" data-ce-args='["finanza"]'>
           <span class="text-sm">💹</span>
           <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Finanza</span>
           <span class="sidebar-chev text-[8px] text-white/30">▶</span>
         </button>
         <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
-          <a class="sidebar-item" data-tab="finance"    onclick="switchTab('finance')"    href="#">💹 Finanza</a>
-          <a class="sidebar-item" data-tab="realestate" onclick="switchTab('realestate')" href="#">🏛️ Real Estate</a>
-          <a class="sidebar-item" data-tab="crypto"     onclick="switchTab('crypto')"     href="#">₿ Crypto & Offshore</a>
-          <a class="sidebar-item" data-tab="invest"     onclick="switchTab('invest')"     href="#">📈 Investimenti</a>
-          <a class="sidebar-item" data-tab="marketing"  onclick="switchTab('marketing')"  href="#">📣 Marketing</a>
+          <a class="sidebar-item" data-tab="finance"    data-ce-act="switchTab" data-ce-args='["finance"]'    href="#">💹 Finanza</a>
+          <a class="sidebar-item" data-tab="realestate" data-ce-act="switchTab" data-ce-args='["realestate"]' href="#">🏛️ Real Estate</a>
+          <a class="sidebar-item" data-tab="crypto"     data-ce-act="switchTab" data-ce-args='["crypto"]'     href="#">₿ Crypto & Offshore</a>
+          <a class="sidebar-item" data-tab="invest"     data-ce-act="switchTab" data-ce-args='["invest"]'     href="#">📈 Investimenti</a>
+          <a class="sidebar-item" data-tab="marketing"  data-ce-act="switchTab" data-ce-args='["marketing"]'  href="#">📣 Marketing</a>
         </div>
       </div>
 
       <!-- POTERE -->
       <div class="sidebar-group" data-group="potere">
-        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('potere')">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" data-ce-act="_sidebarToggle" data-ce-args='["potere"]'>
           <span class="text-sm">🕵️</span>
           <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Potere</span>
           <span class="sidebar-chev text-[8px] text-white/30">▶</span>
         </button>
         <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
-          <a class="sidebar-item" data-tab="provinces" onclick="switchTab('provinces')" href="#">🗺️ War Room</a>
-          <a class="sidebar-item" data-tab="regions"   onclick="switchTab('regions')"   href="#">🗺️ Regioni</a>
-          <a class="sidebar-item" data-tab="politics"  onclick="switchTab('politics')"  href="#">🏛️ Politica</a>
-          <a class="sidebar-item" data-tab="shadow"    onclick="switchTab('shadow')"    href="#">🕵️ Agenzia Ombra</a>
-          <a class="sidebar-item" data-tab="nemesis"   onclick="switchTab('nemesis')"   href="#">🦹 Nemici VIP</a>
-          <a class="sidebar-item" data-tab="opa"       onclick="switchTab('opa')"       href="#">🦅 OPA Ostili</a>
+          <a class="sidebar-item" data-tab="provinces" data-ce-act="switchTab" data-ce-args='["provinces"]' href="#">🗺️ War Room</a>
+          <a class="sidebar-item" data-tab="regions"   data-ce-act="switchTab" data-ce-args='["regions"]'   href="#">🗺️ Regioni</a>
+          <a class="sidebar-item" data-tab="politics"  data-ce-act="switchTab" data-ce-args='["politics"]'  href="#">🏛️ Politica</a>
+          <a class="sidebar-item" data-tab="shadow"    data-ce-act="switchTab" data-ce-args='["shadow"]'    href="#">🕵️ Agenzia Ombra</a>
+          <a class="sidebar-item" data-tab="nemesis"   data-ce-act="switchTab" data-ce-args='["nemesis"]'   href="#">🦹 Nemici VIP</a>
+          <a class="sidebar-item" data-tab="opa"       data-ce-act="switchTab" data-ce-args='["opa"]'       href="#">🦅 OPA Ostili</a>
         </div>
       </div>
 
       <!-- INFO -->
       <div class="sidebar-group" data-group="info">
-        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" onclick="window._sidebarToggle('info')">
+        <button class="sidebar-group-head w-full flex items-center gap-2 px-3 py-2 text-left" data-ce-act="_sidebarToggle" data-ce-args='["info"]'>
           <span class="text-sm">🏆</span>
           <span class="flex-1 text-[10px] font-semibold text-white/70 uppercase tracking-wide">Info</span>
           <span class="sidebar-chev text-[8px] text-white/30">▶</span>
         </button>
         <div class="sidebar-group-body" style="max-height:0;overflow:hidden;transition:max-height 0.25s ease">
-          <a class="sidebar-item" data-tab="ranking" onclick="switchTab('ranking')" href="#">🏆 Classifica</a>
-          <a class="sidebar-item" data-tab="consorzi" onclick="switchTab('consorzi')" href="#">🛡️ Consorzi</a>
-          <a class="sidebar-item" data-tab="prestigio" onclick="switchTab('prestigio')" href="#">🎖️ Prestigio</a>
-          <a class="sidebar-item" data-tab="career"  onclick="switchTab('career')"  href="#">🎯 Missioni <span id="career-dot" class="nav-notif hidden">!</span></a>
-          <a class="sidebar-item" data-tab="legal"   onclick="switchTab('legal')"   href="#">⚖️ Ufficio Legale <span id="fine-dot" class="nav-notif hidden">!</span></a>
-          <a class="sidebar-item" data-tab="help"    onclick="switchTab('help')"    href="#">🆘 Supporto</a>
+          <a class="sidebar-item" data-tab="ranking" data-ce-act="switchTab" data-ce-args='["ranking"]' href="#">🏆 Classifica</a>
+          <a class="sidebar-item" data-tab="consorzi" data-ce-act="switchTab" data-ce-args='["consorzi"]' href="#">🛡️ Consorzi</a>
+          <a class="sidebar-item" data-tab="prestigio" data-ce-act="switchTab" data-ce-args='["prestigio"]' href="#">🎖️ Prestigio</a>
+          <a class="sidebar-item" data-tab="career"  data-ce-act="switchTab" data-ce-args='["career"]'  href="#">🎯 Missioni <span id="career-dot" class="nav-notif hidden">!</span></a>
+          <a class="sidebar-item" data-tab="legal"   data-ce-act="switchTab" data-ce-args='["legal"]'   href="#">⚖️ Ufficio Legale <span id="fine-dot" class="nav-notif hidden">!</span></a>
+          <a class="sidebar-item" data-tab="help"    data-ce-act="switchTab" data-ce-args='["help"]'    href="#">🆘 Supporto</a>
         </div>
       </div>
     </nav>
 
-    <button id="sidebar-close-btn" onclick="window.toggleSidebar && window.toggleSidebar(false)"
+    <button id="sidebar-close-btn" data-ce-act="toggleSidebar" data-ce-args='[false]'
             class="absolute top-2 right-2 text-xs text-white/40 hidden">✕</button>
   </aside>
 
   <!-- SMART HUB MODAL -->
-  <div id="hub-modal" class="hub-modal hidden" onclick="if(event.target===this)window.closeHub()">
-    <div class="hub-inner" onclick="event.stopPropagation()">
+  <div id="hub-modal" class="hub-modal hidden" data-ce-act="ceCloseSelf" data-ce-args='["closeHub"]'>
+    <div class="hub-inner" data-ce-act="ceNoop">
       <!-- Header -->
       <div class="hub-header">
         <div class="hub-header-left">
@@ -354,7 +352,7 @@
         </div>
         <div class="hub-header-right">
           <div id="hub-active-event" class="hub-event-pill hidden"></div>
-          <button onclick="window.closeHub()" class="hub-close">✕</button>
+          <button data-ce-act="closeHub" class="hub-close">✕</button>
         </div>
       </div>
 
@@ -368,134 +366,134 @@
 
       <!-- Module Grid -->
       <div class="hub-grid">
-        <div class="hub-module" onclick="window.hubNavigate('corse')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["corse"]'>
           <div class="hub-mod-icon">🚕</div>
           <div class="hub-mod-title">Dispatch</div>
           <div class="hub-mod-desc">Corse & missioni attive</div>
           <div class="hub-mod-badge" id="hmod-rides">0</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('staff')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["staff"]'>
           <div class="hub-mod-icon">👔</div>
           <div class="hub-mod-title">Staff</div>
           <div class="hub-mod-desc">Autisti & ufficio</div>
           <div class="hub-mod-badge" id="hmod-staff">0</div>
           <div id="hmod-strike" class="hub-mod-alert hidden">🪧</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('finance')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["finance"]'>
           <div class="hub-mod-icon">💹</div>
           <div class="hub-mod-title">Finanza</div>
           <div class="hub-mod-desc">Mercati & broker</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('emails')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["emails"]'>
           <div class="hub-mod-icon">📩</div>
           <div class="hub-mod-title">Inbox</div>
           <div class="hub-mod-desc">Comunicazioni CEO</div>
           <div class="hub-mod-badge hub-mod-badge-red" id="hmod-mail">0</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('lifestyle')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["lifestyle"]'>
           <div class="hub-mod-icon">🏰</div>
           <div class="hub-mod-title">Lifestyle</div>
           <div class="hub-mod-desc">Asset & Diamond</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('ranking')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["ranking"]'>
           <div class="hub-mod-icon">🏆</div>
           <div class="hub-mod-title">Classifica</div>
           <div class="hub-mod-desc">Ranking & rivali</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('invest')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["invest"]'>
           <div class="hub-mod-icon">📈</div>
           <div class="hub-mod-title">Investimenti</div>
           <div class="hub-mod-desc">Portfolio & assets</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('regions')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["regions"]'>
           <div class="hub-mod-icon">🗺️</div>
           <div class="hub-mod-title">Regioni</div>
           <div class="hub-mod-desc">Licenze & territori</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('marketing')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["marketing"]'>
           <div class="hub-mod-icon">📣</div>
           <div class="hub-mod-title">Marketing</div>
           <div class="hub-mod-desc">Brand & campagne</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('politics')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["politics"]'>
           <div class="hub-mod-icon">🏛️</div>
           <div class="hub-mod-title">Politica</div>
           <div class="hub-mod-desc">Lobbying & leggi</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('career')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["career"]'>
           <div class="hub-mod-icon">🎯</div>
           <div class="hub-mod-title">Missioni</div>
           <div class="hub-mod-desc">Quest & carriera</div>
           <div class="hub-mod-badge hub-mod-badge-red" id="hmod-career">0</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('store')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["store"]'>
           <div class="hub-mod-icon">💎</div>
           <div class="hub-mod-title">Executive Club</div>
           <div class="hub-mod-desc">Servizi premium</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('market')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["market"]'>
           <div class="hub-mod-icon">🚗</div>
           <div class="hub-mod-title">Mercato Auto</div>
           <div class="hub-mod-desc">Usato, aste & annunci</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('help')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["help"]'>
           <div class="hub-mod-icon">🆘</div>
           <div class="hub-mod-title">Supporto</div>
           <div class="hub-mod-desc">Bug report & assistenza</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('provinces')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["provinces"]'>
           <div class="hub-mod-icon">🗺️</div>
           <div class="hub-mod-title">War Room</div>
           <div class="hub-mod-desc">Mappa geopolitica & OPA</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('showroom')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["showroom"]'>
           <div class="hub-mod-icon">🚘</div>
           <div class="hub-mod-title">Showroom</div>
           <div class="hub-mod-desc">Configuratore veicoli</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('realestate')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["realestate"]'>
           <div class="hub-mod-icon">🏛</div>
           <div class="hub-mod-title">Real Estate</div>
           <div class="hub-mod-desc">Rendite immobiliari</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('b2b')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["b2b"]'>
           <div class="hub-mod-icon">💼</div>
           <div class="hub-mod-title">Contratti B2B</div>
           <div class="hub-mod-desc">Corporate farming passivo</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('auctions')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["auctions"]'>
           <div class="hub-mod-icon">⚖️</div>
           <div class="hub-mod-title">Aste Giudiziarie</div>
           <div class="hub-mod-desc">Veicoli sequestrati & container</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('shadow')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["shadow"]'>
           <div class="hub-mod-icon">🕵️</div>
           <div class="hub-mod-title">Agenzia Ombra</div>
           <div class="hub-mod-desc">Spionaggio & sabotaggio PvP</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('crypto')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["crypto"]'>
           <div class="hub-mod-icon">₿</div>
           <div class="hub-mod-title">Crypto & Offshore</div>
           <div class="hub-mod-desc">AMM, trading, conti anonimi</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('hq')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["hq"]'>
           <div class="hub-mod-icon">🏗️</div>
           <div class="hub-mod-title">HQ Builder</div>
           <div class="hub-mod-desc">Costruisci la tua base operativa</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('opa')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["opa"]'>
           <div class="hub-mod-icon">🦅</div>
           <div class="hub-mod-title">OPA Ostili</div>
           <div class="hub-mod-desc">Rastrella & controlla rival</div>
           <div class="hub-mod-badge hub-mod-badge-red hidden" id="hmod-opa">0</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('nemesis')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["nemesis"]'>
           <div class="hub-mod-icon">🦹</div>
           <div class="hub-mod-title">Nemici VIP</div>
           <div class="hub-mod-desc">VIP che cospirano contro di te</div>
           <div class="hub-mod-badge hub-mod-badge-red hidden" id="hmod-nemesis">0</div>
         </div>
-        <div class="hub-module" onclick="window.hubNavigate('infrastructure')">
+        <div class="hub-module" data-ce-act="hubNavigate" data-ce-args='["infrastructure"]'>
           <div class="hub-mod-icon">⛽</div>
           <div class="hub-mod-title">Carburante</div>
           <div class="hub-mod-desc">Depositi e monopoli provinciali</div>
@@ -526,7 +524,7 @@
           <h2 id="car-modal-title" class="text-gold font-bold uppercase mb-2">Gestione Veicolo</h2>
           <p id="car-modal-desc" class="text-[10px] text-gray-400 mb-4">Seleziona un'azione per questo veicolo.</p>
           <div id="car-modal-content" class="space-y-3"></div>
-          <button onclick="closeModals()" class="mt-4 w-full p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Chiudi</button>
+          <button data-ce-act="closeModals" class="mt-4 w-full p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Chiudi</button>
       </div>
   </div>
 
@@ -538,20 +536,20 @@
       <div class="bg-panel border border-white/10 p-6 rounded-2xl w-[400px] shadow-2xl">
           <h2 class="text-gold font-bold uppercase mb-4">Dove vuoi riposare?</h2>
           <div class="space-y-3">
-              <button onclick="rest(3)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
+              <button data-ce-act="rest" data-ce-args='[3]' class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
                   <span class="block font-bold text-white">Motel 3 Stelle <span class="text-yellow-500">★★★</span></span>
                   <span class="block text-[10px] text-gray-400">Recupera 50% Energia. Costo: €80</span>
               </button>
-              <button onclick="rest(4)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
+              <button data-ce-act="rest" data-ce-args='[4]' class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
                   <span class="block font-bold text-white">Business Hotel <span class="text-yellow-500">★★★★</span></span>
                   <span class="block text-[10px] text-gray-400">Recupera 75% Energia. Costo: €200</span>
               </button>
-              <button onclick="rest(5)" class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
+              <button data-ce-act="rest" data-ce-args='[5]' class="w-full text-left p-3 border border-white/10 rounded-lg hover:border-gold transition-colors">
                   <span class="block font-bold text-white">Resort Luxury <span class="text-yellow-500">★★★★★</span></span>
                   <span class="block text-[10px] text-gray-400">Recupera 100% Energia + 0.1 Reputazione. Costo: €600</span>
               </button>
           </div>
-          <button onclick="closeModals()" class="mt-4 w-full p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
+          <button data-ce-act="closeModals" class="mt-4 w-full p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
       </div>
   </div>
 
@@ -562,14 +560,14 @@
         <p id="lease-car-name" class="text-xs text-gray-400 mb-4">Mercedes Classe E</p>
         <div class="mb-4">
             <label class="text-[10px] uppercase text-gray-500 mb-2 block">Durata Contratto (Mesi)</label>
-            <input type="range" id="lease-duration" min="12" max="48" step="12" value="24" class="w-full accent-gold" oninput="updateLeasePreview()">
+            <input type="range" id="lease-duration" min="12" max="48" step="12" value="24" class="w-full accent-gold" data-ce-act="updateLeasePreview" data-ce-on="input">
             <div class="flex justify-between text-[10px] text-gray-400 mt-1">
                 <span>12</span><span id="lease-duration-display" class="font-bold text-white">24 Mesi</span><span>48</span>
             </div>
         </div>
         <div class="mb-4">
             <label class="text-[10px] uppercase text-gray-500 mb-2 block">Chilometraggio Annuo Incluso</label>
-            <input type="range" id="lease-km" min="20000" max="80000" step="10000" value="30000" class="w-full accent-gold" oninput="updateLeasePreview()">
+            <input type="range" id="lease-km" min="20000" max="80000" step="10000" value="30000" class="w-full accent-gold" data-ce-act="updateLeasePreview" data-ce-on="input">
             <div class="flex justify-between text-[10px] text-gray-400 mt-1">
                 <span>20k</span><span id="lease-km-display" class="font-bold text-white">30k km</span><span>80k</span>
             </div>
@@ -587,8 +585,8 @@
             <div class="text-[9px] text-gray-600 mt-1">= 50% dei mesi rimanenti × rata mensile</div>
         </div>
         <div class="flex gap-2">
-            <button onclick="closeModals()" class="flex-1 p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
-            <button id="btn-confirm-lease" onclick="confirmLease()" class="flex-1 p-2 bg-gold hover:bg-yellow-500 text-black font-bold rounded text-xs uppercase">Firma Contratto</button>
+            <button data-ce-act="closeModals" class="flex-1 p-2 bg-white/5 hover:bg-white/10 rounded text-xs text-gray-400">Annulla</button>
+            <button id="btn-confirm-lease" data-ce-act="confirmLease" class="flex-1 p-2 bg-gold hover:bg-yellow-500 text-black font-bold rounded text-xs uppercase">Firma Contratto</button>
         </div>
     </div>
   </div>
@@ -601,151 +599,102 @@
   </div>
 
   <!-- Mapbox GL JS v3.6 -->
-  <script defer src='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js'></script>
+  <script defer src='https://api.mapbox.com/mapbox-gl-js/v3.6.0/mapbox-gl.js' integrity="sha384-TmJWW+PnOuP/1K/pvN0A7ml6DLXEHNL/Wpxdbm6RiS8yBg3XWOiuWwk46Jf7F59u" crossorigin="anonymous"></script>
   <!-- Three.js r128 -->
 
 
   <div id="mobile-dispatcher" class="hidden"></div>
-  <script defer src="security.js?v=7"></script>
-  <script defer src="design-system.js?v=6"></script>
-  <script defer src="supabase-config.js?v=6"></script>
-  <script defer src="config.js?v=7"></script>
-  <script defer src="geoCoords.js?v=6"></script>
-  <script defer src="routesDB.js?v=6"></script>
-  <script defer src="data.js?v=6"></script>
-  <script defer src="lang.js?v=6"></script>
-  <script defer src="syncManager.js?v=6"></script>
-  <script defer src="saveSystem.js?v=10"></script>
-  <script defer src="serverState.js?v=8"></script>
-  <script defer src="ui-landing.js?v=6"></script>
-  <script defer src="auth.js?v=12"></script>
-  <script defer src="quests-data.js?v=7"></script>
-  <script defer src="quests.js?v=11"></script>
-  <script defer src="engine.js?v=19"></script>
-  <script defer src="engine-daily.js?v=9"></script>
-  <script defer src="engine-rides.js?v=8"></script>
-  <script defer src="engine-finance.js?v=6"></script>
-  <script defer src="engine-drivers.js?v=6"></script>
-  <script defer src="engine-fleet.js?v=7"></script>
-  <script defer src="engine-store.js?v=10"></script>
-  <script defer src="engine-holding.js?v=6"></script>
-  <script defer src="engine-rivals.js?v=6"></script>
-  <script defer src="engine-events.js?v=6"></script>
-  <script defer src="vip-buffs.js?v=6"></script>
-  <script defer src="vip-clients.js?v=6"></script>
-  <script defer src="war_room.js?v=12"></script>
-  <script defer src="dispatcher.js?v=12"></script>
-  <script defer src="map.js?v=9"></script>
-  <script defer src="map-router.js?v=6"></script>
-  <script defer src="map-garage.js?v=11"></script>
-  <script defer src="map-visual.js?v=6"></script>
-  <script defer src="ui-emails.js?v=11"></script>
-  <script defer src="ui-marketing.js?v=11"></script>
-  <script defer src="ui-finance.js?v=11"></script>
-  <script defer src="ui-dispatch.js?v=11"></script>
-  <script defer src="ui-fleet.js?v=12"></script>
-  <script defer src="ui-staff.js?v=16"></script>
-  <script defer src="ui-lifestyle.js?v=12"></script>
-  <script defer src="ui-ops.js?v=12"></script>
-  <script defer src="ui-ranking.js?v=15"></script>
-  <script defer src="alliances.js?v=3"></script>
-  <script defer src="vanity.js?v=2"></script>
-  <script defer src="ui-investments.js?v=12"></script>
-  <script defer src="ui-legal.js?v=11"></script>
-  <script defer src="ui-politics.js?v=13"></script>
-  <script defer src="ui-career.js?v=13"></script>
-  <script defer src="ui-store.js?v=12"></script>
-  <script defer src="ui-market.js?v=11"></script>
-  <script defer src="world-feed.js?v=2"></script>
-  <script defer src="daily-orders.js?v=2"></script>
-  <script defer src="onboarding.js?v=2"></script>
-  <script defer src="ui-home.js?v=16"></script>
-  <script defer src="ui-help.js?v=13"></script>
-  <script defer src="ui-hub.js?v=6"></script>
-  <script defer src="ui-realestate.js?v=13"></script>
-  <script defer src="ui-map-utils.js?v=6"></script>
-  <script defer src="ui-sidebar.js?v=6"></script>
-  <script defer src="zero-to-hero.js?v=3"></script>
-  <script defer src="objective-tracker.js?v=2"></script>
-  <script defer src="vittorio.js?v=1"></script>
-  <script defer src="em-chrome.js?v=3"></script>
-  <script defer src="showroom.js?v=12"></script>
-  <script defer src="vtk-market.js?v=12"></script>
-  <script defer src="p2p-market.js?v=7"></script>
-  <script defer src="p2p-render.js?v=13"></script>
-  <script defer src="b2b.js?v=13"></script>
-  <script defer src="auctions.js?v=12"></script>
-  <script defer src="driver_skills.js?v=12"></script>
-  <script defer src="global_events.js?v=9"></script>
-  <script defer src="black_ops.js?v=13"></script>
-  <script defer src="crypto.js?v=13"></script>
-  <script defer src="weather_real.js?v=9"></script>
-  <script defer src="hq-data.js?v=6"></script>
-  <script defer src="hq.js?v=13"></script>
-  <script defer src="hq-visual.js?v=9"></script>
-  <script defer src="mobile_dispatcher.js?v=12"></script>
-  <script defer src="hostile_takeover.js?v=13"></script>
-  <script defer src="nemesis.js?v=14"></script>
-  <script defer src="infrastructure.js?v=13"></script>
-  <script defer src="contracts.js?v=14"></script>
-  <script defer src="tourism.js?v=13"></script>
-  <script defer src="tutorial.js?v=9"></script>
-  <script defer src="premium-ui.js?v=6"></script>
-  <script defer src="motion.js?v=6"></script>
-  <script defer src="cmd-palette.js?v=2"></script>
-  <script defer src="push-notifications.js?v=2"></script>
-  <script>
-    // onerror runs immediately (before deferred scripts) to catch load-time errors
-    window.onerror = function(msg, src, line, col, err) {
-      let banner = document.getElementById('_err_banner');
-      if (!banner) {
-        banner = document.createElement('div');
-        banner.id = '_err_banner';
-        banner.style.cssText = 'position:fixed;bottom:0;left:0;right:0;z-index:99999;background:#ff0040;color:#fff;font:bold 11px monospace;padding:6px 12px;word-break:break-all;pointer-events:auto;cursor:pointer;';
-        banner.title = 'Clicca per copiare';
-        banner.onclick = () => { navigator.clipboard?.writeText(banner.textContent); banner.style.background='#005500'; };
-        document.body.appendChild(banner);
-      }
-      const file = (src || '').split('/').pop();
-      banner.textContent = `JS ERROR ${file} L${line}: ${msg}`;
-      return false;
-    };
-    // DOMContentLoaded fires after all deferred scripts have executed
-    document.addEventListener('DOMContentLoaded', function() {
-      const track = document.getElementById('news-ticker-track');
-      if (track && typeof WORLD_NEWS !== 'undefined') {
-        const items = [...WORLD_NEWS, ...WORLD_NEWS, ...WORLD_NEWS];
-        track.innerHTML = items.map(n => `<span>${n}</span>`).join('');
-      }
-      if (typeof window.switchTab === 'function') window.switchTab('corse');
-    });
-  </script>
+  <script defer src="security.js?v=8"></script>
+  <script defer src="events.js?v=2"></script>
+  <script defer src="ce-actions.js?v=2"></script>
+  <script defer src="design-system.js?v=7"></script>
+  <script defer src="supabase-config.js?v=7"></script>
+  <script defer src="config.js?v=8"></script>
+  <script defer src="geoCoords.js?v=7"></script>
+  <script defer src="routesDB.js?v=7"></script>
+  <script defer src="data.js?v=7"></script>
+  <script defer src="lang.js?v=7"></script>
+  <script defer src="syncManager.js?v=7"></script>
+  <script defer src="saveSystem.js?v=11"></script>
+  <script defer src="serverState.js?v=9"></script>
+  <script defer src="ui-landing.js?v=7"></script>
+  <script defer src="auth.js?v=13"></script>
+  <script defer src="quests-data.js?v=8"></script>
+  <script defer src="quests.js?v=12"></script>
+  <script defer src="engine.js?v=20"></script>
+  <script defer src="engine-daily.js?v=10"></script>
+  <script defer src="engine-rides.js?v=9"></script>
+  <script defer src="engine-finance.js?v=7"></script>
+  <script defer src="engine-drivers.js?v=7"></script>
+  <script defer src="engine-fleet.js?v=8"></script>
+  <script defer src="engine-store.js?v=11"></script>
+  <script defer src="engine-holding.js?v=7"></script>
+  <script defer src="engine-rivals.js?v=7"></script>
+  <script defer src="engine-events.js?v=7"></script>
+  <script defer src="vip-buffs.js?v=7"></script>
+  <script defer src="vip-clients.js?v=7"></script>
+  <script defer src="war_room.js?v=13"></script>
+  <script defer src="dispatcher.js?v=13"></script>
+  <script defer src="map.js?v=10"></script>
+  <script defer src="map-router.js?v=7"></script>
+  <script defer src="map-garage.js?v=12"></script>
+  <script defer src="map-visual.js?v=7"></script>
+  <script defer src="ui-emails.js?v=13"></script>
+  <script defer src="ui-marketing.js?v=12"></script>
+  <script defer src="ui-finance.js?v=12"></script>
+  <script defer src="ui-dispatch.js?v=12"></script>
+  <script defer src="ui-fleet.js?v=13"></script>
+  <script defer src="ui-staff.js?v=17"></script>
+  <script defer src="ui-lifestyle.js?v=13"></script>
+  <script defer src="ui-ops.js?v=13"></script>
+  <script defer src="ui-ranking.js?v=16"></script>
+  <script defer src="alliances.js?v=4"></script>
+  <script defer src="vanity.js?v=3"></script>
+  <script defer src="ui-investments.js?v=13"></script>
+  <script defer src="ui-legal.js?v=12"></script>
+  <script defer src="ui-politics.js?v=14"></script>
+  <script defer src="ui-career.js?v=14"></script>
+  <script defer src="ui-store.js?v=13"></script>
+  <script defer src="ui-market.js?v=12"></script>
+  <script defer src="world-feed.js?v=3"></script>
+  <script defer src="daily-orders.js?v=3"></script>
+  <script defer src="onboarding.js?v=3"></script>
+  <script defer src="ui-home.js?v=17"></script>
+  <script defer src="ui-help.js?v=14"></script>
+  <script defer src="ui-hub.js?v=7"></script>
+  <script defer src="ui-realestate.js?v=14"></script>
+  <script defer src="ui-map-utils.js?v=7"></script>
+  <script defer src="ui-sidebar.js?v=7"></script>
+  <script defer src="zero-to-hero.js?v=4"></script>
+  <script defer src="objective-tracker.js?v=3"></script>
+  <script defer src="vittorio.js?v=2"></script>
+  <script defer src="em-chrome.js?v=4"></script>
+  <script defer src="showroom.js?v=13"></script>
+  <script defer src="vtk-market.js?v=13"></script>
+  <script defer src="p2p-market.js?v=8"></script>
+  <script defer src="p2p-render.js?v=14"></script>
+  <script defer src="b2b.js?v=14"></script>
+  <script defer src="auctions.js?v=13"></script>
+  <script defer src="driver_skills.js?v=13"></script>
+  <script defer src="global_events.js?v=10"></script>
+  <script defer src="black_ops.js?v=14"></script>
+  <script defer src="crypto.js?v=14"></script>
+  <script defer src="weather_real.js?v=10"></script>
+  <script defer src="hq-data.js?v=7"></script>
+  <script defer src="hq.js?v=14"></script>
+  <script defer src="hq-visual.js?v=10"></script>
+  <script defer src="mobile_dispatcher.js?v=13"></script>
+  <script defer src="hostile_takeover.js?v=14"></script>
+  <script defer src="nemesis.js?v=15"></script>
+  <script defer src="infrastructure.js?v=14"></script>
+  <script defer src="contracts.js?v=15"></script>
+  <script defer src="tourism.js?v=14"></script>
+  <script defer src="tutorial.js?v=10"></script>
+  <script defer src="premium-ui.js?v=7"></script>
+  <script defer src="motion.js?v=7"></script>
+  <script defer src="cmd-palette.js?v=3"></script>
+  <script defer src="push-notifications.js?v=3"></script>
+  <script src="boot.js?v=2"></script>
 
-  <script>
-  /* ESC key: close overlays / modals, or return to main dispatch tab */
-  document.addEventListener('keydown', function(e) {
-    if (e.key !== 'Escape') return;
-
-    const mapOverlay = document.getElementById('map-overlay');
-    if (mapOverlay && !mapOverlay.classList.contains('hidden')) {
-      if (typeof window.closeMapOverlay === 'function') window.closeMapOverlay();
-      return;
-    }
-
-    const hubModal = document.getElementById('hub-modal');
-    if (hubModal && !hubModal.classList.contains('hidden')) {
-      if (typeof window.closeHub === 'function') window.closeHub();
-      return;
-    }
-
-    const dynModal = document.getElementById('modal-configurator');
-    if (dynModal) { dynModal.remove(); return; }
-
-    const activeItem = document.querySelector('.sidebar-item.active');
-    if (activeItem && activeItem.getAttribute('data-tab') !== 'corse') {
-      if (typeof window.switchTab === 'function') window.switchTab('corse');
-    }
-  });
-  </script>
 </body>
 </html>

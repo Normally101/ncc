@@ -214,8 +214,8 @@ function _buildBox(step, target) {
     const total    = _TUT_STEPS.length;
 
     const btnHtml = `<div style="display:flex;gap:8px;align-items:center">
-        <button onclick="window.tutorialSkip()" style="font-size:11px;padding:4px 12px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:#6b7280;border-radius:4px;cursor:pointer">Salta</button>
-        <button onclick="window.tutorialNext()" style="font-size:12px;padding:5px 16px;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.5);color:#d4af37;border-radius:4px;cursor:pointer;font-weight:700">${isLast ? '🚀 Cominciamo!' : isFirst ? 'Inizia →' : 'Avanti →'}</button>
+        <button ${ceAct('tutorialSkip', [])} style="font-size:11px;padding:4px 12px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:#6b7280;border-radius:4px;cursor:pointer">Salta</button>
+        <button ${ceAct('tutorialNext', [])} style="font-size:12px;padding:5px 16px;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.5);color:#d4af37;border-radius:4px;cursor:pointer;font-weight:700">${isLast ? '🚀 Cominciamo!' : isFirst ? 'Inizia →' : 'Avanti →'}</button>
     </div>`;
 
     const dots = Array.from({ length: total }, (_, i) => {

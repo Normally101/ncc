@@ -69,7 +69,7 @@ function renderTabRegions() {
                     ${owned
                         ? `<div style="font-size:9px;color:#1aa06a;font-weight:700;font-family:var(--font-mono)">✓ Licenza operativa</div>`
                         : r.price === 0 ? ''
-                        : `<button onclick="buyRegion('${r.id}')"
+                        : `<button ${ceAct('buyRegion', [r.id])}
                             style="width:100%;justify-content:center;padding:6px;font-size:10px;border-radius:4px;cursor:pointer;${canBuy ? 'background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a' : 'background:#161b22;border:1px solid #21262d;color:#6b7280;opacity:.6'}"
                             ${!canBuy ? 'disabled' : ''}>
                             ${!hasRep ? '🔒 ' : ''}€${(r.price/1000).toFixed(0)}k
@@ -202,7 +202,7 @@ async function renderTabProvinces() {
                     <input id="offer-${p.id}" type="number" min="${minOffer}" step="10000"
                         style="flex:1;background:rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:4px 8px;font-size:8px;color:#e6edf3"
                         placeholder="Offerta min. €${minOffer.toLocaleString()}">
-                    <button onclick="window.doAcquireProvince('${p.id}')" style="background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:4px 8px;border-radius:4px;font-size:7px;cursor:pointer;white-space:nowrap">🏴 OPA</button>
+                    <button ${ceAct('doAcquireProvince', [p.id])} style="background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:4px 8px;border-radius:4px;font-size:7px;cursor:pointer;white-space:nowrap">🏴 OPA</button>
                 </div>
                 <div style="font-size:7px;color:#6b7280;margin-top:2px">Min: €${minOffer.toLocaleString()} · Vecchio proprietario riceve 80%</div>` : `
                 <div style="font-size:7px;color:#6b7280;margin-top:4px;font-style:italic">🔒 Raggiungi ${threshold} punti influenza per sbloccare l'OPA</div>`}

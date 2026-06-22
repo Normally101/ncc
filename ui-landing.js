@@ -79,11 +79,11 @@ function _showAuthOverlay() {
                                class="ss-input" autocomplete="current-password">
                         <div id="auth-error" class="auth-error"></div>
                         <button id="auth-login-btn"  class="lp-btn-primary"
-                                onclick="window._authLogin()">Accedi →</button>
+                                ${ceAct('_authLogin', [])}>Accedi →</button>
                         <button id="auth-signup-btn" class="lp-btn-secondary"
-                                onclick="window._authSignup()">Crea Account Gratis</button>
+                                ${ceAct('_authSignup', [])}>Crea Account Gratis</button>
                         <p class="auth-hint">Nuovo qui? Crea un account gratis in 30 secondi.</p>
-                        <p class="auth-support-link"><a href="#" onclick="window._authForgotPassword();return false;">Password dimenticata?</a> &nbsp;·&nbsp; <a href="mailto:${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}?subject=Problema%20di%20Accesso">Supporto</a></p>
+                        <p class="auth-support-link"><a href="#" ${ceAct('ceForgotPassword', [])}>Password dimenticata?</a> &nbsp;·&nbsp; <a href="mailto:${(window.GAME_CONFIG||{}).SUPPORT_EMAIL||'support@chauffeurempire.com'}?subject=Problema%20di%20Accesso">Supporto</a></p>
                     </div>
                 </div>
             </div>
@@ -210,7 +210,7 @@ function _showAuthOverlay() {
                 <h2 class="lp-section-title">Cosa ti aspetta</h2>
             </div>
             <div class="lp-showcase-grid">
-                <div class="lp-showcase-slot" onclick="openShowcase(0)" style="cursor:pointer">
+                <div class="lp-showcase-slot" ${ceAct('openShowcase', [0])} style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-map" style="background-image:url(assets/map-preview.jpg);background-size:cover;background-position:center">
                         <div style="position:absolute;inset:0;background:rgba(0,0,0,0.18);z-index:0"></div>
                         <div class="lp-sc-expand">&#x26F6;</div>
@@ -218,7 +218,7 @@ function _showAuthOverlay() {
                     <div class="lp-showcase-label">Mappa Globale Live</div>
                     <div class="lp-showcase-sub">Monitora i tuoi autisti in tempo reale sulla mappa 3D interattiva con traffico e meteo dinamici.</div>
                 </div>
-                <div class="lp-showcase-slot" onclick="openShowcase(1)" style="cursor:pointer">
+                <div class="lp-showcase-slot" ${ceAct('openShowcase', [1])} style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-fleet">
                         <img src="assets/fleet/majestic-e-specter.jpg" alt="Garage & Flotta Elite"
                              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.88">
@@ -228,7 +228,7 @@ function _showAuthOverlay() {
                     <div class="lp-showcase-label">Garage & Flotta Elite</div>
                     <div class="lp-showcase-sub">Da berline premium a Rolls-Royce presidenziali. Ogni auto sblocca contratti e mercati ad alto margine.</div>
                 </div>
-                <div class="lp-showcase-slot" onclick="openShowcase(2)" style="cursor:pointer">
+                <div class="lp-showcase-slot" ${ceAct('openShowcase', [2])} style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-rank">
                         <img src="assets/fleet/stellar-q-imperial.jpg" alt="Classifiche Live"
                              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.9">
@@ -238,7 +238,7 @@ function _showAuthOverlay() {
                     <div class="lp-showcase-label">Classifiche Live</div>
                     <div class="lp-showcase-sub">Scala la vetta della classifica globale e sfida i CEO di tutto il mondo per il dominio assoluto.</div>
                 </div>
-                <div class="lp-showcase-slot" onclick="openShowcase(3)" style="cursor:pointer">
+                <div class="lp-showcase-slot" ${ceAct('openShowcase', [3])} style="cursor:pointer">
                     <div class="lp-showcase-thumb lp-st-fin">
                         <img src="assets/fleet/volt-s-apex.jpg" alt="Borsa & Finanza"
                              style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:0;opacity:0.9">
@@ -385,9 +385,9 @@ window.openShowcase = function(idx) {
     const lb = document.createElement('div');
     lb.id = 'lp-lightbox';
     lb.innerHTML = `
-        <div class="lp-lb-backdrop" onclick="closeLbIfBackdrop(event)">
+        <div class="lp-lb-backdrop" ${ceAct('closeLbIfBackdrop', [event])}>
             <div class="lp-lb-panel">
-                <button class="lp-lb-close" onclick="document.getElementById('lp-lightbox').remove()">&times;</button>
+                <button class="lp-lb-close" ${ceAct('ceRemove', ['lp-lightbox'])}>&times;</button>
                 <div class="lp-lb-img-wrap">
                     <img src="${d.img}" alt="${d.title}" style="${d.imgStyle}">
                 </div>

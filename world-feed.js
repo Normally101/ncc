@@ -189,7 +189,7 @@
                 <div style="font-size:14px;font-weight:800;margin-top:1px;line-height:1.2">${scn.title}</div>
                 <div style="font-size:10.5px;color:#c4cdd8;margin-top:2px">${scn.sub}</div>
             </div>
-            <button onclick="switchTab('${scn.tab}')" style="flex-shrink:0;background:${scn.accent};color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">${scn.cta}</button>
+            <button ${ceAct('switchTab', [scn.tab])} style="flex-shrink:0;background:${scn.accent};color:#fff;border:none;border-radius:7px;padding:9px 14px;font-size:11.5px;font-weight:800;cursor:pointer;white-space:nowrap">${scn.cta}</button>
         </div>`;
     };
 

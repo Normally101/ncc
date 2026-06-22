@@ -75,7 +75,7 @@ function _renderOPACard(opa) {
         : `<span class="em-pill em-pill--gray">👁 Osservatore</span>`;
 
     const buybackBtn = isTarget ? `
-    <button class="em-bbtn" onclick="window._opaRequestBuyback('${opa.opa_id}', ${opa.buyback_price})"
+    <button class="em-bbtn" ${ceAct('_opaRequestBuyback', [opa.opa_id, opa.buyback_price])}
       style="width:100%;margin-top:12px;box-sizing:border-box">
       🛡️ Riacquista maggioranza — €${Number(opa.buyback_price).toLocaleString('it-IT')}
     </button>` : '';

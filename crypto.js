@@ -161,7 +161,7 @@ window.cryptoOpenTradeModal = function(coinId, side) {
       <div style="background:#161b22;border:1px solid #21262d;border-radius:8px;padding:20px;width:320px;max-width:calc(100vw - 32px);box-shadow:0 20px 60px rgba(0,0,0,.6)">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
           <div style="font-size:13px;font-weight:700;color:#e6edf3">${coin.icon} ${coin.name} — ${isBuy ? 'ACQUISTO' : 'VENDITA'}</div>
-          <button onclick="document.getElementById('crypto-trade-modal').remove()" style="background:transparent;border:none;color:#6b7280;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
+          <button ${ceAct('ceRemove', ['crypto-trade-modal'])} style="background:transparent;border:none;color:#6b7280;font-size:16px;cursor:pointer;padding:0;line-height:1">✕</button>
         </div>
 
         <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:16px">
@@ -175,14 +175,14 @@ window.cryptoOpenTradeModal = function(coinId, side) {
           <input id="${inputId}" type="number" min="${isBuy ? 100 : 0}" step="${isBuy ? 1000 : 0.01}"
             value="${isBuy ? 10000 : (holding?.amount || 0)}"
             style="width:100%;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:8px 10px;color:#e6edf3;font-size:12px;outline:none;box-sizing:border-box"
-            oninput="window._cryptoUpdatePreview('${coinId}','${side}',this.value)" />
+            ${ceAct('ceCryptoPreview', [coinId, side], 'input')} />
         </div>
 
         <div id="crypto-preview" style="font-size:10px;color:#6b7280;margin-bottom:10px"></div>
         <div id="crypto-trade-err" style="color:#db5746;font-size:10px;margin-bottom:8px;display:none"></div>
 
         <button id="crypto-trade-btn"
-          onclick="${isBuy ? `window.cryptoBuy('${coinId}', document.getElementById('${inputId}').value)` : `window.cryptoSell('${coinId}', document.getElementById('${inputId}').value)`}"
+          ${ceAct('ceCryptoTrade', [isBuy ? 'buy' : 'sell', coinId, inputId])}
           style="width:100%;padding:9px;font-size:12px;font-weight:700;cursor:pointer;background:linear-gradient(180deg,#e3b441,#c79a2a);color:#fff;border:none;border-radius:7px;box-shadow:0 2px 5px rgba(199,154,42,.24)">
           ${isBuy ? '💰 Acquista' : '💵 Vendi'}
         </button>
@@ -235,8 +235,8 @@ window.renderTabCrypto = function() {
                 — PnL: <span style="color:${(holding.pnl_pct||0)>=0?'var(--em-green)':'var(--em-red)'}">${(holding.pnl_pct||0).toFixed(2)}%</span>
               </div>` : ''}
             <div style="display:flex;gap:8px">
-              <button class="em-goldbtn" onclick="window.cryptoOpenTradeModal('${coin.id}','buy')" style="flex:1;padding:5px 0;font-size:10px">💰 Acquista</button>
-              ${holding ? `<button class="em-redbtn" onclick="window.cryptoOpenTradeModal('${coin.id}','sell')" style="flex:1;padding:5px 0;font-size:10px">💵 Vendi</button>` : ''}
+              <button class="em-goldbtn" ${ceAct('cryptoOpenTradeModal', [coin.id,'buy'])} style="flex:1;padding:5px 0;font-size:10px">💰 Acquista</button>
+              ${holding ? `<button class="em-redbtn" ${ceAct('cryptoOpenTradeModal', [coin.id,'sell'])} style="flex:1;padding:5px 0;font-size:10px">💵 Vendi</button>` : ''}
             </div>
           </div>`;
     }).join('');
@@ -262,13 +262,13 @@ window.renderTabCrypto = function() {
             <div style="display:flex;gap:8px;margin-bottom:6px">
               <input id="${depInputId}" type="number" min="10000" step="10000" value="50000"
                 style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:4px;padding:5px 8px;font-size:10px;color:var(--em-ink);outline:none" placeholder="€ deposito">
-              <button class="em-goldbtn" onclick="window.cryptoDepositOffshore('${j.id}', document.getElementById('${depInputId}').value)" style="font-size:9px;white-space:nowrap">⬇️ Deposita</button>
+              <button class="em-goldbtn" ${ceAct('ceCryptoDeposit', [j.id, depInputId])} style="font-size:9px;white-space:nowrap">⬇️ Deposita</button>
             </div>
             ${acc && acc.balance > 0 ? `
             <div style="display:flex;gap:8px">
               <input id="${wdInputId}" type="number" min="1000" max="${acc.balance}" step="10000"
                 style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:4px;padding:5px 8px;font-size:10px;color:var(--em-ink);outline:none" placeholder="€ prelievo">
-              <button class="em-ghbtn" onclick="window.cryptoWithdrawOffshore('${j.id}', document.getElementById('${wdInputId}').value)" style="font-size:9px;white-space:nowrap;color:var(--em-amber)">⬆️ Preleva</button>
+              <button class="em-ghbtn" ${ceAct('ceCryptoWithdraw', [j.id, wdInputId])} style="font-size:9px;white-space:nowrap;color:var(--em-amber)">⬆️ Preleva</button>
             </div>` : ''}
           </div>`;
     }).join('');
@@ -280,7 +280,7 @@ window.renderTabCrypto = function() {
                 <div style="font-size:20px;font-weight:800;margin-bottom:2px">Crypto &amp; Offshore</div>
                 <div style="font-size:11px;color:var(--em-muted)">Portfolio €${Math.floor(portfolioValue).toLocaleString()} · Offshore €${offshoreTotal.toLocaleString()}</div>
             </div>
-            <button class="em-ghbtn" onclick="window.cryptoRefresh(true).then(()=>window.switchTab('crypto'))">↻ Aggiorna</button>
+            <button class="em-ghbtn" ${ceAct('ceThen', ['cryptoRefresh', 'switchTab', 'crypto'])}>↻ Aggiorna</button>
         </div>
 
         <div class="em-kpis" style="margin-bottom:16px">

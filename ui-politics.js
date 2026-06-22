@@ -42,7 +42,7 @@ function renderTabPolitics() {
                 <div style="flex-shrink:0;margin-top:2px">
                     ${owned
                         ? _pill('ATTIVA', '#1aa06a')
-                        : `<button class="em-goldbtn" onclick="passLobbyLaw('${l.id}')" ${canAfford?'':'disabled'} style="${canAfford?'':'opacity:.45;cursor:not-allowed'}">Approva</button>`}
+                        : `<button class="em-goldbtn" ${ceAct('passLobbyLaw', [l.id])} ${canAfford?'':'disabled'} style="${canAfford?'':'opacity:.45;cursor:not-allowed'}">Approva</button>`}
                 </div>
             </div>
         </div>`;
@@ -57,7 +57,7 @@ function renderTabPolitics() {
                 <div style="font-size:20px;font-weight:800;letter-spacing:-.01em;margin-bottom:2px">Politica &amp; Decreti</div>
                 <div style="font-size:11px;color:var(--em-muted)">${activeLaws} leggi attive · ${points} punti lobbying</div>
             </div>
-            <button class="em-ghbtn" onclick="window.decreesRefresh(true).then(()=>window.renderTabPolitics())" style="font-family:monospace">↻ DECRETI</button>
+            <button class="em-ghbtn" ${ceAct('ceThen', ['decreesRefresh', 'renderTabPolitics'])} style="font-family:monospace">↻ DECRETI</button>
         </div>
     </div>
 
@@ -93,7 +93,7 @@ function renderTabPolitics() {
             <input id="lobby-donate-amt" type="number" min="1000" step="5000" value="10000"
                 style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:5px;padding:8px 12px;color:var(--em-ink);font-family:monospace;font-size:11px"
                 placeholder="€ donazione">
-            <button class="em-goldbtn" onclick="donateToLobby(document.getElementById('lobby-donate-amt').value)">Dona</button>
+            <button class="em-goldbtn" ${ceAct('ceDonateLobby', [])}>Dona</button>
         </div>
     </div>
 
@@ -180,7 +180,7 @@ function _renderDecreesSection(lobbyPoints) {
                     <input id="${inputId}" type="number" min="1" max="${lobbyPoints}" value="1"
                         style="flex:1;background:#0d1117;border:1px solid var(--em-line);border-radius:5px;padding:7px 10px;color:var(--em-ink);font-family:monospace;font-size:11px"
                         placeholder="punti">
-                    <button class="em-goldbtn" onclick="window.voteServerDecree('${d.id}', document.getElementById('${inputId}').value)" ${lobbyPoints < 1 ? 'disabled style="opacity:.45;cursor:not-allowed"' : ''}>Vota</button>
+                    <button class="em-goldbtn" ${ceAct('ceVoteDecree', [d.id, inputId])} ${lobbyPoints < 1 ? 'disabled style="opacity:.45;cursor:not-allowed"' : ''}>Vota</button>
                 </div>` : ''}
             </div>`;
         }).join('');

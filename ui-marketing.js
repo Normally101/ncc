@@ -133,17 +133,17 @@ function renderTabMarketing() {
     // ── 3. STRATEGIA TARIFFARIA ───────────────────────────────────
     html += `<div class="mkt-section-header">Strategia Tariffaria</div>
     <div class="pricing-strategy-panel" style="margin-bottom:16px">
-        <button onclick="setPricingStrategy('discount')" class="pricing-btn ${_ps === 'discount' ? 'pricing-btn-active' : ''}">
+        <button ${ceAct('setPricingStrategy', ['discount'])} class="pricing-btn ${_ps === 'discount' ? 'pricing-btn-active' : ''}">
             <span class="pricing-btn-icon">📉</span>
             <span class="pricing-btn-label">Scontato</span>
             <span class="pricing-btn-sub">+30% corse · −20% guadagno</span>
         </button>
-        <button onclick="setPricingStrategy('standard')" class="pricing-btn ${_ps === 'standard' ? 'pricing-btn-active' : ''}">
+        <button ${ceAct('setPricingStrategy', ['standard'])} class="pricing-btn ${_ps === 'standard' ? 'pricing-btn-active' : ''}">
             <span class="pricing-btn-icon">⚖️</span>
             <span class="pricing-btn-label">Standard</span>
             <span class="pricing-btn-sub">Bilanciato</span>
         </button>
-        <button onclick="setPricingStrategy('premium')" class="pricing-btn ${_ps === 'premium' ? 'pricing-btn-active' : ''}">
+        <button ${ceAct('setPricingStrategy', ['premium'])} class="pricing-btn ${_ps === 'premium' ? 'pricing-btn-active' : ''}">
             <span class="pricing-btn-icon">💎</span>
             <span class="pricing-btn-label">Premium</span>
             <span class="pricing-btn-sub">−30% corse · +40% guadagno</span>
@@ -174,7 +174,7 @@ function renderTabMarketing() {
                 </div>
                 <div style="display:flex;justify-content:space-between;align-items:center;margin-top:4px">
                     <div style="font-size:8px;color:#6b7280">Giorno ${daysDone} di ${totalDays} · termina G.${ac.endsDay}</div>
-                    <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#db5746;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
+                    <button ${ceAct('_stopMarketingCampaign', [camp.id])} style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#db5746;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
                 </div>
             </div>`;
         });
@@ -186,9 +186,9 @@ function renderTabMarketing() {
     // ── 5. SELEZIONA CAMPAGNA — tier tabs ─────────────────────────
     html += `<div class="mkt-section-header">Seleziona Campagna</div>
     <div class="mkt-tier-tabs">
-        <button class="mkt-tier-btn tier-starter ${window._mktTier === 'starter' ? 'active' : ''}" onclick="window._mktTier='starter';renderTabMarketing()">Starter</button>
-        <button class="mkt-tier-btn tier-growth  ${window._mktTier === 'growth'  ? 'active' : ''}" onclick="window._mktTier='growth';renderTabMarketing()">Growth</button>
-        <button class="mkt-tier-btn tier-empire  ${window._mktTier === 'empire'  ? 'active' : ''}" onclick="window._mktTier='empire';renderTabMarketing()">Empire</button>
+        <button class="mkt-tier-btn tier-starter ${window._mktTier === 'starter' ? 'active' : ''}" ${ceAct('ceSetRender', ['_mktTier', null, 'starter', 'renderTabMarketing'])}>Starter</button>
+        <button class="mkt-tier-btn tier-growth  ${window._mktTier === 'growth'  ? 'active' : ''}" ${ceAct('ceSetRender', ['_mktTier', null, 'growth', 'renderTabMarketing'])}>Growth</button>
+        <button class="mkt-tier-btn tier-empire  ${window._mktTier === 'empire'  ? 'active' : ''}" ${ceAct('ceSetRender', ['_mktTier', null, 'empire', 'renderTabMarketing'])}>Empire</button>
     </div>`;
 
     const tierCampaigns = MARKETING_CAMPAIGNS.filter(c => c.tier === window._mktTier);
@@ -282,13 +282,13 @@ function renderTabMarketing() {
             html += `<div class="campaign-progress-wrap"><div class="campaign-progress-bar" style="width:${progress}%"></div></div>
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div style="font-size:8px;color:#1aa06a;font-weight:700">▶ ATTIVA — ${daysLeft}g rimanenti</div>
-                    <button onclick="window._stopMarketingCampaign('${camp.id}')" style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#db5746;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
+                    <button ${ceAct('_stopMarketingCampaign', [camp.id])} style="font-size:8px;padding:3px 8px;background:rgba(239,68,68,0.15);color:#db5746;border:1px solid rgba(239,68,68,0.3);border-radius:4px;cursor:pointer">🛑 Ferma</button>
                 </div>`;
         } else {
             const slotsFull = activeCampaigns.length >= maxSlots;
             const btnDisabled = slotsFull ? 'opacity:0.5;cursor:not-allowed' : 'cursor:pointer';
             const btnTitle = slotsFull ? `title="Slot pieni (${maxSlots}/${maxSlots})"` : '';
-            html += `<button onclick="${slotsFull ? '' : `window._applyMarketingCampaign('${camp.id}')`}" ${btnTitle} style="width:100%;font-size:9px;font-weight:700;padding:6px;background:rgba(34,197,94,0.12);color:#1aa06a;border:1px solid rgba(34,197,94,0.3);border-radius:6px;${btnDisabled}">▶ Avvia Campagna</button>`;
+            html += `<button ${slotsFull ? '' : ceAct('_applyMarketingCampaign', [camp.id])} ${btnTitle} style="width:100%;font-size:9px;font-weight:700;padding:6px;background:rgba(34,197,94,0.12);color:#1aa06a;border:1px solid rgba(34,197,94,0.3);border-radius:6px;${btnDisabled}">▶ Avvia Campagna</button>`;
         }
 
         html += `</div>`;

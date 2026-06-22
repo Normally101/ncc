@@ -318,7 +318,7 @@ function _buildCareerModal() {
 
     return `
     <div id="career-modal-wrap">
-        <div id="career-modal-close" onclick="window.closeCareerModal()">✕</div>
+        <div id="career-modal-close" ${ceAct('closeCareerModal', [])}>✕</div>
         <div id="career-modal">
             <!-- LEFT -->
             <div class="cm-main">
@@ -378,11 +378,11 @@ function _buildActiveStory(q, gs, claimable) {
         : `<div class="cm-status-badge">${_TYPE_LABEL[q.type] || 'In Corso'}</div>`;
 
     const btn = isClaim
-        ? `<button class="cm-btn claim" onclick="window.claimQuestReward('${q.id}')">Riscuoti Ricompensa →</button>`
+        ? `<button class="cm-btn claim" ${ceAct('claimQuestReward', [q.id])}>Riscuoti Ricompensa →</button>`
         : cta
-        ? `<button class="cm-btn" onclick="document.getElementById('career-modal-overlay')?.remove();if(typeof switchTab==='function')switchTab('${cta.tab}')">${cta.label}</button>`
+        ? `<button class="cm-btn" ${ceAct('ceCareerCta', [cta.tab])}>${cta.label}</button>`
         : showDispatch
-        ? `<button class="cm-btn" onclick="window.startMissionRun('${q.id}')">Avvia Missione →</button>`
+        ? `<button class="cm-btn" ${ceAct('startMissionRun', [q.id])}>Avvia Missione →</button>`
         : '';
 
     const rewardChips = _buildRewardChips(q.rewards);
@@ -446,7 +446,7 @@ function _buildClaimStory(q) {
         <div class="cm-reward">
             <div class="cm-rlabel">Ricompensa</div>
             ${rewardChips}
-            <button class="cm-btn claim" onclick="window.claimQuestReward('${q.id}')">Riscuoti →</button>
+            <button class="cm-btn claim" ${ceAct('claimQuestReward', [q.id])}>Riscuoti →</button>
         </div>`;
 }
 
@@ -460,7 +460,7 @@ function _buildClaimMile(q) {
                 <div style="font-size:11px;font-weight:600;color:#e6edf3">${q.title}</div>
                 <div style="font-size:9px;color:#6b7280;margin-top:2px">${rewardChips}</div>
             </div>
-            <button class="cm-btn claim" style="flex-shrink:0" onclick="window.claimQuestReward('${q.id}')">Riscuoti →</button>
+            <button class="cm-btn claim" style="flex-shrink:0" ${ceAct('claimQuestReward', [q.id])}>Riscuoti →</button>
         </div>`;
 }
 
@@ -546,7 +546,7 @@ window.startMissionRun = function(questId) {
 window._showBivioModal = function(q) {
     document.getElementById('bivio-modal')?.remove();
     const optHtml = q.bivio.options.map(opt => `
-        <button onclick="window._applyBivioChoice('${q.id}','${opt.id}')"
+        <button ${ceAct('_applyBivioChoice', [q.id,opt.id])}
                 style="display:block;width:100%;text-align:left;padding:10px 12px;background:#161b22;border:1px solid #21262d;color:#e6edf3;margin-top:8px;cursor:pointer;font-size:10px">
             <div style="font-weight:700;margin-bottom:2px">${opt.label}</div>
             <div style="font-size:9px;color:#6b7280">${opt.desc}</div>
@@ -565,7 +565,7 @@ window._showBivioModal = function(q) {
             ${giverLine}
             <div style="font-size:11px;color:#e6edf3;font-weight:600;margin-bottom:4px">${q.bivio.prompt}</div>
             ${optHtml}
-            <button onclick="document.getElementById('bivio-modal').remove()"
+            <button ${ceAct('ceRemove', ['bivio-modal'])}
                     style="margin-top:14px;font-size:9px;color:#6b7280;background:none;border:none;cursor:pointer;width:100%;text-align:center">Annulla</button>
         </div>`;
     document.body.appendChild(modal);

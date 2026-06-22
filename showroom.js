@@ -355,7 +355,7 @@ function _srmRenderGallery(overlay) {
         const count = f.id === 'all' ? catalog.length
             : catalog.filter(v => _srmFuelGroup(v) === f.id).length;
         if (count === 0 && f.id !== 'all') return '';
-        return `<button class="srm-fbtn${activeFuel === f.id ? ' srm-fa' : ''}" onclick="window._srmFilterFuel('${f.id}')">
+        return `<button class="srm-fbtn${activeFuel === f.id ? ' srm-fa' : ''}" ${ceAct('_srmFilterFuel', [f.id])}>
             ${f.icon} ${f.label} <span style="opacity:0.5;font-weight:400">${count}</span>
         </button>`;
     }).join('');
@@ -364,7 +364,7 @@ function _srmRenderGallery(overlay) {
         const count = f.id === 'all' ? catalog.length
             : catalog.filter(v => _srmBrand(v) === f.id).length;
         if (count === 0 && f.id !== 'all') return '';
-        return `<button class="srm-fbtn${activeBrand === f.id ? ' srm-fa' : ''}" onclick="window._srmFilterBrand('${f.id}')">
+        return `<button class="srm-fbtn${activeBrand === f.id ? ' srm-fa' : ''}" ${ceAct('_srmFilterBrand', [f.id])}>
             ${f.icon} ${f.label} <span style="opacity:0.5;font-weight:400">${count}</span>
         </button>`;
     }).join('');
@@ -387,8 +387,8 @@ function _srmRenderGallery(overlay) {
             ? `🔒 Richiede ${v.rideGate} corse`
             : (isEV && !hasEV ? '⚡ Richiede Hub di Ricarica' : null);
 
-        return `<div class="srm-vcard" style="position:relative;${locked ? 'opacity:0.6' : ''}" onclick="${locked ? '' : `window._srmOpenConfig('${v.id}')`}">
-            <img class="srm-vcard-photo" src="${v.img}" alt="${v.name}" onerror="this.style.display='none'">
+        return `<div class="srm-vcard" style="position:relative;${locked ? 'opacity:0.6' : ''}" ${locked ? '' : ceAct('_srmOpenConfig', [v.id])}>
+            <img class="srm-vcard-photo" src="${v.img}" alt="${v.name}" data-ce-imgerr="hide">
             <div class="srm-vcard-body">
                 <div class="srm-vcard-tier" style="color:${tierColor}">${v.tier}</div>
                 <div class="srm-vcard-name">${v.name}</div>
@@ -400,7 +400,7 @@ function _srmRenderGallery(overlay) {
                     <div class="srm-vcard-price">€ ${(v.price || 0).toLocaleString('it-IT')}</div>
                     ${locked
                         ? `<span style="font-size:9px;color:#db5746;">${locked}</span>`
-                        : `<button class="srm-vcard-btn" onclick="window._srmOpenConfig('${v.id}')">Configura →</button>`
+                        : `<button class="srm-vcard-btn" ${ceAct('_srmOpenConfig', [v.id])}>Configura →</button>`
                     }
                 </div>
             </div>
@@ -410,7 +410,7 @@ function _srmRenderGallery(overlay) {
     overlay.innerHTML = `
         <div id="srm-gallery-topbar">
             <div class="srm-logo">CHAUFFEUR <span>SHOWROOM</span></div>
-            <button class="srm-close-btn" onclick="window._srmClose()">✕</button>
+            <button class="srm-close-btn" ${ceAct('_srmClose', [])}>✕</button>
         </div>
         <div id="srm-filter-bar">${filterHtml}</div>
         <div id="srm-grid-wrap">
@@ -458,7 +458,7 @@ function _srmRenderConfig(overlay) {
     const sidebarHtml = _SRM_SECTIONS.map(s => {
         const count = (s.id === 'esterni' || s.id === 'interni' || s.id === 'speciali') ? _srmOptCount(s.id) : 0;
         const isAct = _srmState.section === s.id;
-        return `<button class="srm-sec-btn${isAct ? ' srm-active' : ''}" onclick="window._srmSetSection('${s.id}')">
+        return `<button class="srm-sec-btn${isAct ? ' srm-active' : ''}" ${ceAct('_srmSetSection', [s.id])}>
             <span class="srm-sec-icon">${s.icon}</span>
             <span class="srm-sec-label">${s.label}</span>
             ${count > 0 ? `<span class="srm-sec-badge">${count}</span>` : ''}
@@ -469,7 +469,7 @@ function _srmRenderConfig(overlay) {
 
     overlay.innerHTML = `<div id="srm-config">
         <div id="srm-cfg-topbar">
-            <button id="srm-cfg-back" onclick="window._srmBackToGallery()">← Galleria</button>
+            <button id="srm-cfg-back" ${ceAct('_srmBackToGallery', [])}>← Galleria</button>
             <div id="srm-cfg-title">
                 <div id="srm-cfg-vname">${v.name}</div>
                 <div id="srm-cfg-vsub">
@@ -480,13 +480,13 @@ function _srmRenderConfig(overlay) {
                 </div>
             </div>
             <div id="srm-cfg-price">€ ${total.toLocaleString('it-IT')}</div>
-            <button class="srm-close-btn" onclick="window._srmClose()" style="margin-left:12px;">✕</button>
+            <button class="srm-close-btn" ${ceAct('_srmClose', [])} style="margin-left:12px;">✕</button>
         </div>
         <div id="srm-cfg-body">
             <div id="srm-cfg-sidebar">${sidebarHtml}</div>
             <div id="srm-cfg-main">
                 <div id="srm-cfg-photo-wrap">
-                    <img id="srm-cfg-photo" src="${v.img}" alt="${v.name}" onerror="this.style.display='none'">
+                    <img id="srm-cfg-photo" src="${v.img}" alt="${v.name}" data-ce-imgerr="hide">
                 </div>
                 <div id="srm-cfg-content">${contentHtml}</div>
             </div>
@@ -561,7 +561,7 @@ function _srmSectionContent(v, meta) {
                 ⚠ Fondi insufficienti. Hai € ${(gameState?.cash||0).toLocaleString('it-IT')}, mancano € ${(total-(gameState?.cash||0)).toLocaleString('it-IT')}.
             </div>` : ''}
         </div>
-        <button class="srm-buy-btn" id="srm-buy-btn" onclick="window._srmPurchase()" ${!canAfford ? 'disabled' : ''}>
+        <button class="srm-buy-btn" id="srm-buy-btn" ${ceAct('_srmPurchase', [])} ${!canAfford ? 'disabled' : ''}>
             Acquista ${v.name}
         </button>`;
     }
@@ -573,7 +573,7 @@ function _srmSectionContent(v, meta) {
     const cards = sectionOpts.map(o => {
         const sel = _srmState.selectedOpts.has(o.id);
         const modStr = Object.entries(o.mods).map(([k,val]) => `+${val} ${k}`).join(' · ');
-        return `<div class="srm-opt-card${sel ? ' srm-sel' : ''}" onclick="window._srmToggle('${o.id}')">
+        return `<div class="srm-opt-card${sel ? ' srm-sel' : ''}" ${ceAct('_srmToggle', [o.id])}>
             <div class="srm-opt-chk">${sel ? '✓' : ''}</div>
             <div class="srm-opt-info">
                 <div class="srm-opt-name">${o.name}</div>

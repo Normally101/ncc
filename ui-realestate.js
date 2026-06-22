@@ -66,7 +66,7 @@ async function renderTabRealEstate() {
         const bg = c==='gold'?'#1a1608':'#161b22';
         const bd = c==='gold'?'#c79a2a':'#21262d';
         const tc = c==='gold'?'#c79a2a':'#6b7280';
-        return `<button onclick="${dis?'':fn}" ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
+        return `<button ${dis?'':fn} ${dis?'disabled':''} style="background:${bg};border:1px solid ${bd};color:${tc};padding:5px 12px;border-radius:4px;font-size:11px;font-weight:700;cursor:${dis?'not-allowed':'pointer'};opacity:${dis?.45:1};font-family:inherit;white-space:nowrap">${t}</button>`;
     };
 
     let html = `
@@ -154,7 +154,7 @@ async function renderTabRealEstate() {
                     <div style="font-size:15px;font-weight:700;color:#c79a2a;font-family:monospace">€${(l.cost||0).toLocaleString('it-IT')}</div>
                     ${isOwned
                         ? _pill('✓ Rendita attiva', '#1aa06a')
-                        : _btn(canAfford ? 'Acquista' : `Mancano €${((l.cost||0)-gameState.cash).toLocaleString('it-IT')}`, `window.doBuyRealEstate('${l.id}')`, canAfford?'gold':'', !canAfford)}
+                        : _btn(canAfford ? 'Acquista' : `Mancano €${((l.cost||0)-gameState.cash).toLocaleString('it-IT')}`, ceAct('doBuyRealEstate', [l.id]), canAfford?'gold':'', !canAfford)}
                 </div>
             </div>
             </div>`;

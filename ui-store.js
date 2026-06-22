@@ -141,7 +141,7 @@ function renderTabPremiumStore() {
       <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${p.sub}</div>
     </div>
     <button class="ec-buy-btn" style="background:${p.btnBg};color:${p.btnColor}"
-      onclick="window._dcSimPurchase(${p.dc})">
+      ${ceAct('_dcSimPurchase', [p.dc])}>
       Acquista · ${p.price}
     </button>
   </div>
@@ -173,41 +173,41 @@ function renderTabPremiumStore() {
     <div style="font-size:12px;font-weight:700;color:var(--text);line-height:1.2">${it.label}</div>
     <div style="font-size:10px;color:var(--text-muted);margin-top:2px;line-height:1.3">${it.sub}</div>
   </div>
-  <button class="ec-svc-btn" onclick="${it.disabled?'':it.fn}" ${it.disabled?'disabled':''}>
+  <button class="ec-svc-btn" ${it.disabled?'':it.act} ${it.disabled?'disabled':''}>
     ${it.disabled ? `<span style="font-size:9px">${it.disabledLabel}</span>` : `<span style="font-size:9px;opacity:.7">DC</span> ${it.cost}`}
   </button>
 </div>`;
 
     const opItems = [
-        { label:'Rifornimento Flotta',  sub:`${lowFuel} veicoli con carburante < 100%`,     cost:3,   icon:'⛽', iconBg:'rgba(249,115,22,0.15)', fn:'fuelBoostDC()',                    disabled:lowFuel===0,            disabledLabel:'Flotta piena' },
-        { label:'Ricarica Energia CEO', sub:'Recupero immediato al 100%',                    cost:4,   icon:'⚡', iconBg:'rgba(250,204,21,0.15)',  fn:'energyBoostDC()',                  disabled:!ceoNeedEnergy,         disabledLabel:'Energia al 100%' },
-        { label:'Sveglia Flotta',       sub:`${restingCount} autisti in pausa forzata`,      cost:Math.max(3,restingCount*2), icon:'⏰', iconBg:'rgba(96,165,250,0.15)', fn:'wakeAllDriversDC()', disabled:restingCount===0, disabledLabel:'Nessuno a riposo' },
-        { label:'Caffè Sospeso',        sub:'Azzera lo stress del driver più esausto',       cost:10,  icon:'☕', iconBg:'rgba(180,120,60,0.20)',  fn:'window._ecCaffeSospeso()',         disabled:stressedCount===0,      disabledLabel:'Staff in forma' },
-        { label:'Benessere Staff',      sub:`${stressedCount} autisti con stress o burnout`, cost:Math.max(4,stressedCount*2), icon:'💊', iconBg:'rgba(34,197,94,0.15)', fn:'healAllDriversDC()', disabled:stressedCount===0, disabledLabel:'Staff in forma' },
-        { label:'Manutenzione Express', sub:'Ripara il veicolo più danneggiato al 100%',     cost:25,  icon:'🔧', iconBg:'rgba(148,163,184,0.12)', fn:'window._ecManutenzioneExpress()',  disabled:(gameState.fleet||[]).every(c=>(c.condition||100)>=100), disabledLabel:'Flotta perfetta' },
-        { label:'Completamento Corsi',  sub:`${trainingCount} corsi in accademia attivi`,    cost:Math.max(1,trainingCount*5), icon:'🎓', iconBg:'rgba(139,92,246,0.15)', fn:'skipAllAcademyDC()', disabled:trainingCount===0, disabledLabel:'Nessun corso' },
-        { label:'Costruzioni Lampo',    sub:`${constructions.length} cantieri in corso`,     cost:Math.max(1,constructions.length*8), icon:'🏗️', iconBg:'rgba(251,191,36,0.12)', fn:'skipAllConstructionsDC()', disabled:constructions.length===0, disabledLabel:'Nessuna costruzione' },
-        { label:'Tangente al Sindacato',sub:'Blocca scioperi per 1 giorno di gioco',         cost:50,  icon:'🤝', iconBg:'rgba(244,63,94,0.12)',   fn:'window._ecTangenteSindacato()',    disabled:(gameState.tangenteUntil||0)>gameState.day, disabledLabel:'Già protetto' },
+        { label:'Rifornimento Flotta',  sub:`${lowFuel} veicoli con carburante < 100%`,     cost:3,   icon:'⛽', iconBg:'rgba(249,115,22,0.15)', act:ceAct('fuelBoostDC',[]),                    disabled:lowFuel===0,            disabledLabel:'Flotta piena' },
+        { label:'Ricarica Energia CEO', sub:'Recupero immediato al 100%',                    cost:4,   icon:'⚡', iconBg:'rgba(250,204,21,0.15)',  act:ceAct('energyBoostDC',[]),                  disabled:!ceoNeedEnergy,         disabledLabel:'Energia al 100%' },
+        { label:'Sveglia Flotta',       sub:`${restingCount} autisti in pausa forzata`,      cost:Math.max(3,restingCount*2), icon:'⏰', iconBg:'rgba(96,165,250,0.15)', act:ceAct('wakeAllDriversDC',[]), disabled:restingCount===0, disabledLabel:'Nessuno a riposo' },
+        { label:'Caffè Sospeso',        sub:'Azzera lo stress del driver più esausto',       cost:10,  icon:'☕', iconBg:'rgba(180,120,60,0.20)',  act:ceAct('_ecCaffeSospeso',[]),         disabled:stressedCount===0,      disabledLabel:'Staff in forma' },
+        { label:'Benessere Staff',      sub:`${stressedCount} autisti con stress o burnout`, cost:Math.max(4,stressedCount*2), icon:'💊', iconBg:'rgba(34,197,94,0.15)', act:ceAct('healAllDriversDC',[]), disabled:stressedCount===0, disabledLabel:'Staff in forma' },
+        { label:'Manutenzione Express', sub:'Ripara il veicolo più danneggiato al 100%',     cost:25,  icon:'🔧', iconBg:'rgba(148,163,184,0.12)', act:ceAct('_ecManutenzioneExpress',[]),  disabled:(gameState.fleet||[]).every(c=>(c.condition||100)>=100), disabledLabel:'Flotta perfetta' },
+        { label:'Completamento Corsi',  sub:`${trainingCount} corsi in accademia attivi`,    cost:Math.max(1,trainingCount*5), icon:'🎓', iconBg:'rgba(139,92,246,0.15)', act:ceAct('skipAllAcademyDC',[]), disabled:trainingCount===0, disabledLabel:'Nessun corso' },
+        { label:'Costruzioni Lampo',    sub:`${constructions.length} cantieri in corso`,     cost:Math.max(1,constructions.length*8), icon:'🏗️', iconBg:'rgba(251,191,36,0.12)', act:ceAct('skipAllConstructionsDC',[]), disabled:constructions.length===0, disabledLabel:'Nessuna costruzione' },
+        { label:'Tangente al Sindacato',sub:'Blocca scioperi per 1 giorno di gioco',         cost:50,  icon:'🤝', iconBg:'rgba(244,63,94,0.12)',   act:ceAct('_ecTangenteSindacato',[]),    disabled:(gameState.tangenteUntil||0)>gameState.day, disabledLabel:'Già protetto' },
         { label:'Limite Offline +2h',   sub:`Progressione offline attuale: ${offLimit}h / max 12h`, cost:20, icon:'🕐', iconBg:'rgba(99,102,241,0.15)', fn:"window._dcSpend('offline_limit',20)", disabled:offLimit>=12, disabledLabel:'Massimo raggiunto' },
         { label:'Auto-Rest CEO',        sub:'Recupero energetico automatico durante offline', cost:30,  icon:'🛌', iconBg:'rgba(6,182,212,0.12)',   fn:"window._dcSpend('auto_rest',30)", disabled:autoRest, disabledLabel:'Già attivo' },
     ];
 
     const bundleItems = [
-        { label:'Pacchetto Operativo',  sub:'Carburante + Energia CEO + Sveglia autisti',     cost:9,   icon:'🚀', iconBg:'rgba(34,197,94,0.18)',   fn:'opsBundleDC()',  disabled:lowFuel===0&&!ceoNeedEnergy&&restingCount===0, disabledLabel:'Tutto OK' },
-        { label:'Pacchetto Imperiale',  sub:'Tutto in uno: flotta, staff, corsi, edifici',    cost:35,  icon:'👑', iconBg:'rgba(212,175,55,0.18)',   fn:'fullBundleDC()', disabled:false, disabledLabel:'' },
+        { label:'Pacchetto Operativo',  sub:'Carburante + Energia CEO + Sveglia autisti',     cost:9,   icon:'🚀', iconBg:'rgba(34,197,94,0.18)',   act:ceAct('opsBundleDC',[]),  disabled:lowFuel===0&&!ceoNeedEnergy&&restingCount===0, disabledLabel:'Tutto OK' },
+        { label:'Pacchetto Imperiale',  sub:'Tutto in uno: flotta, staff, corsi, edifici',    cost:35,  icon:'👑', iconBg:'rgba(212,175,55,0.18)',   act:ceAct('fullBundleDC',[]), disabled:false, disabledLabel:'' },
     ];
 
     const assicItems = [
-        { label:'Polizza Kasko Corporate', icon:'🛡️', iconBg:'rgba(59,130,246,0.15)', cost:150, fn:'window._ecPolizzaKasko()',
+        { label:'Polizza Kasko Corporate', icon:'🛡️', iconBg:'rgba(59,130,246,0.15)', cost:150, act:ceAct('_ecPolizzaKasko',[]),
           sub: tempKaskoActive ? `Attiva fino al giorno ${tempKaskoDay} (${tempKaskoDay-gameState.day} gg rimasti)` : kaskoActive&&!tempKaskoActive ? 'Polizza permanente attiva' : 'Copertura incidenti per 7 giorni di gioco',
           disabled:kaskoActive&&!tempKaskoActive, disabledLabel:'Attiva' },
-        { label:'Executive Pass', icon:'💎', iconBg:'rgba(212,175,55,0.15)', cost:150, fn:'activateExecutivePass()',
+        { label:'Executive Pass', icon:'💎', iconBg:'rgba(212,175,55,0.15)', cost:150, act:ceAct('activateExecutivePass',[]),
           sub: execPassActive ? `Attivo — ${(gameState.executivePassExpiresDay||0)-gameState.day} giorni rimasti` : '+25% slot corse · −50% stress · Insta-Repair 1DC · corse VIP extra',
           disabled:execPassActive, disabledLabel:'Attivo' },
-        { label:'Radar VIP', icon:'📡', iconBg:'rgba(167,139,250,0.15)', cost:200, fn:'window._ecRadarVip()',
+        { label:'Radar VIP', icon:'📡', iconBg:'rgba(167,139,250,0.15)', cost:200, act:ceAct('_ecRadarVip',[]),
           sub: radarActive ? 'Attivo — corse VIP in priorità assoluta' : 'Priority queue +100% per 72 ore di gioco',
           disabled:radarActive, disabledLabel:'Attivo' },
-        { label:'Targa Nera Presidenziale', icon:'🏴', iconBg:'rgba(0,0,0,0.4)', cost:500, fn:'window._ecTargaPresidenziale()',
+        { label:'Targa Nera Presidenziale', icon:'🏴', iconBg:'rgba(0,0,0,0.4)', cost:500, act:ceAct('_ecTargaPresidenziale',[]),
           sub: plate ? 'Già applicata — prestigio massimo' : 'Cosmetico permanente · sblocca clienti esclusivi e rep extra',
           disabled:plate, disabledLabel:'Posseduta' },
     ];
@@ -245,8 +245,8 @@ function renderTabPremiumStore() {
 
   <!-- Tabs -->
   <div style="display:flex;border-bottom:1px solid #21262d;background:#161b22;padding:0 16px">
-    <div class="ec-tab ${_ecActiveTab==='acquire'?'active':''}" onclick="window._ecSwitchTab('acquire')">💳 Acquista DC</div>
-    <div class="ec-tab ${_ecActiveTab==='services'?'active':''}" onclick="window._ecSwitchTab('services')">⚡ Servizi Esclusivi</div>
+    <div class="ec-tab ${_ecActiveTab==='acquire'?'active':''}" ${ceAct('_ecSwitchTab', ['acquire'])}>💳 Acquista DC</div>
+    <div class="ec-tab ${_ecActiveTab==='services'?'active':''}" ${ceAct('_ecSwitchTab', ['services'])}>⚡ Servizi Esclusivi</div>
   </div>
 
   <!-- Content -->

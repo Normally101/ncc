@@ -52,8 +52,8 @@ function renderTabStaff() {
             <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
                 ${owned
                     ? `<span class="em-pill em-pill--green">✓ Attivo</span>
-                       <button onclick="window.fireStaff('${s.id}')" class="em-redbtn" style="padding:4px 11px;font-size:10px">Licenzia</button>`
-                    : `<button onclick="hireOfficeStaff('${s.id}')" ${staffFull ? 'disabled' : ''} class="em-goldbtn" style="${staffFull ? 'opacity:.4;cursor:not-allowed' : ''}">Assumi</button>`
+                       <button ${ceAct('fireStaff', [s.id])} class="em-redbtn" style="padding:4px 11px;font-size:10px">Licenzia</button>`
+                    : `<button ${ceAct('hireOfficeStaff', [s.id])} ${staffFull ? 'disabled' : ''} class="em-goldbtn" style="${staffFull ? 'opacity:.4;cursor:not-allowed' : ''}">Assumi</button>`
                 }
             </div>
         </div>`;
@@ -84,7 +84,7 @@ function renderTabStaff() {
             <div>
                 ${hrActive
                     ? `<span class="em-pill em-pill--green">Attivo</span>`
-                    : `<button onclick="window.buyHRAutomation()" class="em-goldbtn">🪙 5 DC · 7g</button>`}
+                    : `<button ${ceAct('buyHRAutomation', [])} class="em-goldbtn">🪙 5 DC · 7g</button>`}
             </div>
         </div>
     </div>`;
@@ -134,22 +134,22 @@ function renderTabStaff() {
             // actions
             const actBtns = [
                 d.isOnStrike && !isBusy
-                    ? `<button onclick="resolveStrike('${d.id}')" class="em-goldbtn" style="font-size:9.5px;padding:3px 8px">🤝 Accordo</button>`
+                    ? `<button ${ceAct('resolveStrike', [d.id])} class="em-goldbtn" style="font-size:9.5px;padding:3px 8px">🤝 Accordo</button>`
                     : (!isResting && !isBurnout && !isBusy && (fatigue >= 40 || stress >= 50))
-                        ? `<button onclick="putDriverOnBreak('${d.id}')" class="em-ghbtn" style="font-size:9.5px;padding:3px 8px">☕ Pausa</button>`
+                        ? `<button ${ceAct('putDriverOnBreak', [d.id])} class="em-ghbtn" style="font-size:9.5px;padding:3px 8px">☕ Pausa</button>`
                         : '',
-                `<button onclick="window.renderDriverSkillModal('${d.id}')" class="em-bbtn" style="font-size:9.5px;padding:3px 8px">⭐ Skills</button>`,
-                `<button onclick="fireDriver('${d.id}')" class="em-redbtn" style="font-size:9.5px;padding:3px 8px">Licenzia</button>`,
+                `<button ${ceAct('renderDriverSkillModal', [d.id])} class="em-bbtn" style="font-size:9.5px;padding:3px 8px">⭐ Skills</button>`,
+                `<button ${ceAct('fireDriver', [d.id])} class="em-redbtn" style="font-size:9.5px;padding:3px 8px">Licenzia</button>`,
             ].filter(Boolean).join(' ');
 
             html += `
-            <input type="file" id="avatar-upload-${d.id}" accept="image/*" style="display:none" onchange="window.setDriverAvatar('${d.id}', this)">
+            <input type="file" id="avatar-upload-${d.id}" accept="image/*" style="display:none" ${ceAct('ceSetAvatar', [d.id], 'change')}>
             <tr>
                 <td style="min-width:175px">
                     <div style="display:flex;align-items:center;gap:8px">
                         ${d.avatarBase64
-                            ? `<img src="${d.avatarBase64}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid var(--em-line)" onclick="document.getElementById('avatar-upload-${d.id}').click()">`
-                            : `<div style="width:30px;height:30px;border-radius:50%;background:#161b223cf;border:1px solid #ecd9a0;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:var(--em-gold);flex-shrink:0" onclick="document.getElementById('avatar-upload-${d.id}').click()">👤</div>`}
+                            ? `<img src="${d.avatarBase64}" style="width:30px;height:30px;border-radius:50%;object-fit:cover;cursor:pointer;border:1px solid var(--em-line)" ${ceAct('ceClick', ['avatar-upload-' + d.id])}>`
+                            : `<div style="width:30px;height:30px;border-radius:50%;background:#161b223cf;border:1px solid #ecd9a0;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;color:var(--em-gold);flex-shrink:0" ${ceAct('ceClick', ['avatar-upload-' + d.id])}>👤</div>`}
                         <div style="min-width:0">
                             <div style="font-weight:700">${d.name} <span class="lvl-badge ${levelData.badge}" style="font-size:7px">${levelData.name}</span></div>
                             <div style="font-size:9.5px;color:var(--em-dim);margin-top:1px">€${(d.salary||0).toLocaleString()}/mese · XP ${d.xp||0}</div>
@@ -162,13 +162,13 @@ function renderTabStaff() {
                 <td style="min-width:110px">
                     ${miniBar(stress, stressColor)}
                     ${stress >= 50 && !isResting && !isBurnout && !isBusy ? `<div style="margin-top:4px;display:flex;gap:4px">
-                        <button onclick="putDriverOnBreak('${d.id}')" class="em-ghbtn" style="font-size:8.5px;padding:2px 6px">☕ −40%</button>
-                        <button onclick="payStressClear('${d.id}')" class="em-pill em-pill--green" style="border:1px solid #bfe6cd;cursor:pointer;font-size:8.5px;padding:3px 6px">💊 €1k</button>
+                        <button ${ceAct('putDriverOnBreak', [d.id])} class="em-ghbtn" style="font-size:8.5px;padding:2px 6px">☕ −40%</button>
+                        <button ${ceAct('payStressClear', [d.id])} class="em-pill em-pill--green" style="border:1px solid #bfe6cd;cursor:pointer;font-size:8.5px;padding:3px 6px">💊 €1k</button>
                     </div>` : ''}
                 </td>
                 <td style="min-width:110px">
                     ${miniBar(morale, moraleColor)}
-                    ${morale < 60 ? `<button onclick="payDriverBonus('${d.id}', 500)" class="em-pill em-pill--green" style="border:1px solid #bfe6cd;cursor:pointer;font-size:8.5px;padding:3px 6px;margin-top:4px">+€500</button>` : ''}
+                    ${morale < 60 ? `<button ${ceAct('payDriverBonus', [d.id, 500])} class="em-pill em-pill--green" style="border:1px solid #bfe6cd;cursor:pointer;font-size:8.5px;padding:3px 6px;margin-top:4px">+€500</button>` : ''}
                 </td>
                 <td><div style="color:${car ? 'var(--em-ink)' : 'var(--em-dim)'}">${carLabel}</div></td>
                 <td class="r" style="white-space:nowrap">${actBtns}</td>
@@ -212,7 +212,7 @@ function renderTabStaff() {
             </div>
             ${_kidHired
                 ? `<span class="em-pill em-pill--green">✓ Assunto</span>`
-                : `<button onclick="window.hireNeighborhoodKid()" class="em-goldbtn">Assumi · Gratis</button>`}
+                : `<button ${ceAct('hireNeighborhoodKid', [])} class="em-goldbtn">Assumi · Gratis</button>`}
         </div>`;
     } else {
         (gameState.availableRecruits || []).forEach(p => {
@@ -222,7 +222,7 @@ function renderTabStaff() {
                     ${p.trait ? `<div style="margin-top:4px">${typeof window._traitBadgeHTML === 'function' ? window._traitBadgeHTML(p) : ''} <span style="font-size:9.5px;color:var(--em-dim)">${p.trait.desc}</span></div>` : ''}
                     <div style="font-size:10.5px;color:var(--em-dim);margin-top:4px">Stipendio: €${p.salary}/mese | Anticipo: €${p.salary*2}</div>
                 </div>
-                <button onclick="hireDriver('${p.name}', ${p.salary})" class="em-goldbtn">Assumi</button>
+                <button ${ceAct('hireDriver', [p.name, p.salary])} class="em-goldbtn">Assumi</button>
             </div>`;
         });
         if ((gameState.availableRecruits || []).length === 0) {
@@ -248,7 +248,7 @@ function renderTabStaff() {
                     <div style="font-weight:700">Gestione Corsi</div>
                     <div style="font-size:10.5px;color:var(--em-dim);margin-top:2px">${_academyDrivers.length} autisti · ${_inTrainingCount} in corso · 5 corsi disponibili</div>
                 </div>
-                <button onclick="window.openAcademyModal()" class="em-goldbtn">Apri Accademia →</button>
+                <button ${ceAct('openAcademyModal', [])} class="em-goldbtn">Apri Accademia →</button>
             </div>`;
         }
     }
@@ -309,7 +309,7 @@ window.openCarModal = function(carId) {
         <div class="fuel-bar-bg"><div class="fuel-bar-fill" style="width:${tirePct2}%; background:${tireColor2}"></div></div>
         <div style="font-size:8px;color:#6b7280;margin-top:2px;text-align:center">Sostituzione automatica (sotto 20%) via Deposito Aziendale</div>
     </div>
-    ${car.condition < 100 ? `<button onclick="payToRepairCar('${car.id}')" style="width:100%;background:rgba(30,58,138,0.3);border:1px solid rgba(59,130,246,0.3);color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer">🔧 Ripara (€${repairCost})</button>` : ''}
+    ${car.condition < 100 ? `<button ${ceAct('payToRepairCar', [car.id])} style="width:100%;background:rgba(30,58,138,0.3);border:1px solid rgba(59,130,246,0.3);color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer">🔧 Ripara (€${repairCost})</button>` : ''}
     <div style="font-size:10px;color:#6b7280;text-transform:uppercase">Upgrade VIP</div>
     <div style="display:flex;flex-direction:column;gap:4px;max-height:112px;overflow-y:auto">`;
 
@@ -317,7 +317,7 @@ window.openCarModal = function(carId) {
         const owned = car.upgrades.includes(upg.id);
         html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px;border:1px solid #eef1f5;border-radius:4px;font-size:9px;${owned ? 'opacity:.5' : ''}">
             <div><span style="color:#e6edf3;font-weight:700">${upg.name}</span><span style="color:#6b7280;margin-left:4px">${upg.desc}</span></div>
-            ${owned ? '<span class="upgrade-pill">✓</span>' : `<button onclick="buyCARUpgrade('${car.id}','${upg.id}')" style="background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:2px 6px;border-radius:4px;font-size:8px;cursor:pointer">€${upg.price.toLocaleString()}</button>`}
+            ${owned ? '<span class="upgrade-pill">✓</span>' : `<button ${ceAct('buyCARUpgrade', [car.id,upg.id])} style="background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:2px 6px;border-radius:4px;font-size:8px;cursor:pointer">€${upg.price.toLocaleString()}</button>`}
         </div>`;
     });
 
@@ -331,7 +331,7 @@ window.openCarModal = function(carId) {
         const driverTier = lvl >= 6 ? 'ULTRA' : lvl >= 4 ? 'VIP' : lvl >= 2 ? 'BUSINESS' : 'STANDARD';
         const tierColor  = lvl >= 6 ? '#7c5fc9' : lvl >= 4 ? '#2f74c0' : lvl >= 2 ? '#e0922e' : '#6a7480';
         const specLabel  = d.specialty && d.specialty !== 'none' ? ` · ${d.specialty.replace(/_/g,' ')}` : '';
-        html += `<button onclick="assignCarToDriver('${car.id}','${d.id}')" style="text-align:left;padding:6px;border:1px solid ${isSet?'rgba(212,175,55,0.5)':'#d6dee8'};border-radius:4px;font-size:9px;width:100%;background:${isSet?'rgba(212,175,55,0.05)':'transparent'};color:${isSet?'#c79a2a':'#1f2733'};cursor:pointer">
+        html += `<button ${ceAct('assignCarToDriver', [car.id,d.id])} style="text-align:left;padding:6px;border:1px solid ${isSet?'rgba(212,175,55,0.5)':'#d6dee8'};border-radius:4px;font-size:9px;width:100%;background:${isSet?'rgba(212,175,55,0.05)':'transparent'};color:${isSet?'#c79a2a':'#1f2733'};cursor:pointer">
             <span style="font-weight:700">${d.name}</span>
             <span style="font-size:8px;font-weight:700;color:${tierColor};margin-left:4px">[${driverTier}]</span>
             <span style="font-size:8px;color:#6b7280">${specLabel}</span>
@@ -344,19 +344,19 @@ window.openCarModal = function(carId) {
         html += `<div style="font-size:9px;margin-top:4px;color:${_activeSkin.color}">🎨 Livrea: ${_activeSkin.name}</div>`;
     }
     html += `</div>
-    <button onclick="openGarage3D('${car.id}')" style="width:100%;background:#0d1117;border:1px solid #2f74c0;color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">🚗 Vista 3D Garage</button>`;
+    <button ${ceAct('openGarage3D', [car.id])} style="width:100%;background:#0d1117;border:1px solid #2f74c0;color:#2f74c0;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;transition:opacity .15s">🚗 Vista 3D Garage</button>`;
     // Instant Repair DC
     const condPctModal = Math.floor(car.condition || 0);
     const dcRepairCost = gameState.executivePassActive ? 1 : 2;
     if (condPctModal < 100) {
-        html += `<button onclick="instantRepairDC('${car.id}')" style="width:100%;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;transition:opacity .15s" onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">⚡ Ripara Istant. (${dcRepairCost} DC)</button>`;
+        html += `<button ${ceAct('instantRepairDC', [car.id])} style="width:100%;background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px;transition:opacity .15s">⚡ Ripara Istant. (${dcRepairCost} DC)</button>`;
     }
     if(!car.isLease) {
-        html += `<button onclick="sellCar('${car.id}')" style="width:100%;background:rgba(127,29,29,0.2);border:1px solid rgba(127,29,29,0.4);color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">💰 Vendi (usato)</button>`;
+        html += `<button ${ceAct('sellCar', [car.id])} style="width:100%;background:rgba(127,29,29,0.2);border:1px solid rgba(127,29,29,0.4);color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">💰 Vendi (usato)</button>`;
         const alreadyListed = (gameState.marketplace||[]).some(l => l.carId === car.id);
         if (!alreadyListed) {
             const suggestPrice = Math.round(20000 * ((condPctModal/100)) * (car.tier === 'ultra' ? 5 : car.tier === 'vip' ? 3 : car.tier === 'business' ? 1.8 : 1));
-            html += `<button onclick="listCarForSale('${car.id}', ${suggestPrice}); closeModals();" style="width:100%;background:rgba(88,28,135,0.2);border:1px solid rgba(88,28,135,0.4);color:#7c5fc9;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">🏪 Metti in Mercato (~€${(suggestPrice/1000).toFixed(0)}k)</button>`;
+            html += `<button ${ceAct('ceListCar', [car.id, suggestPrice])} style="width:100%;background:rgba(88,28,135,0.2);border:1px solid rgba(88,28,135,0.4);color:#7c5fc9;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">🏪 Metti in Mercato (~€${(suggestPrice/1000).toFixed(0)}k)</button>`;
         }
     }
     document.getElementById('car-modal-content').innerHTML = html + `</div>`;
@@ -449,10 +449,9 @@ window.openCarConfigurator = function(carId, type) {
     <!-- top bar: close -->
     <div style="display:flex;justify-content:space-between;align-items:center;padding:20px 24px 0">
       <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:3px">Configuratore</div>
-      <button onclick="document.getElementById('modal-configurator').remove()"
+      <button ${ceAct('ceRemove', ['modal-configurator'])}
         style="width:28px;height:28px;border-radius:50%;border:1px solid #21262d;background:#21262d;color:#6b7280;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.15s"
-        onmouseover="this.style.background='#d6dee8';this.style.color='#fff'"
-        onmouseout="this.style.background='#eef1f5';this.style.color='#6a7480'">✕</button>
+       >✕</button>
     </div>
 
     <!-- car name + tier + base price block -->
@@ -470,7 +469,7 @@ window.openCarConfigurator = function(carId, type) {
       <div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:3px;margin-bottom:14px">Optional disponibili</div>
       <div id="cfg-upgrades" style="display:flex;flex-direction:column;gap:6px">
         ${CAR_UPGRADES.map(u => `
-        <div id="cfg-upg-${u.id}" onclick="__cfgToggle('${u.id}')"
+        <div id="cfg-upg-${u.id}" ${ceAct('__cfgToggle', [u.id])}
              style="display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:10px;border:1px solid #21262d;background:#161b22;cursor:pointer;user-select:none;transition:all 0.15s">
           <div id="cfg-chk-${u.id}"
                style="width:17px;height:17px;border-radius:4px;border:1.5px solid #c2ccd8;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:10px;font-weight:900;color:#000"></div>
@@ -500,11 +499,11 @@ window.openCarConfigurator = function(carId, type) {
           </div>
           ${!ok ? `<div style="font-size:9px;color:#db5746;margin-bottom:10px;text-align:right">Fondi insufficienti — disponibili: €${gameState.cash.toLocaleString()}</div>` : ''}
           <div style="display:flex;gap:10px">
-            <button onclick="document.getElementById('modal-configurator').remove()"
+            <button ${ceAct('ceRemove', ['modal-configurator'])}
               style="flex:0 0 auto;padding:12px 20px;font-size:10px;border:1px solid #21262d;border-radius:10px;color:#6b7280;background:transparent;cursor:pointer">
               Annulla
             </button>
-            <button onclick="__cfgConfirm('${carId}','${type}')" ${!ok ? 'disabled' : ''}
+            <button ${ceAct('__cfgConfirm', [carId,type])} ${!ok ? 'disabled' : ''}
               style="flex:1;padding:12px;font-size:11px;font-weight:800;border-radius:10px;cursor:${ok ? 'pointer' : 'not-allowed'};letter-spacing:0.5px;
                      background:${ok ? 'linear-gradient(135deg,#c79a2a,#b8961f)' : '#eef1f5'};
                      color:${ok ? '#000' : '#98a1ae'};border:${ok ? 'none' : '1px solid #d6dee8'}">

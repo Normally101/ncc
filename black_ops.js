@@ -195,7 +195,7 @@ window.renderTabShadow = function() {
               </div>
               <div style="display:flex;flex-wrap:wrap;gap:4px">
                 ${window.SHADOW_OPS.map(op => `
-                  <button class="em-ghbtn" onclick="window.shadowExecuteOp('${t.user_id}','${op.id}')"
+                  <button class="em-ghbtn" ${ceAct('shadowExecuteOp', [t.user_id,op.id])}
                     title="${op.desc} — €${op.cost.toLocaleString()}"
                     style="font-size:8px;padding:3px 7px;${(gameState.cash||0) < op.cost ? 'opacity:.4' : ''}">
                     ${op.name.split(' ')[0]} €${Math.round(op.cost/1000)}k
@@ -229,7 +229,7 @@ window.renderTabShadow = function() {
                 <div style="font-size:20px;font-weight:800;margin-bottom:2px">Agenzia Ombra</div>
                 <div style="font-size:11px;color:var(--em-muted)">${targets.length} target disponibili · Difesa Lv.${defLevel}/5</div>
             </div>
-            <button class="em-ghbtn" onclick="window.shadowRefresh(true).then(()=>window.switchTab('shadow'))">↻ Aggiorna</button>
+            <button class="em-ghbtn" ${ceAct('ceThen', ['shadowRefresh', 'switchTab', 'shadow'])}>↻ Aggiorna</button>
         </div>
 
         <div class="em-card" style="padding:14px;margin-bottom:16px">
@@ -242,7 +242,7 @@ window.renderTabShadow = function() {
             </div>
             ${nextTier
                 ? `<div style="font-size:9px;color:var(--em-muted);margin-bottom:8px">Prossimo: ${nextTier.name} — €${nextTier.cost.toLocaleString()}</div>
-                   <button class="em-goldbtn" onclick="window.shadowUpgradeDefense()" style="width:100%;${(gameState.cash||0) < nextTier.cost ? 'opacity:.45;cursor:not-allowed' : ''}">🛡️ Potenzia Difesa</button>`
+                   <button class="em-goldbtn" ${ceAct('shadowUpgradeDefense', [])} style="width:100%;${(gameState.cash||0) < nextTier.cost ? 'opacity:.45;cursor:not-allowed' : ''}">🛡️ Potenzia Difesa</button>`
                 : `<div style="font-size:9px;color:var(--em-green)">Difesa massima raggiunta!</div>`}
         </div>
 

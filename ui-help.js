@@ -53,7 +53,7 @@ function renderTabHelp() {
                 { q:'Problemi con i pagamenti DC?',    a:`Scrivi all'email di supporto con oggetto "Pagamento DC" e il tuo ID compagnia. Verifichiamo entro 4h.` },
             ].map(faq => `
             <div style="padding:11px 0;border-bottom:1px solid var(--em-line);cursor:pointer"
-                 onclick="const a=this.querySelector('.fa');a.style.display=a.style.display==='none'?'block':'none'">
+                 ${ceAct('ceToggleFa', [])}>
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div style="font-size:11px;font-weight:700">${faq.q}</div>
                     <span style="color:var(--em-muted);font-size:14px">⌄</span>

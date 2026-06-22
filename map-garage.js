@@ -104,7 +104,7 @@ window.openGarage3D = function(carId) {
                         </div>
                     </div>
                 </div>
-                <button onclick="closeGarage3D()" style="margin-top:24px;width:100%;padding:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:6px;background:rgba(127,29,29,0.3);border:1px solid rgba(185,28,28,0.4);color:#db5746;cursor:pointer;transition:all .15s" onmousedown="this.style.background='rgba(127,29,29,0.5)'" onmouseup="this.style.background='rgba(127,29,29,0.3)'" onmouseleave="this.style.background='rgba(127,29,29,0.3)'">✕ Chiudi Ispezione</button>
+                <button ${ceAct('closeGarage3D', [])} style="margin-top:24px;width:100%;padding:12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;border-radius:6px;background:rgba(127,29,29,0.3);border:1px solid rgba(185,28,28,0.4);color:#db5746;cursor:pointer;transition:all .15s">✕ Chiudi Ispezione</button>
             </div>
         </div>`;
 

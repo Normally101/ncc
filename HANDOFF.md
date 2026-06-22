@@ -7,6 +7,30 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### 🛠️ 21 giugno 2026 — "Risolvi tutto": follow-up sicurezza + refactor CSP (IN CORSO) + onboarding/economia (da fare)
+Sessione di lavoro su più fronti. **Working tree con modifiche NON committate, NON deployato.**
+
+**✅ FATTO e verificato (3 follow-up sicurezza minori):**
+1. **XSS escape `ui-emails.js`** — 9 sink avvolti in `CE_Sec.escHtml` (subject ×2, body, signature, eventData.desc, choice text, rivalName, driverName, brokerRisk). Bump `ui-emails.js?v=12` in index.html.
+2. **SRI + pin CDN** in index.html — `@supabase/supabase-js` pinnato a **2.108.2** (era range `@2`) + `integrity` sha384 + `crossorigin`; `mapbox-gl.js`/`.css` v3.6.0 + SRI (CORS Mapbox = `*`, verificato).
+3. **`PUSH_CRON_SECRET`** — settato in prod sulla function `send-push` + cron `ce-send-push` (jobid 2) ora invia header `x-cron-secret`. Verificato: anon SENZA secret → **403**, cron CON secret → **200**. Sequenza no-downtime (cron aggiornato prima del secret). La function già supportava il check (riga 47).
+
+**✅ COMPLETO (21 giu, verificato headless) — CSP: rimosso `script-src 'unsafe-inline'`** (decisione Vlad: "fallo completo"). NON ancora deployato.
+Refactor grande: ~486 handler inline (296 onclick nei .js + 124 in index.html + micro/altri) tutti convertiti a event-delegation. Metodo:
+- **Infra: `events.js`** (NUOVO, caricato dopo security.js) — event-delegation. Helper `ceAct(fn, args[, evento])` genera `data-ce-act`/`data-ce-args` (JSON); listener delegato su document (click/change/input/submit) chiama `window[fn].apply(elemento, args)`. Micro-interazioni `this.style.transform` rimosse (coperte da CSS `button:active`).
+- **Convertitore riusabile: `_mockups/convert-handlers.mjs`** (escluso dal deploy) — converte gli handler "chiamata singola sicura" (anche `window.fn(...)`, anche arg-stringa), gestisce `'${expr}'`, **rifiuta** letture DOM al click-time (`getElementById().value` → vanno a funzione nominata) e ha **self-check** (node --check post-conversione → ripristina il file se rompe la sintassi).
+- **Fatto finora:** ~**230 handler convertiti automaticamente** su ~45 file (tutti `node --check` OK). **`ui-emails.js` COMPLETO** (0 handler inline: 3 funzioni nominate `setInboxTab`/`resolveEmail`/`collectBrokerEmail` + 19 SKIP convertiti via `_mockups/fix-emails.mjs`).
+- **NUOVI file (da deployare):** `events.js` (delegation + `ceAct()` + helper ceRemove/ceClick/ceThen/ceSetRender/ceSetActive + listener error per `<img>`), `ce-actions.js` (funzioni nominate per DOM-read/codice-multiplo: cePlaceBid, ceCryptoTrade, ceStockAction, ceVtkSell, ceNoop, ceCloseSelf, …), `boot.js` (i 2 vecchi `<script>` inline esternalizzati: onerror banner + DOMContentLoaded + ESC handler; **non-defer** apposta). Caricati in index.html dopo security.js.
+- **Convertitori (in `_mockups/`, esclusi dal deploy, riusabili):** `convert-handlers.mjs` (auto, self-check con revert), `fix-skips.mjs`, `fix-factories.mjs` (button-factory `_btn`/`it.fn` → ricevono `ceAct(...)`), `fix-index.mjs` (HTML), `fix-boot.mjs`, `bump-versions.mjs` (+1 a 93 `?v=`). 
+- **RISULTATO:** 0 handler inline e 0 `<script>` inline in index.html + tutti i ~45 .js. `?v=` bumpati. **Verifica headless (http.server+chrome-devtools): 0 violazioni CSP, 0 errori JS, 132 elementi `data-ce-act`, delegation testata** (args JSON + `this`). Pattern backdrop: `closest()` "assorbe" il click interno (ceNoop) → rimpiazza stopPropagation; backdrop self-close via `ceCloseSelf`; `<a>`-azione → preventDefault nel dispatcher (rimpiazza `return false`).
+- **PRIMA DEL DEPLOY:** consigliata verifica E2E con **login reale** (click sui bottoni dei vari tab) — l'headless senza login copre load+delegation ma non ogni tab. **Fuori scope** (non toccati): `support.html` e `preview-midnight.html` (pagine statiche separate, CSP propria) hanno ancora 1 handler / `<script>` inline; `style-src 'unsafe-inline'` lasciato (gli style inline nel markup sono fuori scope).
+
+**⏳ DA FARE — Onboarding (mappato, non ancora implementato):** i 4 sistemi (`onboarding.js` gate/checklist, `zero-to-hero.js` survival/restricted, `objective-tracker.js`, `vittorio.js`; + `tutorial.js`) derivano TUTTI lo stato da `gameState.questStats.totalRides` + `gameState.prestige`, con **3 patch su `switchTab`** (ui-sidebar→zero-to-hero→em-chrome, ordine fragile) e hook su `updateUI`/`processDailyRoutines`. Piano: macchina a stati unificata (sorgente di verità unica) + tutorial action-gated + demo idle ("hai guadagnato mentre riposavi", aggancio a `_processOfflineCatchup` in engine.js).
+
+**⏳ DA FARE — Economia debito #1 (decisione Vlad: "fai ciò che è meglio"):** scelta = **spec + scaffolding SQL** (ledger + RPC a-delta), SENZA toccare prod né i guadagni live (la scala economica resta indecisa, Decisioni Aperte #6). Non ancora iniziato.
+
+
+
 ### 🔐 17 giugno 2026 — Audit di sicurezza completo (2 subagent + checklist agentskills)
 **✅ Ondata 1 (sicura) FATTA e deployata** (`bda625f`):
 - **XSS (P0) chiuso** sui sink multiplayer: nome/descrizione di sindacati/consorzi + `company_name` in classifica avvolti in `CE_Sec.escHtml` (`p2p-render.js`, `ui-ranking.js`). Era un vero stored/DOM XSS (descrizione consorzio con `<img onerror>` → eseguiva nel contesto della vittima).

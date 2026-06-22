@@ -215,19 +215,19 @@ window.renderVTKModal = function() {
                     <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.06em">DC</div>
                     <div style="font-size:16px;font-weight:700;color:#c79a2a;font-family:monospace">🪙 ${dc}</div>
                 </div>
-                <button onclick="document.getElementById('vtk-modal').remove()"
+                <button ${ceAct('ceRemove', ['vtk-modal'])}
                     style="background:transparent;border:1px solid #21262d;color:#6b7280;border-radius:4px;padding:4px 8px;cursor:pointer;font-size:14px;line-height:1">✕</button>
             </div>
         </div>
 
         <!-- Sub-tab bar -->
         <div style="display:flex;gap:0;border-bottom:1px solid #21262d">
-            <button onclick="window._vtkState._subTab='market';window.renderVTKModal()"
+            <button ${ceAct('ceSetRender', ['_vtkState', '_subTab', 'market', 'renderVTKModal'])}
                 style="flex:1;padding:10px;font-size:10px;font-weight:600;cursor:pointer;border:none;transition:all .15s;
                     ${subTab==='market' ? 'background:#1a1a2a;color:#2f74c0;border-bottom:2px solid #2f74c0' : 'background:transparent;color:#6b7280;border-bottom:2px solid transparent'}">
                 📈 Mercato P2P
             </button>
-            <button onclick="window._vtkState._subTab='shop';window.renderVTKModal()"
+            <button ${ceAct('ceSetRender', ['_vtkState', '_subTab', 'shop', 'renderVTKModal'])}
                 style="flex:1;padding:10px;font-size:10px;font-weight:600;cursor:pointer;border:none;transition:all .15s;
                     ${subTab==='shop' ? 'background:#1a1a2a;color:#c79a2a;border-bottom:2px solid #c79a2a' : 'background:transparent;color:#6b7280;border-bottom:2px solid transparent'}">
                 🛒 VTK Shop
@@ -264,9 +264,8 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
                     style="width:100%;background:#161b22;border:1px solid #21262d;border-radius:4px;padding:6px 8px;font-size:11px;color:#e6edf3;outline:none;box-sizing:border-box">
             </div>
         </div>
-        <button onclick="window.vtkPlaceSellOrder(document.getElementById('vtk-sell-amount').value, document.getElementById('vtk-sell-price').value)"
-            style="width:100%;padding:7px;font-size:10px;font-weight:700;cursor:pointer;background:#0d1b2a;border:1px solid rgba(88,166,255,0.4);color:#2f74c0;border-radius:4px;transition:opacity .15s"
-            onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+        <button ${ceAct('ceVtkSell', [])}
+            style="width:100%;padding:7px;font-size:10px;font-weight:700;cursor:pointer;background:#0d1b2a;border:1px solid rgba(88,166,255,0.4);color:#2f74c0;border-radius:4px;transition:opacity .15s">
             📤 Pubblica Ordine di Vendita
         </button>
     </div>
@@ -282,7 +281,7 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
                 <span style="color:#6b7280;margin:0 8px">→</span>
                 <span style="color:#c79a2a;font-family:monospace">🪙 ${o.dc_price} DC</span>
             </div>
-            <button onclick="window.vtkCancelOrder('${o.id}')"
+            <button ${ceAct('vtkCancelOrder', [o.id])}
                 style="font-size:9px;padding:3px 8px;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">
                 Annulla
             </button>
@@ -306,10 +305,9 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
                         ${(o.dc_price / o.vtk_amount).toFixed(2)} DC/VTK · da ${o.seller_name || 'Anonimo'}
                     </div>
                 </div>
-                <button onclick="window.vtkFillOrder('${o.id}', ${o.dc_price})"
+                <button ${ceAct('vtkFillOrder', [o.id, o.dc_price])}
                     ${dc < o.dc_price ? 'disabled' : ''}
-                    style="font-size:9px;padding:5px 12px;cursor:${dc < o.dc_price ? 'not-allowed' : 'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${dc < o.dc_price ? 'opacity:.4' : ''};transition:opacity .15s"
-                    onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                    style="font-size:9px;padding:5px 12px;cursor:${dc < o.dc_price ? 'not-allowed' : 'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${dc < o.dc_price ? 'opacity:.4' : ''};transition:opacity .15s">
                     Acquista
                 </button>
             </div>`).join('')
@@ -335,10 +333,9 @@ function _vtkRenderShop(vtk) {
             </div>
             <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
                 <div style="font-size:12px;font-weight:700;color:#2f74c0;font-family:monospace">◈ ${item.cost}</div>
-                <button onclick="window.vtkBuyShopItem('${item.id}')"
+                <button ${ceAct('vtkBuyShopItem', [item.id])}
                     ${canBuy ? '' : 'disabled'}
-                    style="padding:5px 12px;font-size:9px;font-weight:700;border-radius:4px;cursor:${canBuy?'pointer':'not-allowed'};background:${canBuy?'#0d1b2a':'#ffffff'};border:1px solid ${canBuy?'rgba(88,166,255,0.4)':'#d6dee8'};color:${canBuy?'#2f74c0':'#6a7480'};${canBuy?'':'opacity:.5'};transition:opacity .15s"
-                    onmousedown="if(!this.disabled)this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" onmouseleave="this.style.transform=''">
+                    style="padding:5px 12px;font-size:9px;font-weight:700;border-radius:4px;cursor:${canBuy?'pointer':'not-allowed'};background:${canBuy?'#0d1b2a':'#ffffff'};border:1px solid ${canBuy?'rgba(88,166,255,0.4)':'#d6dee8'};color:${canBuy?'#2f74c0':'#6a7480'};${canBuy?'':'opacity:.5'};transition:opacity .15s">
                     Acquista
                 </button>
             </div>

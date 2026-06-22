@@ -58,8 +58,8 @@ function renderTabCorse() {
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px">
         ${alerts}
         <div style="margin-left:auto;display:flex;gap:8px">
-            <button onclick="window.openMapOverlay()" class="em-bbtn">🗺 Live Map</button>
-            <button onclick="assignAllRides()" class="em-goldbtn">Smista tutte</button>
+            <button ${ceAct('openMapOverlay', [])} class="em-bbtn">🗺 Live Map</button>
+            <button ${ceAct('assignAllRides', [])} class="em-goldbtn">Smista tutte</button>
         </div>
     </div>
 
@@ -123,7 +123,7 @@ function renderTabCorse() {
                           : isBusy ? `<span class="em-pill em-pill--blue">In servizio</span>`
                           : `<span class="em-pill em-pill--green">Disponibile</span>`;
         const restBtn = (!isResting && !isBusy && driver.id !== 'ceo' && fatigue >= 40)
-            ? `<button onclick="sendDriverToRest('${driver.id}')" class="em-ghbtn" style="margin-left:7px;padding:2px 8px;font-size:9.5px">Riposo</button>`
+            ? `<button ${ceAct('sendDriverToRest', [driver.id])} class="em-ghbtn" style="margin-left:7px;padding:2px 8px;font-size:9.5px">Riposo</button>`
             : '';
 
         html += `<div class="ops-driver-row em-lrow" data-id="${driver.id}" style="align-items:flex-start;${isResting ? 'opacity:0.5' : ''}">

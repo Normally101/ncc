@@ -319,7 +319,7 @@ async function renderTabWarRoom() {
                     <span style="font-size:16px;font-weight:900;color:#c79a2a;">${totalMine}</span>
                     <span style="font-size:10px;color:#6b7280;"> / ${provinces.length} province</span>
                 </div>
-                <button class="wr-close-btn" onclick="window._wrClose()">✕</button>
+                <button class="wr-close-btn" ${ceAct('_wrClose', [])}>✕</button>
             </div>
         </div>
         <div id="wr-body">
@@ -424,7 +424,7 @@ function _wrShowSidebar(svgId, regionName, regionData, provs) {
                 ctaHtml = `<div style="display:flex;gap:5px;align-items:center;margin-bottom:3px;">
                     <input id="wri-${p.id}" type="number" min="${minOpa}" step="5000"
                         class="wr-offer-inp" placeholder="Min €${minOpa.toLocaleString()}">
-                    <button class="wr-btn wr-btn-green" onclick="window._wrAcquire('${p.id}')">🏴 OPA</button>
+                    <button class="wr-btn wr-btn-green" ${ceAct('_wrAcquire', [p.id])}>🏴 OPA</button>
                 </div>
                 <div style="font-size:9px;color:#6b7280;">Min €${minOpa.toLocaleString()}</div>`;
             } else {
@@ -432,7 +432,7 @@ function _wrShowSidebar(svgId, regionName, regionData, provs) {
                     <input id="wri-${p.id}" type="number" min="${hostOpa}" step="5000"
                         class="wr-offer-inp" style="border-color:rgba(239,68,68,0.3);"
                         placeholder="Min €${hostOpa.toLocaleString()}">
-                    <button class="wr-btn wr-btn-red" onclick="window._wrAcquire('${p.id}')">⚔ Ostile</button>
+                    <button class="wr-btn wr-btn-red" ${ceAct('_wrAcquire', [p.id])}>⚔ Ostile</button>
                 </div>
                 <div style="font-size:9px;color:#6b7280;">+130% · Min €${hostOpa.toLocaleString()}</div>`;
             }
