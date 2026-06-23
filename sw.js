@@ -6,7 +6,7 @@
    • notificationclick → focus sulla tab del gioco
    ═══════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ce-shell-v1';
+const CACHE_NAME = 'ce-shell-v2';
 const SHELL_ASSETS = [
   '/',
   '/index.html',
@@ -35,17 +35,42 @@ self.addEventListener('activate', e => {
   );
 });
 
-// ── Fetch: cache-first per asset statici, network-first per API ──────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────
+// NETWORK-FIRST per il codice che cambia ad ogni deploy (HTML/CSS/JS) → i
+// giocatori ricevono SEMPRE l'ultima versione (niente più index.html stantio
+// che caricava script vecchi). Fallback alla cache solo offline.
+// CACHE-FIRST per media/font (cambiano di rado) → veloci + shell offline.
 self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
   const url = new URL(e.request.url);
-  // Passa al network le chiamate Supabase/Mapbox/API esterne
+  // Esterni (Supabase/Mapbox/CDN): lascia gestire al browser.
   if (url.hostname !== self.location.hostname) return;
-  // Cache-first per asset statici
-  if (e.request.method === 'GET') {
+
+  const p = url.pathname;
+  const isHTML = e.request.mode === 'navigate' || p === '/' || p.endsWith('.html');
+  const isCode = p.endsWith('.js') || p.endsWith('.css');
+
+  const putCopy = res => {
+    if (res && res.ok && res.type === 'basic') {
+      const copy = res.clone();
+      caches.open(CACHE_NAME).then(c => c.put(e.request, copy)).catch(() => {});
+    }
+    return res;
+  };
+
+  if (isHTML || isCode) {
+    // network-first
     e.respondWith(
-      caches.match(e.request).then(cached => cached || fetch(e.request))
+      fetch(e.request).then(putCopy).catch(() =>
+        caches.match(e.request).then(cached => cached || caches.match('/index.html'))
+      )
     );
+    return;
   }
+  // cache-first per il resto (immagini, font, audio…)
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).then(putCopy))
+  );
 });
 
 // ── Push: mostra notifica dal server ─────────────────────────────────────────
