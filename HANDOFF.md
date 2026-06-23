@@ -7,6 +7,15 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### 🔴→✅ 23 giugno 2026 — BUG CRITICO Service Worker (i deploy NON arrivavano ai giocatori) — FIXATO
+Scoperto guardando il sito LIVE in browser (non via curl): errori `ceAct is not defined` + `ceOnb...phase undefined` in produzione. **Causa:** `sw.js` era **cache-first** con `CACHE_NAME` fisso `ce-shell-v1` e `index.html` in `SHELL_ASSETS` → i giocatori di ritorno restavano su un **index.html STANTIO** (senza i `<script>` aggiunti dopo: events.js, onboarding-core.js) mentre gli altri JS caricavano codice nuovo che li referenziava. **Riprodotto** (errori live) e confermato (de-registrato SW + svuotato cache → console pulita).
+- ⚠️ **Lezione operativa:** `curl` bypassa il Service Worker → le mie "verifiche deploy via curl" erano vere (il server serve i file nuovi) ma NON beccavano che i browser di ritorno restano sul cache vecchio. **Per verificare un deploy davvero: browser reale, non solo curl.** Probabilmente è il motivo per cui certi aggiornamenti "non si vedevano".
+- **Fix (deployato `1b031e2`, validato live):** `sw.js` ora **network-first su HTML/CSS/JS** (il codice che cambia ad ogni deploy), cache-first solo per media/font, `CACHE_NAME`→`ce-shell-v2` (l'activate spurga la v1 stantia), `respondWith` difensivo (cache solo `res.ok`/basic, fallback offline a `/index.html`). Verificato: SW attivo live, cache v2, `ceOnb`=object, `ceAct`=function, 0 errori.
+
+### 🔎 23 giugno 2026 — Landing logged-out: render rotto (da sistemare, NON ancora toccato)
+Un visitatore NUOVO vede di fatto solo la card "Unisciti alla community/Discord" + il garage del gioco che traspare. Nel DOM il contenuto buono c'è (hero **"DOMINA LE STRADE. COSTRUISCI IL TUO IMPERO"**, "Come funziona", "Top CEO Globali", news) MA le sezioni finiscono **off-screen** (top −2687…−817) e il **gioco si carica sopra** (`#main-panel` occupa la vista, `IL FONDO DEL BARILE` survival incluso). Funnel "GIOCA/REGISTRATI" sepolto, Discord messo davanti al gioco. **DA FARE (è design → mostrare a Vlad PRIMA di deployare):** far renderizzare pulita la landing per i logged-out + funnel play-first (hero esistente in evidenza + CTA gioca + screenshot reale + Discord come prova sociale secondaria). Test in `_mockups/`, non sull'ufficiale.
+
+
 ### ✅ 22 giugno 2026 (sera) — Security hardening (auth + rate-limit + input caps), applicato a prod
 Richiesta di Vlad ("fai tutto quello che puoi"). Audit completo + fix autonomi (tutti LIVE/verificati):
 - **Auth (Supabase Management API):** `password_min_length` 6→**8** · notifica email su **cambio password** → on. *(NON toccato `require_current_password`: l'unico flusso password dell'app è il reset via email/recovery → abilitarlo rischiava di romperlo. HIBP leaked-password = solo piano **Pro**. CAPTCHA = serve chiave **hCaptcha** da Vlad → entrambi RESTANO da fare.)*
