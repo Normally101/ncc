@@ -7,6 +7,34 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### 🔴 30 luglio 2026 — FALLA CRITICA trovata dalla routine automatica: cassa illimitata via `_add_player_cash` (NON ANCORA FIXATA IN PROD)
+La routine cloud (vedi `docs/AUTOMATION_ROUTINE.md`), su mandato esteso di Vlad ("fixa ogni
+bug, 0 jailbreak, 0 problemi di sicurezza per 10k giocatori"), ha trovato e **verificato
+personalmente leggendo il codice** (non solo un report di subagent) una falla attiva in
+produzione: `public._add_player_cash(v_user_id, v_delta)` (`14_fix_cash_bigint_cast.sql`) è
+un helper pensato per essere chiamato SOLO da altre RPC interne, ma è `GRANT`ato direttamente
+a `authenticated` **senza alcun controllo che `v_user_id = auth.uid()`**. Qualsiasi giocatore
+loggato può chiamare `supabase.rpc('_add_player_cash', {v_user_id: <qualsiasi UUID>, v_delta:
+999999999999})` da devtools/curl e darsi (o sottrarre a chiunque) qualunque cifra. Confermato
+attivo in prod: `rpc_buy_market_car`/`rpc_contribute_consorzio` (Mercato P2P e Consorzi, live)
+dipendono dallo stesso file. **Vlad avvisato via notifica push con mitigazione immediata**
+(2 righe REVOKE, sicure da applicare subito senza aspettare la review della PR).
+- **Scaffold completo (non applicato) in PR #4** (`45_lockdown_cash_exploits_scaffold.sql`,
+  branch `auto/critical-cash-exploits-scaffold`) — copre anche 2 falle correlate trovate
+  nello stesso giro: `rpc_pay_majority_dividend` (zero controllo `auth.uid()`, confermato
+  chiamato dal client, permette di svuotare la cassa di un bersaglio OPA nel conto del raider)
+  e `rpc_claim_daily_reward` (IDOR su `p_user_id`, premio piccolo/limitato quindi non cassa
+  illimitata, solo griefing). Più un quarto fix difensivo per `rpc_start_trip`/
+  `rpc_claim_trip_reward` (importo/durata corsa non validati) — **non confermato se questo
+  specifico path sia raggiungibile dal client attuale** (nessun call-site trovato, probabile
+  residuo di una migrazione MMO abbandonata), ma comunque a rischio se la migration è
+  applicata al DB, dato che resta chiamabile via API diretta.
+- **Azione richiesta da Vlad:** (1) applicare SUBITO le 2 righe REVOKE (sezione 1 dello
+  scaffold) — zero rischio, chiude la falla più grave in 10 secondi; (2) rivedere il resto
+  della PR #4 con calma e applicare gli altri fix; (3) verificare se `01_mmo_migration.sql`/
+  `16_territory_war.sql` (il path corse/trip) sono effettivamente applicati al DB prod, cosa
+  che la routine non può controllare da sola (nessun accesso diretto a Supabase concesso).
+
 ### 🔴→✅ 23 giugno 2026 — BUG CRITICO Service Worker (i deploy NON arrivavano ai giocatori) — FIXATO
 Scoperto guardando il sito LIVE in browser (non via curl): errori `ceAct is not defined` + `ceOnb...phase undefined` in produzione. **Causa:** `sw.js` era **cache-first** con `CACHE_NAME` fisso `ce-shell-v1` e `index.html` in `SHELL_ASSETS` → i giocatori di ritorno restavano su un **index.html STANTIO** (senza i `<script>` aggiunti dopo: events.js, onboarding-core.js) mentre gli altri JS caricavano codice nuovo che li referenziava. **Riprodotto** (errori live) e confermato (de-registrato SW + svuotato cache → console pulita).
 - ⚠️ **Lezione operativa:** `curl` bypassa il Service Worker → le mie "verifiche deploy via curl" erano vere (il server serve i file nuovi) ma NON beccavano che i browser di ritorno restano sul cache vecchio. **Per verificare un deploy davvero: browser reale, non solo curl.** Probabilmente è il motivo per cui certi aggiornamenti "non si vedevano".
