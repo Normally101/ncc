@@ -13,10 +13,7 @@ serve altro lavoro: aspettare la sua revisione.)_
 0
 
 ## Blocchi aperti
-- **PR non apribile dal sandbox**: nessun accesso `gh`/token GitHub in questa sessione al
-  momento del lavoro. Il branch `auto/tutorial-action-gate` è pronto ma **va aperto come PR
-  manualmente da Vlad** (o dalla prossima sveglia se nel frattempo l'accesso GitHub diventa
-  disponibile — verificare prima di aprire una nuova PR se ne esiste già una).
+_(nessuno — l'accesso GitHub è tornato disponibile più tardi nella stessa sveglia, PR aperta.)_
 
 ## Log sveglie
 - 2026-07-30 (sveglia 1): **Tutorial action-gated** — fatto.
@@ -34,7 +31,7 @@ serve altro lavoro: aspettare la sua revisione.)_
   - **NON verificato** (richiede Vlad in locale con login reale): il gate che si attiva
     durante un tutorial live vero (assegnare/completare una corsa mentre lo step è aperto),
     e l'aspetto visivo dell'hint aggiunto nel box del tutorial.
-  - **Branch pushato**: sì. **PR aperta**: no (nessun accesso `gh`/GitHub token disponibile
-    in questa finestra — vedi "Blocchi aperti"). Prossimo passo per Vlad: rivedere il diff
-    su `auto/tutorial-action-gate` e aprire la PR (o chiedere alla routine di farlo se
-    l'accesso GitHub torna disponibile).
+  - **Branch pushato**: sì. **PR aperta**: sì → https://github.com/Normally101/ncc/pull/1
+    (l'accesso GitHub MCP è tornato disponibile più tardi nella stessa sveglia). Routine
+    iscritta agli eventi della PR (CI/review), la seguirà come da protocollo PR-watch fino a
+    merge/chiusura. Prossimo passo per Vlad: revisione + merge (mai autonomo).
