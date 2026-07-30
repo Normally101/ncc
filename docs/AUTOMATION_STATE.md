@@ -48,6 +48,7 @@ _(nessuno)_
     nel sandbox).
   - **NON verificato:** comportamento a schermo con un salvataggio reale offline ≥1 giorno
     (guadagno positivo e caso spese-nette-superiori-agli-incassi).
-  - **Branch pushato**: sì. **PR aperta**: _(da verificare/fare nella stessa sveglia se
-    l'accesso GitHub è disponibile — controllare prima se questa riga è stata aggiornata più
-    sotto)._
+  - **Branch pushato**: sì. **PR aperta**: sì → https://github.com/Normally101/ncc/pull/2.
+    Routine iscritta agli eventi di entrambe le PR (#1 e #2), le segue come da protocollo
+    PR-watch fino a merge/chiusura. Prossimo passo per Vlad: revisione + merge di entrambe
+    (mai autonomo).
