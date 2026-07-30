@@ -12,21 +12,29 @@
   driver saltato dopo burnout, tasse sottostimate).
 - **PR #6** `auto/bughunt-dispatch-rides` — 2 bug reali fixati (doppia penalità incidente,
   prestige senza guard).
+- **PR #7** `auto/bughunt-p2p-alliances` (da aprire in questa sessione) — 3 bug reali
+  fixati: exploit VTK Shop ripetibile all'infinito (richiede applicare
+  `46_vtk_shop_purchase_scaffold.sql` PRIMA del deploy del client, altrimenti il negozio si
+  rompe), doppia deduzione cassa su fondazione/donazione consorzio, fuga di sottoscrizione
+  chat realtime. Vedi HANDOFF.md "30 luglio 2026 — Bug-hunt P2P/alleanze/VTK".
 
-**6 PR aperte, nessuna ancora mergiata da Vlad.** Da questo punto in poi: continuare il
-bug-hunt sistematico va bene (istruzione esplicita di Vlad "procedi da solo"), ma tenere
-d'occhio che non si accumulino troppe PR in coda senza che nessuna venga rivista — se alla
-prossima sveglia sono ancora tutte e 6+ aperte, considerare di rallentare l'apertura di PR
-nuove e concentrarsi solo su watch/CI delle esistenti finché Vlad non ne mergia qualcuna.
+**7 PR aperte, nessuna ancora mergiata da Vlad.** ⏸️ **STOP a nuove PR da qui**: come
+annotato alla sveglia precedente, 6+ PR in coda senza nessuna revisione è già troppo per
+una persona sola. Non aprire altri branch/PR di bug-hunt finché almeno un paio di queste
+non sono state riviste/mergiate da Vlad — anche se la missione estesa lo permetterebbe,
+continuare a produrre PR che si accumulano senza essere guardate non aiuta Vlad, gli crea
+solo più lavoro di coda. Da qui in poi: solo watch/CI/review-response sulle PR esistenti
+(già tutte sottoscritte via subscribe_pr_activity), fino a quando lo stato cambia.
 
 ## Branch attivo
-`auto/bughunt-p2p-alliances` — quarto item concreto della missione estesa: bug-hunt su
-`p2p-market.js` + `alliances.js` + `vtk-market.js`.
+`auto/bughunt-p2p-alliances` — **completato**, PR #7 da aprire in questa stessa sveglia.
+Nessun nuovo branch dopo questo (vedi nota "STOP a nuove PR" sopra).
 
 ## Task corrente
-**In corso ora:** subagent di scansione lanciato sui 3 file P2P/alleanze/VTK; verifica
-manuale di ogni finding (stessa disciplina delle 3 volte precedenti) prima di scrivere
-qualunque fix.
+Bug-hunt P2P/alleanze/VTK completato e verificato. **Da qui: modalità solo-watch** sulle 7
+PR aperte, nessun nuovo lavoro di codice finché Vlad non ne rivede/mergia alcune. Se una
+sveglia futura trova che Vlad ha mergiato qualcosa, si può riprendere il backlog esteso in
+`docs/AUTOMATION_ROUTINE.md` (bug-hunt B2B/tourism/crypto, o l'audit scalabilità 10k).
 
 ## Sveglie consecutive senza progresso
 0
@@ -45,5 +53,6 @@ _(nessuno)_
   `engine-daily.js` → 3 bug reali fixati. PR #5.
 - 2026-07-30 (stessa sveglia): bug-hunt `engine-rides.js`/`dispatcher.js` → 2 bug reali
   fixati, 3 candidati investigati e scartati con motivazione esplicita. PR #6.
-- 2026-07-30 (stessa sveglia): iniziato bug-hunt P2P/alleanze/VTK, branch
-  `auto/bughunt-p2p-alliances`, subagent lanciato, verifica manuale in corso.
+- 2026-07-30 (stessa sveglia): bug-hunt P2P/alleanze/VTK → 3 bug reali fixati (exploit VTK
+  Shop infinito, doppia deduzione cassa consorzi, fuga sottoscrizione chat). PR #7. Deciso
+  di fermarsi dopo 7 PR aperte senza nessuna revisione — passo a modalità solo-watch.

@@ -7,6 +7,52 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### 🔴🐛 30 luglio 2026 — Bug-hunt P2P/alleanze/VTK: exploit VTK Shop + doppia deduzione cassa consorzi (routine automatica, PR da rivedere — richiede SQL nuova)
+Quarto item concreto della missione estesa, branch `auto/bughunt-p2p-alliances`. Subagent +
+**verifica personale** su `p2p-market.js`/`alliances.js`/`vtk-market.js`. 3 bug reali
+confermati e fixati:
+1. **🔴 VTK Shop — acquisti mai scalati sul server, ripetibili gratis all'infinito**
+   (`vtkBuyShopItem`, vtk-market.js). A differenza del mercato P2P VTK (che ha RPC vere),
+   il negozio VTK (slot garage, reset stress, boost reputazione) decrementava
+   `gameState.vtkBalance` **solo in locale** — nessuna RPC esisteva per questo. Siccome
+   `vtk_balance` viene riscritto per intero (non a delta) dal client ad ogni evento
+   Realtime sulla riga `companies` (`serverState.js:210`), il decremento locale veniva
+   silenziosamente annullato al primo evento successivo (es. il payout di una corsa
+   qualsiasi) — mentre l'effetto dell'oggetto (bonus reale, già applicato) restava. Un
+   giocatore poteva ripetere l'acquisto all'infinito gratis. **Fix: nuova RPC
+   `rpc_spend_vtk_shop_item` con catalogo costi lato server** (scaffold, NON applicata —
+   vedi `46_vtk_shop_purchase_scaffold.sql`), client aggiornato per chiamarla.
+   ⚠️ **Sequenziamento:** questa SQL va applicata PRIMA di deployare il fix JS
+   corrispondente, altrimenti il negozio si rompe (RPC inesistente) invece del bug attuale.
+2. **Doppia deduzione cassa su fondazione/donazione consorzio** (`alliances.js`,
+   `_alCreate`/`_alDonate`) — mancava il guard `if (!window.ServerState?.isReady())` che
+   TUTTI gli altri punti-spesa del gioco (p2p-market.js) hanno già, con lo stesso commento
+   "evitiamo doppia deduzione". Sequenza concreta: fondi un consorzio da 25.000, la RPC
+   scala il server a 75.000, poi il codice locale scala ANCHE lui −25.000 (50.000), POI il
+   sync Realtime (a delta) applica un'altra volta −25.000 dal delta server → cassa
+   visualizzata sbagliata per −25.000 fino al prossimo reload completo. Fix: aggiunto lo
+   stesso guard usato ovunque nel resto del codice.
+3. **Chat realtime del consorzio non disiscritta all'uscita/scioglimento** — `_alLeave`/
+   `_alDisband` non chiamavano `removeChannel`, lasciando la sottoscrizione attiva per il
+   resto della sessione anche dopo aver lasciato il consorzio (impatto basso: l'handler
+   fa no-op se il DOM della chat non c'è più, ma è comunque una fuga di sottoscrizione).
+   Fix: nuovo `_unsubscribeChat()` chiamato da entrambe.
+- **Investigati e scartati** (bassa confidenza/materialità): race sull'aggiornamento
+  ottimistico di `vtkBalance`/`driverCoins` in `vtkFillOrder` (stesso bug di fondo del #2
+  ma auto-correggente nell'ordine tipico degli eventi); mancanza di un "generation token"
+  anti-stale-render in `renderTabConsorzi` (plausibile solo con una finestra di timing
+  specifica, non confermato).
+- Bump `alliances.js?v=6`, `vtk-market.js?v=14`.
+- **Verificato:** ogni bug letto e confermato personalmente nel codice sorgente (incluso
+  il pattern-guard mancante confrontato con gli altri 6 call-site che lo usano già in
+  `p2p-market.js`) prima di scrivere il fix. `node --check` su tutti i .js (0 errori). Boot
+  headless senza login → stesso unico errore pre-esistente e scollegato
+  (`supabase-config.js`).
+- **NON verificato** (richiede Vlad in locale, login reale, DOPO aver applicato
+  `46_vtk_shop_purchase_scaffold.sql` a prod): un acquisto reale dal VTK Shop (verificare
+  che il saldo scali per davvero e resti scalato dopo un ciclo di gioco); fondazione/
+  donazione consorzio con cassa vera (verificare che non ci sia più il doppio taglio).
+
 ### 🔴→✅ 23 giugno 2026 — BUG CRITICO Service Worker (i deploy NON arrivavano ai giocatori) — FIXATO
 Scoperto guardando il sito LIVE in browser (non via curl): errori `ceAct is not defined` + `ceOnb...phase undefined` in produzione. **Causa:** `sw.js` era **cache-first** con `CACHE_NAME` fisso `ce-shell-v1` e `index.html` in `SHELL_ASSETS` → i giocatori di ritorno restavano su un **index.html STANTIO** (senza i `<script>` aggiunti dopo: events.js, onboarding-core.js) mentre gli altri JS caricavano codice nuovo che li referenziava. **Riprodotto** (errori live) e confermato (de-registrato SW + svuotato cache → console pulita).
 - ⚠️ **Lezione operativa:** `curl` bypassa il Service Worker → le mie "verifiche deploy via curl" erano vere (il server serve i file nuovi) ma NON beccavano che i browser di ritorno restano sul cache vecchio. **Per verificare un deploy davvero: browser reale, non solo curl.** Probabilmente è il motivo per cui certi aggiornamenti "non si vedevano".

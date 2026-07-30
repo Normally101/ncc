@@ -150,14 +150,25 @@ window.vtkCancelOrder = async function(orderId) {
     window.renderVTKModal();
 };
 
-window.vtkBuyShopItem = function(itemId) {
+window.vtkBuyShopItem = async function(itemId) {
     const item = VTK_SHOP_ITEMS.find(x => x.id === itemId);
     if (!item) return;
     if ((gameState.vtkBalance || 0) < item.cost) {
         if (typeof showNotification === 'function') showNotification(`VTK insufficienti — servono ${item.cost} VTK.`, 'error');
         return;
     }
-    gameState.vtkBalance -= item.cost;
+    const sb = window.supabaseClient;
+    if (!sb) return;
+    // Il costo è validato/dedotto lato server (rpc_spend_vtk_shop_item, catalogo
+    // server-side) — prima girava tutto in locale e il decremento veniva
+    // silenziosamente annullato dal prossimo sync Realtime di vtk_balance,
+    // permettendo acquisti ripetuti gratis. Vedi 46_vtk_shop_purchase_scaffold.sql.
+    const { error } = await sb.rpc('rpc_spend_vtk_shop_item', { v_item_id: itemId });
+    if (error) {
+        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Acquisto non riuscito', error), 'error');
+        return;
+    }
+    if (!window.ServerState?.isReady()) gameState.vtkBalance = (gameState.vtkBalance || 0) - item.cost;
     item.apply(gameState);
     if (typeof updateUI === 'function') updateUI();
     if (typeof saveGame === 'function') saveGame();
