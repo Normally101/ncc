@@ -14,9 +14,12 @@ derivato) — vedi lì per il dettaglio e le regole (un item concreto alla volta
 monolitico, mai load-test/azioni dirette su prod). Il vecchio backlog puntuale (2 item) è
 completato e archiviato in quel file come storico.
 
-Prossimo passo per la prossima sveglia (o per proseguire in questa stessa finestra se il
-budget lo consente): prendere il primo item del nuovo backlog ("Audit rate-limit RPC") e
-aprire `auto/rpc-ratelimit-audit`.
+**In corso ora** (stessa finestra): primo item del nuovo backlog, "Audit rate-limit RPC" —
+un subagent sta mappando tutte le ~90 `rpc_*` in `*.sql` (chi è client-facing, chi muta
+cassa/valuta/stato condiviso, chi ha già `_ce_rate_limit` o un'altra mitigazione) per capire
+dove manca copertura, sul modello del pattern già validato in `43_ratelimit_driver_coins.sql`.
+Solo lettura/audit, nessuna scrittura SQL applicata. Output atteso: scaffold SQL (non
+applicato) + branch `auto/rpc-ratelimit-audit` + PR.
 
 ## Sveglie consecutive senza progresso
 0
