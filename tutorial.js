@@ -59,6 +59,7 @@ const _TUT_STEPS = [
         arrow: 'center',
         title: '🚕 Assegna le Corse',
         body: 'Le corse arrivano in tempo reale. Clicca su una corsa e poi sull\'autista per assegnarla — o usa <strong>Smista tutte</strong>. Verde = Standard, Blu = Business, Viola = VIP, Nero = Ultra.',
+        actionGate: 'rides',
     },
     {
         type: 'auto-nav',
@@ -108,6 +109,7 @@ let _tutCanvas  = null;
 let _tutOverlay = null;
 let _tutTarget  = null;
 let _tutCleanup = null;
+let _tutGateInterval = null;
 
 /* ──────────────────────────────────────────────────────────────
    PUBLIC API
@@ -118,12 +120,14 @@ window.startTutorial = function() {
 };
 
 window.tutorialNext = function() {
+    if (_tutGateInterval) { clearInterval(_tutGateInterval); _tutGateInterval = null; }
     if (_tutCleanup) { _tutCleanup(); _tutCleanup = null; }
     _tutStep++;
     if (_tutStep >= _TUT_STEPS.length) { _end(); } else { _render(); }
 };
 
 window.tutorialSkip = function() {
+    if (_tutGateInterval) { clearInterval(_tutGateInterval); _tutGateInterval = null; }
     if (_tutCleanup) { _tutCleanup(); _tutCleanup = null; }
     _end();
 };
@@ -156,6 +160,7 @@ function _render() {
             const container = document.getElementById('tab-container');
             _buildBackdrop(container, false);
             _buildBox(step, container);
+            _watchActionGate(step);
         }, 250);
         return;
     }
@@ -163,6 +168,33 @@ function _render() {
     const target = (!isCenter && step.target) ? document.querySelector(step.target) : null;
     _buildBackdrop(target, isCenter);
     _buildBox(step, target);
+    _watchActionGate(step);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   ACTION GATE — avanza automaticamente quando il giocatore compie
+   DAVVERO l'azione dello step (non solo cliccando "Avanti").
+   Il bottone "Avanti" resta comunque sempre cliccabile: nessun
+   soft-lock, il gate è un bonus di progressione, non un blocco.
+────────────────────────────────────────────────────────────── */
+function _tutActionSignal(kind) {
+    if (kind === 'rides') {
+        return (window.ceOnb && typeof window.ceOnb.rides === 'function') ? window.ceOnb.rides() : null;
+    }
+    return null;
+}
+
+function _watchActionGate(step) {
+    if (!step.actionGate) return;
+    const baseline = _tutActionSignal(step.actionGate);
+    if (baseline == null) return;
+    _tutGateInterval = setInterval(() => {
+        if (_tutActionSignal(step.actionGate) > baseline) {
+            clearInterval(_tutGateInterval);
+            _tutGateInterval = null;
+            window.tutorialNext();
+        }
+    }, 1000);
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -247,6 +279,7 @@ function _buildBox(step, target) {
         </div>
         <div style="font-size:16px;font-weight:800;color:white;margin-bottom:8px;line-height:1.3">${step.title}</div>
         <div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:16px">${step.body}</div>
+        ${step.actionGate ? '<div style="font-size:11px;color:#d4af37;margin:-10px 0 16px;opacity:0.85">✓ Avanza da solo appena lo fai davvero</div>' : ''}
         <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
             <div style="display:flex;gap:4px;align-items:center">${dots}</div>
             ${btnHtml}
