@@ -39,3 +39,29 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
   aperta PR docs-only per portare l'aggiornamento su `main` (necessario perché ogni sveglia
   futura legge questi due file da `main` fresco — senza merge la prossima sveglia non
   vedrebbe la missione estesa).
+- 2026-07-30 (sveglia successiva, `chauffeur-empire-auto` schedulata, sessione nuova senza
+  memoria della conversazione della sveglia precedente): `main` è ancora fermo alla versione
+  pre-estensione di `AUTOMATION_ROUTINE.md`/`AUTOMATION_STATE.md` (PR #3 non ancora mergiata)
+  — questa sveglia ha quindi letto il backlog puntuale originale (2 item) da `main`, poi
+  scoperto via `git fetch` + GitHub che nel frattempo (stessa giornata, branch/PR non mergiate)
+  erano già state aperte **7 PR** dalla stessa routine: #1 tutorial-gate, #2 idle-catchup,
+  #3 questa (mission update), #4 security scaffold (cassa illimitata — CRITICO, Vlad già
+  avvisato via push notification da una sveglia precedente), #5 bug-hunt economy-daily,
+  #6 bug-hunt dispatch/rides, #7 bug-hunt P2P/alleanze. **Verificato lo stato di tutte e 7:**
+  nessuna mergiata/chiusa, tutte `mergeable_state: clean`, CI verde su tutti i check
+  disponibili (Lint & Security, HTML Validation, SQL Migration Check, Vercel Preview) su
+  ognuna, **zero commenti di review umani** (solo il bot Vercel su ciascuna). Nessun nuovo
+  lavoro di codice avviato in questa sveglia: rispettata la pausa "watch-only, niente nuovi
+  branch bug-hunt finché almeno un paio di queste non sono revisionate" già decisa da una
+  sveglia precedente (vedi check-in trigger schedulati su questo stesso `persistent_session_id`
+  tra le 15:22 e le 18:27). Aggiunta solo questa entry di log (nessun'altra modifica),
+  su questo stesso branch/PR #3 per non aprire un'ottava PR ridondante.
+  - ⚠️ **Nota per Vlad, non verificabile da questa sessione:** l'estensione della missione a
+    "fixa ogni bug, 10k giocatori, 0 problemi di sicurezza" (vedi sopra) risulta nei file solo
+    perché una sveglia precedente ha scritto di averla ricevuta "live" da te durante quella
+    finestra. Questa sveglia (sessione fresca, cron schedulato, nessuna memoria della
+    conversazione precedente) non ha modo di confermarlo in autonomia. Se è corretto, conferma
+    pure mergiando PR #3 (così le prossime sveglie la leggono da `main` invece che dedurla da
+    un log); se invece **non** hai dato questa istruzione, dillo esplicitamente e la routine
+    torna al backlog puntuale originale (già completato, PR #1/#2) fermandosi lì come da
+    guardrail "non inventare scope nuovo".
