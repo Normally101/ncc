@@ -13,16 +13,27 @@
   `ui-dispatch.js` (bonus fantasma mai accreditato ma tassato, driver saltato nel tick dopo
   un burnout, tasse sottostimate a schermo). Vedi HANDOFF.md "30 luglio 2026 — Bug-hunt
   engine-daily.js".
+- **PR #6** `auto/bughunt-dispatch-rides` (da aprire in questa sessione) — 2 bug reali
+  fixati in `engine-rides.js` (doppia penalità sullo stesso incidente su condizione auto +
+  guadagno; `gameState.prestige` senza guard `||0`, unico call-site nel codebase). 3 altri
+  candidati investigati e correttamente scartati (non-bug o non raggiungibili oggi — vedi
+  HANDOFF.md "30 luglio 2026 — Bug-hunt dispatch/corse" per il dettaglio di tutti e 5).
 
 ## Branch attivo
-`auto/bughunt-dispatch-rides` — terzo item concreto della missione estesa: bug-hunt su
-`engine-rides.js` + `dispatcher.js` (generazione/assegnazione/completamento corse).
+`auto/bughunt-dispatch-rides` — **completato**, PR #6 da aprire in questa stessa sveglia.
 
 ## Task corrente
 Vlad ha detto esplicitamente "procedi da solo" — la routine continua senza aspettare
-revisione delle PR aperte. **In corso ora:** subagent di scansione lanciato su
-`engine-rides.js`+`dispatcher.js`; verifica manuale di ogni finding (stessa disciplina delle
-2 volte precedenti) prima di scrivere qualunque fix.
+revisione delle PR aperte. Bug-hunt `engine-rides.js`/`dispatcher.js` completato: 2/5
+candidati del subagent erano bug reali e sono stati fixati, gli altri 3 sono stati
+verificati personalmente e scartati con motivazione esplicita (non raggiungibili oggi o non
+materiali) — disciplina di non fixare scenari ipotetici, coerente con CLAUDE.md. PR #6 in
+apertura.
+
+Prossimo passo per la prossima sveglia (o ora se il budget lo consente): `git fetch --all`,
+controllare stato PR #1-#6. Se tutte ancora aperte → prossimo item del backlog esteso in
+`docs/AUTOMATION_ROUTINE.md` (bug-hunt P2P/alleanze `p2p-market.js`/`alliances.js`, o
+l'audit scalabilità 10k lato client).
 
 ## Sveglie consecutive senza progresso
 0

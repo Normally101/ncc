@@ -581,6 +581,12 @@ function completeRide(ride, _deferPay = false) {
         }
     }
 
+    // Condizione dell'auto PRIMA di un eventuale incidente di questa corsa — usata più sotto
+    // per il conditionMult, così il danno di QUESTO incidente non si scarica due volte sulla
+    // stessa corsa (una volta via il taglio prezzo 50%, una seconda via conditionMult che
+    // altrimenti leggerebbe la condizione già danneggiata).
+    const _conditionBeforeIncident = gameState.fleet.find(c => c.id === driver?.assignedCarId)?.condition;
+
     // Incidente: auto danneggiata, incasso ridotto
     if (ride.hasIncident) {
         const car = gameState.fleet.find(c => c.id === driver?.assignedCarId);
@@ -665,7 +671,7 @@ function completeRide(ride, _deferPay = false) {
     const strategyMult = _ps === 'premium' ? 1.40 : _ps === 'discount' ? 0.80 : 1.0;
     // Condition malus: <50% → −15%, <30% → −20% (i clienti VIP odiano le auto malridotte)
     const _car3 = gameState.fleet.find(c => c.id === driver?.assignedCarId);
-    const _cond3 = _car3 ? (_car3.condition || 0) : 100;
+    const _cond3 = _conditionBeforeIncident != null ? _conditionBeforeIncident : (_car3 ? (_car3.condition || 0) : 100);
     const conditionMult = _cond3 < 30 ? 0.80 : _cond3 < 50 ? 0.85 : 1.0;
     const _kmEst = _car3 && ride.fromPoi?.region !== ride.toPoi?.region ? 250 : 60;
     const _fuelDeduction = Math.round((_kmEst / 10) * (gameState.fuelPrice || 1.85));
@@ -709,7 +715,7 @@ function completeRide(ride, _deferPay = false) {
             }
         }
     }
-    gameState.reputation = Math.min(5.0 + gameState.prestige, gameState.reputation + 0.02);
+    gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.02);
 
     // Milestone €1.000.000 (una volta sola)
     if (prevCash < 1_000_000 && gameState.cash >= 1_000_000 && !gameState._milestoneM1) {
