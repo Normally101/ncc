@@ -11,24 +11,28 @@
   controllo `auth.uid()`, è cassa illimitata confermata attiva in prod — Vlad già avvisato
   via notifica push con mitigazione immediata a parte dalla PR). Vedi HANDOFF.md entry
   "30 luglio 2026 — FALLA CRITICA" per il dettaglio completo.
+- **PR #5** `auto/bughunt-economy-daily` (da aprire in questa sessione) — 3 bug reali fixati
+  in `engine-daily.js`/`ui-dispatch.js` (bonus hotel exclusive mai accreditato ma tassato
+  per davvero, driver saltato nel tick fatica dopo un burnout per bug forEach+splice, tasse
+  mostrate al giocatore sottostimate). Vedi HANDOFF.md entry "30 luglio 2026 — Bug-hunt
+  engine-daily.js" per il dettaglio completo di ognuno.
 
 ## Branch attivo
-`auto/bughunt-economy-daily` — secondo item concreto della missione estesa: bug-hunt mirato
-su `engine-daily.js` (processDailyRoutines, ~1148 righe — cuore del ciclo economico
-giornaliero: tasse, stipendi, leasing, investimenti, eventi random).
+`auto/bughunt-economy-daily` — **completato**, PR #5 da aprire in questa stessa sveglia.
 
 ## Task corrente
-Vlad ha detto esplicitamente "procedi da solo, non hai bisogno del mio intervento" — quindi
-la routine continua sul backlog esteso senza aspettare revisione delle PR #1-#4 aperte.
-**In corso ora:** un subagent sta leggendo `engine-daily.js` riga per riga a caccia di bug
-logici reali (doppi conteggi, off-by-one, condizioni morte, flag che non scadono mai, bug
-da copia-incolla) — NON un audit di sicurezza questa volta, bug di logica generici.
-Come per l'audit RPC precedente: ogni candidato trovato dal subagent verrà **verificato
-personalmente leggendo il codice sorgente** prima di scrivere qualunque fix (lezione
-imparata: il subagent dell'audit RPC aveva sottostimato la gravità reale di un finding e
-mancato di notare che `_add_player_cash` era GRANTed a `authenticated` — la verifica
-manuale ha trovato il problema vero). Solo bug con alta confidenza confermata verranno
-fixati; nessuna modifica speculativa/di stile.
+Vlad ha detto esplicitamente "procedi da solo, non hai bisogno del mio intervento" — la
+routine continua sul backlog esteso senza aspettare revisione delle PR aperte. Bug-hunt su
+`engine-daily.js` completato: subagent di scansione + **verifica personale di ogni finding
+leggendo il codice sorgente riga per riga** (stessa disciplina dell'audit RPC — lì la
+verifica manuale aveva trovato un problema più grave di quanto riportato dal subagent; qui
+ha invece confermato tutti e 3 i finding così come riportati). 3/3 bug confermati e fixati,
+nessun finding scartato come falso positivo questa volta. PR #5 in apertura.
+
+Prossimo passo per la prossima sveglia (o per proseguire ora se il budget lo consente):
+`git fetch --all`, controllare stato PR #1-#5. Se tutte ancora aperte → prendere il prossimo
+item del backlog esteso in `docs/AUTOMATION_ROUTINE.md` (bug-hunt dispatch/corse
+`engine-rides.js`+`dispatcher.js`, o P2P/alleanze, o l'audit scalabilità 10k — vedi lista).
 
 ## Sveglie consecutive senza progresso
 0

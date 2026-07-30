@@ -155,7 +155,7 @@ function renderTabCorse() {
             <span style="color:var(--em-muted)">Entrate <strong style="color:var(--em-green-d)">€${_ds.income.toLocaleString('it-IT')}</strong></span>
             <span style="color:var(--em-dim)">·</span>
             <span style="color:var(--em-muted)">Uscite <strong style="color:var(--em-red)">€${_ds.expenses.toLocaleString('it-IT')}</strong></span>
-            ${_ds.luxuryTax > 0 ? `<span style="color:var(--em-dim)">·</span><span style="color:var(--em-muted)">Tax <strong style="color:var(--em-amber)">€${_ds.luxuryTax.toLocaleString('it-IT')}</strong></span>` : ''}
+            ${_ds.totalTax > 0 ? `<span style="color:var(--em-dim)">·</span><span style="color:var(--em-muted)">Tax <strong style="color:var(--em-amber)">€${_ds.totalTax.toLocaleString('it-IT')}</strong></span>` : ''}
             <span style="color:var(--em-dim)">·</span>
             <span style="color:var(--em-muted)">Cash <strong style="color:var(--em-blue)">€${_ds.cash.toLocaleString('it-IT')}</strong></span>
         </div>`;

@@ -7,6 +7,47 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### 🐛 30 luglio 2026 — Bug-hunt `engine-daily.js`: 3 bug reali trovati e fixati (routine automatica, PR da rivedere)
+Secondo item concreto della missione estesa (`docs/AUTOMATION_ROUTINE.md`), branch
+`auto/bughunt-economy-daily`. Audit mirato (subagent + **verifica personale leggendo il
+codice**, stessa disciplina usata per l'audit RPC) su `processDailyRoutines()` — cuore del
+ciclo economico giornaliero. Trovati e fixati 3 bug reali (non refactor):
+1. **Bonus `inv_hotel_exclusive` (+€500/g) mai accreditato in cassa** — `income += 500` era
+   scritto DOPO `gameState.cash += (income - expenses)`, quindi il bonus era un valore
+   fantasma: mai pagato al giocatore, ma comunque contato in `dailyNetProfit`/
+   `annualProfitTracker` (tassato per davvero alla dichiarazione annuale) e nel calcolo
+   dividendi IPO NPC (`gameState.cash -= npcDividend` basato su profitto gonfiato) — un
+   giocatore con questo investimento perdeva cash vera su un guadagno mai ricevuto. Fix:
+   spostato `income += 500` prima del settlement cassa (stesso pattern già usato per il
+   fondo pensione, che aveva il commento corretto "must be before tax calc").
+2. **`_tickFatigue`: `gameState.drivers.forEach()` con `splice()` dentro il callback per il
+   burnout** — classico bug di mutazione-array-durante-iterazione: quando un driver viene
+   rimosso per burnout, l'array si accorcia ma `forEach` avanza comunque all'indice
+   successivo, saltando il driver immediatamente dopo quello rimosso per l'intero tick
+   (niente fatica/morale/riposo per lui quell'ora). Fix: itera su `[...gameState.drivers]`
+   (copia), lo splice sull'originale non tocca più il cursore di iterazione.
+3. **Tasse mostrate al giocatore sottostimate** — log di chiusura giornata, toast riepilogo
+   e overlay "Tax" nel dispatch center mostravano solo `luxuryTax` (tassa sui veicoli),
+   omettendo `profitTaxes` (tassa sul reddito, fino al 42% del reddito passivo senza
+   Amministratore) — la cassa reale era già dedotta correttamente per entrambe, solo la
+   cifra mostrata era sbagliata. Fix: nuovo `totalTax = luxuryTax + profitTaxes` usato in
+   tutti e 3 i punti di display; rinominato il campo `_dailySummary.luxuryTax` →
+   `.totalTax` (aggiornato l'unico altro riferimento, `ui-dispatch.js:158`).
+- Bump `engine-daily.js?v=11`, `ui-dispatch.js?v=13`.
+- **Verificato:** ogni bug letto e confermato personalmente nel codice sorgente (non solo
+  fidandosi del report del subagent che ha fatto la prima scansione) prima di scrivere il
+  fix. `node --check` su tutti i .js (0 errori). Boot headless senza login → stesso unico
+  errore pre-esistente e scollegato (`supabase-config.js`, CDN irraggiungibile nel sandbox).
+- **NON verificato** (richiede Vlad in locale con login reale/più giorni di gioco): il
+  comportamento a schermo di un ciclo giornaliero completo con `inv_hotel_exclusive` attivo
+  (verificare che il +€500 ora appaia davvero in cassa) e con un burnout driver in mezzo
+  all'array staff (verificare che il driver successivo riceva ora il tick fatica). Nessun
+  harness node scritto per questi (dipendenze pesanti da `gameState`/DOM/Supabase in
+  `engine-daily.js` rendono un mock isolato poco rappresentativo — verifica di lettura del
+  codice ritenuta sufficiente per la confidenza, ma il test a schermo resta il modo per
+  confermarlo davvero, stessa disciplina di sempre: "non dichiarare mai verificato qualcosa
+  che non hai potuto davvero eseguire").
+
 ### 🔴→✅ 23 giugno 2026 — BUG CRITICO Service Worker (i deploy NON arrivavano ai giocatori) — FIXATO
 Scoperto guardando il sito LIVE in browser (non via curl): errori `ceAct is not defined` + `ceOnb...phase undefined` in produzione. **Causa:** `sw.js` era **cache-first** con `CACHE_NAME` fisso `ce-shell-v1` e `index.html` in `SHELL_ASSETS` → i giocatori di ritorno restavano su un **index.html STANTIO** (senza i `<script>` aggiunti dopo: events.js, onboarding-core.js) mentre gli altri JS caricavano codice nuovo che li referenziava. **Riprodotto** (errori live) e confermato (de-registrato SW + svuotato cache → console pulita).
 - ⚠️ **Lezione operativa:** `curl` bypassa il Service Worker → le mie "verifiche deploy via curl" erano vere (il server serve i file nuovi) ma NON beccavano che i browser di ritorno restano sul cache vecchio. **Per verificare un deploy davvero: browser reale, non solo curl.** Probabilmente è il motivo per cui certi aggiornamenti "non si vedevano".
