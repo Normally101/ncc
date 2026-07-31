@@ -124,7 +124,23 @@
         const o = tpl(id);
         const gs = window.gameState;
         const rw = getRw(o, gs);
-        if (rw.dc)   gameState.driverCoins = (gameState.driverCoins || 0) + rw.dc;
+        if (rw.dc) {
+            gameState.driverCoins = (gameState.driverCoins || 0) + rw.dc;
+            // driverCoins e' sincronizzato in OVERWRITE, non a delta (serverState.js:209):
+            // senza persistere sulla colonna autoritativa, il primo evento Realtime sulla
+            // riga `companies` azzera il premio, mentre l'ordine resta marcato come
+            // riscosso per sempre. Stesso pattern usato da ui-store.js:263-275.
+            try {
+                window.ServerState?.addDriverCoins?.(rw.dc, 'daily_order_' + id)
+                    ?.then(r => {
+                        if (r?.ok && r.driver_coins != null) {
+                            gameState.driverCoins = r.driver_coins;
+                            if (typeof updateUI === 'function') updateUI();
+                        }
+                    })
+                    ?.catch(() => {});
+            } catch (e) {}
+        }
         if (rw.cash) { typeof window._addCash === 'function' ? window._addCash(rw.cash) : (gameState.cash = (gameState.cash || 0) + rw.cash); }
         if (rw.rep)  gameState.reputation = Math.min(5, (gameState.reputation || 0) + rw.rep);
         st.claimed.push(id);

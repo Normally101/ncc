@@ -75,7 +75,12 @@ window.claimQuestReward = function(questId) {
         });
     }
   }
-  if (r.tc)         gs.driverCoins = (gs.driverCoins || 0) + r.tc;
+  if (r.tc) {
+    gs.driverCoins = (gs.driverCoins || 0) + r.tc;
+    window.ServerState?.addDriverCoins?.(r.tc, 'quest_reward')
+        ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gs.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
+        ?.catch(() => {});
+  }
   if (r.rep)        gs.reputation = Math.min(5.0 + (gs.prestige || 0), gs.reputation + r.rep);
   if (r.shadowCoin) gs.shadowCoin = (gs.shadowCoin || 0) + r.shadowCoin;
   if (r.unlock)     { if (!gs.unlockedFeatures) gs.unlockedFeatures = []; if (!gs.unlockedFeatures.includes(r.unlock)) gs.unlockedFeatures.push(r.unlock); }
