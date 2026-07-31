@@ -370,7 +370,9 @@ function _tRenderOpenCard(t) {
         <div style="border-top:1px solid #21262d;padding-top:10px;margin-top:4px">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
                 <span style="font-size:8px;color:#6b7280">Pledge (max €100k)</span>
-                <span style="font-size:8px;color:#c79a2a;font-family:monospace" id="t-pledge-val-${t.id}">€0</span>
+                <!-- Mostra il pledge REALE: era hardcoded a €0 mentre lo slider (e quindi
+                     l'importo davvero inviato da tourismSubmitBid) conservava il valore. -->
+                <span style="font-size:8px;color:#c79a2a;font-family:monospace" id="t-pledge-val-${t.id}">€${pledge.toLocaleString('it-IT')}</span>
             </div>
             <input type="range" min="0" max="100000" step="1000"
                 value="${pledge}"
