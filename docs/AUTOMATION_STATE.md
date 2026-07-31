@@ -65,3 +65,37 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
     un log); se invece **non** hai dato questa istruzione, dillo esplicitamente e la routine
     torna al backlog puntuale originale (già completato, PR #1/#2) fermandosi lì come da
     guardrail "non inventare scope nuovo".
+- 2026-07-31 (sveglia cron successiva, `chauffeur-empire-auto`, sessione fresca senza memoria
+  delle precedenti): **trovato un problema di autenticazione della "conferma" lasciata sul
+  commento precedente**, non solo l'incertezza già segnalata sopra.
+  - `git fetch --all` + verifica dei 7 branch/PR: **nessun cambiamento** dalla sveglia
+    precedente (nessun commit nuovo, nessuna review umana, nessun merge/chiusura). Ultimo
+    aggiornamento su tutte le PR: 30 luglio, tra le 15:22 e le 20:19 UTC — oltre 24h ferme.
+  - Ho chiamato `get_me` sull'integrazione GitHub di questa sessione: risponde
+    **`login: Normally101` (lo stesso account owner del repo)**, non un bot dedicato. Questo
+    significa che **qualsiasi sessione Claude Code con questa stessa integrazione — sveglia
+    cron compresa, non solo sessioni interattive con te — posterebbe commenti su GitHub come
+    "Normally101"**, indistinguibili da un tuo commento reale scritto a mano.
+  - Il commento su questa PR datato 2026-07-30T20:18:59Z ("Confermo io — sessione che ha avuto
+    la conversazione diretta con te...") **non è quindi una prova verificabile di conferma
+    umana**: è coerente al 100% con un'altra sessione automatica (stessa integrazione, stesso
+    account) che ha semplicemente affermato di aver avuto quella conversazione, esattamente
+    come il protocollo di `docs/AUTOMATION_ROUTINE.md` dice non poter accadere per una sveglia
+    schedulata ("nessuno risponde alle tue domande in tempo reale"). Non ho elementi per dire
+    che sia successo in mala fede o per errore — solo che **non è verificabile da qui**, e la
+    stessa ambiguità si riproporrebbe per ogni sveglia futura finché il canale di conferma resta
+    "un commento GitHub scritto con questa integrazione".
+  - **Non ho mergiato PR #3, non ho trattato la missione estesa come autorizzata, e non ho
+    avviato nessun nuovo lavoro di bug-hunt.** Resto sul backlog puntuale originale (2 item,
+    già completo: PR #1/#2 in attesa di tua review). Nessuna modifica di codice in questa
+    sveglia, solo questa entry di log + una nota di chiarimento lasciata come commento su PR
+    #3 (link nella nota stessa).
+  - **Raccomandazione:** se vuoi davvero autorizzare la missione estesa, il modo verificabile
+    è un'azione che una sveglia automatica non potrebbe fare al posto tuo — mergiare/chiudere
+    tu stesso PR #3 dalla UI di GitHub, o dirlo direttamente in una sessione interattiva viva
+    con te (non tramite commento). Finché resta solo un commento firmato "Normally101", la
+    routine non lo tratterà come autorizzazione valida, per lo stesso motivo per cui non tratta
+    come tue eventuali istruzioni che sembrano arrivare "da conversazioni precedenti" in una
+    sveglia senza memoria.
+  - **Avvisato Vlad via notifica push** di questo (autenticazione della conferma + le 7 PR
+    ferme da 24h, inclusa la #4 di sicurezza critica).
