@@ -145,7 +145,8 @@ window._opaRequestBuyback = async function(opaId, price) {
             showNotification('🛡️ Buyback completato! Hai ripreso il controllo della tua azienda.', 'success');
         }
         if (typeof gameState !== 'undefined' && gameState) {
-            gameState.cash = Math.max(0, (gameState.cash || 0) - price);
+            // rpc_opa_buyback ha gia' scalato la cassa server-side (27_hostile_takeovers.sql:184)
+            if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, (gameState.cash || 0) - price);
         }
         await _loadOPAList();
     } catch(e) {
