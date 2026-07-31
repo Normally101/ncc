@@ -13,6 +13,16 @@ window._b2bState = {
 };
 
 const _TIER_ORDER = ['BUSINESS', 'PREMIUM', 'PRESIDENTIAL', 'ARMORED', 'ULTRA'];
+
+/* I tier del CATALOGO (maiuscoli, usati da required_tier lato server) e i tier della
+   FLOTTA sono due vocabolari diversi: showroom.js:711 mappa il catalogo sulla flotta
+   via _SHOWROOM_TIER_MAP (PREMIUM->business, PRESIDENTIAL/ARMORED->ultra).
+   Confrontarli con indexOf su _TIER_ORDER dava -1 per 'vip'/'group'/'standard'.
+   Stessi rank gia' usati da tourism.js:20 e contracts.js:125. */
+const _B2B_CAR_RANK = { standard: 1, business: 2, vip: 3, group: 3, ultra: 4 };
+const _B2B_REQ_RANK = { BUSINESS: 2, PREMIUM: 2, PRESIDENTIAL: 4, ARMORED: 4, ULTRA: 4 };
+function _b2bCarRank(car) { return _B2B_CAR_RANK[(car && car.tier || '').toLowerCase()] || 0; }
+function _b2bReqRank(req) { return _B2B_REQ_RANK[(req || '').toUpperCase()] || 2; }
 const _TIER_LABEL = {
     BUSINESS:     '🟢 Business',
     PREMIUM:      '🔵 Premium',
@@ -91,6 +101,11 @@ window.b2bAcceptContract = async function(contractId, vehicleIds, driverIds) {
         penalty_amount:  data.penalty,
         sla_score:      100,
         status:         'active',
+        // Senza questi due campi b2bLockedVehicleIds() fa JSON.parse(undefined) -> catch -> [],
+        // quindi il blocco dei veicoli (l'unico costo del contratto) non si applicava fino
+        // al reload successivo, quando _b2bFetchActive li rileggeva dalla riga DB.
+        locked_vehicles: vehicleIds || [],
+        locked_drivers:  driverIds  || [],
     };
     saveGame();
 
@@ -164,11 +179,10 @@ window.b2bOpenAcceptModal = function(contractId) {
     const contract = window._b2bState.contracts.find(c => c.id === contractId);
     if (!contract) return;
 
-    const tierIndex  = _TIER_ORDER.indexOf(contract.required_tier);
+    const reqRank = _b2bReqRank(contract.required_tier);
     const eligibleCars = (gameState.fleet||[]).filter(c => {
         if (c.isLease || c.isLimitedEdition) return false;
-        const ci = _TIER_ORDER.indexOf((c.tier||'').toUpperCase());
-        return ci >= tierIndex;
+        return _b2bCarRank(c) >= reqRank;
     });
 
     const lockedIds = window.b2bLockedVehicleIds();
@@ -372,10 +386,9 @@ function renderTabB2B() {
         contracts.forEach(c => {
             const locked       = !!active;
             const repOk        = rep >= (c.min_reputation || 0);
-            const tierIndex    = _TIER_ORDER.indexOf(c.required_tier);
+            const reqRank      = _b2bReqRank(c.required_tier);
             const eligibleCars = (gameState.fleet||[]).filter(car => {
-                const ci = _TIER_ORDER.indexOf((car.tier||'').toUpperCase());
-                return ci >= tierIndex && !car.isLease;
+                return _b2bCarRank(car) >= reqRank && !car.isLease;
             });
             const carsOk = eligibleCars.length >= c.required_count;
             const canAccept = !locked && repOk && carsOk;
