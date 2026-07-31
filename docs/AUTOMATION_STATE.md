@@ -22,7 +22,12 @@ Solo lettura/audit, nessuna scrittura SQL applicata. Output atteso: scaffold SQL
 applicato) + branch `auto/rpc-ratelimit-audit` + PR.
 
 ## Sveglie consecutive senza progresso
-0
+3 — soglia del guardrail "dopo 3 sveglie ferme, fermati e scrivi perché" raggiunta con
+questa sveglia (vedi ultima entry di log). Da questa sveglia in poi: nessun nuovo lavoro
+di codice/audit finché non cambia qualcosa di verificabile (merge/chiusura di una PR da
+Vlad, o istruzione diretta in sessione interattiva live). Le prossime sveglie schedulate
+dovrebbero limitarsi a un controllo economico (git fetch + stato delle 7 PR) e fermarsi lì
+se nulla è cambiato, invece di rianalizzare tutto da capo.
 
 ## Blocchi aperti
 _(nessuno per questo task — è solo un aggiornamento di documentazione/missione)_
@@ -99,3 +104,22 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
     sveglia senza memoria.
   - **Avvisato Vlad via notifica push** di questo (autenticazione della conferma + le 7 PR
     ferme da 24h, inclusa la #4 di sicurezza critica).
+- 2026-07-31 (sveglia cron successiva, sessione fresca senza memoria delle precedenti):
+  **controllo economico, nessun cambiamento reale rispetto alla sveglia precedente.**
+  - `git fetch --all` + `list_pull_requests` ordinate per `updated_at`: le 7 PR sono
+    identiche nello stato (tutte `open`, nessuna `merged`/`closed`). L'aggiornamento più
+    recente resta il commento delle 2026-07-31T00:15:44Z scritto dalla sveglia precedente
+    stessa (nessun commento/commit/review umano arrivato dopo).
+  - Non ho quindi ripetuto l'analisi già fatta (identità GitHub `Normally101` = owner,
+    "conferma" della missione estesa non verificabile) né riaperto la domanda a Vlad: è
+    già stata posta chiaramente nel log precedente e via notifica push, e nulla di nuovo
+    giustificherebbe un secondo avviso — lo ripeterei solo se cambiasse qualcosa (merge,
+    chiusura, nuovo commento/review umano, o istruzione diretta in sessione live).
+  - **Nessuna notifica push inviata questa sveglia** (nessuna novità da riportare — evitare
+    di rendere rumoroso un canale che deve restare significativo).
+  - **Nessun nuovo lavoro di codice/audit avviato.** Backlog puntuale originale resta
+    l'unico lavoro confermato (PR #1/#2, in attesa di revisione). Missione estesa (PR #3)
+    resta non trattata come autorizzata, per lo stesso motivo della sveglia precedente.
+  - Soglia "3 sveglie consecutive senza progresso" raggiunta (vedi sopra) — le sveglie
+    successive dovrebbero restare leggere (solo verifica di stato) finché Vlad non agisce
+    su almeno una delle 7 PR o dà istruzioni dirette in una sessione live.
