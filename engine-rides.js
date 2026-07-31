@@ -764,7 +764,13 @@ function completeRide(ride, _deferPay = false) {
     }
 
     // Quest stat tracking
-    if (!gameState.questStats) gameState.questStats = { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 };
+    // Riempi i contatori MANCANTI uno per uno, non solo il caso "oggetto assente":
+    // Object.assign in loadGame sostituisce questStats in blocco, quindi un salvataggio
+    // salvato prima che un contatore esistesse lo lascerebbe undefined -> `++` = NaN.
+    if (!gameState.questStats) gameState.questStats = {};
+    for (const _k of ['totalRides','vipRides','ultraRides','fcoRides','portRides','contractRides','portoCervoRides']) {
+        if (typeof gameState.questStats[_k] !== 'number' || !isFinite(gameState.questStats[_k])) gameState.questStats[_k] = 0;
+    }
     const qs = gameState.questStats;
     qs.totalRides++;
     if (ride.tier === 'ultra') qs.ultraRides++;
