@@ -145,7 +145,9 @@ window._infraBuyDepot = async function(provinceId, provinceName) {
     try {
         const { error } = await window.supabaseClient.rpc('rpc_buy_fuel_depot', { v_province_id: provinceId });
         if (error) throw error;
-        gameState.cash -= cost;
+        // La RPC ha già scalato la cassa server-side: scaliamo in locale solo se
+        // il sync Realtime non è attivo, altrimenti evitiamo doppia deduzione.
+        if (!window.ServerState?.isReady()) gameState.cash -= cost;
         if (typeof showNotification === 'function') showNotification(`⛽ Deposito acquistato a ${provinceName}!`, 'success');
         if (typeof saveGame === 'function') saveGame();
         window.renderTabInfrastructure();
