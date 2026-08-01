@@ -1,9 +1,24 @@
 # Stato routine automatica (memoria tra sveglie)
 
 ## Branch attivo
-`auto/routine-mission-update` (solo docs, questa sveglia). In parallelo restano aperte:
-- `auto/tutorial-action-gate` → **PR #1**, in attesa di revisione/merge di Vlad.
-- `auto/idle-offline-catchup` → **PR #2**, in attesa di revisione/merge di Vlad.
+`auto/routine-mission-update` (solo docs, questa sveglia). In parallelo restano aperte
+**8 PR**, tutte `open`, nessuna mergiata/chiusa, zero review umane (solo bot Vercel):
+- `auto/tutorial-action-gate` → **PR #1**
+- `auto/idle-offline-catchup` → **PR #2**
+- `auto/routine-mission-update` (questo branch) → **PR #3** — missione estesa, conferma non
+  verificabile da questa integrazione (vedi log sotto), non trattata come autorizzata
+- `auto/critical-cash-exploits-scaffold` → **PR #4** — 🔴 sicurezza critica, cassa illimitata
+  via `_add_player_cash` confermata attiva in prod
+- `auto/bughunt-economy-daily` → **PR #5**
+- `auto/bughunt-dispatch-rides` → **PR #6**
+- `auto/bughunt-p2p-alliances` → **PR #7**
+- `auto/bughunt-round2` → **PR #8** — round 2 bug-hunt (aperta da una sveglia precedente
+  senza aggiornare questo file), **contiene anche 2 nuove falle di sicurezza confermate ma
+  NON corrette** (segnalate come commenti sulla PR, non nel diff): `rpc_execute_shadow_op`
+  (costo passato dal client, nessun controllo di segno → si può accreditare cassa arbitraria
+  passando un costo negativo) e `rpc_resolve_auction` (nessun escrow sulle offerte + sconto
+  al vincitore senza fondi → si possono vincere lotti a €0 chiamando la RPC quando la cassa è
+  a zero). Entrambe richiamabili direttamente con la anon key, indipendentemente dal client.
 
 ## Task corrente
 **Missione estesa ricevuta da Vlad (30 luglio 2026, live, non da prompt schedulato):**
@@ -165,3 +180,37 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
     i commenti, non c'è stata attività.
   - **Nessuna notifica push inviata** (nessuna novità reale). **Nessun nuovo lavoro di
     codice/audit avviato.** Solo questa entry di log, su questo stesso branch/PR #3.
+- 2026-08-01 (sveglia cron successiva, sessione fresca senza memoria delle precedenti):
+  **novità reale — è comparsa un'ottava PR aperta da una sveglia precedente senza
+  aggiornare questo file.**
+  - `git fetch --all` + `list_pull_requests` (tutte, ordinate per `updated_at`): le PR
+    #1/#2/#4/#5/#6/#7 restano identiche (stesso `updated_at` delle sveglie precedenti,
+    nessun merge/chiusura/review umana). PR #3 ha un `updated_at` più recente ma è solo un
+    redeploy del bot Vercel (verificato leggendo il commento) — nessun commento/review umano
+    nuovo oltre ai due già loggati (2026-07-30T20:18:59Z e 2026-07-31T00:15:44Z).
+  - **Novità vera: PR #8** (`auto/bughunt-round2`), aperta 2026-07-31T21:59Z da una sveglia
+    precedente che ha proseguito il bug-hunt nonostante la pausa "watch-only" decisa nel log
+    del 2026-07-31 — non annullabile ora, ma da notare per coerenza futura. La PR è indipendente
+    dalle altre 7 (parte da `main`, mergiabile da sola) e corregge 14 bug reali di denaro/stato
+    (dettaglio nel branch aggiornato sopra). **Più rilevante**: nei commenti della stessa PR
+    (non nel diff, quindi non corrette) sono segnalate **2 nuove falle di sicurezza attive**,
+    stessa gravità della falla cassa-illimitata di PR #4:
+    - `rpc_execute_shadow_op` — costo passato dal client senza controllo di segno →
+      accredito di cassa arbitrario con un costo negativo, chiamabile con la sola anon key.
+    - `rpc_resolve_auction` — nessun escrow sui bid + sconto del vincitore senza fondi →
+      si vincono lotti a €0 richiamando la RPC quando la cassa è a zero, col timing scelto
+      dall'attaccante (grant a `authenticated` già presente, nessuno scheduler la chiama
+      oggi quindi il caso "accidentale" non esiste, solo quello deliberato).
+    Nessuna delle due è stata corretta (richiede riscrivere SQL esistente in produzione senza
+    un Postgres di prova — stessa motivazione già usata per lo scaffold di PR #4).
+  - Restano quindi **3 falle di sicurezza economiche confermate e non ancora mergiate/mitigate**
+    (PR #4 + le 2 di PR #8), oltre a 8 PR ferme in totale senza nessuna review umana da oltre
+    24-36h.
+  - **Nessun nuovo lavoro di codice avviato in questa sveglia** (solo questa entry di log):
+    la soglia "3 sveglie ferme" era già raggiunta e resta valida — la novità di oggi è
+    l'esistenza di PR #8 e delle sue 2 falle segnalate, non un cambiamento che sblocchi nuovo
+    lavoro. Aggiornata anche la lista "Branch attivo" sopra per riflettere le 8 PR reali
+    (era ferma alla foto della "prima sveglia" su `main`).
+  - **Notifica push inviata**: 2 nuove falle di sicurezza confermate (non presenti nel
+    riepilogo della sveglia precedente) più il fatto che tutte le 8 PR restano senza alcuna
+    review umana da oltre un giorno, PR #4 inclusa.
