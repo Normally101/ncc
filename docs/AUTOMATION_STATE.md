@@ -304,3 +304,23 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
   - **Nessuna notifica push inviata**: nessuna novità reale rispetto all'ultima sveglia —
     tutto ciò che c'era da segnalare (3 falle di sicurezza, 8 PR ferme, ambiguità missione
     estesa) è già stato notificato in precedenza.
+- 2026-08-02 (sveglia cron successiva, sessione fresca senza memoria delle precedenti):
+  **controllo economico — zero cambiamenti di stato, ma è passata una notte intera
+  (24h+) senza alcuna azione umana su nessuna delle 8 PR.**
+  - `git fetch --all` + `list_pull_requests` (tutte, ordinate per `updated_at`): tutte
+    ancora `open`, nessuna `merged`/`closed`. PR #3 ha un `updated_at` più recente
+    (2026-08-01T20:14:58Z) ma verificato via `get_comments`: è di nuovo solo il redeploy
+    del bot Vercel, nessun contenuto nuovo oltre ai due commenti già loggati. PR #8
+    verificata via `get_comments`: nessun commento nuovo oltre all'ultimo già registrato
+    (2026-08-01T07:33:32Z). PR #4 verificata via `get_reviews`: nessuna review, `[]`.
+  - Nessun commento/review *umano* su nessuna delle 8 PR. Nessun merge, nessuna chiusura.
+    Stessa ambiguità di sempre sulla missione estesa (PR #3, non mergiata).
+  - **Nessun nuovo lavoro di codice/audit avviato** (soglia "3 sveglie ferme" ampiamente
+    superata). Solo questa entry di log, su questo stesso branch/PR #3.
+  - **Notifica push inviata** (prima da 2026-08-01 mattina): non per un finding nuovo, ma
+    perché la falla di sicurezza critica di PR #4 (cassa illimitata via `_add_player_cash`,
+    confermata attiva in prod) è ormai ferma da **3 giorni** senza alcuna review/merge/
+    chiusura — insieme alle altre 2 falle equivalenti segnalate su PR #8
+    (`rpc_execute_shadow_op` mint con costo negativo, `rpc_resolve_auction` lotti a €0).
+    Sono exploit reali chiamabili oggi con la sola anon key, non solo debito tecnico: vale
+    un promemoria periodico anche senza contenuto nuovo, non solo un avviso una tantum.
