@@ -110,14 +110,25 @@ async function renderTabRanking() {
         </div>`;
     }
 
-    const bonusBanner = isTop3 ? `
+    // I bonus NON dipendono da questa classifica. Il motore li cancella su
+    // `_getRankPosition()` (engine.js:362), cioè la posizione per REPUTAZIONE contro i
+    // rivali NPC, mentre `myRank` qui sopra è la classifica multiplayer per potere.
+    // Il banner era agganciato a myRank: chi era top 3 fra i giocatori se lo vedeva
+    // annunciare senza averne nessuno, e chi era top 3 per reputazione ma cinquantesimo
+    // nel multiplayer li aveva senza saperlo. Inoltre elencava "premi assicurativi −15%",
+    // che non esistono: l'effetto vero è il rischio incidenti (engine-rides.js:456).
+    const repRank = (typeof _getRankPosition === 'function') ? _getRankPosition() : null;
+    const _perk = txt => `<span style="font-size:10px;color:#6b7280">${txt}</span>`;
+    const perks = [];
+    if (repRank !== null) {
+        if (repRank <= 5) perks.push(_perk('POI esclusivi: Porto Cervo, Armani Hotel'));
+        if (repRank <= 4) perks.push(_perk('POI esclusivi: Borgo Egnazia, Belmond Splendido'));
+        if (repRank <= 3) perks.push(_perk('Rischio incidenti −15%'));
+    }
+    const bonusBanner = perks.length ? `
     <div style="background:#161b22;border:1px solid #c79a2a;border-radius:6px;padding:12px 16px;margin-bottom:16px">
-        <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Bonus Attivo — Top ${myRank}</div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap">
-            <span style="font-size:10px;color:#6b7280">Corse Ultra-Luxury sbloccate</span>
-            <span style="font-size:10px;color:#6b7280">Premi assicurativi −15%</span>
-            <span style="font-size:10px;color:#6b7280">POI esclusivi visibili</span>
-        </div>
+        <div style="font-size:9px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px">Bonus attivi — #${repRank} per reputazione fra i rivali</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">${perks.join('')}</div>
     </div>` : '';
 
     const errBanner = fetchError ? `

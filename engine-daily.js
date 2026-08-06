@@ -522,7 +522,10 @@ function processDailyRoutines() {
     // Ranking Top 3: notifica bonus attivi
     if (rank <= 3 && !gameState._top3NotifiedDay) {
         gameState._top3NotifiedDay = gameState.day;
-        showBigEvent('🏆', 'Top 3 del Ranking!', 'Stai dominando il mercato! Bonus attivi: corse Ultra-Luxury accessibili, premi assicurativi −15%, POI esclusivi sbloccati.');
+        // I "premi assicurativi −15%" non sono mai esistiti: non c'è alcun sistema di
+        // premi assicurativi nel gioco. L'effetto reale del Top 3 è engine-rides.js:456,
+        // che riduce del 15% la PROBABILITÀ DI INCIDENTE.
+        showBigEvent('🏆', 'Top 3 del Ranking!', 'Stai dominando il mercato! Bonus attivi: rischio incidenti −15% e POI esclusivi Ultra-Luxury sbloccati (Porto Cervo, Armani Hotel, Borgo Egnazia, Belmond Splendido).');
     }
     if (rank > 3) gameState._top3NotifiedDay = null;
 
