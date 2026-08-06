@@ -209,9 +209,30 @@ function renderTabEmails() {
 
         } else if (e.type === 'shadow') {
             const sr = e.shadowData;
-            const hasVetri = gameState.fleet.some(c => (c.upgrades||[]).includes('vetri_oscurati'));
+            // Lo sconto dei Vetri Oscurati vale SOLO per l'auto assegnata all'autista che
+            // esegue la missione (engine-events.js:293-295), non per la flotta. Qui bastava
+            // `fleet.some(...)`: con una sola auto vetrata su venti il giocatore leggeva
+            // "−65%" e correva il rischio pieno in 19 casi su 20.
+            const _fleet     = gameState.fleet || [];
+            const _vetri     = _fleet.filter(c => (c.upgrades||[]).includes('vetri_oscurati')).length;
+            const _allVetri  = _fleet.length > 0 && _vetri === _fleet.length;
+            // inv_safe_driving fa saltare del tutto il controllo l'85% delle volte
+            // (engine-events.js:288): le missioni shadow non sono isGreyMarket, quindi il
+            // filtro le copre. È l'effetto più grande dei due e non era nemmeno citato.
+            const _training  = (typeof hasInvestment === 'function') && hasInvestment('inv_safe_driving');
+            const _passMult  = _training ? 0.15 : 1;
+            const _riskHi    = (sr.seizureRisk * _passMult).toFixed(1);
+            const _riskLo    = (sr.seizureRisk * _passMult * 0.35).toFixed(1);
+            const _riskTxt   = _vetri === 0   ? `${_riskHi}%`
+                             : _allVetri      ? `${_riskLo}%`
+                                              : `${_riskLo}% – ${_riskHi}%`;
+            const _vetriNote = _fleet.length === 0 ? ''
+                             : _vetri === 0  ? ` <span style="color:#e0922e">⚠ Nessuna auto con Vetri Oscurati (−65%)</span>`
+                             : _allVetri     ? ` <span style="color:#1aa06a">−65% Vetri Oscurati su tutta la flotta</span>`
+                                             : ` <span style="color:#e0922e">−65% solo con ${_vetri} auto su ${_fleet.length}: conta quella assegnata all'autista</span>`;
             html += `</div>
-            <div style="font-size:10px;color:#db5746;margin-bottom:4px">Pagamento: <b style="color:#db5746">×5 tariffa</b> — Rischio sequestro: <b style="color:#db5746">${sr.seizureRisk}%</b>${hasVetri ? ' <span style="color:#1aa06a">(−65% con Vetri Oscurati)</span>' : ' <span style="color:#e0922e">⚠ Installa Vetri Oscurati</span>'}</div>
+            <div style="font-size:10px;color:#db5746;margin-bottom:4px">Pagamento: <b style="color:#db5746">×5 tariffa</b> — Rischio sequestro: <b style="color:#db5746">${_riskTxt}</b> <span style="color:#6b7280">(base ${sr.seizureRisk}%)</span>${_vetriNote}</div>
+            ${_training ? `<div style="font-size:10px;color:#1aa06a;margin-bottom:4px">Corso di Guida Sicura: l'85% dei posti di blocco viene superato senza controllo.</div>` : ''}
             <div style="font-size:10px;color:#6b7280;margin-bottom:12px">Un checkpoint della polizia verrà posizionato sulla rotta. Operazione ad altissimo rischio.</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptShadowMission', [e.id])} style="background:#fff5f3;border:1px solid #e7a79c;color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">🔴 ACCETTA RISCHIO (×5)</button>
