@@ -32,8 +32,15 @@ function renderTabMarketing() {
     // ── Market conditions ─────────────────────────────────────────
     const ws = WEATHER_STATES.find(w => w.id === (gameState.weather || 'sole')) || WEATHER_STATES[0];
     const pending = gameState.pendingRides.length;
-    const surgeLabel = pending >= 15 ? '🔥 Surge +35%' : pending >= 8 ? '⚡ Surge +15%' : '🟢 Prezzi standard';
-    const surgeColor = pending >= 15 ? 'text-red-400' : pending >= 8 ? 'text-yellow-400' : 'text-green-400';
+    // Il motore ha UN SOLO scaglione surge: engine-rides.js:94 → `pending >= 8 ? 1.15 : 1.0`.
+    // Qui veniva annunciato anche un "+35%" sopra le 15 corse che non esiste da nessuna parte:
+    // con la coda piena il giocatore leggeva più del doppio di quanto incassava davvero.
+    // Tenuta la soglia del motore come unica fonte di verità.
+    const SURGE_MIN_PENDING = 8;      // deve restare allineato a engine-rides.js:94
+    const SURGE_BONUS_PCT   = 15;
+    const surgeOn    = pending >= SURGE_MIN_PENDING;
+    const surgeLabel = surgeOn ? `⚡ Surge +${SURGE_BONUS_PCT}%` : '🟢 Prezzi standard';
+    const surgeColor = surgeOn ? 'text-yellow-400' : 'text-green-400';
 
     // ── Pricing strategy ──────────────────────────────────────────
     const _ps = gameState.pricingStrategy || 'standard';
@@ -72,7 +79,7 @@ function renderTabMarketing() {
         </div>
         <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
             <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Surge</div>
-            <div style="font-size:12px;font-weight:700;color:${pending>=15?'#db5746':pending>=8?'#e0922e':'#1aa06a'};font-family:monospace">${pending>=15?'+35%':pending>=8?'+15%':'STD'}</div>
+            <div style="font-size:12px;font-weight:700;color:${surgeOn?'#e0922e':'#1aa06a'};font-family:monospace">${surgeOn?`+${SURGE_BONUS_PCT}%`:'STD'}</div>
         </div>
         <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
             <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">Campagne</div>
@@ -117,7 +124,7 @@ function renderTabMarketing() {
             <div style="font-size:10px;font-weight:700;color:#e0922e;margin-top:2px">Tariffe +${Math.round((ws.priceMult - 1) * 100)}%</div>
         </div>
         <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px;display:flex;flex-direction:column;justify-content:center;text-align:center">
-            <div style="font-size:11px;font-weight:700;color:${pending>=15?'#db5746':pending>=8?'#e0922e':'#1aa06a'}">${surgeLabel}</div>
+            <div style="font-size:11px;font-weight:700;color:${surgeOn?'#e0922e':'#1aa06a'}">${surgeLabel}</div>
             <div style="font-size:9px;color:#6b7280;margin-top:4px;font-family:monospace">Corse in attesa: ${pending}</div>
         </div>
     </div>`;
