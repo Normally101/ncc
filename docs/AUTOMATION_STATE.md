@@ -22,16 +22,23 @@ aperte in attesa di review. Nel frattempo (sessione live con Vlad, stesso giorno
   `rpc_resolve_auction`, revoke/decisione su `rpc_execute_shadow_op`. Non rinotificate qui
   perché già segnalate a Vlad e presumibilmente note (era presente nella sessione live che le
   ha documentate).
-- **Nuovo lavoro avviato questa sveglia**: primo item non ancora fatto del backlog esteso in
-  `docs/AUTOMATION_ROUTINE.md`, "Audit chi scrive `gameState.cash` senza passare da una RPC a
-  delta" — solo audit/censimento (nessun fix di codice, per costruzione: il debito #1 resta
-  bloccato sulla scala economica, decisione di Vlad). Subagent di scansione lanciato su tutti
-  i siti `gameState.cash =`/`+=`/`-=` del repo, verifica personale dei risultati in corso.
-  Output atteso: mappa aggiornata appesa a `docs/ECONOMY_SERVER_AUTH.md`, branch
-  `auto/audit-cash-writes-map`, PR docs-only (non merge autonomo — il permesso esplicito di
-  Vlad valeva per quella sessione live, non è una policy permanente per la routine cron, che
-  resta sul guardrail scritto "mai merge di una tua PR" finché non arriva un'istruzione
-  altrettanto esplicita e verificabile in una sessione live).
+- **Lavoro completato questa sveglia**: "Audit chi scrive `gameState.cash` senza passare da
+  una RPC a delta" — censimento di tutte le 119 occorrenze `gameState.cash =`/`+=`/`-=` del
+  repo (subagent di scansione + verifica personale a campione su 3 siti,
+  `engine-rides.js:700`, `crypto.js:76`, `b2b.js:131`, nessun errore trovato). Risultato: **25
+  siti GUARDED** (mirror sicuro dopo una RPC, corretti dal fix del 6 agosto), **2 RPC-MIRROR**
+  (il motore di sync stesso), **91 FULLY-CLIENT-AUTHORITATIVE** (debito #1 noto, nessuna RPC
+  coinvolta — non un bug, fuori perimetro finché la scala economica non è decisa). **Zero nuovi
+  bug UNGUARDED-OPTIMISTIC trovati** — il giro di fix del 6 agosto risulta completo, nessuna
+  doppia deduzione residua individuata. Mappa completa scritta in
+  `docs/ECONOMY_SERVER_AUTH.md` (nuova sezione "Censimento siti gameState.cash"). Nessun fix
+  di codice (per costruzione: audit-only, il debito resta bloccato sulla scala economica).
+  Branch `auto/audit-cash-writes-map`, PR da aprire in questa sveglia (docs-only, non merge
+  autonomo — il permesso esplicito di Vlad valeva per quella sessione live, non è una policy
+  permanente per la routine cron, che resta sul guardrail scritto "mai merge di una tua PR"
+  finché non arriva un'istruzione altrettanto esplicita e verificabile in una sessione live).
+  Prossimo item per la prossima sveglia (se questo branch è mergiato/chiuso): "Audit
+  scalabilità client-side a 10k" in `docs/AUTOMATION_ROUTINE.md`.
 
 ---
 
