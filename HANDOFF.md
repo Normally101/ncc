@@ -7,6 +7,64 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### ✅ 6 agosto 2026 — 26 fix MERGIATI IN PRODUZIONE (7 PR chiuse in una volta)
+Vlad ha autorizzato la routine a mergiare da sola ("puoi modificare da solo i bug che trovi,
+organizzati in modo sistematico"). Mergiate e **verificate live** le PR #1, #2, #3, #4, #5,
+#6, #8. Punto di rollback: **`138a791`** (`git revert` o reset a quel commit riporta tutto
+allo stato pre-merge).
+
+**Metodo usato** — merge uno alla volta, dal rischio zero al rischio reale, con uno script di
+verifica rieseguito dopo ogni passo (sintassi di tutti i .js, collisioni di globali, presenza
+dei `?v=` di cache-bust, CSP `worker-src`, esclusioni `.vercelignore`, boot headless senza
+errori JS nuovi, e un set di asserzioni che i singoli fix siano ancora al loro posto).
+I conflitti sui numeri di cache-bust sono stati risolti prendendo **il massimo per ciascun
+file**, non un lato intero: prendere un lato avrebbe silenziosamente annullato il bust di un
+file modificato dall'altra PR.
+
+**Cosa è cambiato in produzione (26 bug reali):**
+- **Denaro duplicabile nei bandi corporate** (`contracts.js`): il rimborso del pledge avveniva
+  prima della validazione fondi e il `return` usciva senza riscalare → offri, rialzi oltre le
+  tue possibilità, annulli, e ti ritrovi col doppio. Ripetibile. Più il pledge scalato due
+  volte alla vittoria.
+- **12 punti di doppia deduzione cassa**: il client scalava in locale dopo una RPC che aveva
+  già scalato server-side, senza il guard `if (!window.ServerState?.isReady())`. Fra questi
+  **l'acquisto di un veicolo** (showroom, configuratore, leasing) — su un'auto da €400k ne
+  venivano scalati €800k. Poi crypto ×4, shadow ops ×2, OPA, deposito carburante, VIP.
+  Su vendita crypto e prelievo offshore erano accrediti doppi, cioè denaro creato.
+- **Contratti B2B inaccessibili** (`b2b.js`): i tier del catalogo (maiuscoli) venivano
+  confrontati con quelli della flotta (minuscoli, altro vocabolario). Le auto VIP non
+  contavano per nessun contratto; i 5 contratti su 13 che chiedono PREMIUM erano
+  soddisfacibili solo con auto ultra. Più `locked_vehicles` mai salvato → il blocco veicoli,
+  unico costo del contratto, non si applicava fino al reload.
+- **Driver Coins persi in 6 punti**: campo sincronizzato in *overwrite* mutato solo in locale
+  → il premio spariva al primo evento Realtime mentre il progresso restava consumato.
+  Compresi i cosmetici di `vanity.js`, che erano di fatto **gratis**.
+- Più: doppia penalità incidente, bonus fantasma tassato, driver saltato dopo burnout, tasse
+  mostrate sottostimate, contatori quest che diventavano NaN, etichetta pledge turismo a €0.
+
+⚠️ **NON verificato con login reale**: nessun test E2E è possibile dall'ambiente della
+routine. Tutto è verificato per lettura del sorgente + SQL della RPC, sintassi e boot
+headless. Al primo login conviene controllare a mano: acquisto di un'auto, un bando corporate
+vinto, un acquisto dal VTK Shop, e il saldo Driver Coins dopo un ciclo di gioco.
+
+### 🔴 DA FARE TU — tre mitigazioni SQL, la routine non tocca il DB
+1. **PR #4 mergiata ma la SQL NON è applicata.** `45_lockdown_cash_exploits_scaffold.sql` è
+   in repo, non in DB: la **cassa illimitata via `_add_player_cash` è ancora aperta**. Le due
+   righe di `REVOKE` in cima al file la chiudono e non rompono niente.
+2. **`REVOKE EXECUTE ON FUNCTION public.rpc_resolve_auction(UUID) FROM authenticated, anon;`**
+   — costo zero: nessun codice legittimo la chiama già oggi. Senza, chiunque può innescare la
+   risoluzione delle aste quando gli conviene e vincere lotti a €0.
+3. **Shadow ops** (`rpc_execute_shadow_op`): il costo arriva dal client senza controllo di
+   segno → costo negativo = accredito arbitrario. La revoke chiude la falla ma spegne anche
+   la feature: scelta tua.
+
+### ⏸️ PR #7 — l'unica NON mergiata, di proposito
+`auto/bughunt-p2p-alliances` corregge l'exploit del VTK Shop, ma il suo JS chiama
+`rpc_spend_vtk_shop_item`, che **in produzione non esiste**. Mergiarla romperebbe del tutto
+il negozio invece di ripararlo. Applica prima `46_vtk_shop_purchase_scaffold.sql`, poi
+mergia: le due cose vanno insieme.
+
+
 ### 🔴 30 luglio 2026 — FALLA CRITICA trovata dalla routine automatica: cassa illimitata via `_add_player_cash` (NON ANCORA FIXATA IN PROD)
 La routine cloud (vedi `docs/AUTOMATION_ROUTINE.md`), su mandato esteso di Vlad ("fixa ogni
 bug, 0 jailbreak, 0 problemi di sicurezza per 10k giocatori"), ha trovato e **verificato
