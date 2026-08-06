@@ -40,6 +40,24 @@ aperte in attesa di review. Nel frattempo (sessione live con Vlad, stesso giorno
   Prossimo item per la prossima sveglia (se questo branch è mergiato/chiuso): "Audit
   scalabilità client-side a 10k" in `docs/AUTOMATION_ROUTINE.md`.
 
+## ⚡ Aggiornamento (2026-08-06, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all)`: **zero PR aperte oltre a #9 e #10**
+(questo branch e `auto/scalability-audit-10k`, quest'ultimo aperto dalla sveglia successiva a
+questa, item "Audit scalabilità 10k" — backlog esteso ora **6/6 completato**, in attesa di
+review). Le storiche #1-#8 restano `merged`/`closed` come già registrato sopra, nessun
+cambiamento. CI verde su entrambe #9/#10 (su #10 un flake transitorio di
+`actions/setup-node` risolto con un re-run, non legato al diff). Nessun commento/review
+*umano* nuovo su nessuna delle due — solo bot Vercel.
+
+Le 3 mitigazioni SQL non applicate al DB prod (`_add_player_cash`, `rpc_resolve_auction`,
+`rpc_execute_shadow_op`) restano l'unico punto realmente critico ancora aperto, ma non
+rinotificate qui: erano già state segnalate a Vlad nella sessione live che le ha scoperte e
+documentate in `HANDOFF.md` ("DA FARE TU"), e nulla di nuovo le renderebbe una notizia diversa
+da quella già vista. Nessuna notifica push inviata questa sveglia. Nessun nuovo lavoro di
+codice/audit avviato: il backlog esteso è esaurito in attesa che Vlad rivedi/mergi #9 e #10 —
+coerente con la stessa disciplina "non reinventare scope, non duplicare PR" applicata dalle
+sveglie precedenti.
+
 ---
 
 ## PR aperte (nessuna mergiata da questa sessione — controlla sempre lo stato reale su GitHub)
