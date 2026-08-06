@@ -52,6 +52,45 @@ Primo item del backlog automazione (`docs/AUTOMATION_ROUTINE.md`) fatto dalla ro
 - **Verificato:** `node --check` su tutti i .js del progetto (0 errori) · boot headless (http.server + chromium headless-new, senza login) → pagina carica, unico errore JS presente è **pre-esistente e non collegato**: `supabase-config.js:14` fallisce perché il CDN Supabase non è raggiungibile in questo sandbox (nessun accesso di rete esterno), non per via del mio cambio.
 - **NON verificato** (richiede Vlad in locale con login reale): che il gate si attivi davvero durante un tutorial live (assegnare/completare una corsa mentre lo step è aperto → deve avanzare da solo entro ~1s dal completamento) e che non ci siano regressioni visive nel box del tutorial con l'hint aggiunto.
 - PR aperta: https://github.com/Normally101/ncc/pull/1 — CI verde, in attesa di revisione/merge di Vlad.
+### 🐛 30 luglio 2026 — Bug-hunt dispatch/corse: 2 bug reali fixati, 3 candidati investigati e scartati (routine automatica, PR da rivedere)
+Terzo item concreto della missione estesa, branch `auto/bughunt-dispatch-rides`. Subagent +
+**verifica personale leggendo il codice** su `engine-rides.js`/`dispatcher.js` (quest'ultimo,
+nonostante il nome, non contiene logica di dispatch — solo UI/routing tab; tutta la logica
+corse/autisti vive in `engine-rides.js`). 2 bug reali confermati e fixati:
+1. **Doppia penalità sullo stesso incidente** (`completeRide`, riga ~591/667) — quando una
+   corsa ha un incidente (no kasko), `car.condition -= 20` viene applicato SUBITO, poi il
+   `conditionMult` più sotto nella stessa funzione ri-legge la condizione (ora già
+   danneggiata da QUESTO stesso incidente) e applica un secondo taglio (fino a −20%) sopra
+   il taglio prezzo 50% già dato per l'incidente — un incidente colpiva il guadagno due
+   volte invece di una. Fix: catturata la condizione PRIMA del blocco incidente, usata
+   quella (non quella post-danno) per `conditionMult`.
+2. **`gameState.prestige` senza guard `|| 0`** (riga ~712) — unico punto in tutto il
+   codebase (20+ altri siti, incluso uno nello stesso file 92 righe sopra) a non usare
+   `(gameState.prestige || 0)` nel calcolo del tetto reputazione. Oggi dormiente
+   (`prestige` è sempre inizializzato a 0), ma questo è il call-site più eseguito di tutti
+   (ogni corsa completata non-deferred) — un futuro gap di migrazione save che lasciasse
+   `prestige` undefined corromperebbe `gameState.reputation` a NaN per il resto della
+   sessione. Fix: aggiunto `|| 0`, stesso pattern già usato ovunque nel resto del codice.
+- **Investigati e SCARTATI** (bassa confidenza o non-bug reale, coerente con "non
+  refactor/speculazioni" della missione): (a) un early-return in `startNextRide` per
+  `engineHealth===0` che salterebbe il reset `driver.status='idle'` — reale inconsistenza
+  vs. gli altri 4 early-return della stessa funzione, ma **verificato non raggiungibile
+  oggi** (ogni altro punto che azzera `engineHealth` setta sempre anche `outOfService`
+  nello stesso momento, che intercetta il driver prima) — non fixato, è esattamente il tipo
+  di "validazione per uno scenario che non può accadere" che CLAUDE.md scoraggia; (b) un
+  commento/log "+1h di blocco auto" per i ritardi che in realtà non blocca nulla (il valore
+  `ride.duration` modificato non viene mai riletto) — solo testo di flavor fuorviante,
+  nessun impatto di gameplay, non ritenuto abbastanza da giustificare un fix isolato; (c)
+  `checkActiveTrips` non pause-aware mentre il loop di guida lo è — il subagent stesso nota
+  che l'unico caso reale è al logout, materialità bassa.
+- Bump `engine-rides.js?v=10`.
+- **Verificato:** entrambi i bug fixati letti e confermati personalmente nel codice sorgente
+  (righe esatte, non solo il report del subagent) prima di scrivere il fix. `node --check`
+  su tutti i .js (0 errori). Boot headless senza login → stesso unico errore pre-esistente
+  e scollegato (`supabase-config.js`).
+- **NON verificato** (richiede Vlad in locale, login reale): comportamento a schermo di una
+  corsa con incidente (verificare che il taglio finale sia solo il 50% del prezzo, non
+  anche un ulteriore -15/-20% da conditionMult sullo stesso incidente).
 
 ### 🔴→✅ 23 giugno 2026 — BUG CRITICO Service Worker (i deploy NON arrivavano ai giocatori) — FIXATO
 Scoperto guardando il sito LIVE in browser (non via curl): errori `ceAct is not defined` + `ceOnb...phase undefined` in produzione. **Causa:** `sw.js` era **cache-first** con `CACHE_NAME` fisso `ce-shell-v1` e `index.html` in `SHELL_ASSETS` → i giocatori di ritorno restavano su un **index.html STANTIO** (senza i `<script>` aggiunti dopo: events.js, onboarding-core.js) mentre gli altri JS caricavano codice nuovo che li referenziava. **Riprodotto** (errori live) e confermato (de-registrato SW + svuotato cache → console pulita).
