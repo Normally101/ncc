@@ -73,26 +73,22 @@ cosa fare quando il backlog puntuale sotto è vuoto. Regole per tradurlo in lavo
   concreto successivo.
 
 ### Backlog derivato dalla missione estesa (popola qui via via che emergono item concreti)
-- [ ] **Audit rate-limit RPC** — mappare quali RPC Supabase mutano cassa/valuta/stato
-  condiviso e NON hanno rate-limit server-side (oggi solo `rpc_add_driver_coins` e
-  `rpc_award_mission_vtk` ce l'hanno, via `_ce_rate_limit`/`rate_limit_buckets` di
-  `38_security_hardening.sql`). Output: elenco + scaffold SQL (non applicato) per le RPC
-  scoperte, stile `43_ratelimit_driver_coins.sql`.
-- [ ] **Bug-hunt sistema economia** (`engine-daily.js`, ~1.9k righe, cuore di
-  `processDailyRoutines`) — lettura mirata a caccia di bug reali (doppi conteggi, ordine
-  sbagliato tasse/spese, condizioni che non si azzerano mai, ecc.), non riscrittura.
-- [ ] **Bug-hunt dispatch/corse** (`engine-rides.js`, `dispatcher.js`) — stesso approccio,
-  focus su race condition tipo quella già trovata e già protetta in `assignRideToDriver`
-  (verificare che pattern simili non siano rimasti scoperti altrove).
-- [ ] **Bug-hunt P2P/alleanze/mercato** (`p2p-market.js`, `alliances.js`, `vtk-market.js`) —
-  qui vive già la maggior parte dell'anti-cheat esistente (rate-limit chat, donazioni
-  asset-bound, cap driver-coins): cercare varianti non ancora coperte dello stesso exploit
-  pattern (loop sotto-soglia, doppia spesa, mancata `FOR UPDATE`).
+- [x] **Audit rate-limit RPC** — 3 vulnerabilità reali trovate e verificate (`_add_player_cash`
+  cassa illimitata, `rpc_execute_shadow_op`, `rpc_resolve_auction`). Scaffold SQL non
+  applicato in PR #4 (mergiata). Le 3 mitigazioni SQL restano bloccate su Vlad — mai applicate
+  a prod dalla routine, vedi `HANDOFF.md` "DA FARE TU".
+- [x] **Bug-hunt sistema economia** (`engine-daily.js`) — 3 bug reali fixati e mergiati
+  (PR #5): bonus fantasma tassato, driver saltato dopo burnout, tasse sottostimate a schermo.
+- [x] **Bug-hunt dispatch/corse** (`engine-rides.js`, `dispatcher.js`) — 2 bug reali fixati e
+  mergiati (PR #6): doppia penalità incidente, `gameState.prestige` senza guard.
+- [x] **Bug-hunt P2P/alleanze/mercato** — coperto da PR #8 (19 bug reali, mergiata) + fix
+  `alliances.js` estratti da PR #7 (chiusa, VTK Shop exploit richiedeva SQL non ancora in
+  prod — vedi `HANDOFF.md` "PR #7 — l'unica NON mergiata, di proposito").
 - [ ] **Audit "chi scrive gameState.cash senza passare da una RPC a delta"** — mappa
   aggiornata di tutti i siti che ancora fanno `gameState.cash =`/`+=`/`-=` senza sync RPC
   (in continuità col debito #1 già noto). Non risolve il debito (bloccato sulla scala
   economica, decisione di Vlad) ma tiene la mappa aggiornata così la migrazione, quando
-  Vlad la sblocca, parte da dati freschi.
+  Vlad la sblocca, parte da dati freschi. **In corso (sveglia 2026-08-06).**
 - [ ] **Audit scalabilità client-side a 10k** — censire `setInterval`/polling per sessione in
   `engine.js` e affini (generatePOIRide ogni 5min, generateContractRide ogni 8min, ecc.):
   capire cosa genera traffico verso Supabase per giocatore attivo e se qualcosa scalerebbe

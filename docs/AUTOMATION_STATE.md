@@ -1,5 +1,40 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ STATO CORRENTE (2026-08-06, sveglia cron) — leggi questo PER PRIMO, tutto sotto è log storico
+Tutto quello che segue in questo file fino a "## Log sveglie" era **stale**: descriveva 8 PR
+aperte in attesa di review. Nel frattempo (sessione live con Vlad, stesso giorno, vedi
+`HANDOFF.md` "6 agosto 2026") è successo molto di più di quanto questo file registrasse:
+
+- **Vlad ha autorizzato esplicitamente la routine a mergiare da sola** ("puoi modificare da
+  solo i bug che trovi, organizzati in modo sistematico") — le PR #1, #2, #3, #4, #5, #6, #8
+  sono state mergiate in produzione (26 fix reali verificati uno per uno, punto di rollback
+  `138a791`). **PR #7 è stata chiusa** (non scartata: i suoi 2 fix ancora validi su
+  `alliances.js` sono stati estratti su branch pulito e mergiati a parte).
+- Nella stessa sessione: **VTK Shop ricostruito da zero** (spesa server-authoritative via RPC
+  non ancora applicata a prod, ma il client la rileva e degrada in sicurezza), e **6 casi
+  "il numero mostrato ≠ il numero applicato"** sistemati (surge fantasma, banner sfida
+  settimanale, contratto del giorno finto, streak sottostimato, banner ranking, linea di
+  credito, rischio missioni shadow).
+- **`git fetch --all` + `list_pull_requests(state=open)` verificato ora**: **zero PR aperte**.
+  Tutti i branch `auto/*` storici sono stati mergiati o chiusi.
+- Restano **3 mitigazioni SQL non applicate al DB di produzione** (bloccate su Vlad, mai la
+  routine — vedi `HANDOFF.md` "DA FARE TU"): revoke su `_add_player_cash`, revoke su
+  `rpc_resolve_auction`, revoke/decisione su `rpc_execute_shadow_op`. Non rinotificate qui
+  perché già segnalate a Vlad e presumibilmente note (era presente nella sessione live che le
+  ha documentate).
+- **Nuovo lavoro avviato questa sveglia**: primo item non ancora fatto del backlog esteso in
+  `docs/AUTOMATION_ROUTINE.md`, "Audit chi scrive `gameState.cash` senza passare da una RPC a
+  delta" — solo audit/censimento (nessun fix di codice, per costruzione: il debito #1 resta
+  bloccato sulla scala economica, decisione di Vlad). Subagent di scansione lanciato su tutti
+  i siti `gameState.cash =`/`+=`/`-=` del repo, verifica personale dei risultati in corso.
+  Output atteso: mappa aggiornata appesa a `docs/ECONOMY_SERVER_AUTH.md`, branch
+  `auto/audit-cash-writes-map`, PR docs-only (non merge autonomo — il permesso esplicito di
+  Vlad valeva per quella sessione live, non è una policy permanente per la routine cron, che
+  resta sul guardrail scritto "mai merge di una tua PR" finché non arriva un'istruzione
+  altrettanto esplicita e verificabile in una sessione live).
+
+---
+
 ## PR aperte (nessuna mergiata da questa sessione — controlla sempre lo stato reale su GitHub)
 - **PR #1** `auto/tutorial-action-gate` — Tutorial action-gated. CI verde.
 - **PR #2** `auto/idle-offline-catchup` — Demo idle guadagni offline. CI verde.
