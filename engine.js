@@ -1890,9 +1890,11 @@ function updateUI() {
     // Surge indicator
     const elSurge = document.getElementById('tb-surge');
     if (elSurge) {
+        // Unico scaglione surge esistente: engine-rides.js:94 → `pending >= 8 ? 1.15 : 1.0`.
+        // Lo scaglione "+35% sopra 15 corse" non è mai esistito nel motore.
         const p = gameState.pendingRides.length;
-        elSurge.innerText = p >= 15 ? '🔥 +35%' : p >= 8 ? '⚡ +15%' : '';
-        elSurge.className = `text-[9px] font-bold ${p >= 15 ? 'text-red-400' : 'text-yellow-400'}`;
+        elSurge.innerText = p >= 8 ? '⚡ +15%' : '';
+        elSurge.className = 'text-[9px] font-bold text-yellow-400';
     }
     // CEO exhaustion visual distortion
     document.body.classList.toggle('ceo-exhausted', gameState.energy < 15);
