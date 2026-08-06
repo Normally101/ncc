@@ -42,11 +42,21 @@ function _homeStreakCard(gs) {
         { days:14, cash:10000, tc:10 },
         { days:30, cash:25000, tc:25 },
     ];
+    // L'importo vero lo calcola engine-daily.js:1128-1129: tier.cash * extraMult,
+    // con extraMult = 1 + floor((giorno-7)/7)*0.1. Qui veniva annunciato il valore
+    // BASE del tier: dal 14° giorno in poi il giocatore leggeva meno di quanto
+    // incassava davvero (giorno 14: €10.000 annunciati contro €11.000 accreditati).
+    const _extraMult = d => (d >= 7 ? 1 + Math.floor((d - 7) / 7) * 0.1 : 1);
+    const _rewardAt  = (t, d) => Math.round(t.cash * _extraMult(d));
+
     const nextTier = TIERS.find(r => r.days > streak);
-    const nextFmt  = nextTier
-        ? `€${nextTier.cash.toLocaleString('it-IT')}${nextTier.tc ? ` +${nextTier.tc}DC` : ''}`
-        : `+${10 + Math.floor(Math.max(0,streak-7)/7)*10}% bonus`;
-    const nextInfo = nextTier ? `ancora ${nextTier.days - streak}g → ${nextFmt}` : `+10% ogni 7 giorni`;
+    const lastTier = TIERS[TIERS.length - 1];
+    const _fmt = (t, d) => `€${_rewardAt(t, d).toLocaleString('it-IT')}${t.tc ? ` +${t.tc}DC` : ''}`;
+    // Oltre il 30° giorno non ci sono più tier nuovi: resta il 30 con il moltiplicatore
+    // che cresce del 10% ogni settimana, quindi si mostra il prossimo accesso.
+    const nextInfo = nextTier
+        ? `ancora ${nextTier.days - streak}g → ${_fmt(nextTier, nextTier.days)}`
+        : `prossimo accesso → ${_fmt(lastTier, streak + 1)}`;
 
     const cycleDay = streak > 0 ? ((streak - 1) % 7) + 1 : 0;
     const dots = Array.from({ length: 7 }, (_, i) => {
@@ -59,6 +69,65 @@ function _homeStreakCard(gs) {
         : `<span class="em-pill em-pill--gray" style="font-size:10px">tra ${hoursLeft}h</span>`;
 
     return `<div class="em-card" style="margin-bottom:8px"><div style="display:flex;align-items:center;gap:10px;padding:9px 14px;flex-wrap:wrap"><div style="font-size:22px;line-height:1">🔥</div><div><div style="font-size:13px;font-weight:700;color:var(--em-ink)">Streak ${streak} Giorni</div><div style="font-size:10px;color:var(--em-muted)">${nextInfo}</div></div><div style="display:flex;gap:4px;align-items:center;margin-left:4px">${dots}</div><div style="margin-left:auto">${badge}</div></div></div>`;
+}
+
+// ── Banner settimanale ────────────────────────────────────────────────
+// Mostrava una "Sfida Settimanale · Corse Premium" con barra al 55% e un
+// countdown fisso "02:22:39": nessuno dei tre valori esisteva nel motore.
+// La sfida settimanale VERA è "CEO della Settimana" (engine-daily.js:794-828):
+// si azzera al 7° giorno e paga min(50, guadagni/10000) DC, più la Majestic
+// G-Prestige CEO Edition sopra i €100.000. Qui si mostra quella.
+function _homeWeeklyBanner(gs) {
+    const earn     = gs.weeklyEarnings || 0;
+    const rides    = gs.weeklyRides    || 0;
+    const weekday  = (((gs.day || 1) - 1) % 7) + 1;   // engine-daily.js:795
+    const daysLeft = 7 - weekday;
+    const prizeDC  = Math.min(50, Math.floor(earn / 10000));   // engine-daily.js:800
+    const hasCar   = (gs.fleet || []).some(c => c.id === 'ceo_prestige');
+    // Traguardo mostrato: l'auto Limited finché non è posseduta, poi il tetto dei 50 DC.
+    const goal     = hasCar ? 500000 : 100000;
+    const goalTxt  = hasCar
+        ? '€500.000 → premio massimo (50 DC)'
+        : '€100.000 → Majestic G-Prestige CEO Edition';
+    const pct      = Math.max(0, Math.min(100, (earn / goal) * 100));
+    const cdNum    = daysLeft <= 0 ? 'OGGI' : `${daysLeft}g`;
+    const cdLab    = daysLeft <= 0 ? 'chiusura settimana' : 'alla premiazione';
+    return `<div class="em-banner">
+        <div>
+          <div class="bt">CEO della Settimana</div>
+          <h2>€${earn.toLocaleString('it-IT')} · ${rides} cors${rides === 1 ? 'a' : 'e'}</h2>
+          <div class="pb"><i style="width:${pct.toFixed(1)}%"></i></div>
+          <div style="font-size:9.5px;color:#9fb1c2;margin-top:4px">Premio attuale: ${prizeDC} DC · ${goalTxt}</div>
+        </div>
+        <div class="cd"><div class="n">${cdNum}</div><div class="l">${cdLab}</div></div>
+      </div>`;
+}
+
+// ── Riquadro appalto corporate ────────────────────────────────────────
+// Prima era un finto "Contratto del giorno · Transfer premium aeroportuale
+// 0 / 25" con un bottone "Accetta" che apriva solo il tab B2B: il contatore
+// non si muoveva mai perché non esisteva niente da contare.
+function _homeContractCard() {
+    const ac = (window._b2bState && window._b2bState.activeContract) || null;
+    if (!ac) {
+        return `<div class="em-contract">
+            <div class="ct">Nessun appalto attivo</div>
+            <div class="cs">Gli appalti corporate pagano ogni giorno per tutta la durata, ma bloccano i veicoli assegnati.</div>
+            <div class="cr"><button class="em-bbtn" style="margin-left:auto" ${ceAct('switchTab', ['b2b'])}>Vedi appalti →</button></div>
+          </div>`;
+    }
+    const tot  = ac.days_total || ac.days_remaining || 1;
+    const left = Math.max(0, ac.days_remaining || 0);
+    const done = Math.max(0, tot - left);
+    const pay  = ac.daily_payout || 0;
+    return `<div class="em-contract">
+        <div class="ct">${_homeEsc(ac.contract_icon || '💼')} ${_homeEsc(ac.contract_title || 'Appalto corporate')}</div>
+        <div class="cs">${_homeEsc(ac.contract_client || '')} · +€${pay.toLocaleString('it-IT')}/giorno</div>
+        <div class="cr">
+          <span class="cc">${done} / ${tot} giorni</span>
+          <button class="em-bbtn" style="margin-left:auto" ${ceAct('switchTab', ['b2b'])}>Dettagli →</button>
+        </div>
+      </div>`;
 }
 
 // ── main render — eRepublik-modern "EM" kit (vedi style.css .em*) ──────
@@ -196,10 +265,7 @@ window.renderTabHome = function() {
   <div class="em-grid2">
 
     <div>
-      <div class="em-banner">
-        <div><div class="bt">Sfida Settimanale</div><h2>Corse Premium</h2><div class="pb"><i style="width:55%"></i></div></div>
-        <div class="cd"><div class="n">02:22:39</div><div class="l">al prossimo premio</div></div>
-      </div>
+      ${_homeWeeklyBanner(gs)}
       <div style="margin-top:7px">${(typeof window.renderDailyOrdersHTML==='function') ? window.renderDailyOrdersHTML() : ''}</div>
       <div class="em-card" style="margin-top:7px">
         <div class="em-ch"><span class="t">Corse in Corso</span><span class="a">● Live</span></div>
@@ -219,10 +285,7 @@ window.renderTabHome = function() {
 
     <div class="em-card" style="margin-top:7px">
       <div class="em-ch"><span class="t">La tua azienda</span><span class="a">${driversOnDuty.length} autisti attivi</span></div>
-      <div class="em-contract">
-        <div class="ct">Contratto del giorno</div><div class="cs">Transfer premium aeroportuale</div>
-        <div class="cr"><span class="cc">0 / 25</span><button class="em-bbtn" style="margin-left:auto" ${ceAct('switchTab', ['b2b'])}>Accetta →</button></div>
-      </div>
+      ${_homeContractCard()}
       ${driverMiniSection}
     </div>
 

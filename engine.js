@@ -350,7 +350,12 @@ function _applyBrandColor() {
     document.documentElement.style.setProperty('--gold', color);
 }
 
-let _activeTab = 'map';
+// `var` e non `let`: auctions.js:353 e crypto.js:329 leggono `window._activeTab`
+// per decidere se ri-renderizzare il tab aperto su evento Realtime. Con `let` la
+// variabile resta nello scope di script e NON compare su window, quindi entrambi
+// i guard erano sempre falsi: le aste non si aggiornavano sulle offerte altrui e
+// il grafico crypto restava fermo sul prezzo del primo caricamento.
+var _activeTab = 'map';
 function _tabIs(t) { return _activeTab === t; }
 
 // ─── RANKING ──────────────────────────────────────────────────────
