@@ -68,6 +68,55 @@ Su tua indicazione ("puoi anche rifare lo shop da zero, non abbiamo giocatori at
 C'è ora un controllo automatico che verifica che il catalogo prezzi del client e quello del
 server restino allineati: è la prima cosa che si rompe aggiungendo un item solo da un lato.
 
+### ✅ 6 agosto 2026 (stesso giorno) — "il numero mostrato ≠ il numero applicato": 6 casi chiusi
+Filone sistematico emerso durante i merge: in sei punti l'interfaccia annunciava un valore che
+il motore non usava. Non sono errori estetici — su questi numeri il giocatore decide se
+comprare, se rischiare, se aspettare. Tutti mergiati e verificati live.
+
+1. **Surge pricing fantasma** (`ui-marketing.js`, `engine.js` topbar). Veniva annunciato un
+   secondo scaglione "+35% sopra le 15 corse in coda". Non esiste: `engine-rides.js:94` ha un
+   solo scaglione, `pending >= 8 ? 1.15 : 1.0`. Con la coda piena si leggeva più del doppio di
+   quanto si incassava, e la strategia "aspetto di arrivare a 15" era basata sul nulla.
+2. **Banner "Sfida Settimanale"** (`ui-home.js`): barra fissa al 55% e countdown fisso
+   `02:22:39`, resti del mockup. Sostituito con **CEO della Settimana**, che esiste davvero
+   (`engine-daily.js:794-828`): guadagni e corse della settimana, premio DC maturato,
+   traguardo dei €100.000 per la Majestic CEO Edition, giorni reali alla premiazione.
+3. **"Contratto del giorno — 0 / 25"** (`ui-home.js`): finto, il contatore non poteva muoversi.
+   Sostituito con l'appalto B2B realmente attivo (titolo, cliente, payout/giorno, giorni fatti
+   sul totale), o l'assenza di appalti detta esplicitamente.
+4. **Premio streak sottostimato** (`ui-home.js`): mostrava il valore base del tier, mentre
+   `engine-daily.js:1128` lo moltiplica per `1 + floor((giorno-7)/7)*0.1`. Dal 14° giorno il
+   giocatore leggeva **meno** di quanto incassava.
+5. **Banner bonus Ranking** (`ui-ranking.js`): compariva in base alla classifica multiplayer
+   per potere, ma i bonus li assegna `_getRankPosition()`, cioè la posizione **per reputazione
+   contro i rivali NPC**. Le due non coincidono quasi mai. In più elencava "premi assicurativi
+   −15%", meccanica che **non esiste** (l'effetto vero è il rischio incidenti,
+   `engine-rides.js:456`), e dava tutto per Top 3 mentre i POI esclusivi partono dalla 4ª/5ª.
+   Corretto anche il popup gemello in `engine-daily.js:525`.
+6. **Linea di credito** (`ui-investments.js`): mostrava `_getLoanInterestRate()` (tasso BCE),
+   che **nessuna operazione usa**. Il tasso vero è `_getCreditTier(score).rate`, scritto in
+   `loan.rate` da `takeLoan` e riapplicato ogni mese. Il tetto di €500.000 era hardcoded:
+   con score BASIC il fido vero è €100.000 (i bottoni da 250k/500k venivano offerti e poi
+   rifiutati), con PLATINUM è €5.000.000 (e il pannello si bloccava comunque a 500k).
+7. **Rischio missioni shadow** (`ui-emails.js`): annunciava "−65% Vetri Oscurati" se **una
+   qualsiasi** auto della flotta aveva l'upgrade, ma il motore lo applica solo all'auto
+   assegnata all'autista (`engine-events.js:293`). Con una vetrata su venti si correva il
+   rischio pieno 19 volte su 20 — su un'operazione che può costare il veicolo. Aggiunto anche
+   l'effetto del Corso di Guida Sicura (85% dei controlli saltati), che è il più grande dei due
+   e non era citato da nessuna parte.
+
+**Bonus, trovato durante il lavoro:** `_activeTab` era dichiarato `let` in `engine.js`, quindi
+**non compariva su `window`**. `auctions.js:353` e `crypto.js:329` leggono `window._activeTab`
+per decidere se ri-renderizzare il tab aperto su evento Realtime: entrambi i guard erano
+sempre falsi. Le aste giudiziarie non si aggiornavano sulle offerte degli altri giocatori e il
+grafico crypto restava fermo al prezzo del primo caricamento. Passato a `var`. È esattamente il
+guardrail scritto in CLAUDE.md — vale la pena rileggerlo: **globali condivise = `var`**.
+
+Resta aperto un settimo caso che **non tocco da solo** perché è un nerf, non un bug: i payout
+di `_collectEarnings` (`contracts.js`) e quattro punti di `engine-daily.js` accreditano cassa
+senza passare da `income`, quindi **non vengono tassati**. Sistemarlo cambia l'equilibrio
+economico: decisione tua.
+
 ### 🔴 DA FARE TU — tre mitigazioni SQL, la routine non tocca il DB
 1. **PR #4 mergiata ma la SQL NON è applicata.** `45_lockdown_cash_exploits_scaffold.sql` è
    in repo, non in DB: la **cassa illimitata via `_add_player_cash` è ancora aperta**. Le due
