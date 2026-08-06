@@ -39,7 +39,10 @@ function _tickFatigue() {
         if (gameState.energy >= 20) gameState._ceoRestWarned = false;
     }
 
-    gameState.drivers.forEach(driver => {
+    // Copia: il burnout più sotto fa splice() sull'array live — iterare sull'originale
+    // farebbe saltare il driver successivo a quello rimosso (forEach avanza comunque
+    // all'indice successivo, che dopo lo splice punta a chi era 2 posizioni più avanti).
+    [...gameState.drivers].forEach(driver => {
         if (driver.id === 'ceo') return;
         if (driver.fatigue  === undefined) driver.fatigue  = 0;
         if (driver.morale   === undefined) driver.morale   = 100;
@@ -354,14 +357,22 @@ function processDailyRoutines() {
         if (gameState.day === 60) logToMap('🏦 Fondo Pensione attivo: +€1.200/g di rendita!');
     }
 
+    // Hotel Exclusive: bonus income (must be before cash settlement so it's actually credited —
+    // was previously added to `income` after gameState.cash was already updated, so this €500
+    // was a phantom value that still got taxed/counted in profit but never paid out)
+    if (hasInvestment('inv_hotel_exclusive')) income += 500;
+
     let baseTax = gameState.staff.some(s => s.id === 'admin') ? 0.24 : 0.42;
     if ((gameState.activeLobbyLaws || []).includes('law_tax_cut')) baseTax = Math.min(baseTax, 0.28);
     if (hasInvestment('inv_tower')) baseTax *= 0.5;
     let profitTaxes = income > 0 ? (income * baseTax) : 0;
     let luxuryTax = Math.floor(Math.pow(gameState.fleet.length, 1.5) * 50);
     if (hasInvestment('inv_tower')) luxuryTax = Math.floor(luxuryTax * 0.5);
+    // Tassa totale realmente dedotta (lusso + reddito) — usata per il display al giocatore;
+    // prima si mostrava solo luxuryTax, sottostimando quanto pagato quando profitTaxes>0.
+    const totalTax = luxuryTax + profitTaxes;
 
-    expenses += luxuryTax + profitTaxes;
+    expenses += totalTax;
 
     // === MARKETING SYSTEM ===
     // Migrate old activeCampaign string → activeCampaigns array (backward compat)
@@ -453,10 +464,7 @@ function processDailyRoutines() {
 
     if ((gameState.activeLobbyLaws || []).includes('law_airport_monopoly')) for (let i = 0; i < 3; i++) generatePOIRide('vip');
     if (hasInvestment('inv_hotel_partner')) for (let i = 0; i < 3; i++) generatePOIRide('vip');
-    if (hasInvestment('inv_hotel_exclusive')) {
-        for (let i = 0; i < 5; i++) generatePOIRide('vip');
-        income += 500;
-    }
+    if (hasInvestment('inv_hotel_exclusive')) for (let i = 0; i < 5; i++) generatePOIRide('vip');
     if (hasInvestment('inv_armored') && Math.random() > 0.5) {
         const ar = generatePOIRide('vip');
         if (ar) { ar.price *= 3; logToMap('🛡️ Cliente blindato: tariffa triplicata!'); }
@@ -921,7 +929,7 @@ function processDailyRoutines() {
         }
     }
 
-    logToMap(`📊 Chiusura Giornaliera: Entrate +€${income} | Uscite -€${Math.floor(expenses)} (Inc. Tasse: €${luxuryTax})`);
+    logToMap(`📊 Chiusura Giornaliera: Entrate +€${income} | Uscite -€${Math.floor(expenses)} (Inc. Tasse: €${Math.floor(totalTax)})`);
 
     // ── DAILY SUMMARY TOAST ───────────────────────────────────────────────────
     {
@@ -930,7 +938,7 @@ function processDailyRoutines() {
         const _sumType = _net >= 0 ? 'success' : 'error';
         const _todayStr = _today > 0 ? ` · Corse: €${_today.toLocaleString()}` : '';
         if (typeof showNotification === 'function') showNotification(
-            `Giorno ${_closingDay} — ${_net >= 0 ? '+' : ''}€${_net.toLocaleString()} · Tasse €${luxuryTax.toLocaleString()}${_todayStr}`,
+            `Giorno ${_closingDay} — ${_net >= 0 ? '+' : ''}€${_net.toLocaleString()} · Tasse €${Math.floor(totalTax).toLocaleString()}${_todayStr}`,
             _sumType);
         // Store daily summary for dispatch center overlay
         gameState._dailySummary = {
@@ -939,7 +947,7 @@ function processDailyRoutines() {
             expenses: Math.round(expenses),
             net: Math.round(_net),
             todayEarnings: _today,
-            luxuryTax,
+            totalTax: Math.round(totalTax),
             cash: gameState.cash,
             reputation: gameState.reputation,
         };
