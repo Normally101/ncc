@@ -104,25 +104,44 @@ function renderTabInvestments() {
     if ((gameState.investments||[]).includes('inv_loan_facility')) {
         const activeLoans  = gameState.loans || [];
         const totalDebt    = activeLoans.reduce((s,l)=>s+l.amount, 0);
-        const dynRate      = typeof _getLoanInterestRate === 'function' ? _getLoanInterestRate() : 0.08;
-        const ratePct      = (dynRate * 100).toFixed(0);
-        const rateColor    = dynRate <= 0.04 ? '#1aa06a' : dynRate <= 0.06 ? '#e0922e' : '#db5746';
-        const debtPct      = Math.min(100, (totalDebt/500000)*100);
+        // Tasso e limite li decide _getCreditTier (engine-finance.js:151): è il tasso che
+        // takeLoan scrive in loan.rate (engine-finance.js:236) e che l'addebito mensile
+        // riapplica (engine-daily.js:718). Il pannello mostrava invece
+        // _getLoanInterestRate() (engine.js:1121), una seconda funzione basata sul tasso
+        // BCE che nessuna operazione usa, e un tetto fisso di €500.000 che non esiste da
+        // nessuna parte: con Credit Score BASIC il limite vero è €100.000 e i bottoni da
+        // €250k/€500k venivano offerti per poi essere rifiutati, mentre con PLATINUM
+        // (€5.000.000) il pannello si bloccava comunque a €500k.
+        const creditTier   = (typeof _getCreditTier === 'function')
+            ? _getCreditTier(gameState.creditScore || 300)
+            : { label:'BASIC', rate:0.12, loanLimit:100000 };
+        const dynRate      = creditTier.rate;
+        const loanLimit    = creditTier.loanLimit;
+        const atLimit      = totalDebt >= loanLimit;
+        const ratePct      = (dynRate * 100).toFixed(1);
+        const rateColor    = dynRate <= 0.045 ? '#1aa06a' : dynRate <= 0.06 ? '#e0922e' : '#db5746';
+        const debtPct      = Math.min(100, (totalDebt/loanLimit)*100);
+        const _amtFmt      = v => v >= 1000000 ? `${(v/1000000).toFixed(v % 1000000 ? 1 : 0)}M` : `${Math.round(v/1000)}k`;
+        // La scala degli importi segue il limite del tier invece di essere fissa.
+        const loanLadder   = [...new Set([0.1, 0.25, 0.5, 1]
+            .map(f => Math.round(loanLimit * f / 5000) * 5000)
+            .filter(v => v > 0))];
 
         html += `${_SEC('Linea di Credito')}
         <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:12px">
             <div style="display:flex;justify-content:space-between;font-size:10px;color:#6b7280;margin-bottom:10px">
                 <span>Debito: <span style="color:#db5746;font-weight:700;font-family:monospace">€${totalDebt.toLocaleString()}</span></span>
-                <span>Tasso: <span style="color:${rateColor};font-weight:700">${ratePct}%</span> <span style="color:#6b7280">(Rep. ${(gameState.reputation||0).toFixed(1)}★)</span></span>
+                <span>Tasso: <span style="color:${rateColor};font-weight:700">${ratePct}%/mese</span> <span style="color:#6b7280">(Score ${gameState.creditScore || 300} · ${creditTier.label})</span></span>
             </div>
-            <div style="height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-bottom:14px">
+            <div style="height:4px;background:#21262d;border-radius:2px;overflow:hidden;margin-bottom:6px">
                 <div style="height:100%;width:${debtPct}%;background:#db5746;border-radius:2px;transition:width .3s"></div>
             </div>
+            <div style="font-size:9px;color:#6b7280;margin-bottom:12px">Fido ${creditTier.label}: €${loanLimit.toLocaleString()}${atLimit ? ' — esaurito, salda per riaprire la linea' : ''}</div>
             <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px">
-                ${[50000, 100000, 250000, 500000].map(amt => `
-                <button ${ceAct('takeLoan', [amt])} ${totalDebt >= 500000 ? 'disabled' : ''}
-                    style="background:#0d1117;border:1px solid #1e3a5f;color:#2f74c0;padding:8px 6px;border-radius:4px;font-family:monospace;font-size:9px;font-weight:700;cursor:${totalDebt>=500000?'not-allowed':'pointer'};opacity:${totalDebt>=500000?.35:1};text-align:center">
-                    Prestito €${(amt/1000).toFixed(0)}k<br><span style="opacity:.6;font-size:8px">Rata: €${Math.ceil(amt*dynRate).toLocaleString()}/mese</span>
+                ${loanLadder.map(amt => `
+                <button ${ceAct('takeLoan', [amt])} ${atLimit ? 'disabled' : ''}
+                    style="background:#0d1117;border:1px solid #1e3a5f;color:#2f74c0;padding:8px 6px;border-radius:4px;font-family:monospace;font-size:9px;font-weight:700;cursor:${atLimit?'not-allowed':'pointer'};opacity:${atLimit?.35:1};text-align:center">
+                    Prestito €${_amtFmt(amt)}<br><span style="opacity:.6;font-size:8px">Rata: €${Math.ceil(amt*dynRate).toLocaleString()}/mese</span>
                 </button>`).join('')}
             </div>
         </div>
@@ -130,7 +149,7 @@ function renderTabInvestments() {
             ${activeLoans.map(l => `
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:9px;padding:6px 12px;background:#161b22;border:1px solid #21262d;border-radius:4px">
                 <span style="color:#6b7280;font-family:monospace">Prestito #${l.id}</span>
-                <span style="color:#db5746;font-family:monospace">Residuo: €${l.amount.toLocaleString()} (${((l.rate||0.08)*100).toFixed(0)}%/mese)</span>
+                <span style="color:#db5746;font-family:monospace">Residuo: €${l.amount.toLocaleString()} (${((l.rate||0.08)*100).toFixed(1)}%/mese)</span>
                 ${_btn('Salda', ceAct('repayLoan', [l.id]), 'gold', gameState.cash < l.amount)}
             </div>`).join('')}
         </div>` : ''}`;
