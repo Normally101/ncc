@@ -35,6 +35,13 @@ cassa/valuta/stato condiviso, chi ha già `_ce_rate_limit` o un'altra mitigazion
 dove manca copertura, sul modello del pattern già validato in `43_ratelimit_driver_coins.sql`.
 Solo lettura/audit, nessuna scrittura SQL applicata. Output atteso: scaffold SQL (non
 applicato) + branch `auto/rpc-ratelimit-audit` + PR.
+`auto/tutorial-action-gate` — **primo item del backlog COMPLETATO**, in attesa di PR/revisione di Vlad.
+
+## Task corrente
+_(nessuno — item 1 chiuso. Alla prossima sveglia: `git fetch --all`, se il branch è stato
+mergiato/chiuso da Vlad passare al secondo item del backlog — demo idle offline-catchup —
+creando `auto/idle-offline-catchup`. Se il branch è ancora aperto e non toccato da Vlad, non
+serve altro lavoro: aspettare la sua revisione.)_
 
 ## Sveglie consecutive senza progresso
 3 — soglia del guardrail "dopo 3 sveglie ferme, fermati e scrivi perché" raggiunta con
@@ -351,3 +358,25 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
     negativo e `rpc_resolve_auction` lotti a €0). Non è stato inviato nulla tra il 2 e il 6
     agosto (gap di sveglie, vedi sopra) quindi il promemoria periodico era comunque dovuto:
     l'ultimo avviso a Vlad su questo canale risale al 2026-08-02.
+_(nessuno — l'accesso GitHub è tornato disponibile più tardi nella stessa sveglia, PR aperta.)_
+
+## Log sveglie
+- 2026-07-30 (sveglia 1): **Tutorial action-gated** — fatto.
+  - `tutorial.js`: lo step "Assegna le Corse" ora ha `actionGate:'rides'`. Un poll (1s)
+    confronta `ceOnb.rides()` col valore all'apertura dello step; se sale (= corsa
+    DAVVERO completata, via `engine-rides.js`/`zero-to-hero.js`) avanza da solo. Bottone
+    "Avanti" resta sempre manuale/cliccabile — nessun soft-lock possibile.
+  - `index.html`: bump `tutorial.js?v=11`.
+  - `HANDOFF.md`: aggiunta entry riassuntiva in cima a STATO ATTUALE.
+  - **Verificato:** `node --check` su tutti i .js (0 errori) · boot headless
+    (`python3 -m http.server` + chromium headless `/opt/pw-browsers/chromium-1194`) →
+    pagina carica, unico errore JS presente è pre-esistente e scollegato dal mio cambio
+    (`supabase-config.js:14`, CDN Supabase non raggiungibile in questo sandbox senza rete
+    esterna — non è una regressione introdotta qui).
+  - **NON verificato** (richiede Vlad in locale con login reale): il gate che si attiva
+    durante un tutorial live vero (assegnare/completare una corsa mentre lo step è aperto),
+    e l'aspetto visivo dell'hint aggiunto nel box del tutorial.
+  - **Branch pushato**: sì. **PR aperta**: sì → https://github.com/Normally101/ncc/pull/1
+    (l'accesso GitHub MCP è tornato disponibile più tardi nella stessa sveglia). Routine
+    iscritta agli eventi della PR (CI/review), la seguirà come da protocollo PR-watch fino a
+    merge/chiusura. Prossimo passo per Vlad: revisione + merge (mai autonomo).
