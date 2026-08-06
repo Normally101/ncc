@@ -245,6 +245,11 @@
     }
 
     // ── REALTIME CHAT ─────────────────────────────────────────────────
+    function _unsubscribeChat() {
+        try { if (ST.chatChan) sb().removeChannel(ST.chatChan); } catch (e) { /* ok */ }
+        ST.chatChan = null; ST.chatAid = null;
+    }
+
     function _subscribeChat(aid) {
         try {
             if (ST.chatChan && ST.chatAid === aid) return;       // già sottoscritto
@@ -283,7 +288,10 @@
         if ((gameState.cash || 0) < CREATE_COST) return _notify(`Servono ${fmt(CREATE_COST)} per fondare un consorzio.`, 'error');
         try {
             const id = await _rpc('rpc_create_alliance', { p_name: name.trim(), p_tag: tag.trim(), p_company_name: cname(), p_description: desc.trim(), p_emblem: emb });
-            if (typeof window._addCash === 'function') window._addCash(-CREATE_COST); else gameState.cash -= CREATE_COST;
+            // ServerState (Realtime) aggiorna gameState.cash dal server a delta; evitiamo doppia deduzione
+            if (!window.ServerState?.isReady()) {
+                if (typeof window._addCash === 'function') window._addCash(-CREATE_COST); else gameState.cash -= CREATE_COST;
+            }
             // imposta apertura se l'utente l'ha tolta (default RPC = aperto)
             if (!open && id) { try { await sb().from('alliances').update({ is_open: false }).eq('id', id); } catch (e) {} }
             _notify('Consorzio fondato! 🛡️', 'success');
@@ -303,13 +311,13 @@
 
     window._alLeave = async function () {
         if (!confirm('Vuoi davvero uscire dal consorzio?')) return;
-        try { await _rpc('rpc_leave_alliance'); _notify('Hai lasciato il consorzio.', 'info'); window.renderTabConsorzi(); }
+        try { await _rpc('rpc_leave_alliance'); _unsubscribeChat(); _notify('Hai lasciato il consorzio.', 'info'); window.renderTabConsorzi(); }
         catch (e) { _notify(e.message, 'error'); }
     };
 
     window._alDisband = async function () {
         if (!confirm('Sciogliere il consorzio? Operazione irreversibile.')) return;
-        try { await _rpc('rpc_disband_alliance'); _notify('Consorzio sciolto.', 'info'); window.renderTabConsorzi(); }
+        try { await _rpc('rpc_disband_alliance'); _unsubscribeChat(); _notify('Consorzio sciolto.', 'info'); window.renderTabConsorzi(); }
         catch (e) { _notify(e.message, 'error'); }
     };
 
@@ -320,7 +328,10 @@
         if ((gameState.cash || 0) < amt) return _notify('Fondi insufficienti.', 'error');
         try {
             await _rpc('rpc_donate_to_alliance', { p_amount: amt });
-            if (typeof window._addCash === 'function') window._addCash(-amt); else gameState.cash -= amt;
+            // ServerState (Realtime) aggiorna gameState.cash dal server a delta; evitiamo doppia deduzione
+            if (!window.ServerState?.isReady()) {
+                if (typeof window._addCash === 'function') window._addCash(-amt); else gameState.cash -= amt;
+            }
             _notify(`Hai donato ${fmt(amt)} al consorzio.`, 'success');
             if (typeof saveGame === 'function') saveGame();
             if (typeof updateUI === 'function') updateUI();
