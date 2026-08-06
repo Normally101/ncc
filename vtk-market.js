@@ -16,54 +16,70 @@ window._vtkState = {
 
 // ── VTK SHOP CATALOG ─────────────────────────────────────────────────────────
 
+/* ── CATALOGO VTK SHOP ────────────────────────────────────────────────────────
+   REGOLA: qui NON si mette niente che il motore non legga davvero. Ogni effetto
+   sotto è stato verificato risalendo al punto del motore che lo consuma.
+   Il prezzo qui è solo per il display: quello che conta è il catalogo server-side
+   in `rpc_spend_vtk_shop_item` (46_vtk_shop_purchase_scaffold.sql). Se i due
+   divergono, il server vince e l'acquisto viene rifiutato — mai fidarsi del client.
+   Aggiungendo un item QUI va aggiunto anche LÌ, altrimenti resta non acquistabile. */
 const VTK_SHOP_ITEMS = [
-    {
-        id:    'slot_garage_7d',
-        icon:  '🅿️',
-        name:  'Slot Garage +7gg',
-        desc:  'Espandi di 1 il limite veicoli per 7 giorni di gioco.',
-        cost:  200,
-        apply: (gs) => {
-            if (!gs._vtkGarageSlotBonus) gs._vtkGarageSlotBonus = 0;
-            gs._vtkGarageSlotBonus += 1;
-            gs._vtkGarageSlotExpiry = (gs.day || 1) + 7;
-            if (typeof showNotification === 'function') showNotification('🅿️ Slot Garage +1 attivo per 7 giorni!', 'success');
-            if (typeof logToMap === 'function') logToMap('🅿️ VTK Shop: Slot Garage extra attivato per 7 giorni.');
-        },
-    },
     {
         id:    'driver_stress_reset',
         icon:  '💆',
         name:  'Reset Stress Autista',
-        desc:  'Azzera istantaneamente lo stress dell\'autista più stressato.',
+        desc:  'Azzera stress e burnout dell\'autista più provato.',
         cost:  100,
+        // verificato: stress_level/burnout_until esistono (engine-drivers.js:151)
+        // e stress_level è letto in engine-rides.js:430.
         apply: (gs) => {
-            const drivers = (gs.drivers || []).filter(d => d.id !== 'ceo' && (d.stress_level || 0) > 0);
-            if (!drivers.length) {
-                if (typeof showNotification === 'function') showNotification('Nessun autista stressato!', 'info');
-                return;
-            }
-            const worst = drivers.reduce((a, b) => ((a.stress_level||0) > (b.stress_level||0) ? a : b));
+            const drivers = (gs.drivers || []).filter(d => d.id !== 'ceo' && ((d.stress_level || 0) > 0 || d.burnout_until));
+            if (!drivers.length) return { ok: false, msg: 'Nessun autista stressato.' };
+            const worst = drivers.reduce((a, b) => ((a.stress_level || 0) > (b.stress_level || 0) ? a : b));
             worst.stress_level = 0;
             worst.burnout_until = null;
-            if (typeof showNotification === 'function') showNotification(`💆 Stress di ${worst.name} azzerato!`, 'success');
-            if (typeof logToMap === 'function') logToMap(`💆 VTK Shop: Stress di ${worst.name} azzerato.`);
+            return { ok: true, msg: `💆 Stress di ${worst.name} azzerato.` };
+        },
+    },
+    {
+        id:    'fuel_refill_full',
+        icon:  '⛽',
+        name:  'Rifornimento Cisterna',
+        desc:  'Riempie all\'istante il deposito carburante aziendale.',
+        cost:  150,
+        // verificato: fuelTank/fuelTankCapacity sono consumati dal ciclo giornaliero
+        // (engine-daily.js:195,210,231). Non duplica nulla dell'Executive Club.
+        apply: (gs) => {
+            const cap = gs.fuelTankCapacity || 0;
+            if (cap <= 0) return { ok: false, msg: 'Non hai ancora un deposito carburante.' };
+            const before = Math.floor(gs.fuelTank || 0);
+            if (before >= cap) return { ok: false, msg: 'Il deposito è già pieno.' };
+            gs.fuelTank = cap;
+            return { ok: true, msg: `⛽ Deposito riempito: ${before.toLocaleString('it-IT')}L → ${cap.toLocaleString('it-IT')}L.` };
         },
     },
     {
         id:    'rep_boost_01',
         icon:  '⭐',
         name:  'Boost Reputazione +0.2★',
-        desc:  'Incremento immediato reputazione CEO di +0.2 stelle.',
+        desc:  'Incremento immediato della reputazione aziendale.',
         cost:  300,
         apply: (gs) => {
             const cap = 5.0 + (gs.prestige || 0);
-            gs.reputation = Math.min(cap, (gs.reputation || 0) + 0.2);
-            if (typeof showNotification === 'function') showNotification('⭐ Reputazione +0.2★!', 'success');
-            if (typeof logToMap === 'function') logToMap('⭐ VTK Shop: Reputazione +0.2★');
+            const before = gs.reputation || 0;
+            if (before >= cap) return { ok: false, msg: 'Reputazione già al massimo.' };
+            gs.reputation = Math.min(cap, before + 0.2);
+            return { ok: true, msg: '⭐ Reputazione +0.2★.' };
         },
     },
 ];
+
+/* RIMOSSO — 'slot_garage_7d' (200 VTK, "Espandi di 1 il limite veicoli per 7 giorni").
+   Era un placebo: scriveva `_vtkGarageSlotBonus`/`_vtkGarageSlotExpiry`, che in tutto il
+   repo non venivano letti da nessuno, e per di più nel gioco NON esiste alcun limite alla
+   flotta da espandere (le uniche "capacity" sono quelle della cisterna carburante).
+   Il giocatore pagava 200 VTK e non riceveva nulla. Non va reintrodotto finché un limite
+   flotta non esiste davvero e qualcuno non legge quei campi. */
 
 // ── DATA LAYER ────────────────────────────────────────────────────────────────
 
@@ -150,18 +166,79 @@ window.vtkCancelOrder = async function(orderId) {
     window.renderVTKModal();
 };
 
-window.vtkBuyShopItem = function(itemId) {
+/* Acquisto VTK Shop — server-authoritative, con degrado sicuro.
+
+   Il problema che questa funzione risolve: `vtkBalance` viene RISCRITTO PER INTERO dal
+   server ad ogni evento Realtime sulla riga `companies` (serverState.js:210). La vecchia
+   versione lo scalava solo in locale, quindi il saldo tornava su al primo evento successivo
+   mentre l'oggetto restava applicato e salvato: acquisti gratis, ripetibili all'infinito.
+
+   L'unico modo corretto è far scalare il saldo al SERVER. La RPC `rpc_spend_vtk_shop_item`
+   però potrebbe non essere ancora applicata al DB (46_vtk_shop_purchase_scaffold.sql).
+   In quel caso questa funzione RIFIUTA l'acquisto invece di regalare l'oggetto: il negozio
+   si disattiva da solo con un messaggio onesto, il gioco continua a funzionare, e nel
+   momento in cui la SQL viene applicata torna operativo senza bisogno di un nuovo deploy. */
+const _vtkBuyInFlight = new Set();
+
+window.vtkBuyShopItem = async function(itemId) {
     const item = VTK_SHOP_ITEMS.find(x => x.id === itemId);
     if (!item) return;
+
+    // Doppio click / doppio invio: un acquisto per volta per item.
+    if (_vtkBuyInFlight.has(itemId)) return;
+
+    const notify = (msg, kind) => { if (typeof showNotification === 'function') showNotification(msg, kind); };
+
     if ((gameState.vtkBalance || 0) < item.cost) {
-        if (typeof showNotification === 'function') showNotification(`VTK insufficienti — servono ${item.cost} VTK.`, 'error');
+        notify(`VTK insufficienti — servono ${item.cost} VTK.`, 'error');
         return;
     }
-    gameState.vtkBalance -= item.cost;
-    item.apply(gameState);
-    if (typeof updateUI === 'function') updateUI();
-    if (typeof saveGame === 'function') saveGame();
-    window.renderVTKModal();
+
+    // L'effetto va provato PRIMA di pagare: alcuni item non hanno nulla su cui agire
+    // (nessun autista stressato, deposito già pieno, reputazione al massimo). Meglio
+    // dirlo subito che incassare e non fare niente. Si applica su una copia di prova.
+    const dryRun = item.apply({
+        ...gameState,
+        drivers: (gameState.drivers || []).map(d => ({ ...d })),
+    });
+    if (dryRun && dryRun.ok === false) { notify(dryRun.msg, 'info'); return; }
+
+    const sb = window.supabaseClient;
+    if (!sb) { notify('Non connesso al server: acquisto non disponibile offline.', 'error'); return; }
+
+    _vtkBuyInFlight.add(itemId);
+    try {
+        const { data, error } = await sb.rpc('rpc_spend_vtk_shop_item', { v_item_id: itemId });
+
+        if (error) {
+            // 42883 = funzione inesistente (Postgres) · PGRST202 = non esposta (PostgREST).
+            const missing = error.code === '42883' || error.code === 'PGRST202' ||
+                            /does not exist|could not find the function/i.test(error.message || '');
+            if (missing) {
+                notify('VTK Shop non ancora attivo su questo server. Nessun VTK è stato scalato.', 'warning');
+                console.warn('[VTK Shop] rpc_spend_vtk_shop_item assente: applicare 46_vtk_shop_purchase_scaffold.sql');
+            } else {
+                notify(window.CE_Sec?.userError ? window.CE_Sec.userError('Acquisto non riuscito', error)
+                                                : 'Acquisto non riuscito.', 'error');
+            }
+            return;   // in nessun caso l'oggetto viene consegnato
+        }
+
+        // Il server è la fonte di verità sul saldo: allineiamoci alla sua risposta.
+        if (data && data.vtk_balance != null) gameState.vtkBalance = data.vtk_balance;
+        else if (!window.ServerState?.isReady()) gameState.vtkBalance = (gameState.vtkBalance || 0) - item.cost;
+
+        const res = item.apply(gameState);
+        notify((res && res.msg) || 'Acquisto completato.', 'success');
+        if (typeof logToMap === 'function' && res && res.msg) logToMap(`◈ VTK Shop: ${res.msg}`);
+        if (typeof updateUI === 'function') updateUI();
+        if (typeof saveGame === 'function') saveGame();
+        if (typeof window.renderVTKModal === 'function') window.renderVTKModal();
+    } catch (e) {
+        notify('Acquisto non riuscito: errore di rete.', 'error');
+    } finally {
+        _vtkBuyInFlight.delete(itemId);
+    }
 };
 
 // ── MODAL RENDERER ────────────────────────────────────────────────────────────
