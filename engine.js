@@ -1118,6 +1118,12 @@ function _checkDriverLevel(driver) {
 // ─── REPUTAZIONE 2.0 ─────────────────────────────────────────────
 function _getPrestige() { return Math.max(0, +(gameState.reputation - 5.0).toFixed(2)); }
 
+// ATTENZIONE: NON è il tasso che il gioco applica ai prestiti. Quello lo decide
+// _getCreditTier(score).rate (engine-finance.js:151), scritto in loan.rate da takeLoan
+// e riapplicato ogni mese da engine-daily.js:718. Questa funzione, legata al tasso BCE,
+// non è usata da nessuna operazione: mostrarla in un pannello annuncia un tasso diverso
+// da quello addebitato. Se serve un tasso legato alla BCE va fatto usare al motore,
+// non solo all'interfaccia.
 function _getLoanInterestRate() {
     const base = gameState.interestRateBase || 0.045;
     const score = gameState.creditScore || 600;
