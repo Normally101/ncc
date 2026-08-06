@@ -47,6 +47,27 @@ routine. Tutto è verificato per lettura del sorgente + SQL della RPC, sintassi 
 headless. Al primo login conviene controllare a mano: acquisto di un'auto, un bando corporate
 vinto, un acquisto dal VTK Shop, e il saldo Driver Coins dopo un ciclo di gioco.
 
+### ✅ 6 agosto 2026 (stesso giorno) — VTK Shop ricostruito da zero + ultimi fix consorzi
+Su tua indicazione ("puoi anche rifare lo shop da zero, non abbiamo giocatori attivi").
+
+- **VTK Shop riscritto.** La spesa ora la fa il server (`rpc_spend_vtk_shop_item`). La novità
+  che sblocca tutto: il client **rileva** se la RPC non è ancora applicata (`42883`/`PGRST202`)
+  e rifiuta l'acquisto con un messaggio, senza consegnare nulla. Quindi il negozio è già
+  deployato in sicurezza, non regala niente nel frattempo, e si riattiva da solo appena
+  applichi `46_vtk_shop_purchase_scaffold.sql` — **nessun deploy ulteriore necessario**.
+- **Rimosso un item placebo**: `slot_garage_7d` (200 VTK) scriveva due campi che nessuno nel
+  repo leggeva, e per di più nel gioco non esiste un limite flotta da espandere. Si pagava
+  per niente. Sostituito con `fuel_refill_full` (150 VTK), su meccanica verificata viva.
+- Gli effetti ora restituiscono un esito: niente autisti stressati / deposito già pieno /
+  reputazione al massimo ⇒ acquisto rifiutato **prima** di pagare, non incassato a vuoto.
+- **PR #7 chiusa** (non scartata): la sua branch era ferma a prima dei 26 fix e mergiarla
+  avrebbe tolto 1643 righe. I suoi due fix superstiti su `alliances.js` — doppia deduzione
+  cassa su fondazione/donazione e canale Realtime della chat mai chiuso — sono stati estratti
+  su un branch pulito e mergiati.
+
+C'è ora un controllo automatico che verifica che il catalogo prezzi del client e quello del
+server restino allineati: è la prima cosa che si rompe aggiungendo un item solo da un lato.
+
 ### 🔴 DA FARE TU — tre mitigazioni SQL, la routine non tocca il DB
 1. **PR #4 mergiata ma la SQL NON è applicata.** `45_lockdown_cash_exploits_scaffold.sql` è
    in repo, non in DB: la **cassa illimitata via `_add_player_cash` è ancora aperta**. Le due
