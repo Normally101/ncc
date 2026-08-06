@@ -457,18 +457,6 @@ function saveGame() {
 }
 
 
-function _processOfflineCatchup() {
-    const lastOnline = gameState.lastOnlineTimestamp || 0;
-    if (!lastOnline) return;
-    const elapsedMs   = Date.now() - lastOnline;
-    const elapsedDays = Math.min(7, Math.floor(elapsedMs / (24 * 60 * 60 * 1000)));
-    if (elapsedDays < 1) return;
-    for (let i = 0; i < elapsedDays; i++) processDailyRoutines();
-    if (typeof showNotification === 'function') {
-        showNotification(`💤 Offline per ${elapsedDays} giorno${elapsedDays > 1 ? 'i' : ''} — redditi processati.`, 'info');
-    }
-}
-
 function loadGame() {
     try {
         // Slot-aware: read from the selected slot key
@@ -864,11 +852,21 @@ function initGame(fresh = true) {
         gameState.month  = _itaInit.month;
         // Offline catchup: advance day counter toward today, process daily routines for each missed day (capped at 7)
         const _offlineDays = Math.min(7, Math.max(0, _itaInit.gameDay - (gameState.day || _itaInit.gameDay)));
+        const _cashBeforeOffline = gameState.cash;
         for (let i = 0; i < _offlineDays; i++) { gameState.day++; processDailyRoutines(); }
         gameState.day = _itaInit.gameDay; // final snap to canonical real day
         if (_offlineDays >= 1) {
+            // "Hai guadagnato mentre riposavi" — mostra il delta cassa reale accumulato
+            // dai processDailyRoutines() qui sopra (già server-sync'd via ServerState.syncCash,
+            // qui solo lettura per il messaggio: nessuna nuova scrittura su gameState.cash).
+            const _offlineDelta = Math.round(gameState.cash - _cashBeforeOffline);
             setTimeout(() => {
-                if (typeof showNotification === 'function') showNotification(`💤 Offline per ${_offlineDays} giorno${_offlineDays > 1 ? 'i' : ''} — redditi processati.`, 'info');
+                if (typeof showNotification !== 'function') return;
+                const giorni = `${_offlineDays} giorno${_offlineDays > 1 ? 'i' : ''}`;
+                const msg = _offlineDelta >= 0
+                    ? `💤 Sei stato offline per ${giorni} — hai guadagnato €${_offlineDelta.toLocaleString('it-IT')} mentre riposavi!`
+                    : `💤 Sei stato offline per ${giorni} — tra spese e stipendi ti è costato €${Math.abs(_offlineDelta).toLocaleString('it-IT')}.`;
+                showNotification(msg, 'info');
             }, 1200);
         }
         _refreshRecruits();
