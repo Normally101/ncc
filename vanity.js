@@ -122,13 +122,27 @@
     };
 
     // ── acquisto/equip ────────────────────────────────────────────────
-    function _spend(cost) {
+    function _spend(cost, itemId) {
         if ((gameState.driverCoins || 0) < cost) {
             if (typeof showNotification === 'function') showNotification(`Servono ${cost} DC — acquistali nell'Executive Club.`, 'error');
             if (typeof switchTab === 'function') switchTab('store');
             return false;
         }
         gameState.driverCoins -= cost;
+        // `driverCoins` e' sincronizzato in OVERWRITE dal server (serverState.js:209), non a
+        // delta: senza persistere la spesa sulla colonna autoritativa il saldo tornava su al
+        // primo evento Realtime, mentre il cosmetico restava posseduto e salvato -> gratis.
+        // Stessa RPC usata dalle spese dell'Executive Club (ui-store.js:371,386,398).
+        try {
+            window.ServerState?.spendDriverCoins?.(itemId || 'vanity_item', cost)
+                ?.then(r => {
+                    if (r && r.driver_coins != null) {
+                        gameState.driverCoins = r.driver_coins;
+                        if (typeof updateUI === 'function') updateUI();
+                    }
+                })
+                ?.catch(() => {});
+        } catch (e) {}
         return true;
     }
 

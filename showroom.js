@@ -713,7 +713,12 @@ window._srmPurchase = async function() {
         tirePressure: 100, engineHealth: 100, outOfService: false,
         upgrades: opts, vehicleClass: v.id,
     });
-    gameState.cash = Math.max(0, (gameState.cash || 0) - total);
+    // rpc_buy_vehicle ha gia' scalato la cassa server-side (01_mmo_migration.sql:228,
+    // `SET cash = cash - v_price`) — lo dice anche il commento in serverState.js:288
+    // ("Realtime will push ... UPDATE to _company.cash"). Senza questo guard il delta
+    // Realtime applica l'importo una seconda volta: su un'auto sono centinaia di
+    // migliaia di euro, e il Math.max(0, ...) maschera l'underflow azzerando la cassa.
+    if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, (gameState.cash || 0) - total);
     _srmState.selectedOpts.clear();
     updateUI();
     if (typeof saveGame === 'function') saveGame();

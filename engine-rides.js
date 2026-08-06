@@ -770,7 +770,13 @@ function completeRide(ride, _deferPay = false) {
     }
 
     // Quest stat tracking
-    if (!gameState.questStats) gameState.questStats = { totalRides:0, vipRides:0, ultraRides:0, fcoRides:0, portRides:0, contractRides:0, portoCervoRides:0 };
+    // Riempi i contatori MANCANTI uno per uno, non solo il caso "oggetto assente":
+    // Object.assign in loadGame sostituisce questStats in blocco, quindi un salvataggio
+    // salvato prima che un contatore esistesse lo lascerebbe undefined -> `++` = NaN.
+    if (!gameState.questStats) gameState.questStats = {};
+    for (const _k of ['totalRides','vipRides','ultraRides','fcoRides','portRides','contractRides','portoCervoRides']) {
+        if (typeof gameState.questStats[_k] !== 'number' || !isFinite(gameState.questStats[_k])) gameState.questStats[_k] = 0;
+    }
     const qs = gameState.questStats;
     qs.totalRides++;
     if (ride.tier === 'ultra') qs.ultraRides++;
@@ -801,6 +807,10 @@ function completeRide(ride, _deferPay = false) {
     if (ride.tier === 'ultra' && Math.random() < 0.05) {
         const drop = 1 + Math.floor(Math.random() * 3);
         gameState.driverCoins = (gameState.driverCoins || 0) + drop;
+        window.ServerState?.addDriverCoins?.(drop, 'ultra_ride_drop')
+            ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gameState.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
+            ?.catch(() => {});
+
         logToMap(`🪙 Driver Coins: +${drop} DC da transfer Presidential!`);
         if (typeof showNotification === 'function') showNotification(`🪙 +${drop} Driver Coins guadagnati!`, 'success');
     }

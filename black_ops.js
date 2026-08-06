@@ -124,7 +124,8 @@ window.shadowExecuteOp = async function(targetId, opId) {
 
     if (error) { if(typeof showNotification==='function') showNotification(_sErr('Operazione fallita', error), 'error'); return; }
 
-    gameState.cash -= op.cost;
+    // rpc_execute_shadow_op ha gia' scalato la cassa server-side (23_shadow_ops.sql:89)
+    if (!window.ServerState?.isReady()) gameState.cash -= op.cost;
     if (typeof updateUI === 'function') updateUI();
 
     if (data.success) {
@@ -164,7 +165,8 @@ window.shadowUpgradeDefense = async function() {
     const { data, error } = await sb.rpc('rpc_upgrade_shadow_defense', { v_cost: tier.cost });
     if (error) { if(typeof showNotification==='function') showNotification(_sErr('Upgrade difesa fallito', error), 'error'); return; }
 
-    gameState.cash -= tier.cost;
+    // rpc_upgrade_shadow_defense ha gia' scalato la cassa server-side (23_shadow_ops.sql:255)
+    if (!window.ServerState?.isReady()) gameState.cash -= tier.cost;
     gameState._shadowDefenseLevel = data.new_level;
     if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();

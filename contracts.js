@@ -191,7 +191,9 @@ window.CE_Contracts = (() => {
             tender.status  = 'closed';
             const won      = pb && pScore >= bestAI;
             if (won) {
-                if (pb.pledgedCash > 0) gameState.cash -= pb.pledgedCash;
+                // Il pledge e' GIA' stato scalato al momento dell'offerta (CE_placeBid):
+                // alla vittoria viene semplicemente trattenuto, non riscosso una seconda volta.
+                // (Il ramo `else` lo rimborsa, il che conferma che era gia' stato incassato.)
                 const daily = Math.round(co.payout_per_hour * 16);
                 gameState.corporateContracts.push({
                     id: 'ctr_' + tender.id, companyId: co.company_name, company: co,
@@ -258,11 +260,15 @@ window.CE_placeBid = function(tenderId, pledgedCash) {
     const tender = (gameState.corporateTenders || []).find(t => t.id === tenderId);
     if (!tender || tender.status !== 'open') return;
     pledgedCash = Math.max(0, Math.min(50000, parseInt(pledgedCash) || 0));
-    if (tender.playerBid) gameState.cash += tender.playerBid.pledgedCash; // refund previous pledge
-    if (pledgedCash > (gameState.cash || 0)) {
+    // Valida PRIMA di mutare la cassa: se usciamo in mezzo (fondi insufficienti) senza
+    // riscalare, il pledge precedente resterebbe rimborsato ma ancora registrato in
+    // playerBid, e un successivo "Annulla" lo rimborserebbe una seconda volta.
+    const _prevPledge = tender.playerBid ? (tender.playerBid.pledgedCash || 0) : 0;
+    if (pledgedCash > (gameState.cash || 0) + _prevPledge) {
         return window.DS?.toast?.({ title:'Fondi insufficienti', msg:`Servono €${pledgedCash.toLocaleString('it-IT')}`, type:'error' });
     }
-    gameState.cash  -= pledgedCash;
+    gameState.cash += _prevPledge;   // rimborsa il pledge precedente
+    gameState.cash -= pledgedCash;
     tender.playerBid = { pledgedCash, score: _cPlayerScore(tender.company, pledgedCash) };
     if (typeof saveGame === 'function') saveGame();
     window.renderTabContracts?.();

@@ -799,6 +799,10 @@ function processDailyRoutines() {
         if (weekWinner > 0) {
             const prizeTC = Math.min(50, Math.floor(weekWinner / 10000));
             gameState.driverCoins = (gameState.driverCoins || 0) + prizeTC;
+            window.ServerState?.addDriverCoins?.(prizeTC, 'weekly_prize')
+                ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gameState.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
+                ?.catch(() => {});
+
             // Premio auto Limited Edition se settimanale > €100.000
             if (weekWinner >= 100000 && !(gameState.fleet || []).some(c => c.id === 'ceo_prestige')) {
                 const limitedCar = {
@@ -1128,7 +1132,12 @@ function _checkDailyReward() {
 
     gs.cash += cashReward;
     gs.annualProfitTracker = (gs.annualProfitTracker || 0) + cashReward;
-    if (tcReward > 0) gs.driverCoins = (gs.driverCoins || 0) + tcReward;
+    if (tcReward > 0) {
+        gs.driverCoins = (gs.driverCoins || 0) + tcReward;
+        window.ServerState?.addDriverCoins?.(tcReward, 'tier_reward')
+            ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gs.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
+            ?.catch(() => {});
+    }
 
     const rewardDesc = tcReward > 0
         ? `+€${cashReward.toLocaleString('it-IT')} · +${tcReward} DriverCoin`

@@ -118,7 +118,9 @@ window._nemesisBribeVip = async function(vipId) {
     try {
         const { error } = await window.supabaseClient.rpc('rpc_nemesis_bribe_vip', { v_bribe_amount: bribe });
         if (error) throw error;
-        gameState.cash -= bribe;
+        // La RPC ha già scalato la cassa server-side: scaliamo in locale solo se
+        // il sync Realtime non è attivo, altrimenti evitiamo doppia deduzione.
+        if (!window.ServerState?.isReady()) gameState.cash -= bribe;
         nem.anger = Math.max(0, nem.anger - 40);
         nem.level = nem.anger >= 60 ? 2 : nem.anger >= 20 ? 1 : 0;
         if (nem.level === 0) delete gameState.vipNemeses[vipId];
