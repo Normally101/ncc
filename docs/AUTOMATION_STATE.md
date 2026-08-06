@@ -324,3 +324,30 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
     (`rpc_execute_shadow_op` mint con costo negativo, `rpc_resolve_auction` lotti a €0).
     Sono exploit reali chiamabili oggi con la sola anon key, non solo debito tecnico: vale
     un promemoria periodico anche senza contenuto nuovo, non solo un avviso una tantum.
+- 2026-08-06 (sveglia cron successiva, sessione fresca senza memoria delle precedenti):
+  **gap di ~4 giorni senza nessuna sveglia loggata (ultima entry 2026-08-02T01:25Z) — zero
+  cambiamenti di stato sulle 8 PR in tutto quel tempo.**
+  - Checkout fresco: `main` resta fermo alla versione pre-estensione di
+    `AUTOMATION_ROUTINE.md`/`AUTOMATION_STATE.md` (backlog puntuale 2 item, "prima sveglia")
+    — stesso punto di partenza di ogni sveglia precedente. Scoperto di nuovo via
+    `git fetch --all` + branch `auto/*` che la missione estesa e le 8 PR esistono (non
+    ri-raccontata qui, vedi entry sopra per il dettaglio completo).
+  - `list_pull_requests` (state=open, tutte e 8) + `list_pull_requests` ordinate per
+    `updated_at` desc: **identiche nello stato di apertura** (nessuna `merged`/`closed`).
+    L'unico `updated_at` cambiato da allora è PR #3 (2026-08-02T01:25:41Z, il commit di log
+    della sveglia precedente stessa) — nessuna attività dopo quel timestamp su nessuna delle
+    8. Verificato `get_comments` su PR #4 e PR #8: nessun commento/review nuovo oltre a
+    quelli già loggati (PR #4 ha solo il bot Vercel; PR #8 ferma al commento delle
+    2026-08-01T07:33:32Z).
+  - Nessun commento/review *umano* su nessuna delle 8 PR. Nessun merge, nessuna chiusura.
+    Stessa ambiguità di sempre sulla missione estesa (PR #3, non mergiata) — non ripetuta
+    come nuovo avviso, nessun elemento nuovo la renderebbe verificabile.
+  - **Nessun nuovo lavoro di codice/audit avviato** (soglia "3 sveglie ferme" ampiamente
+    superata da tempo). Solo questa entry di log, su questo stesso branch/PR #3.
+  - **Notifica push inviata**: non per un finding nuovo, ma perché sono passati **~8 giorni**
+    (non più 3) dall'apertura di PR #4 senza alcuna review/merge/chiusura umana su nessuna
+    delle 8 PR — inclusi 3 exploit di cassa/valuta reali e confermati, chiamabili oggi con la
+    sola anon key (PR #4 `_add_player_cash`; PR #8 commenti `rpc_execute_shadow_op` costo
+    negativo e `rpc_resolve_auction` lotti a €0). Non è stato inviato nulla tra il 2 e il 6
+    agosto (gap di sveglie, vedi sopra) quindi il promemoria periodico era comunque dovuto:
+    l'ultimo avviso a Vlad su questo canale risale al 2026-08-02.
