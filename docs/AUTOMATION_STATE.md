@@ -58,6 +58,23 @@ codice/audit avviato: il backlog esteso è esaurito in attesa che Vlad rivedi/me
 coerente con la stessa disciplina "non reinventare scope, non duplicare PR" applicata dalle
 sveglie precedenti.
 
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all)` + `get_comments`/`get_reviews`/
+`get_check_runs` su PR #9 e #10: **stato identico** all'ultima entry. Solo PR #1-#8 (`merged`
+o `closed`, verificato anche `merged_by`/`merged_at` con `pull_request_read get` su #1 e #7
+per conferma diretta, non solo il campo `merged` della list che può risultare impreciso).
+PR #9 (`mergeable_state: clean`, 1 commento bot Vercel) e PR #10 (`mergeable_state: clean`,
+CI 5/5 check `success`, 2 commenti: bot Vercel + il re-run già registrato) — **zero commenti o
+review umani nuovi** su entrambe. Nessun merge, nessuna chiusura. Confermato anche via diff
+diretto che questo branch e `auto/scalability-audit-10k` contengono già la sync corretta di
+questi due file — non serve una terza PR docs-only duplicata.
+
+Backlog esteso resta 6/6 completato. Le 3 mitigazioni SQL su `_add_player_cash`/
+`rpc_resolve_auction`/`rpc_execute_shadow_op` restano non applicate al DB prod — non
+rinotificate (stessa motivazione della entry precedente, nulla di nuovo). **Nessuna notifica
+push inviata.** Nessun nuovo lavoro di codice/audit avviato: si resta watch-only su #9/#10
+finché Vlad non agisce o non emerge un item nuovo davvero concreto dalla missione estesa.
+
 ---
 
 ## PR aperte (nessuna mergiata da questa sessione — controlla sempre lo stato reale su GitHub)
