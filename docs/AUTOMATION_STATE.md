@@ -1,6 +1,20 @@
 # Stato routine automatica (memoria tra sveglie)
 
-## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva, ~5h dopo l'ultimo check-in) — controllo, nessun cambiamento
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=open, sort=updated)`: identico all'ultima entry,
+solo PR #9 e #10 restano aperte. Verificati singolarmente `get_check_runs` (5/5 su entrambe,
+tutti `success`/`skipped`, nessun fallimento), `get_comments` (solo bot Vercel + il re-run già
+loggato su #10) e `get_reviews` (`[]` su entrambe). Nessun commento/review umano nuovo, nessun
+merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (aprirne uno duplicherebbe
+lavoro già coperto da #9/#10, entrambe in attesa della review di Vlad). Le 3 mitigazioni SQL
+(`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate al
+DB prod — non rinotificate, nessun elemento nuovo dall'ultimo avviso. **Nessuna notifica push
+inviata** (nessuna novità reale rispetto all'ultima entry). Nessun nuovo lavoro di
+codice/audit avviato: watch-only su #9/#10.
+
+## ⚡ Aggiornamento (2026-08-07, sveglia cron precedente, ~5h prima) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests(state=all, sort=updated)`: identico all'ultima entry.
 Solo PR #9 (`mergeable_state: clean`, CI 4/4 check reali `success` + 1 `skipped` Supabase
 Preview, 1 commento bot Vercel) e PR #10 (`mergeable_state: clean`, 0 review) restano `open`.
