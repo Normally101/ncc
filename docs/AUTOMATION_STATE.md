@@ -1,5 +1,20 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva, ~5h dopo l'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all)`: identico all'ultima entry. Solo PR #1-#8
+`merged`/`closed`, PR #9 e #10 ancora `open`/`mergeable_state: clean`. `get_comments` su
+entrambe: nessun commento/review umano nuovo, solo il bot Vercel già registrato in precedenza
+(PR #9: 1 commento, redeploy; PR #10: 2 commenti, redeploy + il re-run già loggato). Nessun
+merge, nessuna chiusura. Verificato anche che questo branch e `auto/scalability-audit-10k`
+restino gli unici due `auto/*` senza PR aperta associata già mergiata/chiusa a monte — nessuna
+nona PR da aprire.
+
+Le 3 mitigazioni SQL su `_add_player_cash`/`rpc_resolve_auction`/`rpc_execute_shadow_op`
+restano non applicate al DB prod — non rinotificate (nessun elemento nuovo dall'ultimo avviso).
+**Nessuna notifica push inviata** (stato identico alla entry precedente). **Nessun nuovo lavoro
+di codice/audit avviato**: si resta watch-only su #9/#10 finché Vlad non agisce o non emerge un
+item nuovo davvero concreto dalla missione estesa.
+
 ## ⚡ STATO CORRENTE (2026-08-06, sveglia cron) — leggi questo PER PRIMO, tutto sotto è log storico
 Tutto quello che segue in questo file fino a "## Log sveglie" era **stale**: descriveva 8 PR
 aperte in attesa di review. Nel frattempo (sessione live con Vlad, stesso giorno, vedi
