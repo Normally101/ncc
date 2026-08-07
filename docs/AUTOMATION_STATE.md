@@ -1,5 +1,19 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated)`: stato identico alle ultime
+due entry. PR #1-#8 restano `closed` (content già mergiato/estratto in main il 6 agosto), PR #9
+e #10 restano `open`/`mergeable_state: clean`, CI verde su entrambe (5/5 check). `get_comments`
+su #9 (1 commento) e #10 (2 commenti): solo bot Vercel + il re-run già registrato, **zero
+commenti o review umani nuovi**. Nessun merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato: aprire un'undicesima branch
+ora duplicherebbe lavoro già coperto da #9/#10, entrambe in attesa della review di Vlad. Le 3
+mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano
+non applicate al DB prod — non rinotificate, nessun elemento nuovo dall'ultimo avviso e dalla
+sessione live dell'8/6 in cui sono state documentate direttamente a Vlad. **Nessuna notifica
+push inviata** (nessuna novità reale rispetto alle due entry precedenti).
+
 ## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva, ~5h dopo l'ultimo check-in) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests(state=all)`: identico all'ultima entry. Solo PR #1-#8
 `merged`/`closed`, PR #9 e #10 ancora `open`/`mergeable_state: clean`. `get_comments` su
