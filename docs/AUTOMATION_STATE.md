@@ -1,5 +1,29 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva, ~gap di un giorno) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated)`: identico all'ultimo
+check-in del 2026-08-07. Solo PR #9 (`updated_at` 2026-08-07T20:18:01Z, invariato) e PR #10
+(`updated_at` 2026-08-06T15:49:03Z, invariato) restano `open`, `mergeable_state: clean`. Le
+storiche #1-#8 restano `closed` (mergiate a mano nella sessione live dell'8/6, poi chiuse su
+GitHub senza passare dal bottone merge — per questo la API le segna `merged:false` pur
+essendo il contenuto già in `main`, coerente con quanto già verificato nelle entry precedenti).
+`get_reviews` su #9 e #10: `[]` su entrambe, zero review umane. `get_comments` su entrambe:
+solo il bot Vercel già registrato nelle entry precedenti — **zero commenti/review umani
+nuovi**. Nessun merge, nessuna chiusura.
+
+Riletto anche `HANDOFF.md` "DA FARE TU": le 3 mitigazioni SQL
+(`_add_player_cash`/`rpc_resolve_auction`/`rpc_execute_shadow_op`) risultano ancora non
+applicate al DB prod — **la cassa illimitata via `_add_player_cash` resta confermata attiva**,
+ormai da oltre una settimana (scoperta 30/7). Non ri-notificata questa sveglia: nessun
+elemento nuovo dall'ultimo avviso (2026-08-06) che la renderebbe una notizia diversa, e Vlad
+ha lavorato nel repo in sessione live proprio l'8/6 vedendo direttamente questa stessa nota in
+`HANDOFF.md` — ripeterla ora sarebbe rumore, non informazione nuova.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10, entrambe
+in attesa di review). **Nessuna notifica push inviata.** Nessun nuovo lavoro di codice/audit
+avviato: si resta watch-only su #9/#10 finché Vlad non agisce o non emerge un item nuovo
+davvero concreto dalla missione estesa.
+
 ## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests(state=open, sort=updated)`: identico all'ultima entry,
 solo PR #9 e #10 restano aperte. Verificati singolarmente `get_check_runs` (5/5 su entrambe,
