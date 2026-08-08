@@ -1,5 +1,25 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva, ~qualche ora dopo l'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `80b7ccd`). PR #1-#8 restano `closed` (contenuto già mergiato in
+`main` l'8/6). PR #9 (`updated_at` 2026-08-08T10:16:22Z, causato dal redeploy Vercel del
+check-in cron precedente stesso, non da attività umana) e PR #10 (`updated_at`
+2026-08-06T15:49:03Z, invariato) restano entrambe `open`, `mergeable_state: clean`.
+
+Verificato esplicitamente `get_comments`+`get_reviews` su entrambe: su #9 solo il commento
+bot Vercel già noto, `get_reviews` `[]`; su #10 i 2 commenti già noti (redeploy Vercel + nota
+di Claude sul re-run CI del 6/8), `get_reviews` `[]`. `get_check_runs` su #9: 5/5 verdi
+(incluso `Supabase Preview` `skipped`, atteso per un branch docs-only). **Zero commenti/
+review umani nuovi.** Nessun merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato. Le 3 mitigazioni SQL
+(`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate al
+DB prod — non rinotificate (ultimo avviso 2026-08-06, solo 2 giorni fa, nessun elemento nuovo
+che lo renderebbe non-rumore). **Nessuna notifica push inviata** (nessuna novità reale).
+**Nessun nuovo lavoro avviato**: watch-only finché Vlad non agisce su #9/#10 o dà istruzioni
+dirette in sessione live.
+
 ## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests` (state=open e state=all, sort=updated): identico
 all'ultimo check-in (commit `a396a8d`, oggi 05:16 UTC). PR #9 e #10 restano le uniche aperte,
