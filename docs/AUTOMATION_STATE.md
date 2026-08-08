@@ -1,5 +1,24 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=open, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `0643d9f`, oggi 15:15 UTC). Solo PR #9 e #10 restano aperte,
+entrambe `mergeable_state: clean`. PR #9 `updated_at` 2026-08-08T15:15:41Z è solo il redeploy
+Vercel del commit di check-in precedente stesso (non attività umana) — verificato leggendo il
+commento stesso, è il bot `vercel[bot]`. PR #10 `updated_at` invariato dal 2026-08-06.
+
+`get_reviews` su #9 e #10: `[]` su entrambe, zero review umane. `get_comments` su #9 (1
+commento, bot Vercel) e #10 (2 commenti, bot Vercel + il re-run CI già registrato in
+precedenza): **zero commenti/review umani nuovi**. Nessun merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10). Le 3
+mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano
+non applicate al DB prod — ultimo avviso a Vlad 2026-08-06 (2 giorni fa), non ancora scaduto
+il periodo tipico tra promemoria di questa routine (~4-5gg quando non cambia nulla), quindi
+non ri-notificato. **Nessuna notifica push inviata** (nessuna novità reale). **Nessun nuovo
+lavoro avviato**: watch-only finché Vlad non agisce su #9/#10 o dà istruzioni dirette in
+sessione live.
+
 ## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva, ~qualche ora dopo l'ultimo check-in) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
 all'ultimo check-in (commit `80b7ccd`). PR #1-#8 restano `closed` (contenuto già mergiato in
