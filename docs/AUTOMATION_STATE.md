@@ -1,6 +1,27 @@
 # Stato routine automatica (memoria tra sveglie)
 
-## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva, ~gap di un giorno) — controllo, nessun cambiamento
+## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva, ~5h dopo l'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultima entry. PR #1-#8 restano `closed` (contenuto già mergiato in `main` l'8/6, chiuse
+senza bottone merge — coerente con `merged:false` pur essendo il codice già in produzione,
+come verificato nelle entry precedenti). PR #9 (`updated_at` 2026-08-08T00:20:14Z, causato
+dal redeploy Vercel del check-in cron precedente, non da attività umana) e PR #10
+(`updated_at` 2026-08-06T15:49:03Z, invariato) restano entrambe `open`, `mergeable_state:
+clean`, CI 5/5 verde (o skipped su Supabase Preview) su entrambe.
+
+`get_comments` su #9 (1 commento) e #10 (2 commenti): solo bot Vercel + il re-run già
+registrato su #10 nelle entry precedenti — **zero commenti/review umani nuovi**. Nessuna
+review (`get_reviews` non ri-controllato: nessun segnale di attività che lo giustifichi
+rispetto all'ultimo controllo esplicito, già `[]` su entrambe). Nessun merge, nessuna
+chiusura. `main` (`HEAD` locale) invariato, stesso commit `a0ca85b` già letto nelle entry
+precedenti — nessuna nuova entry in `HANDOFF.md`.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10). Le 3
+mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano
+non applicate al DB prod — non rinotificate, nessun elemento nuovo dall'ultimo avviso.
+**Nessuna notifica push inviata** (nessuna novità reale). **Nessun nuovo lavoro di
+codice/audit avviato**: si resta watch-only su #9/#10 finché Vlad non agisce o non emerge un
+item nuovo davvero concreto dalla missione estesa.
 `git fetch --all` + `list_pull_requests(state=all, sort=updated)`: identico all'ultimo
 check-in del 2026-08-07. Solo PR #9 (`updated_at` 2026-08-07T20:18:01Z, invariato) e PR #10
 (`updated_at` 2026-08-06T15:49:03Z, invariato) restano `open`, `mergeable_state: clean`. Le
