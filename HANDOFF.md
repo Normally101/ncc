@@ -1,11 +1,79 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 17 giugno 2026
+> Aggiornato: 9 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
+
+### ✅ 9 agosto 2026 — Tutte le falle SQL critiche chiuse in produzione (sessione live, VS Code)
+Su richiesta diretta di Vlad ("ci stanno dei sql da fare su supabase, procedi con quello"),
+proseguendo dove una sessione cloud si era fermata (vedi PR #14, `docs/SQL_LOCKDOWN_HANDOFF.md`,
+ora chiusa/consumata). Applicato **direttamente al DB di produzione** via Management API
+(`~/.config/ce-supabase.env` — token ruotato in questa sessione, il precedente era scaduto),
+non solo scaffold scritti e lasciati in attesa. Ogni fix verificato leggendo `pg_get_functiondef`
+live PRIMA di scriverlo (zero drift), e le 3 RPC nuove testate con 5 assert comportamentali
+reali in transazione con `ROLLBACK` forzato (exploit rifiutati, uso legittimo accettato,
+cash confermato invariato dopo — non solo "applicato senza errori").
+
+**Gruppo 1 — scaffold già scritti, applicati oggi:**
+- `45_lockdown_cash_exploits_scaffold.sql` (tutte e 4 le sezioni): REVOKE su
+  `_add_player_cash`/`_get_player_cash` (cassa illimitata via devtools — **la falla più vecchia
+  e più grave, ora chiusa**), + fix su `rpc_pay_majority_dividend` (autorizzazione raider
+  mancante), `rpc_start_trip`/`rpc_claim_trip_reward` (tetto €200k difensivo), `rpc_claim_daily_reward`
+  (IDOR su `p_user_id`).
+- `46_vtk_shop_purchase_scaffold.sql`: `rpc_spend_vtk_shop_item` creata — il VTK Shop
+  ricostruito il 6 agosto era **disattivo per i giocatori** (client la chiamava, RPC non
+  esisteva). Ora di nuovo operativo, nessun deploy frontend necessario.
+- PR #11 (`47_`/`48_`, chiusa senza merge — contenuto applicato direttamente): REVOKE su
+  `rpc_resolve_auction` (aste vinte a €0), tetto costo su `rpc_execute_shadow_op` e
+  `rpc_upgrade_shadow_defense` (costo negativo = accredito), rate-limit su
+  `rpc_nemesis_fund_rival` (cooldown 48h era solo cosmetico lato client), `rpc_dampen_tension`
+  internalizzata dentro `rpc_contribute_holding_treasury` (era invocabile da sola per azzerare
+  la tensione nazionale senza contribuire cash reale), quantità negativa bloccata su
+  `rpc_sell_crypto` (mint quasi gratuito). **Fix client incluso**: `p2p-market.js` aggiornato
+  per il nuovo ritorno `jsonb` di `rpc_contribute_holding_treasury` — necessario, non opzionale,
+  perché il REVOKE su `rpc_dampen_tension` rompeva la chiamata separata che il client faceva
+  prima (finestra di rottura chiusa nello stesso commit).
+
+**Gruppo 2 — scritte da zero in questa sessione (`49_lockdown_critical_cash_rpcs_scaffold.sql`),
+le 3 falle più gravi mappate da PR #12:**
+- **`rpc_sync_cash`**: era un `SET` assoluto dal client, zero validazione — il meccanismo di
+  sync più usato nel gioco (daily tick, acquisti, quest, Zero-to-Hero, Vittorio). Non un cap
+  assoluto basso (il catalogo reale ha acquisti legittimi in singola chiamata fino a €45M,
+  Tower) — cap sul **delta** per chiamata (±€60M, derivato dal vero massimo del catalogo con
+  margine) + rate-limit 30/min.
+- **`rpc_sell_vehicle`**: `v_price` dal client senza nemmeno un check `>= 0`. Tetto €25M
+  (derivato dal vero prezzo massimo tra i 50 veicoli del catalogo — €18M, jet privato — con
+  margine per upgrade).
+- **`rpc_take_loan`**: nessun tetto sul capitale, accreditato istantaneamente, il fido vero
+  esisteva solo lato client (`_getCreditTier`, `engine-finance.js:151`). Portata lato server
+  una versione **conservativa** della stessa formula (reputation/cash/loan-count reali,
+  omessi i bonus lifestyle/achievements non verificabili server-side — quindi mai un fido più
+  alto di quanto il client mostrerebbe).
+
+**PR aggiornate:** #11 chiusa (contenuto applicato via commit diretto), #12 mergiata
+(`docs/SYSTEMS.md` + `docs/QA_PLAN.md` — audit completo e piano di test, usarlo come base per
+la prossima fase invece di rifarlo), #13 chiusa (XSS `seller_name`/`car.name` in P2P/VTK
+Market — stesso fix applicato via commit diretto, risolto a mano il conflitto di cache-bust),
+#14 chiusa (handoff consumato). **Restano aperte #9 e #10** (censimento `gameState.cash` e
+audit scalabilità 10k — docs-only, non urgenti, da rivedere quando comodo).
+
+**Non ancora fatto (Gruppo 3, priorità sotto ai fix sopra — vedi `docs/SYSTEMS.md` §9):**
+`rpc_vote_server_decree` (un giocatore approva istantaneamente un decreto globale — commento
+nel file stesso ammette che il server si fida del client), famiglia "Driver Coins negativi" (6
+RPC: `rpc_upgrade_offline_limit`, `rpc_buy_auto_rest`, `rpc_buy_energy_refill`,
+`rpc_buy_fleet_repair`, `rpc_buy_vip_contact`, `rpc_buy_hr_automation` — validano solo
+`< costo`, non il segno), pattern sistemico "prezzo dal client mai confrontato a un listino"
+su ~10 RPC (`rpc_buy_vehicle` incluso — verificato in questa sessione: **non** è il buon
+esempio che PR #12 pensava, ha lo stesso identico problema di `rpc_sell_vehicle` prima del fix
+di oggi, solo un check `>= 0`). Non verificati di persona in questa sessione — ricontrollare
+prima di agire.
+
+**⚠️ Non verificato**: nessun login reale con un account di test dopo i fix (il gioco non ha
+giocatori attivi, rischio basso, ma non testato in UI). Query dirette su Postgres via
+Management API sì, browser no.
 
 ### ✅ 6 agosto 2026 — 26 fix MERGIATI IN PRODUZIONE (7 PR chiuse in una volta)
 Vlad ha autorizzato la routine a mergiare da sola ("puoi modificare da solo i bug che trovi,
@@ -117,16 +185,14 @@ di `_collectEarnings` (`contracts.js`) e quattro punti di `engine-daily.js` accr
 senza passare da `income`, quindi **non vengono tassati**. Sistemarlo cambia l'equilibrio
 economico: decisione tua.
 
-### 🔴 DA FARE TU — tre mitigazioni SQL, la routine non tocca il DB
-1. **PR #4 mergiata ma la SQL NON è applicata.** `45_lockdown_cash_exploits_scaffold.sql` è
-   in repo, non in DB: la **cassa illimitata via `_add_player_cash` è ancora aperta**. Le due
-   righe di `REVOKE` in cima al file la chiudono e non rompono niente.
-2. **`REVOKE EXECUTE ON FUNCTION public.rpc_resolve_auction(UUID) FROM authenticated, anon;`**
-   — costo zero: nessun codice legittimo la chiama già oggi. Senza, chiunque può innescare la
-   risoluzione delle aste quando gli conviene e vincere lotti a €0.
-3. **Shadow ops** (`rpc_execute_shadow_op`): il costo arriva dal client senza controllo di
-   segno → costo negativo = accredito arbitrario. La revoke chiude la falla ma spegne anche
-   la feature: scelta tua.
+### ✅ 9 agosto 2026 — DA FARE TU: FATTO (vedi entry in cima al file)
+Le tre mitigazioni sotto sono state applicate al DB di produzione il 9 agosto 2026 (sessione
+live in VS Code), insieme a molte altre — vedi l'entry "Tutte le falle SQL critiche chiuse in
+produzione" in cima a questo file per il dettaglio completo. Lasciato per riferimento storico:
+1. ~~PR #4 mergiata ma la SQL NON è applicata.~~ `45_lockdown_cash_exploits_scaffold.sql`
+   applicato per intero (tutte le 4 sezioni).
+2. ~~`rpc_resolve_auction`~~ — REVOKE applicata (via `47_`).
+3. ~~Shadow ops (`rpc_execute_shadow_op`)~~ — tetto costo applicato, feature non spenta (via `47_`).
 
 ### ⏸️ PR #7 — l'unica NON mergiata, di proposito
 `auto/bughunt-p2p-alliances` corregge l'exploit del VTK Shop, ma il suo JS chiama
