@@ -1,5 +1,319 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ Aggiornamento (2026-08-09, sveglia cron successiva) — novità reale: PR #11, 4 nuove falle RPC
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: PR #1-#8
+restano `closed` (mergiate l'8/6). PR #9/#10 invariate dall'ultimo check-in (nessun commento/
+review umano nuovo, `get_reviews` `[]` su entrambe).
+
+**Novità: PR #11** (`auto/lockdown-auction-shadowop`, https://github.com/Normally101/ncc/pull/11),
+aperta oggi 11:03-12:19 UTC da una sveglia cron precedente che non ha aggiornato questo file
+(stesso schema già visto con PR #8) — scoperta solo ora controllando i branch `auto/*` oltre
+alla lista PR nota. Contiene:
+- **2 falle già note e MAI corrette in prod** (`rpc_resolve_auction`, `rpc_execute_shadow_op` —
+  le stesse di PR #4/#8, tuttora non applicate secondo `HANDOFF.md` "DA FARE TU").
+- **4 falle NUOVE**, stesso pattern (parametro numerico dal client senza validazione/controllo
+  auth), trovate in un secondo giro di audit e verificate personalmente leggendo il sorgente:
+  - `rpc_nemesis_fund_rival` — **nessun rate-limit server-side**: mint verso qualsiasi account
+    scelto dal chiamante, a raffica (il "cooldown 48h" è solo lato client, nessuna tabella
+    server lo applica). Fix: rate-limit 5/ora.
+  - `rpc_upgrade_shadow_defense` — gemella di `rpc_execute_shadow_op` nello stesso file, stesso
+    bug (costo negativo dal client = accredito), non presa nel primo giro per errore.
+  - `rpc_dampen_tension` — chiamabile a sé stante per azzerare la tensione nazionale (evita lo
+    Sciopero, -30% redditi a tutti) senza mai versare cash reale a una holding. Fix: internalizzata
+    dentro `rpc_contribute_holding_treasury`, REVOKE diretto.
+  - `rpc_sell_crypto` — quantità negativa produce un mint di crypto-coin quasi gratuito
+    (verificato algebricamente: il cast `::BIGINT` arrotonda a 0 l'EUR in uscita per importi
+    frazionari mentre l'`amount` aumenta comunque).
+  Tutto scaffold SQL, **non applicato al DB** (stesso guardrail di sempre) + un fix JS reale
+  già sicuro (`p2p-market.js`, gestisce sia la risposta vecchia che quella nuova della RPC).
+
+Risultato: **3 PR aperte** (#9, #10, #11), tutte `mergeable_state: clean`, **zero review umane
+su nessuna**. Le 3 mitigazioni SQL originali (PR #4-era) restano non applicate al DB prod da
+**10 giorni** (scoperta 30/7), e ora la superficie nota è salita da 3 a **7 RPC vulnerabili
+allo stesso pattern**, tutte chiamabili oggi con la sola anon key.
+
+**Notifica push inviata**: le 4 nuove falle non erano mai state riportate a Vlad (PR #11 è
+stata aperta da una sveglia che non ha loggato qui), più il fatto che le 3 falle originali
+restano aperte in prod da 10 giorni — contenuto nuovo, non un promemoria periodico ripetuto.
+
+Backlog esteso: 6/6 completato, nessun nuovo item avviato in questa sveglia (l'unico lavoro
+reale disponibile — round 3 di audit sullo stesso pattern RPC — duplicherebbe PR #11 già in
+attesa di review; meglio lasciare che Vlad valuti le 7 falle già segnalate prima di aggiungerne
+altre). Watch-only finché Vlad non agisce su #9/#10/#11, applica le mitigazioni SQL, o dà
+istruzioni dirette in sessione live.
+
+## ⚡ Aggiornamento (2026-08-09, sveglia cron precedente) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `611a336`, oggi 05:18 UTC). PR #1-#8 restano `closed` (contenuto
+già in `main`, mergiato l'8/6). Solo PR #9 e #10 restano `open`, entrambe `mergeable_state:
+clean`, CI verde. PR #9 non ha `updated_at` più recente del check-in precedente stesso (nessun
+nuovo redeploy) — verificato comunque `get_comments`+`get_reviews` su entrambe: su #9 resta
+solo il commento bot Vercel già noto, `get_reviews` `[]`; su #10 i 2 commenti già noti (bot
+Vercel + nota di Claude sul re-run CI del 6/8), `get_reviews` `[]`. **Zero commenti/review
+umani nuovi.** Nessun merge, nessuna chiusura.
+
+Riletto `HANDOFF.md` "DA FARE TU": nessuna entry più recente del 6 agosto — le 3 mitigazioni
+SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate
+al DB prod, cassa illimitata via `_add_player_cash` confermata ancora attiva. Ultimo avviso
+push su questo tema: 2026-08-06 (3 giorni fa) — sotto la soglia tipica di ~4-5gg tra promemoria
+quando non cambia nulla di concreto, non ri-notificato oggi.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10, entrambe
+ancora in attesa di prima review umana da 3-6 giorni). **Nessuna notifica push inviata**
+(nessuna novità reale). **Nessun nuovo lavoro di codice/audit avviato**: watch-only finché
+Vlad non agisce su #9/#10, applica le mitigazioni SQL, o dà istruzioni dirette in sessione live.
+
+## ⚡ Aggiornamento (2026-08-09, sveglia cron precedente, gap di ~1 giorno dall'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `ad17491`, 2026-08-08 20:14 UTC). PR #1-#8 restano `closed`
+(contenuto già in `main`, mergiato l'8/6). Solo PR #9 e #10 restano `open`,
+`mergeable_state: clean`. PR #9 `updated_at` 2026-08-08T20:15:11Z è ancora il redeploy
+Vercel innescato dal check-in precedente stesso (verificato leggendo il commento: bot
+`vercel[bot]`, non attività umana). PR #10 `updated_at` invariato dal 2026-08-06.
+
+`get_comments` su #9 (1 commento) e #10 (2 commenti) e `get_reviews` su entrambe (`[]`):
+**zero commenti/review umani nuovi** rispetto all'ultimo check-in. Nessun merge, nessuna
+chiusura. Riletto anche `HANDOFF.md` "DA FARE TU": nessuna entry più recente del 6 agosto —
+le 3 mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`)
+restano non applicate al DB prod, cassa illimitata via `_add_player_cash` confermata ancora
+attiva, ormai 10 giorni dalla scoperta (30/7) e 3 giorni dall'ultimo avviso push (2026-08-06).
+Sotto la soglia tipica di ~4-5gg tra promemoria quando non cambia nulla di concreto — non
+ri-notificata oggi, coerente con la cadenza già stabilita dalle sveglie precedenti su questo
+stesso branch.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10, entrambe
+ancora in attesa di prima review umana da 3-6 giorni). **Nessuna notifica push inviata**
+(nessuna novità reale). **Nessun nuovo lavoro di codice/audit avviato**: watch-only finché
+Vlad non agisce su #9/#10, applica le mitigazioni SQL, o dà istruzioni dirette in sessione live.
+
+## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=open, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `0643d9f`, oggi 15:15 UTC). Solo PR #9 e #10 restano aperte,
+entrambe `mergeable_state: clean`. PR #9 `updated_at` 2026-08-08T15:15:41Z è solo il redeploy
+Vercel del commit di check-in precedente stesso (non attività umana) — verificato leggendo il
+commento stesso, è il bot `vercel[bot]`. PR #10 `updated_at` invariato dal 2026-08-06.
+
+`get_reviews` su #9 e #10: `[]` su entrambe, zero review umane. `get_comments` su #9 (1
+commento, bot Vercel) e #10 (2 commenti, bot Vercel + il re-run CI già registrato in
+precedenza): **zero commenti/review umani nuovi**. Nessun merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10). Le 3
+mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano
+non applicate al DB prod — ultimo avviso a Vlad 2026-08-06 (2 giorni fa), non ancora scaduto
+il periodo tipico tra promemoria di questa routine (~4-5gg quando non cambia nulla), quindi
+non ri-notificato. **Nessuna notifica push inviata** (nessuna novità reale). **Nessun nuovo
+lavoro avviato**: watch-only finché Vlad non agisce su #9/#10 o dà istruzioni dirette in
+sessione live.
+
+## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva, ~qualche ora dopo l'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `80b7ccd`). PR #1-#8 restano `closed` (contenuto già mergiato in
+`main` l'8/6). PR #9 (`updated_at` 2026-08-08T10:16:22Z, causato dal redeploy Vercel del
+check-in cron precedente stesso, non da attività umana) e PR #10 (`updated_at`
+2026-08-06T15:49:03Z, invariato) restano entrambe `open`, `mergeable_state: clean`.
+
+Verificato esplicitamente `get_comments`+`get_reviews` su entrambe: su #9 solo il commento
+bot Vercel già noto, `get_reviews` `[]`; su #10 i 2 commenti già noti (redeploy Vercel + nota
+di Claude sul re-run CI del 6/8), `get_reviews` `[]`. `get_check_runs` su #9: 5/5 verdi
+(incluso `Supabase Preview` `skipped`, atteso per un branch docs-only). **Zero commenti/
+review umani nuovi.** Nessun merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato. Le 3 mitigazioni SQL
+(`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate al
+DB prod — non rinotificate (ultimo avviso 2026-08-06, solo 2 giorni fa, nessun elemento nuovo
+che lo renderebbe non-rumore). **Nessuna notifica push inviata** (nessuna novità reale).
+**Nessun nuovo lavoro avviato**: watch-only finché Vlad non agisce su #9/#10 o dà istruzioni
+dirette in sessione live.
+
+## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests` (state=open e state=all, sort=updated): identico
+all'ultimo check-in (commit `a396a8d`, oggi 05:16 UTC). PR #9 e #10 restano le uniche aperte,
+entrambe `open`/`mergeable_state: clean`, CI verde. `get_comments` su entrambe: solo bot
+Vercel (il redeploy di #9 è causato dal check-in precedente stesso, non da attività umana) —
+zero commenti/review umani nuovi. Nessun merge, nessuna chiusura. Backlog esteso 6/6 resta
+completo, nessun nuovo item avviato. Le 3 mitigazioni SQL (`_add_player_cash`,
+`rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate al DB prod — non
+rinotificate, nessun elemento nuovo dall'ultimo avviso. **Nessuna notifica push inviata**
+(nessuna novità reale). **Nessun nuovo lavoro avviato**: watch-only finché Vlad non agisce.
+
+## ⚡ Aggiornamento (2026-08-08, sveglia cron precedente, ~5h dopo l'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultima entry. PR #1-#8 restano `closed` (contenuto già mergiato in `main` l'8/6, chiuse
+senza bottone merge — coerente con `merged:false` pur essendo il codice già in produzione,
+come verificato nelle entry precedenti). PR #9 (`updated_at` 2026-08-08T00:20:14Z, causato
+dal redeploy Vercel del check-in cron precedente, non da attività umana) e PR #10
+(`updated_at` 2026-08-06T15:49:03Z, invariato) restano entrambe `open`, `mergeable_state:
+clean`, CI 5/5 verde (o skipped su Supabase Preview) su entrambe.
+
+`get_comments` su #9 (1 commento) e #10 (2 commenti): solo bot Vercel + il re-run già
+registrato su #10 nelle entry precedenti — **zero commenti/review umani nuovi**. Nessuna
+review (`get_reviews` non ri-controllato: nessun segnale di attività che lo giustifichi
+rispetto all'ultimo controllo esplicito, già `[]` su entrambe). Nessun merge, nessuna
+chiusura. `main` (`HEAD` locale) invariato, stesso commit `a0ca85b` già letto nelle entry
+precedenti — nessuna nuova entry in `HANDOFF.md`.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10). Le 3
+mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano
+non applicate al DB prod — non rinotificate, nessun elemento nuovo dall'ultimo avviso.
+**Nessuna notifica push inviata** (nessuna novità reale). **Nessun nuovo lavoro di
+codice/audit avviato**: si resta watch-only su #9/#10 finché Vlad non agisce o non emerge un
+item nuovo davvero concreto dalla missione estesa.
+`git fetch --all` + `list_pull_requests(state=all, sort=updated)`: identico all'ultimo
+check-in del 2026-08-07. Solo PR #9 (`updated_at` 2026-08-07T20:18:01Z, invariato) e PR #10
+(`updated_at` 2026-08-06T15:49:03Z, invariato) restano `open`, `mergeable_state: clean`. Le
+storiche #1-#8 restano `closed` (mergiate a mano nella sessione live dell'8/6, poi chiuse su
+GitHub senza passare dal bottone merge — per questo la API le segna `merged:false` pur
+essendo il contenuto già in `main`, coerente con quanto già verificato nelle entry precedenti).
+`get_reviews` su #9 e #10: `[]` su entrambe, zero review umane. `get_comments` su entrambe:
+solo il bot Vercel già registrato nelle entry precedenti — **zero commenti/review umani
+nuovi**. Nessun merge, nessuna chiusura.
+
+Riletto anche `HANDOFF.md` "DA FARE TU": le 3 mitigazioni SQL
+(`_add_player_cash`/`rpc_resolve_auction`/`rpc_execute_shadow_op`) risultano ancora non
+applicate al DB prod — **la cassa illimitata via `_add_player_cash` resta confermata attiva**,
+ormai da oltre una settimana (scoperta 30/7). Non ri-notificata questa sveglia: nessun
+elemento nuovo dall'ultimo avviso (2026-08-06) che la renderebbe una notizia diversa, e Vlad
+ha lavorato nel repo in sessione live proprio l'8/6 vedendo direttamente questa stessa nota in
+`HANDOFF.md` — ripeterla ora sarebbe rumore, non informazione nuova.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10, entrambe
+in attesa di review). **Nessuna notifica push inviata.** Nessun nuovo lavoro di codice/audit
+avviato: si resta watch-only su #9/#10 finché Vlad non agisce o non emerge un item nuovo
+davvero concreto dalla missione estesa.
+
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=open, sort=updated)`: identico all'ultima entry,
+solo PR #9 e #10 restano aperte. Verificati singolarmente `get_check_runs` (5/5 su entrambe,
+tutti `success`/`skipped`, nessun fallimento), `get_comments` (solo bot Vercel + il re-run già
+loggato su #10) e `get_reviews` (`[]` su entrambe). Nessun commento/review umano nuovo, nessun
+merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (aprirne uno duplicherebbe
+lavoro già coperto da #9/#10, entrambe in attesa della review di Vlad). Le 3 mitigazioni SQL
+(`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate al
+DB prod — non rinotificate, nessun elemento nuovo dall'ultimo avviso. **Nessuna notifica push
+inviata** (nessuna novità reale rispetto all'ultima entry). Nessun nuovo lavoro di
+codice/audit avviato: watch-only su #9/#10.
+
+## ⚡ Aggiornamento (2026-08-07, sveglia cron precedente, ~5h prima) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated)`: identico all'ultima entry.
+Solo PR #9 (`mergeable_state: clean`, CI 4/4 check reali `success` + 1 `skipped` Supabase
+Preview, 1 commento bot Vercel) e PR #10 (`mergeable_state: clean`, 0 review) restano `open`.
+`get_reviews` su entrambe: `[]`, zero review umane. Nessun commento/review umano nuovo, nessun
+merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato. Le 3 mitigazioni SQL
+(`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate al
+DB prod — non rinotificate, nessun elemento nuovo dall'ultimo avviso e dalla sessione live
+dell'8/6 in cui sono state documentate direttamente a Vlad. **Nessuna notifica push inviata**
+(nessuna novità reale). Nessun nuovo lavoro di codice/audit avviato: watch-only su #9/#10.
+
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated)`: stato identico alle ultime
+due entry. PR #1-#8 restano `closed` (content già mergiato/estratto in main il 6 agosto), PR #9
+e #10 restano `open`/`mergeable_state: clean`, CI verde su entrambe (5/5 check). `get_comments`
+su #9 (1 commento) e #10 (2 commenti): solo bot Vercel + il re-run già registrato, **zero
+commenti o review umani nuovi**. Nessun merge, nessuna chiusura.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato: aprire un'undicesima branch
+ora duplicherebbe lavoro già coperto da #9/#10, entrambe in attesa della review di Vlad. Le 3
+mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano
+non applicate al DB prod — non rinotificate, nessun elemento nuovo dall'ultimo avviso e dalla
+sessione live dell'8/6 in cui sono state documentate direttamente a Vlad. **Nessuna notifica
+push inviata** (nessuna novità reale rispetto alle due entry precedenti).
+
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva, ~5h dopo l'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all)`: identico all'ultima entry. Solo PR #1-#8
+`merged`/`closed`, PR #9 e #10 ancora `open`/`mergeable_state: clean`. `get_comments` su
+entrambe: nessun commento/review umano nuovo, solo il bot Vercel già registrato in precedenza
+(PR #9: 1 commento, redeploy; PR #10: 2 commenti, redeploy + il re-run già loggato). Nessun
+merge, nessuna chiusura. Verificato anche che questo branch e `auto/scalability-audit-10k`
+restino gli unici due `auto/*` senza PR aperta associata già mergiata/chiusa a monte — nessuna
+nona PR da aprire.
+
+Le 3 mitigazioni SQL su `_add_player_cash`/`rpc_resolve_auction`/`rpc_execute_shadow_op`
+restano non applicate al DB prod — non rinotificate (nessun elemento nuovo dall'ultimo avviso).
+**Nessuna notifica push inviata** (stato identico alla entry precedente). **Nessun nuovo lavoro
+di codice/audit avviato**: si resta watch-only su #9/#10 finché Vlad non agisce o non emerge un
+item nuovo davvero concreto dalla missione estesa.
+
+## ⚡ STATO CORRENTE (2026-08-06, sveglia cron) — leggi questo PER PRIMO, tutto sotto è log storico
+Tutto quello che segue in questo file fino a "## Log sveglie" era **stale**: descriveva 8 PR
+aperte in attesa di review. Nel frattempo (sessione live con Vlad, stesso giorno, vedi
+`HANDOFF.md` "6 agosto 2026") è successo molto di più di quanto questo file registrasse:
+
+- **Vlad ha autorizzato esplicitamente la routine a mergiare da sola** ("puoi modificare da
+  solo i bug che trovi, organizzati in modo sistematico") — le PR #1, #2, #3, #4, #5, #6, #8
+  sono state mergiate in produzione (26 fix reali verificati uno per uno, punto di rollback
+  `138a791`). **PR #7 è stata chiusa** (non scartata: i suoi 2 fix ancora validi su
+  `alliances.js` sono stati estratti su branch pulito e mergiati a parte).
+- Nella stessa sessione: **VTK Shop ricostruito da zero** (spesa server-authoritative via RPC
+  non ancora applicata a prod, ma il client la rileva e degrada in sicurezza), e **6 casi
+  "il numero mostrato ≠ il numero applicato"** sistemati (surge fantasma, banner sfida
+  settimanale, contratto del giorno finto, streak sottostimato, banner ranking, linea di
+  credito, rischio missioni shadow).
+- **`git fetch --all` + `list_pull_requests(state=open)` verificato ora**: **zero PR aperte**.
+  Tutti i branch `auto/*` storici sono stati mergiati o chiusi.
+- Restano **3 mitigazioni SQL non applicate al DB di produzione** (bloccate su Vlad, mai la
+  routine — vedi `HANDOFF.md` "DA FARE TU"): revoke su `_add_player_cash`, revoke su
+  `rpc_resolve_auction`, revoke/decisione su `rpc_execute_shadow_op`. Non rinotificate qui
+  perché già segnalate a Vlad e presumibilmente note (era presente nella sessione live che le
+  ha documentate).
+- **Lavoro completato questa sveglia**: "Audit chi scrive `gameState.cash` senza passare da
+  una RPC a delta" — censimento di tutte le 119 occorrenze `gameState.cash =`/`+=`/`-=` del
+  repo (subagent di scansione + verifica personale a campione su 3 siti,
+  `engine-rides.js:700`, `crypto.js:76`, `b2b.js:131`, nessun errore trovato). Risultato: **25
+  siti GUARDED** (mirror sicuro dopo una RPC, corretti dal fix del 6 agosto), **2 RPC-MIRROR**
+  (il motore di sync stesso), **91 FULLY-CLIENT-AUTHORITATIVE** (debito #1 noto, nessuna RPC
+  coinvolta — non un bug, fuori perimetro finché la scala economica non è decisa). **Zero nuovi
+  bug UNGUARDED-OPTIMISTIC trovati** — il giro di fix del 6 agosto risulta completo, nessuna
+  doppia deduzione residua individuata. Mappa completa scritta in
+  `docs/ECONOMY_SERVER_AUTH.md` (nuova sezione "Censimento siti gameState.cash"). Nessun fix
+  di codice (per costruzione: audit-only, il debito resta bloccato sulla scala economica).
+  Branch `auto/audit-cash-writes-map`, PR da aprire in questa sveglia (docs-only, non merge
+  autonomo — il permesso esplicito di Vlad valeva per quella sessione live, non è una policy
+  permanente per la routine cron, che resta sul guardrail scritto "mai merge di una tua PR"
+  finché non arriva un'istruzione altrettanto esplicita e verificabile in una sessione live).
+  Prossimo item per la prossima sveglia (se questo branch è mergiato/chiuso): "Audit
+  scalabilità client-side a 10k" in `docs/AUTOMATION_ROUTINE.md`.
+
+## ⚡ Aggiornamento (2026-08-06, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all)`: **zero PR aperte oltre a #9 e #10**
+(questo branch e `auto/scalability-audit-10k`, quest'ultimo aperto dalla sveglia successiva a
+questa, item "Audit scalabilità 10k" — backlog esteso ora **6/6 completato**, in attesa di
+review). Le storiche #1-#8 restano `merged`/`closed` come già registrato sopra, nessun
+cambiamento. CI verde su entrambe #9/#10 (su #10 un flake transitorio di
+`actions/setup-node` risolto con un re-run, non legato al diff). Nessun commento/review
+*umano* nuovo su nessuna delle due — solo bot Vercel.
+
+Le 3 mitigazioni SQL non applicate al DB prod (`_add_player_cash`, `rpc_resolve_auction`,
+`rpc_execute_shadow_op`) restano l'unico punto realmente critico ancora aperto, ma non
+rinotificate qui: erano già state segnalate a Vlad nella sessione live che le ha scoperte e
+documentate in `HANDOFF.md` ("DA FARE TU"), e nulla di nuovo le renderebbe una notizia diversa
+da quella già vista. Nessuna notifica push inviata questa sveglia. Nessun nuovo lavoro di
+codice/audit avviato: il backlog esteso è esaurito in attesa che Vlad rivedi/mergi #9 e #10 —
+coerente con la stessa disciplina "non reinventare scope, non duplicare PR" applicata dalle
+sveglie precedenti.
+
+## ⚡ Aggiornamento (2026-08-07, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all)` + `get_comments`/`get_reviews`/
+`get_check_runs` su PR #9 e #10: **stato identico** all'ultima entry. Solo PR #1-#8 (`merged`
+o `closed`, verificato anche `merged_by`/`merged_at` con `pull_request_read get` su #1 e #7
+per conferma diretta, non solo il campo `merged` della list che può risultare impreciso).
+PR #9 (`mergeable_state: clean`, 1 commento bot Vercel) e PR #10 (`mergeable_state: clean`,
+CI 5/5 check `success`, 2 commenti: bot Vercel + il re-run già registrato) — **zero commenti o
+review umani nuovi** su entrambe. Nessun merge, nessuna chiusura. Confermato anche via diff
+diretto che questo branch e `auto/scalability-audit-10k` contengono già la sync corretta di
+questi due file — non serve una terza PR docs-only duplicata.
+
+Backlog esteso resta 6/6 completato. Le 3 mitigazioni SQL su `_add_player_cash`/
+`rpc_resolve_auction`/`rpc_execute_shadow_op` restano non applicate al DB prod — non
+rinotificate (stessa motivazione della entry precedente, nulla di nuovo). **Nessuna notifica
+push inviata.** Nessun nuovo lavoro di codice/audit avviato: si resta watch-only su #9/#10
+finché Vlad non agisce o non emerge un item nuovo davvero concreto dalla missione estesa.
+
+---
+
 ## PR aperte (nessuna mergiata da questa sessione — controlla sempre lo stato reale su GitHub)
 - **PR #1** `auto/tutorial-action-gate` — Tutorial action-gated. CI verde.
 - **PR #2** `auto/idle-offline-catchup` — Demo idle guadagni offline. CI verde.

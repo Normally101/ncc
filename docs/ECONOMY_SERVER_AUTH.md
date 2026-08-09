@@ -35,3 +35,75 @@ La **magnitudine dei tetti** dipende dalla scala economica legittima, ancora **i
 - Non attivare il trigger di enforcement prima della fase 3 (romperebbe ogni guadagno legittimo).
 - Non mettere tetti "al volo" senza la scala economica (falsi positivi sui salti legittimi).
 - Non far decidere al client importi/quantità: solo `reason` → il server mappa il valore.
+
+## Censimento siti `gameState.cash =`/`+=`/`-=` (6 agosto 2026)
+
+Mappa di tutti i punti del codice che ancora scrivono `gameState.cash` direttamente, prodotta
+per dare dati freschi alla fase 3 quando la scala economica verrà sbloccata (`grep -rn
+'gameState\.cash\s*\(=[^=]\|[+-]=\)' --include='*.js'` → **119 occorrenze**, ognuna letta con
+il contesto della funzione, non solo la riga). Nessun fix di codice qui: è solo l'inventario
+che il debito #1 richiede tenere aggiornato.
+
+**Metodo:** ogni sito è stato classificato leggendo se nella stessa funzione esiste già una
+RPC che muta `companies.cash` server-side. Confermato leggendo per intero anche `serverState.js`
+(righe 620-650, il commento dell'autore elenca esplicitamente il refactor pendente) e
+verificando quali RPC-wrapper lì definiti (`hireDriver`, `fireDriver`, `buyInvestment`,
+`toggleTelepass`, `takeLoan`, `repayLoan`, `unlockRegion`, `restCeo`, `startTrip`,
+`claimTripReward`) sono davvero **chiamati** da qualche punto del gioco — nessuno lo è: esistono
+lato server ma sono dead code lato client. Spot-check personale su 3 siti a campione
+(`engine-rides.js:700`, `crypto.js:76`, `b2b.js:131`) conferma la classifica del subagent che
+ha prodotto la scansione: nessun falso positivo/negativo trovato nei campioni verificati.
+
+### GUARDED — mirror locale con guard `!ServerState?.isReady()`, già corretto (25 siti)
+Il fix "doppia deduzione" del 6 agosto ha reso questi siti sicuri: la scrittura locale scatta
+SOLO come fallback quando il sync server-authoritative non è ancora attivo; quando lo è, la
+RPC è l'unica fonte di verità e la riga è un no-op.
+`ui-staff.js:571,611` (rpc_buy_vehicle) · `p2p-render.js:419` (rpc_contribute_consorzio) ·
+`p2p-render.js:447` (rpc_pay_don_carmine) · `black_ops.js:128,169` (rpc_execute_shadow_op,
+rpc_upgrade_shadow_defense) · `showroom.js:721` (rpc_buy_vehicle) · `crypto.js:76,95,116,137`
+(rpc_buy_crypto, rpc_sell_crypto, rpc_deposit_offshore, rpc_withdraw_offshore) ·
+`p2p-market.js:146,199,246,279,294,427` (rpc_buy_market_car, rpc_contribute_holding_treasury,
+rpc_list_company_ipo, rpc_buy_company_shares, rpc_sell_company_shares,
+rpc_gdf_inspection_check) · `nemesis.js:123` (rpc_nemesis_bribe_vip) ·
+`alliances.js:293,333` (rpc_create_alliance, rpc_donate_to_alliance) ·
+`infrastructure.js:150` (rpc_buy_fuel_depot) · `hostile_takeover.js:149` (rpc_opa_buyback) ·
+`b2b.js:131,152` (rpc_terminate_b2b_contract, rpc_b2b_daily_tick) ·
+`tourism.js:158` (rpc_tourism_daily_tick).
+
+### RPC-MIRROR — il motore di sync stesso (2 siti)
+`serverState.js:156` (`_onCompanyChange`, applica il delta Realtime) e `serverState.js:208`
+(`_bridgeToGameState`, overwrite completo da `_company.cash` al boot/reconnect). Non toccare:
+sono l'infrastruttura che rende sicuri tutti i siti GUARDED sopra.
+
+### FULLY-CLIENT-AUTHORITATIVE — debito #1, nessuna RPC coinvolta (91 siti)
+Nessuna RPC scala/accredita cassa da nessuna parte in questi file per queste azioni: il client
+resta l'unica fonte di verità finché non arriva una migrazione. Raggruppati per sottosistema
+(riga = riga del match `gameState.cash`):
+- **Guadagno corse** (`engine-rides.js:700,792,884`) — il flusso di cassa più grande del gioco.
+  `rpc_start_trip`/`rpc_claim_trip_reward` esistono in `serverState.js` ma non sono mai chiamate.
+- **Tick giornaliero** (`engine-daily.js:422,487,565,598,661,681,701,730,759,792,883,905,933,
+  1010,1034,1042,1082`, 17 siti) — simulazione locale voluta, il risultato aggregato viene
+  spinto una volta al giorno via `ServerState.syncCash` (push-up fire-and-forget, strategia di
+  sync più grezza del pattern a delta usato altrove, non un bug).
+- **Gestione autisti** (`engine-drivers.js:43,59,75,107,142`) — `ServerState.hireDriver` esiste
+  ma è dead code.
+- **Finanza** (`engine-finance.js:69,104,214,237,255,276,298,321,358,378,395,412,445,460`,
+  14 siti: dividendi, prestiti, borsa, short-selling, lobby, venture) — `ServerState.takeLoan`/
+  `repayLoan` esistono ma sono dead code.
+- **Holding/CEMP/IPO** (`engine-holding.js:30,47,64,77,91,110,121`).
+- **Flotta/leasing/mercato NPC** (`engine-fleet.js:62,182,205,221,235,252,311,325,389,412,430,
+  446,485,508,509`, 15 siti).
+- **Bandi corporate domestici** (`contracts.js:205,216,270,271,281`, distinti da B2B/turismo
+  che sono già RPC-backed).
+- **10 personaggi VIP client** (`vip-clients.js:53,79,138,211,291,355,540,561,640,643,659,722`,
+  12 siti).
+- **HQ** (`hq.js:157`) · **Eventi/motore centrale** (`engine.js:813,839,956,966,1217,1269,1378,
+  1673,1876`) · **Ordini giornalieri** (`daily-orders.js:144`, ramo cash del reward, il ramo
+  Driver Coins nella stessa funzione invece passa da `ServerState.addDriverCoins`).
+
+### Esito verifica: nessun bug nuovo
+A differenza del giro di fix del 6 agosto, **questo censimento non ha trovato nuovi siti
+UNGUARDED-OPTIMISTIC** (scrittura locale + RPC concorrente sullo stesso saldo senza guard —
+la classe di bug delle 12 doppie deduzioni già sistemate). I 91 siti FULLY-CLIENT-AUTHORITATIVE
+non sono bug: sono semplicemente fuori dal perimetro della migrazione server-authoritative,
+esattamente il debito #1 già noto. Nessuna azione di codice necessaria da questo censimento.
