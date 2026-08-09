@@ -1,6 +1,48 @@
 # Stato routine automatica (memoria tra sveglie)
 
-## ⚡ Aggiornamento (2026-08-09, sveglia cron successiva) — controllo, nessun cambiamento
+## ⚡ Aggiornamento (2026-08-09, sveglia cron successiva) — novità reale: PR #11, 4 nuove falle RPC
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: PR #1-#8
+restano `closed` (mergiate l'8/6). PR #9/#10 invariate dall'ultimo check-in (nessun commento/
+review umano nuovo, `get_reviews` `[]` su entrambe).
+
+**Novità: PR #11** (`auto/lockdown-auction-shadowop`, https://github.com/Normally101/ncc/pull/11),
+aperta oggi 11:03-12:19 UTC da una sveglia cron precedente che non ha aggiornato questo file
+(stesso schema già visto con PR #8) — scoperta solo ora controllando i branch `auto/*` oltre
+alla lista PR nota. Contiene:
+- **2 falle già note e MAI corrette in prod** (`rpc_resolve_auction`, `rpc_execute_shadow_op` —
+  le stesse di PR #4/#8, tuttora non applicate secondo `HANDOFF.md` "DA FARE TU").
+- **4 falle NUOVE**, stesso pattern (parametro numerico dal client senza validazione/controllo
+  auth), trovate in un secondo giro di audit e verificate personalmente leggendo il sorgente:
+  - `rpc_nemesis_fund_rival` — **nessun rate-limit server-side**: mint verso qualsiasi account
+    scelto dal chiamante, a raffica (il "cooldown 48h" è solo lato client, nessuna tabella
+    server lo applica). Fix: rate-limit 5/ora.
+  - `rpc_upgrade_shadow_defense` — gemella di `rpc_execute_shadow_op` nello stesso file, stesso
+    bug (costo negativo dal client = accredito), non presa nel primo giro per errore.
+  - `rpc_dampen_tension` — chiamabile a sé stante per azzerare la tensione nazionale (evita lo
+    Sciopero, -30% redditi a tutti) senza mai versare cash reale a una holding. Fix: internalizzata
+    dentro `rpc_contribute_holding_treasury`, REVOKE diretto.
+  - `rpc_sell_crypto` — quantità negativa produce un mint di crypto-coin quasi gratuito
+    (verificato algebricamente: il cast `::BIGINT` arrotonda a 0 l'EUR in uscita per importi
+    frazionari mentre l'`amount` aumenta comunque).
+  Tutto scaffold SQL, **non applicato al DB** (stesso guardrail di sempre) + un fix JS reale
+  già sicuro (`p2p-market.js`, gestisce sia la risposta vecchia che quella nuova della RPC).
+
+Risultato: **3 PR aperte** (#9, #10, #11), tutte `mergeable_state: clean`, **zero review umane
+su nessuna**. Le 3 mitigazioni SQL originali (PR #4-era) restano non applicate al DB prod da
+**10 giorni** (scoperta 30/7), e ora la superficie nota è salita da 3 a **7 RPC vulnerabili
+allo stesso pattern**, tutte chiamabili oggi con la sola anon key.
+
+**Notifica push inviata**: le 4 nuove falle non erano mai state riportate a Vlad (PR #11 è
+stata aperta da una sveglia che non ha loggato qui), più il fatto che le 3 falle originali
+restano aperte in prod da 10 giorni — contenuto nuovo, non un promemoria periodico ripetuto.
+
+Backlog esteso: 6/6 completato, nessun nuovo item avviato in questa sveglia (l'unico lavoro
+reale disponibile — round 3 di audit sullo stesso pattern RPC — duplicherebbe PR #11 già in
+attesa di review; meglio lasciare che Vlad valuti le 7 falle già segnalate prima di aggiungerne
+altre). Watch-only finché Vlad non agisce su #9/#10/#11, applica le mitigazioni SQL, o dà
+istruzioni dirette in sessione live.
+
+## ⚡ Aggiornamento (2026-08-09, sveglia cron precedente) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
 all'ultimo check-in (commit `611a336`, oggi 05:18 UTC). PR #1-#8 restano `closed` (contenuto
 già in `main`, mergiato l'8/6). Solo PR #9 e #10 restano `open`, entrambe `mergeable_state:
