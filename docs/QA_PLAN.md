@@ -1,9 +1,38 @@
 # QA_PLAN.md — Piano di test per Chauffeur Empire
 
-> Compagno di `docs/SYSTEMS.md` (la mappa). Questo documento è pensato per essere **eseguito da
-> Vlad sul Mac**, dove esistono cose che una sessione cloud non ha: browser reale, login vero,
-> credenziali Supabase, `chrome-devtools`. Non contiene codice di test già scritto (salvo dove
-> indicato) — è il piano, non l'implementazione.
+> Compagno di `docs/SYSTEMS.md` (la mappa). Non è più solo un piano: **Fase 2+3 sono state
+> implementate** il 9-10 agosto 2026 (sessione live) — `npm test` esegue 32 test reali su 9 file
+> (vedi "Stato implementazione" sotto). Le sezioni seguenti restano come riferimento su framework
+> e priorità; per il codice vero vedi `test/` e `test-support/game-env.js`.
+
+## ✅ Stato implementazione (9-10 agosto 2026)
+
+**`npm test` → 32/32 pass**, 9 file sotto `test/`: `economy/vehicle-trade`,
+`garage/repair-vehicle`, `employees/hire-fire`, `rides/complete-ride`, `rides/vip-clients`,
+`daily/daily-orders`, `daily/daily-tick`, `save-load/persistence`, `progression/new-game-plus`.
+
+Harness in `test-support/game-env.js` (Livello 3 sotto): carica i file `.js` **reali** del gioco
+(stessa lista/ordine di `index.html`, filtrata alla logica pura — no mappa/render/realtime) in un
+contesto Node condiviso, `document` reale via `jsdom` (necessario: il codice usa
+`document.getElementById(...)` come segnale di stato, non solo per scrivere HTML — uno stub senza
+registro elementi rompe la logica in modo silenzioso), mock di `ServerState` fedele al
+comportamento reale (RPC → Realtime → `_bridgeToGameState`, replicato mutando `gameState`
+direttamente come farebbe il bridge vero dopo un RPC riuscito, non un semplice stub true/false).
+
+**Cosa copre**: economia (compra/vendi veicolo), garage (riparazione + Kasko + meccanico),
+dipendenti (assunzione + licenziamento), corse (pagamento una sola volta, scenario doppio-click),
+VIP (danno al veicolo giusto), daily orders (rollback su RPC fallita), daily tick (nessun
+drift su chiamate ripetute), save/load (serializzazione + deserializzazione + migrazione stato
+busy→idle al reload), New Game+ (sync cash col server). 6 test sono regressioni esplicite dei fix
+funzionali del 9 agosto (fireDriver, daily-orders, vip-clients, New Game+).
+
+**Cosa NON copre ancora** (SKIP esplicito): contracts/B2B/tourism/aste (zero test), animazioni/
+tooltip/UI pura (Livello 2 jsdom smoke test — deliberatamente fuori scope, priorità bassa),
+E2E reale in browser (Livello 4 — resta solo tuo, richiede Playwright + Supabase di staging).
+
+**Bug trovato scrivendo questi test**: il cap sul delta di `rpc_sync_cash` (fix SQL della stessa
+sessione, poche ore prima) era simmetrico e avrebbe rifiutato un New Game+ legittimo da cash
+alto — corretto in `50_fix_sync_cash_asymmetric_delta.sql`, applicato e testato in prod.
 
 ## Come leggere questo documento
 1. Prima la sezione **"Zero-day"** — non è testing, sono buchi di sicurezza attivi trovati durante
