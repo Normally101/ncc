@@ -93,11 +93,14 @@ cosa fare quando il backlog puntuale sotto è vuoto. Regole per tradurlo in lavo
   (in continuità col debito #1 già noto). Non risolve il debito (bloccato sulla scala
   economica, decisione di Vlad) ma tiene la mappa aggiornata così la migrazione, quando
   Vlad la sblocca, parte da dati freschi.
-- [ ] **Audit scalabilità client-side a 10k** — censire `setInterval`/polling per sessione in
-  `engine.js` e affini (generatePOIRide ogni 5min, generateContractRide ogni 8min, ecc.):
-  capire cosa genera traffico verso Supabase per giocatore attivo e se qualcosa scalerebbe
-  male a 10k sessioni concorrenti (es. Realtime channel per giocatore, frequenza RPC). Solo
-  lettura/calcolo, nessun load-test reale.
+- [x] **Audit scalabilità client-side a 10k** — 22 `setInterval` in `startGameLoops`
+  (`engine.js`), quasi tutti locali/no-rete o già event-driven/cache-guarded (basso rischio).
+  Il vero collo di bottiglia sono i **canali Realtime**: 9 su ~11 subscription per sessione
+  sono unfiltered/broadcast (non filtrate per player), quindi moltiplicano linearmente con la
+  popolazione concorrente invece di scalare per-utente — più un duplicato innocuo
+  (`global_news_feed`/`world_feed_rt` sullo stesso evento). Dettaglio completo in
+  `docs/SCALABILITY_10K.md`. Consolidamento canali = cambio di codice + decisione sul piano
+  Supabase, lasciato a Vlad (stesso principio del debito economico #1).
 - _(esaurita questa lista: torna alla lente della missione estesa sopra e trovane di nuove,
   sempre concrete e verificabili headless. Se davvero non emerge più nulla di azionabile senza
   Vlad, fermati e annotalo in `docs/AUTOMATION_STATE.md`.)_

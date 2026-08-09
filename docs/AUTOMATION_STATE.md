@@ -1,43 +1,60 @@
 # Stato routine automatica (memoria tra sveglie)
 
-## PR aperte (nessuna mergiata da questa sessione — controlla sempre lo stato reale su GitHub)
-- **PR #1** `auto/tutorial-action-gate` — Tutorial action-gated. CI verde.
-- **PR #2** `auto/idle-offline-catchup` — Demo idle guadagni offline. CI verde.
-- **PR #3** `auto/routine-mission-update` — docs: missione estesa + backlog derivato. **Da
-  mergiare per prima** (la prossima sveglia legge questi doc da `main` fresco).
-- **PR #4** 🔴 `auto/critical-cash-exploits-scaffold` — **priorità massima**: scaffold fix
-  per 3 falle economiche confermate (la più grave, cassa illimitata via `_add_player_cash`,
-  confermata attiva in prod — Vlad già avvisato via notifica push separata). Vedi HANDOFF.md
-  "30 luglio 2026 — FALLA CRITICA".
-- **PR #5** `auto/bughunt-economy-daily` — 3 bug reali fixati in `engine-daily.js`/
-  `ui-dispatch.js` (bonus fantasma mai accreditato ma tassato, driver saltato nel tick dopo
-  un burnout, tasse sottostimate a schermo). Vedi HANDOFF.md "30 luglio 2026 — Bug-hunt
-  engine-daily.js".
-- **PR #6** `auto/bughunt-dispatch-rides` (da aprire in questa sessione) — 2 bug reali
-  fixati in `engine-rides.js` (doppia penalità sullo stesso incidente su condizione auto +
-  guadagno; `gameState.prestige` senza guard `||0`, unico call-site nel codebase). 3 altri
-  candidati investigati e correttamente scartati (non-bug o non raggiungibili oggi — vedi
-  HANDOFF.md "30 luglio 2026 — Bug-hunt dispatch/corse" per il dettaglio di tutti e 5).
+## ⚡ 6 agosto 2026 — AGGIORNAMENTO MAGGIORE: le 8 PR storiche sono state mergiate/chiuse
+Tutto quanto sotto questa sezione (fino al "Log sveglie") descrive uno stato **superato**,
+lasciato come cronologia. Non ripartire da lì. Riassunto vero, verificato via `git log` +
+GitHub `list_pull_requests` in questa sveglia:
+
+- **PR #1, #2, #3, #4, #5, #6, #8 → MERGIATE in `main`** da una sessione live con Vlad
+  (autorizzazione esplicita: "puoi modificare da solo i bug che trovi, organizzati in modo
+  sistematico"). 26 bug reali in produzione. Punto di rollback: commit `138a791`. Dettaglio
+  completo in `HANDOFF.md` → "6 agosto 2026 — 26 fix MERGIATI IN PRODUZIONE".
+- **PR #7 → CHIUSA di proposito** (non mergiata): il suo JS chiama `rpc_spend_vtk_shop_item`,
+  non ancora applicata in prod. I suoi 2 fix `alliances.js` recuperati su branch pulito e
+  mergiati separatamente. Riattivare dopo `46_vtk_shop_purchase_scaffold.sql`.
+- Stessa sveglia (dopo i merge): **VTK Shop ricostruito da zero** + **6 casi "numero
+  mostrato ≠ numero applicato" fixati** (surge fantasma, banner sfida/contratto/streak/
+  ranking finti, linea di credito con tasso/tetto sbagliati, rischio missioni shadow su auto
+  sbagliata) + fix `_activeTab` mai su `window`. Tutto mergiato e verificato live. Vedi
+  `HANDOFF.md` per il dettaglio riga per riga.
+- **PR #9** (`auto/audit-cash-writes-map`, aperta 11:35 UTC da una sveglia precedente oggi,
+  ancora **aperta e non mergiata**): sync docs-only di questi due file + censimento delle 119
+  occorrenze `gameState.cash =`/`+=`/`-=` (5° item del backlog esteso) in
+  `docs/ECONOMY_SERVER_AUTH.md`. Zero nuovi bug trovati. Non toccarla di nuovo finché non
+  cambia — è già completa e in attesa di review.
+
+### 🔴 Resta aperto — 3 mitigazioni SQL MAI applicate al DB da nessuna PR mergiata
+La routine non tocca il DB prod per guardrail. Da `HANDOFF.md` "DA FARE TU":
+1. **Cassa illimitata via `_add_player_cash`** — ancora sfruttabile oggi (`GRANT` diretto ad
+   `authenticated`, nessun controllo `auth.uid()`). Scaffold pronto: 2 righe `REVOKE` in cima
+   a `45_lockdown_cash_exploits_scaffold.sql`, zero rischio, non applicate.
+2. `rpc_resolve_auction` — nessun escrow, lotti vincibili a €0. `REVOKE EXECUTE` pronto, non
+   applicato.
+3. `rpc_execute_shadow_op` — costo dal client senza controllo di segno = mint arbitrario.
+   Revoke chiuderebbe anche la feature — scelta di Vlad, non applicato.
+
+## PR aperte (verificato via GitHub in questa sveglia)
+- **PR #9** `auto/audit-cash-writes-map` — open, `mergeable_state: clean`, solo commento bot
+  Vercel, nessuna review umana. Nessuna azione necessaria da questa sveglia.
+- **PR #10** `auto/scalability-audit-10k` (questa sveglia) — 6° e ultimo item del backlog
+  esteso mappato: audit statico di timer client-side + canali Realtime per la scalabilità a
+  10k sessioni concorrenti. Vedi `docs/SCALABILITY_10K.md` per il dettaglio completo.
+  **Nessun bug fixato** (è un audit, non codice): il rischio reale trovato è nei 9 canali
+  Realtime unfiltered/broadcast per sessione (moltiplicano linearmente con la popolazione
+  concorrente), non nei timer (già per lo più locali o cache-guarded) — consolidarli è una
+  decisione di codice + piano Supabase lasciata a Vlad, coerente col principio già applicato
+  al debito economico #1.
+
+**Con PR #10, il backlog esteso mappato in `docs/AUTOMATION_ROUTINE.md` è ora COMPLETO (6/6
+item).** Prossima sveglia: se PR #9/#10 sono ancora aperte senza novità, nessun nuovo lavoro
+di codice — tornare alla lente della missione estesa per trovare item nuovi concreti solo se
+davvero emerge qualcosa di azionabile senza Vlad, altrimenti restare watch-only (vedi
+guardrail "3 sveglie ferme" più sotto, comunque da rivalutare: qui il fermo è reale mancanza
+di item, non inattività).
 
 ## Branch attivo
-`auto/routine-mission-update` (solo docs, questa sveglia). In parallelo restano aperte
-**8 PR**, tutte `open`, nessuna mergiata/chiusa, zero review umane (solo bot Vercel):
-- `auto/tutorial-action-gate` → **PR #1**
-- `auto/idle-offline-catchup` → **PR #2**
-- `auto/routine-mission-update` (questo branch) → **PR #3** — missione estesa, conferma non
-  verificabile da questa integrazione (vedi log sotto), non trattata come autorizzata
-- `auto/critical-cash-exploits-scaffold` → **PR #4** — 🔴 sicurezza critica, cassa illimitata
-  via `_add_player_cash` confermata attiva in prod
-- `auto/bughunt-economy-daily` → **PR #5**
-- `auto/bughunt-dispatch-rides` → **PR #6**
-- `auto/bughunt-p2p-alliances` → **PR #7**
-- `auto/bughunt-round2` → **PR #8** — round 2 bug-hunt (aperta da una sveglia precedente
-  senza aggiornare questo file), **contiene anche 2 nuove falle di sicurezza confermate ma
-  NON corrette** (segnalate come commenti sulla PR, non nel diff): `rpc_execute_shadow_op`
-  (costo passato dal client, nessun controllo di segno → si può accreditare cassa arbitraria
-  passando un costo negativo) e `rpc_resolve_auction` (nessun escrow sulle offerte + sconto
-  al vincitore senza fondi → si possono vincere lotti a €0 chiamando la RPC quando la cassa è
-  a zero). Entrambe richiamabili direttamente con la anon key, indipendentemente dal client.
+`auto/scalability-audit-10k` (questa sveglia, docs-only, PR #10). Le vecchie 8 PR (#1-#8) non
+esistono più come "attive": mergiate o chiuse, vedi sopra. Restano aperte solo PR #9 e #10.
 
 ## Task corrente
 **Missione estesa ricevuta da Vlad (30 luglio 2026, live, non da prompt schedulato):**
@@ -120,12 +137,10 @@ item del backlog esteso in `docs/AUTOMATION_ROUTINE.md` (bug-hunt dispatch/corse
 `engine-rides.js`+`dispatcher.js`, o P2P/alleanze, o l'audit scalabilità 10k — vedi lista).
 
 ## Sveglie consecutive senza progresso
-3 — soglia del guardrail "dopo 3 sveglie ferme, fermati e scrivi perché" raggiunta con
-questa sveglia (vedi ultima entry di log). Da questa sveglia in poi: nessun nuovo lavoro
-di codice/audit finché non cambia qualcosa di verificabile (merge/chiusura di una PR da
-Vlad, o istruzione diretta in sessione interattiva live). Le prossime sveglie schedulate
-dovrebbero limitarsi a un controllo economico (git fetch + stato delle 7 PR) e fermarsi lì
-se nulla è cambiato, invece di rianalizzare tutto da capo.
+**Superato dagli eventi del 6 agosto** (merge di tutte le PR storiche + nuovo lavoro reale
+su PR #9/#10) — il contatore descritto qui sotto si riferiva allo stallo pre-merge, non
+vale più. Se le prossime sveglie trovano di nuovo PR #9/#10 ferme senza review per multipli
+giorni, ripartire il conteggio da capo invece di ereditare questo.
 
 ## ⚠️ Nota per Vlad — possibile conflitto di merge
 `HANDOFF.md` e questo stesso file (`docs/AUTOMATION_STATE.md`) sono stati modificati in
@@ -518,3 +533,32 @@ _(nessuno — l'accesso GitHub è tornato disponibile più tardi nella stessa sv
   aspettare il suo intervento. Iniziato bug-hunt su `engine-daily.js` (secondo item concreto
   della missione estesa), branch `auto/bughunt-economy-daily`, subagent di analisi lanciato,
   verifica manuale dei risultati in corso.
+- 2026-08-06 (sveglia cron, sessione fresca senza memoria delle precedenti): **scoperto un
+  salto enorme rispetto all'ultima entry loggata** (2026-08-02) — in mezzo, una sessione live
+  con Vlad ha mergiato tutte le PR storiche (#1/#2/#3/#4/#5/#6/#8), chiuso #7 di proposito,
+  ricostruito il VTK Shop e fixato 6 casi "numero mostrato ≠ applicato" (26+ bug reali in
+  produzione, dettaglio in `HANDOFF.md`). Una sveglia cron precedente **oggi stesso** (11:35
+  UTC) aveva già aperto PR #9 (sync docs + censimento `gameState.cash`, 5° item del backlog
+  esteso) — verificata via `get_comments`: ancora aperta, solo bot Vercel, nessuna novità,
+  non ritoccata.
+  - Preso il 6° e ultimo item mappato del backlog esteso: **audit scalabilità client-side a
+    10k**. Subagent di scansione (`setInterval` in `engine.js` e affini + canali Realtime
+    per sessione) + **verifica personale leggendo il codice sorgente** (stessa disciplina
+    degli audit precedenti): confermati a campione `checkActiveTrips` (`engine-rides.js:857`,
+    2 RPC condizionali ogni 5s), i 22 `setInterval` di `startGameLoops` (`engine.js:900-926`),
+    e i filtri `postgres_changes` su `ce_game_events` (`serverState.js:105-142`, 4 filtrati
+    su 7). Risultato: **timer OK** (locali o già cache/condition-guarded), **9 canali
+    Realtime su ~11 per sessione sono unfiltered/broadcast** → moltiplicano linearmente con
+    la popolazione concorrente invece che per-utente, è il vero collo di bottiglia a 10k
+    sessioni. Più un duplicato innocuo (`global_news_feed`/`world_feed_rt` sullo stesso
+    evento). Scritto in `docs/SCALABILITY_10K.md`, nuovo file. **Nessun codice toccato** —
+    è un audit, il consolidamento canali è un cambio reale + decisione sul piano Supabase,
+    lasciato a Vlad (stesso principio del debito economico #1, coerente coi guardrail).
+  - Aggiornato `docs/AUTOMATION_ROUTINE.md` (backlog esteso ora 6/6 completato) e questo
+    file (sezione "6 agosto" in cima, sostituisce la cronologia superata sotto). Branch
+    `auto/scalability-audit-10k`, PR #10 in apertura.
+  - **Nessuna notifica push inviata**: le 3 falle SQL critiche restano aperte ma sono già
+    note a Vlad (le ha scritte lui stesso in `HANDOFF.md` "DA FARE TU" nella sessione live di
+    oggi, poche ore fa) — ripeterle ora sarebbe rumore, non segnale nuovo. Nessun altro
+    elemento di questa sveglia richiede attenzione immediata (PR #9/#10 sono lavoro
+    docs-only/audit a rischio zero, in attesa della review ordinaria di Vlad).
