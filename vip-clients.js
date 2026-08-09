@@ -399,7 +399,15 @@ window.acceptVipGolden = function(emailId) {
 
 function _vipCompleteGolden(ride, driver, earned) {
     if (Math.random() < 0.60) {
-        const car = gameState.fleet.find(c => c.id === ride.carId || (driver && c.id === driver.assignedCarId));
+        // FIX: ride.carId è congelato al momento della creazione della ride VIP,
+        // ma driver/veicolo possono essere riassegnati prima del completamento
+        // (nessun vincolo driverId/vehicleRequired — vedi docs/SYSTEMS.md §5). Il
+        // vecchio `c.id === ride.carId || (driver && c.id === driver.assignedCarId)`
+        // in un solo .find() sceglieva in base all'ordine casuale della flotta,
+        // potendo applicare danno/riparazione a un'auto che non è più quella
+        // realmente usata. Priorità esplicita al veicolo ATTUALE del driver.
+        const car = (driver && gameState.fleet.find(c => c.id === driver.assignedCarId))
+            || gameState.fleet.find(c => c.id === ride.carId);
         if (car) {
             if (typeof hasInvestment === 'function' && hasInvestment('inv_kasko')) {
                 logToMap('🛡️ Kasko: danni Golden Boy coperti!');
@@ -709,7 +717,15 @@ window.acceptVipErede = function(emailId) {
 
 function _vipCompleteErede(ride, driver, earned) {
     if (Math.random() < 0.30) {
-        const car = gameState.fleet.find(c => c.id === ride.carId || (driver && c.id === driver.assignedCarId));
+        // FIX: ride.carId è congelato al momento della creazione della ride VIP,
+        // ma driver/veicolo possono essere riassegnati prima del completamento
+        // (nessun vincolo driverId/vehicleRequired — vedi docs/SYSTEMS.md §5). Il
+        // vecchio `c.id === ride.carId || (driver && c.id === driver.assignedCarId)`
+        // in un solo .find() sceglieva in base all'ordine casuale della flotta,
+        // potendo applicare danno/riparazione a un'auto che non è più quella
+        // realmente usata. Priorità esplicita al veicolo ATTUALE del driver.
+        const car = (driver && gameState.fleet.find(c => c.id === driver.assignedCarId))
+            || gameState.fleet.find(c => c.id === ride.carId);
         if (car) {
             logToMap('💸 L\'Erede: INCIDENTE! Kasko copre tutto.');
             showNotification('💥 L\'Erede ha fatto un incidente! Kasko intervenuta. Auto riparata.', 'error');
