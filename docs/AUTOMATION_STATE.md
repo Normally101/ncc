@@ -1,5 +1,28 @@
 # Stato routine automatica (memoria tra sveglie)
 
+## ⚡ Aggiornamento (2026-08-09, sveglia cron successiva, gap di ~1 giorno dall'ultimo check-in) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `ad17491`, 2026-08-08 20:14 UTC). PR #1-#8 restano `closed`
+(contenuto già in `main`, mergiato l'8/6). Solo PR #9 e #10 restano `open`,
+`mergeable_state: clean`. PR #9 `updated_at` 2026-08-08T20:15:11Z è ancora il redeploy
+Vercel innescato dal check-in precedente stesso (verificato leggendo il commento: bot
+`vercel[bot]`, non attività umana). PR #10 `updated_at` invariato dal 2026-08-06.
+
+`get_comments` su #9 (1 commento) e #10 (2 commenti) e `get_reviews` su entrambe (`[]`):
+**zero commenti/review umani nuovi** rispetto all'ultimo check-in. Nessun merge, nessuna
+chiusura. Riletto anche `HANDOFF.md` "DA FARE TU": nessuna entry più recente del 6 agosto —
+le 3 mitigazioni SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`)
+restano non applicate al DB prod, cassa illimitata via `_add_player_cash` confermata ancora
+attiva, ormai 10 giorni dalla scoperta (30/7) e 3 giorni dall'ultimo avviso push (2026-08-06).
+Sotto la soglia tipica di ~4-5gg tra promemoria quando non cambia nulla di concreto — non
+ri-notificata oggi, coerente con la cadenza già stabilita dalle sveglie precedenti su questo
+stesso branch.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10, entrambe
+ancora in attesa di prima review umana da 3-6 giorni). **Nessuna notifica push inviata**
+(nessuna novità reale). **Nessun nuovo lavoro di codice/audit avviato**: watch-only finché
+Vlad non agisce su #9/#10, applica le mitigazioni SQL, o dà istruzioni dirette in sessione live.
+
 ## ⚡ Aggiornamento (2026-08-08, sveglia cron successiva) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests(state=open, sort=updated, direction=desc)`: identico
 all'ultimo check-in (commit `0643d9f`, oggi 15:15 UTC). Solo PR #9 e #10 restano aperte,
