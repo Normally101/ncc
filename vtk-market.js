@@ -379,7 +379,7 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
                         <span style="color:#c79a2a;font-family:monospace">🪙 ${o.dc_price} DC</span>
                     </div>
                     <div style="font-size:9px;color:#6b7280;margin-top:2px">
-                        ${(o.dc_price / o.vtk_amount).toFixed(2)} DC/VTK · da ${o.seller_name || 'Anonimo'}
+                        ${(o.dc_price / o.vtk_amount).toFixed(2)} DC/VTK · da ${CE_Sec.escHtml(o.seller_name || 'Anonimo')}
                     </div>
                 </div>
                 <button ${ceAct('vtkFillOrder', [o.id, o.dc_price])}
