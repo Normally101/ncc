@@ -1757,6 +1757,10 @@ window.newGamePlus = function() {
     _applyBrandColor();
     showBigEvent('♾️', `New Game+ ${ngpCount}`, `Riparto con €${legacyCash.toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. La tua leggenda continua.`);
     logToMap(`♾️ New Game+ ${ngpCount} iniziato!`);
+    // Senza questo, il server tiene ancora il cash pre-NGP e lo rivince al prossimo
+    // login/refresh (auth.js Fase 5 fa sempre vincere il valore server) — vedi
+    // docs/SYSTEMS.md §1 "New Game+ non sincronizza mai col server".
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     updateUI();
     saveGame();
 };
@@ -1822,6 +1826,9 @@ window.sellCompanyNGP = function() {
     showBigEvent('🏦', `Exit Strategy — New Game+ ${ngpCount}`,
         `Il fondo ha acquisito Chauffeur Empire per €${salePrice.toLocaleString()}.\n\nRicominci con €${Math.floor(legacyCash).toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. Credit Score iniziale: ${gameState.creditScore}.\n\nCostruisci un nuovo impero.`);
     logToMap(`♾️ Exit Strategy completata — NGP ${ngpCount} iniziato!`);
+    // Stesso bug/fix di newGamePlus sopra: senza sync il server rivince il cash
+    // pre-exit al prossimo login/refresh.
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     updateUI(); saveGame();
 };
 
