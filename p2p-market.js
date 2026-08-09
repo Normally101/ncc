@@ -199,8 +199,19 @@ window.contributeHoldingTreasury = async function(holdingId, amount) {
     if (!window.ServerState?.isReady()) gameState.cash -= roundedAmount;
     await saveGame();
 
-    // Ogni contributo sindacale riduce il Barometro della Collera (fire-and-forget)
-    if (roundedAmount >= 10000) {
+    // 48_lockdown_nemesis_shadowdef_tension_scaffold.sql internalizza il dampening
+    // tensione dentro questa stessa RPC (torna { treasury, tension } invece del
+    // solo bigint treasury) — finché quella SQL non è applicata, `data` resta il
+    // vecchio bigint e usiamo la vecchia chiamata separata come fallback, per non
+    // rompere nulla prima che Vlad applichi la migrazione.
+    if (data && typeof data === 'object' && data.tension != null) {
+        window._sindacatoState.tension = data.tension;
+        if (roundedAmount >= 10000) {
+            const reduction = Math.floor(roundedAmount / 10000);
+            showNotification(`🌡️ Barometro −${reduction} pt (${Math.round(data.tension)}%)`, 'info');
+        }
+    } else if (roundedAmount >= 10000) {
+        // Ogni contributo sindacale riduce il Barometro della Collera (fire-and-forget)
         _sb().rpc('rpc_dampen_tension', { v_amount: roundedAmount })
             .then(({ data: newTension }) => {
                 if (newTension !== null) {
