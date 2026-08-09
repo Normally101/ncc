@@ -33,8 +33,8 @@ window.renderP2PMarketSection = function() {
             <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:8px 12px;margin-bottom:6px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div style="min-width:0;flex:1">
-                        <div style="font-size:10px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${car.name || 'Auto sconosciuta'}</div>
-                        <div style="font-size:8px;color:#6b7280">da <span style="color:#c79a2a">${l.seller_name}</span> ·
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${CE_Sec.escHtml(car.name || 'Auto sconosciuta')}</div>
+                        <div style="font-size:8px;color:#6b7280">da <span style="color:#c79a2a">${CE_Sec.escHtml(l.seller_name || '')}</span> ·
                             <span style="color:${condColor}">Cond. ${cond}%</span> ·
                             ${car.mileage ? Math.round(car.mileage/1000)+'k km' : '—'}</div>
                     </div>
@@ -59,7 +59,7 @@ window.renderP2PMarketSection = function() {
             <div style="background:rgba(212,175,55,0.04);border:1px solid rgba(212,175,55,0.2);border-radius:6px;padding:8px 12px;margin-bottom:6px">
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div>
-                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${car.name || '?'}</div>
+                        <div style="font-size:10px;font-weight:700;color:#e6edf3">${CE_Sec.escHtml(car.name || '?')}</div>
                         <div style="font-size:8px;color:#e0922e;font-family:monospace">€${l.ask_price.toLocaleString()} · In vendita</div>
                     </div>
                     <button ${ceAct('cancelP2PListing', [l.id])} style="padding:3px 8px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Ritira</button>
