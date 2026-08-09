@@ -1,6 +1,27 @@
 # Stato routine automatica (memoria tra sveglie)
 
-## ⚡ Aggiornamento (2026-08-09, sveglia cron successiva, gap di ~1 giorno dall'ultimo check-in) — controllo, nessun cambiamento
+## ⚡ Aggiornamento (2026-08-09, sveglia cron successiva) — controllo, nessun cambiamento
+`git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
+all'ultimo check-in (commit `611a336`, oggi 05:18 UTC). PR #1-#8 restano `closed` (contenuto
+già in `main`, mergiato l'8/6). Solo PR #9 e #10 restano `open`, entrambe `mergeable_state:
+clean`, CI verde. PR #9 non ha `updated_at` più recente del check-in precedente stesso (nessun
+nuovo redeploy) — verificato comunque `get_comments`+`get_reviews` su entrambe: su #9 resta
+solo il commento bot Vercel già noto, `get_reviews` `[]`; su #10 i 2 commenti già noti (bot
+Vercel + nota di Claude sul re-run CI del 6/8), `get_reviews` `[]`. **Zero commenti/review
+umani nuovi.** Nessun merge, nessuna chiusura.
+
+Riletto `HANDOFF.md` "DA FARE TU": nessuna entry più recente del 6 agosto — le 3 mitigazioni
+SQL (`_add_player_cash`, `rpc_resolve_auction`, `rpc_execute_shadow_op`) restano non applicate
+al DB prod, cassa illimitata via `_add_player_cash` confermata ancora attiva. Ultimo avviso
+push su questo tema: 2026-08-06 (3 giorni fa) — sotto la soglia tipica di ~4-5gg tra promemoria
+quando non cambia nulla di concreto, non ri-notificato oggi.
+
+Backlog esteso resta 6/6 completato, nessun nuovo item avviato (duplicherebbe #9/#10, entrambe
+ancora in attesa di prima review umana da 3-6 giorni). **Nessuna notifica push inviata**
+(nessuna novità reale). **Nessun nuovo lavoro di codice/audit avviato**: watch-only finché
+Vlad non agisce su #9/#10, applica le mitigazioni SQL, o dà istruzioni dirette in sessione live.
+
+## ⚡ Aggiornamento (2026-08-09, sveglia cron precedente, gap di ~1 giorno dall'ultimo check-in) — controllo, nessun cambiamento
 `git fetch --all` + `list_pull_requests(state=all, sort=updated, direction=desc)`: identico
 all'ultimo check-in (commit `ad17491`, 2026-08-08 20:14 UTC). PR #1-#8 restano `closed`
 (contenuto già in `main`, mergiato l'8/6). Solo PR #9 e #10 restano `open`,
