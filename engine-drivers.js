@@ -162,6 +162,12 @@ window.fireDriver = function fireDriver(driverId) {
     const idx = gameState.drivers.findIndex(d => d.id === driverId);
     if (idx === -1) return;
     const driver = gameState.drivers[idx];
+    // Un autista 'busy' è assegnato a una corsa attiva (ride.driverId punta a lui):
+    // rimuoverlo ora lascerebbe quel riferimento orfano — la corsa completa comunque
+    // (completeRide gestisce driver mancante) ma l'auto assegnata torna libera subito,
+    // riassegnabile a un altro autista mentre la corsa vecchia è ancora "in corso".
+    // Stesso guard già usato per l'Accademia (startAcademyCourse) e altrove nel file.
+    if (driver.status === 'busy') { if (typeof showNotification === 'function') showNotification(`${driver.name} è in servizio — attendi che finisca la corsa prima di licenziarlo.`, 'error'); return; }
     gameState.drivers.splice(idx, 1);
     if(typeof showNotification==='function') showNotification(`${driver.name} licenziato.`, 'error');
     if(typeof saveGame==='function') saveGame();
