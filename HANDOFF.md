@@ -7,6 +7,69 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+### ✅ 9 agosto 2026 (continuazione, stesso giorno) — 5 bug funzionali critici, branch `auto/functional-bugs-critical`
+Su istruzione diretta di Vlad ("chiudi concretamente i problemi, partendo dalla sicurezza SQL
+— poi bug che alterano permanentemente stato/economia"). La sicurezza SQL (sotto) era già
+chiusa nella prima parte della stessa sessione; qui backlog funzionale da `docs/SYSTEMS.md`/
+`docs/QA_PLAN.md`, verificato leggendo il codice reale (non fidandosi del solo riassunto),
+fixato, testato con script standalone (VM + mock, il progetto non ha ancora `node --test`
+configurato — `docs/QA_PLAN.md` Fase 2), committato **su branch, non su main** (`git push -u
+origin auto/functional-bugs-critical`, **non mergiato — merge/review a Vlad**).
+
+**FIX APPLICATI:**
+
+| Problema | File/RPC | Modifica | Commit | Test |
+|---|---|---|---|---|
+| New Game+ non sync col server — un relogin poteva far tornare il cash al valore pre-reset | `engine.js` (`newGamePlus`, `sellCompanyNGP`) | Aggiunta `ServerState.syncCash()` dopo il reset, stesso pattern guardato usato altrove | c76beda | Letto il codice, pattern verificato identico ad altri call-site esistenti |
+| ⚠️ **Trovato mentre testavo il fix sopra**: il cap sul delta di `rpc_sync_cash` (di poco prima, nella stessa sessione) era simmetrico e avrebbe rifiutato un New Game+ legittimo da un cash alto | `rpc_sync_cash` (Supabase) | Cap solo sugli INCREMENTI (unica direzione sfruttabile); i decrementi restano liberi, già limitati dal `CHECK (cash >= 0)` esistente sulla tabella | c76beda (`50_fix_sync_cash_asymmetric_delta.sql`) | 4 assert in transazione con ROLLBACK contro il DB reale: incremento enorme rifiutato, decremento enorme (simula NGP) accettato, cash negativo bloccato dal CHECK, incremento plausibile accettato |
+| `fireDriver` licenziava un autista a metà corsa, lasciando `ride.driverId` orfano — l'auto tornava libera e riassegnabile mentre la vecchia corsa pagava comunque a fine corsa | `engine-drivers.js` | Blocco se `status==='busy'`, stesso guard già usato per l'Accademia | ebf2e1e | Script VM con la funzione reale + gameState mockato: 3 assert (driver busy non rimosso, driver idle rimosso, driver busy ancora nel roster) |
+| Race auto-documentata: reward Driver Coins poteva sparire (RPC fallita, `.catch` silenzioso) mentre l'ordine restava "riscosso" per sempre | `daily-orders.js` (`claimDailyOrder`) | Rollback di claim + credito locale sul fallimento della RPC, notifica esplicita invece del catch silenzioso | a73d7fa | Script VM, mock RPC che risolve/rigetta: successo → claim mantenuto + saldo server autoritativo; fallimento → rollback completo + notifica errore |
+| Golden Boy/Erede (VIP) applicavano danno/riparazione a `ride.carId` (congelato alla creazione) invece che al veicolo REALMENTE in uso, se il driver era stato riassegnato nel frattempo | `vip-clients.js` (`_vipCompleteGolden`, `_vipCompleteErede`) | Priorità esplicita a `driver.assignedCarId`, fallback a `ride.carId` | 659eefb | Script VM: driver riassegnato da auto A a B tra creazione e completamento ride — danno forzato via mock di `Math.random`, applicato correttamente a B, A intatta |
+| `_hqMarker` mai rimosso da `_destroyMap()` — dichiarato `let` (locale al file) invece di `var` (diventa `window.X`), stesso pattern del bug storico `_activeTab` | `ui-map-utils.js` | `let` → `var` | e984fc9 | Script che replica la semantica reale browser (`window === global` a top-level di script tag): conferma che `var` si propaga correttamente |
+
+**TEST — nota onesta**: tutti gli script sopra sono verifiche standalone (Node `vm` + mock),
+non un test suite formale — il progetto non ha `node --test` configurato (`docs/QA_PLAN.md`
+Fase 2, non ancora fatta). Ogni fix testato caricando il **file sorgente reale** (non una
+riscrittura) con `gameState`/dipendenze mockate, e asserzioni sul comportamento prima/dopo.
+**NON VERIFICATO**: nessun test in browser reale (Playwright/manuale) — cambi non ancora
+visti girare nel gioco vero.
+
+**SUPABASE**: solo la correzione al cap di `rpc_sync_cash` (50_, sopra) — applicata e testata
+con rollback, stesso metodo della sessione precedente. Nessun'altra RPC toccata in questo giro.
+
+**PROBLEMI ANCORA APERTI (classificati):**
+
+- **`hq.js::hqUpgradeRoom`** — `DESIGN_DECISION_REQUIRED`. Scala `gameState.cash`
+  direttamente, zero RPC, e gli effetti (`allEarningsMult`, `tipMult`, `salaryCostMult`,
+  `driverXpMult`) sono moltiplicatori **globali permanenti** — un vantaggio composto su tutta
+  l'economia futura, non un furto una-tantum. **Verificato**: esiste già `26_hq_buildings.sql`
+  in prod (`hq_status` table + `rpc_update_hq_status`), ma è **solo una leaderboard** — accetta
+  `rooms_built`/`hq_score` autodichiarati dal client senza validare né il costo pagato né i
+  livelli reali. Renderlo davvero server-authoritative richiede schema nuovo (costo/livello per
+  stanza tracciato server-side), stessa classe di lavoro del debito #1 economia — non un fix
+  chirurgico, serve una decisione di scala/priorità da Vlad prima di procedere.
+- **`global_events.js`**: `gameState.activeDynamicEvent` non viene mai azzerato a fine evento
+  globale → il generatore di eventi dinamici locali resta bloccato permanentemente dopo il
+  primo evento globale visto. `FIX_LATER` — non toccato in questo giro (priorità sotto ai 5
+  sopra), ma è un bug di stato reale, non solo estetico.
+- **Pattern sistemico "prezzo dal client mai confrontato a un listino"** su ~10 RPC
+  (`rpc_buy_vehicle` incluso, verificato con l'audit SQL della prima parte di questa sessione)
+  — `FIX_LATER`, stessa famiglia di `rpc_sell_vehicle` già chiuso, non ancora affrontato RPC
+  per RPC.
+- **`hostile_takeover.js`/`rpc_pay_majority_dividend`**: v_ride_earnings ancora arbitrario dal
+  client (solo l'autorizzazione raider è stata chiusa nella prima parte della sessione) —
+  `FIX_LATER`.
+- Resto del backlog Gruppo 3 di `docs/SQL_LOCKDOWN_HANDOFF.md` (Driver Coins negativi su 6 RPC,
+  `rpc_vote_server_decree`) — non toccato in questo giro, `FIX_LATER`.
+
+**DECISIONI CHE SERVONO A VLAD:**
+1. `hq.js` — priorità/scala per rendere l'economia HQ server-authoritative (vedi sopra),
+   stesso tipo di decisione già in sospeso per il debito #1 generale.
+2. Branch `auto/functional-bugs-critical` pushato ma **non mergiato** — review e merge quando
+   comodo (nessun conflitto noto con main al momento del push).
+
+---
+
 ### ✅ 9 agosto 2026 — Tutte le falle SQL critiche chiuse in produzione (sessione live, VS Code)
 Su richiesta diretta di Vlad ("ci stanno dei sql da fare su supabase, procedi con quello"),
 proseguendo dove una sessione cloud si era fermata (vedi PR #14, `docs/SQL_LOCKDOWN_HANDOFF.md`,
