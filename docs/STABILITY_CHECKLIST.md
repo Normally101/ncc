@@ -14,32 +14,48 @@ agosto (vedi `HANDOFF.md`, entry "9 agosto — Tutte le falle SQL critiche chius
 
 ---
 
-## BLOCCO 1 — Core + Save/Load + Economy
+## BLOCCO 1 — Core + Save/Load + Economy — ✅ COMPLETATO (10 agosto 2026)
+
+Branch `auto/stabilization-blocco1` (basato su `auto/qa-test-suite`, con merge del fix giorno-di-gioco
+da `auto/e2e-onboarding-day-bug`/PR #18). Suite: **49/49 pass**. Golden path completo verificato dal
+vivo con account di test usa-e-getta (creato ed eliminato in sessione): New Game → First Day → guida
+manuale → login streak → assunzione → 2 prestiti → acquisto veicolo → save → attesa 4.5s → reload →
+logout → re-login. Tutti gli step coerenti, zero errori console salvo l'anomalia push_subscriptions
+già classificata FALSE_POSITIVE (vedi HANDOFF, non riproducibile da giocatori reali).
 
 ### CORE
 
 | Voce | Stato | Note |
 |---|---|---|
-| New Game | PASS | `initGame(true)` + `rpc_init_company`. Bug giorno-non-sincronizzato trovato e fixato ieri (PR #18, non mergiata) — vedi HANDOFF. |
-| Login | PASS | Verificato live su 3 account reali (Admin API), tutte le 6 fasi di boot (`auth.js`) senza errori. |
+| New Game | PASS | `initGame(true)` + `rpc_init_company`. Bug giorno-non-sincronizzato fixato (PR #18, mergiato in questo branch per il test, PR originale ancora aperta — vedi sezione 11 del report). |
+| Login | PASS | Verificato live su 4 account reali (Admin API) in due sessioni, tutte le 6 fasi di boot (`auth.js`) senza errori. |
 | First Day | PASS | Era proprio lo scenario del bug PR #18 — ora verificato pulito (debito Vittorio resta esattamente €500, nessun tick spurio). |
 | Daily Tick | PASS | `daily-tick.test.js` (no drift su chiamate ripetute) + verificato che non duplica su reload immediato. |
-| Save | PASS | `saveSystem.js` → `game_saves` upsert. Verificato live: payload cloud combacia esattamente con lo stato in memoria. |
-| Load | PASS | Verificato live: reload ripristina cash/giorno/autisti esatti, nessun autista orfano "busy". |
-| Logout | — | Da verificare in questo blocco. |
-| Reload | PASS | Verificato live 2 volte in sessioni diverse, nessuna corruzione. |
+| Save | PASS (con fix) | **FAIL trovato e fixato**: `_cloudSaveSlot` scartava (non accodava) i salvataggi entro 4s l'uno dall'altro — un prestito preso e poi un reload entro 4s perdeva silenziosamente il prestito. Fix: salvataggio "di coda" a fine finestra invece dello scarto. Limite residuo: un reload/chiusura ENTRO la finestra di coda può ancora perdere l'ultima azione (non eliminabile senza toccare `beforeunload`, fuori scope). |
+| Load | PASS | Verificato live: reload ripristina cash/giorno/autisti/prestiti/flotta esatti, nessun autista orfano "busy". |
+| Logout | PASS | `authLogout()` verificato dal vivo: sessione pulita, nessun residuo in `localStorage`, re-login successivo ripristina lo stato intatto. |
+| Reload | PASS | Verificato live in più sessioni, nessuna corruzione. |
 
 ### ECONOMY
 
 | Voce | Stato | Note |
 |---|---|---|
-| Cash | PASS | Server-authoritative sui path testati (RPC + `_bridgeToGameState`). Debito noto: 91+ mutazioni dirette client non passano da RPC — vedi `docs/ECONOMY_SERVER_AUTH.md`, resta `FIX_LATER` architetturale, fuori scope di un fix chirurgico. |
+| Cash | PASS | Server-authoritative sui path testati. Debito noto strutturale (91+ mutazioni dirette client, `docs/ECONOMY_SERVER_AUTH.md`) resta `FIX_LATER` — fuori scope di un fix chirurgico, non nuovo in questa sessione. |
 | Income | PASS | Guida manuale, corse, streak — verificato live. |
 | Expenses | PASS | Interessi Vittorio, daily tick — verificato non duplica su chiamate ripetute. |
-| Loans | — | Nessun test dedicato in `test/`. Da colmare in questo blocco. |
-| Driver Coins | — | Coperto solo indirettamente (`daily-orders.test.js`). Da verificare esplicitamente. |
-| Rewards | — | Login streak verificato live (una volta); claim ripetuto non ancora verificato. |
-| Transactions | — | "Doppio click" già coperto per corse (`complete-ride.test.js` Scenario F) e bandi corporate; da confermare per loans/driver coins. |
+| Loans | PASS (con 2 fix) | **FAIL #1 trovato e fixato**: `takeLoan` validava solo il totale prestiti ESISTENTE contro il fido, non la somma col nuovo prestito — due prestiti singolarmente sotto il fido potevano superarlo insieme. **FAIL #2 trovato e fixato**: `takeLoan`/`repayLoan` non sincronizzavano mai il cash col server — riprodotto dal vivo, `rpc_buy_vehicle` rifiutava un acquisto legittimo subito dopo un prestito ("fondi insufficienti" con cash locale abbondante). 7 test in `test/economy/loans.test.js`. |
+| Driver Coins | PASS | Coperto da `daily-orders.test.js` (già esistente) + verificato che il pattern optimistic-poi-server-authoritative è corretto negli altri call site controllati. Nota: ~14 spese Driver Coins in `engine-store.js` (Executive Pass, skip costruzione, ecc.) restano client-only, stessa classe del debito economia generale — non nuove, non fixate qui, `FIX_LATER`. |
+| Rewards | PASS (con fix) | **FAIL trovato e fixato**: la ricompensa login streak (`_checkDailyReward`) sommava il cash SOLO in locale, stesso rischio di divergenza dei prestiti. 5 test in `test/economy/daily-reward.test.js`, incluso "un secondo claim entro 20h non duplica". |
+| Transactions | PASS | "Doppio click"/retrigger coperto per corse (`complete-ride.test.js`), bandi corporate, prestiti (secondo rimborso non doppio) e reward giornaliero (secondo claim non doppio). |
+
+**`DESIGN_DECISION_REQUIRED` emersa in questo blocco**: `takeLoan`/`repayLoan` ora sincronizzano il
+cash (fix sopra) ma continuano a NON chiamare le RPC dedicate `rpc_take_loan`/`rpc_repay_loan`
+(già indurite il 9 agosto, mai collegate lato client). La RPC ha un modello di ammortamento
+(`daily_payment`, scalato automaticamente da un tick server-side su `company_loans` — vedi
+`02_mmo_rpcs_extension.sql` righe 849-895) che il client non implementa affatto (i prestiti si
+ripagano manualmente per intero, mai a rate). Collegare per intero la RPC richiede prima decidere
+se adottare l'ammortamento server-side o abbandonarlo — non toccato in questa sessione per non
+inventare un sistema nuovo sotto feature freeze.
 
 ---
 

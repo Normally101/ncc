@@ -7,6 +7,52 @@
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
 
+## 🧊 PROGETTO IN FEATURE FREEZE (dal 10 agosto 2026)
+
+Su istruzione diretta di Vlad: niente nuove feature, niente refactoring generale, niente
+espansione di gameplay finché il gioco non è **stabile** (checklist completa in
+`docs/STABILITY_CHECKLIST.md`). Si procede a blocchi: Core+Save/Load+Economy → Garage+Employees+
+Rides → Daily+Contracts+B2B/Tourism → VIP+HQ+Auctions+Eventi → Territories+VTK+New Game+.
+
+### ✅ 10 agosto 2026 (continuazione) — BLOCCO 1 completato, branch `auto/stabilization-blocco1`
+Core + Save/Load + Economy tutti `PASS` (checklist completa in `docs/STABILITY_CHECKLIST.md`).
+Suite: **49/49 pass** (36 pre-esistenti + 7 loans + 5 daily-reward, in `test/economy/`). Golden
+path reale in browser (account di test usa-e-getta, poi eliminato): New Game → First Day → guida
+manuale → login streak → assunzione → 2 prestiti → acquisto veicolo → save → reload → logout →
+re-login. Tutti gli step coerenti.
+
+**4 bug reali trovati e fixati** (nessuno noto prima, tutti emersi dal golden path/scrittura test):
+1. **`takeLoan` non validava la SOMMA dei prestiti attivi contro il fido** — due prestiti
+   singolarmente sotto il fido potevano superarlo insieme (es. fido 100k: 90k + 50k = 140k
+   accettati). `engine-finance.js`.
+2. **`takeLoan`/`repayLoan` non sincronizzavano mai il cash col server** — riprodotto dal vivo:
+   dopo un prestito, `rpc_buy_vehicle` rifiutava un acquisto legittimo con "fondi insufficienti"
+   perché `companies.cash` (server-authoritative) non aveva mai visto l'accredito, pur mostrando
+   il client un saldo abbondante. Fix: `ServerState.syncCash()` dopo la mutazione locale, stesso
+   pattern di `executeManualDrive`/`newGamePlus`. `engine-finance.js`.
+3. **Stesso problema per la ricompensa login streak** (`_checkDailyReward`) — cash sommato solo
+   in locale. Stesso fix. `engine-daily.js`.
+4. **`_cloudSaveSlot` scartava (non accodava) i salvataggi entro 4s l'uno dall'altro** — riprodotto
+   dal vivo: prestito preso, reload entro 4s → il prestito e il suo accredito sparivano senza
+   alcun errore visibile. Fix: salvataggio "di coda" schedulato a fine finestra invece dello
+   scarto (limite residuo: un reload/chiusura ENTRO la finestra di coda può ancora perdere
+   l'ultima azione — non eliminabile senza toccare `beforeunload`, fuori scope). `saveSystem.js`.
+
+**`DESIGN_DECISION_REQUIRED` nuova**: `takeLoan`/`repayLoan` continuano a non chiamare le RPC
+dedicate `rpc_take_loan`/`rpc_repay_loan` (indurite il 9 agosto, mai collegate). La RPC ha un
+modello di ammortamento (`daily_payment`, mai implementato lato client) — serve una decisione
+(adottarlo o abbandonarlo) prima di collegare per intero, altrimenti si rischia una doppia
+contabilità cliente/server. Vedi `docs/STABILITY_CHECKLIST.md` per il dettaglio.
+
+**PR**: [#19](https://github.com/Normally101/ncc/pull/19) aperta, **non mergiata**. Include anche
+il merge del fix giorno-di-gioco (PR #18) per testare tutto insieme — PR #18 resta aperta
+separatamente per la review, questo branch la incorpora solo ai fini del test.
+
+**PROBLEMI ANCORA APERTI**: BLOCCO 2-5 non ancora iniziati (tutti `NOT TESTED` in
+`docs/STABILITY_CHECKLIST.md`). Nessun nuovo Critical FAIL aperto in Core/Save-Load/Economy.
+
+---
+
 ### ✅ 10 agosto 2026 — Prima suite di test eseguibile, branch `auto/qa-test-suite`
 Su istruzione diretta di Vlad: trasformare `docs/QA_PLAN.md` da documento teorico a test
 eseguibili con `npm test`. Branch nuovo (basato su `auto/functional-bugs-critical`, che contiene
