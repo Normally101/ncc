@@ -54,4 +54,26 @@ describe('daily/daily-tick — processDailyRoutines non duplica su chiamate ripe
 
         assert.ok(deltaBigFleet < deltaSmallFleet, 'con più auto la tassa di lusso deve essere più alta, quindi il guadagno netto più basso');
     });
+
+    test('lo stipendio di un autista viene dedotto ogni giorno (salary/30) e riduce il guadagno netto', () => {
+        const noDriverEnv = freshEnv();
+        noDriverEnv.sandbox.gameState.cash = 100000;
+        noDriverEnv.sandbox.gameState.investments.push('inv_carwash');
+        const beforeNoDriver = noDriverEnv.sandbox.gameState.cash;
+        noDriverEnv.sandbox.processDailyRoutines();
+        const deltaNoDriver = noDriverEnv.sandbox.gameState.cash - beforeNoDriver;
+
+        const withDriverEnv = freshEnv();
+        withDriverEnv.sandbox.gameState.cash = 100000;
+        withDriverEnv.sandbox.gameState.investments.push('inv_carwash');
+        withDriverEnv.sandbox.gameState.drivers.push({ id: 'd2', name: 'Driver 2', status: 'idle', assignedCarId: null, queue: [], salary: 3000, fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100 });
+        const beforeWithDriver = withDriverEnv.sandbox.gameState.cash;
+        withDriverEnv.sandbox.processDailyRoutines();
+        const deltaWithDriver = withDriverEnv.sandbox.gameState.cash - beforeWithDriver;
+
+        assert.ok(deltaWithDriver < deltaNoDriver, 'con un autista stipendiato il guadagno netto del giorno deve essere più basso (stipendio/30 dedotto)');
+        const expectedGap = Math.round(3000 / 30);
+        const actualGap = Math.round(deltaNoDriver - deltaWithDriver);
+        assert.ok(Math.abs(actualGap - expectedGap) <= 1, `il divario deve essere ~stipendio/30 (€${expectedGap}), trovato €${actualGap}`);
+    });
 });

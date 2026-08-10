@@ -59,32 +59,34 @@ inventare un sistema nuovo sotto feature freeze.
 
 ---
 
-## BLOCCO 2 — Garage + Employees + Rides
-*(non ancora iniziato)*
+## BLOCCO 2 — Garage + Employees + Rides — ✅ COMPLETATO (10 agosto 2026)
 
-| Voce | Stato |
-|---|---|
-| Buy Vehicle | NOT TESTED (coperto da `vehicle-trade.test.js`, da confermare live) |
-| Sell Vehicle | NOT TESTED |
-| Vehicle upgrades | NOT TESTED |
-| Maintenance | NOT TESTED (coperto da `repair-vehicle.test.js`) |
-| Damage | NOT TESTED |
-| Vehicle assignment | NOT TESTED |
-| Vehicle state | NOT TESTED |
-| Hire | NOT TESTED (coperto da `hire-fire.test.js`, confermato live in sessione precedente) |
-| Fire | NOT TESTED (regressione confermata live — driver busy non licenziabile) |
-| Assign | NOT TESTED |
-| Unassign | NOT TESTED |
-| Salary | NOT TESTED |
-| Skill/progression | NOT TESTED |
-| Incoming ride | NOT TESTED |
-| Accept | NOT TESTED |
-| Dispatch | NOT TESTED (osservato live: dispatch automatico funziona) |
-| Complete | NOT TESTED (coperto da `complete-ride.test.js`) |
-| Cancel | NOT TESTED |
-| Payment | NOT TESTED (pagamento singolo confermato da test + live) |
-| Rewards | NOT TESTED |
-| Driver availability | NOT TESTED |
+Suite: **57/57 pass** (49 di BLOCCO 1 + 7 garage/assign-upgrade + 1 salario in daily-tick).
+Verificato dal vivo: doppia-assegnazione auto (fix), acquisto upgrade veicolo, zero errori console.
+
+| Voce | Stato | Note |
+|---|---|---|
+| Buy Vehicle | PASS | `vehicle-trade.test.js` + confermato live in BLOCCO 1 (prestito→acquisto). |
+| Sell Vehicle | PASS | `vehicle-trade.test.js`; libera correttamente l'autista assegnato (`engine.js` riga ~1483). |
+| Vehicle upgrades | PASS | Nuovo `test/garage/assign-upgrade.test.js` + verificato live. Nota: `buyCARUpgrade` non chiama `syncCash` (stesso debito noto, rischio basso — è un decremento). |
+| Maintenance | PASS | `repair-vehicle.test.js` (4 test, invariato). |
+| Damage | PASS | Coperto indirettamente da `vip-clients.test.js` (danno al veicolo giusto dopo riassegnazione). |
+| Vehicle assignment | PASS (con fix) | **FAIL trovato e fixato**: assegnare un'auto già in uso a un secondo autista non liberava il primo — due autisti finivano assegnati alla stessa vettura, riproducibile con normale uso della UI (nessun devtools richiesto). `engine.js::assignCarToDriver`. |
+| Vehicle state | PASS | `condition`/`fuel`/`mileage` coperti da repair-vehicle + rides. |
+| Hire | PASS | `hire-fire.test.js`, confermato live. |
+| Fire | PASS | Regressione "busy non licenziabile" confermata live (BLOCCO 1). |
+| Assign | PASS (con fix) | Vedi "Vehicle assignment" sopra — stessa funzione. |
+| Unassign | N/A | Nessuna funzione dedicata di "unassign" esplicito — un autista viene liberato solo come effetto collaterale di vendita/riassegnazione auto (entrambi testati). |
+| Salary | PASS | Nuovo test in `daily-tick.test.js`: lo stipendio (salary/30) riduce correttamente il guadagno netto giornaliero. |
+| Skill/progression | NOT TESTED | Sistema ampio (`driver_skills.js`, skill tree con punti/rami) — XP su corsa completata verificato indirettamente, l'albero skill completo non testato in questo giro. Rischio basso (non economico, non corrompe stato critico). |
+| Incoming ride | PASS | `generatePOIRide` osservato dal vivo, genera correttamente una corsa pending. |
+| Accept | N/A | Non esiste un passo "accept" separato — le corse si auto-dispatchano ai driver idle con auto assegnata. |
+| Dispatch | PASS | Osservato dal vivo (BLOCCO 1 e 2): dispatch automatico funziona. |
+| Complete | PASS | `complete-ride.test.js` (pagamento una sola volta, anche a doppia chiamata). |
+| Cancel | N/A | Nessuna funzione di cancellazione corsa nel design attuale (le corse pending scadono o vengono dispatchate, non cancellate dal giocatore). |
+| Payment | PASS | `complete-ride.test.js` + confermato live. |
+| Rewards | PASS | XP autista (`driver.xp +=`) verificato presente nel codice; non un rischio economico (non tocca cash/RPC). |
+| Driver availability | PASS | `complete-ride.test.js` verifica il driver torna `idle` a fine corsa. |
 
 ## BLOCCO 3 — Daily systems + Contracts + B2B/Tourism
 *(non ancora iniziato — tutti NOT TESTED salvo `daily-orders`/`daily-tick`/`corporate-bid` già in suite)*

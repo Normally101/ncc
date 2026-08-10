@@ -1491,6 +1491,14 @@ window.sellCar = async function sellCar(carId) {
 function assignCarToDriver(carId, driverId) {
     const driver = gameState.drivers.find(d => d.id === driverId);
     if(driver) {
+        // FIX (stabilizzazione 10 agosto): senza questo, un'auto già assegnata a un altro
+        // autista restava assegnata ANCHE a lui — riproducibile con normale uso della UI
+        // (apri la scheda dell'auto, assegnala a un secondo autista libero), nessun devtools
+        // richiesto. Due autisti sulla stessa auto = doppio dispatch sullo stesso veicolo
+        // fisico. Stesso pattern già usato in sellVehicle per liberare l'auto dal vecchio
+        // autista.
+        const prevOwner = gameState.drivers.find(d => d.assignedCarId === carId && d.id !== driverId);
+        if (prevOwner) prevOwner.assignedCarId = null;
         driver.assignedCarId = carId;
         saveGame();
         if(typeof openCarModal === 'function') openCarModal(carId);
