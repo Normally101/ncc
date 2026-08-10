@@ -22,5 +22,9 @@ docs
 .claude
 _mockups
 
+# Suite di test (node --test) — logica interna di QA, non serve pubblica
+test
+test-support
+
 # Save di gioco (struttura dati interna / potenziale PII futura) — non servono pubblici
 slot_*.json

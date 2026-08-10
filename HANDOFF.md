@@ -1,11 +1,58 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 9 agosto 2026
+> Aggiornato: 10 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
+
+### ✅ 10 agosto 2026 — Prima suite di test eseguibile, branch `auto/qa-test-suite`
+Su istruzione diretta di Vlad: trasformare `docs/QA_PLAN.md` da documento teorico a test
+eseguibili con `npm test`. Branch nuovo (basato su `auto/functional-bugs-critical`, che contiene
+i fix di cui questi test verificano la regressione — vedi PR collegate sotto), non su main.
+
+**TEST — risultato**: `npm test` → **36 PASS / 0 FAIL / 0 SKIP** (10 file, incluso
+`contracts/corporate-bid` aggiunto in un secondo passaggio — regressione sul bug "denaro
+duplicabile nei bandi corporate" del 6 agosto). Dettaglio completo,
+harness e cosa NON è coperto: vedi `docs/QA_PLAN.md` → "✅ Stato implementazione".
+
+## BUG REALI TROVATI (scrivendo la suite)
+
+**1 bug, in una fix di poche ore prima nella stessa sessione (non nel gioco pre-esistente):**
+- **Sistema**: economia / `rpc_sync_cash` (Supabase).
+- **Causa**: il cap sul delta applicato la mattina stessa (mitigazione anti-exploit) era
+  simmetrico (±€60M) — un New Game+ legittimo da un cash molto alto genera un decremento
+  enorme, che il cap rifiutava, ricreando la stessa divergenza client/server che la fix voleva
+  chiudere.
+- **Fix**: `50_fix_sync_cash_asymmetric_delta.sql` — cap solo sugli incrementi (unica direzione
+  sfruttabile), decrementi liberi (già limitati dal `CHECK (cash >= 0)` di tabella).
+- **Test che lo riproduce**: `test/progression/new-game-plus.test.js` → "REGRESSIONE: newGamePlus
+  manda il nuovo cash al server" (avrebbe fallito con il cap simmetrico: `syncCash` sarebbe stata
+  rifiutata dal DB).
+- **Test che dimostra la correzione**: stesso file, passa; più 4 assert diretti contro il DB reale
+  in transazione con rollback (vedi entry precedente, stessa sessione).
+
+Nessun ALTRO bug di gioco nuovo trovato in questo giro — gli altri fallimenti incontrati scrivendo
+i test erano difetti dell'ambiente di test stesso (sequenza corretta apri-tab-poi-seleziona-auto
+per lo showroom, campi mancanti nei fixture minimi, uno stub `document` troppo semplice sostituito
+con `jsdom` reale), non del gioco.
+
+## PROBLEMI ANCORA APERTI
+
+- **Contracts/B2B/Tourism/Aste**: zero test — priorità più bassa nell'ordine richiesto, non
+  ancora affrontato. `FIX_LATER`.
+- **Livello 4 (E2E reale in browser)**: `NON VERIFICATO` — richiede Playwright + Supabase di
+  staging, resta un lavoro solo tuo (vedi `docs/QA_PLAN.md` Livello 4).
+- **`hq.js::hqUpgradeRoom`**: ancora `DESIGN_DECISION_REQUIRED` (vedi entry precedente) — non
+  toccato, nessun test scritto per lo stesso motivo (non testabile finché non è server-authoritative).
+
+## DECISIONI CHE SERVONO A VLAD
+
+Nessuna nuova rispetto a quelle già segnalate nell'entry precedente (`hq.js` + review/merge dei
+branch `auto/functional-bugs-critical` e `auto/qa-test-suite`, quest'ultimo basato sul primo).
+
+---
 
 ### ✅ 9 agosto 2026 (continuazione, stesso giorno) — 5 bug funzionali critici, branch `auto/functional-bugs-critical`
 Su istruzione diretta di Vlad ("chiudi concretamente i problemi, partendo dalla sicurezza SQL
