@@ -233,6 +233,13 @@ window.takeLoan = function(amount) {
         if (typeof showNotification === 'function') showNotification(`Credit Score troppo basso per questo importo. Score attuale: ${gameState.creditScore} (${creditTier.label})`, 'error');
         return;
     }
+    // FIX (stabilizzazione 10 agosto): mancava il controllo sulla SOMMA — due prestiti
+    // ciascuno sotto il fido singolarmente potevano superare il fido complessivo
+    // (es. fido 100k: 90k + 50k = 140k, entrambi i check sopra passavano).
+    if (activeLoanTotal + amount > creditTier.loanLimit) {
+        if (typeof showNotification === 'function') showNotification(`Fido insufficiente: hai già €${activeLoanTotal.toLocaleString()} di prestiti attivi su un fido di €${creditTier.loanLimit.toLocaleString()}.`, 'error');
+        return;
+    }
     const rate = creditTier.rate;
     gameState.cash += amount;
     gameState.loans.push({ id: gameState.nextId++, original: amount, amount: amount, remaining: amount, rate });
