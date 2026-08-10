@@ -43,6 +43,14 @@ del contenuto stantio di questo file. Da qui in poi, prima di agire, leggi SEMPR
   EXCEPTION) — costo negativo/zero rifiutati, costo legittimo e saldo insufficiente invariati.
   File committato come riferimento storico su `auto/e2e-onboarding-day-bug`, non mergiato via
   questa PR. **Falla chiusa, nessuna azione ulteriore necessaria.**
+- **#18** `auto/e2e-onboarding-day-bug` (nuova, vista mentre si scriveva questo aggiornamento —
+  Vlad è in sessione live in questo momento) — bug reale trovato con **playtest E2E vero in
+  browser** (account di test reali via Admin API, non solo test unitari): `initGame(fresh=true)`
+  non pre-sincronizza `day/hour/minute/month`, il primo tick di `gameLoop()` lo legge come "è
+  passato un giorno" e scatena `processDailyRoutines()` non voluto al primissimo avvio di ogni
+  nuovo account (interessi Vittorio, tick B2B/tourism, ispezione GdF prima che il giocatore
+  abbia fatto qualunque cosa — in un run ha causato un cash intermedio negativo e un rifiuto
+  RPC). Fix verificato live su 3 account reali. CI in corso, aperta da Vlad — non toccare.
 
 **Debito Gruppo 3 residuo, non ancora toccato da nessuno (candidati per le prossime sveglie,
 vedi HANDOFF.md 9/8 per il dettaglio completo — "Driver Coins negativi" ora RISOLTO, vedi PR #17
@@ -56,8 +64,9 @@ sopra, rimosso da questa lista):**
 - `rpc_pay_majority_dividend` — `v_ride_earnings` ancora arbitrario — `FIX_LATER`.
 
 **Cosa fare alla prossima sveglia:** `git fetch --all` + `list_pull_requests` (stato reale, non
-fidarsi di questo file), leggere `HANDOFF.md` per eventuali sessioni live nel frattempo. PR #17
-è chiusa/risolta (vedi sopra) — restano da monitorare solo #9/#10/#15/#16, nessuna delle quali è
+fidarsi di questo file), leggere `HANDOFF.md` per eventuali sessioni live nel frattempo — a fine
+di questa sveglia Vlad risultava **ancora in sessione live** (PR #18 aperta pochi minuti prima).
+PR #17 è chiusa/risolta — restano da monitorare #9/#10/#15/#16/#18, nessuna delle quali è
 compito della routine (review a Vlad). Se nessuna novità umana → prendere UNO dei candidati
 Gruppo 3 sopra (es. audit `rpc_buy_vehicle` + le altre ~10 RPC del pattern "prezzo non
 verificato", che è il più simile per portata a quello appena chiuso) e ripetere lo stesso
