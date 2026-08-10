@@ -81,7 +81,21 @@ describe('economy/loans — prestiti (takeLoan/repayLoan)', () => {
         assert.equal(sandbox.gameState.cash, cashAfterFirstRepay, 'un secondo rimborso sullo stesso id non deve scalare di nuovo');
     });
 
-    test('NOTA (debito noto, non una regressione di questa sessione): takeLoan/repayLoan mutano cash SOLO in locale — non chiamano mai ServerState.takeLoan/repayLoan, pur esistendo entrambi i wrapper e la RPC server-side già indurita (9 agosto). Stessa classe del debito economia client-authoritative già tracciato in docs/ECONOMY_SERVER_AUTH.md — non class-nuova, non fixata qui: la RPC server-side ha un modello diverso (ammortamento con daily_payment mai usato lato client), servirebbe una decisione di design prima di ricollegarla.', () => {
+    test('REGRESSIONE (fix stabilizzazione 10 agosto): un prestito sincronizza il cash col server — senza questo, rpc_buy_vehicle rifiutava un acquisto legittimo subito dopo un prestito (riprodotto dal vivo: "fondi insufficienti" col cash locale abbondante)', async () => {
+        const calls = [];
+        const { sandbox } = freshEnv({ serverState: { syncCash: async (v) => { calls.push(v); return { success: true, cash: v }; } } });
+        sandbox.gameState.cash = 1000;
+
+        sandbox.takeLoan(50000);
+        await new Promise(r => setTimeout(r, 10));
+        assert.deepEqual(calls, [51000], 'takeLoan deve sincronizzare il nuovo saldo col server');
+
+        sandbox.repayLoan(sandbox.gameState.loans[0].id);
+        await new Promise(r => setTimeout(r, 10));
+        assert.deepEqual(calls, [51000, 1000], 'repayLoan deve sincronizzare il saldo dopo il rimborso');
+    });
+
+    test('NOTA (debito noto, non una regressione di questa sessione): takeLoan/repayLoan continuano a NON chiamare ServerState.takeLoan/repayLoan (le RPC dedicate, già indurite il 9 agosto) — solo syncCash del saldo risultante. Stessa classe del debito economia client-authoritative già tracciato in docs/ECONOMY_SERVER_AUTH.md: la RPC dedicata ha un modello di ammortamento (daily_payment) mai usato lato client, servirebbe una decisione di design prima di ricollegarla per intero.', () => {
         assert.ok(true);
     });
 });

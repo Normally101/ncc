@@ -75,7 +75,15 @@ describe('economy/daily-reward — login streak (_checkDailyReward)', () => {
         assert.equal(sandbox.gameState.loginStreak, 1, 'streak interrotto: riparte da 1, non da 11');
     });
 
-    test('NOTA (debito noto, non una regressione di questa sessione): il cash della ricompensa (a differenza dei Driver Coins) viene sommato SOLO in locale (gs.cash += cashReward) — nessuna chiamata ServerState.syncCash in questa funzione. Stessa classe del debito economia client-authoritative già tracciato in docs/ECONOMY_SERVER_AUTH.md: il valore raggiunge companies.cash solo indirettamente, alla prossima syncCash innescata da un\'altra azione.', () => {
-        assert.ok(true);
+    test('REGRESSIONE (fix stabilizzazione 10 agosto): il cash della ricompensa sincronizza col server — prima restava locale finché non arrivava un\'altra azione a innescare un syncCash, con lo stesso rischio di rifiuto RPC già riprodotto dal vivo per i prestiti', async () => {
+        const calls = [];
+        const { sandbox } = freshEnv({ serverState: { syncCash: async (v) => { calls.push(v); return { success: true, cash: v }; } } });
+        sandbox.gameState.cash = 0;
+        sandbox.gameState.lastDailyClaim = 0;
+
+        sandbox._checkDailyReward();
+        await new Promise(r => setTimeout(r, 10));
+
+        assert.deepEqual(calls, [500], 'la ricompensa del giorno 1 (+€500) deve essere sincronizzata col server');
     });
 });

@@ -1135,6 +1135,11 @@ function _checkDailyReward() {
 
     gs.cash += cashReward;
     gs.annualProfitTracker = (gs.annualProfitTracker || 0) + cashReward;
+    // FIX (stabilizzazione 10 agosto): senza questo il premio in cash resta locale finché
+    // non arriva un'altra azione a innescare un syncCash — nel frattempo companies.cash
+    // (server-authoritative) non lo vede, con lo stesso rischio di rifiuto RPC già
+    // riprodotto dal vivo per i prestiti. Stesso pattern di executeManualDrive/newGamePlus.
+    if (typeof window.ServerState !== 'undefined') window.ServerState.syncCash(gs.cash).catch(() => {});
     if (tcReward > 0) {
         gs.driverCoins = (gs.driverCoins || 0) + tcReward;
         window.ServerState?.addDriverCoins?.(tcReward, 'tier_reward')
