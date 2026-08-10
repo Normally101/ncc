@@ -1,6 +1,80 @@
 # Stato routine automatica (memoria tra sveglie)
 
-## PR aperte (nessuna mergiata da questa sessione — controlla sempre lo stato reale su GitHub)
+## ⚠️ RIALLINEAMENTO 2026-08-10 — leggi questo blocco per primo, ignora i blocchi sotto
+Tutto ciò che segue questo blocco (fino a "## Log sveglie") era **gravemente disallineato**:
+descriveva ancora "8 PR ferme, nessuna review umana" come se main fosse fermo al 6 agosto.
+Nella realtà, tra il 6 e il 9 agosto **Vlad ha lavorato moltissimo in sessioni live** (VS Code,
+non questa routine) e il repo è cambiato radicalmente. Questa sveglia ha risincronizzato tutto
+leggendo `HANDOFF.md` fresco + `git fetch --all` + stato reale delle PR su GitHub, non fidandosi
+del contenuto stantio di questo file. Da qui in poi, prima di agire, leggi SEMPRE `HANDOFF.md`
+(non solo questo file) — è quello che le sessioni live tengono aggiornato.
+
+**Cosa è successo dal 6 al 9 agosto (riassunto, dettaglio in HANDOFF.md):**
+- 6 agosto: Vlad ha autorizzato la routine a mergiare da sola ("procedi, organizzati in modo
+  sistematico"). **26 bug reali mergiati in produzione** (PR #1,#2,#3,#4,#5,#6,#8) — cassa
+  duplicabile nei bandi, 12 punti di doppia deduzione cassa, B2B inaccessibile, Driver Coins
+  persi, ecc. Rollback point: commit `138a791`.
+- 6 agosto (stesso giorno): **VTK Shop ricostruito da zero** (spesa server-authoritative via
+  `rpc_spend_vtk_shop_item`), PR #7 chiusa (superata, 2 fix estratti e mergiati altrove).
+- 9 agosto (sessione live VS Code): **tutte e 3 le falle SQL critiche già segnalate da questa
+  routine sono state chiuse IN PRODUZIONE** (non solo scaffold) via Management API:
+  `_add_player_cash`/`_get_player_cash` (cassa illimitata, la più vecchia e grave), aste a €0,
+  shadow-ops costo negativo, `rpc_sync_cash`/`rpc_sell_vehicle`/`rpc_take_loan` senza tetto. PR
+  #11/#13/#14 chiuse (contenuto applicato via commit diretto), PR #12 mergiata (`docs/SYSTEMS.md`
+  + `docs/QA_PLAN.md` — mappa completa dei sistemi, usali come base invece di riaudire da zero).
+- 9 agosto (stessa sessione): **PR #15** (`auto/functional-bugs-critical`, base `main`) — 5 bug
+  funzionali (New Game+ non sincronizzava cash, fireDriver a metà corsa, race Driver Coins
+  daily-orders, VIP danneggiava auto sbagliata, `_hqMarker` mai rimosso). **PR #16**
+  (`auto/qa-test-suite`, base `auto/functional-bugs-critical` — impilata su #15, non su main) —
+  prima suite di test eseguibile, `npm test` 32/32 pass. **Entrambe ancora aperte, CI verde,
+  esplicitamente marcate "non mergiare da sola — review a Vlad".**
+
+**PR aperte VERE a questa sveglia** (verificato `list_pull_requests` + lettura diretta):
+- **#9** `auto/audit-cash-writes-map` — docs, censimento `gameState.cash`. Non urgente.
+- **#10** `auto/scalability-audit-10k` — docs, audit statico scalabilità. Non urgente.
+- **#15** `auto/functional-bugs-critical` — 5 fix funzionali, CI verde, aperta da Vlad in live
+  session il 9/8, in attesa di sua review/merge. **Non toccare, non è compito della routine.**
+- **#16** `auto/qa-test-suite` — suite di test, impilata su #15, CI verde, stessa attesa.
+- ~~**#17** `auto/lockdown-negative-cost-driver-coins`~~ — **CHIUSA senza merge, stesso giorno**:
+  scaffold SQL aperto da questa routine per il debito "Gruppo 3" (6 RPC Driver Coins senza
+  controllo di segno sul costo, vedi sotto). Vlad l'ha applicata **direttamente in produzione**
+  in una sessione live poco dopo (stesso metodo di PR #11/#13/#49), verificata con transazioni
+  `ROLLBACK` su 2 delle 6 RPC (i 2 pattern strutturali del file: ritorno jsonb e RAISE
+  EXCEPTION) — costo negativo/zero rifiutati, costo legittimo e saldo insufficiente invariati.
+  File committato come riferimento storico su `auto/e2e-onboarding-day-bug`, non mergiato via
+  questa PR. **Falla chiusa, nessuna azione ulteriore necessaria.**
+- **#18** `auto/e2e-onboarding-day-bug` (nuova, vista mentre si scriveva questo aggiornamento —
+  Vlad è in sessione live in questo momento) — bug reale trovato con **playtest E2E vero in
+  browser** (account di test reali via Admin API, non solo test unitari): `initGame(fresh=true)`
+  non pre-sincronizza `day/hour/minute/month`, il primo tick di `gameLoop()` lo legge come "è
+  passato un giorno" e scatena `processDailyRoutines()` non voluto al primissimo avvio di ogni
+  nuovo account (interessi Vittorio, tick B2B/tourism, ispezione GdF prima che il giocatore
+  abbia fatto qualunque cosa — in un run ha causato un cash intermedio negativo e un rifiuto
+  RPC). Fix verificato live su 3 account reali. CI in corso, aperta da Vlad — non toccare.
+
+**Debito Gruppo 3 residuo, non ancora toccato da nessuno (candidati per le prossime sveglie,
+vedi HANDOFF.md 9/8 per il dettaglio completo — "Driver Coins negativi" ora RISOLTO, vedi PR #17
+sopra, rimosso da questa lista):**
+- `rpc_vote_server_decree` — un giocatore approva istantaneamente un decreto globale, il
+  server si fida del client (commento nel codice stesso lo ammette). `DESIGN_DECISION_REQUIRED`.
+- Pattern "prezzo dal client mai confrontato a un listino" su ~10 RPC, incluso `rpc_buy_vehicle`
+  (verificato in sessione 9/8: ha lo stesso problema di `rpc_sell_vehicle` prima del fix).
+- `hq.js::hqUpgradeRoom` — `DESIGN_DECISION_REQUIRED` (richiede schema server nuovo).
+- `global_events.js::activeDynamicEvent` mai azzerato — `FIX_LATER`.
+- `rpc_pay_majority_dividend` — `v_ride_earnings` ancora arbitrario — `FIX_LATER`.
+
+**Cosa fare alla prossima sveglia:** `git fetch --all` + `list_pull_requests` (stato reale, non
+fidarsi di questo file), leggere `HANDOFF.md` per eventuali sessioni live nel frattempo — a fine
+di questa sveglia Vlad risultava **ancora in sessione live** (PR #18 aperta pochi minuti prima).
+PR #17 è chiusa/risolta — restano da monitorare #9/#10/#15/#16/#18, nessuna delle quali è
+compito della routine (review a Vlad). Se nessuna novità umana → prendere UNO dei candidati
+Gruppo 3 sopra (es. audit `rpc_buy_vehicle` + le altre ~10 RPC del pattern "prezzo non
+verificato", che è il più simile per portata a quello appena chiuso) e ripetere lo stesso
+schema: leggere il codice reale, scaffold SQL, PR, mai applicare a prod, mai mergiare da sola.
+
+---
+
+## PR aperte (blocco storico, DISALLINEATO — vedi riallineamento sopra, non usare per orientarsi)
 - **PR #1** `auto/tutorial-action-gate` — Tutorial action-gated. CI verde.
 - **PR #2** `auto/idle-offline-catchup` — Demo idle guadagni offline. CI verde.
 - **PR #3** `auto/routine-mission-update` — docs: missione estesa + backlog derivato. **Da
@@ -446,6 +520,57 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
 _(nessuno — l'accesso GitHub è tornato disponibile più tardi nella stessa sveglia, PR aperta.)_
 
 ## Log sveglie
+- 2026-08-10 (stessa sessione, ~2h30 dopo l'apertura di PR #17, evento webhook non da check-in
+  schedulato): **PR #17 risolta — falla chiusa.** Vlad (sessione live) ha applicato lo scaffold
+  direttamente in produzione, stesso metodo già usato per `49_lockdown_critical_cash_rpcs_
+  scaffold.sql`, verificato con transazioni `ROLLBACK` forzato su 2 delle 6 RPC (i 2 pattern
+  strutturali del file — ritorno jsonb e RAISE EXCEPTION): costo negativo/zero rifiutati, costo
+  legittimo e saldo insufficiente invariati rispetto a prima. File committato come riferimento
+  storico su `auto/e2e-onboarding-day-bug` (non mergiato via questa PR). PR chiusa senza merge,
+  stesso trattamento riservato a #11/#13. Sessione auto-unsubscribed dal webhook della PR.
+  - Cancellato il check-in orario schedulato (non più necessario, PR chiusa). Aggiornato questo
+    file: PR #17 spuntata come risolta, rimossa dal debito Gruppo 3 residuo, sezione "prossimo
+    passo" aggiornata. Aperta una nuova PR docs-only (`auto/routine-state-sync-2`) per portare
+    questo aggiornamento su `main`, dato che il branch della #17 non è più mergiabile in modo
+    utile (la sua PR è chiusa).
+  - Nessuna notifica push: è la stessa correzione già notificata un'ora fa quando la routine ha
+    aperto lo scaffold, applicata da Vlad stesso — non è informazione nuova per lui.
+- 2026-08-10 (stessa sessione, check-in schedulato 2h dopo l'apertura di PR #17): **nessun
+  cambiamento** rispetto al check-in precedente — PR #17 ancora `open`/`mergeable_state:
+  clean`/CI verde, unico commento il bot Vercel (ri-postato per il mio stesso commit di log
+  dell'ora precedente, non attività umana), zero review. PR #9/#10/#15/#16 `updated_at`
+  invariato. Nessuna notifica (nulla di nuovo). Check-in ri-armato per un'altra ora.
+- 2026-08-10 (stessa sessione, check-in schedulato 1h dopo l'apertura di PR #17): **nessun
+  cambiamento** — PR #17 ancora `open`, `mergeable_state: clean`, CI tutta verde (Lint &
+  Security, SQL Migration Check, HTML Validation, Vercel), unico commento resta il bot Vercel,
+  zero review. PR #9/#10/#15/#16 hanno `updated_at` identico al check precedente — nessuna
+  attività umana su nessuna. Nessuna notifica push (niente di nuovo da riportare, già avvisato
+  Vlad un'ora fa). Check-in ri-armato per un'altra ora.
+- 2026-08-10 (sveglia cron, sessione fresca senza memoria delle precedenti): **riallineamento
+  completo** — vedi blocco "⚠️ RIALLINEAMENTO 2026-08-10" in cima al file per il dettaglio.
+  Questo file era fermo al 6 agosto ("8 PR ferme, zero review umane") mentre nella realtà,
+  letto da `HANDOFF.md` fresco + `git fetch --all` + `list_pull_requests`, tra il 6 e il 9
+  agosto Vlad ha lavorato molto in sessioni live: 26 fix mergiati in prod (6/8), VTK Shop
+  ricostruito (6/8), **tutte e 3 le falle SQL critiche già segnalate da questa routine chiuse
+  in produzione** (9/8), più PR #15 (5 bug funzionali) e #16 (prima suite di test, 32/32 pass)
+  aperte da Vlad il 9/8, entrambe CI verde, in attesa di sua review — non toccate da questa
+  sveglia, non è compito della routine.
+  - Riletto il debito "Gruppo 3" annotato in HANDOFF.md 9/8 (non ancora fixato da nessuno) e
+    scelto l'item più concreto e verificabile headless: la famiglia "Driver Coins negativi" (6
+    RPC in `05_mmo_driver_coins.sql`/`12_hr_automation.sql`) validava solo fondi insufficienti,
+    mai il segno del costo — un costo negativo conia Driver Coins arbitrari, stessa classe delle
+    falle già chiuse ma mai estesa qui. **Verificato personalmente leggendo il sorgente reale
+    riga per riga** (non fidato del solo elenco in HANDOFF.md), confermato nessun CHECK
+    constraint sulla colonna che blocchi il caso, confermato il pattern corretto già esistente
+    altrove nel codebase (`rpc_ec_spend`). Scritto scaffold SQL (nessuna applicazione a prod),
+    branch `auto/lockdown-negative-cost-driver-coins`, PR #17 aperta
+    (https://github.com/Normally101/ncc/pull/17), esplicitamente marcata "non mergiare da sola".
+  - **Notifica push inviata**: la soglia "3 sveglie ferme, resta watch-only" delle sveglie
+    precedenti non è più valida (il contesto che l'aveva giustificata — 8 PR ferme da giorni
+    senza alcuna azione umana — è stato superato da moltissima attività umana reale nel
+    frattempo, incluse le stesse 3 falle di sicurezza che avevano giustificato l'allarme). Vlad
+    avvisato del riallineamento, del nuovo scaffold di sicurezza (PR #17) e del debito Gruppo 3
+    residuo, così non deve leggere l'intero log per orientarsi.
 - 2026-07-30 (sveglia 1): **Tutorial action-gated** — fatto.
   - `tutorial.js`: lo step "Assegna le Corse" ora ha `actionGate:'rides'`. Un poll (1s)
     confronta `ceOnb.rides()` col valore all'apertura dello step; se sale (= corsa
