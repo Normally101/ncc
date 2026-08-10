@@ -12,7 +12,9 @@ Su istruzione diretta di Vlad: trasformare `docs/QA_PLAN.md` da documento teoric
 eseguibili con `npm test`. Branch nuovo (basato su `auto/functional-bugs-critical`, che contiene
 i fix di cui questi test verificano la regressione — vedi PR collegate sotto), non su main.
 
-**TEST — risultato**: `npm test` → **32 PASS / 0 FAIL / 0 SKIP** (9 file). Dettaglio completo,
+**TEST — risultato**: `npm test` → **36 PASS / 0 FAIL / 0 SKIP** (10 file, incluso
+`contracts/corporate-bid` aggiunto in un secondo passaggio — regressione sul bug "denaro
+duplicabile nei bandi corporate" del 6 agosto). Dettaglio completo,
 harness e cosa NON è coperto: vedi `docs/QA_PLAN.md` → "✅ Stato implementazione".
 
 ## BUG REALI TROVATI (scrivendo la suite)

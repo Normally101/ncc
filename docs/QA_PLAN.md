@@ -1,15 +1,16 @@
 # QA_PLAN.md — Piano di test per Chauffeur Empire
 
 > Compagno di `docs/SYSTEMS.md` (la mappa). Non è più solo un piano: **Fase 2+3 sono state
-> implementate** il 9-10 agosto 2026 (sessione live) — `npm test` esegue 32 test reali su 9 file
+> implementate** il 9-10 agosto 2026 (sessione live) — `npm test` esegue 36 test reali su 10 file
 > (vedi "Stato implementazione" sotto). Le sezioni seguenti restano come riferimento su framework
 > e priorità; per il codice vero vedi `test/` e `test-support/game-env.js`.
 
 ## ✅ Stato implementazione (9-10 agosto 2026)
 
-**`npm test` → 32/32 pass**, 9 file sotto `test/`: `economy/vehicle-trade`,
+**`npm test` → 36/36 pass**, 10 file sotto `test/`: `economy/vehicle-trade`,
 `garage/repair-vehicle`, `employees/hire-fire`, `rides/complete-ride`, `rides/vip-clients`,
-`daily/daily-orders`, `daily/daily-tick`, `save-load/persistence`, `progression/new-game-plus`.
+`daily/daily-orders`, `daily/daily-tick`, `save-load/persistence`, `progression/new-game-plus`,
+`contracts/corporate-bid`.
 
 Harness in `test-support/game-env.js` (Livello 3 sotto): carica i file `.js` **reali** del gioco
 (stessa lista/ordine di `index.html`, filtrata alla logica pura — no mappa/render/realtime) in un
@@ -26,9 +27,13 @@ drift su chiamate ripetute), save/load (serializzazione + deserializzazione + mi
 busy→idle al reload), New Game+ (sync cash col server). 6 test sono regressioni esplicite dei fix
 funzionali del 9 agosto (fireDriver, daily-orders, vip-clients, New Game+).
 
-**Cosa NON copre ancora** (SKIP esplicito): contracts/B2B/tourism/aste (zero test), animazioni/
-tooltip/UI pura (Livello 2 jsdom smoke test — deliberatamente fuori scope, priorità bassa),
-E2E reale in browser (Livello 4 — resta solo tuo, richiede Playwright + Supabase di staging).
+Più `contracts/corporate-bid` (4 test: pledge, REGRESSIONE rilancio-offerta non duplica il
+pledge, fondi insufficienti, doppio annullamento non rimborsa due volte).
+
+**Cosa NON copre ancora** (SKIP esplicito): B2B/tourism/aste (zero test — contracts.js coperto
+solo per il pledge sui bandi corporate, non l'intero sistema), animazioni/tooltip/UI pura
+(Livello 2 jsdom smoke test — deliberatamente fuori scope, priorità bassa), E2E reale in browser
+(Livello 4 — resta solo tuo, richiede Playwright + Supabase di staging).
 
 **Bug trovato scrivendo questi test**: il cap sul delta di `rpc_sync_cash` (fix SQL della stessa
 sessione, poche ore prima) era simmetrico e avrebbe rifiutato un New Game+ legittimo da cash
