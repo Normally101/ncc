@@ -88,8 +88,56 @@ Verificato dal vivo: doppia-assegnazione auto (fix), acquisto upgrade veicolo, z
 | Rewards | PASS | XP autista (`driver.xp +=`) verificato presente nel codice; non un rischio economico (non tocca cash/RPC). |
 | Driver availability | PASS | `complete-ride.test.js` verifica il driver torna `idle` a fine corsa. |
 
-## BLOCCO 3 — Daily systems + Contracts + B2B/Tourism
-*(non ancora iniziato — tutti NOT TESTED salvo `daily-orders`/`daily-tick`/`corporate-bid` già in suite)*
+## BLOCCO 3 — Daily systems + Contracts + B2B/Tourism — ✅ COMPLETATO (10 agosto 2026)
+
+Suite: **64/64 pass**. `daily-orders`/`daily-tick`/`corporate-bid` invariati. Nuovo:
+`test/contracts/b2b-tourism-eligibility.test.js` (7 test sulla logica pura di rank/punteggio).
+Verificato dal vivo l'intero ciclo B2B (fetch → accetta → tick → dati coerenti) e Tourism
+(fetch → bid → cancel), con 2 bug reali trovati e corretti.
+
+| Voce | Stato | Note |
+|---|---|---|
+| Daily Tick | PASS | Invariato da BLOCCO 1/2 (+ test salario). |
+| Daily Orders | PASS | Invariato (`daily-orders.test.js`, 4 test + regressione rollback). |
+| Contracts (bandi corporate) | PASS | Invariato (`corporate-bid.test.js`, 4 test). |
+| B2B | PASS (con 2 fix) | Vedi sotto. |
+| Tourism | PASS (con 1 fix + 1 seed) | Vedi sotto. |
+
+**BUG REALE #1 — tabelle `b2b_contracts`/`b2b_catalog`/`b2b_active_tenders` vuote in produzione,
+sistemi B2B e Tourism completamente senza contenuto per chiunque:**
+- Stesso identico pattern di VTK Shop (6 agosto) e Provinces (10 agosto): RPC/UI/fetch tutti
+  funzionanti e verificati, ma **zero righe** nelle tabelle di contenuto — nessun contratto B2B
+  né bando turismo disponibile per nessun giocatore, mai. Nessuna RPC di generazione esiste
+  (verificato: nessuna `generate_b2b_contracts`/simile nello schema).
+- **Fix applicato**: seed già progettato nei migration file esistenti, mai applicato — 12
+  contratti B2B (`19_b2b_contracts.sql`) + 21 aziende turismo con relativi bandi attivi
+  (`34_fix_console_errors.sql`, versione più recente/corretta di `33_tourism_tenders.sql`).
+  Nessun dato inventato — valori identici ai file committati. `ON CONFLICT DO NOTHING`,
+  idempotente, verificato prima/dopo.
+- Verificato dal vivo: `b2bRefresh()`/`tourismRefresh()` ora restituiscono 12 contratti e 21
+  bandi rispettivamente (prima: 0 e 0).
+
+**BUG REALE #2 — messaggio di errore corrotto su reputazione insufficiente (bug di formattazione
+SQL, non di sicurezza):**
+- `rpc_accept_b2b_contract` e `rpc_list_company_ipo` usavano `%.1f` in `RAISE EXCEPTION` — sintassi
+  printf-style **non supportata da Postgres** (che usa solo `%` come placeholder posizionale).
+  Risultato: messaggio mostrato al giocatore "Reputazione insufficiente (serve 1.5.1f★)" invece di
+  "...serve 1.5★". Riprodotto dal vivo tentando di accettare un contratto con reputazione
+  insufficiente (il path di rifiuto più comune, non un edge case).
+- **Fix applicato**: sostituito `%.1f` con `round(valore, 1)` + `%`, verificato dal vivo che il
+  messaggio ora sia pulito.
+
+**Verificato dal vivo, ciclo completo:**
+- B2B: fetch contratti (12) → accetta "Trasporto Dirigenti Senior" (con flotta/reputazione
+  qualificanti) → contratto attivo con importi/scadenze corretti → tick giornaliero (nessun
+  errore, nessun payout perché non ancora dovuto — `next_payout_at` a 24h) → zero errori console.
+- Tourism: fetch bandi (21) → imposta pledge e presenta offerta su "Zenith Harbor Leisure" (bid
+  registrata, `bid_count` 0→1) → annulla offerta (nessun errore, cash coerente) → zero errori
+  console.
+
+**NOT TESTED**: la maturazione reale di un bando/contratto fino al termine (richiederebbe
+manipolare `next_payout_at`/`bidding_ends_at` nel DB per non aspettare ore reali — non fatto in
+questo giro, rischio basso essendo puro tick temporale già testato in astratto da `daily-tick`).
 
 ## BLOCCO 4 — VIP + HQ + Auctions + Dynamic Events
 *(non ancora iniziato)*

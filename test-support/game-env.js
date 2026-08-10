@@ -27,7 +27,7 @@ const CORE_FILES = [
     'engine-fleet.js', 'engine-store.js', 'engine-holding.js', 'engine-rivals.js', 'engine-events.js',
     'driver_skills.js', 'vip-buffs.js', 'vip-clients.js',
     'daily-orders.js', 'zero-to-hero.js', 'showroom.js', 'hq-data.js', 'hq.js',
-    'contracts.js',
+    'contracts.js', 'b2b.js', 'tourism.js',
 ];
 
 // document reale via jsdom — necessario perché il codice del gioco usa
