@@ -509,6 +509,12 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
 _(nessuno — l'accesso GitHub è tornato disponibile più tardi nella stessa sveglia, PR aperta.)_
 
 ## Log sveglie
+- 2026-08-10 (stessa sessione, check-in schedulato 1h dopo l'apertura di PR #17): **nessun
+  cambiamento** — PR #17 ancora `open`, `mergeable_state: clean`, CI tutta verde (Lint &
+  Security, SQL Migration Check, HTML Validation, Vercel), unico commento resta il bot Vercel,
+  zero review. PR #9/#10/#15/#16 hanno `updated_at` identico al check precedente — nessuna
+  attività umana su nessuna. Nessuna notifica push (niente di nuovo da riportare, già avvisato
+  Vlad un'ora fa). Check-in ri-armato per un'altra ora.
 - 2026-08-10 (sveglia cron, sessione fresca senza memoria delle precedenti): **riallineamento
   completo** — vedi blocco "⚠️ RIALLINEAMENTO 2026-08-10" in cima al file per il dettaglio.
   Questo file era fermo al 6 agosto ("8 PR ferme, zero review umane") mentre nella realtà,
