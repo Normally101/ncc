@@ -44,7 +44,7 @@ modello di ammortamento (`daily_payment`, mai implementato lato client) — serv
 (adottarlo o abbandonarlo) prima di collegare per intero, altrimenti si rischia una doppia
 contabilità cliente/server. Vedi `docs/STABILITY_CHECKLIST.md` per il dettaglio.
 
-**PR**: [#19](https://github.com/Normally101/ncc/pull/19) aperta, **non mergiata**. Include anche
+**PR**: [#20](https://github.com/Normally101/ncc/pull/20) aperta, **non mergiata**. Include anche
 il merge del fix giorno-di-gioco (PR #18) per testare tutto insieme — PR #18 resta aperta
 separatamente per la review, questo branch la incorpora solo ai fini del test.
 
