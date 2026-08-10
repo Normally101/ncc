@@ -509,6 +509,11 @@ _(nessuno per questo task — è solo un aggiornamento di documentazione/mission
 _(nessuno — l'accesso GitHub è tornato disponibile più tardi nella stessa sveglia, PR aperta.)_
 
 ## Log sveglie
+- 2026-08-10 (stessa sessione, check-in schedulato 2h dopo l'apertura di PR #17): **nessun
+  cambiamento** rispetto al check-in precedente — PR #17 ancora `open`/`mergeable_state:
+  clean`/CI verde, unico commento il bot Vercel (ri-postato per il mio stesso commit di log
+  dell'ora precedente, non attività umana), zero review. PR #9/#10/#15/#16 `updated_at`
+  invariato. Nessuna notifica (nulla di nuovo). Check-in ri-armato per un'altra ora.
 - 2026-08-10 (stessa sessione, check-in schedulato 1h dopo l'apertura di PR #17): **nessun
   cambiamento** — PR #17 ancora `open`, `mergeable_state: clean`, CI tutta verde (Lint &
   Security, SQL Migration Check, HTML Validation, Vercel), unico commento resta il bot Vercel,
