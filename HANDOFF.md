@@ -1,11 +1,90 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 9 agosto 2026
+> Aggiornato: 10 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
+
+### ✅ 10 agosto 2026 — Playtest E2E reale con account di test veri, branch `auto/e2e-onboarding-day-bug`
+Su richiesta diretta di Vlad ("crea un account di prova, testa realmente TUTTO... l'unico modo per
+avere la certezza che sia un gioco veramente senza bug"). Creati 3 account usa-e-getta reali via
+Supabase Admin API (email `.invalid`, pre-confermati, MAI committati/loggati in chiaro), giocati
+davvero in Chrome (chrome-devtools MCP) contro il branch `auto/qa-test-suite` servito in locale
+(`http.server` + Supabase di **produzione**, non esiste uno staging separato per questo progetto).
+Tutti e 3 gli account e ogni riga associata (companies/game_saves/leaderboard/push_subscriptions)
+**eliminati a fine sessione** — verificato con query di conteggio a zero su tutte le tabelle toccate.
+
+**BUG REALE #1 (il più importante trovato in questa sessione) — giorno di gioco non sincronizzato
+al primissimo avvio, riproducibile su OGNI nuovo account:**
+- **Sintomo**: al login di un account appena creato, console mostra `[ServerState] RPC
+  rpc_sync_cash fallita: ... violates check constraint "companies_cash_check"`. Riprodotto
+  identico su 3 account diversi.
+- **Causa**: `initGame(fresh=true)` non inizializza `gameState.day/hour/minute/month`. Il primo
+  tick di `gameLoop()` (600ms dopo l'avvio) risincronizza forzatamente `gameState.day` al giorno
+  reale del server (`engine.js` riga ~981) — la differenza rispetto al default del template viene
+  letta come "è passato un giorno" e fa scattare un `processDailyRoutines()` non voluto
+  (interessi debito Vittorio, tick B2B/tourism, ispezione GdF) sulla primissima sessione di ogni
+  nuovo giocatore, prima che abbia fatto qualunque cosa. **Invisibile ai 36 test unitari per
+  costruzione**: `freshEnv()` ferma gli interval subito dopo `initGame`, quindi `gameLoop()` non
+  parte mai nei test — solo un vero playtest in browser poteva trovarlo.
+- **Fix**: pre-sync di day/hour/minute/month in `initGame(fresh)`, stesso pattern già corretto nel
+  ramo returning-player 3 righe sotto. `engine.js` (commit su `auto/e2e-onboarding-day-bug`, PR
+  [#18](https://github.com/Normally101/ncc/pull/18), non mergiata).
+- **Verificato**: bug riprodotto E poi confermato chiuso sullo stesso identico flusso con un 3°
+  account pulito (nessun errore, debito Vittorio resta esattamente a €500, nessun interesse
+  spurio). Suite 36/36 invariata.
+
+**BUG REALE #2 — tabella `provinces` vuota in produzione (0 righe), sistema "Conquista i
+Territori" completamente non funzionante per chiunque:**
+- Ogni corsa completata in una città mappata prova ad accreditare influenza territoriale
+  (`rpc_add_province_influence`) → falliva sempre con "Provincia non trovata" perché la tabella
+  `provinces` non aveva MAI ricevuto il seed (stesso identico pattern del VTK Shop del 6 agosto:
+  migration scritta, mai applicata). Il client referenzia **23** province (`_POI_TO_PROVINCE` in
+  `engine.js`), la migration `09_provinces_realestate_fuel.sql` ne definisce solo **5** (Roma,
+  Milano, Firenze, Napoli, Venezia).
+- **Fix applicato**: seed delle 5 province già progettate nella migration esistente (nessun dato
+  inventato — valori presi identici dal file committato). Verificato: `rpc_add_province_influence`
+  ora funziona per queste 5.
+- **APERTO — decisione per Vlad**: le altre **18** province (Torino, Trieste, Trento, Perugia,
+  Aosta, Bologna, Genova, Como, Padova, Bari, Palermo, Cagliari, Taormina, Amalfi, Cervo,
+  Cortina, Civitavecchia, Egnazia) non hanno `base_price`/`region_id` progettati da nessuna parte
+  nel repo — servono valori di bilanciamento reali, non inventabili da me. `DESIGN_DECISION_REQUIRED`.
+
+**SQL — PR #17 (Driver Coins costo negativo) applicata e chiusa:** le 6 RPC (`rpc_upgrade_offline_
+limit`, `rpc_buy_auto_rest`, `rpc_buy_energy_refill`, `rpc_buy_fleet_repair`, `rpc_buy_vip_contact`,
+`rpc_buy_hr_automation` — trovate dalla routine cloud in autonomia durante questa stessa giornata,
+PR aperta indipendentemente da questa sessione) validavano solo il fondo insufficiente, mai il
+segno del costo: un costo negativo conservava valuta premium arbitraria. Applicata
+`51_lockdown_driver_coins_negative_cost_scaffold.sql`, verificata in transazione con ROLLBACK
+forzato (negativo/zero rifiutati, positivo legittimo e saldo-insufficiente invariati).
+
+**Playtest reale eseguito e verificato** (oltre ai 2 bug sopra): guida manuale (+€15/-10%
+energia), login streak (+€500 giorno 1), assunzione Ragazzo di Quartiere (eredita auto CEO come
+da design), dispatch automatico corsa, **regressione `fireDriver` a metà corsa confermata dal
+vivo** (driver non rimosso mentre `busy`, stesso comportamento dei test unitari ma ora osservato
+contro RPC reali), **round-trip save/reload cloud confermato** (era l'unico gap esplicitamente
+segnalato come "NON VERIFICATO" nella sessione QA — cash/giorno/autisti persistiti e ripristinati
+esatti). Non ri-testati a schermo in questo giro (già coperti dai 36 test unitari, non
+ri-verificati live per tempo): VIP-riassegnazione, daily-orders rollback, New Game+, HQ, VTK
+Shop, B2B/tourism/aste.
+
+**Anomalia investigata e classificata FALSE_POSITIVE**: 403 su `push_subscriptions` a ogni login.
+Causa: `endpoint` push ha vincolo UNIQUE globale (non per-utente) e questo browser di test genera
+lo stesso endpoint mock ad ogni sessione — RLS blocca correttamente l'UPDATE su una riga di un
+altro utente. Non riproducibile da giocatori reali (endpoint Push API reale è univoco per
+dispositivo). Nessun fix applicato.
+
+**PROBLEMI ANCORA APERTI (oltre a quelli già in cima al file):**
+- 18 province senza dati di bilanciamento — `DESIGN_DECISION_REQUIRED` (sopra).
+- PR #18 (fix giorno di gioco) — pushata, **non mergiata**, review a Vlad.
+- Copertura E2E reale rimane parziale: confermato il boot/auth/RPC layer end-to-end e i sistemi
+  sopra, ma "ogni tasto, ogni funzione" nel senso letterale (tutti i tab, tutte le decine di
+  investimenti/upgrade/eventi) NON è stato possibile in una sessione — sarebbe lavoro per più
+  sessioni dedicate o un vero setup Playwright.
+
+---
 
 ### ✅ 9 agosto 2026 — Tutte le falle SQL critiche chiuse in produzione (sessione live, VS Code)
 Su richiesta diretta di Vlad ("ci stanno dei sql da fare su supabase, procedi con quello"),
