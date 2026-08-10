@@ -834,6 +834,19 @@ function initGame(fresh = true) {
     _gameIntervals.forEach(clearInterval);
     _gameIntervals = [];
     if (fresh) {
+        // Pre-sync clock come nel ramo "returning player" sotto (riga ~854): senza questo,
+        // gameState.day/hour restano al default del template (es. 1) mentre il primo tick di
+        // gameLoop() li risincronizza forzatamente al calendario reale (riga ~981) — la
+        // differenza viene letta come "è passato un giorno" e fa scattare un
+        // processDailyRoutines() non voluto/non limitato (interessi Vittorio, tick B2B/tourism,
+        // ispezione GdF...) sulla primissima sessione di un account appena creato, prima che il
+        // giocatore abbia fatto qualunque cosa. Riprodotto live: rpc_sync_cash rifiutata
+        // (companies_cash_check) su ogni nuovo signup.
+        const _itaFresh = _getItalyTime();
+        gameState.hour   = _itaFresh.hour;
+        gameState.minute = _itaFresh.minute;
+        gameState.month  = _itaFresh.month;
+        gameState.day    = _itaFresh.gameDay;
         // Zero-to-Hero: una partita nuova parte dal "fondo del barile".
         // 10 guidate manuali (+15€) = 150€, coerente col modal "Hai 150€ in tasca ora".
         gameState.cash = 0;
