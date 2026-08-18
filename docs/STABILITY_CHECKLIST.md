@@ -139,13 +139,54 @@ SQL, non di sicurezza):**
 manipolare `next_payout_at`/`bidding_ends_at` nel DB per non aspettare ore reali — non fatto in
 questo giro, rischio basso essendo puro tick temporale già testato in astratto da `daily-tick`).
 
-## BLOCCO 4 — VIP + HQ + Auctions + Dynamic Events
-*(non ancora iniziato)*
-- HQ: noto `FAIL` architetturale — `hq.js::hqUpgradeRoom` non server-authoritative, `DESIGN_DECISION_REQUIRED` (vedi HANDOFF).
-- Dynamic Events: noto `FAIL` — `global_events.js::activeDynamicEvent` mai resettato dopo un evento globale.
+## BLOCCO 4 — VIP + HQ + Auctions + Dynamic Events — 🔄 IN CORSO (18 agosto 2026)
+
+Suite: **78/78 pass** (erano 64 a fine BLOCCO 3). Nuovi: `test/events/global-events-sync.test.js`
+(5), `test/events/dynamic-events-lifecycle.test.js` (3), `test/vip/email-actions.test.js` (3).
+Due `FAIL` noti chiusi, uno resta bloccato su una decisione di Vlad.
+
+| Voce | Stato | Note |
+|---|---|---|
+| Dynamic Events | PASS (con 1 fix) | Il `FAIL` noto è chiuso, vedi BUG #1. Ciclo locale e specchio globale coperti da test. |
+| VIP | PASS (con 1 fix) | Cassa ora sincronizzata col server, vedi BUG #2. Resta da provare live il giro email→corsa per ognuno dei 10 clienti. |
+| Auctions | PASS su audit · NOT TESTED live | Interamente RPC (`rpc_place_auction_bid`, `rpc_get_*`): nessuna mutazione locale di `gameState.cash`, niente da sincronizzare. Serve una sessione vera con aste attive per confermarlo dal vivo. |
+| HQ | `FAIL` — bloccato | `hq.js::hqUpgradeRoom` non server-authoritative (`gameState.cash -= nextTier.cost` in locale). `DESIGN_DECISION_REQUIRED`: aspetta una decisione di Vlad, non codice. |
+
+**BUG REALE #1 — `activeDynamicEvent` mai azzerato alla fine di un evento globale
+(era il `FAIL` noto del blocco):**
+- `global_events.js` specchia l'evento globale in `gameState.activeDynamicEvent` con
+  `endsHour: Infinity`, quindi `_tickDynamicEvent()` (engine-events.js) non lo scade mai; e quando
+  l'evento finiva, la funzione del banner usciva subito (`if (!ev) { …hidden; return; }`) senza
+  toccare lo specchio. Due conseguenze: i moltiplicatori (mance, xp, velocità, `forceAirport`)
+  restavano attivi **per sempre**, e nessun evento dinamico locale poteva più partire, perché
+  `_maybeGenerateDynamicEvent()` trovava lo slot sempre occupato.
+- **Fix applicato**: la sincronizzazione è ora `window.syncGlobalEventToGameState()`, separata dal
+  disegno del banner (gira anche se `#hub-event-banner` non è nel DOM) e azzera lo specchio solo
+  se di origine globale — gli eventi locali hanno il loro timer e non vanno toccati.
+- Coperto da 8 test: popolamento, azzeramento a evento finito, indipendenza dal DOM, immunità
+  degli eventi locali, cambio di evento, più il ciclo di vita locale (scadenza all'ora giusta).
+- Primo lavoro passato per l'hub Olga Studio (task `t_00d4f8c4db1246e3a94c`), eseguito da Gigi.
+
+**BUG REALE #2 — le azioni email VIP muovevano cassa senza dirlo al server:**
+- Sette handler (Grigori rerouting, Platinum paparazzi, Onorevole GdF, Garante paga/intimidisci,
+  Wedding gestisci/saldo) facevano `gameState.cash ±= …` e poi `saveGame()`. Ma `saveGame()`
+  scrive **solo il blob** in `game_saves`: `companies.cash` — quello che leggono le RPC di P2P,
+  alleanze, IPO e province — restava indietro fino alla prima azione che sincronizzava per conto
+  suo. È il debito #1 (doppia source of truth) che si manifesta in un punto concreto.
+- **Fix applicato**: `_vipSyncCash()` dopo ogni azione che muove cassa, stesso pattern già usato
+  in `engine-rides.js` e `engine-daily.js`. Le `_vipComplete*` non ne hanno bisogno: girano dentro
+  il completamento corsa, che sincronizza già alla fine.
+- Coperto da 3 test (incasso, spesa, fondi insufficienti → nessuna sincronizzazione).
+
+**NOT TESTED in questo giro**: le aste dal vivo (serve un'asta attiva sul server), il giro
+completo email→corsa→completamento per ciascuno dei 10 clienti VIP, e HQ (bloccato).
 
 ## BLOCCO 5 — Territories + VTK Shop + New Game+
-*(non ancora iniziato)*
+*(non ancora iniziato — solo ricognizione, 18 agosto 2026)*
 - Territories: `FAIL` parziale noto — 5/23 province seedate e funzionanti, 18 `FIX_LATER` (dati di bilanciamento mancanti, `DESIGN_DECISION_REQUIRED`).
-- VTK Shop: PASS storico (fix 6/9 agosto), da riconfermare.
-- New Game+: coperto da `new-game-plus.test.js`, da riconfermare live.
+- VTK Shop: PASS storico (fix 6/9 agosto). Riconfermato **su audit del codice** il 18/08: tutte le
+  operazioni passano da RPC (`rpc_place_vtk_sell_order`, `rpc_fill_vtk_order`, `rpc_cancel_vtk_order`,
+  `rpc_spend_vtk_shop_item`), nessuna mutazione locale di cassa o di saldo VTK. Da riconfermare live.
+- New Game+: `PASS` — `test/progression/new-game-plus.test.js` verde (3 test: reset, eredità della
+  reputazione, sync del cash col server sia per `newGamePlus` sia per `sellCompanyNGP`). Da
+  riconfermare live.
