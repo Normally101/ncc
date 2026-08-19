@@ -106,15 +106,12 @@ window.shadowExecuteOp = async function(targetId, opId) {
     const target = window._shadowState.targets.find(t => t.user_id === targetId);
     if (!target) { if(typeof showNotification==='function') showNotification('Target non trovato', 'error'); return; }
 
-    if ((gameState.cash || 0) < op.cost) {
-        if(typeof showNotification==='function') showNotification(`Fondi insufficienti (serve €${op.cost.toLocaleString()})`, 'error');
-        return;
-    }
-
     const sb = window.supabaseClient;
     if (!sb) return;
 
-    if (!confirm(`Eseguire "${op.name}" su ${target.name || 'target'} per €${op.cost.toLocaleString()}?`)) return;
+    if (typeof confirm === 'function' && !confirm(`Eseguire "${op.name}" su ${target.name || 'target'} per €${op.cost.toLocaleString()}?`)) return;
+
+    if (!window.CE_money.spend(op.cost, 'shadow_op_' + opId)) return;
 
     const { data, error } = await sb.rpc('rpc_execute_shadow_op', {
         v_target_id: targetId,
@@ -122,10 +119,12 @@ window.shadowExecuteOp = async function(targetId, opId) {
         v_op_cost:   op.cost,
     });
 
-    if (error) { if(typeof showNotification==='function') showNotification(_sErr('Operazione fallita', error), 'error'); return; }
+    if (error) {
+        window.CE_money.earn(op.cost, 'shadow_op_refund');
+        if (typeof showNotification === 'function') showNotification(_sErr('Operazione fallita', error), 'error');
+        return;
+    }
 
-    // rpc_execute_shadow_op ha gia' scalato la cassa server-side (23_shadow_ops.sql:89)
-    if (!window.ServerState?.isReady()) gameState.cash -= op.cost;
     if (typeof updateUI === 'function') updateUI();
 
     if (data.success) {
@@ -157,16 +156,15 @@ window.shadowUpgradeDefense = async function() {
     const currentLevel = gameState._shadowDefenseLevel || 0;
     const tier = _DEFENSE_TIERS[currentLevel];
     if (!tier) { if(typeof showNotification==='function') showNotification('Difesa già al massimo!', 'error'); return; }
-    if ((gameState.cash || 0) < tier.cost) {
-        if(typeof showNotification==='function') showNotification(`Fondi insufficienti (serve €${tier.cost.toLocaleString()})`, 'error');
-        return;
-    }
+
+    if (!window.CE_money.spend(tier.cost, 'shadow_defense_upgrade')) return;
 
     const { data, error } = await sb.rpc('rpc_upgrade_shadow_defense', { v_cost: tier.cost });
-    if (error) { if(typeof showNotification==='function') showNotification(_sErr('Upgrade difesa fallito', error), 'error'); return; }
-
-    // rpc_upgrade_shadow_defense ha gia' scalato la cassa server-side (23_shadow_ops.sql:255)
-    if (!window.ServerState?.isReady()) gameState.cash -= tier.cost;
+    if (error) {
+        window.CE_money.earn(tier.cost, 'shadow_defense_refund');
+        if (typeof showNotification === 'function') showNotification(_sErr('Upgrade difesa fallito', error), 'error');
+        return;
+    }
     gameState._shadowDefenseLevel = data.new_level;
     if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();
