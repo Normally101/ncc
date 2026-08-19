@@ -23,6 +23,10 @@ const CORE_FILES = [
     'security.js', 'events.js', 'ce-actions.js', 'config.js', 'geoCoords.js', 'routesDB.js', 'data.js', 'lang.js',
     'quests-data.js', 'quests.js',
     'syncManager.js', 'saveSystem.js',
+    // money.js: la porta unica del denaro. Va caricata PRIMA dei file di gioco,
+    // che da qui in poi la usano al posto di `gameState.cash -=` (vedi
+    // test/guardrail/una-sola-porta.test.js).
+    'money.js',
     'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js', 'engine-drivers.js',
     'engine-fleet.js', 'engine-store.js', 'engine-holding.js', 'engine-rivals.js', 'engine-events.js',
     'driver_skills.js', 'vip-buffs.js', 'vip-clients.js',
