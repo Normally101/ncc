@@ -962,6 +962,14 @@ function processDailyRoutines() {
         gameState.todayEarnings = 0; // reset for the new day
     }
 
+    // Push final authoritative cash to server — the riga 424 sync only captured
+    // income/expenses at that point; everything after it (multe scadute, upkeep
+    // investimenti, bonus fedeltà, VC/Meet&Greet income, tasse annuali, rata
+    // prestiti, bonus CV, hub tax, vendita marketplace, dividendi holding/IPO)
+    // mutates gameState.cash directly and was never mirrored — companies.cash
+    // stayed stale and wiped all of it on the next login (auth.js Phase 5).
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+
     // GdF inspection — fire-and-forget, async (requires user logged in)
     if (typeof window._sindacatoGdfDailyCheck === 'function') window._sindacatoGdfDailyCheck();
     // B2B corporate contract daily payout
@@ -1135,6 +1143,11 @@ function _checkDailyReward() {
 
     gs.cash += cashReward;
     gs.annualProfitTracker = (gs.annualProfitTracker || 0) + cashReward;
+    // FIX (stabilizzazione 10 agosto): senza questo il premio in cash resta locale finché
+    // non arriva un'altra azione a innescare un syncCash — nel frattempo companies.cash
+    // (server-authoritative) non lo vede, con lo stesso rischio di rifiuto RPC già
+    // riprodotto dal vivo per i prestiti. Stesso pattern di executeManualDrive/newGamePlus.
+    if (typeof window.ServerState !== 'undefined') window.ServerState.syncCash(gs.cash).catch(() => {});
     if (tcReward > 0) {
         gs.driverCoins = (gs.driverCoins || 0) + tcReward;
         window.ServerState?.addDriverCoins?.(tcReward, 'tier_reward')

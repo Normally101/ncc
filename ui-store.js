@@ -188,8 +188,8 @@ function renderTabPremiumStore() {
         { label:'Completamento Corsi',  sub:`${trainingCount} corsi in accademia attivi`,    cost:Math.max(1,trainingCount*5), icon:'🎓', iconBg:'rgba(139,92,246,0.15)', act:ceAct('skipAllAcademyDC',[]), disabled:trainingCount===0, disabledLabel:'Nessun corso' },
         { label:'Costruzioni Lampo',    sub:`${constructions.length} cantieri in corso`,     cost:Math.max(1,constructions.length*8), icon:'🏗️', iconBg:'rgba(251,191,36,0.12)', act:ceAct('skipAllConstructionsDC',[]), disabled:constructions.length===0, disabledLabel:'Nessuna costruzione' },
         { label:'Tangente al Sindacato',sub:'Blocca scioperi per 1 giorno di gioco',         cost:50,  icon:'🤝', iconBg:'rgba(244,63,94,0.12)',   act:ceAct('_ecTangenteSindacato',[]),    disabled:(gameState.tangenteUntil||0)>gameState.day, disabledLabel:'Già protetto' },
-        { label:'Limite Offline +2h',   sub:`Progressione offline attuale: ${offLimit}h / max 12h`, cost:20, icon:'🕐', iconBg:'rgba(99,102,241,0.15)', fn:"window._dcSpend('offline_limit',20)", disabled:offLimit>=12, disabledLabel:'Massimo raggiunto' },
-        { label:'Auto-Rest CEO',        sub:'Recupero energetico automatico durante offline', cost:30,  icon:'🛌', iconBg:'rgba(6,182,212,0.12)',   fn:"window._dcSpend('auto_rest',30)", disabled:autoRest, disabledLabel:'Già attivo' },
+        { label:'Limite Offline +2h',   sub:`Progressione offline attuale: ${offLimit}h / max 12h`, cost:20, icon:'🕐', iconBg:'rgba(99,102,241,0.15)', act:ceAct('_dcSpend',['offline_limit',20]), disabled:offLimit>=12, disabledLabel:'Massimo raggiunto' },
+        { label:'Auto-Rest CEO',        sub:'Recupero energetico automatico durante offline', cost:30,  icon:'🛌', iconBg:'rgba(6,182,212,0.12)',   act:ceAct('_dcSpend',['auto_rest',30]), disabled:autoRest, disabledLabel:'Già attivo' },
     ];
 
     const bundleItems = [

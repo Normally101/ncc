@@ -494,7 +494,19 @@ const ServerState = (() => {
 
     // ── Sync authoritative cash to server after local daily tick ───────────────
     async function syncCash(cash) {
-        return _rpc('rpc_sync_cash', { v_cash: Math.round(cash) });
+        // Aggiorna subito la baseline del delta Realtime (BUG 4) col valore che stiamo
+        // per scrivere. Senza questo, quando l'echo Realtime della NOSTRA STESSA
+        // scrittura torna indietro, _onCompanyChange lo confronta con un
+        // _lastServerCash ancora vecchio e applica di nuovo lo stesso delta
+        // (raddoppio locale, mai arrivato al server). Riprodotto dal vivo il
+        // 17/08/2026: primo syncCash dopo la creazione azienda (premio login
+        // Giorno 1) raddoppiava il cash locale (1000 invece di 500, server
+        // corretto a 500) — l'echo dell'INSERT di initCompany() aveva lasciato
+        // _lastServerCash fermo a 0 e nessun altro evento lo aveva aggiornato nel
+        // frattempo.
+        const v = Math.round(cash);
+        _lastServerCash = v;
+        return _rpc('rpc_sync_cash', { v_cash: v });
     }
 
     // ── Idle / Premium ────────────────────────────────────────────────────────

@@ -33,6 +33,12 @@ function _triggerBankruptcy() {
     });
     gameState.consecutiveRedDays = 0;
     gameState.cash = Math.max(gameState.cash, 800);
+    // Il tick giornaliero sincronizza la cassa prima di chiamarci (engine-daily.js:424) e di nuovo
+    // in fondo a processDailyRoutines(): senza questo push, fra i due momenti companies.cash resta
+    // al valore negativo pre-pignoramento mentre il giocatore vede 800. In quella finestra girano
+    // showBigEvent e i render, e ogni RPC server-authoritative (P2P, alleanze, IPO, province)
+    // userebbe il numero sbagliato. Vale anche se il resto del tick si interrompe per un errore.
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     showBigEvent('💥', 'FALLIMENTO TECNICO!', `Il tribunale ha emesso un decreto di pignoramento. ${toSeize.length} veicoli confiscati per coprire i debiti. Riorganizza le finanze immediatamente.`);
     logToMap(`💥 PIGNORAMENTO: ${toSeize.length} auto sequestrate dal tribunale.`);
     if (typeof renderTabFleet === 'function') renderTabFleet();

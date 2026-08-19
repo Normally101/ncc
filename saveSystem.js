@@ -153,6 +153,7 @@ window.saveCurrentSlot = function() {
 */
 const _CLOUD_MIN_INTERVAL_MS = 4_000;
 const _lastCloudSaveTs = {};
+const _pendingCloudSave = {};
 
 function _updateCloudDot(state) {
     const dot = document.getElementById('cloud-sync-dot');
@@ -170,7 +171,23 @@ function _updateCloudDot(state) {
 async function _cloudSaveSlot(slotIndex, saveData) {
     if (!window.currentUser || !window.supabaseClient) return;
     const now = Date.now();
-    if (_lastCloudSaveTs[slotIndex] && (now - _lastCloudSaveTs[slotIndex]) < _CLOUD_MIN_INTERVAL_MS) return;
+    if (_lastCloudSaveTs[slotIndex] && (now - _lastCloudSaveTs[slotIndex]) < _CLOUD_MIN_INTERVAL_MS) {
+        // FIX (stabilizzazione 10 agosto): prima questo era un semplice `return` — un save
+        // dentro la finestra di debounce veniva SCARTATO, non rimandato. Riprodotto dal
+        // vivo: prestito preso, poi (entro 4s) un reload → il prestito e il suo accredito
+        // sparivano, perché il cloud non aveva mai visto quel saveGame(). Ora si accoda UN
+        // solo salvataggio "di coda" a fine finestra, che rilegge lo stato più recente al
+        // momento dello scatto (non lo snapshot di questa chiamata, ormai stantio se nel
+        // frattempo sono successe altre cose) — così l'ultimo stato reale arriva comunque.
+        if (!_pendingCloudSave[slotIndex]) {
+            const remaining = _CLOUD_MIN_INTERVAL_MS - (now - _lastCloudSaveTs[slotIndex]);
+            _pendingCloudSave[slotIndex] = setTimeout(() => {
+                _pendingCloudSave[slotIndex] = null;
+                if (typeof window.saveCurrentSlot === 'function') window.saveCurrentSlot();
+            }, remaining + 50);
+        }
+        return;
+    }
     _lastCloudSaveTs[slotIndex] = now;
     _updateCloudDot('busy');
     try {

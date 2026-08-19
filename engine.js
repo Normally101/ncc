@@ -834,6 +834,19 @@ function initGame(fresh = true) {
     _gameIntervals.forEach(clearInterval);
     _gameIntervals = [];
     if (fresh) {
+        // Pre-sync clock come nel ramo "returning player" sotto (riga ~854): senza questo,
+        // gameState.day/hour restano al default del template (es. 1) mentre il primo tick di
+        // gameLoop() li risincronizza forzatamente al calendario reale (riga ~981) — la
+        // differenza viene letta come "è passato un giorno" e fa scattare un
+        // processDailyRoutines() non voluto/non limitato (interessi Vittorio, tick B2B/tourism,
+        // ispezione GdF...) sulla primissima sessione di un account appena creato, prima che il
+        // giocatore abbia fatto qualunque cosa. Riprodotto live: rpc_sync_cash rifiutata
+        // (companies_cash_check) su ogni nuovo signup.
+        const _itaFresh = _getItalyTime();
+        gameState.hour   = _itaFresh.hour;
+        gameState.minute = _itaFresh.minute;
+        gameState.month  = _itaFresh.month;
+        gameState.day    = _itaFresh.gameDay;
         // Zero-to-Hero: una partita nuova parte dal "fondo del barile".
         // 10 guidate manuali (+15€) = 150€, coerente col modal "Hai 150€ in tasca ora".
         gameState.cash = 0;
@@ -849,6 +862,20 @@ function initGame(fresh = true) {
             outOfService: null, upgrades: [], protoId: null
         });
         _refreshRecruits();
+        // Pacing (17/08/2026): senza questo il Dispatch è vuoto fino al primo
+        // setInterval(generatePOIRide, 5 min) — misurato dal vivo, un giocatore
+        // nuovo resta davanti a zero corse subito dopo l'onboarding. 2 corse
+        // pronte da subito, solo per una partita davvero nuova.
+        // Stesso motivo: il primo batch di bandi corporate aspettava fino a 2
+        // giorni reali (contracts.js CYCLE_DAYS) — lo si genera subito.
+        setTimeout(() => {
+            if (typeof generatePOIRide === 'function') { generatePOIRide('standard'); generatePOIRide('standard'); }
+            if (window.CE_Contracts && typeof window.CE_Contracts.dailyTick === 'function') {
+                gameState.nextTenderDay = gameState.day; // altrimenti initState() lo fissa a day+2
+                window.CE_Contracts.dailyTick();
+            }
+            if (typeof updateUI === 'function') updateUI();
+        }, 800);
     } else {
         // Pre-sync clock and process offline income before intervals start (prevents false hourly/daily triggers)
         const _itaInit = _getItalyTime();
@@ -1268,6 +1295,7 @@ window.payFine = function(fineId) {
     if (gameState.cash < fine.amount) { showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= fine.amount;
     fine.status = 'paid';
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`💸 Multa pagata: €${fine.amount}`);
     showNotification(`Multa pagata: −€${fine.amount}`, 'error');
     updateUI(); saveGame();
@@ -1376,6 +1404,7 @@ window.attackTerritory = function(regionId) {
     }
 
     gameState.cash -= warCost;
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     const warDays = 3;
     gameState.pricewars.push({
         regionId,
@@ -1478,6 +1507,14 @@ window.sellCar = async function sellCar(carId) {
 function assignCarToDriver(carId, driverId) {
     const driver = gameState.drivers.find(d => d.id === driverId);
     if(driver) {
+        // FIX (stabilizzazione 10 agosto): senza questo, un'auto già assegnata a un altro
+        // autista restava assegnata ANCHE a lui — riproducibile con normale uso della UI
+        // (apri la scheda dell'auto, assegnala a un secondo autista libero), nessun devtools
+        // richiesto. Due autisti sulla stessa auto = doppio dispatch sullo stesso veicolo
+        // fisico. Stesso pattern già usato in sellVehicle per liberare l'auto dal vecchio
+        // autista.
+        const prevOwner = gameState.drivers.find(d => d.assignedCarId === carId && d.id !== driverId);
+        if (prevOwner) prevOwner.assignedCarId = null;
         driver.assignedCarId = carId;
         saveGame();
         if(typeof openCarModal === 'function') openCarModal(carId);
@@ -1671,6 +1708,7 @@ window.sellInvestment = function(invId) {
     if (!confirm(`Vendere ${item.name} per €${refund.toLocaleString()} (40% del valore)? Non si può annullare.`)) return;
     gameState.investments.splice(idx, 1);
     gameState.cash += refund;
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`🏷️ Investimento venduto: ${item.name} → +€${refund.toLocaleString()}`);
     if (typeof showNotification === 'function') showNotification(`${item.name} venduto per €${refund.toLocaleString()}`, 'success');
     updateUI();
@@ -1757,6 +1795,10 @@ window.newGamePlus = function() {
     _applyBrandColor();
     showBigEvent('♾️', `New Game+ ${ngpCount}`, `Riparto con €${legacyCash.toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. La tua leggenda continua.`);
     logToMap(`♾️ New Game+ ${ngpCount} iniziato!`);
+    // Senza questo, il server tiene ancora il cash pre-NGP e lo rivince al prossimo
+    // login/refresh (auth.js Fase 5 fa sempre vincere il valore server) — vedi
+    // docs/SYSTEMS.md §1 "New Game+ non sincronizza mai col server".
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     updateUI();
     saveGame();
 };
@@ -1822,6 +1864,9 @@ window.sellCompanyNGP = function() {
     showBigEvent('🏦', `Exit Strategy — New Game+ ${ngpCount}`,
         `Il fondo ha acquisito Chauffeur Empire per €${salePrice.toLocaleString()}.\n\nRicominci con €${Math.floor(legacyCash).toLocaleString()} e ${legacyRep.toFixed(1)}★ di reputazione ereditata. Credit Score iniziale: ${gameState.creditScore}.\n\nCostruisci un nuovo impero.`);
     logToMap(`♾️ Exit Strategy completata — NGP ${ngpCount} iniziato!`);
+    // Stesso bug/fix di newGamePlus sopra: senza sync il server rivince il cash
+    // pre-exit al prossimo login/refresh.
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     updateUI(); saveGame();
 };
 

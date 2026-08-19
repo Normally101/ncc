@@ -6,6 +6,20 @@
    Dipendenze: vip-buffs.js (helpers), engine.js (gameState, saveGame)
    ================================================================ */
 
+/**
+ * Il cash mosso da un'azione email VIP va anche al server.
+ * saveGame() scrive solo il blob del salvataggio (game_saves): `companies.cash`,
+ * che è quello che leggono le RPC (P2P, alleanze, IPO, province), resterebbe
+ * indietro fino alla prima azione che sincronizza per conto suo. Stesso pattern
+ * di engine-rides.js e engine-daily.js.
+ * Le _vipComplete* non ne hanno bisogno: girano dentro il completamento corsa,
+ * che sincronizza già alla fine.
+ */
+function _vipSyncCash() {
+    if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
+        window.ServerState.syncCash(gameState.cash).catch(() => {});
+}
+
 // ─── 1. GRIGORI V. — OLIGARCA PARANOICO ──────────────────────────────────────
 
 window._maybeVipGrigori = function() {
@@ -81,7 +95,7 @@ window.vipGrigoriEventAccept = function(emailId) {
     gameState.vipCooldowns.grigori -= 24; // loyalty: next offer 24h earlier
     _vipResolveEmail(emailId);
     showNotification(`🕵️ Rerouting gestito. −€${cost}. Grigori fidelizzato.`, 'success');
-    _vipRefreshUI(); saveGame();
+    _vipSyncCash(); _vipRefreshUI(); saveGame();
 };
 
 window.vipGrigoriEventDecline = function(emailId) {
@@ -212,7 +226,7 @@ window.vipPlatinumEventBlock = function(emailId) {
         window._applyBuff('platinum_hype', 'tip_pct', 20, 4);
         showNotification(`📸 Paparazzi bloccati. −€${fine}. La Diva riconoscente! +20% mance 4h`, 'success');
     }
-    _vipRefreshUI(); saveGame();
+    _vipSyncCash(); _vipRefreshUI(); saveGame();
 };
 
 window.vipPlatinumEventAllow = function(emailId) {
@@ -291,7 +305,7 @@ window.vipOnorevoleEventCopera = function(emailId) {
         gameState.cash = Math.max(0, gameState.cash - fine);
         showNotification(`🚔 GdF: multa €${fine}. Nessun Gettone disponibile.`, 'error');
     }
-    _vipRefreshUI(); saveGame();
+    _vipSyncCash(); _vipRefreshUI(); saveGame();
 };
 
 window.vipOnorevoleEventResisti = function(emailId) {
@@ -399,7 +413,15 @@ window.acceptVipGolden = function(emailId) {
 
 function _vipCompleteGolden(ride, driver, earned) {
     if (Math.random() < 0.60) {
-        const car = gameState.fleet.find(c => c.id === ride.carId || (driver && c.id === driver.assignedCarId));
+        // FIX: ride.carId è congelato al momento della creazione della ride VIP,
+        // ma driver/veicolo possono essere riassegnati prima del completamento
+        // (nessun vincolo driverId/vehicleRequired — vedi docs/SYSTEMS.md §5). Il
+        // vecchio `c.id === ride.carId || (driver && c.id === driver.assignedCarId)`
+        // in un solo .find() sceglieva in base all'ordine casuale della flotta,
+        // potendo applicare danno/riparazione a un'auto che non è più quella
+        // realmente usata. Priorità esplicita al veicolo ATTUALE del driver.
+        const car = (driver && gameState.fleet.find(c => c.id === driver.assignedCarId))
+            || gameState.fleet.find(c => c.id === ride.carId);
         if (car) {
             if (typeof hasInvestment === 'function' && hasInvestment('inv_kasko')) {
                 logToMap('🛡️ Kasko: danni Golden Boy coperti!');
@@ -541,7 +563,7 @@ window.vipGaranteEventPaga = function(emailId) {
     _vipResolveEmail(emailId);
     logToMap(`🚔 Posto di blocco: multa €${finalFine} pagata.`);
     showNotification(`🚔 Multa pagata: €${finalFine.toLocaleString()}`, 'error');
-    _vipRefreshUI(); saveGame();
+    _vipSyncCash(); _vipRefreshUI(); saveGame();
 };
 
 window.vipGaranteEventIntimidisci = function(emailId) {
@@ -563,7 +585,7 @@ window.vipGaranteEventIntimidisci = function(emailId) {
             showNotification(`🚔 Il poliziotto non si è lasciato intimidire! Multa ×2: −€${fine.toLocaleString()}`, 'error');
         }
     }
-    _vipRefreshUI(); saveGame();
+    _vipSyncCash(); _vipRefreshUI(); saveGame();
 };
 
 // ─── 9. WHITE LACE WEDDINGS — WEDDING PLANNER ────────────────────────────────
@@ -642,7 +664,7 @@ window.vipWeddingEventGestisci = function(emailId) {
     const bonus = 2000;
     gameState.cash += bonus;
     showNotification(`💍 Drama gestito! −€${cost} + compenso sposi €${bonus}. Netto: +€${bonus - cost}.`, 'success');
-    _vipRefreshUI(); saveGame();
+    _vipSyncCash(); _vipRefreshUI(); saveGame();
 };
 
 window.vipWeddingEventIgnora = function(emailId) {
@@ -663,7 +685,7 @@ window.vipWeddingPaymentCollect = function(emailId) {
         spawnMoneyParticles(r.width / 2, r.height / 2, bonus);
     }
     showNotification(`💍 Saldo ricevuto! +€${bonus.toLocaleString()}`, 'success');
-    _vipRefreshUI(); saveGame();
+    _vipSyncCash(); _vipRefreshUI(); saveGame();
 };
 
 // ─── 10. L'EREDE VIZIATO ──────────────────────────────────────────────────────
@@ -709,7 +731,15 @@ window.acceptVipErede = function(emailId) {
 
 function _vipCompleteErede(ride, driver, earned) {
     if (Math.random() < 0.30) {
-        const car = gameState.fleet.find(c => c.id === ride.carId || (driver && c.id === driver.assignedCarId));
+        // FIX: ride.carId è congelato al momento della creazione della ride VIP,
+        // ma driver/veicolo possono essere riassegnati prima del completamento
+        // (nessun vincolo driverId/vehicleRequired — vedi docs/SYSTEMS.md §5). Il
+        // vecchio `c.id === ride.carId || (driver && c.id === driver.assignedCarId)`
+        // in un solo .find() sceglieva in base all'ordine casuale della flotta,
+        // potendo applicare danno/riparazione a un'auto che non è più quella
+        // realmente usata. Priorità esplicita al veicolo ATTUALE del driver.
+        const car = (driver && gameState.fleet.find(c => c.id === driver.assignedCarId))
+            || gameState.fleet.find(c => c.id === ride.carId);
         if (car) {
             logToMap('💸 L\'Erede: INCIDENTE! Kasko copre tutto.');
             showNotification('💥 L\'Erede ha fatto un incidente! Kasko intervenuta. Auto riparata.', 'error');

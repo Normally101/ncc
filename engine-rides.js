@@ -223,7 +223,9 @@ const TIER_COMPATIBILITY = {
 
 function _getRideDurationMs(ride) {
     const price = ride.sellingPrice || ride.basePrice || ride.price || 150;
-    let minutes = Math.max(10, Math.min(360, price * 0.4));
+    // Pacing (17/08/2026): 0.4 rendeva una corsa da ~90€ lunga 36 minuti reali,
+    // misurato dal vivo — dimezzato a 0.2, stesso tetto/pavimento.
+    let minutes = Math.max(10, Math.min(360, price * 0.2));
     // routeType is set by generateContractRide from routesDB route.type ('Airport','Rail','Transfer','Boat','Port','City-to-City')
     const rType = ride.routeType || '';
     if (rType === 'Airport' || rType === 'Rail' || rType === 'Transfer') minutes *= 0.7;
@@ -831,6 +833,13 @@ function completeRide(ride, _deferPay = false) {
     // Territory influence (async, fire & forget)
     _awardTerritoryInfluence(ride);
 
+    // Mirror server-authoritative del cash. Senza questo l'incasso della corsa resta solo
+    // in gameState/game_saves: al reload bridgeToGameState() sovrascrive con companies.cash
+    // e il guadagno sparisce. Copre sia il pagamento immediato (!_deferPay) sia il bonus
+    // mancia Charmante. Stesso pattern di zero-to-hero.js/engine-daily.js.
+    if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
+        window.ServerState.syncCash(gameState.cash).catch(() => {});
+
     saveGame();
 
     // Empty leg: if a long-distance ride just completed, look for a return passenger
@@ -914,6 +923,11 @@ function checkActiveTrips() {
         completed++;
     }
     if (completed > 0) {
+        // Mirror server-authoritative: i pagamenti differiti (trip.earnings) incrementano
+        // solo gameState.cash. Un solo sync dopo il loop copre tutti i viaggi chiusi in
+        // questo passaggio, senza N chiamate RPC.
+        if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
+            window.ServerState.syncCash(gameState.cash).catch(() => {});
         updateUI();
         saveGame();
     }

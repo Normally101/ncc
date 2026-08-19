@@ -90,7 +90,8 @@
         if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
             window.ServerState.syncCash(gs.cash).catch(() => {});
 
-        if (gs.questStats.totalRides === 10) {
+        // Deve restare = soglia survival di onboarding-core.js (phase(), oggi 6).
+        if (gs.questStats.totalRides === 6) {
             window.triggerCapitalismEvent();
         } else {
             window.renderManualSurvivalMode();

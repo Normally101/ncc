@@ -214,6 +214,14 @@ window.repayLoan = function(loanId) {
     gameState.cash -= loan.amount;
     gameState.loans = gameState.loans.filter(l => l.id !== loanId);
     gameState.creditScore = Math.min(900, (gameState.creditScore || 300) + 20);
+    // FIX (stabilizzazione 10 agosto): senza questo, il cash resta disallineato dal
+    // companies.cash server-authoritative — rpc_buy_vehicle e altre RPC che validano il
+    // saldo lato server (vedi 49_lockdown_critical_cash_rpcs_scaffold.sql) rifiutano
+    // acquisti legittimi perché il server non ha mai visto il rimborso. Stesso pattern già
+    // usato da executeManualDrive/newGamePlus, non la RPC dedicata rpc_repay_loan (il suo
+    // modello di ammortamento con daily_payment non è mai stato collegato lato client —
+    // DESIGN_DECISION_REQUIRED, vedi HANDOFF).
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`✅ Prestito #${loanId} saldato — €${loan.amount.toLocaleString()} rimborsati. Credit Score +20`);
     showNotification(`✅ Prestito saldato! +20 Credit Score`, 'success');
     updateUI(); saveGame();
@@ -233,9 +241,23 @@ window.takeLoan = function(amount) {
         if (typeof showNotification === 'function') showNotification(`Credit Score troppo basso per questo importo. Score attuale: ${gameState.creditScore} (${creditTier.label})`, 'error');
         return;
     }
+    // FIX (stabilizzazione 10 agosto): mancava il controllo sulla SOMMA — due prestiti
+    // ciascuno sotto il fido singolarmente potevano superare il fido complessivo
+    // (es. fido 100k: 90k + 50k = 140k, entrambi i check sopra passavano).
+    if (activeLoanTotal + amount > creditTier.loanLimit) {
+        if (typeof showNotification === 'function') showNotification(`Fido insufficiente: hai già €${activeLoanTotal.toLocaleString()} di prestiti attivi su un fido di €${creditTier.loanLimit.toLocaleString()}.`, 'error');
+        return;
+    }
     const rate = creditTier.rate;
     gameState.cash += amount;
     gameState.loans.push({ id: gameState.nextId++, original: amount, amount: amount, remaining: amount, rate });
+    // FIX (stabilizzazione 10 agosto): senza questo, rpc_buy_vehicle e altre RPC che
+    // validano il saldo lato server rifiutano un acquisto legittimo subito dopo un
+    // prestito, perché companies.cash non ha mai visto l'accredito — riprodotto dal vivo
+    // ("fondi insufficienti" con cash locale abbondante). Stesso pattern di
+    // executeManualDrive/newGamePlus; vedi nota in repayLoan sopra sul perché non uso
+    // rpc_take_loan direttamente.
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`🏦 Prestito €${amount.toLocaleString()} — tasso ${(rate*100).toFixed(1)}%/mese (Score: ${gameState.creditScore} ${creditTier.label})`);
     if (typeof showNotification === 'function') showNotification(`💰 Prestito €${amount.toLocaleString()} approvato!`, 'success');
     updateUI(); saveGame();

@@ -40,7 +40,11 @@ function _updateDayNight() {
 window._updateDayNight = _updateDayNight;
 
 // ─── HQ MARKER ──────────────────────────────────────────────────
-let _hqMarker = null;
+// `var` (non `let`) perché deve diventare window._hqMarker: map.js::_destroyMap()
+// lo legge/rimuove come window._hqMarker (stesso pattern del bug storico
+// _activeTab, vedi docs/SYSTEMS.md §8) — con `let` era locale al file e il
+// marker HQ non veniva mai rimosso alla distruzione della mappa.
+var _hqMarker = null;
 const _HQ_MARKER_STYLES = [
     { icon:'🛖', label:'Garage',   style:'border:2px solid #555;background:rgba(20,20,30,0.9);' },
     { icon:'🏢', label:'Ufficio',  style:'border:2px solid #00f2ff;background:rgba(0,20,40,0.9);box-shadow:0 0 10px #00f2ff88;' },

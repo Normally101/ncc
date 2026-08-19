@@ -20,14 +20,17 @@
 
     // Gate di sblocco precoci (specchio leggero di onboarding.js GATES) per indicare
     // il prossimo traguardo una volta superato l'onboarding base.
+    // Solo display ("prossimo obiettivo") — DEVE restare allineato a GATES in
+    // onboarding-core.js (soglie dimezzate 17/08/2026), altrimenti la pill
+    // mostra un numero diverso da quello che sblocca davvero il tab.
     const EARLY_GATES = [
-        { rides: 5,  label: 'Finanza',        tab: 'finance' },
-        { rides: 8,  label: 'Mercato',        tab: 'market' },
-        { rides: 12, label: 'Contratti B2B',  tab: 'b2b' },
-        { rides: 15, label: 'Quartier Generale', tab: 'hq' },
-        { rides: 18, label: 'Contratti',      tab: 'contracts' },
-        { rides: 25, label: 'Infrastrutture', tab: 'infrastructure' },
-        { rides: 30, label: 'Turismo',        tab: 'tourism' },
+        { rides: 3,  label: 'Finanza',        tab: 'finance' },
+        { rides: 5,  label: 'Mercato',        tab: 'market' },
+        { rides: 7,  label: 'Contratti B2B',  tab: 'b2b' },
+        { rides: 9,  label: 'Quartier Generale', tab: 'hq' },
+        { rides: 11, label: 'Contratti',      tab: 'contracts' },
+        { rides: 15, label: 'Infrastrutture', tab: 'infrastructure' },
+        { rides: 18, label: 'Turismo',        tab: 'tourism' },
     ];
 
     function nextGate() {

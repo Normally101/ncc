@@ -1,11 +1,580 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 9 agosto 2026
+> Aggiornato: 18 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
 
 ## 🚀 STATO ATTUALE (giugno 2026) — leggi questo PER PRIMO
+
+## 🧊 PROGETTO IN FEATURE FREEZE (dal 10 agosto 2026)
+
+Su istruzione diretta di Vlad: niente nuove feature, niente refactoring generale, niente
+espansione di gameplay finché il gioco non è **stabile** (checklist completa in
+`docs/STABILITY_CHECKLIST.md`). Si procede a blocchi: Core+Save/Load+Economy → Garage+Employees+
+Rides → Daily+Contracts+B2B/Tourism → VIP+HQ+Auctions+Eventi → Territories+VTK+New Game+.
+
+### ✅ 18 agosto 2026 — BLOCCO 4 aperto: 2 `FAIL` chiusi (eventi globali, cassa VIP) + il primo lavoro arrivato dall'hub
+
+**Suite: 78/78 verdi** (erano 64 a fine BLOCCO 3, 67 contando il lavoro non committato in corso).
+Branch: `auto/stabilization-blocco1`, commit `b9eea41` e `073cca5`. **Niente pushato.**
+
+**Cosa è stato chiuso (dettaglio in `docs/STABILITY_CHECKLIST.md`, BLOCCO 4):**
+1. **`activeDynamicEvent` mai azzerato dopo un evento globale** — era il `FAIL` noto del blocco.
+   Lo specchio locale nasce con `endsHour: Infinity`, quindi il tick non lo scade mai, e alla fine
+   dell'evento la funzione del banner usciva senza toccarlo: moltiplicatori attivi per sempre e
+   nessun evento locale poteva più partire (lo slot restava occupato). Ora la sincronizzazione è
+   `window.syncGlobalEventToGameState()`, indipendente dal DOM, e azzera solo gli eventi di origine
+   globale. 8 test nuovi (`test/events/`).
+2. **Le azioni email VIP muovevano cassa senza dirlo al server** — 7 handler facevano
+   `gameState.cash ±= …` + `saveGame()`, che scrive solo il blob in `game_saves`: `companies.cash`
+   (letto dalle RPC di P2P, alleanze, IPO, province) restava indietro. Aggiunto `_vipSyncCash()`,
+   stesso pattern di `engine-rides.js`/`engine-daily.js`. 3 test nuovi (`test/vip/`).
+
+**Ricognizione, senza modifiche:** Auctions e VTK Shop sono già interamente su RPC (nessuna
+mutazione locale di cassa) — restano da confermare dal vivo. New Game+ è verde nei test.
+**HQ resta bloccato** (`hqUpgradeRoom` non server-authoritative): è `DESIGN_DECISION_REQUIRED`,
+aspetta una decisione tua, non codice. Idem le 18 province `FIX_LATER` del BLOCCO 5.
+
+**Nota sul cache-bust:** in `index.html` sono saliti `global_events.js?v=11` e `vip-clients.js?v=8`.
+Il file è tra quelli che stavi già modificando tu, quindi quelle due righe sono nel working tree
+ma **fuori dai commit**: vanno con il tuo prossimo commit.
+
+**Il primo fix è arrivato dall'hub, non da qui:** il bug degli eventi globali è stato eseguito da
+Gigi (task `t_00d4f8c4db1246e3a94c` su Olga Studio, ora in `review`), su un branch dedicato, e poi
+verificato riga per riga e con i test prima di essere portato dentro. È il primo giro completo
+WhatsApp/hub → codice del gioco.
+
+### 🔴 15 agosto 2026 (cont.) — Seconda review Gemini (modalità adversarial): 3 findings, tutti confermati e fixati
+Gemini ha scritto un secondo giro in `CLAUDE_HANDOFF.md` ("Adversarial Bug Hunter"). Tutti e 3 i
+findings verificati indipendentemente e confermati veri:
+
+1. **CRITICAL/HIGH, confermato** — `rpc_refuel_vehicle` bloccava **sempre** `v_fuel_amount=0` con
+   `RAISE EXCEPTION`, ma `superchargeVehicle` (ricarica EV, `engine-fleet.js:19`) e `refillTires`
+   (pressione gomme, `engine-fleet.js:37`) chiamano quella RPC apposta con `v_fuel_amount=0` (per
+   addebitare solo il costo, senza toccare il carburante). **Entrambe le feature erano
+   completamente rotte** — ogni tentativo falliva con errore server, cash mai scalato, stato mai
+   aggiornato. Non un edge case: bug sistematico su ogni singolo utilizzo. Fix: `< 0` invece di
+   `<= 0` nel check.
+
+2. **HIGH, confermato** — `rpc_vote_server_decree` accettava `v_points_spent` illimitato dal
+   client (solo pavimento `>=1`, nessun tetto): un utente poteva passare 100.000 e approvare
+   istantaneamente qualsiasi decreto globale. Verificato che `gameState.lobbyingPoints` (il
+   "budget" che il client controlla prima di chiamare, `ui-lifestyle.js:171-173`) è puramente
+   client-local — zero colonne DB, mai sincronizzato — quindi il server non può validare il vero
+   possesso. Un fix server-authoritative completo richiederebbe portare l'intero sistema lobbying
+   lato server (decisione di design, fuori scope). Fix minimo applicato (stesso principio già
+   usato per `rpc_start_trip`/`rpc_sell_vehicle`): tetto 200 (range massimo dichiarato nel commento
+   di `engine.js:234`, `// 0-200`) + rate-limit 10/min. Questo è lo stesso bug già annotato come
+   "non ancora fatto" nel backlog Gruppo 3 di una sessione precedente — ora chiuso.
+
+3. **Segnalato da Gemini come MEDIUM (manca rate-limit), ma verificato durante l'implementazione
+   che era in realtà CRITICAL** — `rpc_contribute_consorzio` non validava il **segno** di
+   `v_amount`. Con un valore negativo, il check "fondi insufficienti" non scattava mai (`v_cash <
+   v_amount` è sempre falso con `v_amount` molto negativo), `_add_player_cash(v_uid, -v_amount)`
+   diventava un **accredito** (delta positivo) al chiamante, e `treasury = treasury + v_amount`
+   **sottraeva** dal tesoro del consorzio — un "contributo" negativo si trasformava in un furto:
+   cash dal nulla per il chiamante + drenaggio del tesoro condiviso. Non trovato né da me né da
+   Gemini nel giro precedente. Fix: aggiunto `IF v_amount <= 0 THEN RAISE EXCEPTION` (mancava del
+   tutto) + il rate-limit 20/min segnalato da Gemini.
+
+**Migration**: `58_fix_refuel_zero_vote_cap_consorzio_ratelimit.sql`. **Verificato con test
+end-to-end reali** (utente temporaneo, creato ed eliminato): `rpc_refuel_vehicle(id, 0, 80)` ora
+riesce (cash scalato correttamente 100.000→99.920, fuel_level invariato come atteso);
+`rpc_contribute_consorzio(id, -1000000)` ora rifiutato con "Importo non valido";
+`rpc_vote_server_decree(id, 100000)` ora rifiutato con "punti fuori range (100000, max 200)".
+Nessuna modifica JS in questo giro — solo i 3 file SQL. Suite invariata: 65/65 pass. Risposta
+completa per Gemini in `GEMINI_HANDOFF.md`.
+
+### 🔴 15 agosto 2026 (cont.) — Prima review Gemini: 4 findings verificati, 4 fix applicati
+Gemini ha scritto `CLAUDE_HANDOFF.md` con 4 findings + revisione dei fix 52-56 (tutti APPROVATI da
+Gemini, nessuna regressione). Ogni finding verificato indipendentemente sul codice/DB reale prima
+di agire, come da workflow:
+
+1. **CONFERMATO e fixato** — `rpc_list_company_ipo` leggeva `reputation`/`company_name` da
+   `public.leaderboard` (client-writable, stesso pattern già visto in `rpc_donate_to_alliance`)
+   invece di `public.companies` (autoritativa). Un utente poteva scriversi `reputation=5.0` via
+   devtools e quotarsi in borsa senza il requisito minimo 3.5★. **Il presunto "bug di
+   formattazione %.1f" segnalato da Gemini era un falso positivo** — verificato sul DB: il codice
+   usa già il pattern corretto (`%` + `round(...,1)` pre-calcolato), non un modificatore printf.
+   Fix: `57_fix_ipo_reputation_source_of_truth.sql`, legge da `companies`.
+
+2. **CONFERMATO e fixato** — `ui-store.js` righe 191-192 (Executive Club → Limite Offline / Auto-
+   Rest CEO): 2 item su 15 usavano `fn:"window._dcSpend(...)"` (stringa letterale mai processata)
+   invece di `act:ceAct('_dcSpend',[...])`. Il template `_svcCard` legge `it.act`, quindi
+   generava un attributo `undefined` — bottoni completamente inerti, mai intercettati da
+   `events.js`. Il mio controllo automatico "bottoni morti" della sessione precedente cercava solo
+   chiamate `ceAct(...)` esistenti, non item di array privi del campo `act` — gap del mio metodo,
+   non del codice; trovato da Gemini con un approccio di lettura diretta.
+
+3. **Riclassificato da "CONFIRMED BUG/MEDIUM" a IMPROVEMENT** — `p2p-market.js` aveva un ramo
+   fallback che chiamava `rpc_dampen_tension` direttamente (RPC REVOKEd da `authenticated`/`anon`,
+   quindi fallirebbe sempre). Root cause tecnica di Gemini corretta, ma verificato sul DB che
+   `rpc_contribute_holding_treasury` ritorna **sempre** `{treasury, tension}` — quindi quel ramo
+   è irraggiungibile nella pratica attuale, zero impatto reale oggi (non un bug attivo, solo
+   codice morto fuorviante). Rimosso comunque per pulizia/prevenzione futura.
+
+4. **CONFERMATO e fixato, gravità precisata** — `buyCARUpgrade`, `payFine`, `attackTerritory`,
+   `sellInvestment` mutavano `gameState.cash` senza `ServerState.syncCash()`. Verificato che
+   `sellInvestment` è un **incremento** (non un decremento come gli altri 3): lì il rischio è
+   perdita netta per il giocatore (investimento rimosso e salvato, ma rimborso mai arrivato al
+   server) — più grave del semplice "sconto auto-inflitto" degli altri 3 casi, coerente con la
+   gravità HIGH assegnata da Gemini. Aggiunto `syncCash` a tutte e 4. Test obsoleto in
+   `test/garage/assign-upgrade.test.js` (che documentava il debito come "non una regressione di
+   questa sessione") sostituito con un vero test di regressione per `buyCARUpgrade`.
+
+**Verificato**: sintassi valida su tutti i file JS toccati, cache-bust bump (`engine.js` v25→26,
+`engine-fleet.js` v8→9, `ui-store.js` v13→14, `p2p-market.js` v9→10), suite completa 65/65 pass
+(incluso il nuovo test di regressione). Risposta completa per Gemini scritta in
+`GEMINI_HANDOFF.md`.
+
+### 🔴 15 agosto 2026 (cont.) — Service worker verificato pulito, gap di test coverage individuato
+**Service worker (`sw.js`, 102 righe)**: nessun bug trovato. Strategia network-first per HTML/JS/
+CSS (aggiornamento immediato ad ogni deploy, risolve lo storico problema di asset stale) +
+cache-first per media. Tutti gli shell asset precached esistono e non sono esclusi da
+`.vercelignore`. CSP (`worker-src 'self' blob:`) intatta.
+
+**Test coverage — gap significativo, non ancora colmato**: zero test automatizzati (`test/`)
+coprono l'intera area P2P/Sindacato/Alleanze (`p2p-market.js`, `p2p-render.js`, `alliances.js`) —
+esattamente l'area dove sono stati trovati 3 dei 6 bug economici di questa sessione
+(`rpc_donate_to_alliance`, il bug cash P2P del Fix 1, `rpc_daily_dividends`). Il framework di test
+esistente (`test-support/game-env.js`) mocka `ServerState` (il wrapper JS di alto livello), ma
+`p2p-market.js`/`alliances.js` chiamano il client Supabase direttamente (`_sb().rpc(...)`),
+bypassando `ServerState` — servirebbe un nuovo tipo di mock (client Supabase fittizio) per poter
+testare questi file. Non implementato in questa sessione: è un investimento infrastrutturale
+(nuovo pattern di mock + suite di test da scrivere), non un fix isolato — da decidere
+esplicitamente se affrontarlo, non infilato in coda. Nessun altro problema trovato nella suite
+esistente: i due `assert.ok(true)` in `loans.test.js`/`assign-upgrade.test.js` sono un pattern
+intenzionale di "documentazione eseguibile" di debiti tecnici noti, non test rotti.
+
+### 🔴 15 agosto 2026 (cont.) — Audit backend RPC: 2 CRITICAL + 1 HIGH aggiuntivi (accesso pubblico non autenticato)
+Mappate tutte le ~127 RPC `rpc_%` raggiungibili dal ruolo `anon` (grant di default Postgres/
+PostgREST su funzioni senza REVOKE esplicito), incrociate con l'assenza di un controllo
+`auth.uid()`/`_my_company_id()` interno. 13 funzioni risultavano prive di guardia auth interna;
+la maggior parte ha comunque una guardia **temporale** naturale che le rende idempotenti anche se
+richiamate a raffica da un anonimo (es. `rpc_credit_real_estate_rents`: `last_rent_at < now()-24h`;
+`rpc_reset_daily_vtk`: `vtk_today_reset < CURRENT_DATE`; `rpc_tick_tension`: delta calcolato sul
+tempo reale trascorso). Due invece no:
+
+🔴 **CRITICAL — `rpc_daily_dividends()` raggiungibile da chiunque, anche SENZA account, senza
+alcuna guardia anti-duplicazione.** Il commento originale in `08_mmo_p2p_marketplace.sql` la
+descriveva come "da chiamare ogni mezzanotte via cron/edge fn", ma non è mai stata collegata a
+nessun cron — il GRANT di default a `PUBLIC` non era mai stato revocato, e zero call-site nel
+client (mai chiamata). A differenza di `rpc_credit_real_estate_rents`, non azzera/segna mai
+`weeklyEarnings` come già distribuito: chiamata ripetutamente in loop, paga N volte lo stesso
+dividendo giornaliero a tutti gli shareholder di **qualsiasi** azienda quotata in borsa,
+prelevando ripetutamente dal cash dell'emittente. A differenza degli altri bug economici di
+questa sessione, non richiede nemmeno un account — è un vettore di attacco pubblico contro terzi.
+**Fix** (`56_revoke_daily_dividends_public_access.sql`): REVOKE completo da `authenticated`+`anon`
+(zero regressione). Nota per il futuro: se si vuole riattivare un vero cron, va prima aggiunta una
+guardia anti-doppio-pagamento (campo tipo `last_dividend_day`), non solo il GRANT a `service_role`.
+
+🟠 **HIGH — due RPC scrivevano dati globali senza richiedere alcuna autenticazione**:
+`rpc_spawn_judicial_auction` (crea lotti d'asta pubblici, zero call-site client — verosimilmente
+un cron mai completato, come `rpc_daily_dividends`) e `rpc_broadcast_news` (scrive nel feed
+pubblico `global_news`, chiamata legittimamente da `engine.js:2000` ma raggiungibile anche da
+`anon` per impersonare qualsiasi azienda). **Fix** (`55_fix_public_rpc_no_auth_required.sql`):
+REVOKE completo sulla prima; sulla seconda aggiunto un controllo `auth.uid() IS NOT NULL` (il
+client la chiama solo da loggato, zero regressione) + REVOKE da `anon`.
+
+**Verificato**: nessuna di queste 3 fix tocca file JS — solo GRANT/REVOKE e un controllo auth
+aggiunto. Suite test invariata (65/65 pass, nessuna di queste RPC è coperta da test node — sono
+lette solo via query dirette sul DB, verificate con `has_function_privilege` prima/dopo).
+
+### 🔴 15 agosto 2026 — NUOVO WORKFLOW (Claude Code + Gemini 3.7 Flash via Continue/Vertex AI) + FIX CRITICAL rpc_donate_to_alliance
+**Workflow di progetto aggiornato**: da oggi Chauffeur Empire usa due AI indipendenti — Claude Code
+(implementazione) + Gemini 3.7 Flash via Continue in VS Code, provider Vertex AI (non API
+consumer). Gemini fa da secondo paio di occhi (bug hunting/code review indipendente); Claude
+verifica ogni finding sul repo reale prima di agire, classificandolo CONFIRMED BUG / POTENTIAL BUG
+/ FALSE POSITIVE / IMPROVEMENT. **Vincolo tecnico**: Claude Code non ha un canale diretto verso
+Continue/Gemini — l'interazione passa da Vlad (incolla i findings di Gemini in sessione). Dettagli
+completi salvati in memoria di progetto (`workflow_due_agenti_gemini.md`).
+
+**🔴 CRITICAL trovato e fixato: `rpc_donate_to_alliance` generava tesoro alleanza dal nulla,
+corrompendo il Punteggio Potere "a prova di cheat".** File: `17_executive_club.sql`-area
+(alliances) + `alliances.js:330` (call-site, input libero dall'utente). L'unico controllo di
+plausibilità era `p_amount > leaderboard.liquid_assets` — ma quel campo è **liberamente
+scrivibile dal client**: la RLS su `public.leaderboard` (`polcmd '*'`, `user_id = auth.uid()`)
+permette a chiunque di fare UPDATE sulla propria riga senza validazione server-side del contenuto
+(verificato: `saveSystem.js::_upsertLeaderboard` ci scrive `Math.floor(saveData.cash||0)`, ma
+nulla impedisce una scrittura diretta arbitraria da devtools). **E anche superato quel check finto,
+la funzione non scalava mai un euro da `companies.cash` o `game_saves.cash`** — il "donatore" non
+pagava letteralmente nulla. Il tesoro alleanza sblocca perk reali (`rpc_activate_alliance_perk`) e
+la `alliance_members.contribution` incrementata alimenta **direttamente** il Punteggio Potere in
+classifica (`ui-ranking.js:53-63`), l'unica metrica esplicitamente progettata per essere "a prova
+di cheat" (riga 144) proprio perché non dipende dal cash lato client — quindi questo bug la
+vanificava del tutto, ed era ripetibile senza alcun rate-limit.
+
+**Fix applicato** (`54_fix_donate_to_alliance_cash_source_of_truth.sql`): la RPC ora legge e scala
+`companies.cash FOR UPDATE` (fonte autoritativa, stesso pattern di `rpc_sync_cash`), ignora
+completamente `leaderboard.liquid_assets`, aggiunto rate-limit 20/min. Firma, tetto (€100M/chiamata)
+e resto della logica (treasury, contribution, membership check) invariati.
+
+**Verificato con un test end-to-end reale** (utente temporaneo, `leaderboard.liquid_assets`
+volutamente falsificato a €200M): prima donazione da €40.000 con `companies.cash` reale a
+€50.000 → riuscita, `cash` sceso correttamente a €10.000. Seconda donazione da €40.000 →
+**correttamente rifiutata** ("Fondi insufficienti, hai €10.000") nonostante `leaderboard` mostrasse
+ancora €200M — la RPC ignora del tutto quel campo, come da fix. Dati di test rimossi subito dopo.
+
+### 🔴 14 agosto 2026 — RESET dati di test + FIX BUG CRITICAL doppia source of truth del cash (P2P/Sindacato)
+
+**Reset dati di test (autorizzato esplicitamente da Vlad, verificato PRIMA che non esistesse un
+DB dev separato — `twstjbykstaioaahfqbe` è l'UNICO progetto Supabase di Chauffeur Empire, lo
+stesso che serve il client live).** Inventario letto dallo schema reale (non dai file `.sql`,
+alcuni sono scaffold mai applicati): 10 tabelle con FK reale `ON DELETE CASCADE` da
+`companies.id`, ~35 tabelle con `user_id`/`company_id` senza FK dichiarata. 7 account totali in
+`auth.users` (tutti riconducibili a Vlad — `djblade594@gmail.com`, `vlad@olgavision.it`,
+`gainavladionut@gmail.com`, `slumpdivider@gmail.com`, `slump_divider_5m@icloud.com`,
+`djbladestudio@gmail.com`, `bestbroker1998@gmail.com`), confermato con Vlad via domanda esplicita
+prima di procedere (includeva anche il suo account principale). **Eseguito**: `TRUNCATE` di tutte
+le tabelle per-utente (companies CASCADE + tutte le tabelle Gruppo B esplicite) + pulizia
+riferimenti in `judicial_auctions`/`server_decrees` (generate proceduralmente, righe preservate,
+solo `winner_id`/`bid_count`/`votes_current` azzerati) + cancellazione dei 7 utenti via Auth Admin
+API (non `DELETE FROM auth.users` diretto — pulisce correttamente anche `identities`/`sessions`).
+**Zero DDL**: schema, migration, RPC, policy invariati. Verificato dopo: `auth.users=0`,
+`companies=0`, `game_saves=0`, tabelle globali (`provinces`, `b2b_catalog`, ecc.) intatte.
+
+**Bug cash — verifica confermata (era già diagnosticato in una sessione precedente, qui
+riverificato sullo stato REALE del DB prod prima di correggere, come richiesto).** Root cause:
+`_get_player_cash`/`_add_player_cash` (helper usati da 9 RPC — mercato P2P auto, holding/IPO,
+azioni, consorzi, Don Carmine, GdF) leggevano/scrivevano SOLO `game_saves.game_state.cash`,
+**mai** `companies.cash` (la source of truth prevista dall'architettura — `auth.js` Phase 5:
+"companies table is always authoritative"). Ogni transazione P2P veniva silenziosamente
+cancellata dal primo `saveGame()` chiamato subito dopo dallo stesso codice client
+(`p2p-market.js`/`p2p-render.js`) — upsert completo del blob `game_state` con `gameState.cash`
+ancora stantio (mai decrementato localmente, perché il codice assumeva — erroneamente — che
+Realtime su `companies` lo avrebbe fatto). Effetto: compratori P2P non pagavano mai davvero,
+venditori/contributori perdevano l'asset senza incassare.
+
+**Fix applicato** (`52_fix_p2p_sindacato_cash_source_of_truth.sql`, applicata al DB prod):
+`_get_player_cash`/`_add_player_cash` ora operano su `companies.cash`, stesso contratto di
+`rpc_sync_cash` (UPDATE atomico singolo, niente più `GREATEST(0,...)` che clampava
+silenziosamente un prelievo eccessivo — ora si affida al `CHECK companies_cash_check (cash>=0)`
+già esistente, fail-loud con ROLLBACK automatico dell'intera RPC, elimina anche il TOCTOU tra
+check preliminare e scrittura). Aggiunto lock ordinato `FOR UPDATE ... ORDER BY user_id` su
+entrambe le `companies` coinvolte in `rpc_buy_market_car` (buyer+seller),
+`rpc_buy_company_shares` (buyer+issuer), `rpc_daily_dividends` (holder+issuer per iterazione) —
+prima non c'era, rischio deadlock reale con transazioni P2P incrociate concorrenti. Le altre 6 RPC
+(`rpc_contribute_holding_treasury`, `rpc_list_company_ipo`, `rpc_sell_company_shares`,
+`rpc_contribute_consorzio`, `rpc_pay_don_carmine`, `rpc_gdf_inspection_check`) non richiedevano
+modifiche — toccano un solo utente, puntano automaticamente al fix tramite gli helper.
+`saveSystem.js` **non toccato** (non serviva): una volta che `gameState.cash` converge
+correttamente via Realtime su `companies`, il prossimo autosave scrive comunque il valore giusto.
+
+**Verificato con un test end-to-end reale** (2 utenti auth temporanei, creati e poi eliminati):
+buyer con €100.000 compra un'auto P2P da seller con €50.000 a €20.000 → dopo la RPC,
+`companies.cash`: buyer=€80.000, seller=€69.000 (netto dopo fee 5%) — **corretto**; `game_saves.cash`
+resta invariato (snapshot stantio, atteso — verrà aggiornato dal prossimo `saveGame()` una volta
+che `gameState.cash` converge via Realtime). `market_listings` correttamente ripulita. Dati di test
+rimossi subito dopo.
+
+**Audit economia (FASE 7, prima area) — 65 RPC che toccano cash/driver_coins/vtk mappate dallo
+schema reale, ~30 con prezzo/importo dal client analizzate in dettaglio.**
+
+🔴 **HIGH trovato e fixato**: `rpc_nemesis_fund_rival` (`17_executive_club.sql` +
+`nemesis.js:69-98`) generava cash dal nulla (fino a €50.000, rate-limit 5/ora esistente =
+fino a €250.000/ora) verso **qualsiasi** `user_id` passato dal client — il sistema "Nemesis" è
+puramente narrativo lato client (il rivale è scelto a caso dalla leaderboard, zero tabelle
+`%nemesis%` nello schema per tracciare una relazione reale), la RPC si fidava ciecamente del
+target. Sfruttabile anche per trasferire fondi tra account multipli dello stesso giocatore. **Fix
+applicato** (`53_revoke_nemesis_fund_rival_no_server_tracking.sql`): REVOKE dell'accesso diretto
+client — il client gestisce già l'RPC in un `try/catch` silenzioso, nessuna regressione visibile,
+l'evento narrativo smette solo di attivarsi. Il resto del sistema Nemesis (`rpc_nemesis_bribe_vip`,
+che addebita solo il chiamante) resta attivo. **Fix vero rimandato** (decisione di design, non
+implementata): tabella `nemesis_events` server-side per tracciare la relazione reale prima di
+riattivare il pagamento.
+
+🟡 **MEDIUM, pattern già noto (Gruppo 3 in questo stesso file), confermato ancora presente, non
+toccato**: `rpc_buy_auto_rest`, `rpc_buy_energy_refill`, `rpc_buy_fleet_repair`,
+`rpc_buy_vip_contact`, `rpc_upgrade_offline_limit`, `rpc_buy_hr_automation`, `rpc_buy_investment`
+— il costo è dichiarato interamente dal client, mai confrontato a un listino server-side (non
+genera valuta dal nulla, limitato dal saldo posseduto, ma permette di pagare quasi nulla per il
+beneficio). Fix vero = portare i listini lato server, task ampio, fuori scope per un fix isolato.
+
+✅ **Verificate senza problemi** (falsi positivi del grep automatico usato per la triage, o già
+hardenizzate in sessioni precedenti): `rpc_add_driver_coins` (cap 1M + rate-limit già presenti),
+`rpc_buy_crypto`, `rpc_deposit_offshore`, `rpc_upgrade_shadow_defense` (già hardenizzata),
+`rpc_nemesis_bribe_vip`, `rpc_pay_fuel_levy` (il `GREATEST(10,...)` neutralizza input negativi),
+`rpc_place_auction_bid` (già protetta con cap €100M + flag cheat + rate-limit 10s).
+
+**Audit STATO (FASE 7, seconda area) — gameState/ServerState/save-load/login/logout/reload/
+Realtime letti per intero.** Nessun nuovo bug critico oltre al fix cash di questa stessa sessione:
+boot sequence (`auth.js` Phase 1-6) solida e self-healing (`_ensureCompany`), delta-sync Realtime
+(`_onCompanyChange`, "BUG 4 fix") corretto, debounce cloud-save con coda già gestisce il caso
+"salvataggio scartato in finestra" (fix precedente "stabilizzazione 10 agosto"). Il pattern
+sistemico "RPC → non toccare gameState localmente, fidati di Realtime" ora funziona correttamente
+anche per le RPC P2P/Sindacato grazie al fix di oggi.
+
+🟢 **LOW, solo igiene dati, non toccato**: `resetGame()` (`auth.js:362-394`) cancella `game_saves`
+e azzera `companies.cash`, ma non ripulisce `vehicles`/`drivers`/`active_trips`/`company_loans`
+collegati alla company esistente — restano righe orfane lato server dopo ogni reset in gioco (uso
+normale, non il reset DB di test fatto oggi). Verificato che NON gonfia il "Punteggio Potere" in
+classifica (si basa su `gameState.fleet.length` dichiarato dal client via `leaderboard.fleet_count`,
+non sul conteggio server) — nessun impatto di gioco concreto trovato finora.
+
+**Audit FRONTEND (FASE 7, terza area) — bottoni morti.** Estratti tutti i nomi funzione
+referenziati da `ceAct(...)` (230) e da `data-ce-act="..."` letterale (21) su tutto il repo,
+verificata l'esistenza di una definizione per ciascuno. **Zero bottoni morti trovati** — tutti i
+riferimenti risolvono a una funzione reale.
+
+**Audit SIMULAZIONE (FASE 7, quarta area) — 🔴 CRITICAL trovato e fixato: `processDailyRoutines`
+sincronizzava il cash solo a metà funzione.** File: `engine-daily.js`. La funzione chiamava
+`ServerState.syncCash(gameState.cash)` **una sola volta**, a riga 424, subito dopo
+`gameState.cash += (income - expenses)`. Da lì in poi (altre ~550 righe, fino alla chiusura della
+funzione) continua a mutare `gameState.cash` direttamente per: multe scadute auto-pagate, upkeep
+giornaliero investimenti, bonus fedeltà autisti (30/60/90gg), entrate Venture Capital, entrate
+Meet & Greet, tassa annuale sui profitti, rata mensile prestiti, bonus streak Classic Vacations,
+incasso Hub Tax, vendita auto NPC sul marketplace, dividendi holding subsidiarie, dividendi IPO
+NPC — **nessuna di queste risincronizzava**. Stesso meccanismo del bug cash P2P fixato oggi
+(`companies.cash` server resta stantio, `auth.js` Phase 5 lo sovrascrive su `gameState.cash` al
+prossimo login, cancellando silenziosamente tutto il delta) ma qui molto più pervasivo: si attiva
+**ogni giorno di gioco, per ogni giocatore**, non solo su azioni P2P opzionali. Il test esistente
+(`test/daily/daily-tick.test.js`) non lo copriva — nello scenario minimo di test (`inv_carwash`,
+senza upkeep/prestiti/multe attivi) il gap non si manifestava mai, quindi passava comunque.
+
+**Fix applicato**: aggiunto un secondo `ServerState.syncCash(gameState.cash)` alla fine della
+funzione (dopo il blocco "daily summary toast", prima delle 4 chiamate fire-and-forget finali
+`_sindacatoGdfDailyCheck`/`_b2bDailyTick`/`_tourismDailyTick`/`_hqDailyTick` — verificate a parte,
+pulite: le prime due usano RPC dedicate che scrivono già `companies.cash` correttamente, l'ultima
+non tocca cash). `rpc_sync_cash` fa un SET assoluto quindi due chiamate in sequenza non causano
+doppio conteggio. Cache-bust `engine-daily.js` v12→v13 in `index.html`.
+
+**Test aggiunto** (`test/daily/daily-tick.test.js`): nuovo caso con `inv_fuel_depot`
+(`dailyUpkeep:500`, mutazione DOPO il primo sync) che verifica ≥2 chiamate a `syncCash` e che
+l'ultimo valore sincronizzato includa l'upkeep. **Verificato che il test fallisce senza il fix**
+(`git stash` sul file sorgente, rieseguito: `trovate 1 chiamate` invece di ≥2) — non è un falso
+positivo. Suite completa: **65/65 pass**, nessuna regressione.
+
+**Non ancora fatto**: resto della FASE 7-10 (backend/RPC rimanenti oltre l'economia, service
+worker, test coverage generale) — scope ancora ampio, da affrontare area per area.
+
+### ✅ 10 agosto 2026 (continuazione) — BLOCCO 1 completato, branch `auto/stabilization-blocco1`
+Core + Save/Load + Economy tutti `PASS` (checklist completa in `docs/STABILITY_CHECKLIST.md`).
+Suite: **49/49 pass** (36 pre-esistenti + 7 loans + 5 daily-reward, in `test/economy/`). Golden
+path reale in browser (account di test usa-e-getta, poi eliminato): New Game → First Day → guida
+manuale → login streak → assunzione → 2 prestiti → acquisto veicolo → save → reload → logout →
+re-login. Tutti gli step coerenti.
+
+**4 bug reali trovati e fixati** (nessuno noto prima, tutti emersi dal golden path/scrittura test):
+1. **`takeLoan` non validava la SOMMA dei prestiti attivi contro il fido** — due prestiti
+   singolarmente sotto il fido potevano superarlo insieme (es. fido 100k: 90k + 50k = 140k
+   accettati). `engine-finance.js`.
+2. **`takeLoan`/`repayLoan` non sincronizzavano mai il cash col server** — riprodotto dal vivo:
+   dopo un prestito, `rpc_buy_vehicle` rifiutava un acquisto legittimo con "fondi insufficienti"
+   perché `companies.cash` (server-authoritative) non aveva mai visto l'accredito, pur mostrando
+   il client un saldo abbondante. Fix: `ServerState.syncCash()` dopo la mutazione locale, stesso
+   pattern di `executeManualDrive`/`newGamePlus`. `engine-finance.js`.
+3. **Stesso problema per la ricompensa login streak** (`_checkDailyReward`) — cash sommato solo
+   in locale. Stesso fix. `engine-daily.js`.
+4. **`_cloudSaveSlot` scartava (non accodava) i salvataggi entro 4s l'uno dall'altro** — riprodotto
+   dal vivo: prestito preso, reload entro 4s → il prestito e il suo accredito sparivano senza
+   alcun errore visibile. Fix: salvataggio "di coda" schedulato a fine finestra invece dello
+   scarto (limite residuo: un reload/chiusura ENTRO la finestra di coda può ancora perdere
+   l'ultima azione — non eliminabile senza toccare `beforeunload`, fuori scope). `saveSystem.js`.
+
+**`DESIGN_DECISION_REQUIRED` nuova**: `takeLoan`/`repayLoan` continuano a non chiamare le RPC
+dedicate `rpc_take_loan`/`rpc_repay_loan` (indurite il 9 agosto, mai collegate). La RPC ha un
+modello di ammortamento (`daily_payment`, mai implementato lato client) — serve una decisione
+(adottarlo o abbandonarlo) prima di collegare per intero, altrimenti si rischia una doppia
+contabilità cliente/server. Vedi `docs/STABILITY_CHECKLIST.md` per il dettaglio.
+
+**PR**: [#20](https://github.com/Normally101/ncc/pull/20) aperta, **non mergiata**. Include anche
+il merge del fix giorno-di-gioco (PR #18) per testare tutto insieme — PR #18 resta aperta
+separatamente per la review, questo branch la incorpora solo ai fini del test.
+
+**PROBLEMI ANCORA APERTI**: BLOCCO 2-5 non ancora iniziati (tutti `NOT TESTED` in
+`docs/STABILITY_CHECKLIST.md`). Nessun nuovo Critical FAIL aperto in Core/Save-Load/Economy.
+
+---
+
+### ✅ 10 agosto 2026 — Prima suite di test eseguibile, branch `auto/qa-test-suite`
+Su istruzione diretta di Vlad: trasformare `docs/QA_PLAN.md` da documento teorico a test
+eseguibili con `npm test`. Branch nuovo (basato su `auto/functional-bugs-critical`, che contiene
+i fix di cui questi test verificano la regressione — vedi PR collegate sotto), non su main.
+
+**TEST — risultato**: `npm test` → **36 PASS / 0 FAIL / 0 SKIP** (10 file, incluso
+`contracts/corporate-bid` aggiunto in un secondo passaggio — regressione sul bug "denaro
+duplicabile nei bandi corporate" del 6 agosto). Dettaglio completo,
+harness e cosa NON è coperto: vedi `docs/QA_PLAN.md` → "✅ Stato implementazione".
+
+## BUG REALI TROVATI (scrivendo la suite)
+
+**1 bug, in una fix di poche ore prima nella stessa sessione (non nel gioco pre-esistente):**
+- **Sistema**: economia / `rpc_sync_cash` (Supabase).
+- **Causa**: il cap sul delta applicato la mattina stessa (mitigazione anti-exploit) era
+  simmetrico (±€60M) — un New Game+ legittimo da un cash molto alto genera un decremento
+  enorme, che il cap rifiutava, ricreando la stessa divergenza client/server che la fix voleva
+  chiudere.
+- **Fix**: `50_fix_sync_cash_asymmetric_delta.sql` — cap solo sugli incrementi (unica direzione
+  sfruttabile), decrementi liberi (già limitati dal `CHECK (cash >= 0)` di tabella).
+- **Test che lo riproduce**: `test/progression/new-game-plus.test.js` → "REGRESSIONE: newGamePlus
+  manda il nuovo cash al server" (avrebbe fallito con il cap simmetrico: `syncCash` sarebbe stata
+  rifiutata dal DB).
+- **Test che dimostra la correzione**: stesso file, passa; più 4 assert diretti contro il DB reale
+  in transazione con rollback (vedi entry precedente, stessa sessione).
+
+Nessun ALTRO bug di gioco nuovo trovato in questo giro — gli altri fallimenti incontrati scrivendo
+i test erano difetti dell'ambiente di test stesso (sequenza corretta apri-tab-poi-seleziona-auto
+per lo showroom, campi mancanti nei fixture minimi, uno stub `document` troppo semplice sostituito
+con `jsdom` reale), non del gioco.
+
+## PROBLEMI ANCORA APERTI
+
+- **Contracts/B2B/Tourism/Aste**: zero test — priorità più bassa nell'ordine richiesto, non
+  ancora affrontato. `FIX_LATER`.
+- **Livello 4 (E2E reale in browser)**: `NON VERIFICATO` — richiede Playwright + Supabase di
+  staging, resta un lavoro solo tuo (vedi `docs/QA_PLAN.md` Livello 4).
+- **`hq.js::hqUpgradeRoom`**: ancora `DESIGN_DECISION_REQUIRED` (vedi entry precedente) — non
+  toccato, nessun test scritto per lo stesso motivo (non testabile finché non è server-authoritative).
+
+## DECISIONI CHE SERVONO A VLAD
+
+Nessuna nuova rispetto a quelle già segnalate nell'entry precedente (`hq.js` + review/merge dei
+branch `auto/functional-bugs-critical` e `auto/qa-test-suite`, quest'ultimo basato sul primo).
+
+---
+
+### ✅ 9 agosto 2026 (continuazione, stesso giorno) — 5 bug funzionali critici, branch `auto/functional-bugs-critical`
+Su istruzione diretta di Vlad ("chiudi concretamente i problemi, partendo dalla sicurezza SQL
+— poi bug che alterano permanentemente stato/economia"). La sicurezza SQL (sotto) era già
+chiusa nella prima parte della stessa sessione; qui backlog funzionale da `docs/SYSTEMS.md`/
+`docs/QA_PLAN.md`, verificato leggendo il codice reale (non fidandosi del solo riassunto),
+fixato, testato con script standalone (VM + mock, il progetto non ha ancora `node --test`
+configurato — `docs/QA_PLAN.md` Fase 2), committato **su branch, non su main** (`git push -u
+origin auto/functional-bugs-critical`, **non mergiato — merge/review a Vlad**).
+
+**FIX APPLICATI:**
+
+| Problema | File/RPC | Modifica | Commit | Test |
+|---|---|---|---|---|
+| New Game+ non sync col server — un relogin poteva far tornare il cash al valore pre-reset | `engine.js` (`newGamePlus`, `sellCompanyNGP`) | Aggiunta `ServerState.syncCash()` dopo il reset, stesso pattern guardato usato altrove | c76beda | Letto il codice, pattern verificato identico ad altri call-site esistenti |
+| ⚠️ **Trovato mentre testavo il fix sopra**: il cap sul delta di `rpc_sync_cash` (di poco prima, nella stessa sessione) era simmetrico e avrebbe rifiutato un New Game+ legittimo da un cash alto | `rpc_sync_cash` (Supabase) | Cap solo sugli INCREMENTI (unica direzione sfruttabile); i decrementi restano liberi, già limitati dal `CHECK (cash >= 0)` esistente sulla tabella | c76beda (`50_fix_sync_cash_asymmetric_delta.sql`) | 4 assert in transazione con ROLLBACK contro il DB reale: incremento enorme rifiutato, decremento enorme (simula NGP) accettato, cash negativo bloccato dal CHECK, incremento plausibile accettato |
+| `fireDriver` licenziava un autista a metà corsa, lasciando `ride.driverId` orfano — l'auto tornava libera e riassegnabile mentre la vecchia corsa pagava comunque a fine corsa | `engine-drivers.js` | Blocco se `status==='busy'`, stesso guard già usato per l'Accademia | ebf2e1e | Script VM con la funzione reale + gameState mockato: 3 assert (driver busy non rimosso, driver idle rimosso, driver busy ancora nel roster) |
+| Race auto-documentata: reward Driver Coins poteva sparire (RPC fallita, `.catch` silenzioso) mentre l'ordine restava "riscosso" per sempre | `daily-orders.js` (`claimDailyOrder`) | Rollback di claim + credito locale sul fallimento della RPC, notifica esplicita invece del catch silenzioso | a73d7fa | Script VM, mock RPC che risolve/rigetta: successo → claim mantenuto + saldo server autoritativo; fallimento → rollback completo + notifica errore |
+| Golden Boy/Erede (VIP) applicavano danno/riparazione a `ride.carId` (congelato alla creazione) invece che al veicolo REALMENTE in uso, se il driver era stato riassegnato nel frattempo | `vip-clients.js` (`_vipCompleteGolden`, `_vipCompleteErede`) | Priorità esplicita a `driver.assignedCarId`, fallback a `ride.carId` | 659eefb | Script VM: driver riassegnato da auto A a B tra creazione e completamento ride — danno forzato via mock di `Math.random`, applicato correttamente a B, A intatta |
+| `_hqMarker` mai rimosso da `_destroyMap()` — dichiarato `let` (locale al file) invece di `var` (diventa `window.X`), stesso pattern del bug storico `_activeTab` | `ui-map-utils.js` | `let` → `var` | e984fc9 | Script che replica la semantica reale browser (`window === global` a top-level di script tag): conferma che `var` si propaga correttamente |
+
+**TEST — nota onesta**: tutti gli script sopra sono verifiche standalone (Node `vm` + mock),
+non un test suite formale — il progetto non ha `node --test` configurato (`docs/QA_PLAN.md`
+Fase 2, non ancora fatta). Ogni fix testato caricando il **file sorgente reale** (non una
+riscrittura) con `gameState`/dipendenze mockate, e asserzioni sul comportamento prima/dopo.
+**NON VERIFICATO**: nessun test in browser reale (Playwright/manuale) — cambi non ancora
+visti girare nel gioco vero.
+
+**SUPABASE**: solo la correzione al cap di `rpc_sync_cash` (50_, sopra) — applicata e testata
+con rollback, stesso metodo della sessione precedente. Nessun'altra RPC toccata in questo giro.
+
+**PROBLEMI ANCORA APERTI (classificati):**
+
+- **`hq.js::hqUpgradeRoom`** — `DESIGN_DECISION_REQUIRED`. Scala `gameState.cash`
+  direttamente, zero RPC, e gli effetti (`allEarningsMult`, `tipMult`, `salaryCostMult`,
+  `driverXpMult`) sono moltiplicatori **globali permanenti** — un vantaggio composto su tutta
+  l'economia futura, non un furto una-tantum. **Verificato**: esiste già `26_hq_buildings.sql`
+  in prod (`hq_status` table + `rpc_update_hq_status`), ma è **solo una leaderboard** — accetta
+  `rooms_built`/`hq_score` autodichiarati dal client senza validare né il costo pagato né i
+  livelli reali. Renderlo davvero server-authoritative richiede schema nuovo (costo/livello per
+  stanza tracciato server-side), stessa classe di lavoro del debito #1 economia — non un fix
+  chirurgico, serve una decisione di scala/priorità da Vlad prima di procedere.
+- **`global_events.js`**: `gameState.activeDynamicEvent` non viene mai azzerato a fine evento
+  globale → il generatore di eventi dinamici locali resta bloccato permanentemente dopo il
+  primo evento globale visto. `FIX_LATER` — non toccato in questo giro (priorità sotto ai 5
+  sopra), ma è un bug di stato reale, non solo estetico.
+- **Pattern sistemico "prezzo dal client mai confrontato a un listino"** su ~10 RPC
+  (`rpc_buy_vehicle` incluso, verificato con l'audit SQL della prima parte di questa sessione)
+  — `FIX_LATER`, stessa famiglia di `rpc_sell_vehicle` già chiuso, non ancora affrontato RPC
+  per RPC.
+- **`hostile_takeover.js`/`rpc_pay_majority_dividend`**: v_ride_earnings ancora arbitrario dal
+  client (solo l'autorizzazione raider è stata chiusa nella prima parte della sessione) —
+  `FIX_LATER`.
+- Resto del backlog Gruppo 3 di `docs/SQL_LOCKDOWN_HANDOFF.md` (Driver Coins negativi su 6 RPC,
+  `rpc_vote_server_decree`) — non toccato in questo giro, `FIX_LATER`.
+
+**DECISIONI CHE SERVONO A VLAD:**
+1. `hq.js` — priorità/scala per rendere l'economia HQ server-authoritative (vedi sopra),
+   stesso tipo di decisione già in sospeso per il debito #1 generale.
+2. Branch `auto/functional-bugs-critical` pushato ma **non mergiato** — review e merge quando
+   comodo (nessun conflitto noto con main al momento del push).
+
+---
+
+### ✅ 10 agosto 2026 (continuazione) — Playtest E2E reale con account di test veri, branch `auto/e2e-onboarding-day-bug`
+Su richiesta diretta di Vlad ("crea un account di prova, testa realmente TUTTO... l'unico modo per
+avere la certezza che sia un gioco veramente senza bug"). Creati 3 account usa-e-getta reali via
+Supabase Admin API (email `.invalid`, pre-confermati, MAI committati/loggati in chiaro), giocati
+davvero in Chrome (chrome-devtools MCP) contro il branch `auto/qa-test-suite` servito in locale
+(`http.server` + Supabase di **produzione**, non esiste uno staging separato per questo progetto).
+Tutti e 3 gli account e ogni riga associata (companies/game_saves/leaderboard/push_subscriptions)
+**eliminati a fine sessione** — verificato con query di conteggio a zero su tutte le tabelle toccate.
+
+**BUG REALE #1 (il più importante trovato in questa sessione) — giorno di gioco non sincronizzato
+al primissimo avvio, riproducibile su OGNI nuovo account:**
+- **Sintomo**: al login di un account appena creato, console mostra `[ServerState] RPC
+  rpc_sync_cash fallita: ... violates check constraint "companies_cash_check"`. Riprodotto
+  identico su 3 account diversi.
+- **Causa**: `initGame(fresh=true)` non inizializza `gameState.day/hour/minute/month`. Il primo
+  tick di `gameLoop()` (600ms dopo l'avvio) risincronizza forzatamente `gameState.day` al giorno
+  reale del server (`engine.js` riga ~981) — la differenza rispetto al default del template viene
+  letta come "è passato un giorno" e fa scattare un `processDailyRoutines()` non voluto
+  (interessi debito Vittorio, tick B2B/tourism, ispezione GdF) sulla primissima sessione di ogni
+  nuovo giocatore, prima che abbia fatto qualunque cosa. **Invisibile ai 36 test unitari per
+  costruzione**: `freshEnv()` ferma gli interval subito dopo `initGame`, quindi `gameLoop()` non
+  parte mai nei test — solo un vero playtest in browser poteva trovarlo.
+- **Fix**: pre-sync di day/hour/minute/month in `initGame(fresh)`, stesso pattern già corretto nel
+  ramo returning-player 3 righe sotto. `engine.js` (commit su `auto/e2e-onboarding-day-bug`, PR
+  [#18](https://github.com/Normally101/ncc/pull/18), non mergiata).
+- **Verificato**: bug riprodotto E poi confermato chiuso sullo stesso identico flusso con un 3°
+  account pulito (nessun errore, debito Vittorio resta esattamente a €500, nessun interesse
+  spurio). Suite 36/36 invariata.
+
+**BUG REALE #2 — tabella `provinces` vuota in produzione (0 righe), sistema "Conquista i
+Territori" completamente non funzionante per chiunque:**
+- Ogni corsa completata in una città mappata prova ad accreditare influenza territoriale
+  (`rpc_add_province_influence`) → falliva sempre con "Provincia non trovata" perché la tabella
+  `provinces` non aveva MAI ricevuto il seed (stesso identico pattern del VTK Shop del 6 agosto:
+  migration scritta, mai applicata). Il client referenzia **23** province (`_POI_TO_PROVINCE` in
+  `engine.js`), la migration `09_provinces_realestate_fuel.sql` ne definisce solo **5** (Roma,
+  Milano, Firenze, Napoli, Venezia).
+- **Fix applicato**: seed delle 5 province già progettate nella migration esistente (nessun dato
+  inventato — valori presi identici dal file committato). Verificato: `rpc_add_province_influence`
+  ora funziona per queste 5.
+- **APERTO — decisione per Vlad**: le altre **18** province (Torino, Trieste, Trento, Perugia,
+  Aosta, Bologna, Genova, Como, Padova, Bari, Palermo, Cagliari, Taormina, Amalfi, Cervo,
+  Cortina, Civitavecchia, Egnazia) non hanno `base_price`/`region_id` progettati da nessuna parte
+  nel repo — servono valori di bilanciamento reali, non inventabili da me. `DESIGN_DECISION_REQUIRED`.
+
+**SQL — PR #17 (Driver Coins costo negativo) applicata e chiusa:** le 6 RPC (`rpc_upgrade_offline_
+limit`, `rpc_buy_auto_rest`, `rpc_buy_energy_refill`, `rpc_buy_fleet_repair`, `rpc_buy_vip_contact`,
+`rpc_buy_hr_automation` — trovate dalla routine cloud in autonomia durante questa stessa giornata,
+PR aperta indipendentemente da questa sessione) validavano solo il fondo insufficiente, mai il
+segno del costo: un costo negativo conservava valuta premium arbitraria. Applicata
+`51_lockdown_driver_coins_negative_cost_scaffold.sql`, verificata in transazione con ROLLBACK
+forzato (negativo/zero rifiutati, positivo legittimo e saldo-insufficiente invariati).
+
+**Playtest reale eseguito e verificato** (oltre ai 2 bug sopra): guida manuale (+€15/-10%
+energia), login streak (+€500 giorno 1), assunzione Ragazzo di Quartiere (eredita auto CEO come
+da design), dispatch automatico corsa, **regressione `fireDriver` a metà corsa confermata dal
+vivo** (driver non rimosso mentre `busy`, stesso comportamento dei test unitari ma ora osservato
+contro RPC reali), **round-trip save/reload cloud confermato** (era l'unico gap esplicitamente
+segnalato come "NON VERIFICATO" nella sessione QA — cash/giorno/autisti persistiti e ripristinati
+esatti). Non ri-testati a schermo in questo giro (già coperti dai 36 test unitari, non
+ri-verificati live per tempo): VIP-riassegnazione, daily-orders rollback, New Game+, HQ, VTK
+Shop, B2B/tourism/aste.
+
+**Anomalia investigata e classificata FALSE_POSITIVE**: 403 su `push_subscriptions` a ogni login.
+Causa: `endpoint` push ha vincolo UNIQUE globale (non per-utente) e questo browser di test genera
+lo stesso endpoint mock ad ogni sessione — RLS blocca correttamente l'UPDATE su una riga di un
+altro utente. Non riproducibile da giocatori reali (endpoint Push API reale è univoco per
+dispositivo). Nessun fix applicato.
+
+**PROBLEMI ANCORA APERTI (oltre a quelli già in cima al file):**
+- 18 province senza dati di bilanciamento — `DESIGN_DECISION_REQUIRED` (sopra).
+- PR #18 (fix giorno di gioco) — pushata, **non mergiata**, review a Vlad.
+- Copertura E2E reale rimane parziale: confermato il boot/auth/RPC layer end-to-end e i sistemi
+  sopra, ma "ogni tasto, ogni funzione" nel senso letterale (tutti i tab, tutte le decine di
+  investimenti/upgrade/eventi) NON è stato possibile in una sessione — sarebbe lavoro per più
+  sessioni dedicate o un vero setup Playwright.
+
+---
 
 ### ✅ 9 agosto 2026 — Tutte le falle SQL critiche chiuse in produzione (sessione live, VS Code)
 Su richiesta diretta di Vlad ("ci stanno dei sql da fare su supabase, procedi con quello"),
@@ -817,3 +1386,161 @@ War Room (provinces):
   - openMapOverlay() → _ensureMap() → initMap() (se map===null)
   - initMap() NON chiama più switchTab() — era il bug della sessione precedente
 ```
+
+### 🎮 15 agosto 2026 — PLAYTEST COMPLETO su account nuovo (browser reale) — 3 bug CRITICAL
+
+Prima sessione di gioco vera del progetto: account nuovo (`qa.alpha@example.com`, creato via Auth
+Admin API con `email_confirm:true` perché `supabase-config.js:15` ha `redirectTo` hardcoded sulla
+produzione), `python3 -m http.server 8000`, Chrome pilotato via chrome-devtools MCP, con un
+collector installato via `initScript` che intercetta **ogni** chiamata `/rest/v1/rpc/` con status e
+ogni errore console. Report completo: `docs/PLAYTEST_REPORT_2026-08-15.md`.
+
+Serviva perché tutto il debugging precedente era su codice e DB, mai giocando: i 67 test Node
+mockano `ServerState`, quindi lo strato RPC+Realtime reale non era mai stato esercitato.
+
+**Esito di fondo:** il gioco non va in errore — sweep di tutti i 31 tab con **zero eccezioni JS e
+zero RPC fallite**. È rotto in modi più insidiosi.
+
+**1. [CRITICAL, FIXATO] Ogni incasso da corsa spariva al reload — il ciclo centrale.**
+`engine-rides.js` incrementava `gameState.cash` alle righe 700/792/884 senza **mai** chiamare
+`syncCash` (zero occorrenze nel file). Riprodotto: `game_saves.game_state.cash` = 923 ma
+`companies.cash` = 650 → al boot `bridgeToGameState()` sovrascrive col server e 273 EUR spariscono.
+Fix: 2 `syncCash` (fine `completeRide` per pagamento immediato + mancia Charmante; dopo il loop di
+`checkActiveTrips` per i differiti, una sola RPC per passaggio). `?v=10→11`. Verificato dal vivo:
+811 = 811, sopravvive al reload. 2 test di regressione → **67/67**.
+
+**2. [CRITICAL, FIXATO] Il canale Realtime principale era completamente muto.**
+Nessuna modifica lato server arrivava al client: comprato un veicolo, il server addebitava
+correttamente 35.000 EUR ma il giocatore vedeva il saldo vecchio a tempo indefinito. Idem veicoli,
+viaggi, immobili, prezzo carburante. Canale regolarmente `joined`/`SUBSCRIBED`.
+Causa isolata con test A/B in browser: canale col solo binding `companies` → riceve; stesso canale
++ binding su `drivers` (assente dalla publication) → **non riceve nulla**. In Supabase Realtime
+**un binding non valido invalida tutti gli altri binding dello stesso canale, in silenzio**;
+`serverState.js` ne registra 7 su `ce_game_events`. Diff sottoscrizioni-client vs publication:
+**9 tabelle mancanti** (`drivers`, `market_listings`, `company_shares`, `holding_members`,
+`consorzio_members`, `judicial_auctions`, `crypto_market`, `global_events`, `real_world_status`).
+Fix: `60_fix_realtime_publication.sql` (ADD TABLE idempotente, zero DDL distruttivo). Verificato:
+modifica server di −9.999 applicata dal client in pochi secondi; prima del fix nessun effetto.
+⚠️ Conseguenza da valutare a parte: `rpc_sync_cash` fa un **SET assoluto**, quindi finché il client
+non riceveva gli addebiti server-side un `syncCash` successivo poteva **annullarli**.
+
+**3. [CRITICAL, FIXATO — responsabilità del reset del 14/08] Nove cataloghi globali vuoti.**
+`crypto_market`, `regions`, `real_estate_listings`, `judicial_auctions`, `server_decrees`,
+`fuel_market`, `global_tension`, `vehicle_co2_rates`, `real_world_status` a 0 righe → i tab Crypto,
+Real Estate, Regioni, Aste e Politica erano gusci vuoti. Forensica `pg_stat_user_tables`:
+`n_tup_ins>0`, `n_tup_del=0`, `n_live_tup=0` = firma di un **TRUNCATE**. **La nota del 14/08
+(righe 198-204) che dichiarava "tabelle globali intatte" e "judicial_auctions/server_decrees righe
+preservate" era INESATTA.** Reseed verbatim dalle migration originali in
+`59_reseed_global_catalogs.sql`.
+
+**Confermati e NON corretti** (dettaglio e riproduzione nel report):
+- **Schermata "Fonda Azienda" irraggiungibile**: `auth.js:51-57` crea la company col nome di
+  default, quindi il ramo `showNewGameSetup()` (`auth.js:167-175`) è codice morto. Ogni giocatore
+  si chiama "Chauffeur Empire" con logo 👁️ e **non può rinominarsi da nessuna parte**.
+- **`rpc_get_vtk_market_orders` non esiste** (404 PGRST202) e `vtk-market.js:95` ingoia l'errore →
+  il mercato VTK sembra "senza venditori" mentre è rotto.
+- **18 province su 23 non esistono**: `rpc_add_province_influence` → 400 "Provincia non trovata:
+  prov_civita" durante una corsa normale. Mancano i dati di bilanciamento, non il codice.
+- **Classifica pubblica sempre vuota**: la landing interroga `companies` (RLS `user_id=auth.uid()`
+  → 0 righe per anon, senza errore) invece di `leaderboard` (già pubblica). Link Discord `href="#"`.
+- **Il service worker può servire codice vecchio dopo un deploy**: durante il test ha servito un
+  `index.html` con `?v=10` mentre su disco era `?v=11`. Il cache-bust non protegge se è
+  `index.html` stesso a essere in cache.
+
+**Ritmo — la risposta vera a "non sembra giocabile"** (nessuno è un bug, insieme sono il problema):
+zero corse generate all'avvio (solo `setInterval` 5 min) → fino a 5 minuti di Dispatch vuoto subito
+dopo l'onboarding; durata corsa = `price×0.4` minuti cap 10-360 → una standard da 187 EUR dura
+**36 minuti reali** (misurato); i tab si sbloccano a 25 corse ≈ **9 ore reali** con 1 autista;
+primo batch bandi corporate dopo **2 giorni reali**.
+
+**Verificato sano:** tutorial 12 step, onboarding survival completo senza soft-lock, contabilità
+cash (0 → +500 premio login → +150 corse = 650), pipeline dispatch, `rpc_buy_vehicle` che addebita
+esattamente il listino, `syncCash` che arrotonda prima del `bigint`. Le **7 RPC delle alleanze**
+assenti dal repo **esistono in produzione** (migration mai committata → da dumpare e mettere in
+repo).
+
+**Rimasto aperto:** i test multi-account (P2P auto, alleanze, IPO, aste competitive, OPA, Shadow
+Ops, voto decreti) — il secondo account era creato ma la diagnosi del Realtime ha assorbito il
+tempo. **Vanno rifatti dopo il fix al Realtime**, che cambia il comportamento di tutte quelle
+feature. Piano di sweep statici per Gemini in `GEMINI_TESTPLAN.md` (8 sweep, il più urgente è la
+mappatura degli errori RPC ingoiati in silenzio).
+
+**Pulizia:** account QA eliminati, `auth.users` torna a 1 (solo Vlad, 600 EUR, intatto), cataloghi
+seedati mantenuti.
+
+### 🎮 17 agosto 2026 — Fix bug netti + ritmo di gioco (richiesti da Vlad dopo il playtest) — 1 CRITICAL trovato durante la verifica
+
+Seguito al playtest del 15/08: Vlad ha chiesto di correggere sia i bug netti sia il ritmo/flow
+(non solo sicurezza). Tutto verificato dal vivo con account puliti (browser context isolati,
+mai riusati tra un account e l'altro — lezione imparata a metà sessione, vedi sotto).
+
+**Bug netti:**
+- **"Fonda Azienda" reso raggiungibile** (`auth.js`): Phase 1/Phase 4 di `_mmoBootSequence`
+  creavano silenziosamente la company con nome default PRIMA che potesse mai scattare
+  `showNewGameSetup()` — quel ramo era codice morto (il flusso `_confirmNewGame` → 
+  `ServerState.initCompany(nomeVero)` → `_startGameWithSlot` era però già corretto e completo,
+  semplicemente mai raggiunto). Rimossa la creazione silenziosa in entrambi i punti; il ramo
+  legittimo (utente con save ma company sparita) resta invariato. Verificato dal vivo: nome
+  "QA Isolata Test" e logo scelti vengono rispettati end-to-end.
+- **Classifica pubblica sulla landing** (`ui-landing.js`): leggeva da `companies` (RLS
+  `user_id=auth.uid()` → sempre 0 righe per un anonimo, senza errore) invece di `leaderboard`
+  (già pubblica). Verificato dal vivo: "TOP CEO GLOBALI" ora mostra righe reali.
+- **`rpc_get_vtk_market_orders` mancante** (404 PGRST202, mai definita in nessun file):
+  creata in `61_fix_vtk_orders_provinces_pacing.sql`, stesso stile delle RPC sorelle. Verificato
+  con chiamata autenticata reale: nessun errore.
+- **18 province su 23 mancanti**: stesso pattern "seed mai applicato" già visto il 15/08 —
+  `16_territory_war.sql` aveva 5 UPDATE + 18 INSERT pronti (mapped_pois/required_influence,
+  colonne già presenti da ALTER) mai eseguiti. Rieseguiti verbatim. 23/23 confermate.
+
+**Ritmo (dimezzato, non stravolto — numeri documentati per revisione facile):**
+- Durata corsa: `price × 0.4` min → `× 0.2` (`engine-rides.js`). Una corsa da ~90€ passa da 36 a
+  18 minuti reali.
+- Soglie onboarding dimezzate (`onboarding-core.js` GATES + `phase()`): survival 10→6 corse,
+  restricted 25→15. Tutti i gate tab proporzionalmente dimezzati (finance 5→3 … opa 80→48).
+  Sincronizzate le due copie satellite che altrimenti sarebbero andate fuori fase:
+  `zero-to-hero.js` (trigger evento capitalismo, era hardcoded a `totalRides===10`, ora `6`) e
+  `objective-tracker.js` (EARLY_GATES, solo display "prossimo obiettivo").
+- Zero corse/zero bandi corporate all'avvio di una partita nuova: `initGame(fresh=true)` ora
+  genera 2 corse + forza il primo batch di bandi (`CE_Contracts.dailyTick()`, bypassando
+  l'attesa di 2 giorni reali) 800ms dopo il boot. Verificato dal vivo: 4 bandi già presenti al
+  primo `switchTab('contracts')`.
+
+**🔴 CRITICAL trovato verificando il fix "Fonda Azienda" — raddoppio del cash al primissimo
+premio giornaliero, mai osservabile prima perché il percorso che lo espone era proprio quello
+appena sbloccato.** Riprodotto 3 volte con browser context isolati: dopo la creazione
+dell'azienda, al primo `_checkDailyReward()` (+500, 1.5s dopo il boot) il cash locale saliva a
+**1000** mentre `companies.cash` restava correttamente a **500**. `loginStreak`/`lastDailyClaim`
+confermavano che il premio era scattato UNA sola volta — non un doppio trigger.
+
+Causa isolata leggendo `serverState.js`: `_onCompanyChange` (il fix "BUG 4" storico) applica
+solo il DELTA `newRow.cash - _lastServerCash` per non sovrascrivere guadagni locali non ancora
+sincronizzati. Ma `_lastServerCash` viene aggiornato SOLO quando arriva un evento Realtime
+(o al bridge di boot) — non quando il client stesso lancia un `syncCash`. Sequenza esatta:
+`initCompany()` fissa `_lastServerCash=0`; **nessun altro evento lo aggiorna** prima che
+`_checkDailyReward()` faccia `gs.cash += 500` (locale, sincrono) e poi chiami
+`syncCash(500)` (RPC); quando l'ECHO Realtime di QUELLA STESSA scrittura torna indietro,
+`_onCompanyChange` lo confronta ancora con `_lastServerCash=0` (mai toccato nel frattempo) →
+delta=500 → lo riapplica sopra un cash locale che aveva GIÀ quel +500 → 1000. Un client che
+mandava un valore e ne riceveva l'eco veniva trattato come se qualcun altro l'avesse cambiato.
+
+Fix minimo (`serverState.js`, funzione `syncCash`): aggiorna `_lastServerCash` **subito**, in
+modo sincrono, col valore che si sta per scrivere — non aspetta l'eco Realtime per saperlo.
+Qualsiasi eco successivo della propria stessa scrittura calcola correttamente delta=0. I delta
+per cambiamenti ESTERNI reali (altro giocatore, altra RPC) restano intatti perché quella logica
+non è stata toccata. Verificato dal vivo su un 4° account pulito: cash locale e server
+convergono a 500, restano identici, e sopravvivono al reload.
+
+**Lezione operativa**: due dei falsi allarmi durante questa verifica (`cash:1000` su
+qa.pacing/qa.pacing2) erano contaminazione tra sessioni Supabase nello stesso browser tab
+(sessione precedente mai sloggata, auto-restore al page-load) — non bug del gioco. Isolato
+il problema vero usando SEMPRE `isolatedContext` per ogni account di test da ora in poi.
+
+**File**: `auth.js` (v14), `ui-landing.js` (v8), `engine.js` (v28), `engine-rides.js` (v12),
+`serverState.js` (v10), `onboarding-core.js` (v2), `zero-to-hero.js` (v6),
+`objective-tracker.js` (v5), `vtk-market.js` (v16, nessun edit JS — solo la RPC lato SQL),
+`61_fix_vtk_orders_provinces_pacing.sql` (applicata). Suite: 67/67 pass, invariata.
+
+**Non toccato** (fuori scope, resta nel report del 15/08): mercato VTK aveva SOLO la RPC
+mancante — non ho ri-verificato l'intero flusso compravendita end-to-end; test multi-account
+(P2P, alleanze, aste) ancora da fare; le 18 province nuove hanno numeri di bilanciamento presi
+verbatim da una migration mai applicata, non nuovi — non è un mio giudizio di game design.

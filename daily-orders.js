@@ -138,7 +138,19 @@
                             if (typeof updateUI === 'function') updateUI();
                         }
                     })
-                    ?.catch(() => {});
+                    ?.catch(() => {
+                        // FIX: senza rollback, se la RPC fallisce il premio va perso in
+                        // silenzio mentre l'ordine resta marcato "riscosso" per sempre
+                        // (nessun modo di ritentare). Disfa sia il credito locale
+                        // ottimistico sia il claim, così il giocatore può riprovare.
+                        gameState.driverCoins = Math.max(0, (gameState.driverCoins || 0) - rw.dc);
+                        const idx = st.claimed.indexOf(id);
+                        if (idx !== -1) st.claimed.splice(idx, 1);
+                        if (typeof showNotification === 'function') showNotification('Errore nel riscattare il premio — riprova.', 'error');
+                        if (typeof updateUI === 'function') updateUI();
+                        if (typeof saveGame === 'function') saveGame();
+                        if (typeof window.renderTabHome === 'function') window.renderTabHome();
+                    });
             } catch (e) {}
         }
         if (rw.cash) { typeof window._addCash === 'function' ? window._addCash(rw.cash) : (gameState.cash = (gameState.cash || 0) + rw.cash); }

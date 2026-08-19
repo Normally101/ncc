@@ -63,10 +63,54 @@ window.getActiveGlobalEvent = function() {
     ) || null;
 };
 
+// ── SYNC STATO LOCALE ─────────────────────────────────────────────────────────
+
+// Specchia l'evento globale attivo dentro gameState.activeDynamicEvent, da cui l'engine
+// legge i moltiplicatori. Deliberatamente separata dal disegno del banner: deve girare
+// anche quando #hub-event-banner non esiste nel DOM, altrimenti lo specchio non viene né
+// popolato né azzerato.
+window.syncGlobalEventToGameState = function() {
+    if (typeof gameState === 'undefined' || !gameState) return;
+
+    const ev = window.getActiveGlobalEvent();
+
+    if (!ev) {
+        // Lo specchio globale ha endsHour: Infinity, quindi _tickDynamicEvent
+        // (engine-events.js) non lo scade mai: va azzerato qui alla fine dell'evento,
+        // altrimenti i moltiplicatori restano attivi per sempre e nessun evento locale
+        // può più partire. Un evento locale (engine-events.js, black_ops.js) ha invece
+        // il suo timer e non va toccato.
+        const cur = gameState.activeDynamicEvent;
+        if (cur && typeof cur.id === 'string' && cur.id.startsWith('global_')) {
+            gameState.activeDynamicEvent = null;
+        }
+        return;
+    }
+
+    const fx = ev.effects || {};
+    gameState.activeDynamicEvent = {
+        id:           'global_' + ev.id,
+        name:         ev.name,
+        icon:         ev.icon,
+        endsHour:     Infinity, // managed by globalEvents, not local timer
+        tipMult:      fx.tipMult    || 1.0,
+        xpMult:       fx.xpMult    || 1.0,
+        fuelMult:     fx.fuelMult   || 1.0,
+        wearMult:     fx.wearMult   || 1.0,
+        speedMult:    fx.speedMult  || 1.0,
+        extraRidePct: fx.extraRidePct || 0,
+        forceAirport: fx.forceAirport || false,
+    };
+};
+
 // ── HUB BANNER ────────────────────────────────────────────────────────────────
 
 function _applyGlobalEventBanner() {
     const ev = window.getActiveGlobalEvent();
+
+    // Prima del banner: la sincronizzazione dello stato non deve dipendere dal DOM.
+    window.syncGlobalEventToGameState();
+
     const banner = document.getElementById('hub-event-banner');
     if (!banner) return;
 
@@ -96,24 +140,6 @@ function _applyGlobalEventBanner() {
         const fx = ev.effects || {};
         const tipM = fx.tipMult || 1.0;
         multEl.textContent = tipM > 1 ? `×${tipM.toFixed(1)}` : '🌍';
-    }
-
-    // Also sync with local gameState activeDynamicEvent so engine picks up effects
-    if (typeof gameState !== 'undefined') {
-        const fx = ev.effects || {};
-        gameState.activeDynamicEvent = {
-            id:           'global_' + ev.id,
-            name:         ev.name,
-            icon:         ev.icon,
-            endsHour:     Infinity, // managed by globalEvents, not local timer
-            tipMult:      fx.tipMult    || 1.0,
-            xpMult:       fx.xpMult    || 1.0,
-            fuelMult:     fx.fuelMult   || 1.0,
-            wearMult:     fx.wearMult   || 1.0,
-            speedMult:    fx.speedMult  || 1.0,
-            extraRidePct: fx.extraRidePct || 0,
-            forceAirport: fx.forceAirport || false,
-        };
     }
 }
 
