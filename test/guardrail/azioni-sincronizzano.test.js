@@ -150,6 +150,12 @@ const NON_SONO_ACQUISTI = new Set(['_confirmNewGame', 'confirmNewGame', 'resetGa
 const ROTTE_NOTE = new Set([
     // engine-fleet.js, in attesa del suo task di conversione
     'instantRepairDC',
+    // ui-store.js: `_dcSpend(itemId, costo)` chiamata senza costo porta i Driver
+    // Coins a NaN (`driverCoins -= undefined`), stessa famiglia del NaN di
+    // hireDriver. Trovata il 19/08 allargando il banco di prova, che prima non
+    // caricava ui-store.js. Si chiude con la conversione a CE_money.spendDC, che
+    // rifiuta i valori non finiti.
+    '_dcSpend',
     // hireDriver e' stata convertita il 19/08: oltre a non sincronizzare, chiamata
     // senza argomenti portava il saldo a NaN. CE_money.spend rifiuta i valori non
     // finiti, quindi ora esce senza toccare nulla e non figura piu' qui.

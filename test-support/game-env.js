@@ -12,26 +12,29 @@ const { JSDOM } = require('jsdom');
 
 const ROOT = path.resolve(__dirname, '..');
 
-// Stessa lista/ordine di index.html, filtrata ai file di logica pura necessari per
-// simulare economia/garage/dipendenti/corse/daily/save-load/progressione headless.
-// Esclusi deliberatamente: file di rendering (ui-*.js tranne quelli con logica mista
-// necessaria), mappa/mapbox (map*.js, war_room.js, dispatcher.js), Realtime/push
-// (world-feed.js, weather_real.js, push-notifications.js), e serverState.js stesso
-// (sostituito dal mock — vedi makeServerState più sotto, altrimenti il vero modulo
-// sovrascriverebbe window.ServerState al suo caricamento).
+// Stessa lista/ordine di index.html. Include ora anche i file ui-*.js e i sistemi
+// (p2p, aste, crypto, alleanze, VTK…) che muovono denaro: senza di loro un terzo
+// delle azioni del giocatore non era nemmeno raggiungibile dai test — 90 nomi su
+// 246 non risolvevano a nessuna funzione. Il rendering e i modali di quei file
+// vengono neutralizzati dopo il caricamento (vedi in fondo a createGameEnv), così
+// il comportamento resta quello di prima ma le loro funzioni diventano testabili.
+//
+// Restano fuori: serverState.js (sostituito dal mock, altrimenti sovrascriverebbe
+// window.ServerState), supabase-config.js (vuole l'SDK), map-visual.js (vuole la
+// mappa vera e avvia un timer che fa cadere il processo), motion.js
+// (IntersectionObserver), e i file che avviano l'applicazione (boot.js, tutorial,
+// onboarding, push-notifications), che mandano il caricamento in stallo.
 const CORE_FILES = [
-    'security.js', 'events.js', 'ce-actions.js', 'config.js', 'geoCoords.js', 'routesDB.js', 'data.js', 'lang.js',
-    'quests-data.js', 'quests.js',
-    'syncManager.js', 'saveSystem.js',
-    // money.js: la porta unica del denaro. Va caricata PRIMA dei file di gioco,
-    // che da qui in poi la usano al posto di `gameState.cash -=` (vedi
-    // test/guardrail/una-sola-porta.test.js).
-    'money.js',
-    'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js', 'engine-drivers.js',
-    'engine-fleet.js', 'engine-store.js', 'engine-holding.js', 'engine-rivals.js', 'engine-events.js',
-    'driver_skills.js', 'vip-buffs.js', 'vip-clients.js',
-    'daily-orders.js', 'zero-to-hero.js', 'showroom.js', 'hq-data.js', 'hq.js',
-    'contracts.js', 'b2b.js', 'tourism.js',
+    'security.js', 'events.js', 'ce-actions.js', 'config.js', 'geoCoords.js', 'routesDB.js',
+    'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'quests-data.js',
+    'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
+    'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',
+    'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-staff.js',
+    'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-store.js', 'daily-orders.js',
+    'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
+    'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
+    'hq-data.js', 'hq.js', 'hostile_takeover.js', 'nemesis.js', 'infrastructure.js',
+    'contracts.js', 'tourism.js'
 ];
 
 // document reale via jsdom — necessario perché il codice del gioco usa
@@ -136,7 +139,8 @@ function makeServerState(sandboxRef, overrides = {}) {
 // Costruisce un nuovo ambiente pulito (sandbox VM) e carica i file indicati, nell'ordine
 // dato, tutti nello STESSO contesto (come fanno gli script tag in index.html — le globali
 // `var` sono condivise tra file). Ritorna `{ sandbox, window }` — window === sandbox.
-function createGameEnv(files, { serverState } = {}) {
+function createGameEnv(files, opzioni = {}) {
+    const { serverState } = opzioni;
     const notifications = [];
     const logs = [];
     // startGameLoops/initGame registrano setInterval reali (game loop, poll trip, ecc.) su
@@ -190,6 +194,33 @@ function createGameEnv(files, { serverState } = {}) {
     sandbox.logToMap = (msg) => logs.push(msg);
 
     const stopAllIntervals = () => { activeIntervals.forEach(id => clearInterval(id)); activeIntervals.clear(); };
+
+    // Rendering e modali neutralizzati di default.
+    //
+    // Finché i file ui-*.js non erano caricati, `renderTabStaff` e compagnia non
+    // esistevano e le chiamate dentro la logica di gioco venivano saltate dalle
+    // guardie `typeof x === 'function'`. Caricandoli, ogni azione fa partire il
+    // rendering vero, che pretende molto più stato di quanto un test di logica
+    // prepari: `hireDriver` finiva per esplodere dentro zero-to-hero.js.
+    //
+    // Lo stesso vale per i modali (openCarModal & co.), che scrivono su elementi
+    // reali della pagina: dare al banco il DOM completo di index.html li farebbe
+    // funzionare, ma cambierebbe il comportamento di tutto il codice che usa la
+    // presenza di un elemento come segnale di stato ("il pannello è già aperto?")
+    // — e quadruplicherebbe la durata della suite.
+    //
+    // Stubbandoli si ottiene ESATTAMENTE il comportamento di prima, ma le funzioni
+    // di quei file restano disponibili per essere testate direttamente — che è il
+    // motivo per cui li carichiamo. Chi vuole il rendering vero passa
+    // `{ render: true }` e se lo prepara.
+    if (!opzioni.render) {
+        for (const chiave of Object.keys(sandbox)) {
+            if (/^(render(Tab|P2P)|open\w*Modal)/.test(chiave) && typeof sandbox[chiave] === 'function') {
+                sandbox[chiave] = function () {};
+                sandbox.window[chiave] = sandbox[chiave];
+            }
+        }
+    }
 
     return { sandbox, notifications, logs, stopAllIntervals };
 }
