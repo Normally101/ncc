@@ -127,9 +127,11 @@ window.b2bTerminateContract = async function(activeId) {
         return;
     }
 
-    if (!window.ServerState?.isReady()) {
-        gameState.cash = Math.max(0, (gameState.cash||0) - data.penalty);
-        gameState.reputation = Math.max(0, (gameState.reputation||0) - data.rep_penalty);
+    if (data.penalty > 0) {
+        window.CE_money.spend(data.penalty, 'b2b_terminate_penalty');
+    }
+    if (data.rep_penalty) {
+        window.CE_money.addReputation(-data.rep_penalty);
     }
     saveGame();
     window._b2bState.activeContract = null;
@@ -148,8 +150,8 @@ window._b2bDailyTick = async function() {
     const { data, error } = await _sb().rpc('rpc_b2b_daily_tick');
     if (error || !data) return;
 
-    if (!window.ServerState?.isReady()) {
-        gameState.cash = (gameState.cash||0) + data.payout;
+    if (data.payout > 0) {
+        window.CE_money.earn(data.payout, 'b2b_daily_payout');
     }
 
     if (data.completed) {
@@ -157,8 +159,8 @@ window._b2bDailyTick = async function() {
         showBigEvent('💼', 'Contratto Completato!',
             `"${data.title}"\n\n✅ SLA rispettato al 100%.\nBonus reputazione: +${data.rep_bonus}★\n\nEseguita la consegna finale. Il cliente è soddisfatto.`);
         logToMap(`💼 Appalto B2B completato: "${data.title}" — +${data.rep_bonus}★ reputazione`);
-        if (!window.ServerState?.isReady()) {
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation||0) + (data.rep_bonus||0));
+        if (data.rep_bonus) {
+            window.CE_money.addReputation(data.rep_bonus);
         }
     } else if (data.payout > 0) {
         showNotification(`💼 B2B: +€${data.payout.toLocaleString()} da "${data.title}" (${data.days_remaining}g rim.)`, 'success');
