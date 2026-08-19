@@ -20,6 +20,12 @@ if (!istruzione) {
 
 const cwd = process.cwd();
 const sh = (cmd, args) => execFileSync(cmd, args, { cwd, encoding: 'utf8' }).trim();
+// Come sh() ma SENZA trim: `git status --porcelain` usa i primi due caratteri per
+// lo stato e il terzo come separatore, quindi una riga di file modificato inizia
+// con uno spazio. Tagliarlo faceva perdere la prima lettera al primo nome della
+// lista ("engine-fleet.js" -> "ngine-fleet.js"): innocuo finche' si faceva
+// `git add -A`, fatale da quando si aggiungono i file per nome.
+const shGrezzo = (cmd, args) => execFileSync(cmd, args, { cwd, encoding: 'utf8' });
 
 // Il titolo (se il chiamante lo passa) finisce nel nome del ramo e nel messaggio
 // di commit. Senza, il commit prendeva le prime 70 lettere dell'istruzione: tutti
@@ -44,7 +50,7 @@ const esito = await runGeminiAgent({
   timeoutMs: 20 * 60_000,
 });
 
-const tuttiCambiati = sh('git', ['status', '--porcelain'])
+const tuttiCambiati = shGrezzo('git', ['status', '--porcelain'])
   .split('\n')
   .filter((r) => r.length > 3)
   .map((r) => r.slice(3).trim())
