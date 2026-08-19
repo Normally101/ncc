@@ -13,29 +13,39 @@
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
     function gs()        { return window.gameState; }
-    function rides()     { return window.ceOnb.rides(); }     // sorgente unica (onboarding-core.js)
+    function rides()     { return (window.ceOnb && typeof window.ceOnb.rides === 'function') ? window.ceOnb.rides() : ((gs() && gs().questStats && gs().questStats.totalRides) || 0); }
     function nDrivers()  { const g = gs(); return ((g && g.drivers) || []).filter(d => d.id !== 'ceo').length; }
     function nFleet()    { const g = gs(); return ((g && g.fleet) || []).length; }
-    function prestige()  { return window.ceOnb.prestige(); }  // sorgente unica
+    function prestige()  { return (window.ceOnb && typeof window.ceOnb.prestige === 'function') ? window.ceOnb.prestige() : ((gs() && gs().prestige) || 0); }
 
-    // Gate di sblocco precoci (specchio leggero di onboarding.js GATES) per indicare
-    // il prossimo traguardo una volta superato l'onboarding base.
-    // Solo display ("prossimo obiettivo") — DEVE restare allineato a GATES in
-    // onboarding-core.js (soglie dimezzate 17/08/2026), altrimenti la pill
-    // mostra un numero diverso da quello che sblocca davvero il tab.
-    const EARLY_GATES = [
-        { rides: 3,  label: 'Finanza',        tab: 'finance' },
-        { rides: 5,  label: 'Mercato',        tab: 'market' },
-        { rides: 7,  label: 'Contratti B2B',  tab: 'b2b' },
-        { rides: 9,  label: 'Quartier Generale', tab: 'hq' },
-        { rides: 11, label: 'Contratti',      tab: 'contracts' },
-        { rides: 15, label: 'Infrastrutture', tab: 'infrastructure' },
-        { rides: 18, label: 'Turismo',        tab: 'tourism' },
+    // Gate di sblocco precoci per indicare il prossimo traguardo una volta superato l'onboarding base.
+    // Solo display ("prossimo obiettivo") — deriva le soglie da window.ceOnb.GATES (sorgente di verità unica)
+    // mantenendo un fallback se ceOnb non è ancora caricato.
+    const EARLY_GATE_DEFS = [
+        { tab: 'finance',        label: 'Finanza',           fallbackRides: 3 },
+        { tab: 'market',         label: 'Mercato',           fallbackRides: 5 },
+        { tab: 'b2b',            label: 'Contratti B2B',     fallbackRides: 7 },
+        { tab: 'hq',             label: 'Quartier Generale', fallbackRides: 9 },
+        { tab: 'contracts',      label: 'Contratti',         fallbackRides: 11 },
+        { tab: 'infrastructure', label: 'Infrastrutture',    fallbackRides: 15 },
+        { tab: 'tourism',        label: 'Turismo',           fallbackRides: 18 },
     ];
+
+    function earlyGates() {
+        const gates = (typeof window !== 'undefined' && window.ceOnb && window.ceOnb.GATES) || null;
+        return EARLY_GATE_DEFS.map(def => ({
+            tab: def.tab,
+            label: def.label,
+            rides: (gates && gates[def.tab] && typeof gates[def.tab].rides === 'number')
+                ? gates[def.tab].rides
+                : def.fallbackRides,
+        }));
+    }
+    window._earlyGates = earlyGates;
 
     function nextGate() {
         const r = rides();
-        for (const g of EARLY_GATES) if (r < g.rides) return g;
+        for (const g of earlyGates()) if (r < g.rides) return g;
         return null;
     }
 
