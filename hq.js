@@ -11,7 +11,22 @@ const HQ_GRID_SIZE = HQ_GRID_COLS * HQ_GRID_ROWS;
 
 // ── INIT & MIGRATION ──────────────────────────────────────────────────────────
 
+/* Interruttore spento: toglie dalla navigazione ogni voce che porta all'HQ.
+   Fatto da codice e non a mano nell'HTML (dove le voci sono tre, sidebar
+   desktop + menu mobile + tile dell'hub) così riaccendere l'HQ resta una riga
+   sola in config.js invece di una caccia ai punti da ripristinare. */
+function _hqNascondiNavigazione() {
+    if (window.HQ_ENABLED !== false) return;
+    const selettori = '[data-tab="hq"], [data-ce-args=\'["hq"]\']';
+    document.querySelectorAll(selettori).forEach(el => {
+        const voce = el.closest('.hub-module') || el;
+        voce.style.display = 'none';
+    });
+}
+window._hqNascondiNavigazione = _hqNascondiNavigazione;
+
 window.hqInit = function() {
+    _hqNascondiNavigazione();
     // Migration from old state to new state
     if (!gameState.hqs) {
         gameState.hqs = {
@@ -71,6 +86,9 @@ window.hqGetRoomLevel = function(cityId, roomId) {
 // Sum up all effects across all cities
 window.hqAllEffects = function() {
     const fx = {};
+    // Interruttore spento (config.js): effetti neutri, così l'unico punto in cui
+    // l'HQ tocca il gioco (engine-rides.js:691) si comporta come se non esistesse.
+    if (window.HQ_ENABLED === false) return fx;
     if (!gameState.hqs) return fx;
     
     for (const cityId of Object.keys(gameState.hqs)) {
@@ -98,13 +116,13 @@ window.hqAllEffects = function() {
     return fx;
 };
 
-window.hqGetEffect = function(effectKey) {
-    return window.hqAllEffects()[effectKey];
-};
-
 // ── ACTION: BUILD / UPGRADE ───────────────────────────────────────────────────
 
 window.hqUpgradeRoom = async function(cityId, roomId, slotIndex) {
+    // Interruttore spento: nessuna spesa possibile. Questa funzione scalava il
+    // denaro solo in locale (nessun syncCash), quindi il costo tornava indietro
+    // al ricaricamento mentre la stanza restava: costruzione gratis.
+    if (window.HQ_ENABLED === false) return;
     const roomDef = window.HQ_ROOMS.find(r => r.id === roomId);
     if (!roomDef) return;
     

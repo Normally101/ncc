@@ -3,6 +3,15 @@
    config.js — Chauffeur Empire · Global Constants
    ================================================================ */
 
+/* ── Interruttori di funzionalità ────────────────────────────────────────────
+   HQ_ENABLED: l'HQ Base Builder è staccato dal gioco in attesa di essere
+   sistemato (decisione di Vlad, 19/08/2026). Non è server-authoritative —
+   `hqUpgradeRoom` scalava il denaro solo nel browser, quindi la spesa tornava
+   indietro al ricaricamento e la stanza restava costruita. Finché resta false:
+   tab nascosta, effetti neutri, nessuna spesa possibile.
+   Per riaccenderlo basta rimettere true, ma prima va convertito a CE_money. */
+window.HQ_ENABLED = false;
+
 window.GAME_CONFIG = {
     SUPPORT_EMAIL: 'support@chauffeurempire.com',
     SUPPORT_SUBJECT_ACCESS: 'Problema%20di%20Accesso',
