@@ -1,0 +1,53 @@
+name: Lavoro di Gemini
+
+# Si lancia a mano (dal telefono, dalla pagina Actions) oppure via API dall'hub.
+# Gira sui server di GitHub: il Mac di Vlad può essere spento.
+on:
+  workflow_dispatch:
+    inputs:
+      istruzione:
+        description: "Cosa deve fare (in italiano, come su WhatsApp)"
+        required: true
+        type: string
+
+# Serve per pubblicare il branch di lavoro.
+permissions:
+  contents: write
+
+jobs:
+  lavora:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Il branch nuovo parte da main, come sul Mac.
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Dipendenze
+        # jsdom serve alla suite di test; @google/genai solo all'agente e non va
+        # in package.json (il gioco è vanilla, senza dipendenze runtime).
+        run: npm ci --no-audit --no-fund && npm install --no-save @google/genai
+
+      - name: Credenziali Vertex
+        env:
+          CHIAVE: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY_B64 }}
+        run: |
+          if [ -z "$CHIAVE" ]; then
+            echo "::error::manca il secret GOOGLE_SERVICE_ACCOUNT_KEY_B64"
+            exit 1
+          fi
+          echo "$CHIAVE" | base64 -d > "$RUNNER_TEMP/vertex.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/vertex.json" >> "$GITHUB_ENV"
+
+      - name: Gemini al lavoro
+        env:
+          INSTRUCTION: ${{ inputs.istruzione }}
+          GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
+          GIGI_GEMINI_LOCATION: global
+        run: node .github/agent/run-task.mjs
