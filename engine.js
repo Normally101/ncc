@@ -862,6 +862,20 @@ function initGame(fresh = true) {
             outOfService: null, upgrades: [], protoId: null
         });
         _refreshRecruits();
+        // Pacing (17/08/2026): senza questo il Dispatch è vuoto fino al primo
+        // setInterval(generatePOIRide, 5 min) — misurato dal vivo, un giocatore
+        // nuovo resta davanti a zero corse subito dopo l'onboarding. 2 corse
+        // pronte da subito, solo per una partita davvero nuova.
+        // Stesso motivo: il primo batch di bandi corporate aspettava fino a 2
+        // giorni reali (contracts.js CYCLE_DAYS) — lo si genera subito.
+        setTimeout(() => {
+            if (typeof generatePOIRide === 'function') { generatePOIRide('standard'); generatePOIRide('standard'); }
+            if (window.CE_Contracts && typeof window.CE_Contracts.dailyTick === 'function') {
+                gameState.nextTenderDay = gameState.day; // altrimenti initState() lo fissa a day+2
+                window.CE_Contracts.dailyTick();
+            }
+            if (typeof updateUI === 'function') updateUI();
+        }, 800);
     } else {
         // Pre-sync clock and process offline income before intervals start (prevents false hourly/daily triggers)
         const _itaInit = _getItalyTime();

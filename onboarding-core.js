@@ -6,11 +6,15 @@
    rides/prestige/fase (prima erano 4 copie divergenti).
 
    Stato derivato da: gameState.questStats.totalRides + gameState.prestige.
-   Soglie (INVARIATE rispetto alla logica storica sparsa — behavior-preserving):
+   Soglie pacing (17/08/2026, ~dimezzate rispetto all'originale — misurato dal
+   vivo: 25 corse ≈ 9 ore reali con 1 autista, troppo lento a partire):
      • prestige > 0           → veterano/NG+  → fase 'free', esente da tutto
-     • rides < 10             → 'survival'    (Zero-to-Hero: fondo del barile)
-     • 10 ≤ rides < 25        → 'restricted'  (nav ridotta: solo Corse + Staff)
-     • rides ≥ 25             → 'free'
+     • rides < 6              → 'survival'    (Zero-to-Hero: fondo del barile)
+     • 6 ≤ rides < 15         → 'restricted'  (nav ridotta: solo Corse + Staff)
+     • rides ≥ 15             → 'free'
+   ⚠️ zero-to-hero.js (trigger evento capitalismo) e objective-tracker.js
+   (EARLY_GATES, solo display) hanno soglie proprie che DEVONO restare
+   allineate a queste — vedi commenti lì.
    Esporta: window.ceOnb { rides, prestige, veteran, phase, restricted, tabUnlock, GATES }
    ════════════════════════════════════════════════════════════════════════════ */
 (function () {
@@ -18,25 +22,26 @@
 
     // tab → requisito di sblocco. ok se (corse ≥ rides) OPPURE (prestigio ≥ prestige).
     // Tutto ciò che NON è qui è sempre aperto. (Catalogo storico di onboarding.js.)
+    // Soglie dimezzate 17/08/2026 (pacing) — proporzioni/ordine relativo invariati.
     const GATES = {
-        finance:        { rides: 5 },
-        market:         { rides: 8 },
-        b2b:            { rides: 12 },
-        regions:        { rides: 12 },
-        hq:             { rides: 15 },
-        invest:         { rides: 15, prestige: 1 },
-        realestate:     { rides: 15, prestige: 1 },
-        contracts:      { rides: 18 },
-        infrastructure: { rides: 25 },
-        tourism:        { rides: 30 },
-        lifestyle:      { rides: 30 },
-        auctions:       { rides: 30 },
-        provinces:      { rides: 40, prestige: 3 },
-        politics:       { rides: 40, prestige: 3 },
-        crypto:         { rides: 45, prestige: 4 },
-        shadow:         { rides: 60, prestige: 5 },
-        nemesis:        { rides: 60, prestige: 5 },
-        opa:            { rides: 80, prestige: 6 },
+        finance:        { rides: 3 },
+        market:         { rides: 5 },
+        b2b:            { rides: 7 },
+        regions:        { rides: 7 },
+        hq:             { rides: 9 },
+        invest:         { rides: 9,  prestige: 1 },
+        realestate:     { rides: 9,  prestige: 1 },
+        contracts:      { rides: 11 },
+        infrastructure: { rides: 15 },
+        tourism:        { rides: 18 },
+        lifestyle:      { rides: 18 },
+        auctions:       { rides: 18 },
+        provinces:      { rides: 24, prestige: 3 },
+        politics:       { rides: 24, prestige: 3 },
+        crypto:         { rides: 27, prestige: 4 },
+        shadow:         { rides: 36, prestige: 5 },
+        nemesis:        { rides: 36, prestige: 5 },
+        opa:            { rides: 48, prestige: 6 },
     };
 
     function rides()    { const g = _gs(); return (g && g.questStats && g.questStats.totalRides) || 0; }
@@ -46,13 +51,13 @@
     function phase() {
         if (veteran()) return 'free';
         const r = rides();
-        if (r < 10) return 'survival';
-        if (r < 25) return 'restricted';
+        if (r < 6) return 'survival';
+        if (r < 15) return 'restricted';
         return 'free';
     }
 
     // Fase transitoria Staff (recruit ridotto, niente HR/Academy).
-    function restricted() { return !veteran() && rides() < 25; }
+    function restricted() { return !veteran() && rides() < 15; }
 
     function tabUnlock(tab) {
         const g = GATES[tab];

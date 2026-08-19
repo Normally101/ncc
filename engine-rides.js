@@ -223,7 +223,9 @@ const TIER_COMPATIBILITY = {
 
 function _getRideDurationMs(ride) {
     const price = ride.sellingPrice || ride.basePrice || ride.price || 150;
-    let minutes = Math.max(10, Math.min(360, price * 0.4));
+    // Pacing (17/08/2026): 0.4 rendeva una corsa da ~90€ lunga 36 minuti reali,
+    // misurato dal vivo — dimezzato a 0.2, stesso tetto/pavimento.
+    let minutes = Math.max(10, Math.min(360, price * 0.2));
     // routeType is set by generateContractRide from routesDB route.type ('Airport','Rail','Transfer','Boat','Port','City-to-City')
     const rType = ride.routeType || '';
     if (rType === 'Airport' || rType === 'Rail' || rType === 'Transfer') minutes *= 0.7;
