@@ -251,6 +251,7 @@ window.buyCARUpgrade = function(carId, upgradeId) {
     if (gameState.cash < upg.price) { showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= upg.price;
     car.upgrades.push(upgradeId);
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     showNotification(`${upg.name} installato su ${car.name}!`, 'success');
     logToMap(`🔧 Upgrade: ${upg.name} su ${car.name}`);
     updateUI();

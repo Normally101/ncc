@@ -34,6 +34,29 @@ describe('daily/daily-tick — processDailyRoutines non duplica su chiamate ripe
         assert.equal(syncedCash, sandbox.gameState.cash, 'il valore mandato al server deve coincidere con quello locale — altrimenti client e server divergono già al primo tick (docs/SYSTEMS.md, debito #1)');
     });
 
+    test('REGRESSIONE (fix 15 agosto 2026): il valore sincronizzato include anche le mutazioni DOPO il sync di metà funzione (upkeep investimenti, multe, bonus, ecc.)', () => {
+        // processDailyRoutines sincronizzava il cash una sola volta a metà funzione
+        // (income - expenses), poi continuava a mutare gameState.cash per un'altra
+        // ventina di meccaniche (upkeep investimenti, multe scadute, bonus fedeltà,
+        // rata prestiti, dividendi...) senza mai risincronizzare. Il server restava
+        // con un valore stantio, cancellato al login successivo (auth.js Phase 5).
+        // inv_fuel_depot ha dailyUpkeep:500, dedotto DOPO il punto del primo sync —
+        // se il fix regredisse, syncedCash tornerebbe a essere il valore PRIMA
+        // della deduzione upkeep invece di quello finale.
+        let syncCallCount = 0;
+        let lastSyncedCash = null;
+        const { sandbox } = freshEnv({
+            serverState: { syncCash: async (cash) => { syncCallCount++; lastSyncedCash = cash; return { success: true, cash }; } },
+        });
+        sandbox.gameState.investments.push('inv_fuel_depot');
+        sandbox.gameState.cash = 1000000;
+
+        sandbox.processDailyRoutines();
+
+        assert.ok(syncCallCount >= 2, `il tick deve sincronizzare almeno 2 volte (metà + fine funzione) quando ci sono mutazioni successive al primo sync — trovate ${syncCallCount} chiamate`);
+        assert.equal(lastSyncedCash, sandbox.gameState.cash, "l'ultimo valore mandato al server deve coincidere col cash locale finale, upkeep incluso — altrimenti €500/g di deduzione spariscono al prossimo login");
+    });
+
     test('la tassa di lusso cresce con la flotta (più auto = più tasse, non un importo fisso)', () => {
         const smallFleetEnv = freshEnv();
         smallFleetEnv.sandbox.gameState.cash = 100000;

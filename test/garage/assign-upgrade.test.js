@@ -78,7 +78,16 @@ describe('garage/upgrade — buyCARUpgrade', () => {
         assert.equal(sandbox.gameState.fleet.find(c => c.id === 'c_starter').upgrades.length, 0);
     });
 
-    test('NOTA (debito noto, non una regressione di questa sessione): buyCARUpgrade scala il cash SOLO in locale (nessun ServerState.syncCash) — stessa classe del debito economia client-authoritative già tracciato in docs/ECONOMY_SERVER_AUTH.md. A differenza dei prestiti (fixati in BLOCCO 1), qui il rischio pratico è più basso: è un decremento, non un incremento, quindi non causa rifiuti di RPC a valle (il server ha comunque ALMENO quanto mostra il client) — solo un possibile "sconto" se il cash viene ripristinato dal server prima del prossimo syncCash innescato da un\'altra azione.', () => {
-        assert.ok(true);
+    test('REGRESSIONE (fix 15 agosto 2026, trovato da Gemini review): buyCARUpgrade sincronizza il cash col server — prima restava locale, un refresh subito dopo ripristinava il vecchio saldo dal server mantenendo comunque l\'upgrade installato ("sconto" gratuito)', () => {
+        let syncedCash = null;
+        const { sandbox } = freshEnv({
+            serverState: { syncCash: async (cash) => { syncedCash = cash; return { success: true, cash }; } },
+        });
+        const upg = { id: 'wifi', price: 2500 }; // data.js: Wi-Fi Starlink
+        sandbox.gameState.cash = upg.price + 1000;
+
+        sandbox.buyCARUpgrade('c_starter', upg.id);
+
+        assert.equal(syncedCash, sandbox.gameState.cash, 'il valore mandato al server deve coincidere col cash locale dopo l\'upgrade');
     });
 });

@@ -1281,6 +1281,7 @@ window.payFine = function(fineId) {
     if (gameState.cash < fine.amount) { showNotification('Fondi insufficienti!', 'error'); return; }
     gameState.cash -= fine.amount;
     fine.status = 'paid';
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`💸 Multa pagata: €${fine.amount}`);
     showNotification(`Multa pagata: −€${fine.amount}`, 'error');
     updateUI(); saveGame();
@@ -1389,6 +1390,7 @@ window.attackTerritory = function(regionId) {
     }
 
     gameState.cash -= warCost;
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     const warDays = 3;
     gameState.pricewars.push({
         regionId,
@@ -1692,6 +1694,7 @@ window.sellInvestment = function(invId) {
     if (!confirm(`Vendere ${item.name} per €${refund.toLocaleString()} (40% del valore)? Non si può annullare.`)) return;
     gameState.investments.splice(idx, 1);
     gameState.cash += refund;
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`🏷️ Investimento venduto: ${item.name} → +€${refund.toLocaleString()}`);
     if (typeof showNotification === 'function') showNotification(`${item.name} venduto per €${refund.toLocaleString()}`, 'success');
     updateUI();

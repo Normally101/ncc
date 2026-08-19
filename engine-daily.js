@@ -962,6 +962,14 @@ function processDailyRoutines() {
         gameState.todayEarnings = 0; // reset for the new day
     }
 
+    // Push final authoritative cash to server — the riga 424 sync only captured
+    // income/expenses at that point; everything after it (multe scadute, upkeep
+    // investimenti, bonus fedeltà, VC/Meet&Greet income, tasse annuali, rata
+    // prestiti, bonus CV, hub tax, vendita marketplace, dividendi holding/IPO)
+    // mutates gameState.cash directly and was never mirrored — companies.cash
+    // stayed stale and wiped all of it on the next login (auth.js Phase 5).
+    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+
     // GdF inspection — fire-and-forget, async (requires user logged in)
     if (typeof window._sindacatoGdfDailyCheck === 'function') window._sindacatoGdfDailyCheck();
     // B2B corporate contract daily payout
