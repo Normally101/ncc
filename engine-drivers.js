@@ -37,10 +37,10 @@ window.putDriverOnBreak = function(driverId) {
 // ── BONUS MONETARIO ───────────────────────────────────────────────
 window.payDriverBonus = function(driverId, amount) {
     amount = Math.round(Number(amount));
-    if (amount <= 0 || gameState.cash < amount) { showNotification('Fondi insufficienti per il bonus!', 'error'); return; }
+    if (amount <= 0) return;
     const d = gameState.drivers.find(x => x.id === driverId);
     if (!d) return;
-    gameState.cash -= amount;
+    if (!window.CE_money.spend(amount, 'driver_bonus')) return;
     d.satisfaction = Math.min(100, (d.satisfaction || 0) + Math.min(40, amount / 100));
     d.morale = Math.min(100, (d.morale || 100) + 15);
     logToMap(`💸 Bonus €${amount.toLocaleString()} pagato a ${d.name} — soddisfazione +${Math.min(40, Math.round(amount/100))}`);
@@ -52,11 +52,10 @@ window.payDriverBonus = function(driverId, amount) {
 // ── AZZERA STRESS (€1.000) ────────────────────────────────────────
 window.payStressClear = function(driverId) {
     const cost = 1000;
-    if ((gameState.cash || 0) < cost) { showNotification('Fondi insufficienti — Bonus Stress: €1.000', 'error'); return; }
     const d = gameState.drivers.find(x => x.id === driverId);
     if (!d || d.id === 'ceo') return;
     if ((d.stress_level || 0) === 0 && !d.burnout_until) { showNotification(`${d.name} non è stressato.`, 'info'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'pay_stress_clear')) return;
     d.stress_level = 0;
     d.burnout_until = null;
     if (d.status === 'resting' && (d.restHoursLeft || 0) > 0) { d.status = 'idle'; d.restHoursLeft = 0; }
@@ -71,8 +70,7 @@ window.resolveStrike = function(driverId) {
     const d = gameState.drivers.find(x => x.id === driverId);
     if (!d || !d.isOnStrike) return;
     const settlementCost = Math.round((d.salary || 2500) * 0.5);
-    if (gameState.cash < settlementCost) { showNotification(`Accordo sindacale: €${settlementCost.toLocaleString()} necessari.`, 'error'); return; }
-    gameState.cash -= settlementCost;
+    if (!window.CE_money.spend(settlementCost, 'resolve_strike')) return;
     d.isOnStrike = false;
     d.status = 'idle';
     d.satisfaction = 60;
@@ -101,10 +99,7 @@ window.startAcademyCourse = function(driverId, courseId) {
     if ((gameState.driverAcademy||[]).some(c => c.driverId === driverId)) {
         showNotification(`${driver.name} è già in formazione.`, 'error'); return;
     }
-    if (gameState.cash < course.cost) {
-        showNotification(`Fondi insufficienti — Corso: €${course.cost.toLocaleString()}`, 'error'); return;
-    }
-    gameState.cash -= course.cost;
+    if (!window.CE_money.spend(course.cost, 'start_academy_course')) return;
     if (!gameState.driverAcademy) gameState.driverAcademy = [];
     gameState.driverAcademy.push({
         driverId, skill: course.skill, skillGain: course.skillGain,
@@ -120,12 +115,11 @@ window.startAcademyCourse = function(driverId, courseId) {
 
 window.skipAcademyTraining = function(driverId) {
     const cost = 5;
-    if ((gameState.driverCoins || 0) < cost) { showNotification(`${cost} DC necessari.`, 'error'); return; }
     const entry = (gameState.driverAcademy || []).find(c => c.driverId === driverId);
     if (!entry) { showNotification('Nessun corso attivo per questo autista.', 'info'); return; }
     const driver = gameState.drivers.find(d => d.id === driverId);
     if (!driver) return;
-    gameState.driverCoins -= cost;
+    if (!window.CE_money.spendDC(cost, 'skip_academy')) return;
     driver[entry.skill] = Math.min(100, (driver[entry.skill] || 50) + (entry.skillGain || 10));
     gameState.driverAcademy = gameState.driverAcademy.filter(c => c.driverId !== driverId);
     driver.status = 'idle';
@@ -137,9 +131,9 @@ window.skipAcademyTraining = function(driverId) {
 
 // ── ASSUNZIONE / LICENZIAMENTO ────────────────────────────────────
 window.hireDriver = function hireDriver(name, salary) {
+    if (!name) return;
     const cost = salary * 2;
-    if (gameState.cash < cost) { if(typeof showNotification==='function') showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'hire_driver')) return;
     const recruit = (gameState.availableRecruits || []).find(r => r.name === name);
     gameState.drivers.push({
         id: 'd_' + Date.now(), name, salary, status: 'idle', assignedCarId: null, queue: [],
@@ -150,7 +144,7 @@ window.hireDriver = function hireDriver(name, salary) {
         skill_speed:      recruit?.skill_speed      ?? 50,
         stress_level: 0, burnout_until: null,
     });
-    const idx = gameState.availableRecruits.findIndex(r => r.name === name);
+    const idx = (gameState.availableRecruits || []).findIndex(r => r.name === name);
     if (idx > -1) gameState.availableRecruits.splice(idx, 1);
     _refreshRecruits();
     if(typeof showNotification==='function') showNotification(`${name} assunto!`, 'success');
