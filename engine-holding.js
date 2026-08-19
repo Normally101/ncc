@@ -23,11 +23,8 @@ window.incorporateHolding = function() {
     if ((gameState.reputation || 0) < repReq) {
         showNotification(`Reputazione insufficiente — serve ${repReq}★ per fondare una Holding.`, 'error'); return;
     }
-    if (gameState.cash < cost) {
-        showNotification(`Fondi insufficienti — Incorporazione: €${cost.toLocaleString()}`, 'error'); return;
-    }
     if (gameState.holding?.incorporated) { showNotification('Holding già incorporata.', 'info'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'incorporate_holding')) return;
     gameState.holding = { incorporated: true, incorporationDay: gameState.day, subsidiaries: [] };
     logToMap('🏢 Holding Finanziaria fondata! Ora puoi acquisire aziende subsidiarie.');
     showBigEvent('🏢', 'Holding Finanziaria Fondata!', 'La tua holding è operativa. Acquisisci aziende subsidiarie per generare reddito passivo ogni giorno.');
@@ -41,10 +38,7 @@ window.acquireSubsidiary = function(subId) {
     const sub = HOLDING_SUBSIDIARIES.find(s => s.id === subId);
     if (!sub) return;
     if ((gameState.holding.subsidiaries || []).includes(subId)) { showNotification('Sussidiaria già acquisita.', 'info'); return; }
-    if (gameState.cash < sub.cost) {
-        showNotification(`Fondi insufficienti — Acquisizione: €${sub.cost.toLocaleString()}`, 'error'); return;
-    }
-    gameState.cash -= sub.cost;
+    if (!window.CE_money.spend(sub.cost, 'acquire_subsidiary')) return;
     if (!gameState.holding.subsidiaries) gameState.holding.subsidiaries = [];
     gameState.holding.subsidiaries.push(subId);
     logToMap(`🏢 Acquisita: ${sub.name} — +€${sub.dailyIncome.toLocaleString()}/g dividendi`);
@@ -61,7 +55,7 @@ window.divestSubsidiary = function(subId) {
     if (idx === -1) return;
     const resale = Math.floor(sub.cost * 0.60);
     gameState.holding.subsidiaries.splice(idx, 1);
-    gameState.cash += resale;
+    window.CE_money.earn(resale, 'divest_subsidiary');
     logToMap(`💸 Ceduta: ${sub.name} — +€${resale.toLocaleString()} (60% del costo)`);
     showNotification(`${sub.name} ceduta. +€${resale.toLocaleString()}`, 'success');
     updateUI(); saveGame();
@@ -73,8 +67,7 @@ window.buyCempShares = function(qty) {
     qty = Math.max(1, Math.round(Number(qty)));
     const price = gameState.cempPrice || 10;
     const cost  = Math.round(price * qty);
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti — €${cost.toLocaleString()} per ${qty} azioni.`, 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'buy_cemp_shares')) return;
     gameState.cempOwnedShares = (gameState.cempOwnedShares || 0) + qty;
     logToMap(`📈 Acquistate ${qty} azioni $CEMP a €${price.toFixed(2)} — Tot. ${gameState.cempOwnedShares} azioni`);
     showNotification(`✅ ${qty} azioni $CEMP acquistate a €${price.toFixed(2)}.`, 'success');
@@ -88,7 +81,7 @@ window.sellCempShares = function(qty) {
     const price   = gameState.cempPrice || 10;
     const revenue = Math.round(price * qty);
     gameState.cempOwnedShares -= qty;
-    gameState.cash += revenue;
+    window.CE_money.earn(revenue, 'sell_cemp_shares');
     logToMap(`📉 Vendute ${qty} azioni $CEMP a €${price.toFixed(2)} — +€${revenue.toLocaleString()}`);
     showNotification(`📉 ${qty} azioni $CEMP vendute. +€${revenue.toLocaleString()}`, 'success');
     saveGame();
@@ -104,10 +97,7 @@ window._listCompanyIPO_NPC = function() {
     if ((gameState.reputation || 0) < repReq) {
         showNotification(`Reputazione insufficiente — serve ${repReq}★ per la quotazione.`, 'error'); return;
     }
-    if (gameState.cash < cost) {
-        showNotification(`Fondi insufficienti — Fee quotazione: €${cost.toLocaleString()}`, 'error'); return;
-    }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'list_company_ipo_fee')) return;
     if (!gameState.companyIPO) gameState.companyIPO = {};
     gameState.companyIPO = {
         listed: true,
@@ -118,7 +108,7 @@ window._listCompanyIPO_NPC = function() {
         dividendsPaid: 0,
     };
     const npcBuy = Math.round(gameState.companyIPO.sharePrice * gameState.companyIPO.npcSharesOwned);
-    gameState.cash += npcBuy;
+    window.CE_money.earn(npcBuy, 'list_company_ipo_npc_buy');
     logToMap(`📈 ${gameState.companyName} quotata in borsa! 1.000 azioni a €${gameState.companyIPO.sharePrice} — incassati €${npcBuy.toLocaleString()} dagli investitori NPC.`);
     showBigEvent('📈', `${gameState.companyName} è in Borsa!`, `La tua azienda è ora quotata. Ogni giorno il 10% dei profitti viene distribuito agli azionisti. Gli investitori NPC hanno comprato 300 azioni per €${npcBuy.toLocaleString()}.`);
     updateUI(); saveGame();
