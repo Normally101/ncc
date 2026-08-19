@@ -74,8 +74,13 @@ if (!cambiati.length) {
   process.exit(esito.ok ? 0 : 1);
 }
 
+// L'email deve corrispondere a un account GitHub, altrimenti Vercel BLOCCA la
+// deploy di anteprima del ramo ("commit email could not be matched to a GitHub
+// account") e ogni run di Gemini lascia un errore rosso nella dashboard.
+// Il nome resta "Gigi (cloud)": l'autore del codice si legge da li', non
+// dall'indirizzo.
 sh('git', ['config', 'user.name', 'Gigi (cloud)']);
-sh('git', ['config', 'user.email', 'gigi@chauffeurempire.com']);
+sh('git', ['config', 'user.email', 'djblade594@gmail.com']);
 sh('git', ['add', '-A']);
 sh('git', ['commit', '-m', `${istruzione.slice(0, 70)}\n\nLavoro svolto da Gemini 3.7 Flash su GitHub Actions.\nDa rivedere prima del merge: nessuno ha ancora guardato questo codice.`]);
 sh('git', ['push', 'origin', branch]);
