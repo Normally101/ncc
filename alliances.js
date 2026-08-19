@@ -285,13 +285,9 @@
         const open = !!(document.getElementById('al-open') || {}).checked;
         if (name.trim().length < 3) return _notify('Nome troppo corto (min 3).', 'error');
         if (tag.trim().length < 2)  return _notify('TAG troppo corto (min 2).', 'error');
-        if ((gameState.cash || 0) < CREATE_COST) return _notify(`Servono ${fmt(CREATE_COST)} per fondare un consorzio.`, 'error');
+        if (!window.CE_money.spend(CREATE_COST, 'create_alliance')) return;
         try {
             const id = await _rpc('rpc_create_alliance', { p_name: name.trim(), p_tag: tag.trim(), p_company_name: cname(), p_description: desc.trim(), p_emblem: emb });
-            // ServerState (Realtime) aggiorna gameState.cash dal server a delta; evitiamo doppia deduzione
-            if (!window.ServerState?.isReady()) {
-                if (typeof window._addCash === 'function') window._addCash(-CREATE_COST); else gameState.cash -= CREATE_COST;
-            }
             // imposta apertura se l'utente l'ha tolta (default RPC = aperto)
             if (!open && id) { try { await sb().from('alliances').update({ is_open: false }).eq('id', id); } catch (e) {} }
             _notify('Consorzio fondato! 🛡️', 'success');
@@ -325,13 +321,9 @@
         const el = document.getElementById('al-donate');
         const amt = Math.floor(parseFloat(el && el.value) || 0);
         if (amt <= 0) return _notify('Importo non valido.', 'error');
-        if ((gameState.cash || 0) < amt) return _notify('Fondi insufficienti.', 'error');
+        if (!window.CE_money.spend(amt, 'donate_alliance')) return;
         try {
             await _rpc('rpc_donate_to_alliance', { p_amount: amt });
-            // ServerState (Realtime) aggiorna gameState.cash dal server a delta; evitiamo doppia deduzione
-            if (!window.ServerState?.isReady()) {
-                if (typeof window._addCash === 'function') window._addCash(-amt); else gameState.cash -= amt;
-            }
             _notify(`Hai donato ${fmt(amt)} al consorzio.`, 'success');
             if (typeof saveGame === 'function') saveGame();
             if (typeof updateUI === 'function') updateUI();

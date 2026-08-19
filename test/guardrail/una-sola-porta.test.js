@@ -27,7 +27,6 @@ const AUTORIZZATI = new Set(['money.js', 'serverState.js']);
 // Debito noto: file non ancora convertiti alla porta unica.
 // Ogni task di conversione RIMUOVE una riga da qui. Nessun task ne aggiunge.
 const ECCEZIONI = new Set([
-    'alliances.js',
     'b2b.js',
     'black_ops.js',
     'contracts.js',
