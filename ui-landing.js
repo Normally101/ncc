@@ -432,9 +432,12 @@ async function _fetchLpRankings() {
     const el = document.getElementById('lp-ranking-list');
     if (!el || !window.supabaseClient) return;
     try {
+        // leaderboard, non companies: companies ha RLS "solo la propria riga"
+        // (companies_select_own) → per un visitatore anonimo tornava sempre 0 righe
+        // senza errore. leaderboard ha una policy di lettura pubblica dedicata.
         const { data } = await window.supabaseClient
-            .from('companies')
-            .select('company_name, cash, reputation')
+            .from('leaderboard')
+            .select('company_name, reputation')
             .order('reputation', { ascending: false })
             .limit(8);
         if (!data || !data.length) { el.innerHTML = '<div class="lp-rank-loading">Nessun dato disponibile</div>'; return; }
