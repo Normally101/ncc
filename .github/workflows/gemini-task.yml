@@ -9,6 +9,10 @@ on:
         description: "Cosa deve fare (in italiano, come su WhatsApp)"
         required: true
         type: string
+      titolo:
+        description: "Nome breve del lavoro — diventa il nome del ramo e del commit"
+        required: false
+        type: string
 
 # Serve per pubblicare il branch di lavoro.
 permissions:
@@ -48,6 +52,7 @@ jobs:
       - name: Gemini al lavoro
         env:
           INSTRUCTION: ${{ inputs.istruzione }}
+          TITOLO: ${{ inputs.titolo }}
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
           GIGI_GEMINI_LOCATION: global
         run: node .github/agent/run-task.mjs

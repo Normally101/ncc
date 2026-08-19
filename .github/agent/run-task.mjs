@@ -21,8 +21,17 @@ if (!istruzione) {
 const cwd = process.cwd();
 const sh = (cmd, args) => execFileSync(cmd, args, { cwd, encoding: 'utf8' }).trim();
 
+// Il titolo (se il chiamante lo passa) finisce nel nome del ramo e nel messaggio
+// di commit. Senza, il commit prendeva le prime 70 lettere dell'istruzione: tutti
+// i lavori finivano chiamati "CONTESTO DEL BUG" e la cronologia era illeggibile.
+const titolo = (process.env.TITOLO || '').trim();
+const etichetta = titolo
+  ? titolo.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)
+  : 'cloud';
+
 const stampo = new Date().toISOString().slice(5, 16).replace(/[-:T]/g, '');
-const branch = `gigi/cloud-${stampo}`;
+const branch = `gigi/${etichetta}-${stampo}`;
 sh('git', ['checkout', '-b', branch]);
 console.log(`Branch ${branch} creato da ${sh('git', ['rev-parse', '--short', 'HEAD'])}.`);
 
@@ -82,7 +91,8 @@ if (!cambiati.length) {
 sh('git', ['config', 'user.name', 'Gigi (cloud)']);
 sh('git', ['config', 'user.email', 'djblade594@gmail.com']);
 sh('git', ['add', '-A']);
-sh('git', ['commit', '-m', `${istruzione.slice(0, 70)}\n\nLavoro svolto da Gemini 3.7 Flash su GitHub Actions.\nDa rivedere prima del merge: nessuno ha ancora guardato questo codice.`]);
+const intestazione = titolo || istruzione.split('\n').find(r => r.trim())?.slice(0, 70) || 'lavoro di Gemini';
+sh('git', ['commit', '-m', `${intestazione}\n\nLavoro svolto da Gemini 3.7 Flash su GitHub Actions.\nDa rivedere prima del merge: nessuno ha ancora guardato questo codice.`]);
 sh('git', ['push', 'origin', branch]);
 console.log(`\nBranch pubblicato: ${branch}`);
 
