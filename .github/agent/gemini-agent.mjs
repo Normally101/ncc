@@ -101,6 +101,22 @@ const STRUMENTI = [{
       },
     },
     {
+      name: 'modifica_file',
+      description:
+        'Sostituisce un pezzo di un file esistente lasciando intatto tutto il resto. ' +
+        'DA PREFERIRE a scrivi_file quando il file esiste già: non serve rigenerarlo tutto. ' +
+        'Il testo da sostituire deve comparire una volta sola nel file, altrimenti la modifica viene rifiutata.',
+      parameters: {
+        type: 'OBJECT',
+        properties: {
+          percorso: { type: 'STRING', description: 'percorso relativo alla cartella di lavoro' },
+          cerca: { type: 'STRING', description: 'il testo esatto da sostituire, com\'è nel file' },
+          sostituisci: { type: 'STRING', description: 'il testo nuovo che prende il suo posto' },
+        },
+        required: ['percorso', 'cerca', 'sostituisci'],
+      },
+    },
+    {
       name: 'elenca_cartella',
       description: 'Elenca i file di una cartella dentro la cartella di lavoro.',
       parameters: {
@@ -143,6 +159,23 @@ async function eseguiStrumento(nome, args, cwd, onProgress) {
         fs.writeFileSync(file, args.contenuto, 'utf8');
         return { scritto: args.percorso, byte: Buffer.byteLength(args.contenuto) };
       }
+      case 'modifica_file': {
+        const file = risolviDentro(cwd, args.percorso);
+        const testo = fs.readFileSync(file, 'utf8');
+        const occorrenze = testo.split(args.cerca).length - 1;
+        // Zero o più di una: in entrambi i casi non sappiamo cosa stiamo
+        // cambiando. Meglio dirlo e farglielo riprovare con più contesto
+        // attorno, che modificare il punto sbagliato del file.
+        if (occorrenze === 0) {
+          return { errore: 'il testo da sostituire non compare nel file: rileggilo e copialo esattamente' };
+        }
+        if (occorrenze > 1) {
+          return { errore: `il testo compare ${occorrenze} volte: aggiungi righe attorno finché non è unico` };
+        }
+        onProgress(`modifica ${args.percorso}`);
+        fs.writeFileSync(file, testo.replace(args.cerca, args.sostituisci), 'utf8');
+        return { modificato: args.percorso };
+      }
       case 'elenca_cartella': {
         const dir = risolviDentro(cwd, args.percorso || '.');
         const voci = fs.readdirSync(dir, { withFileTypes: true })
@@ -172,6 +205,8 @@ const ISTRUZIONI = `Sei un programmatore che lavora su un repository gia' esiste
 Regole:
 - Leggi il codice prima di cambiarlo: non inventare nomi di funzioni o di file.
 - Fai la modifica MINIMA che risolve il compito. Niente refactor collaterali.
+- Su un file che esiste già usa modifica_file, non scrivi_file: rigenerare un file
+  intero per cambiarne tre righe è lento e rischia di perderne pezzi.
 - Scrivi commenti solo per i vincoli che il codice non riesce a mostrare da solo.
 - Segui lo stile del file che stai modificando (lingua dei commenti compresa).
 - Quando hai finito, esegui il comando di verifica indicato e assicurati che passi.
@@ -285,7 +320,8 @@ export async function runGeminiAgent({
     let haScritto = false;
     for (const { functionCall } of chiamate) {
       const esito = await eseguiStrumento(functionCall.name, functionCall.args || {}, cwd, onProgress);
-      if (functionCall.name === 'scrivi_file' && !esito.errore) haScritto = true;
+      if ((functionCall.name === 'scrivi_file' || functionCall.name === 'modifica_file') && !esito.errore)
+        haScritto = true;
       risposteStrumenti.push({ functionResponse: { name: functionCall.name, response: esito } });
     }
     contents.push({ role: 'user', parts: risposteStrumenti });
