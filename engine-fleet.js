@@ -71,12 +71,11 @@ window.repairEngine = async function(carId) {
 
 // ── INSTA-REPAIR (DC) ─────────────────────────────────────────────
 window.instantRepairDC = function(carId) {
-    const cost = gameState.executivePassActive ? 1 : 2;
-    if ((gameState.driverCoins || 0) < cost) { showNotification(`DC insufficienti — servono ${cost} DC.`, 'error'); return; }
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
     if ((car.condition || 0) >= 100) { showNotification('Veicolo già al 100%.', 'info'); return; }
-    gameState.driverCoins -= cost;
+    const cost = gameState.executivePassActive ? 1 : 2;
+    if (!window.CE_money.spendDC(cost, 'instant_repair_dc')) return;
     car.condition = 100;
     car.outOfService = null;
     logToMap(`⚡ ${car.name} riparata istantaneamente (${cost} DC)!`);
@@ -285,10 +284,7 @@ window.returnToHub = function(carId) {
     const hasTelepass = hasInvestment('inv_telepass') || (car.upgrades||[]).includes('telepass_car');
     const tollCost    = hasTelepass ? 0 : Math.round(distKm * 0.08);
     const totalCost   = fuelCost + tollCost;
-    if (gameState.cash < totalCost) {
-        if (typeof showNotification === 'function') showNotification(`Fondi insufficienti per il rientro (€${totalCost}).`, 'error'); return;
-    }
-    gameState.cash -= totalCost;
+    if (!window.CE_money.spend(totalCost, 'return_to_hub')) return;
     driver.status        = 'resting';
     driver.restHoursLeft = travelHours;
     driver._returning    = true;
@@ -338,8 +334,7 @@ window.applyVehicleSkin = function(carId, skinId) {
     const skin = VEHICLE_SKINS.find(s => s.id === skinId);
     if (!car || !skin) return;
     const cost = skin.cost;
-    if ((gameState.driverCoins || 0) < cost) { showNotification(`DC insufficienti — Skin: ${cost} DC`, 'error'); return; }
-    gameState.driverCoins -= cost;
+    if (!window.CE_money.spendDC(cost, 'vehicle_skin')) return;
     car.skin = skinId;
     logToMap(`🎨 ${car.name}: skin "${skin.name}" applicata (${cost} DC)`);
     showNotification(`🎨 ${skin.name} applicata a ${car.name}!`, 'success');
@@ -363,14 +358,10 @@ window.terminateLease = function(carId) {
         `Penale (50% mesi rimanenti): €${penalty.toLocaleString()}\n\n` +
         `Premere OK per confermare.`
     )) return;
-    if (gameState.cash < penalty) {
-        showNotification(`Fondi insufficienti per la penale: €${penalty.toLocaleString()}`, 'error'); return;
-    }
-    gameState.cash -= penalty;
+    if (!window.CE_money.spend(penalty, 'terminate_lease')) return;
     const driver = (gameState.drivers || []).find(d => d.assignedCarId === carId);
     if (driver) driver.assignedCarId = null;
     gameState.fleet.splice(idx, 1);
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     showBigEvent('📋', 'Leasing Terminato', `${car.name} restituita al concessionario. Penale applicata: €${penalty.toLocaleString()}.`);
     logToMap(`📋 Leasing "${car.name}" terminato anticipatamente — penale €${penalty.toLocaleString()}`);
     updateUI();
@@ -388,8 +379,7 @@ window.buyPrototypeCar = function(protoId) {
     const _protoRides = gameState.questStats?.totalRides || 0;
     if ((proto.rideGate || 0) > _protoRides) { showNotification(`Sblocco non raggiunto! Servono ${proto.rideGate} corse completate — hai ${_protoRides}.`, 'error'); return; }
     if (proto.fuel === 'electric' && !gameState.hasEVHub) { showNotification('Infrastruttura mancante: costruisci l\'Hub di Ricarica Corporate prima di acquistare veicoli EV.', 'error'); return; }
-    if (gameState.cash < proto.price) { showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= proto.price;
+    if (!window.CE_money.spend(proto.price, 'buy_prototype_car')) return;
     gameState.fleet.push({ id: 'c_proto_' + Date.now(), name: proto.name, tier: proto.tier, condition: 100, isLease: false, fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, outOfService: null, upgrades: [], protoId: proto.id, vehicleClass: proto.vehicleClass || 'mercedes_e' });
     showBigEvent('🔬', `${proto.name} Acquisita!`, proto.desc);
     logToMap(`🔬 Prototipo: ${proto.name} aggiunta alla flotta!`);
@@ -406,8 +396,7 @@ window.buyHub = function(hubId) {
     const cost = 50000 + Math.floor(hub.baseFlat * 200);
     const repReq = 2.5;
     if ((gameState.reputation || 0) < repReq) { showNotification(`Reputazione insufficiente (min ${repReq}★).`, 'error'); return; }
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti — Concessione Hub: €${cost.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'buy_hub')) return;
     if (!gameState.ownedHubs) gameState.ownedHubs = [];
     gameState.ownedHubs.push(hubId);
     logToMap(`🏛️ Hub conquistato: ${hub.name} — tassa del 5% su ogni corsa!`);
@@ -423,7 +412,7 @@ window.sellHub = function(hubId) {
     if (idx === -1) return;
     const resaleValue = Math.floor((50000 + Math.floor(hub.baseFlat * 200)) * 0.6);
     gameState.ownedHubs.splice(idx, 1);
-    gameState.cash += resaleValue;
+    window.CE_money.earn(resaleValue, 'sell_hub');
     logToMap(`💰 Hub ${hub.name} ceduto — +€${resaleValue.toLocaleString()} (60% del costo)`);
     showNotification(`Hub ${hub.name} ceduto. +€${resaleValue.toLocaleString()}`, 'success');
     updateUI(); saveGame();
@@ -461,8 +450,7 @@ window.cancelListing = function(listingId) {
 window.buyNpcCar = function(listingId) {
     const listing = (gameState.npcMarket || []).find(l => l.id === listingId);
     if (!listing) return;
-    if (gameState.cash < listing.price) { showNotification(`Fondi insufficienti — €${listing.price.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= listing.price;
+    if (!window.CE_money.spend(listing.price, 'buy_npc_car')) return;
     const newCar = {
         id: 'c_' + Date.now(), name: listing.name, tier: listing.tier,
         vehicleClass: listing.vehicleClass || 'mercedes_e',
@@ -484,9 +472,11 @@ window.bidOnAuction = function(amount) {
     if (!auc) return;
     amount = Math.round(Number(amount));
     if (amount <= auc.currentBid) { showNotification(`Offerta troppo bassa — minimo €${(auc.currentBid+1000).toLocaleString()}`, 'error'); return; }
-    if (gameState.cash < amount) { showNotification('Liquidità insufficiente per questa offerta.', 'error'); return; }
-    if (auc.playerBid) gameState.cash += auc.playerBid;
-    gameState.cash -= amount;
+    if ((gameState.cash || 0) + (auc.playerBid || 0) < amount) {
+        showNotification('Liquidità insufficiente per questa offerta.', 'error'); return;
+    }
+    if (auc.playerBid) window.CE_money.earn(auc.playerBid, 'auction_bid_refund');
+    if (!window.CE_money.spend(amount, 'auction_bid')) return;
     auc.playerBid   = amount;
     auc.currentBid  = amount;
     logToMap(`🔨 Tua offerta: €${amount.toLocaleString()} per ${auc.name}`);
