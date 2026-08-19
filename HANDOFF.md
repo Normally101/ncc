@@ -1,7 +1,42 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 18 agosto 2026
+> Aggiornato: 19 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+---
+
+### 🟢 19 agosto 2026 — TUTTO PUBBLICATO. `main` è live, suite a 103 verdi
+
+**Il lavoro accumulato è online.** `auto/stabilization-blocco1` (36 commit) e i lavori di Gemini
+sono stati portati su `main` e pubblicati su Vercel: `4ae47c5` e `b63c10a`. Non c'è più niente
+in sospeso — working tree pulito, nessun ramo `gigi/*` o `gemini/*` rimasto.
+
+**Prima di pubblicare è stato fatto un playtest vero nel browser**, non solo i test:
+fondazione azienda da account nuovo, corsa completata, cassa passata da 500 a 710 e
+**confermata su `companies.cash`**, salvataggio e ricarica senza perdite, console senza errori.
+L'account di prova è stato poi cancellato dalla produzione (torna a 1 utente, 1 azienda).
+
+**Cosa è entrato, oltre a quanto già descritto sotto per il 18 agosto:**
+- la cassa viene specchiata sul server dopo **ogni** movimento locale (corse, pagamenti differiti,
+  upgrade, multe, guerre di prezzo, vendita investimenti, coda del tick giornaliero, pignoramento);
+- `syncCash()` aggiorna la baseline del delta Realtime prima di scrivere: l'eco della nostra stessa
+  scrittura veniva riapplicata (il premio del Giorno 1 mostrava 1000 invece di 500);
+- **pacing**: soglie di sblocco dimezzate, durata corsa da 0.4 a 0.2 minuti/euro, due corse e il
+  primo batch di bandi disponibili subito invece che dopo 5 minuti / 2 giorni di gioco;
+- **un account nuovo sceglie davvero nome, logo e colore** — il boot creava la company col nome di
+  default e rendeva `showNewGameSetup()` codice morto (in produzione c'era infatti **una sola
+  azienda, chiamata "Chauffeur Empire"**: nata proprio da quel bug);
+- la classifica pubblica in home legge `leaderboard` invece di `companies`, che con la RLS
+  "solo la propria riga" tornava sempre vuota a un visitatore anonimo;
+- le soglie del tracker obiettivi derivano da `ceOnb.GATES` invece di essere riscritte a mano.
+
+**Migrazioni SQL 52-61: tutte già applicate in produzione**, verificate una per una il 19 agosto
+(corpo delle funzioni identico, permessi revocati, publication a 27 tabelle, cataloghi popolati).
+Niente da eseguire.
+
+**Debito trovato e non chiuso:** `game_saves` non ha `ON DELETE CASCADE` verso `auth.users`,
+quindi cancellare un account fallisce finché non si cancella prima il salvataggio. Conta per una
+eventuale richiesta di cancellazione dati.
 
 ---
 
