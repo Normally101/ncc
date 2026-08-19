@@ -1,7 +1,73 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 19 agosto 2026
+> Aggiornato: 19 agosto 2026 (sera)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+---
+
+### 🤖 19 agosto sera — Gemini lavora da solo. Suite 125 → 188 verdi
+
+**Il cambio di metodo, che conta più dei singoli fix.** I bug della stessa famiglia continuavano
+a ricomparire perché li cercavamo a mano, un file alla volta. Ora il criterio è meccanico ed è
+scritto in `~/.claude/.../memory/criterio_analisi_ce.md`:
+
+1. **Una sola porta per il denaro** — `money.js` (`CE_money.spend/earn/spendDC/earnDC/addReputation`).
+2. **Il divieto è un test** — `test/guardrail/una-sola-porta.test.js` fallisce se qualcuno muove
+   valuta scavalcando la porta. La lista `ECCEZIONI` (i file non ancora convertiti) **può solo
+   accorciarsi**, e un secondo test impedisce di toglierne uno senza averlo davvero convertito.
+   Siccome il cancello degli agenti è `npm test`, la regola si applica **da sola anche a loro**.
+3. **Le 246 azioni sono l'unità di verifica** — `test/guardrail/azioni-sincronizzano.test.js`
+   estrae i nomi `data-ce-act` dal sorgente, li esegue tutti e fallisce se uno muove denaro senza
+   una **scrittura** verso il server (le letture come `getCompany` non contano).
+4. **Un'azione, una funzione** — registro in `docs/AZIONI.md`.
+
+**Come si misura, d'ora in poi:** eseguendo il codice nel banco di prova, mai deducendo dalla
+lettura. Ogni fix va verificato **per mutazione** (rompo il codice corretto, i test nuovi devono
+diventare rossi).
+
+**Fatto in questa sessione:** `money.js` + i due guardrail; negozio DC, holding e autisti
+convertiti da Gemini (34 test suoi, tutti verificati per mutazione); riparazione carrozzeria
+consolidata da due funzioni a una (il pulsante mostrava €5.100 e ne addebitava 1.500 — ora il
+prezzo viene da `repairCostFor()`, fonte unica, a €85/punto come le interfacce hanno sempre
+mostrato); HQ dietro interruttore spento in `config.js`.
+
+**Debito noto e non nascosto:** `syncCash` manda al server il totale **deciso dal browser**.
+Questo lavoro ripara la divergenza (soldi che sparivano, acquisti gratis) ma **non l'imbroglio**.
+Renderlo a prova di manomissione significa spostare ogni transazione su una RPC che la valida:
+lavoro separato, dopo.
+
+### Il ciclo autonomo (`jarvis/src/code-loop.js`, gira sulla VM)
+
+Gemini prende il lavoro successivo dalla coda, lo manda a GitHub Actions, aspetta l'esito e passa
+al prossimo — **anche di notte**. Sui successi tace; scrive su WhatsApp e **si ferma** solo se un
+task fallisce, se la coda finisce, se ci sono 3 rami in attesa di revisione o al 12° lavoro del
+giorno. Comandi: «gigi, stato», «gigi, riprendi», «gigi, ferma». Lo stato si vede nel riquadro
+*Live activity* dell'hub.
+
+La coda (25 task) **non è scritta a mano**: `jarvis/scripts/genera-coda-ce.mjs` la ricava dalla
+lista `ECCEZIONI` del guardrail, quindi non può divergere dalla realtà.
+
+**Due trappole già pagate, da non ripetere:**
+- **Mai modificare `.github/` mentre una run è in volo.** Il ramo nasce da un main più vecchio,
+  contiene un workflow diverso e GitHub respinge il push: 40 turni e $0,70 buttati. Ora
+  `run-task.mjs` scarta da sé ogni modifica sotto `.github/` (un agente non deve poter cambiare
+  le regole con cui viene eseguito).
+- **File grossi vanno spezzati.** `engine-fleet.js` (14 funzioni) ha esaurito i 40 turni in un
+  colpo solo; ora è due task.
+
+### Cosa resta
+
+- 25 task in coda (≈2 giorni di lavoro autonomo), poi il ciclo chiede lavoro nuovo.
+- **Copertura del guardrail sulle azioni, dichiarata dal test stesso:** 246 azioni, solo 5
+  verificate, 145 non attivabili dal banco, 90 nomi che non risolvono perché vivono in file che
+  `test-support/game-env.js` non carica (29 su 93). Allargare `CORE_FILES` è ciò che fa salire
+  davvero quel numero.
+- **Controlli meccanici ancora da scrivere** (sono quelli che generano i prossimi task): nomi
+  globali sovrascritti in silenzio — `hqOpenBuildModal` ha **firme incompatibili**,
+  `renderTabProvinces` mostra due schermate diverse per la stessa tab —, chiamate `window.*` a
+  funzioni che non esistono, e le 34 funzioni morte elencate in `docs/AZIONI.md`.
+- Debiti aperti: prestiti senza RPC dedicata, province (18/23 senza dati di bilanciamento),
+  `game_saves` senza ON DELETE CASCADE, token GitHub su Vercel troppo ampio.
 
 ---
 
