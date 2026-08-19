@@ -1,0 +1,37 @@
+-- ============================================================================
+-- 56_revoke_daily_dividends_public_access.sql
+-- FIX CRITICAL: rpc_daily_dividends() era pensata per un cron/edge function
+-- ("da chiamare ogni mezzanotte via cron/edge fn", commento originale in
+-- 08_mmo_p2p_marketplace.sql) ma non è mai stata collegata a nessun cron —
+-- il GRANT di default di Postgres/PostgREST su una nuova funzione (a PUBLIC,
+-- che include anon+authenticated) non era mai stato revocato.
+--
+-- Verificato leggendo il codice: nessun call-site nel client (grep sull'intero
+-- repo .js — mai chiamata). La funzione paga il 10% di weeklyEarnings/7 come
+-- dividendo a tutti gli shareholder di TUTTE le company quotate in borsa, ma
+-- NON azzera/segna mai weeklyEarnings come "già distribuito" e non ha alcuna
+-- guardia temporale (a differenza di rpc_credit_real_estate_rents, che si
+-- basa su last_rent_at < now()-24h ed è quindi naturalmente idempotente).
+--
+-- Impatto: chiunque, anche SENZA un account (grant anon), può chiamare
+-- rpc_daily_dividends() ripetutamente in loop per far pagare N volte lo
+-- stesso dividendo giornaliero a tutti gli shareholder — drenando
+-- ripetutamente il cash di QUALSIASI azienda quotata in borsa, a favore di
+-- chiunque ne possieda anche una sola azione (incluso l'attaccante stesso).
+-- A differenza degli altri bug economici trovati in questa sessione, questo
+-- non richiede nemmeno un account: è un vettore di attacco pubblico contro
+-- terzi.
+--
+-- Fix: REVOKE completo da authenticated+anon (nessuna regressione, zero
+-- client la usa). Se in futuro si vuole un vero cron/edge function per i
+-- dividendi IPO, va eseguito con service_role (che bypassa comunque i GRANT
+-- normali) — E prima va aggiunta una guardia anti-doppio-pagamento (es. un
+-- campo last_dividend_day per company_shares, sul modello di last_rent_at
+-- in rpc_credit_real_estate_rents), altrimenti il problema si ripresenta
+-- identico anche chiamata solo dal cron se il cron gira più di una volta
+-- al giorno per errore. Non implementata qui: nessun cron esiste oggi,
+-- fuori scope per questo fix mirato.
+-- ============================================================================
+
+REVOKE EXECUTE ON FUNCTION public.rpc_daily_dividends()
+FROM authenticated, anon, PUBLIC;

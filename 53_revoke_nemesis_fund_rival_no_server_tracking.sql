@@ -1,0 +1,32 @@
+-- ============================================================================
+-- 53_revoke_nemesis_fund_rival_no_server_tracking.sql
+-- FIX HIGH: rpc_nemesis_fund_rival generava cash dal nulla (fino a €50.000,
+-- rate-limit 5/ora = fino a €250.000/ora) verso QUALSIASI user_id esistente
+-- passato dal client, senza alcuna verifica che si tratti di una vera
+-- relazione Nemesis attiva.
+--
+-- Root cause: il sistema "Nemesis" (nemesis.js) è puramente narrativo lato
+-- client — il "rivale" da finanziare è scelto A CASO dalla leaderboard
+-- (`.neq('user_id', self)`, poi random tra i primi 5, vedi nemesis.js:69-82).
+-- Non esiste alcuna tabella server che tracci chi è il Nemesis/rivale di chi
+-- (verificato: zero tabelle `%nemesis%` nello schema). La RPC si fidava
+-- ciecamente di `v_rival_user_id` — chiamabile direttamente (bypassando il
+-- client) con qualunque account esistente come bersaglio, incluso un secondo
+-- account dello stesso giocatore.
+--
+-- Fix minimo (non una riscrittura): REVOKE dell'accesso diretto client. Il
+-- client gestisce già l'RPC in un try/catch silenzioso (nemesis.js:86-98) —
+-- nessuna regressione visibile, l'evento narrativo "VIP finanzia il rivale"
+-- smette semplicemente di attivarsi (`nem.lastFunded` non avanza mai, il
+-- retry successivo è silenzioso, nessun errore mostrato al giocatore). Il
+-- resto del sistema Nemesis (es. rpc_nemesis_bribe_vip, che addebita SOLO il
+-- chiamante) resta invariato e attivo.
+--
+-- Fix vero (rimandato, richiede una decisione di design — vedi HANDOFF.md):
+-- una tabella `nemesis_events` (chi è il rivale attivo di chi, quando,
+-- scadenza) popolata da un trigger server-side, con la RPC che verifica il
+-- match prima di pagare. Riattivare il GRANT solo dopo quella riscrittura.
+-- ============================================================================
+
+REVOKE EXECUTE ON FUNCTION public.rpc_nemesis_fund_rival(uuid, bigint, text)
+FROM authenticated, anon, PUBLIC;
