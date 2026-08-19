@@ -157,8 +157,7 @@ window.buyFuelForDepot = function(litres) {
     const _allyFuelDiscount = (typeof window._allyPerkMult === 'function') ? window._allyPerkMult('fuel') : 1.0;
     const fuelDiscount   = lobbyDiscount * depotDiscount * _consorzioFuelDiscount * _allyFuelDiscount;
     const cost = Math.floor(actual * (gameState.fuelPrice || 1.85) * fuelDiscount);
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'buy_fuel_for_depot')) return;
     gameState.fuelTank = (gameState.fuelTank || 0) + actual;
     logToMap(`🛢️ Deposito: +${actual.toLocaleString()}L a €${(gameState.fuelPrice||1.85).toFixed(2)}/L. Costo −€${cost.toLocaleString()}`);
     showNotification(`🛢️ +${actual.toLocaleString()}L nel deposito!`, 'success');
@@ -178,10 +177,7 @@ window.emergencyRefuel = function() {
     const litresNeeded = stoppedCars.length * 80;
     const emergencyPrice = (gameState.fuelPrice || 1.85) * 3;
     const cost = Math.ceil(litresNeeded * emergencyPrice);
-    if (gameState.cash < cost) {
-        showNotification(`Fondi insufficienti per il rifornimento di emergenza! Servono €${cost.toLocaleString()}`, 'error'); return;
-    }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'emergency_refuel')) return;
     stoppedCars.forEach(car => { car.fuel = 100; car.outOfService = null; });
     logToMap(`🚨 Rifornimento emergenza: ${stoppedCars.length} auto rifornite al triplo prezzo. Costo: −€${cost.toLocaleString()}`);
     showNotification(`🚨 ${stoppedCars.length} auto rifornite! −€${cost.toLocaleString()} (3× tariffa emergenza)`, 'error');
@@ -196,8 +192,7 @@ window.upgradeFuelDepot = function() {
     const next = _DEPOT_LEVELS.find(d => d.level === lvl + 1);
     if (!next) { showNotification('Deposito già al livello massimo!', 'info'); return; }
     const cost = Math.round(5000 * Math.pow(lvl, 1.8));
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'upgrade_fuel_depot')) return;
     gameState.fuelTankLevel = next.level;
     gameState.fuelTankCapacity = next.capacity;
     logToMap(`🏗️ Mega-Depot potenziato: ${next.name} (${(next.capacity/1000).toFixed(0)}kL, −${(next.priceDiscount*100).toFixed(0)}% carburante)`);
@@ -210,8 +205,7 @@ window.buyTiresForDepot = function(sets) {
     if (!hasInvestment('inv_fuel_depot')) { showNotification('Attiva prima il Deposito Aziendale!', 'error'); return; }
     const costPerSet = 800;
     const cost = sets * costPerSet;
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'buy_tires_for_depot')) return;
     gameState.depositoGomme = (gameState.depositoGomme || 0) + sets;
     logToMap(`🔧 Deposito: +${sets} treni di gomme. (Totale: ${gameState.depositoGomme})`);
     showNotification(`🔧 +${sets} treni di gomme nel deposito!`, 'success');
@@ -301,8 +295,7 @@ window.returnToHub = function(carId) {
 // ── CONTRATTO MANUTENZIONE ────────────────────────────────────────
 window.buyMaintenanceContract = function() {
     const cost = 10000;
-    if (gameState.cash < cost) { showNotification('Fondi insufficienti (€10.000).', 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'buy_maintenance_contract')) return;
     gameState.maintenanceContract = true;
     gameState.maintenanceContractPaidUntilDay = gameState.day + 7;
     logToMap('📋 Contratto di Manutenzione attivato — riparazioni −30% per 7 giorni.');
