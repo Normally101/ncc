@@ -155,4 +155,19 @@ describe('rides/driver-can-take-ride — idoneità autista per assegnazione cors
         assert.equal(sandbox._driverCanTakeRide(driverResting, ride), false, 'autista a riposo non deve poter accettare corse');
         assert.equal(sandbox._driverCanTakeRide(driverFullQueue, ride), false, 'autista con coda di 10 corse (senza Executive Pass) deve rifiutare nuove corse');
     });
+
+    test('limite coda: un autista con 10 corse in coda non può prendere la corsa mentre con 9 può', () => {
+        const { sandbox } = freshEnv();
+        const car = { id: 'car1', tier: 'standard', condition: 90, outOfService: false };
+        const driverWith9 = { id: 'd1', name: 'Mario', status: 'idle', assignedCarId: 'car1', queue: new Array(9).fill({ id: 'dummy' }) };
+        const driverWith10 = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: new Array(10).fill({ id: 'dummy' }) };
+
+        sandbox.gameState.fleet = [car];
+        sandbox.gameState.drivers = [driverWith9, driverWith10];
+
+        const ride = { id: 'r1', tier: 'standard' };
+
+        assert.equal(sandbox._driverCanTakeRide(driverWith9, ride), true, 'con 9 elementi in coda deve poter prendere la corsa');
+        assert.equal(sandbox._driverCanTakeRide(driverWith10, ride), false, 'con 10 elementi in coda (piena) non deve poter prendere la corsa');
+    });
 });
