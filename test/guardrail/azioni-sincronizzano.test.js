@@ -42,7 +42,7 @@ function nomiAzioni() {
     for (const f of sorgenti) {
         let testo;
         try { testo = fs.readFileSync(path.join(ROOT, f), 'utf8'); } catch { continue; }
-        for (const m of testo.matchAll(/ceAct\(\s*'([A-Za-z_$][\w$]*)'/g)) nomi.add(m[1]);
+        for (const m of testo.matchAll(/ceAct\(\s*['"]([A-Za-z_$][\w$]*)['"]/g)) nomi.add(m[1]);
         for (const m of testo.matchAll(/data-ce-act=\\?["']([A-Za-z_$][\w$]*)/g)) nomi.add(m[1]);
     }
     return [...nomi].sort();
