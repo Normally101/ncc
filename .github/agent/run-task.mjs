@@ -44,11 +44,24 @@ const esito = await runGeminiAgent({
   timeoutMs: 20 * 60_000,
 });
 
-const cambiati = sh('git', ['status', '--porcelain'])
+const tuttiCambiati = sh('git', ['status', '--porcelain'])
   .split('\n')
   .filter((r) => r.length > 3)
   .map((r) => r.slice(3).trim())
   .filter(Boolean);
+
+// L'agente non pubblica MAI la CI. Due motivi, uno pratico e uno di sostanza:
+// GitHub rifiuta il push se un'automazione tocca .github/workflows senza il
+// permesso `workflows` (successo il 19/08/2026: un ramo nato da un main piu'
+// vecchio conteneva una versione diversa del workflow e il push e' stato
+// respinto, buttando via 40 turni di lavoro gia' fatto); e soprattutto un agente
+// non deve poter modificare le regole con cui viene eseguito.
+const cambiati = tuttiCambiati.filter((f) => !f.startsWith('.github/'));
+const scartati = tuttiCambiati.filter((f) => f.startsWith('.github/'));
+if (scartati.length) {
+  console.log(`\n⚠️  Non pubblico modifiche alla CI: ${scartati.join(', ')}`);
+  sh('git', ['checkout', '--', '.github/']);
+}
 
 console.log('\n──────── ESITO ────────');
 console.log(`ok: ${esito.ok} | turni: ${esito.turni} | costo: $${esito.costo.toFixed(4)}`);
@@ -90,7 +103,9 @@ if (!cambiati.length) {
 // dall'indirizzo.
 sh('git', ['config', 'user.name', 'Gigi (cloud)']);
 sh('git', ['config', 'user.email', 'djblade594@gmail.com']);
-sh('git', ['add', '-A']);
+// Solo i file davvero previsti: `git add -A` avrebbe rimesso dentro anche la CI
+// appena scartata sopra.
+sh('git', ['add', '--', ...cambiati]);
 const intestazione = titolo || istruzione.split('\n').find(r => r.trim())?.slice(0, 70) || 'lavoro di Gemini';
 sh('git', ['commit', '-m', `${intestazione}\n\nLavoro svolto da Gemini 3.7 Flash su GitHub Actions.\nDa rivedere prima del merge: nessuno ha ancora guardato questo codice.`]);
 sh('git', ['push', 'origin', branch]);
