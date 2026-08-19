@@ -28,3 +28,6 @@ _mockups/
 
 # Dev preview pages — non servire pubblicamente
 preview-*.html
+
+# Configurazione locale estensione Continue (contiene il projectId Google Cloud)
+.continue/

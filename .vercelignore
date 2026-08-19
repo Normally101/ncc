@@ -20,6 +20,7 @@ docs
 .github
 .agents
 .claude
+skills
 _mockups
 
 # Suite di test (node --test) — logica interna di QA, non serve pubblica
