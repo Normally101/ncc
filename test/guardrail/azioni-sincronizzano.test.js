@@ -150,10 +150,9 @@ const NON_SONO_ACQUISTI = new Set(['_confirmNewGame', 'confirmNewGame', 'resetGa
 const ROTTE_NOTE = new Set([
     // engine-fleet.js, in attesa del suo task di conversione
     'instantRepairDC',
-    // hireDriver: oltre a non sincronizzare, chiamata senza argomenti porta il saldo
-    // a NaN (nessuna validazione dello stipendio). CE_money.spend rifiuta i valori
-    // non finiti, quindi la conversione chiude entrambi i problemi.
-    'hireDriver',
+    // hireDriver e' stata convertita il 19/08: oltre a non sincronizzare, chiamata
+    // senza argomenti portava il saldo a NaN. CE_money.spend rifiuta i valori non
+    // finiti, quindi ora esce senza toccare nulla e non figura piu' qui.
     'buyFuelForDepot', 'upgradeFuelDepot', 'buyTiresForDepot', 'emergencyRefuel',
     'buyMaintenanceContract', 'buyHub', 'sellHub', 'buyPrototypeCar', 'buyNpcCar',
     'bidOnAuction', 'donateToLobby', 'buyStocks', 'sellStocks', 'shortSell',
