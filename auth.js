@@ -47,14 +47,13 @@ async function _mmoBootSequence(userId) {
             console.log('[Auth] Phase 1 ✅ ServerState pronto —',
                 hasCompanyRow ? `company: ${state.company.company_name}, cash: €${state.company.cash}` : 'nessuna company row');
 
-            // Ensure company row exists (idempotent: ON CONFLICT updates only company_name)
-            if (!hasCompanyRow) {
-                const companyName = window._pendingCompanyName || 'Chauffeur Empire';
-                const created = await window.ServerState.initCompany(companyName);
-                hasCompanyRow = !!created;
-                companyId = created?.id || companyId;
-                console.log('[Auth] Phase 1 → Company creata:', created?.company_name);
-            }
+            // NON creare la company qui con un nome di default: per un account davvero nuovo
+            // (nessuna company, nessun save) deve restare hasCompanyRow=false così la Phase 4
+            // mostra showNewGameSetup() e il giocatore sceglie nome/logo/colore veri — prima
+            // questa creazione "silenziosa" rendeva quello schermo codice morto (ogni azienda
+            // nasceva già chiamata "Chauffeur Empire", irreversibile). Il ramo Phase 4 sotto
+            // (cloudSimState presente) resta il fallback legittimo per un utente che ha già
+            // giocato ma la cui company row è sparita per qualche motivo.
         } catch(e) {
             // Tables may not exist yet if SQL migration hasn't been run.
             // Non-fatal: fall through using legacy flow only.
@@ -150,19 +149,6 @@ async function _mmoBootSequence(userId) {
         // Always discard it.
         _clearLocalCache();
         console.log('[Auth] Phase 4 → Cloud OK, nessun save — cancello cache locale.');
-
-        // If Phase 1 failed to create the company row, retry now
-        if (!hasCompanyRow && window.ServerState) {
-            try {
-                const created = await window.ServerState.initCompany(
-                    window._pendingCompanyName || 'Chauffeur Empire'
-                );
-                if (created) hasCompanyRow = true;
-                console.log('[Auth] Phase 4 → Company creata (retry):', created?.company_name);
-            } catch(e) {
-                console.warn('[Auth] Phase 4 ⚠ initCompany retry fallita:', e.message);
-            }
-        }
 
         if (hasCompanyRow) {
             console.log('[Auth] Phase 4 → Avvio partita fresca.');
