@@ -40,7 +40,6 @@ const ECCEZIONI = new Set([
     'engine-fleet.js',
     'engine-holding.js',
     'engine-rides.js',
-    'engine-store.js',
     'engine.js',
     'hostile_takeover.js',
     'hq.js',
