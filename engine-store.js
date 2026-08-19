@@ -191,8 +191,7 @@ window.fullBundleDC = function() {
     });
     gameState.driverAcademy = [];
     const constructions = (gameState.constructions || []).slice();
-    const constructionsList = constructions;
-    constructionsList.forEach(c => { if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId); });
+    constructions.forEach(c => { if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId); });
     gameState.constructions = [];
     logToMap(`👑 Pacchetto Imperiale attivato (${cost} DC)`);
     showNotification(`👑 Pacchetto Imperiale: tutto l'impero è al massimo! (−${cost} DC)`, 'success');
