@@ -10,7 +10,7 @@
  */
 import { execFileSync } from 'child_process';
 import fs from 'fs';
-import { runGeminiAgent } from './gemini-agent.js';
+import { runGeminiAgent } from './gemini-agent.mjs';
 
 const istruzione = process.env.INSTRUCTION?.trim();
 if (!istruzione) {
