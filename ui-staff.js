@@ -278,11 +278,10 @@ window.openCarModal = function(carId) {
     document.getElementById('car-modal-title').innerText = car.name;
     document.getElementById('car-modal-desc').innerText = `${car.tier.toUpperCase()} · Condizione ${Math.floor(car.condition)}% · Carburante ${Math.floor(car.fuel||100)}%`;
 
-    const _repMissing = 100 - Math.max(0, Math.floor(car.condition || 0));
-    const _repHasMech = gameState.staff.some(s => s.id === 'mech');
-    const _repContractDisc = (gameState.maintenanceContract && gameState.day <= gameState.maintenanceContractPaidUntilDay) ? 0.70 : 1.0;
-    const _repMechDisc = _repHasMech ? 0.50 : 1.0;
-    let repairCost = Math.round(Math.max(500, _repMissing * 85) * _repContractDisc * _repMechDisc);
+    // Prezzo dalla funzione canonica (engine.js): questa formula era ricopiata a
+    // mano e divergeva da quella davvero addebitata dal pulsante — mostrava
+    // €5.100 su un'auto al 40% mentre payToRepairCar ne scalava 1.500.
+    let repairCost = window.repairCostFor(car);
 
     const fuelPct = car.fuel !== undefined ? Math.floor(car.fuel) : 100;
     const fuelColor = fuelPct < 20 ? '#db5746' : fuelPct < 50 ? '#e0922e' : '#2f74c0';

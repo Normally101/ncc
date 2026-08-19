@@ -233,7 +233,9 @@ function renderTabFleet() {
             ].filter(Boolean).join(' ');
 
             const assignedDriver = gameState.drivers.find(d => d.assignedCarId === car.id && d.id !== 'ceo');
-            const repairCostCond = Math.max(500, (100 - condPct) * 85);
+            // Prezzo dalla funzione canonica: la formula era ricopiata qui e in
+            // ui-staff.js, e divergeva da quella davvero addebitata.
+            const repairCostCond = window.repairCostFor(car);
             const repairCostEng  = Math.max(800, (100 - eh) * 180);
 
             // Tier badge
@@ -286,7 +288,7 @@ function renderTabFleet() {
                 </td>
                 <td style="white-space:nowrap"><span class="em-pill ${statusCls}">${statusLabel}</span></td>
                 <td class="r" style="white-space:nowrap">
-                    ${condPct < 100 ? `<button ${ceAct('repairVehicle', [car.id])} class="em-goldbtn" style="font-size:9.5px;padding:3px 8px;margin-right:5px" title="Ripara carrozzeria">🔧 €${repairCostCond.toLocaleString()}</button>` : ''}
+                    ${condPct < 100 ? `<button ${ceAct('payToRepairCar', [car.id])} class="em-goldbtn" style="font-size:9.5px;padding:3px 8px;margin-right:5px" title="Ripara carrozzeria">🔧 €${repairCostCond.toLocaleString()}</button>` : ''}
                     ${eh < 70 ? `<button ${ceAct('repairEngine', [car.id])} class="em-pill" style="border:1px solid #f0d2a8;background:#fdeede;color:var(--em-amber);cursor:pointer;font-size:9.5px;padding:4px 8px;margin-right:5px" title="Ripara motore">⚙ €${repairCostEng.toLocaleString()}</button>` : ''}
                     <button ${ceAct('openCarModal', [car.id])} class="em-bbtn" style="padding:5px 11px">Gestisci →</button>
                 </td>
@@ -408,8 +410,8 @@ window.bulkRepairFleet = function(ids) {
     let count = 0;
     ids.forEach(id => {
         const car = (gameState.fleet || []).find(c => c.id === id);
-        if (car && (car.condition || 0) < 100 && typeof repairVehicle === 'function') {
-            repairVehicle(id);
+        if (car && (car.condition || 0) < 100 && typeof window.payToRepairCar === 'function') {
+            window.payToRepairCar(id);
             count++;
         }
     });

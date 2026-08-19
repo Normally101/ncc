@@ -10,7 +10,11 @@ describe('garage/repair-vehicle — riparazione veicolo', () => {
         sandbox.gameState.fleet.push(car);
         sandbox.gameState.cash = 50000;
         const cashBefore = sandbox.gameState.cash;
-        const expectedCost = (100 - 40) * 25; // formula reale in engine.js::payToRepairCar, nessun mech/mobile_workshop
+        // 19/08/2026: il prezzo passa da €25 a €85 al punto. Non e' un ritocco di
+        // bilanciamento: €85 e' la cifra che ENTRAMBE le interfacce mostravano da
+        // sempre sul pulsante, mentre l'addebito reale usava di nascosto €25.
+        // Consolidato su cio' che il giocatore legge. Fonte unica: repairCostFor.
+        const expectedCost = (100 - 40) * 85;
 
         await sandbox.payToRepairCar('c_dmg');
 
@@ -51,7 +55,7 @@ describe('garage/repair-vehicle — riparazione veicolo', () => {
         sandbox.gameState.staff.push({ id: 'mech', name: 'Meccanico' });
         sandbox.gameState.cash = 50000;
         const cashBefore = sandbox.gameState.cash;
-        const expectedCost = Math.floor((100 - 40) * 25 * 0.5);
+        const expectedCost = Math.round((100 - 40) * 85 * 0.5);
 
         await sandbox.payToRepairCar('c_dmg3');
 

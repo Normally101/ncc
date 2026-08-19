@@ -1454,14 +1454,58 @@ window.respondPoaching = function(emailId, accept) {
 };
 
 // ─── GESTIONE AVANZATA AUTO (RIPARA, VENDI, ASSEGNA) ───
+/* ── RIPARAZIONE CARROZZERIA — funzione unica ─────────────────────────────────
+   Fino al 19/08/2026 esistevano DUE riparazioni con DUE prezzi diversi:
+   payToRepairCar qui (€25/punto, addebito vero via RPC) e repairVehicle in
+   engine-fleet.js (€85/punto, scalava solo in locale senza mai dirlo al server).
+   Entrambe le interfacce mostravano pero' il prezzo a €85: il pulsante del tab
+   Staff diceva "€5.100" e ne addebitava 1.500.
+
+   Consolidate qui, sul prezzo che i giocatori hanno sempre visto (€85/punto),
+   con l'unione delle logiche che le due avevano separatamente: Kasko e sconto
+   officina mobile venivano solo da questa, blocco motore fuso, sconto contratto
+   di manutenzione e azzeramento di outOfService solo dall'altra.
+
+   `repairCostFor` e' l'UNICA fonte del prezzo: le interfacce devono chiamarla
+   invece di ricopiare la formula (era copiata in ui-staff.js e ui-fleet.js). */
+
+const RIPARAZIONE_EURO_PER_PUNTO = 85;
+const RIPARAZIONE_MINIMO = 500;
+
+/**
+ * Costo di riparazione della carrozzeria, sconti inclusi.
+ * @returns {number} 0 se gratis (Kasko) o se non c'e' nulla da riparare.
+ */
+window.repairCostFor = function repairCostFor(car) {
+    if (!car) return 0;
+    const missing = 100 - Math.max(0, Math.floor(car.condition || 0));
+    if (missing <= 0) return 0;
+    if (hasInvestment('inv_kasko')) return 0;
+
+    let cost = Math.max(RIPARAZIONE_MINIMO, missing * RIPARAZIONE_EURO_PER_PUNTO);
+    const contrattoAttivo = gameState.maintenanceContract && gameState.day <= gameState.maintenanceContractPaidUntilDay;
+    if (contrattoAttivo) cost *= 0.70;
+    if (gameState.staff.some(s => s.id === 'mech')) cost *= 0.50;
+    if (hasInvestment('inv_mobile_workshop')) cost *= 0.80;
+    return Math.round(cost);
+};
+
 window.payToRepairCar = async function payToRepairCar(carId) {
     const car = gameState.fleet.find(c => c.id === carId);
     if(!car) return;
-    if(car.condition === 100) return;
+    if((car.condition || 0) >= 100) { showNotification('Veicolo già in ottime condizioni!', 'info'); return; }
+
+    // Motore fuso: la carrozzeria da sola non rimette l'auto in strada, e pagarla
+    // adesso sarebbe denaro buttato finche' non si ripara il motore.
+    if (car.engineHealth !== undefined && car.engineHealth <= 0) {
+        showNotification('⚙️ Motore fuso — usa "Ripara Motore" prima di riparare la carrozzeria.', 'error');
+        return;
+    }
 
     // Kasko: riparazioni incidentali gratuite
     if (hasInvestment('inv_kasko')) {
         car.condition = 100;
+        car.outOfService = null;
         logToMap(`🛡️ Kasko: ${car.name} riparata gratuitamente.`);
         if(typeof closeModals === 'function') closeModals();
         if(typeof renderTabFleet === 'function') renderTabFleet();
@@ -1469,14 +1513,18 @@ window.payToRepairCar = async function payToRepairCar(carId) {
         return;
     }
 
-    let cost = (100 - car.condition) * 25;
-    if (gameState.staff.some(s => s.id === 'mech')) cost = Math.floor(cost * 0.5);
-    if (hasInvestment('inv_mobile_workshop')) cost = Math.floor(cost * 0.8);
+    const cost = window.repairCostFor(car);
+    if ((gameState.cash || 0) < cost) {
+        showNotification(`Fondi insufficienti — Riparazione: €${cost.toLocaleString('it-IT')}`, 'error');
+        return;
+    }
 
     const result = await window.ServerState?.repairVehicle(car._serverId, cost);
     if (!result) return;
 
     car.condition = 100;
+    car.outOfService = null;
+    logToMap(`🔧 ${car.name} riparata: 100% (€${cost.toLocaleString('it-IT')})`);
     if(typeof closeModals === 'function') closeModals();
     if(typeof renderTabFleet === 'function') renderTabFleet();
     updateUI();

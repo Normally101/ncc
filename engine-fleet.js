@@ -44,33 +44,12 @@ window.refillTires = async function(carId) {
 };
 
 // ── RIPARAZIONE CONDIZIONI ────────────────────────────────────────
-window.repairVehicle = function(carId) {
-    const car = gameState.fleet.find(c => c.id === carId);
-    if (!car) return;
-    const missing = 100 - Math.max(0, Math.floor(car.condition || 0));
-    if (missing <= 0) { showNotification('Veicolo già in ottime condizioni!', 'info'); return; }
-    const hasMech = gameState.staff.some(s => s.id === 'mech');
-    const contractDisc = (gameState.maintenanceContract && gameState.day <= gameState.maintenanceContractPaidUntilDay) ? 0.70 : 1.0;
-    const mechDisc     = hasMech ? 0.50 : 1.0;
-    const baseCost = Math.max(500, missing * 85);
-    const cost = Math.round(baseCost * contractDisc * mechDisc);
-    if ((car.engineHealth !== undefined) && car.engineHealth <= 0) {
-        showNotification('⚙️ Motore fuso — usa "Ripara Motore" prima di riparare la carrozzeria.', 'error');
-        return;
-    }
-    if (gameState.cash < cost) { showNotification(`Fondi insufficienti — Riparazione: €${cost.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= cost;
-    car.condition = 100;
-    car.outOfService = null;
-    let discLabel = '';
-    if (contractDisc < 1 && hasMech) discLabel = ' (−30% contratto + −50% Capo Officina)';
-    else if (contractDisc < 1) discLabel = ' (−30% contratto)';
-    else if (hasMech) discLabel = ' (−50% Capo Officina)';
-    logToMap(`🔧 ${car.name} riparata: 100% (€${cost.toLocaleString()}${discLabel})`);
-    showNotification(`✅ ${car.name} riparata!`, 'success');
-    updateUI(); saveGame();
-    if (typeof renderTabFleet === 'function') renderTabFleet();
-};
+/* `repairVehicle` viveva qui ed era il gemello rotto di `payToRepairCar`
+   (engine.js): stessa azione, prezzo diverso, e scalava il denaro solo nel
+   browser senza mai dirlo al server — quindi la spesa tornava indietro al
+   ricaricamento e l'auto restava riparata. Rimossa il 19/08/2026; la logica
+   utile (blocco motore fuso, sconto contratto, azzeramento outOfService) e'
+   confluita nella funzione canonica. Non reintrodurla: vedi docs/AZIONI.md. */
 
 // ── RIPARAZIONE MOTORE ────────────────────────────────────────────
 window.repairEngine = async function(carId) {
