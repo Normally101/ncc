@@ -159,6 +159,15 @@ const verdetto = {
 };
 
 console.log(JSON.stringify(verdetto, null, 2));
+/* E anche su UNA riga sola, con un marcatore davanti.
+   Il ciclo su Google legge il verdetto raschiando i log di questa run, e il
+   JSON indentato non si lascia raschiare: GitHub antepone un timestamp a OGNI
+   riga, quindi ricomporre l'oggetto significa ripulirle una per una. La
+   ripulitura era sbagliata (si aspettava due marcatori temporali, ce n'e' uno),
+   JSON.parse falliva, il verdetto arrivava vuoto e il ciclo respingeva per
+   prudenza rami perfettamente buoni — tre, il 20/08. Una riga sola toglie il
+   problema alla radice: basta prendere da '{' a fine riga. */
+console.log('VERDETTO ' + JSON.stringify(verdetto));
 if (process.env.VERDETTO_OUT) fs.writeFileSync(process.env.VERDETTO_OUT, JSON.stringify(verdetto));
 
 if (process.env.GITHUB_STEP_SUMMARY) {
