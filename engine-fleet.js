@@ -220,10 +220,8 @@ window.buyCARUpgrade = function(carId, upgradeId) {
     if (!car || !upg) return;
     if (!car.upgrades) car.upgrades = [];
     if (car.upgrades.includes(upgradeId)) { showNotification('Upgrade già installato!', 'error'); return; }
-    if (gameState.cash < upg.price) { showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= upg.price;
+    if (!window.CE_money.spend(upg.price, 'buy_car_upgrade')) return;
     car.upgrades.push(upgradeId);
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     showNotification(`${upg.name} installato su ${car.name}!`, 'success');
     logToMap(`🔧 Upgrade: ${upg.name} su ${car.name}`);
     updateUI();
