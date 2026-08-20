@@ -33,7 +33,6 @@ const ECCEZIONI = new Set([
     'hq.js',
     'showroom.js',
     'ui-staff.js',
-    'vtk-market.js',
 ]);
 
 const MUTAZIONE = /gameState\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
