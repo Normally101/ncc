@@ -1480,7 +1480,24 @@ window.repairCostFor = function repairCostFor(car) {
     if (!car) return 0;
     const missing = 100 - Math.max(0, Math.floor(car.condition || 0));
     if (missing <= 0) return 0;
-    if (hasInvestment('inv_kasko')) return 0;
+
+    /* La Kasko NON azzera piu' la riparazione ordinaria.
+     *
+     * La sua descrizione promette che «le riparazioni incidentali non costano
+     * nulla», e quella promessa e' gia' mantenuta dove serve: quando un
+     * incidente accade, engine-rides.js ripara l'auto sul posto senza
+     * addebitare niente. Azzerare anche l'usura normale significava pagare due
+     * volte la stessa cosa, e con 48.000 euro — che una flotta di cinque auto
+     * ripaga in circa 75 corse a testa — toglieva dal gioco un intero centro di
+     * costo, per sempre.
+     *
+     * Le riparazioni sono una delle poche spese ricorrenti che danno al
+     * giocatore un motivo per tornare e una decisione da prendere (riparo
+     * adesso o tiro avanti?). Regalarle non rende il gioco piu' generoso:
+     * lo rende piu' vuoto. Chi vuole spendere meno ha gia' tre sconti che si
+     * moltiplicano — contratto, Capo Officina, Officina Mobile — e insieme
+     * portano il prezzo da 85 a 24 euro al punto.
+     */
 
     let cost = Math.max(RIPARAZIONE_MINIMO, missing * RIPARAZIONE_EURO_PER_PUNTO);
     const contrattoAttivo = gameState.maintenanceContract && gameState.day <= gameState.maintenanceContractPaidUntilDay;

@@ -58,10 +58,26 @@ describe('garage/riparazione — una sola funzione, un solo prezzo', () => {
         assert.equal(sandbox.window.repairCostFor(car), 1428, '× 0.80 officina mobile');
     });
 
-    test('con Kasko la riparazione e\' gratuita', () => {
+    test('la Kasko NON regala la riparazione ordinaria', () => {
+        /* Fino al 20/08/2026 la Kasko azzerava qualunque riparazione. La sua
+           descrizione pero' promette solo che «le riparazioni incidentali non
+           costano nulla» — e quella promessa e' gia' mantenuta altrove:
+           engine-rides.js ripara l'auto sul posto quando l'incidente accade,
+           senza addebitare niente.
+
+           Azzerare anche l'usura normale era pagare due volte la stessa cosa, e
+           con 48.000 euro toglieva dal gioco un intero centro di costo per
+           sempre. Le riparazioni sono una delle poche spese ricorrenti che
+           danno al giocatore una decisione da prendere: regalarle non rende il
+           gioco piu' generoso, lo rende piu' vuoto.
+
+           Se questo test torna a pretendere 0, qualcuno ha rimesso lo sconto
+           totale: e' una scelta di equilibrio, e va discussa, non fatta di
+           passaggio. */
         const { sandbox, gs, car } = conAuto(30);
         gs.investments.push('inv_kasko');
-        assert.equal(sandbox.window.repairCostFor(car), 0);
+        assert.equal(sandbox.window.repairCostFor(car), 5950,
+            '70 punti mancanti × 85: la Kasko non c\'entra con l\'usura');
     });
 
     test('col motore fuso la riparazione carrozzeria viene rifiutata senza addebito', async () => {
