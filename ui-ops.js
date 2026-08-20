@@ -215,17 +215,13 @@ async function renderTabProvinces() {
     container.innerHTML = `<div class="em em-page"><div class="em-wrap">` + html + `</div></div>`;
 }
 
-window.buyHRAutomation = async function() {
+window.buyHRAutomation = function() {
     const cost = 5, days = 7;
-    if ((gameState.driverCoins || 0) < cost) {
-        showNotification(`Driver Coins insufficienti (servono ${cost} DC)`, 'error');
-        return;
-    }
-    const result = await window.ServerState?.buyHRAutomation(cost, days);
-    if (!result?.success) return;
+    if (!window.CE_money.spendDC(cost, 'buy_hr_automation')) return;
 
-    gameState.hrAutomationExpiresAt = result.expires_at;
-    gameState.driverCoins = Math.max(0, (gameState.driverCoins || 0) - cost);
+    const currentExpiry = gameState.hrAutomationExpiresAt ? new Date(gameState.hrAutomationExpiresAt).getTime() : Date.now();
+    const baseTime = Math.max(Date.now(), currentExpiry);
+    gameState.hrAutomationExpiresAt = new Date(baseTime + days * 86400000).toISOString();
 
     // Resolve all drivers already on strike
     let resolved = 0;
