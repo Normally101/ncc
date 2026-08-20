@@ -115,7 +115,6 @@ window.vtkPlaceSellOrder = async function(vtkAmount, dcPrice) {
         return;
     }
 
-    gameState.vtkBalance = (gameState.vtkBalance || 0) - vtk;
     if (typeof updateUI === 'function') updateUI();
     if (typeof saveGame === 'function') saveGame();
     if (typeof showNotification === 'function') showNotification(`✅ Ordine di vendita: ${vtk} VTK → ${dc} DC`, 'success');
@@ -138,8 +137,7 @@ window.vtkFillOrder = async function(orderId, dcCost) {
         return;
     }
 
-    gameState.driverCoins = (gameState.driverCoins || 0) - dcCost;
-    gameState.vtkBalance  = (gameState.vtkBalance  || 0) + (data?.vtk_received || 0);
+    if (!window.CE_money.spendDC(dcCost, 'vtk_market_fill')) return;
     if (typeof updateUI === 'function') updateUI();
     if (typeof saveGame === 'function') saveGame();
     if (typeof showNotification === 'function') showNotification(`✅ Acquistati ${data?.vtk_received || 0} VTK!`, 'success');
@@ -157,7 +155,6 @@ window.vtkCancelOrder = async function(orderId) {
         return;
     }
 
-    gameState.vtkBalance = (gameState.vtkBalance || 0) + (data?.vtk_refunded || 0);
     if (typeof updateUI === 'function') updateUI();
     if (typeof saveGame === 'function') saveGame();
     if (typeof showNotification === 'function') showNotification('Ordine annullato.', 'success');
@@ -223,10 +220,6 @@ window.vtkBuyShopItem = async function(itemId) {
             }
             return;   // in nessun caso l'oggetto viene consegnato
         }
-
-        // Il server è la fonte di verità sul saldo: allineiamoci alla sua risposta.
-        if (data && data.vtk_balance != null) gameState.vtkBalance = data.vtk_balance;
-        else if (!window.ServerState?.isReady()) gameState.vtkBalance = (gameState.vtkBalance || 0) - item.cost;
 
         const res = item.apply(gameState);
         notify((res && res.msg) || 'Acquisto completato.', 'success');
