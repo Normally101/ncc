@@ -32,7 +32,6 @@ const ECCEZIONI = new Set([
     'engine-rides.js',
     'engine.js',
     'hq.js',
-    'nemesis.js',
     'p2p-market.js',
     'p2p-render.js',
     'showroom.js',
