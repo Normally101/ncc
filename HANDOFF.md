@@ -1,7 +1,52 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 19 agosto 2026 (sera)
+> Aggiornato: 20 agosto 2026 (mattina)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+---
+
+### 🌙 20 agosto — 18 rami fusi. Suite 192 → 339 verdi. Il canale è Telegram
+
+**La notte è servita.** Gemini ha lavorato dalle 22:46 alle 05:27 e ha prodotto 23 rami. In
+revisione ne sono stati accettati **18** e rifiutati 5. La lista `ECCEZIONI` del guardrail è
+scesa **da 29 a 12** file.
+
+**La misura che conta non è 339.** Rompendo di proposito la sincronizzazione in `money.js`,
+prima fallivano **29** test, ora **109**. È la dimensione reale della rete di sicurezza, ed è
+misurata rompendo il codice, non stimata.
+
+**Confermato eseguendolo:** `buyMaintenanceContract` ora sincronizza davvero (uscito da
+`ROTTE_NOTE`).
+
+**Perché 5 rami sono stati rifiutati** — sono i modi tipici in cui un lavoro *sembra* riuscito:
+- `ui-store`: 352 righe di test e il file **mai toccato** (13 mutazioni ancora dentro).
+- `engine-rides`: conversione giusta ma una chiamata al server **per ogni corsa** invece di una
+  sola col totale. L'ha preso un test di regressione già esistente.
+- `vtk-market`: si è tolto dalle `ECCEZIONI` **lasciandosi dentro 5 mutazioni**.
+- `engine-finance`: un suo stesso test rosso. `showroom`, `ui-staff`: nessun ramo prodotto.
+
+**Tre difetti erano nostri, non di Gemini** (tutti corretti):
+1. Il guardrail `ROTTE_NOTE` **puniva il successo**: diventava rosso quando una correzione
+   riusciva, e siccome il cancello è `npm test`, il lavoro buono veniva marcato fallito. È il
+   motivo dei 7 "fallimenti" della notte, di cui almeno due contenevano lavoro completo.
+2. Lo script di merge saltava un commit in silenzio, lasciando modifiche a metà.
+3. Il ciclo trasformava il chat_id Telegram in `154231837@s.whatsapp.net`: l'avviso non sarebbe
+   mai partito e nessuno l'avrebbe saputo.
+
+**Il canale è Telegram** (`@gigi_olga_bot`), servizio `gigi-telegram` sulla VM; WhatsApp è
+**spento e disabilitato**. Motivo in `memory/architettura_gigi_cloud.md`: Baileys dipende
+dall'app sul telefono, iOS la sospende, e i messaggi sparivano senza lasciare traccia. Non era
+un nostro bug. **L'avviso è stato provato davvero end-to-end**, non solo scritto.
+
+**In coda ora (12 task, ciclo attivo):** i 6 file rimasti della classe denaro, più 6 lavori che
+allargano il **banco di prova** (45 file su 88 → di qui il fatto che solo 12 azioni su 246 sono
+verificate). Quest'ultima è la parte redditizia: ogni file aggiunto rende verificabili le azioni
+che contiene, e quelle rotte emergono da sole.
+
+**Da fare alla prossima sessione:** rivedere e fondere i rami nuovi; le 6 collisioni di nomi
+globali (`hqOpenBuildModal` con firme incompatibili, `renderTabProvinces` con due schermate per
+la stessa tab); le 34 funzioni morte. Debiti più vecchi: prestiti senza RPC dedicate, province
+(18/23 senza dati di bilanciamento), `game_saves` senza ON DELETE CASCADE.
 
 ---
 
