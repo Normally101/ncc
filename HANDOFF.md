@@ -1,7 +1,44 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 20 agosto 2026 (pomeriggio)
+> Aggiornato: 21 agosto 2026 (notte)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+---
+
+# 📌 AGENDA DI DOMATTINA — decisa da Vlad il 21/08 all'01:15
+
+Tre cose, da fare **dopo** che il ciclo notturno si è fermato (verso le 9). Nessuna va toccata
+prima: il ciclo gira sulla VM Google e riavviare il servizio butta via il lavoro in corso.
+
+**1. Controllo a campione delle fusioni notturne.** È la contropartita promessa quando abbiamo
+tolto il clic di Vlad dal cancello: si fonde da soli, ma la mattina dopo qualcuno guarda.
+
+**2. L'hub deve dire la verità.** Misurato interrogando Neon la notte del 21/08:
+il diario «Live activity» è reale (245 righe in 24 ore, l'ultima 50 secondi prima del controllo),
+ma **avanzamento, task e obiettivi sono fermi al 19/08 alle 09:40**. Il ciclo scrive solo su
+`/api/gigi/activity`: la tabella `tasks` non la tocca **mai**, quindi il 17% resterà 17% per
+sempre. Nella stessa finestra in cui l'hub segnava zero, in `main` erano entrati 17 commit.
+Da fare: la coda vera del ciclo diventa righe `tasks`, e l'avanzamento smette di essere un numero
+scritto a mano. Vlad: *«voglio che sia sempre aggiornato e reale, così mi faccio sempre un'idea
+di come stiamo messi.»*
+
+**3. Gli agenti veri.** Oggi la scheda «Active Agents» mostra sei righe seminate da
+`src/lib/mock-data.ts` (Architect, Developer, Marketing, QA, Researcher + Olga) con modello
+`olga-core-preview`, **che non esiste**. Nessuno assegna loro lavoro, nessuno esegue niente.
+L'unica viva è Olga (la chat, che ha strumenti veri). Gemini, che è l'unico che lavora davvero,
+scrive nel diario con `agent_id` nullo: **il solo lavoratore non compare nell'elenco dei
+lavoratori.** Vlad vuole che diventino veri e che collaborino, non solo su CE ma su tutti i
+progetti. Materiale già esistente da cui partire: **232 definizioni di agente** in
+`~/.claude/agents` e **251 skill** in `~/.claude/skills`, più il vault `olga-vision-brain`
+(14 settori). Il pezzo mancante non sono gli agenti: è **il lavoro** — chi decide cosa fa un
+agente di marketing o di finanza su un progetto, e dove finisce il risultato.
+
+**Divisione del lavoro decisa da Vlad:** di giorno Gemini continua sul codice del gioco, e io
+lavoro su queste tre. *«sembrano banali, ma secondo me non lo sono.»*
+
+**4. Libri → skill.** Vlad procura i PDF interi (li ha in fisico) e me li fa leggere **per
+intero, non a campione**; io valuto quale skill utile ne può nascere. Non cercare riassunti
+online: darebbero i luoghi comuni sul libro invece del suo metodo.
 
 ---
 
