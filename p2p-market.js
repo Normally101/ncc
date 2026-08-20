@@ -141,9 +141,7 @@ window.buyP2PCar = async function(listingId) {
 
     if (error || !data) { showNotification(_p2pErrMsg('Acquisto fallito', error || {message: 'risposta vuota'}), 'error'); return; }
 
-    // Aggiorna gameState locale con cash aggiornato e nuova auto
-    // ServerState (Realtime) aggiorna gameState.cash dal server; evitiamo doppia deduzione
-    if (!window.ServerState?.isReady()) gameState.cash -= data.price_paid;
+    if (!window.CE_money.spend(data.price_paid, 'buy_p2p_car')) return;
     const newCar = data.car;
     newCar.id = 'c_p2p_' + Date.now(); // nuovo ID locale per evitare conflitti
     gameState.fleet.push(newCar);
@@ -192,11 +190,16 @@ window.leaveHolding = async function(holdingId) {
 window.contributeHoldingTreasury = async function(holdingId, amount) {
     if (!_uid()) return;
     const roundedAmount = Math.round(amount);
+    if (!Number.isFinite(roundedAmount) || roundedAmount <= 0) return;
+    if ((gameState.cash || 0) < roundedAmount) {
+        showNotification(`Fondi insufficienti — servono €${roundedAmount.toLocaleString()}`, 'error');
+        return;
+    }
     const { data, error } = await _sb().rpc('rpc_contribute_holding_treasury', {
         v_holding_id: holdingId, v_amount: roundedAmount,
     });
     if (error) { showNotification(_p2pErrMsg('Errore contributo holding', error), 'error'); return; }
-    if (!window.ServerState?.isReady()) gameState.cash -= roundedAmount;
+    if (!window.CE_money.spend(roundedAmount, 'contribute_holding_treasury')) return;
     await saveGame();
 
     // rpc_contribute_holding_treasury internalizza il dampening tensione e
@@ -244,7 +247,7 @@ window.listCompanyIPO = async function() {
     if (error || !data) { showNotification(_p2pErrMsg('IPO fallita', error || {message: 'risposta vuota'}), 'error'); return; }
 
     // Aggiorna gameState locale
-    if (!window.ServerState?.isReady()) gameState.cash -= 50000;
+    if (!window.CE_money.spend(50000, 'list_company_ipo_fee')) return;
     gameState.companyIPO = {
         listed:      true,
         listedDay:   gameState.day,
@@ -277,7 +280,7 @@ window.buyCompanyShares = async function(listingId, qty) {
     });
     if (error || !data) { showNotification(_p2pErrMsg('Acquisto azioni fallito', error || {message: 'risposta vuota'}), 'error'); return; }
 
-    if (!window.ServerState?.isReady()) gameState.cash -= total;
+    if (!window.CE_money.spend(total, 'buy_company_shares')) return;
     await saveGame();
     showNotification(`✅ Comprate ${qty} azioni di ${data.company} a €${data.price}/az.`, 'success');
     updateUI();
@@ -292,7 +295,7 @@ window.sellCompanyShares = async function(listingId, qty) {
     });
     if (error || !data) { showNotification(_p2pErrMsg('Vendita azioni fallita', error || {message: 'risposta vuota'}), 'error'); return; }
 
-    if (!window.ServerState?.isReady()) gameState.cash += data.total;
+    window.CE_money.earn(data.total, 'sell_company_shares');
     await saveGame();
     showNotification(`✅ Vendute ${data.qty_sold} azioni di ${data.company} — +€${data.total.toLocaleString()}`, 'success');
     updateUI();
@@ -425,7 +428,10 @@ window._sindacatoGdfDailyCheck = async function() {
     if (error || !data) return;
     if (data.inspected) {
         const fine = data.fine || 0;
-        if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, gameState.cash - fine);
+        if (fine > 0) {
+            const daPagare = Math.min(gameState.cash || 0, fine);
+            if (daPagare > 0) window.CE_money.spend(daPagare, 'gdf_fine');
+        }
         await saveGame();
         showBigEvent('🚔', 'ISPEZIONE GdF!',
             `La Guardia di Finanza ha fatto irruzione. Multa: −€${fine.toLocaleString()}.\nRischio GdF ridotto di 30 punti dopo l'ispezione.\nPaga Don Carmine per evitare future visite.`);
