@@ -122,34 +122,13 @@
     };
 
     // ── acquisto/equip ────────────────────────────────────────────────
-    function _spend(cost, itemId) {
-        if ((gameState.driverCoins || 0) < cost) {
-            if (typeof showNotification === 'function') showNotification(`Servono ${cost} DC — acquistali nell'Executive Club.`, 'error');
-            if (typeof switchTab === 'function') switchTab('store');
-            return false;
-        }
-        gameState.driverCoins -= cost;
-        // `driverCoins` e' sincronizzato in OVERWRITE dal server (serverState.js:209), non a
-        // delta: senza persistere la spesa sulla colonna autoritativa il saldo tornava su al
-        // primo evento Realtime, mentre il cosmetico restava posseduto e salvato -> gratis.
-        // Stessa RPC usata dalle spese dell'Executive Club (ui-store.js:371,386,398).
-        try {
-            window.ServerState?.spendDriverCoins?.(itemId || 'vanity_item', cost)
-                ?.then(r => {
-                    if (r && r.driver_coins != null) {
-                        gameState.driverCoins = r.driver_coins;
-                        if (typeof updateUI === 'function') updateUI();
-                    }
-                })
-                ?.catch(() => {});
-        } catch (e) {}
-        return true;
-    }
-
     window._vanityEmblem = function (e) {
         _ensure();
         const it = EMBLEMS.find(x => x.e === e); if (!it) return;
-        if (!gameState.ownedEmblems.includes(e)) { if (!_spend(it.c)) return; gameState.ownedEmblems.push(e); }
+        if (!gameState.ownedEmblems.includes(e)) {
+            if (it.c > 0 && !window.CE_money.spendDC(it.c, 'vanity_emblem')) return;
+            gameState.ownedEmblems.push(e);
+        }
         gameState.companyLogo = e;
         _applyBrand();
         if (typeof showNotification === 'function') showNotification(`Stemma ${e} equipaggiato.`, 'success');
@@ -158,7 +137,10 @@
     window._vanityColor = function (v) {
         _ensure();
         const it = COLORS.find(x => x.v === v); if (!it) return;
-        if (!gameState.ownedColors.includes(v)) { if (!_spend(it.c)) return; gameState.ownedColors.push(v); }
+        if (!gameState.ownedColors.includes(v)) {
+            if (it.c > 0 && !window.CE_money.spendDC(it.c, 'vanity_color')) return;
+            gameState.ownedColors.push(v);
+        }
         gameState.companyColor = v;
         _applyBrand();
         if (typeof showNotification === 'function') showNotification(`Colore aggiornato.`, 'success');
@@ -167,7 +149,10 @@
     window._vanityTitle = function (t) {
         _ensure();
         const it = TITLES.find(x => x.t === t); if (!it) return;
-        if (!gameState.ownedTitles.includes(t)) { if (!_spend(it.c)) return; gameState.ownedTitles.push(t); }
+        if (!gameState.ownedTitles.includes(t)) {
+            if (it.c > 0 && !window.CE_money.spendDC(it.c, 'vanity_title')) return;
+            gameState.ownedTitles.push(t);
+        }
         gameState.companyTitle = t;
         if (typeof showNotification === 'function') showNotification(`Titolo: ${t}.`, 'success');
         _save();
