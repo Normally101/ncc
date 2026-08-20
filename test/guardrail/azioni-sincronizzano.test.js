@@ -105,9 +105,31 @@ function preparaMondo() {
 
 /* ── 3. Esegue un'azione e guarda se il denaro si e' mosso di nascosto ───── */
 
-// Argomenti plausibili: quasi tutte le azioni prendono l'id di un'auto, di un
-// autista o niente. Si prova la prima forma che fa muovere qualcosa.
-const ARGOMENTI = [[], ['c1'], ['d1']];
+/**
+ * Le forme di argomento con cui si prova ogni azione.
+ *
+ * Conta piu' di quanto sembri: un'azione risulta "non verificata" non perche'
+ * il suo file non sia caricato — quello e' un malinteso che e' costato un
+ * pomeriggio — ma perche' ESEGUITA con questi argomenti non muove denaro. Se
+ * `_srmPurchase` vuole l'id di un'auto del catalogo e gli passiamo 'c1', non
+ * compra niente e noi concludiamo che non tocca il portafoglio. Sbagliando.
+ *
+ * Quindi ogni forma aggiunta qui puo' portare alla luce azioni rotte che prima
+ * passavano inosservate. Gli id corrispondono a quelli che preparaMondo()
+ * mette davvero nel gameState.
+ */
+const ARGOMENTI = [
+    [],
+    ['c1'],                    // un veicolo in flotta
+    ['d1'],                    // un autista
+    ['tn1'],                   // una gara d'appalto aperta
+    ['k1'],                    // un cantiere in corso
+    ['inv_fuel_depot'],        // un investimento posseduto
+    [0],                       // molte azioni indicizzano una lista
+    ['roma'],                  // una citta'
+    ['c1', 0],
+    ['d1', 0],
+];
 
 function provaAzione(mondo, nome) {
     const { sandbox, gs, scritture } = mondo;
@@ -136,6 +158,37 @@ function provaAzione(mondo, nome) {
         }
     }
     return { stato: 'non verificata' };
+}
+
+/* ── 3-bis. Quali azioni riguardano davvero il denaro ─────────────────────
+   Senza questa distinzione il rapporto di copertura mente. Delle 246 azioni,
+   115 sono navigazione, filtri, aperture di finestre: non toccano il
+   portafoglio e non c'e' niente da verificare. Contarle nel denominatore
+   faceva leggere "15 su 246" — un 6% che spaventa — quando il lavoro vero
+   riguarda 129 azioni. Il 20/08/2026 questo numero mal costruito ha mandato
+   un pomeriggio di lavoro nella direzione sbagliata. */
+const TOCCA_DENARO = /CE_money|gameState\.(cash|driverCoins|vtkBalance)|spendDriverCoins|syncCash|buyEnergyRefill|acquireProvince|buyRealEstate/;
+
+function azioniCheToccanoDenaro(nomi) {
+    const sorgenti = fs.readdirSync(ROOT).filter(f => f.endsWith('.js') && f !== 'sw.js');
+    const testi = sorgenti.map(f => {
+        try { return fs.readFileSync(path.join(ROOT, f), 'utf8'); } catch { return ''; }
+    });
+    const dentro = new Set();
+    for (const nome of nomi) {
+        const fuga = nome.replace(/[$]/g, '\\$');
+        const re = new RegExp(`(window\\.)?${fuga}\\s*=\\s*(async\\s*)?function|function\\s+${fuga}\\s*\\(`);
+        for (const testo of testi) {
+            const m = re.exec(testo);
+            if (!m) continue;
+            // Il corpo non si delimita con precisione senza un parser: 2500
+            // caratteri coprono abbondantemente una funzione di gioco e un
+            // falso positivo qui e' innocuo (si verifica un'azione in piu').
+            if (TOCCA_DENARO.test(testo.slice(m.index, m.index + 2500))) dentro.add(nome);
+            break;
+        }
+    }
+    return dentro;
 }
 
 /* ── 4. Il test ───────────────────────────────────────────────────────────── */
@@ -210,7 +263,13 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
 
     test('rapporto di copertura', () => {
         const conta = s => esiti.filter(e => e.stato === s).length;
-        const nonVerificate = esiti.filter(e => e.stato === 'non verificata').map(e => e.nome);
+        const conSoldi = azioniCheToccanoDenaro(azioni);
+        // Fra le non verificate contano solo quelle che il denaro lo toccano:
+        // le altre non sono lavoro arretrato, sono azioni senza niente da
+        // verificare.
+        const nonVerificate = esiti
+            .filter(e => e.stato === 'non verificata' && conSoldi.has(e.nome))
+            .map(e => e.nome);
         // Elenco completo solo su richiesta: stamparlo sempre sommerge l'output di
         // `npm test`. `AZIONI_VERBOSE=1 npm test` per vedere la lista di lavoro.
         const dettaglio = process.env.AZIONI_VERBOSE
@@ -220,6 +279,7 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
             `\n   azioni totali: ${esiti.length}` +
             `\n   verificate e corrette: ${conta('ok')}` +
             `\n   rotte note (in attesa di conversione): ${conta('ROTTA')}` +
+            `\n   azioni che toccano denaro: ${conSoldi.size} (le altre ${azioni.length - conSoldi.size} non hanno niente da verificare)` +
             `\n   non attivabili dal banco: ${nonVerificate.length}` +
             `\n   nome non risolto a una funzione: ${conta('assente')}` +
             dettaglio
