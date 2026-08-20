@@ -202,7 +202,7 @@ window.CE_Contracts = (() => {
                 });
                 window.DS?.alert?.({ text:`🤝 CONTRATTO VINTO: ${co.company_name} — €${daily.toLocaleString('it-IT')}/gg`, type:'success', tab:'contracts', duration:12000 });
             } else {
-                if (pb && pb.pledgedCash > 0) gameState.cash += pb.pledgedCash; // refund pledge on loss
+                if (pb && pb.pledgedCash > 0) window.CE_money.earn(pb.pledgedCash, 'refund_tender_bid'); // refund pledge on loss
                 if (pb) window.DS?.alert?.({ text:`❌ Bando perso: ${co.company_name} (score ${pScore} vs AI ${bestAI})`, type:'warning', duration:8000 });
             }
             tender.result = { won, pScore, bestAI, aiCount: aiScores.length };
@@ -213,7 +213,7 @@ window.CE_Contracts = (() => {
 
     function _collectEarnings() {
         (gameState.corporateContracts || []).filter(c => c.status === 'active').forEach(c => {
-            gameState.cash     += c.dailyPayout;
+            window.CE_money.earn(c.dailyPayout, 'corporate_contract');
             c.totalEarned       = (c.totalEarned || 0) + c.dailyPayout;
         });
     }
@@ -260,15 +260,13 @@ window.CE_placeBid = function(tenderId, pledgedCash) {
     const tender = (gameState.corporateTenders || []).find(t => t.id === tenderId);
     if (!tender || tender.status !== 'open') return;
     pledgedCash = Math.max(0, Math.min(50000, parseInt(pledgedCash) || 0));
-    // Valida PRIMA di mutare la cassa: se usciamo in mezzo (fondi insufficienti) senza
-    // riscalare, il pledge precedente resterebbe rimborsato ma ancora registrato in
-    // playerBid, e un successivo "Annulla" lo rimborserebbe una seconda volta.
     const _prevPledge = tender.playerBid ? (tender.playerBid.pledgedCash || 0) : 0;
-    if (pledgedCash > (gameState.cash || 0) + _prevPledge) {
-        return window.DS?.toast?.({ title:'Fondi insufficienti', msg:`Servono €${pledgedCash.toLocaleString('it-IT')}`, type:'error' });
+    const diff = pledgedCash - _prevPledge;
+    if (diff > 0) {
+        if (!window.CE_money.spend(diff, 'corporate_tender_bid')) return;
+    } else if (diff < 0) {
+        window.CE_money.earn(-diff, 'corporate_tender_bid_refund');
     }
-    gameState.cash += _prevPledge;   // rimborsa il pledge precedente
-    gameState.cash -= pledgedCash;
     tender.playerBid = { pledgedCash, score: _cPlayerScore(tender.company, pledgedCash) };
     if (typeof saveGame === 'function') saveGame();
     window.renderTabContracts?.();
@@ -278,7 +276,10 @@ window.CE_placeBid = function(tenderId, pledgedCash) {
 window.CE_cancelBid = function(tenderId) {
     const tender = (gameState.corporateTenders || []).find(t => t.id === tenderId);
     if (!tender || !tender.playerBid) return;
-    gameState.cash      += tender.playerBid.pledgedCash;
+    const pledge = tender.playerBid.pledgedCash || 0;
+    if (pledge > 0) {
+        window.CE_money.earn(pledge, 'corporate_bid_cancel');
+    }
     tender.playerBid     = null;
     if (typeof saveGame === 'function') saveGame();
     window.renderTabContracts?.();
