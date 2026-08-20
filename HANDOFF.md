@@ -25,14 +25,27 @@ Come l'ha detto Vlad, ed è la formulazione da tenere:
 > «Anziché avere 20 macchine, ne ha 5 ma che funzionano. Nel buio lavoriamo alle altre 15,
 > e quando saranno pronte le rilasciamo.»
 
-`config.js` → `window.FEATURES`: **5 accese** (corse, flotta, autisti, finanza, contratti),
-**16 spente** (aste, alleanze, salone, mercatoP2P, cripto, vtk, turismo, lusso, politica,
+`config.js` → `window.FEATURES`: **6 accese** (corse, flotta, autisti, finanza, contratti,
+**aste**), **15 spente** (alleanze, salone, mercatoP2P, cripto, vtk, turismo, lusso, politica,
 infrastrutture, holding, nemesi, vanita, negozioDC, vip, carriera).
 `window.attiva('aste')` per chiedere. Sconosciuta = spenta, nel dubbio non si mostra.
 
 **Spegnere NON cancella codice.** Il codice resta caricato: si nascondono i punti d'ingresso
 (schede, pulsanti) e si neutralizzano gli effetti. Riaccendere costa una riga. È lo stesso
 meccanismo di `HQ_ENABLED`, generalizzato.
+
+**Il meccanismo esiste davvero, da oggi.** Fino al 20/08 pomeriggio `FEATURES` era solo un
+elenco: `window.attiva()` era definita e **nessun file la chiamava**, quindi il gioco mostrava
+tutte e 21 le funzioni come prima e la misura "5 su 21" descriveva un'intenzione, non la
+partita. Ora chiude due strade: `feature-gate.js` nasconde le porte visibili con un foglio di
+stile generato (regola CSS invece di `remove()`, perché la barra laterale si ridisegna più
+volte in partita), e `switchTab` in `dispatcher.js` rifiuta una scheda spenta rimbalzando alla
+home. `window.TAB_DI` in config.js dice quale funzione governa quale scheda.
+Sorvegliato da `test/guardrail/interruttori-applicati.test.js`, che esegue il codice vero
+sulla pagina vera (`index.html`).
+**Due funzioni restano scoperte e sono dichiarate nel test, non dimenticate:** `vtk` e `vip`
+non hanno una scheda propria — vivono dentro schermate accese e vanno spente nel punto in cui
+compaiono.
 
 **Come si accende una funzione** (il ciclo di lavoro d'ora in poi):
 1. Si costruisce nel banco di prova la situazione che la rende viva (un'asta aperta con
@@ -42,9 +55,34 @@ meccanismo di `HQ_ENABLED`, generalizzato.
 4. Si accende in `FEATURES` e si toglie il nome da `SPENTE_ALL_INIZIO` in
    `test/guardrail/interruttori.test.js`. Da lì in poi un test la sorveglia.
 
-**Prossimo passo concreto:** iniziare dalle **aste** (`auctions.js`, 5 azioni) — è la funzione
-spenta più piccola, quindi il modo migliore per collaudare il metodo prima di applicarlo alle
-grosse (`ui-emails` 29 azioni, `ui-staff` 24, `ui-store` 18).
+**Le aste: fatte (20/08 sera). Cosa ha insegnato il primo collaudo.**
+Il codice client era già scritto bene — nessun `gameState.cash`, tutto via RPC — eppure la
+funzione era completamente morta, e **leggendo il codice non si vedeva**. Si è vista
+interrogando il database vero: 5 lotti, tutti ancora `open`, 4 scaduti da giorni.
+I quattro guasti trovati (dettaglio nel commit `7418494`):
+1. nessun cron chiudeva le aste — `rpc_resolve_auction` esisteva, il cron dato per scontato
+   in un commento non era mai stato creato. Ora `_process_judicial_auctions()` gira ogni 15′;
+2. vincere non dava niente: nessun veicolo in flotta, nessun denaro dal container. Aggiunta
+   `rpc_claim_auction` con `claimed_at`;
+3. chi offriva alto e poi svuotava il conto vinceva lo stesso a sconto (`LEAST(cash, bid)`);
+4. un solo saldo poteva vincere dieci aste — l'offerta controllava i fondi senza impegnarli.
+
+**La lezione per le prossime 15:** il banco di prova in Node non basta. Metà dei guasti stava
+sul server o nel fatto che *nessuno chiamava* qualcosa. Per ogni funzione da accendere vanno
+fatte tre domande, in quest'ordine: **(a)** c'è un processo schedulato che la tiene viva, e
+gira davvero? (`select jobname from cron.job` — oggi ce ne sono 3: meteo, push, aste);
+**(b)** quello che il giocatore vince/compra entra davvero nel suo stato, o si ferma a una
+schermata? **(c)** i dati che il server produce hanno la stessa forma che il client si aspetta
+(le aste generavano tier in maiuscolo e container nel campo sbagliato)?
+
+**Trovato di passaggio, da sistemare quando tocca a `mercatoP2P`:** esiste una *seconda* asta,
+locale e finta, in `engine.js` (`gameState.activeAuction`, `_resolveAuction` a riga ~798), che
+scala `gameState.cash` direttamente. Vive nella scheda Mercato Auto, oggi spenta. Quando si
+accenderà `mercatoP2P` va collassata sulla vera (caso da manuale della Regola 4).
+
+**Prossimo passo concreto:** la funzione spenta più piccola rimasta. Candidate nell'ordine:
+`vanita` (vanity.js, già l'unico file che spendeva DC correttamente), `cripto`, `salone`.
+Le grosse (`ui-emails` 29 azioni, `ui-staff` 24, `ui-store` 18) per ultime.
 
 **Vlad vuole che Gemini lavori il più possibile.** Ha chiesto di valutare Gemini 3.1 Pro al
 posto di 3.7 Flash per il codice: da decidere provandolo su un lavoro vero e confrontando,
