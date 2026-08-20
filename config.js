@@ -51,7 +51,7 @@ window.FEATURES = {
     infrastrutture: false, // infrastructure.js
     holding:      false,  // hostile_takeover, engine-holding
     nemesi:       false,  // nemesis.js, black_ops.js
-    vanita:       false,  // vanity.js: stemmi, colori, titoli
+    vanita:       true,   // vanity.js — verificata 20/08/2026 (4 azioni, tutte eseguite nel banco)
     negozioDC:    false,  // ui-store, engine-store: valuta premium
     vip:          false,  // vip-clients, vip-buffs
     carriera:     false,  // ui-career
