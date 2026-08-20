@@ -52,10 +52,9 @@ const ECCEZIONI = new Set([
     'ui-store.js',
     'vanity.js',
     'vip-clients.js',
-    'vtk-market.js',
 ]);
 
-const MUTAZIONE = /gameState\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
+const MUTAZIONE = /gameState\.(cash|driverCoins)\s*(?:[-+*/]?=)(?!=)/g;
 
 function fileDiGioco() {
     return fs.readdirSync(ROOT)

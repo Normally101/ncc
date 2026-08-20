@@ -138,7 +138,7 @@ window.vtkFillOrder = async function(orderId, dcCost) {
         return;
     }
 
-    gameState.driverCoins = (gameState.driverCoins || 0) - dcCost;
+    if (!window.CE_money.spendDC(dcCost, 'vtk_fill_order')) return;
     gameState.vtkBalance  = (gameState.vtkBalance  || 0) + (data?.vtk_received || 0);
     if (typeof updateUI === 'function') updateUI();
     if (typeof saveGame === 'function') saveGame();
