@@ -273,8 +273,7 @@ window.buyStocks = function(tickerId, shares) {
     const price = gameState.stockPrices[tickerId] || ticker.basePrice;
     const totalCost = Math.round(price * shares);
     if (totalCost <= 0) { showNotification('Quantità non valida.', 'error'); return; }
-    if (gameState.cash < totalCost) { showNotification(`Fondi insufficienti! Servono €${totalCost.toLocaleString()}`, 'error'); return; }
-    gameState.cash -= totalCost;
+    if (!window.CE_money.spend(totalCost, 'buy_stocks')) return;
     const holding = gameState.stockHoldings[tickerId];
     const prevTotal = holding.shares * holding.avgCost;
     holding.avgCost = +((prevTotal + totalCost) / (holding.shares + shares)).toFixed(2);
@@ -295,7 +294,7 @@ window.sellStocks = function(tickerId, shares) {
     const proceeds = Math.round(price * shares);
     const costBasis = Math.round(holding.avgCost * shares);
     const profit = proceeds - costBasis;
-    gameState.cash += proceeds;
+    window.CE_money.earn(proceeds, 'sell_stocks');
     holding.shares -= shares;
     if (holding.shares === 0) holding.avgCost = 0;
     gameState.totalStockProfit = (gameState.totalStockProfit || 0) + profit;
@@ -316,8 +315,7 @@ window.placeBrokerInvestment = function(capital, riskId, durationHours) {
     if (!profile) return;
     capital = Math.round(Number(capital));
     if (capital < 1000) { showNotification('Capitale minimo: €1.000', 'error'); return; }
-    if (gameState.cash < capital) { showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= capital;
+    if (!window.CE_money.spend(capital, 'broker_investment')) return;
     const currentHour = gameState.day * 24 + gameState.hour;
     gameState.brokerInvestments.push({
         id: gameState.nextId++,
@@ -368,7 +366,7 @@ window.shortSell = function(tickerId, shares) {
     if (shares <= 0) { showNotification('Quantità non valida.', 'error'); return; }
     const price = gameState.stockPrices[tickerId] || ticker.basePrice;
     const margin = Math.round(price * shares * 0.20);
-    if (gameState.cash < margin) { showNotification(`Margine richiesto: €${margin.toLocaleString()} (20% del valore)`, 'error'); return; }
+    if (!window.CE_money.spend(margin, 'short_sell')) return;
     if (!gameState.shortPositions) gameState.shortPositions = {};
     const existing = gameState.shortPositions[tickerId];
     if (existing) {
@@ -377,7 +375,6 @@ window.shortSell = function(tickerId, shares) {
     } else {
         gameState.shortPositions[tickerId] = { shares, openPrice: +price.toFixed(2) };
     }
-    gameState.cash -= margin;
     gameState.shortMarginHeld = (gameState.shortMarginHeld || 0) + margin;
     logToMap(`📉 Short: ${shares} quote ${ticker.name} @ €${price.toFixed(2)} — margine bloccato €${margin.toLocaleString()}`);
     showNotification(`Short ${shares}x ${ticker.name} aperto!`, 'success');
@@ -397,7 +394,7 @@ window.coverShort = function(tickerId, shares) {
     const priceDiff = pos.openPrice - currentPrice;
     const profit = Math.round(priceDiff * shares);
     const marginReturn = Math.round(pos.openPrice * shares * 0.20);
-    gameState.cash += marginReturn + profit;
+    window.CE_money.earn(marginReturn + profit, 'cover_short');
     gameState.shortMarginHeld = Math.max(0, (gameState.shortMarginHeld || 0) - marginReturn);
     pos.shares -= shares;
     if (pos.shares <= 0) delete gameState.shortPositions[tickerId];
