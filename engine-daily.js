@@ -419,9 +419,7 @@ function processDailyRoutines() {
     // Snapshot prev prices for flash animation
     gameState.stockPrevPrices = Object.assign({}, _prices);
 
-    gameState.cash += (income - expenses);
-    // Push authoritative cash to server (fire-and-forget — Realtime will confirm)
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+    window.CE_money.earn(income - expenses, 'daily_net_profit');
 
     // Bankruptcy risk: track consecutive days in red
     if (gameState.cash < 0) {
@@ -484,7 +482,7 @@ function processDailyRoutines() {
             if (f.status === 'pending' && f.expiresAt && gameHour >= f.expiresAt) {
                 // Auto-pay expired fine + 30% penalty
                 const penalty = Math.floor(f.amount * 1.30);
-                gameState.cash -= penalty;
+                window.CE_money.earn(-penalty, 'fine_expired');
                 f.status = 'expired_paid';
                 logToMap(`⚠️ Multa scaduta auto-pagata: −€${penalty}`);
                 if(typeof showNotification==='function') showNotification(`Multa scaduta! −€${penalty}`, 'error');
@@ -562,7 +560,7 @@ function processDailyRoutines() {
             if (inv && inv.dailyUpkeep) upkeepTotal += inv.dailyUpkeep;
         });
         if (upkeepTotal > 0) {
-            gameState.cash -= upkeepTotal;
+            window.CE_money.earn(-upkeepTotal, 'investment_upkeep');
             if (gameState.day % 7 === 0) logToMap(`🔧 Manutenzione investimenti: −€${upkeepTotal.toLocaleString()}/g`);
         }
     }
@@ -595,8 +593,8 @@ function processDailyRoutines() {
         if (tenure > 0 && tenure % 30 === 0 && tenure <= 90) {
             const bonusAmt = tenure === 30 ? 500 : tenure === 60 ? 1000 : 2000;
             const repBonus = tenure === 90 ? 0.1 : 0;
-            gameState.cash += bonusAmt;
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + repBonus);
+            window.CE_money.earn(bonusAmt, 'driver_loyalty_bonus');
+            if (repBonus > 0) window.CE_money.addReputation(repBonus);
             d.morale = Math.min(100, (d.morale || 100) + 15);
             logToMap(`🎖️ ${d.name}: ${tenure} giorni di servizio! Bonus fedeltà +€${bonusAmt}${repBonus > 0 ? ' +0.1★' : ''}`);
             showBigEvent('🎖️', `${d.name}: ${tenure} Giorni!`, `Fedeltà premiata con un bonus di €${bonusAmt}. Morale autista +15.`);
@@ -658,7 +656,7 @@ function processDailyRoutines() {
             vcIncome += daily;
         });
         if (vcIncome > 0) {
-            gameState.cash += vcIncome;
+            window.CE_money.earn(vcIncome, 'venture_capital_dividend');
             gameState.annualProfitTracker = (gameState.annualProfitTracker || 0) + vcIncome;
             if (gameState.day % 30 === 0) logToMap(`💼 Venture Capital: +€${vcIncome.toLocaleString()}/g da ${gameState.ventureCapital.length} partecipazioni.`);
         }
@@ -678,7 +676,7 @@ function processDailyRoutines() {
             }
         });
         if (mgIncome > 0) {
-            gameState.cash += mgIncome;
+            window.CE_money.earn(mgIncome, 'meet_greet_income');
             gameState.annualProfitTracker = (gameState.annualProfitTracker || 0) + mgIncome;
             gameState._lastMgIncome = mgIncome;
             if (gameState.day % 7 === 0) logToMap(`🤝 Meet & Greet: +€${mgIncome.toLocaleString()} da assistenti aeroportuali (carburante: 0).`);
@@ -698,7 +696,7 @@ function processDailyRoutines() {
         const taxable  = gameState.annualProfitTracker || 0;
         const taxDue   = Math.max(0, Math.floor(taxable * taxRate));
         if (taxDue > 0) {
-            gameState.cash -= taxDue;
+            window.CE_money.earn(-taxDue, 'annual_tax');
             logToMap(`📋 Dichiarazione fiscale annuale: profitti €${taxable.toLocaleString()} × ${(taxRate*100).toFixed(0)}% = −€${taxDue.toLocaleString()}`);
             showBigEvent('📋', 'Dichiarazione Fiscale Annuale', `Profitti annui: €${taxable.toLocaleString()}\nAliquota: ${(taxRate*100).toFixed(0)}%\nImposta versata: −€${taxDue.toLocaleString()}\n${hasAdmin ? '(Riduzione al 24% grazie all\'Amministratore)' : 'Assumi un Amministratore per ridurre al 24%.'}`);
         }
@@ -707,7 +705,7 @@ function processDailyRoutines() {
 
     // Filantropia: +0.5 rep settimanale
     if (hasInvestment('inv_philanthropy') && gameState.day % 7 === 0) {
-        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.5);
+        window.CE_money.addReputation(0.5);
         logToMap('💝 Fondazione: +0.5★ Reputazione settimanale.');
     }
 
@@ -727,7 +725,7 @@ function processDailyRoutines() {
             return true;
         });
         if (totalRepayment > 0) {
-            gameState.cash -= totalRepayment;
+            window.CE_money.earn(-totalRepayment, 'loan_repayment');
             logToMap(`🏦 Rata prestito mensile: −€${totalRepayment}`);
             if (typeof showNotification === 'function') showNotification(`🏦 Rata prestito: −€${totalRepayment}`, 'error');
         }
@@ -756,8 +754,8 @@ function processDailyRoutines() {
             const streak = gameState.cvWeeklyStreak;
             const bonus  = streak >= 3 ? 10000 : streak === 2 ? 5000 : 2000;
             const repGain = streak >= 3 ? 0.2 : 0.1;
-            gameState.cash += bonus;
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + repGain);
+            window.CE_money.earn(bonus, 'classic_vacations_quota_bonus');
+            window.CE_money.addReputation(repGain);
             logToMap(`🤝 Classic Vacations: quota settim. raggiunta (${completed}/${target})! Streak ${streak}× → +€${bonus.toLocaleString()} +${repGain}★`);
             showBigEvent('🤝', 'Quota CV Completata!', `${completed} tratte su ${target} consegnate.\nBonus: +€${bonus.toLocaleString()} · +${repGain}★ rep\nStreak: ${streak} settimane consecutive.`);
         } else if (completed > 0) {
@@ -789,7 +787,7 @@ function processDailyRoutines() {
     // ── HUB TAX: incasso giornaliero nel conto principale ──────────────────
     if ((gameState.hubTaxBalance || 0) > 0) {
         const dailyHubIncome = Math.floor(gameState.hubTaxBalance);
-        gameState.cash += dailyHubIncome;
+        window.CE_money.earn(dailyHubIncome, 'hub_tax_income');
         logToMap(`🏛️ Entrate Hub: +€${dailyHubIncome.toLocaleString()} (tasse concessioni)`);
         gameState.hubTaxBalance = 0;
     }
@@ -801,10 +799,7 @@ function processDailyRoutines() {
         const weekRides  = gameState.weeklyRides    || 0;
         if (weekWinner > 0) {
             const prizeTC = Math.min(50, Math.floor(weekWinner / 10000));
-            gameState.driverCoins = (gameState.driverCoins || 0) + prizeTC;
-            window.ServerState?.addDriverCoins?.(prizeTC, 'weekly_prize')
-                ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gameState.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
-                ?.catch(() => {});
+            window.CE_money.earnDC(prizeTC, 'weekly_prize');
 
             // Premio auto Limited Edition se settimanale > €100.000
             if (weekWinner >= 100000 && !(gameState.fleet || []).some(c => c.id === 'ceo_prestige')) {
@@ -880,7 +875,7 @@ function processDailyRoutines() {
                 const car = gameState.fleet.find(c => c.id === listing.carId);
                 if (car) {
                     const salePrice = Math.round(listing.askPrice * 0.95); // 5% fee
-                    gameState.cash += salePrice;
+                    window.CE_money.earn(salePrice, 'marketplace_npc_sale');
                     gameState.fleet.splice(gameState.fleet.indexOf(car), 1);
                     const driver = gameState.drivers.find(d => d.assignedCarId === car.id);
                     if (driver) driver.assignedCarId = null;
@@ -902,7 +897,7 @@ function processDailyRoutines() {
             return sum + (tmpl ? tmpl.dailyIncome : 0);
         }, 0);
         if (subIncome > 0) {
-            gameState.cash += subIncome;
+            window.CE_money.earn(subIncome, 'subsidiary_dividend');
             logToMap(`🏢 Holding: dividendi subsidiarie +€${subIncome.toLocaleString()}/g`);
         }
     }
@@ -930,7 +925,7 @@ function processDailyRoutines() {
             const totalShares = gameState.companyIPO.sharesTotal || 1000;
             const npcPct = gameState.companyIPO.npcSharesOwned / totalShares;
             const npcDividend = Math.floor(dividendPool * npcPct);
-            gameState.cash -= npcDividend;
+            window.CE_money.earn(-npcDividend, 'ipo_npc_dividend');
             gameState.companyIPO.dividendsPaid = (gameState.companyIPO.dividendsPaid || 0) + npcDividend;
             logToMap(`📈 IPO Dividendo: €${npcDividend.toLocaleString()} pagato agli azionisti NPC (10% utili giornalieri)`);
         }
@@ -1015,8 +1010,8 @@ function autoNegotiateEmails() {
         if (email.type === 'b2b' && hasEventMgr) {
             let counterOffer = Math.floor(email.offer * 1.15);
             logToMap(`L'Event Manager ha chiuso un Appalto B2B a €${counterOffer}`);
-            gameState.cash += counterOffer;
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.05);
+            window.CE_money.earn(counterOffer, 'b2b_auto_negotiate');
+            window.CE_money.addReputation(0.05);
             email.status = 'resolved';
 
             let numRides = Math.floor(Math.random() * 3) + 3;
@@ -1038,20 +1033,25 @@ function negotiateEmail(emailId, action, choiceIdx = null) {
 
     if (email.type === 'ceo_event' && choiceIdx !== null) {
         const choice = email.eventData.choices[choiceIdx];
-        if (gameState.cash >= Math.max(0, choice.cost)) {
-            gameState.cash -= choice.cost;
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), Math.max(0, gameState.reputation + choice.repBonus));
-            logToMap(`Evento: Hai scelto "${choice.text}".`);
-        } else { return; } // Fondi insufficienti
+        const cost = Math.max(0, choice.cost || 0);
+        if (cost > 0) {
+            if (!window.CE_money.spend(cost, 'ceo_event_choice')) return;
+        }
+        if (choice.repBonus) {
+            window.CE_money.addReputation(choice.repBonus);
+        }
+        logToMap(`Evento: Hai scelto "${choice.text}".`);
     } else if (email.type === 'b2b') {
         let successChance = 100 - (((action / email.offer) - 1) * 100) + (gameState.reputation * 15);
         if (Math.random() * 100 <= successChance) {
             logToMap(`✅ Appalto B2B chiuso: €${action}`);
-            gameState.cash += action; gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.05);
+            window.CE_money.earn(action, 'b2b_negotiate_success');
+            window.CE_money.addReputation(0.05);
             let numRides = Math.floor(Math.random() * 3) + 3;
             for(let i=0; i<numRides; i++) generatePOIRide(Math.random()>0.5?'business':'vip');
         } else {
-            logToMap(`❌ Trattativa fallita.`); gameState.reputation = Math.max(0, gameState.reputation - 0.02);
+            logToMap(`❌ Trattativa fallita.`);
+            window.CE_money.addReputation(-0.02);
         }
     }
 
@@ -1087,8 +1087,7 @@ function _tickDriverSatisfaction() {
                 d.satisfaction = 45;
                 d.morale = Math.min(100, (d.morale || 50) + 15);
                 const bonusCost = Math.round((d.salary || 2000) * 0.1);
-                gameState.cash -= bonusCost;
-                if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+                window.CE_money.earn(-bonusCost, 'hr_strike_prevention_bonus');
                 showNotification(`🤝 HR ha gestito automaticamente un potenziale sciopero di ${d.name} (−€${bonusCost.toLocaleString()})`, 'success');
                 logToMap(`🤝 HR Automation: sciopero di ${d.name} evitato automaticamente.`);
             } else {
@@ -1141,18 +1140,10 @@ function _checkDailyReward() {
     const cashReward = Math.round(tier.cash * extraMult);
     const tcReward   = tier.tc;
 
-    gs.cash += cashReward;
+    window.CE_money.earn(cashReward, 'daily_login_reward');
     gs.annualProfitTracker = (gs.annualProfitTracker || 0) + cashReward;
-    // FIX (stabilizzazione 10 agosto): senza questo il premio in cash resta locale finché
-    // non arriva un'altra azione a innescare un syncCash — nel frattempo companies.cash
-    // (server-authoritative) non lo vede, con lo stesso rischio di rifiuto RPC già
-    // riprodotto dal vivo per i prestiti. Stesso pattern di executeManualDrive/newGamePlus.
-    if (typeof window.ServerState !== 'undefined') window.ServerState.syncCash(gs.cash).catch(() => {});
     if (tcReward > 0) {
-        gs.driverCoins = (gs.driverCoins || 0) + tcReward;
-        window.ServerState?.addDriverCoins?.(tcReward, 'tier_reward')
-            ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gs.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
-            ?.catch(() => {});
+        window.CE_money.earnDC(tcReward, 'tier_reward');
     }
 
     const rewardDesc = tcReward > 0
