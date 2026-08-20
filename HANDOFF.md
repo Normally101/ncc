@@ -111,6 +111,19 @@ contesto giusto.
 
 ### 🔧 L'infrastruttura, e come sta davvero
 
+- **⚠️ Se il sito non si aggiorna, guarda l'autore dei commit.** Il 19-20/08 tredici deploy di
+  produzione di fila sono risultati `BLOCKED` e il sito è rimasto fermo mezza giornata senza
+  che nessuno se ne accorgesse. Vercel, sul piano **Hobby**, rifiuta ogni deploy il cui autore
+  del commit non risulti collaboratore del progetto — e su repository privati il piano Hobby
+  la collaborazione non la supporta proprio. L'unica firma accettata è
+  **`Vlad <bestbroker1998@gmail.com>`** (l'account Vercel). Attenzione: l'account Google di
+  Vertex è un altro (`djblade594@gmail.com`) — non confonderli, valgono per cose diverse.
+  Come accorgersene subito: `vercel inspect` mostra `status UNKNOWN`, ma
+  `GET /v6/deployments?projectId=ncc` dell'API dice `BLOCKED` a chiare lettere.
+  Verifica veloce dopo ogni push importante:
+  `curl -s -o /dev/null -w '%{http_code}' https://www.chauffeurempire.com/<file-appena-aggiunto>`
+- Le anteprime dei rami `gigi/**` sono **spente** in `vercel.json`: non consumano build.
+
 - **Canale: Telegram** (`@gigi_olga_bot`), servizio `gigi-telegram` sulla VM. WhatsApp spento e
   disabilitato. Comandi: `stato`, `pronti`, `approva 1` / `approva tutti`, `scarta 2`,
   `ferma`/`riprendi`.
