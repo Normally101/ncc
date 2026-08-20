@@ -148,6 +148,18 @@ window.closeMapOverlay = function() {
 };
 
 window.switchTab = function(tab) {
+    // ── Funzione spenta: la scheda non esiste per il giocatore. ──
+    //    Le voci di menu sono gia' nascoste da feature-gate.js; questo ferma
+    //    chi ci arriva per un'altra strada — un vecchio link, un pezzo di
+    //    codice che non sa dello spegnimento, la console del browser. Si torna
+    //    alla home senza spiegazioni: una schermata "in arrivo" annuncerebbe
+    //    al giocatore una cosa che non puo' avere.
+    if (typeof window.tabSpenta === 'function' && window.tabSpenta(tab)) {
+        console.warn(`[interruttori] "${tab}" e' spenta: non ancora verificata.`);
+        if (tab !== 'home') window.switchTab('home');
+        return;
+    }
+
     const _prevTab = _activeTab;
     _activeTab = tab;
 

@@ -128,3 +128,32 @@ if (process.argv.includes('--json')) {
     console.log(`Porta del denaro:  ${ecc.length} file ancora fuori (${ecc.join(', ') || 'nessuno'})`);
     console.log('');
 }
+
+/* ── Invio all'hub ────────────────────────────────────────────────────────
+   Con --hub la misura finisce nella pagina del progetto su Olga Studio, cosi'
+   Vlad la vede dal telefono senza aprire un terminale. I segreti si leggono
+   dall'ambiente: non stanno nel repository e non devono starci. */
+if (process.argv.includes('--hub')) {
+    const url = process.env.HUB_URL;
+    const token = process.env.GIGI_API_TOKEN;
+    if (!url || !token) {
+        console.error('Per --hub servono HUB_URL e GIGI_API_TOKEN nell\'ambiente.');
+        console.error('  set -a; . ~/.config/olga-hub.env; set +a');
+        process.exit(1);
+    }
+    const a = stato.azioni ?? {};
+    const titolo = `${stato.test.totale} test (${stato.test.rossi} rossi) · `
+        + `${conMutazione ?? '?'} colgono il guasto sul denaro · `
+        + `${stato.file.nelBanco}/${stato.file.totali} file eseguiti · `
+        + `${a.verificate ?? 0}/${a.totali ?? 0} azioni verificate`;
+    const risposta = await fetch(`${url}/api/gigi/metrics`, {
+        method: 'POST',
+        headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+        body: JSON.stringify({ project: 'chauffeur-empire', metrics: stato, headline: titolo }),
+    });
+    if (!risposta.ok) {
+        console.error(`L'hub ha rifiutato la misura (${risposta.status}): ${(await risposta.text()).slice(0, 200)}`);
+        process.exit(1);
+    }
+    console.log('Misura inviata all\'hub.\n');
+}

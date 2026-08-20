@@ -62,6 +62,36 @@ window.attiva = function attiva(nome) {
     return window.FEATURES?.[nome] === true;
 };
 
+/* A quale funzione appartiene ogni scheda del gioco. Una scheda che non compare
+   qui non è governata dagli interruttori: resta sempre visibile (è il nucleo).
+   Due schede possono dipendere dalla stessa funzione — politica governa sia la
+   scheda "politics" sia la mappa delle province, e devono sparire insieme. */
+window.TAB_DI = {
+    auctions:       'aste',
+    consorzi:       'alleanze',
+    showroom:       'salone',
+    market:         'mercatoP2P',
+    crypto:         'cripto',
+    tourism:        'turismo',
+    lifestyle:      'lusso',
+    realestate:     'lusso',
+    prestigio:      'vanita',
+    politics:       'politica',
+    provinces:      'politica',
+    infrastructure: 'infrastrutture',
+    opa:            'holding',
+    nemesis:        'nemesi',
+    shadow:         'nemesi',
+    store:          'negozioDC',
+    career:         'carriera',
+};
+
+/** Questa scheda è nascosta perché la sua funzione è spenta? */
+window.tabSpenta = function tabSpenta(tab) {
+    const funzione = window.TAB_DI?.[tab];
+    return !!funzione && !window.attiva(funzione);
+};
+
 window.GAME_CONFIG = {
     SUPPORT_EMAIL: 'support@chauffeurempire.com',
     SUPPORT_SUBJECT_ACCESS: 'Problema%20di%20Accesso',
