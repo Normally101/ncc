@@ -91,14 +91,16 @@ e oggi col Flash il tasso di rifiuto è stato alto.
 
 ---
 
-### 📌 Stato al 20/08 pomeriggio
+### 📌 Stato al 20/08 sera
 
-- **348 test, tutti verdi.** Rompendo la porta del denaro ne falliscono **114** (erano 29 ieri).
-- **Funzioni accese: 5 su 21.**
+- **405 test, tutti verdi** (erano 348 a metà pomeriggio).
+- **Funzioni accese: 6 su 21** — e da oggi lo spegnimento è un meccanismo, non una
+  dichiarazione (vedi IL METODO in cima).
 - **Azioni: 246 totali, ma solo 129 toccano denaro** — le altre 117 sono navigazione e filtri,
-  non hanno niente da verificare. Verificate 16, rotte note 2, **da verificare 107**.
-- Lista `ECCEZIONI` della porta del denaro: **8 file** (di cui 3 esclusi per scelta:
-  `engine.js`, `hq.js`, `engine-fleet.js`).
+  non hanno niente da verificare.
+- Lista `ECCEZIONI` della porta del denaro: **6 file** — `engine-finance.js` (resta solo la
+  parte lobby/partecipazioni: la borsa è convertita), `engine-fleet.js`, `engine.js`, `hq.js`,
+  `showroom.js`, `ui-staff.js`. Convertiti oggi: `ui-store.js`, `vtk-market.js`.
 
 **Errore mio da non ripetere:** avevo scritto «193 azioni al buio» contando anche le 117 che
 non toccano denaro, e su quel numero ho mandato mezza giornata di lavoro nella direzione
@@ -115,10 +117,15 @@ contesto giusto.
 - **Cancello automatico** (`.github/agent/verifica-ramo.mjs` + `fondi-ramo.mjs`): verifica il
   ramo UNITO a main, test cresciuti, nessun test disattivato, prova per mutazione. Chi passa
   diventa una richiesta di approvazione sull'hub; Vlad approva e il ramo si fonde da solo.
-- **⚠️ Il giro completo NON è mai stato visto funzionare end-to-end.** Oggi ha prodotto tre
-  difetti in fila (formato dei test illeggibile in CI, verdetto non recuperabile dai log,
-  giudizio letto dall'esito della run invece che dal verdetto). Tutti corretti, nessuno
-  provato dal vivo. **Non mandare richieste a Vlad finché non si è visto il giro intero.**
+- **✅ Il cancello è stato visto giudicare, il 20/08 sera.** Eseguito a mano su tutti e 4 i
+  rami in attesa (`RAMO=... BASE=origin/main node .github/agent/verifica-ramo.mjs` in un
+  worktree con `node_modules` in symlink): 4 verdetti su 4, tutti corretti, tutti negativi,
+  con il motivo scritto in chiaro. Quello che resta da vedere dal vivo è il pezzo *dopo* il
+  verdetto — richiesta sull'hub, approvazione di Vlad, fusione automatica.
+- **Il cancello dice NO bene, ma il NO va letto.** Dei 4 rami respinti, 3 erano recuperabili in
+  poche righe: due avevano solo dimenticato di togliere il file da `ECCEZIONI`, uno aveva i
+  test scritti contro dati inventati. Respingere e archiviare avrebbe buttato via ~50 test
+  buoni. **Un rifiuto è l'inizio di una revisione, non la fine.**
 - **Hub** (`olga-studio-nine.vercel.app`): scheda progetto con le misure (`npm run stato --hub`),
   pagina Approvals funzionante. `HUB_URL` e `GIGI_API_TOKEN` sono anche secret di GitHub.
 
