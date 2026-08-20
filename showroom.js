@@ -689,36 +689,23 @@ window._srmPurchase = async function() {
     const total = _srmTotalPrice();
     const opts  = [..._srmState.selectedOpts];
 
-    if ((gameState.cash || 0) < total) {
-        showNotification(`Fondi insufficienti. Servono € ${total.toLocaleString('it-IT')}`, 'error');
-        return;
-    }
+    if (!window.CE_money.spend(total, 'showroom_purchase')) return;
+
     const btn = document.getElementById('srm-buy-btn');
     if (btn) { btn.disabled = true; btn.textContent = 'Elaborazione acquisto…'; }
 
-    const result = await window.ServerState?.buyVehicle(v.id, total, ServerState.getCompany()?.hq_city || 'roma');
-    if (!result) {
-        if (btn) { btn.disabled = false; btn.textContent = `Acquista ${v.name}`; }
-        return;
-    }
     // Mappa i tier del catalogo Showroom ai tier compatibili con TIER_COMPATIBILITY
     const _SHOWROOM_TIER_MAP = {
         BUSINESS:'business', PREMIUM:'business', STANDARD:'standard',
         PRESIDENTIAL:'ultra', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group'
     };
     gameState.fleet.push({
-        id: 'c_' + Date.now(), _serverId: result.id,
+        id: 'c_' + Date.now(),
         name: v.name, tier: _SHOWROOM_TIER_MAP[(v.tier||'').toUpperCase()] || 'business',
         condition: 100, isLease: false, fuel: 100, mileage: 0,
         tirePressure: 100, engineHealth: 100, outOfService: false,
         upgrades: opts, vehicleClass: v.id,
     });
-    // rpc_buy_vehicle ha gia' scalato la cassa server-side (01_mmo_migration.sql:228,
-    // `SET cash = cash - v_price`) — lo dice anche il commento in serverState.js:288
-    // ("Realtime will push ... UPDATE to _company.cash"). Senza questo guard il delta
-    // Realtime applica l'importo una seconda volta: su un'auto sono centinaia di
-    // migliaia di euro, e il Math.max(0, ...) maschera l'underflow azzerando la cassa.
-    if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, (gameState.cash || 0) - total);
     _srmState.selectedOpts.clear();
     updateUI();
     if (typeof saveGame === 'function') saveGame();
