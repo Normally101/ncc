@@ -125,36 +125,41 @@
         const gs = window.gameState;
         const rw = getRw(o, gs);
         if (rw.dc) {
-            gameState.driverCoins = (gameState.driverCoins || 0) + rw.dc;
-            // driverCoins e' sincronizzato in OVERWRITE, non a delta (serverState.js:209):
-            // senza persistere sulla colonna autoritativa, il primo evento Realtime sulla
-            // riga `companies` azzera il premio, mentre l'ordine resta marcato come
-            // riscosso per sempre. Stesso pattern usato da ui-store.js:263-275.
+            let rpcPromise = null;
+            const origAddDC = window.ServerState?.addDriverCoins;
+            if (origAddDC && typeof origAddDC === 'function') {
+                window.ServerState.addDriverCoins = function (...args) {
+                    rpcPromise = origAddDC.apply(this, args);
+                    return rpcPromise;
+                };
+            }
             try {
-                window.ServerState?.addDriverCoins?.(rw.dc, 'daily_order_' + id)
-                    ?.then(r => {
-                        if (r?.ok && r.driver_coins != null) {
-                            gameState.driverCoins = r.driver_coins;
-                            if (typeof updateUI === 'function') updateUI();
-                        }
-                    })
-                    ?.catch(() => {
-                        // FIX: senza rollback, se la RPC fallisce il premio va perso in
-                        // silenzio mentre l'ordine resta marcato "riscosso" per sempre
-                        // (nessun modo di ritentare). Disfa sia il credito locale
-                        // ottimistico sia il claim, così il giocatore può riprovare.
-                        gameState.driverCoins = Math.max(0, (gameState.driverCoins || 0) - rw.dc);
-                        const idx = st.claimed.indexOf(id);
-                        if (idx !== -1) st.claimed.splice(idx, 1);
-                        if (typeof showNotification === 'function') showNotification('Errore nel riscattare il premio — riprova.', 'error');
-                        if (typeof updateUI === 'function') updateUI();
-                        if (typeof saveGame === 'function') saveGame();
-                        if (typeof window.renderTabHome === 'function') window.renderTabHome();
-                    });
-            } catch (e) {}
+                window.CE_money.earnDC(rw.dc, 'daily_order_' + id);
+            } finally {
+                if (origAddDC) window.ServerState.addDriverCoins = origAddDC;
+            }
+            if (rpcPromise && typeof rpcPromise.catch === 'function') {
+                rpcPromise.catch(() => {
+                    // FIX: se la RPC fallisce, disfa il credito locale ottimistico e il claim
+                    // così l'utente può riprovare senza perdere il premio né restare bloccato.
+                    if (gs && Number.isFinite(rw.dc)) {
+                        gs.driverCoins = Math.max(0, (gs.driverCoins || 0) - rw.dc);
+                    }
+                    const idx = st.claimed.indexOf(id);
+                    if (idx !== -1) st.claimed.splice(idx, 1);
+                    if (typeof showNotification === 'function') showNotification('Errore nel riscattare il premio — riprova.', 'error');
+                    if (typeof updateUI === 'function') updateUI();
+                    if (typeof saveGame === 'function') saveGame();
+                    if (typeof window.renderTabHome === 'function') window.renderTabHome();
+                });
+            }
         }
-        if (rw.cash) { typeof window._addCash === 'function' ? window._addCash(rw.cash) : (gameState.cash = (gameState.cash || 0) + rw.cash); }
-        if (rw.rep)  gameState.reputation = Math.min(5, (gameState.reputation || 0) + rw.rep);
+        if (rw.cash) {
+            window.CE_money.earn(rw.cash, 'daily_order_' + id);
+        }
+        if (rw.rep) {
+            window.CE_money.addReputation(rw.rep);
+        }
         st.claimed.push(id);
         if (typeof showNotification === 'function') showNotification(`Ordine completato! ${rwLabel(rw)}`, 'success');
         if (typeof window.spawnMoneyParticles === 'function' && rw.cash) { try { window.spawnMoneyParticles(window.innerWidth/2, 120, rw.cash); } catch (e) {} }
