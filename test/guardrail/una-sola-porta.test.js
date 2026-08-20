@@ -29,7 +29,6 @@ const AUTORIZZATI = new Set(['money.js', 'serverState.js']);
 const ECCEZIONI = new Set([
     'engine-finance.js',
     'engine-fleet.js',
-    'engine-rides.js',
     'engine.js',
     'hq.js',
     'showroom.js',
