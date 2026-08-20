@@ -567,7 +567,7 @@ window.openCarConfigurator = function(carId, type) {
         });
         // rpc_buy_vehicle ha gia' scalato la cassa server-side (01_mmo_migration.sql:228).
         // Senza guard il delta Realtime la riapplica: doppia deduzione su un acquisto d'auto.
-        if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, (gameState.cash || 0) - total);
+        if (!window.ServerState?.isReady()) window.CE_money.spend(total, 'buy_car_configurator');
         document.getElementById('modal-configurator')?.remove();
         updateUI(); if (typeof switchTab === 'function') switchTab('fleet');
         showBigEvent('🚗', `${car.name} Configurata!`, ups.length > 0 ? `${ups.length} optional installati · pronta al servizio.` : 'Veicolo standard pronto per la flotta.');
@@ -607,8 +607,8 @@ window.leaseCar = async function(carId) {
         fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100, upgrades: [],
     });
     // rpc_buy_vehicle ha gia' scalato la cassa server-side (01_mmo_migration.sql:228).
-    if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, (gameState.cash || 0) - upFront);
-    updateUI(); renderTabFleet();
+    if (!window.ServerState?.isReady()) window.CE_money.spend(upFront, 'lease_car');
+    updateUI(); if (typeof renderTabFleet === 'function') renderTabFleet();
     showNotification('Contratto Leasing approvato!', 'success');
 };
 
