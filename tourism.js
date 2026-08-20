@@ -136,7 +136,7 @@ window.tourismTerminate = async function(tenderId) {
     if (error) { showNotification(window.CE_Sec.userError('Terminazione non riuscita', error), 'error'); return; }
 
     if (!window.ServerState?.isReady()) {
-        gameState.reputation = Math.max(0, (gameState.reputation || 0) - (data.rep_penalty || 0));
+        window.CE_money.addReputation(-(data.rep_penalty || 0));
     }
     showBigEvent('⚠️', 'Contratto Rescisso',
         `Penale reputazione: −${(data.rep_penalty || 0).toFixed(2)}★\n\nIl bando tornerà disponibile dopo un periodo di cooldown.`);
@@ -155,7 +155,7 @@ window._tourismDailyTick = async function() {
     if (error || !data || !data.total_payout) return;
 
     if (!window.ServerState?.isReady()) {
-        gameState.cash = (gameState.cash || 0) + data.total_payout;
+        window.CE_money.earn(data.total_payout, 'tourism_daily_payout');
     }
 
     const payouts = Array.isArray(data.payouts) ? data.payouts : [];
