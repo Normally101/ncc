@@ -129,6 +129,23 @@ contesto giusto.
 
 ### 🔧 L'infrastruttura, e come sta davvero
 
+- **⚠️ Il repository è PUBBLICO dal 21/08.** Deciso da Vlad per avere minuti GitHub Actions
+  illimitati: *«è un gioco, non ho soldi in ballo, non lo conosce nessuno»*. Il piano gratuito
+  dà 2.000 minuti/mese sui repo privati e **li abbiamo esauriti in due giorni** (il 20/08 da
+  solo: 148 run, 1.426 minuti), perché un lavoro costa ~65′ di macchina.
+  **Prima di aprirlo ho scandagliato tutta la storia**: nessun token, nessuna chiave privata,
+  nessun `service_role`. L'unica chiave presente è quella *anon* di Supabase, pubblica per
+  progetto — la protegge la RLS. I segreti veri stanno nei GitHub Secrets e restano privati.
+  **Resta però vero che i 61 file SQL documentano RLS, anti-cheat e rate-limit**, ed è la cosa
+  che `.vercelignore` teneva fuori dal sito. Se un giorno il gioco avrà giocatori veri, la
+  strada pulita è spostare SQL e documenti interni in un repo privato separato — ricordando
+  che **la storia li conserva comunque** (sono lì dal 15/05, in 68 commit), quindi servirebbe
+  riscriverla.
+- **Alternativa mai adottata ma provata e valida:** far girare i lavori sul VM Google invece
+  che su GitHub Actions. La suite completa gira lì in **11′17″** (contro ~8′ su Actions):
+  gratis, illimitata, e non pubblica niente. È la strada da riprendere se il repo dovesse
+  tornare privato.
+
 - **⭐ Dal 20/08 sera il cancello fonde da solo. Non si chiede più l'ok a Vlad.**
   La ragione è sua: *«scritto così, io non so se approvare o meno. non sono in grado di capire
   se fidarmi. posso aiutarvi con cose umane, non a livello di coding.»* Chiedere a una persona
