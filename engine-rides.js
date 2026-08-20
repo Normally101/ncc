@@ -625,7 +625,7 @@ function completeRide(ride, _deferPay = false) {
     const skillTipMult  = _skillEffects.tipMult || 1.0;
     // Diplomatico: Ambasciatore — VIP rep gain
     if (isVipOrUltra && _skillEffects.vipRepGain && driver?.id !== 'ceo') {
-        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation || 0) + _skillEffects.vipRepGain);
+        window.CE_money.addReputation(_skillEffects.vipRepGain);
     }
     // Specialty tip bonus
     let specTipMult = 1.0;
@@ -699,7 +699,7 @@ function completeRide(ride, _deferPay = false) {
         const _trip = (gameState.activeTrips || []).find(t => t.id === ride.id);
         if (_trip) _trip.earnings = earned;
     } else {
-        gameState.cash += earned;
+        window.CE_money.earn(earned, 'ride_earnings');
         gameState.todayEarnings = (gameState.todayEarnings || 0) + earned;
         // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
         if (window.supabaseClient && window.currentUser) {
@@ -717,7 +717,7 @@ function completeRide(ride, _deferPay = false) {
             }
         }
     }
-    gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.02);
+    window.CE_money.addReputation(0.02);
 
     // Milestone €1.000.000 (una volta sola)
     if (prevCash < 1_000_000 && gameState.cash >= 1_000_000 && !gameState._milestoneM1) {
@@ -791,7 +791,7 @@ function completeRide(ride, _deferPay = false) {
     // Charmante trait: +15% mance VIP/Ultra (already via vipTipMult), 10% chance of big tip email
     if (driver?.trait?.id === 'charmante' && (ride.tier === 'vip' || ride.tier === 'ultra') && Math.random() < 0.10) {
         const bonus = 250 + Math.floor(Math.random() * 250);
-        gameState.cash += bonus;
+        window.CE_money.earn(bonus, 'charmante_tip');
         const gameHour = gameState.day * 24 + gameState.hour;
         const _charmanteEmail = {
             id: gameState.nextId++, sender: driver.name,
@@ -808,11 +808,7 @@ function completeRide(ride, _deferPay = false) {
     // F2P Driver Coins drop: 5% chance on ultra-tier ride
     if (ride.tier === 'ultra' && Math.random() < 0.05) {
         const drop = 1 + Math.floor(Math.random() * 3);
-        gameState.driverCoins = (gameState.driverCoins || 0) + drop;
-        window.ServerState?.addDriverCoins?.(drop, 'ultra_ride_drop')
-            ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gameState.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
-            ?.catch(() => {});
-
+        window.CE_money.earnDC(drop, 'ultra_ride_drop');
         logToMap(`🪙 Driver Coins: +${drop} DC da transfer Presidential!`);
         if (typeof showNotification === 'function') showNotification(`🪙 +${drop} Driver Coins guadagnati!`, 'success');
     }
@@ -832,13 +828,6 @@ function completeRide(ride, _deferPay = false) {
 
     // Territory influence (async, fire & forget)
     _awardTerritoryInfluence(ride);
-
-    // Mirror server-authoritative del cash. Senza questo l'incasso della corsa resta solo
-    // in gameState/game_saves: al reload bridgeToGameState() sovrascrive con companies.cash
-    // e il guadagno sparisce. Copre sia il pagamento immediato (!_deferPay) sia il bonus
-    // mancia Charmante. Stesso pattern di zero-to-hero.js/engine-daily.js.
-    if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
-        window.ServerState.syncCash(gameState.cash).catch(() => {});
 
     saveGame();
 
@@ -885,12 +874,13 @@ function checkActiveTrips() {
     if (!trips.length) return;
     const now = Date.now();
     let completed = 0;
+    let totalEarnings = 0;
     for (let i = trips.length - 1; i >= 0; i--) {
         const trip = trips[i];
         if (now < trip.endTime) continue;
         // Pay earnings
         if (trip.earnings != null) {
-            gameState.cash += trip.earnings;
+            totalEarnings += trip.earnings;
             gameState.todayEarnings = (gameState.todayEarnings || 0) + trip.earnings;
             // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
             if (window.supabaseClient && window.currentUser) {
@@ -922,12 +912,10 @@ function checkActiveTrips() {
         trips.splice(i, 1);
         completed++;
     }
+    if (totalEarnings > 0) {
+        window.CE_money.earn(totalEarnings, 'completed_trips');
+    }
     if (completed > 0) {
-        // Mirror server-authoritative: i pagamenti differiti (trip.earnings) incrementano
-        // solo gameState.cash. Un solo sync dopo il loop copre tutti i viaggi chiusi in
-        // questo passaggio, senza N chiamate RPC.
-        if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
-            window.ServerState.syncCash(gameState.cash).catch(() => {});
         updateUI();
         saveGame();
     }
