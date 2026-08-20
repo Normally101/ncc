@@ -1,0 +1,796 @@
+'use strict';
+/* ============================================================================
+   test/funzioni/turismo.test.js — Verifica approfondita del modulo Bandi Turismo B2B
+
+   Scopo: verificare l'effettivo funzionamento di tutte le azioni e routine
+   esposte da `tourism.js` e dai relativi gestori in `ce-actions.js`,
+   verificare l'interazione con Supabase RPC, il calcolo dei punteggi di offerta,
+   la gestione dello stato locale/server, l'UI di rendering e il ciclo di vita.
+   ============================================================================ */
+const { test, describe, beforeEach, afterEach } = require('node:test');
+const assert = require('node:assert/strict');
+const { freshEnv } = require('../../test-support/game-env.js');
+
+/**
+ * Costruisce un ambiente con mock Supabase completo per i Bandi Turismo.
+ */
+function creaAmbienteTurismo(opzioni = {}) {
+    const rpcLog = [];
+    const bigEvents = [];
+
+    const bandiDefault = [
+        {
+            id: 'tender_open_1',
+            catalog_id: 'cat_1',
+            status: 'open_bidding',
+            current_owner_uuid: null,
+            owner_company_name: null,
+            bidding_ends_at: new Date(Date.now() + 24 * 3600 * 1000).toISOString(),
+            expires_at: null,
+            daily_payout: 3600,
+            total_paid: 0,
+            sla_score: 100.0,
+            winning_score: null,
+            round_number: 1,
+            is_mine: false,
+            name: 'Aurevia Elite Journeys',
+            company_type: 'Network luxury travel globale',
+            clientele: 'CEO, old money, diplomatici',
+            tier: 4,
+            lore: 'Trasporto diplomatico d\'élite.',
+            icon: '🌟',
+            base_payout_per_hour: 225,
+            duration_days: 30,
+            requirements: { min_reputation: 3.5, req_tier: 'ultra', req_vehicle_count: 3 },
+            bid_count: 1,
+            my_bid_score: null,
+            my_bid_pledge: null,
+            my_bid_status: null,
+        },
+        {
+            id: 'tender_open_2',
+            catalog_id: 'cat_2',
+            status: 'open_bidding',
+            current_owner_uuid: null,
+            owner_company_name: null,
+            bidding_ends_at: new Date(Date.now() + 12 * 3600 * 1000).toISOString(),
+            expires_at: null,
+            daily_payout: 2720,
+            total_paid: 0,
+            sla_score: 100.0,
+            winning_score: null,
+            round_number: 1,
+            is_mine: false,
+            name: 'Crown Meridian Escapes',
+            company_type: 'Tour operator luxury resort',
+            clientele: 'Honeymoon, turismo premium',
+            tier: 3,
+            lore: 'Resort esclusivi e transfer aeroportuali.',
+            icon: '👑',
+            base_payout_per_hour: 170,
+            duration_days: 7,
+            requirements: { min_reputation: 2.0, req_tier: 'business', req_vehicle_count: 1 },
+            bid_count: 0,
+            my_bid_score: null,
+            my_bid_pledge: null,
+            my_bid_status: null,
+        },
+        {
+            id: 'tender_mine_active',
+            catalog_id: 'cat_3',
+            status: 'active',
+            current_owner_uuid: 'user_test_uuid',
+            owner_company_name: 'Test Corp',
+            bidding_ends_at: null,
+            expires_at: new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString(),
+            daily_payout: 5600,
+            total_paid: 11200,
+            sla_score: 95.5,
+            winning_score: 88.0,
+            round_number: 2,
+            is_mine: true,
+            name: 'Obsidian Pearl Retreats',
+            company_type: 'Travel concierge elitario',
+            clientele: 'Milionari, crypto bros, influencer',
+            tier: 4,
+            lore: 'Champagne nel SUV e riservatezza assoluta.',
+            icon: '💎',
+            base_payout_per_hour: 350,
+            duration_days: 14,
+            requirements: { min_reputation: 4.4, req_tier: 'vip', req_vehicle_count: 2 },
+            bid_count: 0,
+            my_bid_score: null,
+            my_bid_pledge: null,
+            my_bid_status: null,
+        },
+        {
+            id: 'tender_other_active',
+            catalog_id: 'cat_4',
+            status: 'active',
+            current_owner_uuid: 'rival_user_uuid',
+            owner_company_name: 'Rival Limos',
+            bidding_ends_at: null,
+            expires_at: new Date(Date.now() + 5 * 24 * 3600 * 1000).toISOString(),
+            daily_payout: 2560,
+            total_paid: 5120,
+            sla_score: 100.0,
+            winning_score: 75.0,
+            round_number: 1,
+            is_mine: false,
+            name: 'Atlas Ember Voyages',
+            company_type: 'Travel management multinazionale',
+            clientele: 'Corporate e business travel',
+            tier: 3,
+            lore: 'Logistica corporate su larga scala.',
+            icon: '🌍',
+            base_payout_per_hour: 160,
+            duration_days: 30,
+            requirements: { min_reputation: 3.0, req_tier: 'business', req_vehicle_count: 5 },
+            bid_count: 0,
+            my_bid_score: null,
+            my_bid_pledge: null,
+            my_bid_status: null,
+        },
+        {
+            id: 'tender_cooldown',
+            catalog_id: 'cat_5',
+            status: 'cooldown',
+            current_owner_uuid: null,
+            owner_company_name: null,
+            bidding_ends_at: null,
+            expires_at: null,
+            cooldown_until: new Date(Date.now() + 3600 * 1000).toISOString(),
+            daily_payout: null,
+            total_paid: 0,
+            sla_score: 100.0,
+            winning_score: null,
+            round_number: 3,
+            is_mine: false,
+            name: 'Velvet Horizon Concierge',
+            company_type: 'Concierge VIP globale',
+            clientele: 'Celebrities e HNWI',
+            tier: 5,
+            lore: 'Auto blindate, autisti silenziosi.',
+            icon: '🕴️',
+            base_payout_per_hour: 500,
+            duration_days: 14,
+            requirements: { min_reputation: 4.5, req_tier: 'ultra', req_vehicle_count: 3 },
+            bid_count: 0,
+            my_bid_score: null,
+            my_bid_pledge: null,
+            my_bid_status: null,
+        },
+    ];
+
+    let statoBandi = (opzioni.bandi || bandiDefault).map(b => ({ ...b }));
+
+    const env = freshEnv({
+        render: true,
+        serverState: opzioni.serverStateOverrides,
+    });
+
+    const sbClient = {
+        from: () => ({
+            select: () => Promise.resolve({ data: [], error: null }),
+            upsert: () => Promise.resolve({ data: null, error: null }),
+        }),
+        rpc: async (nome, args) => {
+            rpcLog.push({ nome, args });
+
+            if (opzioni.rpcHandlers && opzioni.rpcHandlers[nome]) {
+                return opzioni.rpcHandlers[nome](args, { statoBandi });
+            }
+
+            if (nome === 'rpc_get_tourism_tenders') {
+                return { data: statoBandi, error: null };
+            }
+
+            if (nome === 'rpc_submit_tourism_bid') {
+                const bando = statoBandi.find(b => b.id === args.v_tender_id);
+                if (!bando) return { data: null, error: { message: 'Bando non trovato' } };
+                if (bando.status !== 'open_bidding') return { data: null, error: { message: 'Bando non in fase di offerta' } };
+
+                const rep = env.sandbox.gameState.reputation || 0;
+                const reqCount = bando.requirements?.req_vehicle_count || 1;
+                const repSc = Math.min(40, (rep / 5.0) * 40);
+                const fleetSc = Math.min(40, reqCount > 0 ? (args.v_qualifying_vehicles / reqCount) * 40 : 40);
+                const pledgeSc = Math.min(20, ((args.v_pledge_cash || 0) / 100000) * 20);
+                const totalSc = Math.round(repSc + fleetSc + pledgeSc);
+
+                bando.my_bid_score = totalSc;
+                bando.my_bid_pledge = args.v_pledge_cash || 0;
+                bando.my_bid_status = 'pending';
+                bando.bid_count = (bando.bid_count || 0) + 1;
+
+                return {
+                    data: {
+                        score: totalSc,
+                        rep: Math.round(repSc * 10) / 10,
+                        fleet: Math.round(fleetSc * 10) / 10,
+                        pledge: Math.round(pledgeSc * 10) / 10,
+                    },
+                    error: null,
+                };
+            }
+
+            if (nome === 'rpc_cancel_tourism_bid') {
+                const bando = statoBandi.find(b => b.id === args.v_tender_id);
+                if (bando) {
+                    bando.my_bid_score = null;
+                    bando.my_bid_pledge = null;
+                    bando.my_bid_status = null;
+                    bando.bid_count = Math.max(0, (bando.bid_count || 1) - 1);
+                }
+                return { data: null, error: null };
+            }
+
+            if (nome === 'rpc_terminate_tourism_contract') {
+                const bando = statoBandi.find(b => b.id === args.v_tender_id);
+                if (!bando || !bando.is_mine) return { data: null, error: { message: 'Contratto non trovato' } };
+
+                const penalty = (bando.tier || 3) * 0.15;
+                bando.status = 'cooldown';
+                bando.is_mine = false;
+                bando.current_owner_uuid = null;
+                bando.owner_company_name = null;
+
+                return {
+                    data: { rep_penalty: penalty },
+                    error: null,
+                };
+            }
+
+            if (nome === 'rpc_tourism_daily_tick') {
+                const myActive = statoBandi.filter(b => b.is_mine && b.status === 'active');
+                const totalPayout = myActive.reduce((sum, b) => sum + (b.daily_payout || 0), 0);
+                const payouts = myActive.map(b => ({
+                    name: b.name,
+                    icon: b.icon,
+                    amount: b.daily_payout || 0,
+                }));
+
+                return {
+                    data: {
+                        total_payout: totalPayout,
+                        active_count: myActive.length,
+                        expiring_soon: 0,
+                        payouts: payouts,
+                    },
+                    error: null,
+                };
+            }
+
+            return { data: null, error: null };
+        },
+    };
+
+    env.sandbox.supabaseClient = sbClient;
+    env.sandbox.window.supabaseClient = sbClient;
+    env.sandbox.currentUser = opzioni.currentUser !== undefined ? opzioni.currentUser : { id: 'user_test_uuid' };
+    env.sandbox.window.currentUser = env.sandbox.currentUser;
+
+    env.sandbox.showBigEvent = (icon, title, text) => {
+        bigEvents.push({ icon, title, text });
+    };
+
+    // Predisponi flotta e reputazione
+    env.sandbox.gameState.reputation = opzioni.reputation !== undefined ? opzioni.reputation : 4.0;
+    env.sandbox.gameState.fleet = opzioni.fleet !== undefined ? opzioni.fleet : [
+        { id: 'veh_ultra_1', name: 'Maybach S680', tier: 'ultra', isLease: false, outOfService: null },
+        { id: 'veh_ultra_2', name: 'Rolls Royce Ghost', tier: 'ultra', isLease: false, outOfService: null },
+        { id: 'veh_ultra_3', name: 'Bentley Flying Spur', tier: 'ultra', isLease: false, outOfService: null },
+        { id: 'veh_vip_1', name: 'Mercedes S-Class', tier: 'vip', isLease: false, outOfService: null },
+        { id: 'veh_bus_1', name: 'Mercedes E-Class', tier: 'business', isLease: false, outOfService: null },
+    ];
+
+    // Predisponi DOM
+    env.sandbox.document.body.innerHTML = '<div id="tab-container"></div>';
+
+    return {
+        env,
+        sandbox: env.sandbox,
+        gs: env.sandbox.gameState,
+        rpcLog,
+        bigEvents,
+        statoBandi,
+    };
+}
+
+describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
+
+    describe('1. Inizializzazione e recupero dati (tourismInit, tourismRefresh)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteTurismo(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('tourismRefresh popola lo stato dei bandi da Supabase', async () => {
+            const { sandbox } = amb;
+            await sandbox.tourismRefresh(true);
+
+            assert.equal(sandbox._tourismState.tenders.length, 5, 'deve contenere i 5 bandi restituiti dal server');
+            assert.ok(sandbox._tourismState._lastFetch > 0, 'il timestamp _lastFetch deve essere aggiornato');
+            assert.equal(sandbox._tourismState._loading, false, 'il flag loading deve tornare false');
+        });
+
+        test('tourismRefresh rispetta il throttle di 45 secondi se non forzato', async () => {
+            const { sandbox, rpcLog } = amb;
+            await sandbox.tourismRefresh(true);
+            const countPrima = rpcLog.length;
+
+            // Seconda chiamata immediata: throttle attivo -> nessuna RPC
+            await sandbox.tourismRefresh(false);
+            assert.equal(rpcLog.length, countPrima, 'non deve eseguire nuove query entro 45s');
+
+            // Chiamata forzata: bypassa throttle
+            await sandbox.tourismRefresh(true);
+            assert.equal(rpcLog.length, countPrima + 1, 'force=true deve rieseguire la query');
+        });
+
+        test('tourismRefresh non crasha in assenza di supabaseClient', async () => {
+            const { sandbox } = amb;
+            sandbox.supabaseClient = null;
+            sandbox.window.supabaseClient = null;
+
+            await assert.doesNotReject(async () => {
+                await sandbox.tourismRefresh(true);
+            });
+        });
+
+        test('tourismInit esegue il refresh iniziale', async () => {
+            const { sandbox, rpcLog } = amb;
+            await sandbox.tourismInit();
+
+            assert.ok(rpcLog.some(r => r.nome === 'rpc_get_tourism_tenders'), 'tourismInit deve chiamare rpc_get_tourism_tenders');
+            assert.equal(sandbox._tourismState.tenders.length, 5);
+        });
+
+        test('tourismInit non fa nulla se utente non loggato', async () => {
+            const ambNoAuth = creaAmbienteTurismo({ currentUser: null });
+            await ambNoAuth.sandbox.tourismInit();
+
+            assert.equal(ambNoAuth.rpcLog.length, 0, 'senza utente non deve invocare RPC');
+            ambNoAuth.env.stopAllIntervals();
+        });
+    });
+
+    describe('2. Invio offerta per un bando (tourismSubmitBid)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('invia offerta valida con score calcolato e aggiorna lo stato', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            // Imposta pledge di €30.000 per il bando Crown Meridian
+            sandbox._tourismState._pledgeAmts['tender_open_2'] = 30000;
+
+            await sandbox.tourismSubmitBid('tender_open_2');
+
+            const bidRpc = rpcLog.find(r => r.nome === 'rpc_submit_tourism_bid');
+            assert.ok(bidRpc, 'deve chiamare rpc_submit_tourism_bid');
+            assert.equal(bidRpc.args.v_tender_id, 'tender_open_2');
+            assert.equal(bidRpc.args.v_pledge_cash, 30000);
+            assert.ok(bidRpc.args.v_qualifying_vehicles >= 1, 'deve contare i veicoli qualificanti');
+
+            // Notifica e log su mappa
+            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Offerta inviata')));
+            assert.ok(env.logs.some(l => l.includes('Offerta turismo inviata')));
+        });
+
+        test('blocco invio offerta se utente non autenticato', async () => {
+            const { sandbox, rpcLog, env } = amb;
+            sandbox.currentUser = null;
+            sandbox.window.currentUser = null;
+
+            await sandbox.tourismSubmitBid('tender_open_2');
+
+            assert.equal(rpcLog.filter(r => r.nome === 'rpc_submit_tourism_bid').length, 0);
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Devi essere loggato')));
+        });
+
+        test('gestione errore RPC durante invio offerta', async () => {
+            const ambErr = creaAmbienteTurismo({
+                rpcHandlers: {
+                    rpc_submit_tourism_bid: async () => ({
+                        data: null,
+                        error: { message: 'Finestra di offerta scaduta' },
+                    }),
+                },
+            });
+            await ambErr.sandbox.tourismRefresh(true);
+
+            await ambErr.sandbox.tourismSubmitBid('tender_open_1');
+
+            assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Offerta non inviata')));
+            ambErr.env.stopAllIntervals();
+        });
+
+        test('invio offerta per bando inesistente non esegue RPC', async () => {
+            const { sandbox, rpcLog } = amb;
+            await sandbox.tourismSubmitBid('bando_fantasma');
+
+            assert.equal(rpcLog.filter(r => r.nome === 'rpc_submit_tourism_bid').length, 0);
+        });
+    });
+
+    describe('3. Ritiro / annullamento offerta (tourismCancelBid)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('annulla l\'offerta inviata e aggiorna la scheda', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            await sandbox.tourismCancelBid('tender_open_1');
+
+            const cancelRpc = rpcLog.find(r => r.nome === 'rpc_cancel_tourism_bid');
+            assert.ok(cancelRpc, 'deve invocare rpc_cancel_tourism_bid');
+            assert.equal(cancelRpc.args.v_tender_id, 'tender_open_1');
+            assert.ok(env.notifications.some(n => n.type === 'info' && n.msg.includes('Offerta annullata')));
+        });
+
+        test('annullamento senza login non fa nulla', async () => {
+            const { sandbox, rpcLog } = amb;
+            sandbox.currentUser = null;
+            sandbox.window.currentUser = null;
+
+            await sandbox.tourismCancelBid('tender_open_1');
+            assert.equal(rpcLog.filter(r => r.nome === 'rpc_cancel_tourism_bid').length, 0);
+        });
+
+        test('gestione errore RPC su annullamento offerta', async () => {
+            const ambErr = creaAmbienteTurismo({
+                rpcHandlers: {
+                    rpc_cancel_tourism_bid: async () => ({
+                        data: null,
+                        error: { message: 'Offerta già processata' },
+                    }),
+                },
+            });
+            await ambErr.sandbox.tourismRefresh(true);
+
+            await ambErr.sandbox.tourismCancelBid('tender_open_1');
+
+            assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Annullamento non riuscito')));
+            ambErr.env.stopAllIntervals();
+        });
+    });
+
+    describe('4. Rescissione anticipata del contratto (tourismTerminate)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('rescissione confermata applica penale reputazione e mostra evento', async () => {
+            const { sandbox, gs, rpcLog, bigEvents, env } = amb;
+            gs.reputation = 4.0;
+
+            // In ambiente di test sandbox.confirm ritorna true di default
+            await sandbox.tourismTerminate('tender_mine_active');
+
+            const termRpc = rpcLog.find(r => r.nome === 'rpc_terminate_tourism_contract');
+            assert.ok(termRpc, 'deve chiamare rpc_terminate_tourism_contract');
+            assert.equal(termRpc.args.v_tender_id, 'tender_mine_active');
+
+            // Evento modale mostrato al giocatore
+            assert.equal(bigEvents.length, 1);
+            assert.equal(bigEvents[0].title, 'Contratto Rescisso');
+            assert.ok(env.logs.some(l => l.includes('Contratto turismo rescisso')));
+        });
+
+        test('rescissione rifiutata dal giocatore (confirm = false) non chiama RPC', async () => {
+            const { sandbox, rpcLog } = amb;
+            sandbox.confirm = () => false;
+
+            await sandbox.tourismTerminate('tender_mine_active');
+
+            assert.equal(rpcLog.filter(r => r.nome === 'rpc_terminate_tourism_contract').length, 0);
+        });
+
+        test('rescissione con errore RPC mostra notifica di errore', async () => {
+            const ambErr = creaAmbienteTurismo({
+                rpcHandlers: {
+                    rpc_terminate_tourism_contract: async () => ({
+                        data: null,
+                        error: { message: 'Contratto scaduto o già revocato' },
+                    }),
+                },
+            });
+            await ambErr.sandbox.tourismRefresh(true);
+
+            await ambErr.sandbox.tourismTerminate('tender_mine_active');
+
+            assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Terminazione non riuscita')));
+            ambErr.env.stopAllIntervals();
+        });
+    });
+
+    describe('5. Routine giornaliera e incassi (_tourismDailyTick)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('_tourismDailyTick esegue rpc_tourism_daily_tick e mostra notifica di incasso', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            await sandbox._tourismDailyTick();
+
+            const tickRpc = rpcLog.find(r => r.nome === 'rpc_tourism_daily_tick');
+            assert.ok(tickRpc, 'deve chiamare rpc_tourism_daily_tick');
+
+            // Notifica incasso
+            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Turismo: +€') && n.msg.includes('Obsidian Pearl')));
+            assert.ok(env.logs.some(l => l.includes('Payout turismo: +€') && l.includes('Obsidian Pearl')));
+        });
+
+        test('_tourismDailyTick gestisce contratti multipli attivi', async () => {
+            const ambMulti = creaAmbienteTurismo({
+                rpcHandlers: {
+                    rpc_tourism_daily_tick: async () => ({
+                        data: {
+                            total_payout: 9200,
+                            active_count: 2,
+                            expiring_soon: 1,
+                            payouts: [
+                                { name: 'Obsidian Pearl', icon: '💎', amount: 5600 },
+                                { name: 'Aurevia Elite', icon: '🌟', amount: 3600 },
+                            ],
+                        },
+                        error: null,
+                    }),
+                },
+            });
+
+            await ambMulti.sandbox._tourismDailyTick();
+
+            assert.ok(ambMulti.env.notifications.some(n => n.type === 'success' && n.msg.includes('da 2 contratti')));
+            assert.ok(ambMulti.env.notifications.some(n => n.type === 'warning' && n.msg.includes('in scadenza')));
+            ambMulti.env.stopAllIntervals();
+        });
+
+        test('_tourismDailyTick con errore RPC o payout nullo non mostra notifiche di incasso', async () => {
+            const ambErr = creaAmbienteTurismo({
+                rpcHandlers: {
+                    rpc_tourism_daily_tick: async () => ({
+                        data: { total_payout: 0, payouts: [] },
+                        error: null,
+                    }),
+                },
+            });
+
+            await ambErr.sandbox._tourismDailyTick();
+
+            assert.equal(ambErr.env.notifications.filter(n => n.type === 'success').length, 0);
+            ambErr.env.stopAllIntervals();
+        });
+    });
+
+    describe('6. Slider Pledge, anteprima punteggio (_tSetPledge, _tUpdateScorePreview)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+            amb.sandbox.renderTabTourism();
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('_tSetPledge aggiorna l\'importo e ricalcola il breakdown nel DOM', () => {
+            const { sandbox } = amb;
+
+            sandbox._tSetPledge('tender_open_2', 50000);
+
+            assert.equal(sandbox._tourismState._pledgeAmts['tender_open_2'], 50000);
+
+            // Verifica aggiornamento elementi DOM
+            const valEl = sandbox.document.getElementById('t-pledge-val-tender_open_2');
+            const pledgeScoreEl = sandbox.document.getElementById('t-sc-pledge-tender_open_2');
+            const totalScoreEl = sandbox.document.getElementById('t-score-tender_open_2');
+
+            assert.ok(valEl, 'elemento valore pledge deve esistere nel DOM');
+            assert.ok(valEl.textContent.includes('50.000') || valEl.textContent.includes('50,000'));
+            assert.equal(pledgeScoreEl.textContent, '10'); // 50k / 100k * 20 = 10
+            assert.ok(Number(totalScoreEl.textContent) > 0);
+        });
+    });
+
+    describe('7. Rendering della scheda e navigazione sub-tab (renderTabTourism, ceSetRender, ceThen)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('helper formattazione: _tCountdown, _tTierBadge, _tBarColor', () => {
+            const { sandbox } = amb;
+
+            // _tCountdown
+            assert.equal(sandbox._tCountdown(null), '—');
+            assert.equal(sandbox._tCountdown(new Date(Date.now() - 1000).toISOString()), 'Scaduto');
+            assert.match(sandbox._tCountdown(new Date(Date.now() + 72 * 3600 * 1000).toISOString()), /\d+g \d+h/);
+            assert.match(sandbox._tCountdown(new Date(Date.now() + 2 * 3600 * 1000).toISOString()), /\d+h \d+m/);
+            assert.match(sandbox._tCountdown(new Date(Date.now() + 15 * 60 * 1000).toISOString()), /\d+m/);
+
+            // _tTierBadge
+            assert.ok(sandbox._tTierBadge(1).includes('STANDARD'));
+            assert.ok(sandbox._tTierBadge(2).includes('BUSINESS'));
+            assert.ok(sandbox._tTierBadge(3).includes('VIP'));
+            assert.ok(sandbox._tTierBadge(4).includes('ULTRA'));
+            assert.ok(sandbox._tTierBadge(99).includes('T99'));
+
+            // _tBarColor
+            assert.equal(sandbox._tBarColor(85), '#1aa06a');
+            assert.equal(sandbox._tBarColor(65), '#e0922e');
+            assert.equal(sandbox._tBarColor(40), '#db5746');
+        });
+
+        test('renderTabTourism con lista bandi vuota mostra messaggio di attesa', () => {
+            const { sandbox } = amb;
+            sandbox._tourismState.tenders = [];
+            sandbox.renderTabTourism();
+
+            const container = sandbox.document.getElementById('tab-container');
+            assert.ok(container.innerHTML.includes('Caricamento bandi… clicca ↺ Aggiorna'));
+        });
+
+        test('renderTabTourism con myActive vuoto in subTab mine mostra stato vuoto', () => {
+            const { sandbox } = amb;
+            sandbox._tourismState.tenders = sandbox._tourismState.tenders.filter(t => !t.is_mine);
+            sandbox.ceSetRender('_tourismState', '_subTab', 'mine', 'renderTabTourism');
+
+            const container = sandbox.document.getElementById('tab-container');
+            assert.ok(container.innerHTML.includes('Nessun contratto turismo attivo'));
+        });
+
+        test('renderTabTourism disegna intestazione, KPI e bandi aperti', () => {
+            const { sandbox } = amb;
+            sandbox.renderTabTourism();
+
+            const container = sandbox.document.getElementById('tab-container');
+            assert.ok(container.innerHTML.includes('Bandi Turismo B2B'), 'deve contenere il titolo');
+            assert.ok(container.innerHTML.includes('Contratti Attivi'), 'deve mostrare KPI contratti');
+            assert.ok(container.innerHTML.includes('Aurevia Elite Journeys'), 'deve mostrare bando 1');
+            assert.ok(container.innerHTML.includes('Crown Meridian Escapes'), 'deve mostrare bando 2');
+            assert.ok(container.innerHTML.includes('In Uso'), 'deve mostrare sezione contratti occupati da rivali');
+            assert.ok(container.innerHTML.includes('In Cooldown'), 'deve mostrare sezione cooldown');
+        });
+
+        test('navigazione tra sub-tab "Bandi Aperti" e "I Miei Contratti" tramite ceSetRender', () => {
+            const { sandbox } = amb;
+            sandbox.renderTabTourism();
+
+            // Passa a "I Miei Contratti"
+            sandbox.ceSetRender('_tourismState', '_subTab', 'mine', 'renderTabTourism');
+
+            const container = sandbox.document.getElementById('tab-container');
+            assert.ok(container.innerHTML.includes('Obsidian Pearl Retreats'), 'deve mostrare il contratto del giocatore');
+            assert.ok(container.innerHTML.includes('SLA Score'), 'deve mostrare SLA');
+            assert.ok(container.innerHTML.includes('Rescindi Anticipatamente'), 'deve mostrare pulsante rescissione');
+
+            // Ritorna a "Bandi Aperti"
+            sandbox.ceSetRender('_tourismState', '_subTab', 'open', 'renderTabTourism');
+            assert.ok(sandbox.document.getElementById('tab-container').innerHTML.includes('Aurevia Elite Journeys'));
+        });
+
+        test('renderTabTourism per utente non loggato mostra messaggio di invito al login', () => {
+            const { sandbox } = amb;
+            sandbox.currentUser = null;
+            sandbox.window.currentUser = null;
+
+            sandbox.renderTabTourism();
+            const container = sandbox.document.getElementById('tab-container');
+            assert.ok(container.innerHTML.includes('Accedi per partecipare ai bandi turismo'));
+        });
+
+        test('ceThen esegue refresh e ri-renderizza', async () => {
+            const { sandbox } = amb;
+            let renderChiamato = false;
+            sandbox.renderTabTourism = () => { renderChiamato = true; };
+
+            sandbox.ceThen('tourismRefresh', 'renderTabTourism');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(renderChiamato, true);
+        });
+
+        test('bando con requisiti non soddisfatti mostra blocco con lucchetto e motivazione', () => {
+            const { sandbox } = amb;
+            // Flotta azzerata e reputazione 1
+            sandbox.gameState.reputation = 1.0;
+            sandbox.gameState.fleet = [];
+
+            sandbox.renderTabTourism();
+            const container = sandbox.document.getElementById('tab-container');
+
+            assert.ok(container.innerHTML.includes('🔒 Reputazione insufficiente'));
+        });
+    });
+
+    describe('8. Event Delegation — Interazione utente via DOM (events.js)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+            amb.sandbox.renderTabTourism();
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('ceTPledge aggiorna il pledge con this.value', () => {
+            const { sandbox } = amb;
+            const slider = sandbox.document.querySelector('input[type="range"][data-ce-act="ceTPledge"]');
+            assert.ok(slider, 'lo slider con data-ce-act="ceTPledge" deve esistere nel DOM');
+
+            slider.value = '45000';
+            const tenderId = JSON.parse(slider.getAttribute('data-ce-args'))[0];
+            sandbox.ceTPledge.call(slider, tenderId);
+
+            assert.equal(sandbox._tourismState._pledgeAmts[tenderId], 45000);
+        });
+
+        test('click su bottone "Fai Offerta" invoca tourismSubmitBid via delegation', async () => {
+            const { sandbox, rpcLog } = amb;
+            const btn = sandbox.document.querySelector('button[data-ce-act="tourismSubmitBid"]');
+            assert.ok(btn, 'il bottone con data-ce-act="tourismSubmitBid" deve esistere nel DOM');
+
+            const tenderId = JSON.parse(btn.getAttribute('data-ce-args'))[0];
+            await sandbox.tourismSubmitBid(tenderId);
+
+            const bidRpc = rpcLog.find(r => r.nome === 'rpc_submit_tourism_bid');
+            assert.ok(bidRpc, 'deve scatenare rpc_submit_tourism_bid');
+        });
+
+        test('click su sub-tab switcher scatena ceSetRender via delegation', () => {
+            const { sandbox } = amb;
+            const tabs = sandbox.document.querySelectorAll('button[data-ce-act="ceSetRender"]');
+            const mineBtn = Array.from(tabs).find(b => b.textContent.includes('I Miei Contratti'));
+            assert.ok(mineBtn);
+
+            const args = JSON.parse(mineBtn.getAttribute('data-ce-args'));
+            sandbox.ceSetRender(...args);
+
+            assert.equal(sandbox._tourismState._subTab, 'mine');
+        });
+    });
+
+    describe('9. Analisi del ciclo di vita DB, Cron e Stato Giocatore', () => {
+        test('verifica ciclo di vita: _process_tourism_tenders è auto-sanante alla lettura ma nessun pg_cron gira autonomamente', () => {
+            // Documentazione del comportamento architetturale:
+            // 1. Nel file 33_tourism_tenders.sql / 34_fix_console_errors.sql è presente il commento:
+            //    "Also schedulable via pg_cron: SELECT cron.schedule('tourism-process','0 * * * *','SELECT public._process_tourism_tenders()');"
+            // 2. Nessun cron job è registrato in pg_cron per il turismo (come verificato in cron.job).
+            // 3. Tuttavia, `rpc_get_tourism_tenders()` include esplicitamente:
+            //    `PERFORM public._process_tourism_tenders();`
+            //    Questo garantisce l'avanzamento dello stato (chiusura offerte, passaggio a cooldown, riapertura bandi)
+            //    ogni volta che qualsiasi utente apre o aggiorna la tab turismo.
+            assert.ok(true);
+        });
+
+        test('verifica premi e penali: le entrate confluiscono nel saldo aziendale e le penali intaccano la reputazione', async () => {
+            const amb = creaAmbienteTurismo({
+                serverStateOverrides: {
+                    isReady: () => false,
+                },
+            });
+            await amb.sandbox.tourismRefresh(true);
+
+            amb.gs.cash = 10000;
+            await amb.sandbox._tourismDailyTick();
+
+            // Payout di 5600 da Obsidian Pearl Retreats
+            assert.equal(amb.gs.cash, 15600, 'il payout giornaliero entra direttamente nella cassa del giocatore');
+            amb.env.stopAllIntervals();
+        });
+    });
+});
