@@ -1,0 +1,41 @@
+name: Fondi un ramo approvato
+
+# Si lancia SOLO dopo che Vlad ha approvato dall'hub. Non decide niente: la
+# decisione è già stata presa, qui si esegue.
+on:
+  workflow_dispatch:
+    inputs:
+      ramo:
+        description: "Il ramo approvato da fondere in main"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  fondi:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    # Due merge in parallelo si pesterebbero i piedi su main.
+    concurrency:
+      group: fondi-main
+      cancel-in-progress: false
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Dipendenze
+        run: npm ci --no-audit --no-fund
+
+      - name: Fondi
+        env:
+          RAMO: ${{ inputs.ramo }}
+        run: node .github/agent/fondi-ramo.mjs
