@@ -28,7 +28,6 @@ const AUTORIZZATI = new Set(['money.js', 'serverState.js']);
 // Ogni task di conversione RIMUOVE una riga da qui. Nessun task ne aggiunge.
 const ECCEZIONI = new Set([
     'engine-finance.js',
-    'engine-fleet.js',
     'engine.js',
     'hq.js',
     'ui-staff.js',
