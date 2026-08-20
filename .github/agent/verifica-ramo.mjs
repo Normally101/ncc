@@ -176,4 +176,12 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 try { sh('git', ['merge', '--abort']); } catch { /* nessun merge in corso */ }
 try { sh('git', ['reset', '--hard', BASE]); } catch { /* niente da annullare */ }
 
-process.exit(verdetto.promuovibile ? 0 : 1);
+// Esce SEMPRE 0, anche quando il ramo non passa.
+//
+// Un ramo respinto e' un esito normale di questo controllo, non un guasto: e'
+// esattamente il lavoro che gli abbiamo chiesto di fare. Uscire con errore
+// faceva mandare a GitHub una mail di fallimento a ogni rifiuto, cioe' rumore
+// che insegna a ignorare le mail — comprese quelle che segnalano guasti veri.
+//
+// Chi ha bisogno del verdetto lo legge da 'promuovibile' nel JSON qui sopra.
+process.exit(0);
