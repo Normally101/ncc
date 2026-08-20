@@ -136,21 +136,17 @@ function _renderRivalCard(d) {
 
 window._infraBuyDepot = async function(provinceId, provinceName) {
     const cost = 300000;
-    if ((gameState.cash || 0) < cost) {
-        if (typeof showNotification === 'function') showNotification('Fondi insufficienti (servono €300.000)', 'error');
-        return;
-    }
     if (!window.confirm(`Acquistare il deposito carburante a ${provinceName} per €300.000?`)) return;
+    if (!window.CE_money.spend(cost, 'buy_fuel_depot')) return;
 
     try {
-        const { error } = await window.supabaseClient.rpc('rpc_buy_fuel_depot', { v_province_id: provinceId });
-        if (error) throw error;
-        // La RPC ha già scalato la cassa server-side: scaliamo in locale solo se
-        // il sync Realtime non è attivo, altrimenti evitiamo doppia deduzione.
-        if (!window.ServerState?.isReady()) gameState.cash -= cost;
+        if (window.supabaseClient) {
+            const { error } = await window.supabaseClient.rpc('rpc_buy_fuel_depot', { v_province_id: provinceId });
+            if (error) throw error;
+        }
         if (typeof showNotification === 'function') showNotification(`⛽ Deposito acquistato a ${provinceName}!`, 'success');
         if (typeof saveGame === 'function') saveGame();
-        window.renderTabInfrastructure();
+        if (typeof window.renderTabInfrastructure === 'function') window.renderTabInfrastructure();
     } catch(e) {
         if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Acquisto deposito non riuscito', e), 'error');
     }
