@@ -670,5 +670,28 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
             assert.equal(gs.vipNemeses.vip_emiro.level, 1);
             assert.equal(gs.vipNemeses.vip_emiro.anger, 30);
         });
+
+        test('il catalogo SHADOW_OPS caricato in VM contiene tutte le 7 operazioni canoniche con costi e descrizioni', () => {
+            const shadowOps = vm.runInContext('SHADOW_OPS', sandbox);
+            assert.ok(Array.isArray(shadowOps), 'SHADOW_OPS deve essere un array');
+            assert.equal(shadowOps.length, 7);
+
+            const ids = Array.from(shadowOps).map(o => String(o.id));
+            assert.deepEqual(ids, [
+                'spy_fleet',
+                'spy_finances',
+                'fake_review',
+                'buy_off_client',
+                'bribe_driver',
+                'sabotage_vehicle',
+                'hijack_client'
+            ]);
+
+            shadowOps.forEach(op => {
+                assert.ok(op.cost > 0, `costo non valido per op ${op.id}`);
+                assert.ok(typeof op.name === 'string' && op.name.length > 0);
+                assert.ok(typeof op.desc === 'string' && op.desc.length > 0);
+            });
+        });
     });
 });
