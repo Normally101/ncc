@@ -46,7 +46,6 @@ const ECCEZIONI = new Set([
     'p2p-market.js',
     'p2p-render.js',
     'showroom.js',
-    'tourism.js',
     'ui-ops.js',
     'ui-staff.js',
     'ui-store.js',
