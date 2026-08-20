@@ -124,29 +124,21 @@ function _renderOPACard(opa) {
 }
 
 window._opaRequestBuyback = async function(opaId, price) {
-    const cash = (typeof gameState !== 'undefined' && gameState?.cash) ? gameState.cash : 0;
-    if (cash < price) {
-        if (typeof showNotification === 'function') {
-            showNotification(`❌ Fondi insufficienti per il buyback (servono €${Number(price).toLocaleString('it-IT')})`, 'error');
-        }
-        return;
-    }
-
     const ok = window.confirm(
         `Riacquistare la maggioranza per €${Number(price).toLocaleString('it-IT')}?\n\n` +
         `Il 50% andrà al raider come compensazione. Confermi?`
     );
     if (!ok) return;
 
+    if (!window.CE_money.spend(price, 'opa_buyback')) return;
+
     try {
-        const { data, error } = await window.supabaseClient.rpc('rpc_opa_buyback', { v_opa_id: opaId });
-        if (error) throw error;
+        if (window.supabaseClient?.rpc) {
+            const { data, error } = await window.supabaseClient.rpc('rpc_opa_buyback', { v_opa_id: opaId });
+            if (error) throw error;
+        }
         if (typeof showNotification === 'function') {
             showNotification('🛡️ Buyback completato! Hai ripreso il controllo della tua azienda.', 'success');
-        }
-        if (typeof gameState !== 'undefined' && gameState) {
-            // rpc_opa_buyback ha gia' scalato la cassa server-side (27_hostile_takeovers.sql:184)
-            if (!window.ServerState?.isReady()) gameState.cash = Math.max(0, (gameState.cash || 0) - price);
         }
         await _loadOPAList();
     } catch(e) {
