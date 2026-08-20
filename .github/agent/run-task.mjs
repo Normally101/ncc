@@ -47,7 +47,13 @@ const esito = await runGeminiAgent({
   gate: 'npm test',
   onProgress: (m) => console.log(`  · ${m}`),
   maxTurni: 40,
-  timeoutMs: 20 * 60_000,
+  // 45 minuti, non 20. Il 20/08 tre lavori di fila sono morti per tempo
+  // scaduto (20, 26, 29 turni) e il ciclo si e' fermato da solo, come deve fare
+  // dopo tre fallimenti in fila. La causa non era il modello: `npm test` in CI
+  // impiega 7-9 minuti, e un lavoro fatto bene la suite la lancia almeno tre
+  // volte (rossa, dopo la correzione, e alla fine). Solo li' se ne andavano
+  // venticinque minuti su venti disponibili.
+  timeoutMs: 45 * 60_000,
 });
 
 const tuttiCambiati = shGrezzo('git', ['status', '--porcelain'])

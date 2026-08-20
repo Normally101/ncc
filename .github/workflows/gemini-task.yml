@@ -28,7 +28,9 @@ permissions:
 jobs:
   lavora:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # Deve stare SOPRA il tetto dell'agente (45 min in run-task.mjs), altrimenti
+    # GitHub tronca il lavoro a meta' e il ramo non viene nemmeno pubblicato.
+    timeout-minutes: 60
 
     steps:
       - uses: actions/checkout@v4

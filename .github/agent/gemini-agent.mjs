@@ -128,7 +128,11 @@ const STRUMENTI = [{
       name: 'esegui_comando',
       description:
         'Esegue un comando in lista bianca (npm test, node --test, git status/diff/log, ls, grep, rg, wc, head, tail). ' +
-        'Passa il comando come lista di argomenti, per esempio ["npm","test"].',
+        'Passa il comando come lista di argomenti, per esempio ["npm","test"]. ' +
+        'IMPORTANTE: `npm test` lancia oltre 400 test e richiede 7-9 minuti. Mentre lavori usa ' +
+        '["node","--test","test/la-tua-cartella/il-tuo-file.test.js"], che risponde in pochi secondi. ' +
+        'Tieni `npm test` per la verifica finale, quando credi di aver finito: se lo lanci a ogni ' +
+        'passaggio finisci il tempo prima del lavoro.',
       parameters: {
         type: 'OBJECT',
         properties: {
