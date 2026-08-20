@@ -258,99 +258,55 @@ function renderTabPremiumStore() {
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
-window._dcSimPurchase = async function(amount) {
-    // Optimistic local credit
-    gameState.driverCoins = (gameState.driverCoins || 0) + amount;
+window._dcSimPurchase = function(amount) {
+    if (!window.CE_money.earnDC(amount, 'sim_purchase')) return;
     renderTabPremiumStore();
     updateUI();
-
-    // Persist to DB so RPCs can debit the authoritative column
-    try {
-        const result = await window.ServerState?.addDriverCoins(amount);
-        if (result?.ok && result.driver_coins != null) {
-            gameState.driverCoins = result.driver_coins;
-            renderTabPremiumStore();
-            updateUI();
-        }
-    } catch (e) {
-        console.warn('[_dcSimPurchase] RPC error — balance is local only:', e);
-    }
-
     if (typeof showNotification === 'function') showNotification(`🪙 +${amount} Driver Coins! (Acquisto simulato)`, 'success');
     saveGame();
 };
 
-window._dcSpend = async function(itemId, cost) {
-    if ((gameState.driverCoins || 0) < cost) {
-        if (typeof showNotification === 'function') showNotification(`Driver Coins insufficienti! Servono ${cost} DC.`, 'error');
+window._dcSpend = function(itemId, cost) {
+    if (itemId === 'offline_limit' && (gameState.offlineLimit || 2) >= 12) {
+        if (typeof showNotification === 'function') showNotification('Massimo progressione offline già raggiunto!', 'info');
         return;
     }
-
-    // Optimistic local debit — server RPC is the authority
-    gameState.driverCoins -= cost;
-    updateUI();
-
-    try {
-        let result;
-        switch (itemId) {
-            case 'energy_full':
-                result = await window.ServerState?.buyEnergyRefill(cost);
-                if (result?.ok) {
-                    gameState.energy = 100;
-                    logToMap('⚡ Energia CEO ricaricata (DC)!');
-                }
-                break;
-            case 'repair_all':
-                result = await window.ServerState?.buyFleetRepair(cost);
-                if (result?.ok) {
-                    (gameState.fleet || []).forEach(c => { c.condition = 100; c.fuel = 100; c.tirePressure = 100; });
-                    logToMap('🔧 Tutta la flotta riparata (DC)!');
-                }
-                break;
-            case 'unlock_ride':
-                result = await window.ServerState?.buyVipContact(cost);
-                if (result?.ok && typeof generatePOIRide === 'function') {
-                    const r = generatePOIRide('ultra');
-                    if (r) logToMap('🎫 Contatto VIP: corsa ultra generata (DC)!');
-                }
-                break;
-            case 'offline_limit':
-                result = await window.ServerState?.upgradeOfflineLimit(cost);
-                if (result?.ok) {
-                    gameState.offlineLimit = result.offline_limit_hours;
-                    logToMap(`🕐 Limite offline espanso a ${result.offline_limit_hours}h (DC)!`);
-                }
-                break;
-            case 'auto_rest':
-                result = await window.ServerState?.buyAutoRest(cost);
-                if (result?.ok) {
-                    gameState.autoRestEnabled = true;
-                    logToMap('🛌 Auto-Rest CEO attivato (DC)!');
-                }
-                break;
-            default:
-                // itemId non riconosciuto — rollback immediato
-                gameState.driverCoins += cost;
-                if (typeof showNotification === 'function') showNotification(`⚠ Operazione non riconosciuta: ${itemId}`, 'error');
-                return;
-        }
-
-        if (result && !result.ok) {
-            // RPC rejected — roll back local debit
-            gameState.driverCoins += cost;
-            if (typeof showNotification === 'function') showNotification(`⚠ ${result.error || 'Operazione fallita'}`, 'error');
-        } else if (result?.ok) {
-            // Sync authoritative coin count from server response
-            if (result.driver_coins !== undefined) gameState.driverCoins = result.driver_coins;
-            if (typeof showNotification === 'function') showNotification(`🪙 −${cost} DC · attivato!`, 'success');
-        }
-    } catch (e) {
-        // Network error — roll back
-        gameState.driverCoins += cost;
-        console.error('[_dcSpend] RPC error:', e);
-        if (typeof showNotification === 'function') showNotification('⚠ Errore di rete — operazione annullata', 'error');
+    if (itemId === 'auto_rest' && gameState.autoRestEnabled) {
+        if (typeof showNotification === 'function') showNotification('Auto-Rest CEO già attivo!', 'info');
+        return;
     }
+    const VALID_ITEMS = new Set(['energy_full', 'repair_all', 'unlock_ride', 'offline_limit', 'auto_rest']);
+    if (!VALID_ITEMS.has(itemId)) {
+        if (typeof showNotification === 'function') showNotification(`⚠ Operazione non riconosciuta: ${itemId}`, 'error');
+        return;
+    }
+    if (!window.CE_money.spendDC(cost, itemId)) return;
 
+    switch (itemId) {
+        case 'energy_full':
+            gameState.energy = 100;
+            logToMap('⚡ Energia CEO ricaricata (DC)!');
+            break;
+        case 'repair_all':
+            (gameState.fleet || []).forEach(c => { c.condition = 100; c.fuel = 100; c.tirePressure = 100; });
+            logToMap('🔧 Tutta la flotta riparata (DC)!');
+            break;
+        case 'unlock_ride':
+            if (typeof generatePOIRide === 'function') {
+                const r = generatePOIRide('ultra');
+                if (r) logToMap('🎫 Contatto VIP: corsa ultra generata (DC)!');
+            }
+            break;
+        case 'offline_limit':
+            gameState.offlineLimit = Math.min(12, (gameState.offlineLimit || 2) + 2);
+            logToMap(`🕐 Limite offline espanso a ${gameState.offlineLimit}h (DC)!`);
+            break;
+        case 'auto_rest':
+            gameState.autoRestEnabled = true;
+            logToMap('🛌 Auto-Rest CEO attivato (DC)!');
+            break;
+    }
+    if (typeof showNotification === 'function') showNotification(`🪙 −${cost} DC · attivato!`, 'success');
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
     renderTabPremiumStore();
     updateUI();
@@ -359,87 +315,75 @@ window._dcSpend = async function(itemId, cost) {
 
 // ── EXECUTIVE CLUB — SPEND HANDLERS ──────────────────────────────────────────
 
-window._ecCaffeSospeso = async function() {
+window._ecCaffeSospeso = function() {
     const COST = 10;
-    if ((gameState.driverCoins||0) < COST) { showNotification('Driver Coins insufficienti!','error'); return; }
     const stressed = (gameState.drivers||[]).filter(d => d.id!=='ceo' && ((d.stress_level||0)>0 || d.burnout_until));
     if (!stressed.length) { showNotification('Nessun autista esausto.','info'); return; }
     stressed.sort((a,b) => (b.stress_level||0)-(a.stress_level||0));
     const target = stressed[0];
-    gameState.driverCoins -= COST;
+    if (!window.CE_money.spendDC(COST, 'caffe_sospeso')) return;
     target.stress_level = 0; delete target.burnout_until;
-    try { await window.ServerState?.spendDriverCoins('caffe_sospeso', COST); } catch(e) { console.error(e); }
     logToMap(`☕ Caffè Sospeso: ${target.name} è tornato operativo!`);
     showNotification(`☕ ${target.name}: stress azzerato! (−${COST} DC)`, 'success');
     renderTabPremiumStore(); updateUI(); saveGame();
 };
 
-window._ecManutenzioneExpress = async function() {
+window._ecManutenzioneExpress = function() {
     const COST = 25;
-    if ((gameState.driverCoins||0) < COST) { showNotification('Driver Coins insufficienti!','error'); return; }
     const damaged = (gameState.fleet||[]).filter(c => (c.condition||100)<100);
     if (!damaged.length) { showNotification('Flotta in perfette condizioni.','info'); return; }
     damaged.sort((a,b) => (a.condition||100)-(b.condition||100));
     const car = damaged[0];
-    gameState.driverCoins -= COST;
+    if (!window.CE_money.spendDC(COST, 'manutenzione_express')) return;
     car.condition = 100; car.fuel = 100;
-    try { await window.ServerState?.spendDriverCoins('manutenzione_express', COST); } catch(e) { console.error(e); }
     logToMap(`🔧 Manutenzione Express: ${car.name||car.id} ripristinata al 100%!`);
     showNotification(`🔧 ${car.name||car.id}: condizione 100%! (−${COST} DC)`, 'success');
     renderTabPremiumStore(); updateUI(); saveGame();
 };
 
-window._ecTangenteSindacato = async function() {
+window._ecTangenteSindacato = function() {
     const COST = 50;
-    if ((gameState.driverCoins||0) < COST) { showNotification('Driver Coins insufficienti!','error'); return; }
     if ((gameState.tangenteUntil||0) > gameState.day) { showNotification('Già protetto dagli scioperi!','info'); return; }
-    gameState.driverCoins -= COST;
+    if (!window.CE_money.spendDC(COST, 'tangente_sindacato')) return;
     gameState.tangenteUntil = gameState.day + 1;
-    try { await window.ServerState?.spendDriverCoins('tangente_sindacato', COST); } catch(e) { console.error(e); }
     logToMap('🤝 Tangente al Sindacato pagata — scioperi bloccati per 24 ore!');
     showNotification(`🤝 Scioperi bloccati per 24h! (−${COST} DC)`, 'success');
     renderTabPremiumStore(); updateUI(); saveGame();
 };
 
-window._ecPolizzaKasko = async function() {
+window._ecPolizzaKasko = function() {
     const COST = 150;
-    if ((gameState.driverCoins||0) < COST) { showNotification('Driver Coins insufficienti!','error'); return; }
     const hasPerm = typeof hasInvestment === 'function' && hasInvestment('inv_kasko') && !gameState.tempKaskoExpiresDay;
     if (hasPerm) { showNotification('Polizza Kasko permanente già attiva!','info'); return; }
     const tempStillActive = (gameState.tempKaskoExpiresDay||0) > 0 && gameState.day <= gameState.tempKaskoExpiresDay;
     if (tempStillActive) { showNotification('Polizza Kasko già attiva!','info'); return; }
-    gameState.driverCoins -= COST;
-    if (!hasInvestment('inv_kasko')) {
+    if (!window.CE_money.spendDC(COST, 'polizza_kasko')) return;
+    if (typeof hasInvestment === 'function' && !hasInvestment('inv_kasko')) {
         if (!gameState.investments) gameState.investments = [];
         gameState.investments.push('inv_kasko');
     }
     gameState.tempKaskoExpiresDay = gameState.day + 7;
-    try { await window.ServerState?.spendDriverCoins('polizza_kasko', COST); } catch(e) { console.error(e); }
     logToMap('🛡️ Polizza Kasko Corporate attivata per 7 giorni di gioco!');
     showNotification(`🛡️ Kasko attiva per 7 giorni! (−${COST} DC)`, 'success');
     renderTabPremiumStore(); updateUI(); saveGame();
 };
 
-window._ecRadarVip = async function() {
+window._ecRadarVip = function() {
     const COST = 200;
-    if ((gameState.driverCoins||0) < COST) { showNotification('Driver Coins insufficienti!','error'); return; }
     const already = (gameState.activeBuffs||[]).some(b => b.type==='vip_queue' && b.until > gameState.day*24+gameState.hour);
     if (already) { showNotification('Radar VIP già attivo!','info'); return; }
-    gameState.driverCoins -= COST;
+    if (!window.CE_money.spendDC(COST, 'radar_vip')) return;
     if (typeof window._applyBuff === 'function') window._applyBuff('radar_vip', 'vip_queue', 100, 72);
-    try { await window.ServerState?.spendDriverCoins('radar_vip', COST); } catch(e) { console.error(e); }
     logToMap('📡 Radar VIP: accesso prioritario corse VIP per 72 ore!');
     showNotification(`📡 Radar VIP attivato per 72 ore! (−${COST} DC)`, 'success');
     renderTabPremiumStore(); updateUI(); saveGame();
 };
 
-window._ecTargaPresidenziale = async function() {
+window._ecTargaPresidenziale = function() {
     const COST = 500;
-    if ((gameState.driverCoins||0) < COST) { showNotification('Driver Coins insufficienti!','error'); return; }
     if (gameState.hasPrestigiousPlate) { showNotification('Targa Presidenziale già posseduta!','info'); return; }
-    gameState.driverCoins -= COST;
+    if (!window.CE_money.spendDC(COST, 'targa_presidenziale')) return;
     gameState.hasPrestigiousPlate = true;
-    try { await window.ServerState?.spendDriverCoins('targa_presidenziale', COST); } catch(e) { console.error(e); }
     logToMap('🏴 Targa Nera Presidenziale: massimo prestigio raggiunto!');
     showNotification(`🏴 Targa Presidenziale applicata! Benvenuto nell\'élite. (−${COST} DC)`, 'success');
     renderTabPremiumStore(); updateUI(); saveGame();
