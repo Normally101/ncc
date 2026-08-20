@@ -172,7 +172,7 @@ window.hqUpgradeRoom = async function(cityId, roomId, slotIndex) {
     const actionName = currentLevel === 0 ? 'Costruire' : 'Migliorare';
     if (nextTier.cost > 0) {
         if (!confirm(`${actionName} ${roomDef.icon} ${roomDef.name} a Livello ${nextTier.level} per €${nextTier.cost.toLocaleString()}?`)) return;
-        gameState.cash -= nextTier.cost;
+        if (!window.CE_money.spend(nextTier.cost, 'hq_upgrade_' + roomId)) return;
     }
 
     gameState.hqs[cityId].rooms[roomId] = nextTier.level;
@@ -187,7 +187,7 @@ window.hqUpgradeRoom = async function(cityId, roomId, slotIndex) {
         const prevBonus = currentLevel > 0 ? roomDef.tiers.find(t=>t.level===currentLevel).effect.reputationBonus || 0 : 0;
         const delta = nextTier.effect.reputationBonus - prevBonus;
         if (delta > 0) {
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation || 0) + delta);
+            window.CE_money.addReputation(delta);
         }
     }
 
