@@ -176,6 +176,43 @@ if (process.env.GITHUB_STEP_SUMMARY) {
 try { sh('git', ['merge', '--abort']); } catch { /* nessun merge in corso */ }
 try { sh('git', ['reset', '--hard', BASE]); } catch { /* niente da annullare */ }
 
+/* ── La richiesta di approvazione ─────────────────────────────────────────
+   La crea il controllo, non il ciclo. Il ciclo dovrebbe rileggere i numeri dai
+   log della run, e non ci riesce: l'API di GitHub non li restituisce come
+   testo semplice, e a Vlad arrivava «Test: undefined → undefined», cioe' una
+   richiesta di approvare alla cieca — esattamente cio' che questo meccanismo
+   doveva evitare. Qui i numeri sono gia' in mano: si scrivono e basta. */
+if (verdetto.promuovibile && process.env.HUB_URL && process.env.GIGI_API_TOKEN) {
+    const nonTest = toccati.filter(f => !f.startsWith('test/') && !f.startsWith('.github/'));
+    const motivo = [
+        `Ramo: ${RAMO}`,
+        '',
+        `Test: ${base.totale} → ${dopo.totale}, tutti verdi una volta uniti a main.`,
+        `Test che si accorgono se rompo la porta del denaro: ${colgono}.`,
+        `File di gioco toccati: ${nonTest.join(', ') || 'nessuno (solo test e banco di prova)'}`,
+        ...(note.length ? ['', ...note.map(n => `Nota: ${n}`)] : []),
+        '',
+        'Ha superato tutti i controlli automatici. Resta fuori solo il difetto',
+        'che nessun test copre: quello lo cerca Claude, a campione, anche dopo.',
+    ].join('\n');
+    try {
+        const r = await fetch(`${process.env.HUB_URL}/api/gigi/approvals`, {
+            method: 'POST',
+            headers: { authorization: `Bearer ${process.env.GIGI_API_TOKEN}`, 'content-type': 'application/json' },
+            body: JSON.stringify({
+                title: RAMO.replace(/^gigi\//, '').replace(/-\d{8}$/, '').replace(/-/g, ' '),
+                rationale: motivo,
+                risk: 'low',
+                actions: [{ type: 'merge', ramo: RAMO }],
+                requested_by: 'gigi',
+            }),
+        });
+        console.log(r.ok ? 'Richiesta di approvazione creata.' : `L'hub ha rifiutato la richiesta (${r.status}).`);
+    } catch (e) {
+        console.log(`Non sono riuscito a chiedere l'approvazione: ${e.message}`);
+    }
+}
+
 // Esce SEMPRE 0, anche quando il ramo non passa.
 //
 // Un ramo respinto e' un esito normale di questo controllo, non un guasto: e'
