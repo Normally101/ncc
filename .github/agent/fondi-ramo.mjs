@@ -34,7 +34,12 @@ function test() {
 
 sh('git', ['config', 'user.name', 'Gigi (cloud)']);
 // Deve corrispondere a un account GitHub, altrimenti Vercel blocca la deploy.
-sh('git', ['config', 'user.email', 'djblade594@gmail.com']);
+// L'indirizzo NON e' decorativo: Vercel, sul piano Hobby, rifiuta ogni
+// deploy il cui autore non risulti collaboratore del progetto, e
+// djblade594@gmail.com non e' l'indirizzo dell'account GitHub. Con quello
+// sbagliato ogni ramo veniva bloccato in silenzio (19-20/08: 13 deploy di
+// fila mai andati online, col sito fermo a meta' giornata).
+sh('git', ['config', 'user.email', 'bestbroker1998@gmail.com']);
 
 let risolto = false;
 try {

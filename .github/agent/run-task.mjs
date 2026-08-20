@@ -108,7 +108,12 @@ if (!cambiati.length) {
 // Il nome resta "Gigi (cloud)": l'autore del codice si legge da li', non
 // dall'indirizzo.
 sh('git', ['config', 'user.name', 'Gigi (cloud)']);
-sh('git', ['config', 'user.email', 'djblade594@gmail.com']);
+// L'indirizzo NON e' decorativo: Vercel, sul piano Hobby, rifiuta ogni
+// deploy il cui autore non risulti collaboratore del progetto, e
+// djblade594@gmail.com non e' l'indirizzo dell'account GitHub. Con quello
+// sbagliato ogni ramo veniva bloccato in silenzio (19-20/08: 13 deploy di
+// fila mai andati online, col sito fermo a meta' giornata).
+sh('git', ['config', 'user.email', 'bestbroker1998@gmail.com']);
 // Solo i file davvero previsti: `git add -A` avrebbe rimesso dentro anche la CI
 // appena scartata sopra.
 sh('git', ['add', '--', ...cambiati]);
