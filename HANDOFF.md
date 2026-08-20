@@ -102,10 +102,23 @@ e oggi col Flash il tasso di rifiuto è stato alto.
   dividendi:69, payout:104, prestito:214), `engine.js`, `hq.js`.
   Convertiti oggi: `ui-store.js`, `vtk-market.js`, `showroom.js`, `ui-staff.js`, e di
   `engine-finance.js` la borsa più lobby/partecipazioni.
-- **Aperto, deciso a metà:** `ui-staff.js:285` mostra sul pulsante `max(500, mancante*85)`
-  mentre `payToRepairCar` addebita `(100-cond)*25` — con un'auto al 40% mostra €5.100 e
-  addebita €1.500. Non toccato perché è un cambio di prezzo: **va deciso quale dei due è
-  quello giusto.**
+- ~~Prezzo riparazione incoerente~~ — **già risolto il 19/08** dal commit `ac094f8`, che ha
+  unificato tutto su `window.repairCostFor()` (85 €/punto, minimo €500). Il rilievo era rimasto
+  nel piano vecchio e l'ho ripetuto il 20/08 senza riverificarlo, finendo anche in un messaggio
+  di commit: **è sbagliato lì.** Prima di riportare un difetto da un documento, rileggere il
+  codice.
+- **Verificato che 85 €/punto regge economicamente** (20/08 sera). Corsa mediana €777 su 2.033
+  rotte; usura 1,5 punti a corsa (2 vip, 2,5 ultra) → **€127 a corsa, il 16% dell'incasso**:
+  una spesa che si sente senza schiacciare. I tre sconti si moltiplicano — contratto ×0,70,
+  Capo Officina ×0,50, Officina Mobile ×0,80 = **×0,28**, cioè 24 €/punto a fine progressione.
+  Quindi 85 e 25 non erano formule rivali: **85 è il prezzo del principiante, ~24 quello del
+  veterano**, e la vecchia `payToRepairCar` faceva pagare a tutti il prezzo da veterano dal
+  primo giorno.
+- **DA DECIDERE (domanda di gioco, non di codice):** la Polizza Kasko (€48.000, rinnovo annuo)
+  in `repairCostFor` azzera **ogni** riparazione, ma la sua descrizione promette solo quelle
+  «incidentali». Con una flotta di 5 auto si ripaga in ~75 corse a testa e poi toglie dal gioco
+  un intero centro di costo. O si allinea il codice alla descrizione (solo danni da incidente),
+  o si alza il prezzo, o si accetta. **Serve una scelta di Vlad.**
 
 **Errore mio da non ripetere:** avevo scritto «193 azioni al buio» contando anche le 117 che
 non toccano denaro, e su quel numero ho mandato mezza giornata di lavoro nella direzione
