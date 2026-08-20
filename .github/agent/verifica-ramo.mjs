@@ -191,7 +191,15 @@ try { sh('git', ['reset', '--hard', BASE]); } catch { /* niente da annullare */ 
    testo semplice, e a Vlad arrivava «Test: undefined → undefined», cioe' una
    richiesta di approvare alla cieca — esattamente cio' che questo meccanismo
    doveva evitare. Qui i numeri sono gia' in mano: si scrivono e basta. */
-if (verdetto.promuovibile && process.env.HUB_URL && process.env.GIGI_API_TOKEN) {
+/* NON si crea piu' una richiesta di approvazione.
+   Dal 20/08 sera un ramo che passa i controlli si fonde da solo: chiedere a
+   Vlad di approvare un merge che non e' in grado di valutare non aggiungeva
+   sicurezza, aggiungeva una firma vuota — e teneva fermo il lavoro per ore.
+   Restano umane le domande umane: prezzi, equilibrio, cosa mostrare.
+   Il verdetto qui sopra resta il documento di cosa e' stato controllato.
+   Il meccanismo resta qui dietro CHIEDI_APPROVAZIONE=1, per il giorno in cui
+   una modifica sara' davvero da far decidere a una persona. */
+if (process.env.CHIEDI_APPROVAZIONE === '1' && verdetto.promuovibile && process.env.HUB_URL && process.env.GIGI_API_TOKEN) {
     const nonTest = toccati.filter(f => !f.startsWith('test/') && !f.startsWith('.github/'));
     const motivo = [
         `Ramo: ${RAMO}`,
