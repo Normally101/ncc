@@ -410,8 +410,7 @@ window.coverShort = function(tickerId, shares) {
 window.donateToLobby = function(amount) {
     amount = Math.round(Number(amount));
     if (amount < 1000) { showNotification('Donazione minima: €1.000', 'error'); return; }
-    if (gameState.cash < amount) { showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= amount;
+    if (!window.CE_money.spend(amount, 'lobby_donation')) return;
     const points = Math.floor(amount / 1000);
     gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) + points;
     logToMap(`🏛️ Lobbying: €${amount.toLocaleString()} donati — +${points} punti lobbying`);
@@ -447,21 +446,17 @@ window.acquireVentureStake = function(agencyId, stakePercent) {
     }
     stakePercent = Math.min(agency.maxStake, Math.max(1, Math.round(Number(stakePercent))));
     const cost = Math.floor(agency.valuation * stakePercent / 100);
-    if (gameState.cash < cost) {
-        showNotification(`Fondi insufficienti! Servono €${cost.toLocaleString()}`, 'error'); return;
-    }
     const existing = (gameState.ventureCapital || []).find(s => s.agencyId === agencyId);
+    if (existing && existing.stakePercent + stakePercent > agency.maxStake) {
+        showNotification(`Quota massima acquisibile: ${agency.maxStake}%`, 'error'); return;
+    }
+    if (!window.CE_money.spend(cost, 'acquire_venture_stake')) return;
     if (existing) {
-        const newStake = existing.stakePercent + stakePercent;
-        if (newStake > agency.maxStake) {
-            showNotification(`Quota massima acquisibile: ${agency.maxStake}%`, 'error'); return;
-        }
-        existing.stakePercent = newStake;
+        existing.stakePercent += stakePercent;
     } else {
         if (!gameState.ventureCapital) gameState.ventureCapital = [];
         gameState.ventureCapital.push({ agencyId, stakePercent });
     }
-    gameState.cash -= cost;
     const dailyReturn = Math.floor(agency.dailyIncome * stakePercent / 100);
     logToMap(`💼 M&A: Acquisita quota ${stakePercent}% di ${agency.name} per €${cost.toLocaleString()}. Rendita: +€${dailyReturn}/g`);
     showBigEvent('💼', `Acquisita: ${agency.name}`, `Quota: ${stakePercent}%\nInvestimento: €${cost.toLocaleString()}\nRendita giornaliera: +€${dailyReturn}\nRischio: ${agency.riskLevel.toUpperCase()}`);
@@ -476,7 +471,7 @@ window.divestVentureStake = function(agencyId) {
     const stake  = gameState.ventureCapital[idx];
     const refund = Math.floor((agency ? agency.valuation : 100000) * stake.stakePercent / 100 * 0.75);
     gameState.ventureCapital.splice(idx, 1);
-    gameState.cash += refund;
+    window.CE_money.earn(refund, 'divest_venture_stake');
     logToMap(`💼 Disinvestito ${agency?.name || agencyId}: +€${refund.toLocaleString()} (75% valutazione)`);
     showNotification(`📤 Quota ceduta: +€${refund.toLocaleString()}`, 'success');
     updateUI(); saveGame();
