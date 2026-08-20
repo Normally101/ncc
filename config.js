@@ -12,6 +12,56 @@
    Per riaccenderlo basta rimettere true, ma prima va convertito a CE_money. */
 window.HQ_ENABLED = false;
 
+/* ── Cosa è acceso, e perché è spento tutto il resto ─────────────────────────
+   Regola invertita, dal 20/08/2026: una parte del gioco è accesa solo se
+   qualcuno l'ha verificata. Prima era il contrario — tutto acceso, e nessuno
+   sapeva cosa funzionasse davvero.
+
+   Il motivo del cambio: il gioco non è ancora uscito, quindi possiamo
+   permetterci di mostrarne meno. E "meno funzioni, tutte funzionanti" è un
+   gioco migliore di "tutte le funzioni, metà rotte" — soprattutto al lancio,
+   dove un giocatore che perde soldi per un bug non torna.
+
+   Una voce passa a true quando: le sue azioni sono state eseguite tutte nel
+   banco di prova, quelle che muovono denaro passano da CE_money, e un test le
+   sorveglia da lì in avanti. Da quel momento non si torna indietro.
+
+   ATTENZIONE: spegnere una funzione non significa cancellarne il codice. Il
+   codice resta, intatto e caricato: si nascondono i punti d'ingresso (schede,
+   pulsanti) e si neutralizzano gli effetti sul resto del gioco. Così
+   riaccenderla costa una riga, e nel frattempo nessuno può romperci niente. */
+window.FEATURES = {
+    // Il nucleo: quello che i test coprono davvero oggi.
+    corse:        true,   // engine-rides, dispatcher — il cuore del gioco
+    flotta:       true,   // engine-fleet: acquisto, riparazione, carburante
+    autisti:      true,   // engine-drivers: assunzione, accademia, stipendi
+    finanza:      true,   // engine-finance: prestiti, borsa (in conversione)
+    contratti:    true,   // contracts, b2b: le entrate ricorrenti
+
+    // Spente finché non le verifichiamo una per una.
+    aste:         false,  // auctions.js
+    alleanze:     false,  // alliances.js
+    salone:       false,  // showroom.js — la vetrina delle auto
+    mercatoP2P:   false,  // p2p-market, p2p-render: scambi fra giocatori
+    cripto:       false,  // crypto.js
+    vtk:          false,  // vtk-market.js
+    turismo:      false,  // tourism.js
+    lusso:        false,  // ui-lifestyle: ville, orologi, status
+    politica:     false,  // ui-politics, war_room: province e influenza
+    infrastrutture: false, // infrastructure.js
+    holding:      false,  // hostile_takeover, engine-holding
+    nemesi:       false,  // nemesis.js, black_ops.js
+    vanita:       false,  // vanity.js: stemmi, colori, titoli
+    negozioDC:    false,  // ui-store, engine-store: valuta premium
+    vip:          false,  // vip-clients, vip-buffs
+    carriera:     false,  // ui-career
+};
+
+/** Una funzione è attiva? Sconosciuta = spenta: nel dubbio non si mostra. */
+window.attiva = function attiva(nome) {
+    return window.FEATURES?.[nome] === true;
+};
+
 window.GAME_CONFIG = {
     SUPPORT_EMAIL: 'support@chauffeurempire.com',
     SUPPORT_SUBJECT_ACCESS: 'Problema%20di%20Accesso',
