@@ -43,8 +43,18 @@ const sh = (cmd, args, opzioni = {}) =>
 const problemi = [];
 const note = [];
 
+/**
+ * Node stampa il riepilogo in due formati diversi a seconda di dove gira:
+ * «ℹ fail 0» quando c'e' un terminale, «# fail 0» (TAP) quando non c'e' — cioe'
+ * sempre, in CI. Leggerne uno solo faceva tornare -1 a ogni misura, e il
+ * controllo respingeva OGNI ramo dicendo che main era rotto. Successo il
+ * 20/08/2026: cinque lavori buoni scartati da un controllo cieco.
+ */
 function conta(uscita) {
-    const n = (etichetta) => Number(uscita.match(new RegExp(`^ℹ ${etichetta} (\\d+)`, 'm'))?.[1] ?? -1);
+    const n = (etichetta) => {
+        const m = uscita.match(new RegExp(`^(?:ℹ|#)\\s*${etichetta}\\s+(\\d+)`, 'm'));
+        return m ? Number(m[1]) : -1;
+    };
     return { totale: n('tests'), passati: n('pass'), falliti: n('fail') };
 }
 

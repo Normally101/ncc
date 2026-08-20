@@ -23,11 +23,12 @@ const GUARD = 'test/guardrail/una-sola-porta.test.js';
 
 function test() {
     try {
+        // Due formati: «ℹ fail 0» col terminale, «# fail 0» senza (cioe' in CI).
         const out = sh('npm', ['test']);
-        return Number(out.match(/^ℹ fail (\d+)/m)?.[1] ?? -1);
+        return Number(out.match(/^(?:ℹ|#)\s*fail\s+(\d+)/m)?.[1] ?? -1);
     } catch (e) {
         const out = (e.stdout ?? '') + (e.stderr ?? '');
-        return Number(out.match(/^ℹ fail (\d+)/m)?.[1] ?? -1);
+        return Number(out.match(/^(?:ℹ|#)\s*fail\s+(\d+)/m)?.[1] ?? -1);
     }
 }
 
