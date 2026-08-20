@@ -160,7 +160,7 @@ const ROTTE_NOTE = new Set([
     // senza argomenti portava il saldo a NaN. CE_money.spend rifiuta i valori non
     // finiti, quindi ora esce senza toccare nulla e non figura piu' qui.
     'buyFuelForDepot', 'upgradeFuelDepot', 'buyTiresForDepot', 'emergencyRefuel',
-    'buyMaintenanceContract', 'buyHub', 'sellHub', 'buyPrototypeCar', 'buyNpcCar',
+    'buyHub', 'sellHub', 'buyPrototypeCar', 'buyNpcCar',
     'bidOnAuction', 'donateToLobby', 'buyStocks', 'sellStocks', 'shortSell',
     'coverShort', 'placeBrokerInvestment', 'buyLifestyleAsset', 'passLobbyLaw',
     'acquireVentureStake', 'divestVentureStake', 'CE_placeBid', 'CE_cancelBid',
