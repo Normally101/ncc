@@ -42,7 +42,6 @@ const ECCEZIONI = new Set([
     'hostile_takeover.js',
     'hq.js',
     'infrastructure.js',
-    'nemesis.js',
     'p2p-market.js',
     'p2p-render.js',
     'showroom.js',

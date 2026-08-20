@@ -98,7 +98,7 @@ async function _nemesisFundRival(vipId, nem) {
     } catch(e) {}
 }
 
-window._nemesisBribeVip = async function(vipId) {
+window._nemesisBribeVip = function(vipId) {
     const nem = (gameState.vipNemeses || {})[vipId];
     if (!nem) return;
 
@@ -110,33 +110,21 @@ window._nemesisBribeVip = async function(vipId) {
     );
     if (!ok) return;
 
-    if ((gameState.cash || 0) < bribe) {
-        if (typeof showNotification === 'function') showNotification('Fondi insufficienti per la corruzione!', 'error');
-        return;
-    }
+    if (!window.CE_money.spend(bribe, 'nemesis_bribe_vip')) return;
 
-    try {
-        const { error } = await window.supabaseClient.rpc('rpc_nemesis_bribe_vip', { v_bribe_amount: bribe });
-        if (error) throw error;
-        // La RPC ha già scalato la cassa server-side: scaliamo in locale solo se
-        // il sync Realtime non è attivo, altrimenti evitiamo doppia deduzione.
-        if (!window.ServerState?.isReady()) gameState.cash -= bribe;
-        nem.anger = Math.max(0, nem.anger - 40);
-        nem.level = nem.anger >= 60 ? 2 : nem.anger >= 20 ? 1 : 0;
-        if (nem.level === 0) delete gameState.vipNemeses[vipId];
-        if (typeof showNotification === 'function') {
-            showNotification(
-                nem.level === 0
-                    ? `🤝 ${nem.name} ha accettato la tua offerta. Pace fatta.`
-                    : `😐 ${nem.name} ha preso i soldi ma resta diffidente.`,
-                nem.level === 0 ? 'success' : 'warning'
-            );
-        }
-        if (typeof saveGame === 'function') saveGame();
-        if (typeof window.renderTabNemesis === 'function') window.renderTabNemesis();
-    } catch(e) {
-        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Corruzione non riuscita', e), 'error');
+    nem.anger = Math.max(0, nem.anger - 40);
+    nem.level = nem.anger >= 60 ? 2 : nem.anger >= 20 ? 1 : 0;
+    if (nem.level === 0) delete gameState.vipNemeses[vipId];
+    if (typeof showNotification === 'function') {
+        showNotification(
+            nem.level === 0
+                ? `🤝 ${nem.name} ha accettato la tua offerta. Pace fatta.`
+                : `😐 ${nem.name} ha preso i soldi ma resta diffidente.`,
+            nem.level === 0 ? 'success' : 'warning'
+        );
     }
+    if (typeof saveGame === 'function') saveGame();
+    if (typeof window.renderTabNemesis === 'function') window.renderTabNemesis();
 };
 
 window.renderTabNemesis = function() {
