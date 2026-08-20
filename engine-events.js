@@ -32,13 +32,9 @@ function _triggerBankruptcy() {
         gameState.drivers.forEach(d => { if (d.assignedCarId === car.id) d.assignedCarId = null; });
     });
     gameState.consecutiveRedDays = 0;
-    gameState.cash = Math.max(gameState.cash, 800);
-    // Il tick giornaliero sincronizza la cassa prima di chiamarci (engine-daily.js:424) e di nuovo
-    // in fondo a processDailyRoutines(): senza questo push, fra i due momenti companies.cash resta
-    // al valore negativo pre-pignoramento mentre il giocatore vede 800. In quella finestra girano
-    // showBigEvent e i render, e ogni RPC server-authoritative (P2P, alleanze, IPO, province)
-    // userebbe il numero sbagliato. Vale anche se il resto del tick si interrompe per un errore.
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+    if ((gameState.cash || 0) < 800) {
+        window.CE_money.earn(800 - (gameState.cash || 0), 'bankruptcy_floor');
+    }
     showBigEvent('💥', 'FALLIMENTO TECNICO!', `Il tribunale ha emesso un decreto di pignoramento. ${toSeize.length} veicoli confiscati per coprire i debiti. Riorganizza le finanze immediatamente.`);
     logToMap(`💥 PIGNORAMENTO: ${toSeize.length} auto sequestrate dal tribunale.`);
     if (typeof renderTabFleet === 'function') renderTabFleet();
@@ -375,18 +371,18 @@ function _maybeParazziEvent() {
     if (roll < 0.5) {
         // Positive: VIP happy with discretion, big tip
         const bonus = Math.floor(ride.price * 0.40);
-        gameState.cash += bonus;
-        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.05);
+        window.CE_money.earn(bonus, 'paparazzi_tip');
+        window.CE_money.addReputation(0.05);
         logToMap(`📸 Paparazzi! ${driver?.name} protegge il cliente VIP. Mancia extra: +€${bonus}`);
         if (typeof showNotification === 'function') showNotification(`📸 Paparazzi evitati! +€${bonus} mancia.`, 'success');
     } else if (roll < 0.80) {
         // Negative: photo scandal, slight rep hit
-        gameState.reputation = Math.max(0, gameState.reputation - 0.08);
+        window.CE_money.addReputation(-0.08);
         logToMap(`📸 PAPARAZZI: ${driver?.name} sorpreso con cliente VIP. −0.08★ Reputazione.`);
         showBigEvent('📸', 'Scandalo Paparazzi!', `${driver?.name || 'Il tuo autista'} è stato fotografato con un cliente VIP. La discrezione è la chiave del lusso. −0.08★ reputazione.`);
     } else {
         // Viral moment: big rep boost
-        gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.15);
+        window.CE_money.addReputation(0.15);
         logToMap(`📸 Momento virale! Chauffeur Empire sui social. +0.15★ Reputazione.`);
         if (typeof showNotification === 'function') showNotification(`📸 Chauffeur Empire diventa virale! +0.15★`, 'success');
     }
