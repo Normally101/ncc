@@ -33,7 +33,6 @@ const ECCEZIONI = new Set([
     'contracts.js',
     'crypto.js',
     'daily-orders.js',
-    'engine-daily.js',
     'engine-events.js',
     'engine-finance.js',
     'engine-fleet.js',
