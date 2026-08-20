@@ -13,6 +13,13 @@ on:
         description: "Nome breve del lavoro — diventa il nome del ramo e del commit"
         required: false
         type: string
+      modello:
+        # Serve per confrontare i motori su lavori veri invece che a priori.
+        # Vuoto = si resta su quello di sempre: cambiare motore dev'essere una
+        # scelta esplicita, non un effetto collaterale di questo campo.
+        description: "Motore Gemini da usare (vuoto = gemini-3.7-flash)"
+        required: false
+        type: string
 
 # Serve per pubblicare il branch di lavoro.
 permissions:
@@ -55,4 +62,5 @@ jobs:
           TITOLO: ${{ inputs.titolo }}
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
           GIGI_GEMINI_LOCATION: global
+          GIGI_GEMINI_MODEL: ${{ inputs.modello }}
         run: node .github/agent/run-task.mjs

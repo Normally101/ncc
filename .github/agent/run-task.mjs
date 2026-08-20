@@ -10,7 +10,7 @@
  */
 import { execFileSync } from 'child_process';
 import fs from 'fs';
-import { runGeminiAgent } from './gemini-agent.mjs';
+import { runGeminiAgent, AGENT_MODEL } from './gemini-agent.mjs';
 
 const istruzione = process.env.INSTRUCTION?.trim();
 if (!istruzione) {
@@ -85,7 +85,7 @@ if (process.env.GITHUB_STEP_SUMMARY) {
     `**Richiesta:** ${istruzione}`,
     '',
     `- Branch: \`${branch}\``,
-    `- Motore: gemini-3.7-flash · **$${esito.costo.toFixed(3)}** di crediti Google`,
+    `- Motore: ${AGENT_MODEL} · **$${esito.costo.toFixed(3)}** di crediti Google`,
     `- Turni: ${esito.turni} · token ${esito.tokenIn} in / ${esito.tokenOut} out`,
     `- File toccati: ${cambiati.length ? cambiati.map((f) => `\`${f}\``).join(', ') : 'nessuno'}`,
     esito.dettaglio ? `- Nota: ${esito.dettaglio}` : '',
