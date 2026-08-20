@@ -31,7 +31,6 @@ const ECCEZIONI = new Set([
     'engine-fleet.js',
     'engine.js',
     'hq.js',
-    'ui-staff.js',
 ]);
 
 const MUTAZIONE = /gameState\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
