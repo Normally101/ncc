@@ -31,7 +31,7 @@ const CORE_FILES = [
     'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',
     'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-staff.js',
     'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-store.js', 'daily-orders.js',
-    'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
+    'ui-home.js', 'ui-sidebar.js', 'zero-to-hero.js', 'objective-tracker.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
     'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
     'hq-data.js', 'hq.js', 'hostile_takeover.js', 'nemesis.js', 'infrastructure.js',
     'contracts.js', 'tourism.js'
