@@ -93,13 +93,13 @@ e oggi col Flash il tasso di rifiuto è stato alto.
 
 ### 📌 Stato al 20/08 sera
 
-- **425 test, tutti verdi** (erano 348 a metà pomeriggio).
-- **Funzioni accese: 6 su 21** — e da oggi lo spegnimento è un meccanismo, non una
+- **474 test, tutti verdi** (erano 348 a metà pomeriggio).
+- **Funzioni accese: 7 su 21** (aggiunta `vanita`) — e da oggi lo spegnimento è un meccanismo, non una
   dichiarazione (vedi IL METODO in cima).
 - **Azioni: 246 totali, ma solo 129 toccano denaro** — le altre 117 sono navigazione e filtri,
   non hanno niente da verificare.
-- Lista `ECCEZIONI` della porta del denaro: **4 file** — `engine-finance.js` (restano
-  dividendi:69, payout:104, prestito:214), `engine-fleet.js`, `engine.js`, `hq.js`.
+- Lista `ECCEZIONI` della porta del denaro: **3 file** — `engine-finance.js` (restano
+  dividendi:69, payout:104, prestito:214), `engine.js`, `hq.js`.
   Convertiti oggi: `ui-store.js`, `vtk-market.js`, `showroom.js`, `ui-staff.js`, e di
   `engine-finance.js` la borsa più lobby/partecipazioni.
 - **Aperto, deciso a metà:** `ui-staff.js:285` mostra sul pulsante `max(500, mancante*85)`
@@ -115,6 +115,18 @@ verifica non è che il file non è caricato — è che eseguirla non fa succeder
 contesto giusto.
 
 ### 🔧 L'infrastruttura, e come sta davvero
+
+- **⚠️ «Fallito» non vuol dire che il lavoro non c'è.** Il 20/08 sera tre run di fila hanno
+  riportato fallimento per tempo scaduto e il ciclo si è fermato da solo (comportamento giusto:
+  tre fallimenti in fila dicono che il guasto è a monte). **Due delle tre avevano il ramo
+  pubblicato e il lavoro completo** — messe davanti al cancello davano `promuovibile: true`
+  senza una riga da cambiare, 27 e 22 test nuovi. L'agente aveva finito e non aveva fatto in
+  tempo a dirlo. Corretto in `code-loop.js`: **se il ramo esiste si giudica**, qualunque cosa
+  dica l'esito della run.
+- **Il vero collo di bottiglia è `npm test`: 7-9 minuti in CI.** Un lavoro fatto bene la suite
+  la lancia tre volte (rossa, dopo la correzione, finale) — ventiquattro minuti su venti
+  disponibili. Tetto dell'agente portato da 20 a **45 minuti** (workflow a 60), e la
+  descrizione dello strumento ora dice di usare `node --test <singolo file>` durante il lavoro.
 
 - **⚠️ Se il sito non si aggiorna, guarda l'autore dei commit.** Il 19-20/08 tredici deploy di
   produzione di fila sono risultati `BLOCKED` e il sito è rimasto fermo mezza giornata senza
