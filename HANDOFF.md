@@ -5,6 +5,14 @@
 
 ---
 
+> **Stato misurato:** `npm run stato` conta i numeri veri (test, rete di sicurezza, file eseguiti,
+> azioni verificate). Il cruscotto leggibile sta su
+> https://claude.ai/code/artifact/621f3f9e-8c5d-4314-a5f4-e26ea6e1d1be
+> (sorgente in `docs/cantiere.html`) — va **ripubblicato con lo stesso URL** dopo ogni revisione,
+> non ricreato, o si moltiplicano le copie.
+
+---
+
 ### 🌙 20 agosto — 18 rami fusi. Suite 192 → 339 verdi. Il canale è Telegram
 
 **La notte è servita.** Gemini ha lavorato dalle 22:46 alle 05:27 e ha prodotto 23 rami. In

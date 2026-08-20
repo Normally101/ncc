@@ -1,0 +1,545 @@
+<title>Cantiere Chauffeur Empire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  /* ── Palette: asfalto bagnato e ottone. Neutri con bias freddo (il grigio
+     puro leggeva come non scelto), un solo accento caldo, e i colori di stato
+     tenuti separati dall'accento perche' devono significare, non decorare. */
+  :root {
+    --ground:      #F6F7F8;
+    --surface:     #FFFFFF;
+    --surface-2:   #EEF0F2;
+    --line:        #D9DDE1;
+    --line-soft:   #E7EAED;
+    --ink:         #15181C;
+    --ink-2:       #4A525C;
+    --ink-3:       #79838E;
+    --accent:      #9A6B22;
+    --accent-soft: #F0E4D0;
+    --ok:          #2C7048;
+    --ok-soft:     #DCEBE2;
+    --warn:        #9E6F14;
+    --warn-soft:   #F5E8CE;
+    --bad:         #9C3A2C;
+    --bad-soft:    #F3DCD8;
+    --dark-fill:   #2A3038;
+
+    --sp: 1.5rem;
+    --radius: 3px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground:      #0E1013;
+      --surface:     #171A1F;
+      --surface-2:   #1F242A;
+      --line:        #2C323A;
+      --line-soft:   #232930;
+      --ink:         #E9EBED;
+      --ink-2:       #A8B1BB;
+      --ink-3:       #78828D;
+      --accent:      #D6A45C;
+      --accent-soft: #38301F;
+      --ok:          #6FBF8F;
+      --ok-soft:     #1C2E24;
+      --warn:        #D9AE55;
+      --warn-soft:   #322A18;
+      --bad:         #DE8878;
+      --bad-soft:    #331F1C;
+      --dark-fill:   #C3CBD4;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground:      #0E1013;
+    --surface:     #171A1F;
+    --surface-2:   #1F242A;
+    --line:        #2C323A;
+    --line-soft:   #232930;
+    --ink:         #E9EBED;
+    --ink-2:       #A8B1BB;
+    --ink-3:       #78828D;
+    --accent:      #D6A45C;
+    --accent-soft: #38301F;
+    --ok:          #6FBF8F;
+    --ok-soft:     #1C2E24;
+    --warn:        #D9AE55;
+    --warn-soft:   #322A18;
+    --bad:         #DE8878;
+    --bad-soft:    #331F1C;
+    --dark-fill:   #C3CBD4;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--ground);
+    color: var(--ink);
+    font-family: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-size: 16.5px;
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 60rem;
+    margin: 0 auto;
+    padding: clamp(2rem, 5vw, 4rem) clamp(1.1rem, 4vw, 2.5rem) 5rem;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  /* ── Testata ─────────────────────────────────────────────────────── */
+  .testata { display: flex; flex-direction: column; gap: .75rem; }
+
+  .occhiello {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .69rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  h1 {
+    font-family: Newsreader, Georgia, "Times New Roman", serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 5.5vw, 3.1rem);
+    line-height: 1.1;
+    letter-spacing: -.015em;
+    text-wrap: balance;
+    margin: 0;
+  }
+
+  .sommario {
+    font-size: 1.08rem;
+    color: var(--ink-2);
+    max-width: 40rem;
+    margin: 0;
+  }
+
+  .misura {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .74rem;
+    color: var(--ink-3);
+    border-top: 1px solid var(--line-soft);
+    padding-top: .8rem;
+    margin-top: .4rem;
+  }
+
+  /* ── Numeri in evidenza ──────────────────────────────────────────── */
+  .quadro {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .cifra {
+    background: var(--surface);
+    padding: 1.15rem 1.25rem 1.3rem;
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+  }
+
+  .cifra dt {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: .68rem;
+    letter-spacing: .11em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+
+  .cifra dd {
+    margin: 0;
+    font-family: Newsreader, Georgia, serif;
+    font-size: 2.15rem;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+  }
+
+  .cifra dd small {
+    font-size: .95rem;
+    color: var(--ink-3);
+    font-family: "Source Sans 3", sans-serif;
+    letter-spacing: 0;
+  }
+
+  .cifra .chiosa {
+    font-size: .82rem;
+    color: var(--ink-2);
+    line-height: 1.4;
+  }
+
+  .verde { color: var(--ok); }
+  .ambra { color: var(--warn); }
+  .rosso { color: var(--bad); }
+
+  /* ── La barra delle azioni ───────────────────────────────────────── */
+  section { display: flex; flex-direction: column; gap: 1.1rem; }
+
+  h2 {
+    font-family: Newsreader, Georgia, serif;
+    font-weight: 500;
+    font-size: 1.65rem;
+    letter-spacing: -.01em;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .intro { margin: 0; color: var(--ink-2); max-width: 42rem; }
+
+  .barra {
+    display: flex;
+    height: 2.6rem;
+    border-radius: var(--radius);
+    overflow: hidden;
+    border: 1px solid var(--line);
+  }
+
+  .barra > div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .72rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+  }
+
+  .seg-buio  { background: var(--dark-fill); color: var(--surface); }
+  .seg-ok    { background: var(--ok-soft);   color: var(--ok); }
+  .seg-rotte { background: var(--bad-soft);  color: var(--bad); }
+  .seg-orfane{ background: var(--surface-2); color: var(--ink-3); }
+
+  .legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .45rem 1.4rem;
+    font-size: .87rem;
+    color: var(--ink-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .legenda li { display: flex; align-items: baseline; gap: .5rem; }
+
+  .punto {
+    width: .62rem; height: .62rem;
+    border-radius: 2px;
+    flex: none;
+    transform: translateY(1px);
+    border: 1px solid var(--line);
+  }
+
+  .legenda b {
+    font-family: "IBM Plex Mono", monospace;
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  /* ── Fasi ────────────────────────────────────────────────────────── */
+  .fasi { display: flex; flex-direction: column; gap: 1.1rem; }
+
+  .fase {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.4rem clamp(1.1rem, 3vw, 1.7rem) 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: .9rem;
+  }
+
+  .fase-testa {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .7rem 1rem;
+    justify-content: space-between;
+  }
+
+  .fase h3 {
+    font-family: Newsreader, Georgia, serif;
+    font-weight: 500;
+    font-size: 1.3rem;
+    margin: 0;
+    letter-spacing: -.01em;
+  }
+
+  .pillola {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .67rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: .28rem .6rem;
+    border-radius: 2px;
+    white-space: nowrap;
+  }
+
+  .p-corso  { background: var(--warn-soft); color: var(--warn); }
+  .p-dopo   { background: var(--surface-2); color: var(--ink-3); }
+  .p-fatto  { background: var(--ok-soft);   color: var(--ok); }
+
+  .quando {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .76rem;
+    color: var(--ink-3);
+  }
+
+  .voci { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+
+  .voce {
+    display: grid;
+    grid-template-columns: 1.35rem 1fr auto;
+    gap: .1rem .7rem;
+    align-items: baseline;
+    padding: .62rem 0;
+    border-top: 1px solid var(--line-soft);
+  }
+
+  .voce:first-child { border-top: none; padding-top: .2rem; }
+
+  .segno {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .95rem;
+    line-height: 1.4;
+  }
+
+  .voce-testo { min-width: 0; }
+  .voce-testo strong { font-weight: 600; }
+  .voce-nota { display: block; font-size: .86rem; color: var(--ink-2); line-height: 1.45; }
+
+  .voce-dato {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  /* ── Nota di chiusura ────────────────────────────────────────────── */
+  .avvertenza {
+    border-left: 2px solid var(--accent);
+    background: var(--accent-soft);
+    padding: 1.1rem 1.3rem;
+    border-radius: 0 var(--radius) var(--radius) 0;
+    display: flex;
+    flex-direction: column;
+    gap: .55rem;
+  }
+
+  .avvertenza p { margin: 0; }
+  .avvertenza p:first-child { font-weight: 600; }
+
+  code {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: .87em;
+    background: var(--surface-2);
+    padding: .1em .38em;
+    border-radius: 2px;
+  }
+
+  .avvertenza code { background: rgba(128,128,128,.16); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding-top: 1.2rem;
+    font-size: .87rem;
+    color: var(--ink-3);
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+
+  @media (max-width: 34rem) {
+    .voce { grid-template-columns: 1.2rem 1fr; }
+    .voce-dato { grid-column: 2; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="testata">
+    <div class="occhiello">Chauffeur Empire · stato dei lavori</div>
+    <h1>Quanto del gioco abbiamo davvero controllato</h1>
+    <p class="sommario">
+      Ogni numero di questa pagina è misurato dal codice con <code>npm run stato</code>, non scritto a mano.
+      Un avanzamento raccontato invecchia in due giorni e comincia a mentire; uno contato no.
+    </p>
+    <div class="misura">Ultima misura: 20 agosto 2026, 12:32</div>
+  </header>
+
+  <dl class="quadro">
+    <div class="cifra">
+      <dt>Test</dt>
+      <dd>344 <small>· 0 rossi</small></dd>
+      <div class="chiosa">Erano 125 due giorni fa.</div>
+    </div>
+    <div class="cifra">
+      <dt>Rete di sicurezza</dt>
+      <dd class="verde">114</dd>
+      <div class="chiosa">Test che si accorgono se il denaro smette di avvisare il server. Erano 29.</div>
+    </div>
+    <div class="cifra">
+      <dt>File eseguiti</dt>
+      <dd>45<small>/88</small></dd>
+      <div class="chiosa">Gli altri 43 non vengono mai caricati durante i test.</div>
+    </div>
+    <div class="cifra">
+      <dt>Azioni verificate</dt>
+      <dd class="ambra">15<small>/246</small></dd>
+      <div class="chiosa">Il numero che conta, e quello più basso.</div>
+    </div>
+  </dl>
+
+  <section>
+    <h2>Le 246 azioni del giocatore</h2>
+    <p class="intro">
+      Ogni cosa che un giocatore può fare — comprare, assumere, vendere, riparare — passa da un punto solo
+      del codice. Sono 246 in tutto, ed è l'unico elenco completo che abbiamo. Ecco come stanno oggi.
+    </p>
+
+    <div class="barra" role="img" aria-label="Delle 246 azioni: 193 mai eseguite in un test, 36 senza una funzione dietro, 15 verificate e corrette, 2 rotte e note.">
+      <div class="seg-buio"   style="flex: 193 1 0">193</div>
+      <div class="seg-orfane" style="flex: 36 1 0">36</div>
+      <div class="seg-ok"     style="flex: 15 1 0">15</div>
+      <div class="seg-rotte"  style="flex: 2 1 0" title="2 rotte note"></div>
+    </div>
+
+    <ul class="legenda">
+      <li><span class="punto" style="background: var(--dark-fill)"></span><span><b>193</b> mai eseguite in un test — non sappiamo se funzionano</span></li>
+      <li><span class="punto" style="background: var(--surface-2)"></span><span><b>36</b> senza una funzione dietro</span></li>
+      <li><span class="punto" style="background: var(--ok-soft)"></span><span><b>15</b> verificate e corrette</span></li>
+      <li><span class="punto" style="background: var(--bad-soft)"></span><span><b>2</b> rotte e note</span></li>
+    </ul>
+
+    <p class="intro">
+      Il blocco scuro è il vero lavoro che resta. Non sono azioni difettose: sono azioni <em>su cui non sappiamo
+      niente</em>, perché i file che le contengono non vengono mai caricati durante i test. È il buio da cui
+      uscivano, uno alla volta, i bug che continuavamo a trovare a mano.
+    </p>
+  </section>
+
+  <section>
+    <h2>Il piano</h2>
+
+    <div class="fasi">
+
+      <article class="fase">
+        <div class="fase-testa">
+          <h3>Prima — i bug del gioco così com'è</h3>
+          <span class="pillola p-corso">in corso</span>
+        </div>
+        <div class="quando">obiettivo: fine agosto 2026</div>
+        <ul class="voci">
+          <li class="voce">
+            <span class="segno ambra">◐</span>
+            <span class="voce-testo">
+              <strong>Una porta sola per il denaro</strong>
+              <span class="voce-nota">Ogni movimento di valuta passa da <code>CE_money</code> e avvisa il server. Un test impedisce di scavalcarla, e la lista dei file esentati può solo accorciarsi.</span>
+            </span>
+            <span class="voce-dato">8 file su 29 rimasti</span>
+          </li>
+          <li class="voce">
+            <span class="segno ambra">◐</span>
+            <span class="voce-testo">
+              <strong>Caricare tutti i file nel banco di prova</strong>
+              <span class="voce-nota">È la leva che accende le 193 azioni al buio. Ogni gruppo di file aggiunto non aggiunge un test: rende verificabili le azioni che contiene, e quelle rotte si presentano da sole.</span>
+            </span>
+            <span class="voce-dato">45 / 88</span>
+          </li>
+          <li class="voce">
+            <span class="segno rosso">○</span>
+            <span class="voce-testo">
+              <strong>Correggere quello che emergerà</strong>
+              <span class="voce-nota">La parte non stimabile in anticipo. Sulle azioni esaminate finora, circa una su tre risultava difettosa.</span>
+            </span>
+            <span class="voce-dato">da misurare</span>
+          </li>
+          <li class="voce">
+            <span class="segno rosso">○</span>
+            <span class="voce-testo">
+              <strong>Doppioni e codice morto</strong>
+              <span class="voce-nota">Sei nomi definiti in due file diversi — vince l'ultimo caricato, in silenzio. Più 34 funzioni che nessuno chiama.</span>
+            </span>
+            <span class="voce-dato">6 + 34</span>
+          </li>
+        </ul>
+      </article>
+
+      <article class="fase">
+        <div class="fase-testa">
+          <h3>Poi — tutto il resto</h3>
+          <span class="pillola p-dopo">da iniziare</span>
+        </div>
+        <div class="quando">dai primi giorni di settembre</div>
+        <ul class="voci">
+          <li class="voce">
+            <span class="segno">○</span>
+            <span class="voce-testo">
+              <strong>Rendere le transazioni a prova di manomissione</strong>
+              <span class="voce-nota">Oggi è il browser a dire al server quanto denaro ha il giocatore, e il server si fida. Spostare ogni transazione su una chiamata che il server valida è un progetto a sé, più lungo di tutto il resto messo insieme.</span>
+            </span>
+            <span class="voce-dato">progetto a sé</span>
+          </li>
+          <li class="voce">
+            <span class="segno">○</span>
+            <span class="voce-testo">
+              <strong>Riaccendere il quartier generale</strong>
+              <span class="voce-nota">Spento con un interruttore per toglierlo di mezzo: il codice è intatto, la scheda nascosta, nessuna spesa possibile.</span>
+            </span>
+            <span class="voce-dato">1 riga</span>
+          </li>
+          <li class="voce">
+            <span class="segno">○</span>
+            <span class="voce-testo">
+              <strong>Debiti vecchi</strong>
+              <span class="voce-nota">Province senza dati di bilanciamento, prestiti che non usano le chiamate dedicate, salvataggi senza cancellazione a cascata.</span>
+            </span>
+            <span class="voce-dato">3 aperti</span>
+          </li>
+        </ul>
+      </article>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>Come lavoriamo</h2>
+    <p class="intro">
+      Gemini prende un compito alla volta dalla coda, lavora su un ramo separato e non tocca mai il gioco online.
+      Nessun ramo entra senza revisione: nella notte fra il 19 e il 20 agosto ne ha prodotti 23, e cinque sono
+      stati scartati — uno aveva scritto 352 righe di test senza toccare il file, un altro faceva partire una
+      chiamata al server per ogni corsa invece di una sola col totale.
+    </p>
+
+    <div class="avvertenza">
+      <p>La misura di cui ci fidiamo non è il numero di test.</p>
+      <p>
+        È questa: rompendo di proposito la porta del denaro, oggi se ne accorgono <strong>114</strong> test.
+        Due giorni fa erano 29. Un test verde su codice rotto non dimostra niente, quindi ogni correzione
+        viene verificata rompendola apposta prima di accettarla.
+      </p>
+    </div>
+  </section>
+
+  <footer>
+    <div>Aggiornato a mano dopo ogni sessione di revisione. I numeri vengono da <code>npm run stato</code>.</div>
+    <div>Il ciclo notturno scrive su Telegram solo quando serve un intervento umano.</div>
+  </footer>
+
+</div>

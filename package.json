@@ -9,7 +9,8 @@
   "scripts": {
     "build:css": "tailwindcss -i tailwind.input.css -o tailwind.min.css --minify",
     "watch:css": "tailwindcss -i tailwind.input.css -o tailwind.min.css --watch",
-    "test": "node --test"
+    "test": "node --test",
+    "stato": "node scripts/stato-progetto.mjs"
   },
   "repository": {
     "type": "git",
