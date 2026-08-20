@@ -61,6 +61,25 @@ var CE_money = (function () {
         return true;
     }
 
+    /**
+     * Allinea il saldo locale a un accredito che il SERVER ha gia' fatto.
+     *
+     * Serve quando il denaro si muove dentro una RPC (le aste giudiziarie sono
+     * il primo caso): li' la colonna `companies.cash` e' gia' aggiornata, e
+     * chiamare `earn` rispedirebbe indietro il totale calcolato dal browser —
+     * cioe' farebbe decidere al client una cifra che il server aveva gia'
+     * deciso da solo. Qui si aggiorna solo la previsione locale, che cosi'
+     * torna a coincidere con la verita' senza mai sovrascriverla.
+     *
+     * @returns {boolean} false se l'importo non e' un numero utilizzabile.
+     */
+    function accreditatoDalServer(importo, motivo) {
+        var gs = _gs();
+        if (!Number.isFinite(importo) || importo <= 0) return false;
+        gs.cash = (gs.cash || 0) + importo;
+        return true;
+    }
+
     /* ── DRIVER COINS ─────────────────────────────────────────────────────
        I DC sono la valuta premium: si comprano con soldi veri. Anche loro
        arrivano in OVERWRITE (serverState.js:209), quindi una spesa solo
@@ -134,7 +153,10 @@ var CE_money = (function () {
         return true;
     }
 
-    return { spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC, addReputation: addReputation };
+    return {
+        spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC,
+        addReputation: addReputation, accreditatoDalServer: accreditatoDalServer,
+    };
 })();
 
 window.CE_money = CE_money;

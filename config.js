@@ -39,7 +39,7 @@ window.FEATURES = {
     contratti:    true,   // contracts, b2b: le entrate ricorrenti
 
     // Spente finché non le verifichiamo una per una.
-    aste:         false,  // auctions.js
+    aste:         true,   // auctions.js — verificata 20/08/2026 (ciclo di vita + riscossione)
     alleanze:     false,  // alliances.js
     salone:       false,  // showroom.js — la vetrina delle auto
     mercatoP2P:   false,  // p2p-market, p2p-render: scambi fra giocatori

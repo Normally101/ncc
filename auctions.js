@@ -33,19 +33,25 @@ function _countdown(endsAt) {
     return `${m}m ${s}s`;
 }
 
+/* I lotti vecchi scrivono il tier in maiuscolo ('BUSINESS'), quelli generati
+   dal server lo scrivono come il resto del gioco ('business'). Si normalizza
+   qui invece di tenere due vocabolari vivi in due posti. */
 function _tierBadge(tier) {
+    const t = String(tier || '').toLowerCase();
     const cls = {
-        BUSINESS:    'em-pill--blue',
-        PREMIUM:     'em-pill--violet',
-        PRESIDENTIAL:'em-pill--gold',
-        ARMORED:     'em-pill--red',
-        ULTRA:       'em-pill--gold',
-    }[tier] || 'em-pill--gray';
+        standard:     'em-pill--gray',
+        business:     'em-pill--blue',
+        premium:      'em-pill--violet',
+        vip:          'em-pill--gold',
+        presidential: 'em-pill--gold',
+        armored:      'em-pill--red',
+        ultra:        'em-pill--gold',
+    }[t] || 'em-pill--gray';
     const labels = {
-        BUSINESS:'Business', PREMIUM:'Premium', PRESIDENTIAL:'Presidential',
-        ARMORED:'Armored', ULTRA:'Ultra',
+        standard:'Standard', business:'Business', premium:'Premium', vip:'VIP',
+        presidential:'Presidential', armored:'Armored', ultra:'Ultra',
     };
-    return `<span class="em-pill ${cls}">${labels[tier] || tier || '?'}</span>`;
+    return `<span class="em-pill ${cls}">${labels[t] || tier || '?'}</span>`;
 }
 
 window.auctionsRefresh = async function(force = false) {
@@ -164,9 +170,96 @@ window.auctionsConfirmBid = async function(auctionId) {
     if (typeof window.switchTab === 'function') window.switchTab('auctions');
 };
 
-window.auctionsRevealWon = function(auctionId) {
+/* ── Dal lotto vinto all'auto in garage ──────────────────────────────────────
+   Il server decide la parte economica del lotto — tier, condizione, chilometri
+   — e non il modello preciso, perche' il catalogo delle auto vive in data.js e
+   deve restare scritto in un posto solo. Qui si sceglie un'auto vera di quel
+   tier e le si applica lo stato del lotto. */
+function _autoDalLotto(datiVeicolo) {
+    const dati = datiVeicolo || {};
+    const tier = String(dati.tier || 'business').toLowerCase();
+
+    const catalogo = [
+        ...(typeof USED_CARS !== 'undefined' ? USED_CARS : []),
+        ...(typeof NEW_CARS  !== 'undefined' ? NEW_CARS  : []),
+    ];
+    // I lotti piu' vecchi portano gia' un vehicleClass: in quel caso comanda lui.
+    const candidati = dati.vehicleClass
+        ? catalogo.filter(c => c.vehicleClass === dati.vehicleClass)
+        : catalogo.filter(c => c.tier === tier);
+    const modello = (candidati.length ? candidati : catalogo)[
+        Math.floor(Math.random() * (candidati.length || catalogo.length || 1))
+    ];
+    if (!modello) return null;
+
+    return {
+        id:           'c_ast_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        name:         `${modello.name} (Asta)`,
+        tier:         modello.tier,
+        vehicleClass: modello.vehicleClass,
+        condition:    Math.max(10, Math.min(100, Number(dati.condition) || 60)),
+        isLease:      false,
+        fuel:         60,
+        mileage:      Number(dati.km) || 0,
+        tirePressure: 80,
+        engineHealth: Math.max(30, Math.min(100, Number(dati.condition) || 60)),
+        outOfService: null,
+        upgrades:     [],
+    };
+}
+
+/**
+ * Riscuote un lotto vinto: e' il momento in cui il giocatore riceve davvero
+ * qualcosa. Prima di questa funzione la schermata "hai vinto" era solo una
+ * schermata — il veicolo non entrava in flotta e il denaro del container non
+ * arrivava mai, quindi si pagava l'aggiudicazione e non si riceveva niente.
+ *
+ * Il denaro lo accredita il server dentro `rpc_claim_auction`; qui si allinea
+ * solo la previsione locale. Il veicolo invece nasce qui, perche' e' qui che
+ * la flotta vive.
+ */
+window.auctionsClaim = async function(auctionId) {
+    const sb = window.supabaseClient;
+    if (!sb) return { error: 'Supabase non disponibile' };
+
+    const { data, error } = await sb.rpc('rpc_claim_auction', { v_auction_id: auctionId });
+    if (error) return { error: _aErr('Ritiro fallito', error) };
+
+    const nuove = [];
+    const contanti = Number(data?.cash_accreditato) || 0;
+    if (contanti > 0 && window.CE_money) {
+        window.CE_money.accreditatoDalServer(contanti, 'asta giudiziaria');
+    }
+
+    if (data?.lot_type === 'container') {
+        for (const item of (data.container_data?.items || [])) {
+            if (item?.type !== 'vehicle') continue;
+            const auto = _autoDalLotto(item);
+            if (auto) { window.gameState?.fleet?.push(auto); nuove.push(auto); }
+        }
+    } else {
+        const auto = _autoDalLotto(data?.vehicle_data);
+        if (auto) { window.gameState?.fleet?.push(auto); nuove.push(auto); }
+    }
+
+    // Il lotto e' riscosso: non deve piu' comparire fra quelli da ritirare.
+    window._auctionsState.wonAuctions =
+        window._auctionsState.wonAuctions.filter(a => a.id !== auctionId);
+    if (typeof window.saveGame === 'function') window.saveGame();
+    if (typeof window.updateUI === 'function') window.updateUI();
+
+    return { data, veicoli: nuove, contanti };
+};
+
+window.auctionsRevealWon = async function(auctionId) {
     const won = window._auctionsState.wonAuctions.find(a => a.id === auctionId);
     if (!won) return;
+
+    const esito = await window.auctionsClaim(auctionId);
+    if (esito.error) {
+        if (typeof showNotification === 'function') showNotification(esito.error, 'error');
+        return;
+    }
 
     const existing = document.getElementById('auction-won-modal');
     if (existing) existing.remove();
