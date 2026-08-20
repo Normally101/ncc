@@ -93,14 +93,19 @@ e oggi col Flash il tasso di rifiuto è stato alto.
 
 ### 📌 Stato al 20/08 sera
 
-- **405 test, tutti verdi** (erano 348 a metà pomeriggio).
+- **425 test, tutti verdi** (erano 348 a metà pomeriggio).
 - **Funzioni accese: 6 su 21** — e da oggi lo spegnimento è un meccanismo, non una
   dichiarazione (vedi IL METODO in cima).
 - **Azioni: 246 totali, ma solo 129 toccano denaro** — le altre 117 sono navigazione e filtri,
   non hanno niente da verificare.
-- Lista `ECCEZIONI` della porta del denaro: **6 file** — `engine-finance.js` (resta solo la
-  parte lobby/partecipazioni: la borsa è convertita), `engine-fleet.js`, `engine.js`, `hq.js`,
-  `showroom.js`, `ui-staff.js`. Convertiti oggi: `ui-store.js`, `vtk-market.js`.
+- Lista `ECCEZIONI` della porta del denaro: **4 file** — `engine-finance.js` (restano
+  dividendi:69, payout:104, prestito:214), `engine-fleet.js`, `engine.js`, `hq.js`.
+  Convertiti oggi: `ui-store.js`, `vtk-market.js`, `showroom.js`, `ui-staff.js`, e di
+  `engine-finance.js` la borsa più lobby/partecipazioni.
+- **Aperto, deciso a metà:** `ui-staff.js:285` mostra sul pulsante `max(500, mancante*85)`
+  mentre `payToRepairCar` addebita `(100-cond)*25` — con un'auto al 40% mostra €5.100 e
+  addebita €1.500. Non toccato perché è un cambio di prezzo: **va deciso quale dei due è
+  quello giusto.**
 
 **Errore mio da non ripetere:** avevo scritto «193 azioni al buio» contando anche le 117 che
 non toccano denaro, e su quel numero ho mandato mezza giornata di lavoro nella direzione
@@ -135,10 +140,20 @@ contesto giusto.
   worktree con `node_modules` in symlink): 4 verdetti su 4, tutti corretti, tutti negativi,
   con il motivo scritto in chiaro. Quello che resta da vedere dal vivo è il pezzo *dopo* il
   verdetto — richiesta sull'hub, approvazione di Vlad, fusione automatica.
-- **Il cancello dice NO bene, ma il NO va letto.** Dei 4 rami respinti, 3 erano recuperabili in
-  poche righe: due avevano solo dimenticato di togliere il file da `ECCEZIONI`, uno aveva i
-  test scritti contro dati inventati. Respingere e archiviare avrebbe buttato via ~50 test
-  buoni. **Un rifiuto è l'inizio di una revisione, non la fine.**
+- **Il cancello dice NO bene, ma il NO va letto.** Dei 7 rami respinti oggi, **6 erano
+  recuperabili**, quasi tutti in poche righe: quattro avevano solo dimenticato di togliere il
+  file da `ECCEZIONI` (è il passo che Gemini salta più spesso, e il guardiano lo prende ogni
+  volta), uno aveva i test scritti contro dati inventati, uno aveva scritto i test e mai la
+  correzione. Archiviarli avrebbe buttato via un centinaio di test buoni.
+  **Un rifiuto è l'inizio di una revisione, non la fine.**
+- **Il cancello ha avuto due guasti opposti in un giorno, ed è la cosa da ricordare.**
+  La mattina *approvava senza giudicare* (leggeva l'esito della run invece del verdetto); il
+  pomeriggio *rifiutava senza giudicare* (il verdetto veniva raschiato da un JSON indentato
+  con una pulizia dei timestamp sbagliata → `{}` → «non promuovibile»). Quattro rami bocciati
+  senza mai essere stati esaminati, uno dei quali passava senza una riga da cambiare.
+  Ora il verdetto esce anche su **una riga sola** dietro il marcatore `VERDETTO `, e il ciclo
+  legge quella. Provato sul log vero di una run vera, e provato al contrario: la vecchia
+  logica su quello stesso log fallisce con «Unexpected end of JSON input».
 - **Hub** (`olga-studio-nine.vercel.app`): scheda progetto con le misure (`npm run stato --hub`),
   pagina Approvals funzionante. `HUB_URL` e `GIGI_API_TOKEN` sono anche secret di GitHub.
 
