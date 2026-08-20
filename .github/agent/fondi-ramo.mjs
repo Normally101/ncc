@@ -93,5 +93,40 @@ if (toccati.length) {
     }
 }
 
-sh('git', ['push', 'origin', 'HEAD:main']);
+/* Il push va riprovato, non dato per scontato.
+ *
+ * Main si muove: due fusioni ravvicinate, un commit fatto a mano nel
+ * frattempo, e `git push` viene rifiutato perche' non e' piu' fast-forward.
+ * Il 20/08 sera la prima fusione automatica e' morta esattamente cosi', e il
+ * ciclo aveva gia' segnato il lavoro come fuso: di notte sarebbe successo per
+ * ore senza che nessuno se ne accorgesse.
+ *
+ * A ogni tentativo si riparte dal main NUOVO: si riporta sopra il lavoro, si
+ * rifanno girare i test — perche' un ramo verde sul main di prima non e'
+ * detto che lo sia su quello di adesso — e si ritenta. */
+const TENTATIVI = 4;
+let spinto = false;
+
+for (let n = 1; n <= TENTATIVI && !spinto; n++) {
+    try {
+        sh('git', ['push', 'origin', 'HEAD:main']);
+        spinto = true;
+    } catch (e) {
+        const rifiutato = /non-fast-forward|fetch first|rejected/i.test(
+            `${e.stderr || ''}${e.stdout || ''}${e.message || ''}`);
+        if (!rifiutato || n === TENTATIVI) throw e;
+
+        console.log(`Main si e' mosso: rifaccio il lavoro sul main nuovo (tentativo ${n}/${TENTATIVI}).`);
+        sh('git', ['fetch', 'origin', 'main']);
+        sh('git', ['merge', '--no-edit', 'origin/main']);
+
+        const ancoraRossi = test();
+        if (ancoraRossi > 0) {
+            throw new Error(
+                `Dopo essersi riportato sul main nuovo il ramo ha ${ancoraRossi} test rossi. ` +
+                `Non lo spingo: il main e' cambiato sotto e questo lavoro va rivisto.`);
+        }
+    }
+}
+
 console.log(`Fuso in main: ${RAMO}${risolto ? ' (conflitto risolto)' : ''}`);
