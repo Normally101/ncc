@@ -36,6 +36,28 @@ agente di marketing o di finanza su un progetto, e dove finisce il risultato.
 **Divisione del lavoro decisa da Vlad:** di giorno Gemini continua sul codice del gioco, e io
 lavoro su queste tre. *«sembrano banali, ma secondo me non lo sono.»*
 
+**3-bis. Cripto conta i soldi due volte** — trovato il 21/08 all'01:35 controllando l'ultima
+approvazione rimasta appesa (`cripto`, ramo `…crypto-js-08201949`, già in `main`).
+La funzione è **spenta**, quindi nessun giocatore può arrivarci: si sistema con calma.
+
+`rpc_buy_crypto` (24_crypto_offshore.sql:137) scala già il cash sul server — `UPDATE companies
+SET cash = cash - v_eur_in` — e `rpc_sell_crypto` lo accredita. Ma `crypto.js:74` e `:91`
+richiamano `CE_money.spend`/`earn` **dopo** che la RPC è tornata, e quelle rispediscono al
+server il totale calcolato dal browser. Se l'eco Realtime della scrittura del server arriva
+prima (cosa probabile: la RPC ritorna a commit avvenuto), il client applica il delta e **poi**
+somma di nuovo → sulla vendita sono soldi regalati. È la stessa famiglia del bug delle aste,
+e la cura esiste già: `accreditatoDalServer` in `money.js` — quando il server ha già mosso i
+soldi, il client non risincronizza.
+
+C'è anche un guardiano finto: `crypto.js:74` è `if (!CE_money.spend(...)) return;` messo **dopo**
+l'acquisto sul server. A quel punto le monete sono già state comprate: quel `return` non
+protegge niente, salta solo il refresh della schermata.
+
+**Come è saltato fuori, e perché conta per il metodo:** i 28 test del ramo passano tutti anche
+se cancello quel guardiano. Un ramo può essere verde, avere 608 righe di test nuovi, superare
+il cancello automatico — e la funzione contare male i soldi lo stesso. È esattamente il motivo
+per cui il controllo a campione della mattina non è una formalità.
+
 **4. Libri → skill.** Vlad procura i PDF interi (li ha in fisico) e me li fa leggere **per
 intero, non a campione**; io valuto quale skill utile ne può nascere. Non cercare riassunti
 online: darebbero i luoghi comuni sul libro invece del suo metodo.
