@@ -65,15 +65,13 @@ window.cryptoRefresh = async function(force = false) {
 window.cryptoBuy = async function(coinId, eurAmount) {
     const amount = parseInt(eurAmount, 10);
     if (!amount || amount < 100) { if(typeof showNotification==='function') showNotification('Minimo €100', 'error'); return; }
-    if ((gameState.cash || 0) < amount) { if(typeof showNotification==='function') showNotification('Fondi insufficienti', 'error'); return; }
 
     const sb = window.supabaseClient;
     if (!sb) return;
     const { data, error } = await sb.rpc('rpc_buy_crypto', { v_coin_id: coinId, v_eur_in: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Acquisto fallito', error), 'error'); return; }
 
-    // rpc_buy_crypto ha gia' scalato la cassa server-side (24_crypto_offshore.sql:137)
-    if (!window.ServerState?.isReady()) gameState.cash -= amount;
+    if (!window.CE_money.spend(amount, 'crypto_buy')) return;
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`✅ Acquistati ${_fmtCoin(data.coins_got)} ${coinId} per €${amount.toLocaleString()}`, 'success');
     window._cryptoState._lastFetch = 0;
@@ -90,9 +88,7 @@ window.cryptoSell = async function(coinId, coinAmount) {
     const { data, error } = await sb.rpc('rpc_sell_crypto', { v_coin_id: coinId, v_coins_in: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Vendita fallita', error), 'error'); return; }
 
-    // rpc_sell_crypto ha gia' accreditato la cassa server-side (24_crypto_offshore.sql:197):
-    // senza questo guard il delta Realtime lo applicherebbe una SECONDA volta.
-    if (!window.ServerState?.isReady()) gameState.cash = (gameState.cash || 0) + Math.floor(data.eur_received);
+    window.CE_money.earn(Math.floor(data.eur_received), 'crypto_sell');
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`✅ Venduti ${_fmtCoin(amount)} ${coinId} per €${Math.floor(data.eur_received).toLocaleString()}`, 'success');
     window._cryptoState._lastFetch = 0;
@@ -103,7 +99,6 @@ window.cryptoSell = async function(coinId, coinAmount) {
 window.cryptoDepositOffshore = async function(jurisdiction, eurAmount) {
     const amount = parseInt(eurAmount, 10);
     if (!amount || amount < 10000) { if(typeof showNotification==='function') showNotification('Minimo offshore: €10.000', 'error'); return; }
-    if ((gameState.cash || 0) < amount) { if(typeof showNotification==='function') showNotification('Fondi insufficienti', 'error'); return; }
 
     if (!confirm(`Depositare €${amount.toLocaleString()} nel conto offshore ${jurisdiction}? Commissione: 3%.`)) return;
 
@@ -112,8 +107,7 @@ window.cryptoDepositOffshore = async function(jurisdiction, eurAmount) {
     const { data, error } = await sb.rpc('rpc_deposit_offshore', { v_jurisdiction: jurisdiction, v_eur_amount: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Deposito offshore fallito', error), 'error'); return; }
 
-    // rpc_deposit_offshore ha gia' scalato la cassa server-side (24_crypto_offshore.sql:234)
-    if (!window.ServerState?.isReady()) gameState.cash -= amount;
+    if (!window.CE_money.spend(amount, 'crypto_deposit_offshore')) return;
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`🏦 Depositato €${data.net_deposited.toLocaleString()} in ${data.jurisdiction} (fee: €${data.fee.toLocaleString()})`, 'success');
     window._cryptoState._lastFetch = 0;
@@ -132,9 +126,7 @@ window.cryptoWithdrawOffshore = async function(jurisdiction, eurAmount) {
     const { data, error } = await sb.rpc('rpc_withdraw_offshore', { v_jurisdiction: jurisdiction, v_eur_amount: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Prelievo fallito', error), 'error'); return; }
 
-    // rpc_withdraw_offshore ha gia' accreditato la cassa server-side (24_crypto_offshore.sql:284):
-    // senza questo guard il delta Realtime lo applicherebbe una SECONDA volta.
-    if (!window.ServerState?.isReady()) gameState.cash = (gameState.cash || 0) + data.received;
+    window.CE_money.earn(data.received, 'crypto_withdraw_offshore');
     if (typeof updateUI === 'function') updateUI();
 
     if (data.seized) {
