@@ -1,6 +1,6 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 20 agosto 2026 (mattina)
+> Aggiornato: 20 agosto 2026 (pomeriggio)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 ---
@@ -10,6 +10,86 @@
 > https://claude.ai/code/artifact/621f3f9e-8c5d-4314-a5f4-e26ea6e1d1be
 > (sorgente in `docs/cantiere.html`) — va **ripubblicato con lo stesso URL** dopo ogni revisione,
 > non ricreato, o si moltiplicano le copie.
+
+---
+
+# ⭐ IL METODO, dal 20/08/2026 pomeriggio — leggi questo per primo
+
+**Il gioco NON è ancora uscito. Non ci sono giocatori.** Questo fatto, saputo solo oggi
+pomeriggio, ha cambiato la strategia: possiamo permetterci di mostrare meno gioco.
+
+**Regola invertita: una funzione è accesa solo se qualcuno l'ha verificata.**
+Prima era il contrario — tutto acceso, e nessuno sapeva cosa funzionasse.
+
+Come l'ha detto Vlad, ed è la formulazione da tenere:
+> «Anziché avere 20 macchine, ne ha 5 ma che funzionano. Nel buio lavoriamo alle altre 15,
+> e quando saranno pronte le rilasciamo.»
+
+`config.js` → `window.FEATURES`: **5 accese** (corse, flotta, autisti, finanza, contratti),
+**16 spente** (aste, alleanze, salone, mercatoP2P, cripto, vtk, turismo, lusso, politica,
+infrastrutture, holding, nemesi, vanita, negozioDC, vip, carriera).
+`window.attiva('aste')` per chiedere. Sconosciuta = spenta, nel dubbio non si mostra.
+
+**Spegnere NON cancella codice.** Il codice resta caricato: si nascondono i punti d'ingresso
+(schede, pulsanti) e si neutralizzano gli effetti. Riaccendere costa una riga. È lo stesso
+meccanismo di `HQ_ENABLED`, generalizzato.
+
+**Come si accende una funzione** (il ciclo di lavoro d'ora in poi):
+1. Si costruisce nel banco di prova la situazione che la rende viva (un'asta aperta con
+   rilanci, un'alleanza con membri) — è questo il pezzo difficile, non il codice.
+2. Si eseguono TUTTE le sue azioni.
+3. Si corregge quello che è rotto (denaro via `CE_money`).
+4. Si accende in `FEATURES` e si toglie il nome da `SPENTE_ALL_INIZIO` in
+   `test/guardrail/interruttori.test.js`. Da lì in poi un test la sorveglia.
+
+**Prossimo passo concreto:** iniziare dalle **aste** (`auctions.js`, 5 azioni) — è la funzione
+spenta più piccola, quindi il modo migliore per collaudare il metodo prima di applicarlo alle
+grosse (`ui-emails` 29 azioni, `ui-staff` 24, `ui-store` 18).
+
+**Vlad vuole che Gemini lavori il più possibile.** Ha chiesto di valutare Gemini 3.1 Pro al
+posto di 3.7 Flash per il codice: da decidere provandolo su un lavoro vero e confrontando,
+non a priori. I lavori "una funzione alla volta" sono più difficili dei "converti un file",
+e oggi col Flash il tasso di rifiuto è stato alto.
+
+---
+
+### 📌 Stato al 20/08 pomeriggio
+
+- **348 test, tutti verdi.** Rompendo la porta del denaro ne falliscono **114** (erano 29 ieri).
+- **Funzioni accese: 5 su 21.**
+- **Azioni: 246 totali, ma solo 129 toccano denaro** — le altre 117 sono navigazione e filtri,
+  non hanno niente da verificare. Verificate 16, rotte note 2, **da verificare 107**.
+- Lista `ECCEZIONI` della porta del denaro: **8 file** (di cui 3 esclusi per scelta:
+  `engine.js`, `hq.js`, `engine-fleet.js`).
+
+**Errore mio da non ripetere:** avevo scritto «193 azioni al buio» contando anche le 117 che
+non toccano denaro, e su quel numero ho mandato mezza giornata di lavoro nella direzione
+sbagliata (8 compiti per allargare il banco di prova). **Allargare il banco non sposta la
+copertura**: provato, un file in più l'ha cambiata di zero. Il motivo per cui un'azione non si
+verifica non è che il file non è caricato — è che eseguirla non fa succedere niente senza il
+contesto giusto.
+
+### 🔧 L'infrastruttura, e come sta davvero
+
+- **Canale: Telegram** (`@gigi_olga_bot`), servizio `gigi-telegram` sulla VM. WhatsApp spento e
+  disabilitato. Comandi: `stato`, `pronti`, `approva 1` / `approva tutti`, `scarta 2`,
+  `ferma`/`riprendi`.
+- **Cancello automatico** (`.github/agent/verifica-ramo.mjs` + `fondi-ramo.mjs`): verifica il
+  ramo UNITO a main, test cresciuti, nessun test disattivato, prova per mutazione. Chi passa
+  diventa una richiesta di approvazione sull'hub; Vlad approva e il ramo si fonde da solo.
+- **⚠️ Il giro completo NON è mai stato visto funzionare end-to-end.** Oggi ha prodotto tre
+  difetti in fila (formato dei test illeggibile in CI, verdetto non recuperabile dai log,
+  giudizio letto dall'esito della run invece che dal verdetto). Tutti corretti, nessuno
+  provato dal vivo. **Non mandare richieste a Vlad finché non si è visto il giro intero.**
+- **Hub** (`olga-studio-nine.vercel.app`): scheda progetto con le misure (`npm run stato --hub`),
+  pagina Approvals funzionante. `HUB_URL` e `GIGI_API_TOKEN` sono anche secret di GitHub.
+
+### 📋 Cosa aspetta
+
+- **4 rami aspettano una revisione mia** (hanno già fallito il cancello o una revisione).
+- La coda del vecchio metodo è quasi vuota: resta `ce-ui-staff-2`. Gli 11 compiti sul banco di
+  prova sono stati **cancellati** perché basati sulla premessa sbagliata.
+- **Da rifare col metodo nuovo:** tutto il resto.
 
 ---
 
