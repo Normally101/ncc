@@ -64,8 +64,8 @@ window.acceptVipGrigori = function(emailId) {
 
 function _vipCompleteGrigori(ride, driver, earned) {
     const tip = 15000;
-    gameState.cash += tip;
-    gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.1);
+    window.CE_money.earn(tip, 'vip_grigori_tip');
+    window.CE_money.addReputation(0.1);
     logToMap(`💰 Grigori V.: mancia di €${tip.toLocaleString()}! Reputazione +0.1★`);
     showNotification(`🕵️ Grigori soddisfatto! +€${tip.toLocaleString()} mancia`, 'success');
 
@@ -89,18 +89,17 @@ window.vipGrigoriEventAccept = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
     const cost = (e.vipEventData || {}).cost || 500;
-    if (gameState.cash < cost) { showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'vip_grigori_rerouting')) return;
     _vipSetCooldown('grigori'); // resets for next offer sooner
     gameState.vipCooldowns.grigori -= 24; // loyalty: next offer 24h earlier
     _vipResolveEmail(emailId);
     showNotification(`🕵️ Rerouting gestito. −€${cost}. Grigori fidelizzato.`, 'success');
-    _vipSyncCash(); _vipRefreshUI(); saveGame();
+    _vipRefreshUI(); saveGame();
 };
 
 window.vipGrigoriEventDecline = function(emailId) {
     _vipResolveEmail(emailId);
-    gameState.reputation = Math.max(0, gameState.reputation - 0.1);
+    window.CE_money.addReputation(-0.1);
     showNotification('Grigori non è contento. Reputazione −0.1★', 'error');
     _vipRefreshUI(); saveGame();
 };
@@ -149,7 +148,8 @@ function _vipCompleteStrata(ride, driver, earned) {
 
     if (Math.random() < 0.20) {
         const chargeback = Math.floor(earned * 0.5);
-        gameState.cash -= chargeback;
+        const toPay = Math.min(gameState.cash || 0, chargeback);
+        window.CE_money.spend(toPay, 'vip_strata_chargeback');
         gameState.strataStreak = 0;
         logToMap(`💼 Strata chargeback: −€${chargeback}. Streak azzerata.`);
         showNotification(`💼 Strata: chargeback! −€${chargeback.toLocaleString()}`, 'error');
@@ -218,20 +218,17 @@ function _vipCompletePlatinum(ride, driver, earned) {
 }
 
 window.vipPlatinumEventBlock = function(emailId) {
-    _vipResolveEmail(emailId);
     const fine = 300;
-    if (gameState.cash < fine) { showNotification('Fondi insufficienti per bloccare i paparazzi!', 'error'); }
-    else {
-        gameState.cash -= fine;
-        window._applyBuff('platinum_hype', 'tip_pct', 20, 4);
-        showNotification(`📸 Paparazzi bloccati. −€${fine}. La Diva riconoscente! +20% mance 4h`, 'success');
-    }
-    _vipSyncCash(); _vipRefreshUI(); saveGame();
+    if (!window.CE_money.spend(fine, 'vip_platinum_block')) return;
+    _vipResolveEmail(emailId);
+    window._applyBuff('platinum_hype', 'tip_pct', 20, 4);
+    showNotification(`📸 Paparazzi bloccati. −€${fine}. La Diva riconoscente! +20% mance 4h`, 'success');
+    _vipRefreshUI(); saveGame();
 };
 
 window.vipPlatinumEventAllow = function(emailId) {
     _vipResolveEmail(emailId);
-    gameState.reputation = Math.min(5.0 + (gameState.prestige||0), gameState.reputation + 0.15);
+    window.CE_money.addReputation(0.15);
     logToMap('📸 Paparazzi liberi di scattare. Hype! Reputazione +0.15★');
     showNotification('📸 Buzz mediatico! Reputazione +0.15★', 'success');
     _vipRefreshUI(); saveGame();
@@ -302,16 +299,17 @@ window.vipOnorevoleEventCopera = function(emailId) {
         showNotification('🏛️ Gettone Politico usato. GdF soddisfatta. −1 Token.', 'success');
     } else {
         const fine = 1000;
-        gameState.cash = Math.max(0, gameState.cash - fine);
+        const toPay = Math.min(gameState.cash || 0, fine);
+        window.CE_money.spend(toPay, 'vip_onorevole_fine');
         showNotification(`🚔 GdF: multa €${fine}. Nessun Gettone disponibile.`, 'error');
     }
-    _vipSyncCash(); _vipRefreshUI(); saveGame();
+    _vipRefreshUI(); saveGame();
 };
 
 window.vipOnorevoleEventResisti = function(emailId) {
     _vipResolveEmail(emailId);
     gameState.politicalTokens = (gameState.politicalTokens || 0) + 1;
-    gameState.reputation = Math.max(0, gameState.reputation - 0.05);
+    window.CE_money.addReputation(-0.05);
     showNotification('⚖️ Resistenza GdF: +1 Gettone Politico (favore), −0.05★ rep.', 'success');
     _vipRefreshUI(); saveGame();
 };
@@ -366,7 +364,7 @@ function _vipCompleteEmiro(ride, driver, earned) {
 
     if (Math.random() < 0.30) {
         const shoppingBonus = 5000;
-        gameState.cash += shoppingBonus;
+        window.CE_money.earn(shoppingBonus, 'vip_emiro_shopping_bonus');
         showNotification(`🛍️ Shopping reale: l'Emiro ha fatto una deviazione. +€${shoppingBonus}`, 'success');
         logToMap(`🛍️ Emiro shopping detour: +€${shoppingBonus}`);
     }
@@ -559,11 +557,12 @@ window.vipGaranteEventPaga = function(emailId) {
     const fine = (e.vipEventData || {}).fine || 2000;
     const discount = window._getBuffValue('fine_discount') / 100;
     const finalFine = Math.floor(fine * (1 - discount));
-    gameState.cash = Math.max(0, gameState.cash - finalFine);
+    const toPay = Math.min(gameState.cash || 0, finalFine);
+    window.CE_money.spend(toPay, 'vip_garante_fine');
     _vipResolveEmail(emailId);
     logToMap(`🚔 Posto di blocco: multa €${finalFine} pagata.`);
     showNotification(`🚔 Multa pagata: €${finalFine.toLocaleString()}`, 'error');
-    _vipSyncCash(); _vipRefreshUI(); saveGame();
+    _vipRefreshUI(); saveGame();
 };
 
 window.vipGaranteEventIntimidisci = function(emailId) {
@@ -580,12 +579,13 @@ window.vipGaranteEventIntimidisci = function(emailId) {
             showNotification('😤 Il Garante fissa il poliziotto. Passa liscia.', 'success');
         } else {
             const fine = ((e.vipEventData || {}).fine || 2000) * 2;
-            gameState.cash = Math.max(0, gameState.cash - fine);
+            const toPay = Math.min(gameState.cash || 0, fine);
+            window.CE_money.spend(toPay, 'vip_garante_fine_double');
             _vipResolveEmail(emailId);
             showNotification(`🚔 Il poliziotto non si è lasciato intimidire! Multa ×2: −€${fine.toLocaleString()}`, 'error');
         }
     }
-    _vipSyncCash(); _vipRefreshUI(); saveGame();
+    _vipRefreshUI(); saveGame();
 };
 
 // ─── 9. WHITE LACE WEDDINGS — WEDDING PLANNER ────────────────────────────────
@@ -658,18 +658,17 @@ function _vipCompleteWedding(ride, driver, earned) {
 
 window.vipWeddingEventGestisci = function(emailId) {
     const cost = 800;
-    if (gameState.cash < cost) { showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= cost;
+    if (!window.CE_money.spend(cost, 'vip_wedding_drama_cost')) return;
     _vipResolveEmail(emailId);
     const bonus = 2000;
-    gameState.cash += bonus;
+    window.CE_money.earn(bonus, 'vip_wedding_drama_bonus');
     showNotification(`💍 Drama gestito! −€${cost} + compenso sposi €${bonus}. Netto: +€${bonus - cost}.`, 'success');
-    _vipSyncCash(); _vipRefreshUI(); saveGame();
+    _vipRefreshUI(); saveGame();
 };
 
 window.vipWeddingEventIgnora = function(emailId) {
     _vipResolveEmail(emailId);
-    gameState.reputation = Math.max(0, gameState.reputation - 0.2);
+    window.CE_money.addReputation(-0.2);
     showNotification('💥 White Lace furious! Reputazione −0.2★', 'error');
     _vipRefreshUI(); saveGame();
 };
@@ -678,14 +677,14 @@ window.vipWeddingPaymentCollect = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
     const bonus = (e.vipEventData || {}).bonus || 0;
-    gameState.cash += bonus;
+    window.CE_money.earn(bonus, 'vip_wedding_payment');
     _vipResolveEmail(emailId);
     if (typeof spawnMoneyParticles === 'function') {
         const r = document.body.getBoundingClientRect();
         spawnMoneyParticles(r.width / 2, r.height / 2, bonus);
     }
     showNotification(`💍 Saldo ricevuto! +€${bonus.toLocaleString()}`, 'success');
-    _vipSyncCash(); _vipRefreshUI(); saveGame();
+    _vipRefreshUI(); saveGame();
 };
 
 // ─── 10. L'EREDE VIZIATO ──────────────────────────────────────────────────────
@@ -749,8 +748,8 @@ function _vipCompleteErede(ride, driver, earned) {
 
     if (Math.random() < 0.30) {
         const viral = Math.floor(earned * 1.0);
-        gameState.cash += viral;
-        gameState.reputation = Math.min(5.0 + (gameState.prestige||0), gameState.reputation + 0.10);
+        window.CE_money.earn(viral, 'vip_erede_viral');
+        window.CE_money.addReputation(0.10);
         logToMap(`💸 L\'Erede virale: +€${viral} bonus e +0.10★ reputazione!`);
         showNotification(`💸 L\'Erede è diventato virale! +€${viral.toLocaleString()} + 0.10★`, 'success');
     }
