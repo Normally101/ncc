@@ -1,0 +1,41 @@
+name: Verifica di un ramo
+
+# Il controllo che decide se un ramo di Gemini puo' arrivare a Vlad per
+# l'approvazione. Non pubblica niente e non fonde niente: guarda e basta.
+on:
+  workflow_dispatch:
+    inputs:
+      ramo:
+        description: "Il ramo da verificare (senza origin/)"
+        required: true
+        type: string
+
+# Legge soltanto. Un controllo che potesse scrivere sarebbe un controllo di cui
+# fidarsi meno.
+permissions:
+  contents: read
+
+jobs:
+  verifica:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Serve la storia completa: si verifica il ramo UNITO a main, non il
+          # ramo isolato, e per unire servono entrambi.
+          fetch-depth: 0
+          ref: main
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Dipendenze
+        run: npm ci --no-audit --no-fund
+
+      - name: Verifica
+        env:
+          RAMO: ${{ inputs.ramo }}
+        run: node .github/agent/verifica-ramo.mjs

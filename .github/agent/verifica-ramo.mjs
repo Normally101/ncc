@@ -1,0 +1,169 @@
+/**
+ * Il controllo che sostituisce il mio «no».
+ *
+ * Il 20/08/2026, rivedendo 23 rami prodotti da Gemini, ne ho scartati 5. Tutti
+ * e cinque erano rilevabili senza leggere una riga di codice:
+ *
+ *   ui-store       10 test rossi
+ *   engine-finance 15 test rossi
+ *   showroom        4 test rossi
+ *   ui-staff        4 test rossi
+ *   vtk-market      verde da solo, ROSSO una volta unito a main
+ *
+ * L'ultimo e' il motivo per cui qui si testa il MERGE e non il ramo isolato:
+ * vtk-market si era tolto dalla lista delle eccezioni lasciandosi dentro cinque
+ * mutazioni, e se ne accorgeva solo il guardrail aggiornato che stava su main.
+ * Verificare il ramo da solo lo avrebbe promosso.
+ *
+ * Cosa NON copre: un ramo che passa tutto e ha comunque un difetto che nessun
+ * test vede. Per quello serve ancora che qualcuno guardi, ogni tanto, anche i
+ * rami gia' fusi. Questo controllo toglie l'attesa, non la revisione.
+ *
+ * Esce 0 se il ramo e' promuovibile, 1 altrimenti. Scrive un verdetto in JSON
+ * su VERDETTO_OUT, perche' il ciclo lo rilegge per costruire la richiesta di
+ * approvazione.
+ */
+import { execFileSync } from 'node:child_process';
+import fs from 'node:fs';
+
+const RAMO = process.env.RAMO?.trim();
+if (!RAMO) {
+    console.error('RAMO mancante.');
+    process.exit(2);
+}
+
+const cwd = process.cwd();
+// Di norma si confronta con main. Si puo' cambiare per poter provare il
+// controllo stesso in un worktree, dove main e' gia' occupato dal repository
+// principale e git rifiuta di prenderlo due volte.
+const BASE = process.env.BASE?.trim() || 'main';
+const sh = (cmd, args, opzioni = {}) =>
+    execFileSync(cmd, args, { cwd, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024, ...opzioni });
+
+const problemi = [];
+const note = [];
+
+function conta(uscita) {
+    const n = (etichetta) => Number(uscita.match(new RegExp(`^ℹ ${etichetta} (\\d+)`, 'm'))?.[1] ?? -1);
+    return { totale: n('tests'), passati: n('pass'), falliti: n('fail') };
+}
+
+function test() {
+    try {
+        return conta(sh('npm', ['test']));
+    } catch (e) {
+        return conta((e.stdout ?? '') + (e.stderr ?? ''));
+    }
+}
+
+/* ── 1. La base: quanti test ha main adesso ───────────────────────────── */
+sh('git', ['checkout', '--quiet', BASE]);
+const base = test();
+if (base.falliti !== 0) {
+    // Se main e' gia' rotto, il confronto non significa niente: meglio fermarsi
+    // che promuovere un ramo basandosi su una base marcia.
+    problemi.push(`${BASE} ha ${base.falliti} test rossi: non posso giudicare niente finche' non e' verde.`);
+}
+
+/* ── 2. Il merge, non il ramo ─────────────────────────────────────────── */
+sh('git', ['config', 'user.name', 'verifica']);
+sh('git', ['config', 'user.email', 'verifica@local']);
+let conflitti = [];
+try {
+    sh('git', ['merge', '--no-commit', '--no-ff', `origin/${RAMO}`]);
+} catch {
+    conflitti = sh('git', ['diff', '--name-only', '--diff-filter=U'])
+        .split('\n').map(r => r.trim()).filter(Boolean);
+    // Un conflitto sulla sola lista delle eccezioni e' atteso e si risolve da
+    // se': ogni lavoro toglie una riga diversa dallo stesso elenco, e git non
+    // sa che le rimozioni sono indipendenti.
+    const soloGuardrail = conflitti.length > 0
+        && conflitti.every(f => f === 'test/guardrail/una-sola-porta.test.js');
+    if (soloGuardrail) {
+        const guard = 'test/guardrail/una-sola-porta.test.js';
+        const nostro = sh('git', ['show', `${BASE}:${guard}`]);
+        const convertiti = sh('git', ['diff', '--name-only', `${BASE}...origin/${RAMO}`])
+            .split('\n').map(r => r.trim()).filter(f => /^[a-z_0-9-]+\.js$/.test(f));
+        let testo = nostro;
+        for (const f of convertiti) testo = testo.split('\n').filter(r => !r.includes(`'${f}',`)).join('\n');
+        fs.writeFileSync(`${cwd}/${guard}`, testo);
+        sh('git', ['add', '--', guard]);
+        note.push('conflitto sulla lista delle eccezioni risolto da solo');
+        conflitti = [];
+    } else {
+        problemi.push(`Non si unisce a ${BASE} senza conflitti: ${conflitti.join(', ')}`);
+    }
+}
+
+/* ── 3. I test, sul risultato dell'unione ─────────────────────────────── */
+const dopo = conflitti.length ? { totale: -1, falliti: -1 } : test();
+if (dopo.falliti > 0) problemi.push(`${dopo.falliti} test rossi una volta unito a ${BASE}.`);
+if (dopo.totale >= 0 && base.totale >= 0 && dopo.totale <= base.totale) {
+    // Una correzione senza un test nuovo non e' verificabile: e' una promessa.
+    problemi.push(`I test non sono cresciuti (${base.totale} → ${dopo.totale}): manca la prova che il bug fosse reale.`);
+}
+
+/* ── 4. Nessun test cancellato o messo a dormire ──────────────────────── */
+const diffTest = conflitti.length ? '' : sh('git', ['diff', '--cached', '--', 'test/']);
+const spenti = diffTest.split('\n').filter(r => /^\+.*\b(skip|todo|only)\s*[:(]/.test(r));
+if (spenti.length) {
+    problemi.push(`Ha disattivato ${spenti.length} test invece di farli passare.`);
+}
+const testRimossi = conflitti.length ? [] : sh('git', ['diff', '--cached', '--diff-filter=D', '--name-only', '--', 'test/'])
+    .split('\n').map(r => r.trim()).filter(Boolean);
+if (testRimossi.length) problemi.push(`Ha cancellato file di test: ${testRimossi.join(', ')}`);
+
+/* ── 5. La prova per mutazione ────────────────────────────────────────── */
+/* Un test verde su codice rotto non dimostra niente. Si rompe di proposito la
+   porta del denaro e si controlla che i test se ne accorgano: se restano tutti
+   verdi, quei test non stanno provando quello che dicono di provare. */
+let colgono = -1;
+if (!problemi.length) {
+    const originale = fs.readFileSync(`${cwd}/money.js`, 'utf8');
+    try {
+        fs.writeFileSync(`${cwd}/money.js`, originale
+            .replace(/function _sincronizzaCassa\(\) \{/, 'function _sincronizzaCassa() { return;')
+            .replace(/var p = window\.ServerState && window\.ServerState\.spendDriverCoins/,
+                     'var p = false && window.ServerState.spendDriverCoins'));
+        colgono = test().falliti;
+    } finally {
+        fs.writeFileSync(`${cwd}/money.js`, originale);
+    }
+    if (colgono <= 0) {
+        problemi.push('Rompendo la porta del denaro non fallisce nessun test: la copertura e\' apparente.');
+    }
+}
+
+/* ── Verdetto ─────────────────────────────────────────────────────────── */
+const toccati = sh('git', ['diff', '--name-only', `${BASE}...origin/${RAMO}`])
+    .split('\n').map(r => r.trim()).filter(Boolean);
+
+const verdetto = {
+    ramo: RAMO,
+    promuovibile: problemi.length === 0,
+    problemi,
+    note,
+    test: { prima: base.totale, dopo: dopo.totale, rossi: dopo.falliti },
+    colgonoLaMutazione: colgono,
+    fileToccati: toccati,
+};
+
+console.log(JSON.stringify(verdetto, null, 2));
+if (process.env.VERDETTO_OUT) fs.writeFileSync(process.env.VERDETTO_OUT, JSON.stringify(verdetto));
+
+if (process.env.GITHUB_STEP_SUMMARY) {
+    fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY, [
+        `## ${verdetto.promuovibile ? '✅ Promuovibile' : '❌ Non promuovibile'} — \`${RAMO}\``,
+        '',
+        `- Test: ${base.totale} → ${dopo.totale} (${dopo.falliti} rossi)`,
+        `- Test che colgono la mutazione: ${colgono >= 0 ? colgono : 'non provato'}`,
+        `- File toccati: ${toccati.map(f => `\`${f}\``).join(', ') || 'nessuno'}`,
+        ...(problemi.length ? ['', '### Perché no', ...problemi.map(p => `- ${p}`)] : []),
+    ].join('\n'));
+}
+
+// Si lascia il repository com'era: questo controllo non deve pubblicare niente.
+try { sh('git', ['merge', '--abort']); } catch { /* nessun merge in corso */ }
+try { sh('git', ['reset', '--hard', BASE]); } catch { /* niente da annullare */ }
+
+process.exit(verdetto.promuovibile ? 0 : 1);
