@@ -93,7 +93,7 @@ e oggi col Flash il tasso di rifiuto è stato alto.
 
 ### 📌 Stato al 20/08 sera
 
-- **474 test, tutti verdi** (erano 348 a metà pomeriggio).
+- **523 test, tutti verdi** (erano 348 a metà pomeriggio).
 - **Funzioni accese: 7 su 21** (aggiunta `vanita`) — e da oggi lo spegnimento è un meccanismo, non una
   dichiarazione (vedi IL METODO in cima).
 - **Azioni: 246 totali, ma solo 129 toccano denaro** — le altre 117 sono navigazione e filtri,
@@ -128,6 +128,21 @@ verifica non è che il file non è caricato — è che eseguirla non fa succeder
 contesto giusto.
 
 ### 🔧 L'infrastruttura, e come sta davvero
+
+- **⭐ Dal 20/08 sera il cancello fonde da solo. Non si chiede più l'ok a Vlad.**
+  La ragione è sua: *«scritto così, io non so se approvare o meno. non sono in grado di capire
+  se fidarmi. posso aiutarvi con cose umane, non a livello di coding.»* Chiedere a una persona
+  di approvare ciò che non può valutare non aggiunge sicurezza — aggiunge una firma vuota, e
+  intanto il lavoro resta fermo per ore. La sicurezza sta nei controlli; se non bastano si
+  rafforzano quelli. Il vecchio meccanismo resta dietro `CHIEDI_APPROVAZIONE=1`.
+  **A Vlad si chiedono solo domande umane:** prezzi, equilibrio, cosa mostrare ai giocatori.
+- **Come regge la notte (21→09) senza nessuno.** Tetto giornaliero 60 lavori (era 30: si
+  esauriva nel pomeriggio). Ogni stop automatico si riprova dopo 20′, fino a 2 volte.
+  `riprendi` azzera anche `fallitiDiFila` — prima ripartiva con tre in conto e si rifermava
+  subito. Un ramo respinto torna in coda **una volta**, con dentro il motivo esatto del
+  cancello: dei 7 respinti del 20/08, **6 erano recuperabili in poche righe**.
+- **Quanto dura un giro:** ~45′ l'agente + ~18′ il cancello (la suite gira due volte su 500+
+  test) + ~3′ la fusione. Poco più di un'ora a lavoro, cioè ~10 lavori a notte.
 
 - **⚠️ «Fallito» non vuol dire che il lavoro non c'è.** Il 20/08 sera tre run di fila hanno
   riportato fallimento per tempo scaduto e il ciclo si è fermato da solo (comportamento giusto:
