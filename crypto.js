@@ -72,6 +72,8 @@ window.cryptoBuy = async function(coinId, eurAmount) {
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Acquisto fallito', error), 'error'); return; }
 
     window.CE_money.addebitatoDalServer(amount, 'crypto_buy');
+    const modalEl = document.getElementById('crypto-trade-modal');
+    if (modalEl) modalEl.remove();
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`✅ Acquistati ${_fmtCoin(data.coins_got)} ${coinId} per €${amount.toLocaleString()}`, 'success');
     window._cryptoState._lastFetch = 0;
@@ -89,6 +91,8 @@ window.cryptoSell = async function(coinId, coinAmount) {
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Vendita fallita', error), 'error'); return; }
 
     window.CE_money.accreditatoDalServer(Math.floor(data.eur_received), 'crypto_sell');
+    const modalEl = document.getElementById('crypto-trade-modal');
+    if (modalEl) modalEl.remove();
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`✅ Venduti ${_fmtCoin(amount)} ${coinId} per €${Math.floor(data.eur_received).toLocaleString()}`, 'success');
     window._cryptoState._lastFetch = 0;
