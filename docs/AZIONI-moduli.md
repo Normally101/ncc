@@ -334,18 +334,17 @@
 
 ## `hq.js`
 
-- `_hqNascondiNavigazione` · `hq.js:18` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqInit` · `hq.js:28` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqGetCityRooms` · `hq.js:71` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqHasRoomInCity` · `hq.js:76` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqGetRoomLevel` · `hq.js:81` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqAllEffects` · `hq.js:87` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqUpgradeRoom` · `hq.js:121` · data-ce-act: `hqUpgradeRoom` (`hq.js`) · doppioni: nessuno · denaro: CE_money (`spend, addReputation`)
-- `hqSwitchCity` · `hq.js:202` · data-ce-act: `hqSwitchCity` (`hq.js`) · doppioni: nessuno · denaro: no
-- `renderTabHQ` · `hq.js:209` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqOpenBuildModalStanza` · `hq.js:339` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_hqDailyTick` · `hq.js:376` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_hqBuildFromList` · `hq.js:410` · data-ce-act: `_hqBuildFromList` (`hq.js`) · doppioni: nessuno · denaro: no
+- `_hqNascondiNavigazione` · `hq.js:13` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqInit` · `hq.js:23` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqGetCityRooms` · `hq.js:66` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqHasRoomInCity` · `hq.js:71` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqGetRoomLevel` · `hq.js:76` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqAllEffects` · `hq.js:82` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqUpgradeRoom` · `hq.js:116` · data-ce-act: `hqUpgradeRoom` (`hq.js`) · doppioni: nessuno · denaro: CE_money (`spend, addReputation`)
+- `hqSwitchCity` · `hq.js:197` · data-ce-act: `hqSwitchCity` (`hq.js`) · doppioni: nessuno · denaro: no
+- `renderTabHQ` · `hq.js:204` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_hqDailyTick` · `hq.js:339` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_hqBuildFromList` · `hq.js:373` · data-ce-act: `_hqBuildFromList` (`hq.js`) · doppioni: nessuno · denaro: no
 
 ## `hq-visual.js`
 
@@ -428,7 +427,6 @@
 |---|---|---|
 | `b2bLockedDriverIds` | `b2b.js:70` | Getter ID autisti bloccati B2B mai invocato |
 | `_vipSyncCash` | `vip-clients.js:18` | Helper non referenziato |
-| `hqOpenBuildModalStanza` | `hq.js:339` | Nessuna invocazione trovata nel codebase (JS/HTML/data-ce-act) |
 | `getMissionRequires` | `quests.js:15` | Helper requisiti missione non referenziato |
 | `driverSkillEffect` | `driver_skills.js:101` | Calcolo effetto skill non referenziato |
 

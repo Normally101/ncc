@@ -55,4 +55,12 @@ describe('hq — interruttore spento', () => {
         assert.equal(typeof sandbox.window.hqGetEffect, 'undefined',
             'se qualcuno la reintroduce, va prima messa nel registro delle azioni');
     });
+
+    test('hqOpenBuildModalStanza e\' stata rimossa: era codice morto', () => {
+        // hqOpenBuildModalStanza era definita in hq.js ma mai invocata dalla UI:
+        // il flusso lista usa _hqBuildFromList e il flusso campus usa hqOpenBuildModalSlot.
+        const { sandbox } = freshEnv();
+        assert.equal(typeof sandbox.window.hqOpenBuildModalStanza, 'undefined',
+            'hqOpenBuildModalStanza e\' codice morto e non deve esistere su window');
+    });
 });

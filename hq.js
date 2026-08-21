@@ -4,11 +4,6 @@
    Espansione 6: Base Building HQ Multi-Città e Tiers
    ================================================================ */
 
-// Grid layout: 5 columns × 3 rows
-const HQ_GRID_COLS = 5;
-const HQ_GRID_ROWS = 3;
-const HQ_GRID_SIZE = HQ_GRID_COLS * HQ_GRID_ROWS;
-
 // ── INIT & MIGRATION ──────────────────────────────────────────────────────────
 
 /* Interruttore spento: toglie dalla navigazione ogni voce che porta all'HQ.
@@ -336,39 +331,7 @@ window.renderTabHQ = function() {
     }
 };
 
-window.hqOpenBuildModalStanza = function(roomId) {
-    const currentCityId = gameState.currentHQCity || 'roma';
-    const grid = gameState.hqs[currentCityId].grid || {};
-    
-    // Find empty slots
-    const emptySlots = [];
-    for (let i = 0; i < HQ_GRID_SIZE; i++) {
-        if (!grid[i]) emptySlots.push(i);
-    }
 
-    const existing = document.getElementById('hq-build-modal');
-    if (existing) existing.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'hq-build-modal';
-    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:50;display:flex;align-items:center;justify-content:center';
-    modal.innerHTML = `
-      <div style="background:#1a1a2e;border:1px solid #21262d;border-radius:6px;padding:20px;width:320px;max-width:calc(100vw - 32px);margin:16px;box-shadow:0 20px 60px rgba(0,0,0,0.8);max-height:80vh;overflow-y:auto">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-          <div style="font-size:12px;font-weight:700;color:#e6edf3">🏗️ Scegli lo slot per ${window.HQ_ROOMS.find(r=>r.id===roomId).name}</div>
-          <button ${ceAct('ceRemove', ['hq-build-modal'])} style="color:#6b7280;background:none;border:none;font-size:18px;cursor:pointer;padding:0;line-height:1">✕</button>
-        </div>
-        ${emptySlots.length === 0
-            ? '<div style="font-size:10px;color:#6b7280;text-align:center;padding:16px 0">Nessuno slot libero in questa città.</div>'
-            : emptySlots.map(slot => `
-              <div style="background:rgba(255,255,255,0.03);border:1px solid #21262d;border-radius:6px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;cursor:pointer"
-                   ${ceAct('ceHqBuildConfirm', ['hq-build-modal', currentCityId, roomId, slot])}>
-                <div style="font-weight:700;color:#e6edf3;font-size:12px">Slot #${slot}</div>
-                <div style="color:#c79a2a;font-size:11px;font-family:monospace">Posiziona qui</div>
-              </div>`).join('')}
-      </div>`;
-    document.body.appendChild(modal);
-};
 
 // ── DAILY EFFECTS IN ENGINE ────────────────────────────────────────────────────
 // Called from processDailyRoutines via window._hqDailyTick
