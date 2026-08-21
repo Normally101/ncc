@@ -41,10 +41,31 @@ Coda a **790 KB**, 2,4 milioni di token spediti per un solo tentativo.
 `null` è una risposta vera e il ciclo segna il fallimento; un ramo qualsiasi è una risposta
 falsa che nessun controllo a valle può smascherare, perché a valle sembra tutto normale.
 
-**Da recuperare:** il ramo `…-08210736` porta **7.852 righe in 22 file** mai giudicate, e toglie
-`engine.js` dalle eccezioni del guardiano. Attenzione: è un ramo Frankenstein — le riprove ci
-hanno impilato dentro il lavoro di altri task (alleanze, carriera, holding, lusso, mercatoP2P,
-negozioDC, turismo, vip, vtk). Va aperto e diviso, non fuso com'è.
+**Il ramo `…-08210736` è stato spacchettato e chiuso** (21/08 mattina). Non era un Frankenstein:
+sembrava tale perché la mia copia di `main` era vecchia di quattordici fusioni. Portava due sole
+modifiche, e ne è entrata una.
+
+- **Tenuta:** `_addCash` passava da `gameState.cash` e basta — chi incassava per quella strada
+  vedeva il denaro a schermo e lo perdeva al ricaricamento. Ora passa da `CE_money.earn`.
+- **Scartata:** la conversione di `payToRepairCar` sostituiva la RPC del server con
+  `CE_money.spend`. `rpc_repair_vehicle` non muove solo denaro: verifica che l'auto sia tua,
+  rifiuta di ripararla mentre è in corsa, controlla i fondi **lato server** e scrive
+  `condition`/`tire_pressure`/`status` sulla riga del veicolo. Senza di lei restano soldi spesi e
+  auto ancora rotta al ricaricamento. Due test esistenti lo dicevano già: il ramo li faceva
+  diventare rossi. **Il guardiano della porta unica non poteva accorgersene** — cerca
+  `gameState.cash -=`, e sostituire una RPC con `CE_money` lo soddisfa mentre peggiora il gioco.
+
+**La Kasko: la decisione del 20/08 era applicata a metà.** Avevo tolto la riparazione gratuita da
+`repairCostFor`, ma `payToRepairCar` aveva una **seconda porta** che usciva prima di arrivarci.
+Risultato: il prezzo mostrato diceva €5.950 e il pulsante riparava gratis. Il test che avevo
+scritto guardava `repairCostFor`, cioè la porta sbagliata, e restava verde. Ora la scorciatoia
+non c'è più; la promessa della Kasko resta dove nasce — con la Kasko l'incidente non fa danno
+affatto (`engine-rides.js:595`), quindi non c'è niente da riparare.
+
+**Suite: 944 verdi** (939 prima). Verificato per mutazione in entrambe le direzioni.
+**`engine.js` resta nelle eccezioni:** ha ancora **10 mutazioni dirette** del saldo
+(righe 813, 852, 1005, 1256, 1308, 1418, 1764, 1787, 1998 + il ripiego voluto in `_addCash`).
+È il prossimo lavoro vero su quel file.
 
 ---
 
