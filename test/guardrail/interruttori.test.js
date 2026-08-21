@@ -44,7 +44,7 @@ function features() {
 const SPENTE_ALL_INIZIO = new Set([
     'alleanze', 'salone', 'mercatoP2P', 'cripto', 'vtk', 'turismo',
     'lusso', 'politica', 'infrastrutture', 'holding', 'nemesi',
-    'negozioDC', 'vip', 'carriera',
+    'negozioDC', 'vip',
 ]);
 
 describe('guardrail — gli interruttori delle funzioni', () => {

@@ -54,10 +54,17 @@ window.claimQuestReward = function(questId) {
   gs.completedQuests.push(questId);
 
   const r = q.rewards;
-  if (r.cash)       { gs.cash += r.cash; gs.annualProfitTracker = (gs.annualProfitTracker || 0) + r.cash;
-    // Server-authoritative mirror (come per il VTK sotto): senza questo il reward cash
-    // resta solo locale e al prossimo bridge col server viene sovrascritto → desync/exploit.
-    if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function') window.ServerState.syncCash(gs.cash).catch(() => {}); }
+  if (r.cash) {
+    gs.annualProfitTracker = (gs.annualProfitTracker || 0) + r.cash;
+    if (window.CE_money && typeof window.CE_money.earn === 'function') {
+      window.CE_money.earn(r.cash, 'quest_reward');
+    } else {
+      gs.cash = (gs.cash || 0) + r.cash;
+      if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function') {
+        window.ServerState.syncCash(gs.cash).catch(() => {});
+      }
+    }
+  }
   if (r.vtk) {
     gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;   // optimistic
     // VTK-5: il server applica il cap giornaliero (500) ed è autoritativo.
@@ -76,12 +83,22 @@ window.claimQuestReward = function(questId) {
     }
   }
   if (r.tc) {
-    gs.driverCoins = (gs.driverCoins || 0) + r.tc;
-    window.ServerState?.addDriverCoins?.(r.tc, 'quest_reward')
-        ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gs.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
-        ?.catch(() => {});
+    if (window.CE_money && typeof window.CE_money.earnDC === 'function') {
+      window.CE_money.earnDC(r.tc, 'quest_reward');
+    } else {
+      gs.driverCoins = (gs.driverCoins || 0) + r.tc;
+      window.ServerState?.addDriverCoins?.(r.tc, 'quest_reward')
+          ?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gs.driverCoins = _r.driver_coins; if (typeof updateUI === 'function') updateUI(); } })
+          ?.catch(() => {});
+    }
   }
-  if (r.rep)        gs.reputation = Math.min(5.0 + (gs.prestige || 0), gs.reputation + r.rep);
+  if (r.rep) {
+    if (window.CE_money && typeof window.CE_money.addReputation === 'function') {
+      window.CE_money.addReputation(r.rep);
+    } else {
+      gs.reputation = Math.min(5.0 + (gs.prestige || 0), (gs.reputation || 0) + r.rep);
+    }
+  }
   if (r.shadowCoin) gs.shadowCoin = (gs.shadowCoin || 0) + r.shadowCoin;
   if (r.unlock)     { if (!gs.unlockedFeatures) gs.unlockedFeatures = []; if (!gs.unlockedFeatures.includes(r.unlock)) gs.unlockedFeatures.push(r.unlock); }
   if (r.title)      gs.playerTitle = r.title;

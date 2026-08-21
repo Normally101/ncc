@@ -609,3 +609,106 @@ describe('Funzione Carriera — Interfaccia Utente e Modali (ui-career.js & ce-a
         assert.ok(chips.includes('Magnate Supremo'));
     });
 });
+
+describe('Funzione Carriera — Sincronizzazione CE_money e Integrità Economica', () => {
+    let amb;
+    beforeEach(() => { amb = creaAmbienteCarriera(); });
+    afterEach(() => amb.env.stopAllIntervals());
+
+    test('claimQuestReward invoca CE_money.earn con motivo e aggiorna cash e ServerState', async () => {
+        const { sandbox, gs, syncedCash } = amb;
+        const earnChiamate = [];
+        const origEarn = sandbox.CE_money.earn;
+        sandbox.CE_money.earn = (amt, motivo) => {
+            earnChiamate.push({ amt, motivo });
+            return origEarn(amt, motivo);
+        };
+
+        gs.cash = 5000;
+        gs.claimableQuests = ['t03']; // t03: cash 1500
+
+        sandbox.claimQuestReward('t03');
+        await new Promise(r => setImmediate(r));
+
+        assert.equal(gs.cash, 6500);
+        assert.deepEqual(earnChiamate, [{ amt: 1500, motivo: 'quest_reward' }]);
+        assert.deepEqual(syncedCash, [6500]);
+    });
+
+    test('claimQuestReward invoca CE_money.earnDC con motivo e accredita Driver Coins', async () => {
+        const { sandbox, gs, addedDriverCoins } = amb;
+        const earnDcChiamate = [];
+        const origEarnDC = sandbox.CE_money.earnDC;
+        sandbox.CE_money.earnDC = (amt, motivo) => {
+            earnDcChiamate.push({ amt, motivo });
+            return origEarnDC(amt, motivo);
+        };
+
+        gs.driverCoins = 10;
+        gs.claimableQuests = ['m16']; // m16: tc 120
+
+        sandbox.claimQuestReward('m16');
+        await new Promise(r => setImmediate(r));
+
+        assert.equal(gs.driverCoins, 130);
+        assert.deepEqual(earnDcChiamate, [{ amt: 120, motivo: 'quest_reward' }]);
+        assert.deepEqual(addedDriverCoins, [{ amt: 120, reason: 'quest_reward' }]);
+    });
+
+    test('claimQuestReward invoca CE_money.addReputation rispettando il tetto 5.0 + prestigio', () => {
+        const { sandbox, gs } = amb;
+        const repChiamate = [];
+        const origAddRep = sandbox.CE_money.addReputation;
+        sandbox.CE_money.addReputation = (delta) => {
+            repChiamate.push(delta);
+            return origAddRep(delta);
+        };
+
+        gs.prestige = 1.0; // tetto max = 6.0
+        gs.reputation = 5.2;
+        gs.claimableQuests = ['m01']; // m01: rep 0.2
+
+        sandbox.claimQuestReward('m01');
+
+        assert.equal(Number(gs.reputation.toFixed(2)), 5.4);
+        assert.deepEqual(repChiamate, [0.2]);
+    });
+
+    test('scelte del bivio con effetto monetario transitano per CE_money', async () => {
+        const { sandbox, gs, syncedCash } = amb;
+        const earnChiamate = [];
+        const repChiamate = [];
+        const origEarn = sandbox.CE_money.earn;
+        const origAddRep = sandbox.CE_money.addReputation;
+
+        sandbox.CE_money.earn = (amt, motivo) => {
+            earnChiamate.push({ amt, motivo });
+            return origEarn(amt, motivo);
+        };
+        sandbox.CE_money.addReputation = (delta) => {
+            repChiamate.push(delta);
+            return origAddRep(delta);
+        };
+
+        gs.completedQuests = ['t05'];
+        gs.cash = 1000;
+        gs.reputation = 3.0;
+
+        // Bivio t06: opzione accetta (+5000 cash)
+        sandbox.startMissionRun('t06');
+        sandbox._applyBivioChoice('t06', 'accetta');
+        await new Promise(r => setImmediate(r));
+
+        assert.equal(gs.cash, 6000);
+        assert.deepEqual(earnChiamate, [{ amt: 5000, motivo: 'quest_bivio' }]);
+        assert.deepEqual(syncedCash, [6000]);
+
+        // Bivio m01: opzione rifiuta (+0.2 rep)
+        gs.completedQuests.push('t06');
+        sandbox.startMissionRun('m01');
+        sandbox._applyBivioChoice('m01', 'rifiuta');
+
+        assert.equal(Number(gs.reputation.toFixed(1)), 3.2);
+        assert.deepEqual(repChiamate, [0.2]);
+    });
+});
