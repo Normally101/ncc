@@ -3,6 +3,12 @@
 > Aggiornato: 21 agosto 2026 (notte)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
+> **E leggi anche le note che Vlad ha lasciato a Gigi mentre non c'eri:**
+> `gcloud compute ssh gigi-whatsapp --zone=us-central1-a --command='cat ~/gigi/per-claude.md'`
+> Le scrive dal telefono con «nota: ...» quando è fuori casa. Dopo averle lette,
+> segnale come lette (`segnaLette()` in `jarvis/src/note.js`), altrimenti restano
+> a contarsi come nuove per sempre.
+
 ---
 
 # 🟢 21/08 notte — 19 funzioni accese su 21
