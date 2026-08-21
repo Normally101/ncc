@@ -26,8 +26,18 @@ const AUTORIZZATI = new Set(['money.js', 'serverState.js']);
 
 // Debito noto: file non ancora convertiti alla porta unica.
 // Ogni task di conversione RIMUOVE una riga da qui. Nessun task ne aggiunge.
-const ECCEZIONI = new Set([
-    'engine.js',
+const ECCEZIONI = new Set([]);
+
+// Righe autorizzate in deroga perche' non sono transazioni economiche:
+// ciascuna ha il motivo esplicito accanto. Non allargare l'espressione regolare.
+const RIGHE_CONSENTITE = new Map([
+    // engine.js:
+    // 1. `gameState.cash = 0` all'inizio di una partita nuova: e' inizializzazione.
+    ['engine.js:gameState.cash = 0;', 'Inizializzazione nuova partita'],
+    // 2. il ripiego dentro `_addCash` per quando money.js non e' ancora caricato.
+    ['engine.js:gameState.cash += amount;', 'Ripiego _addCash prima del caricamento di money.js'],
+    // 3. il ripristino dell'ultimo saldo valido quando il saldo diventa NaN: e' una riparazione.
+    ['engine.js:gameState.cash = (typeof window._lastValidCash === \'number\') ? window._lastValidCash : 0;', 'Ripristino ultimo saldo valido quando non-finito'],
 ]);
 
 const MUTAZIONE = /gameState\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
@@ -46,7 +56,11 @@ function mutazioniIn(file) {
         // Salta i commenti di riga: parlare del bug non e' commetterlo.
         const senzaCommento = riga.replace(/\/\/.*$/, '');
         MUTAZIONE.lastIndex = 0;
-        if (MUTAZIONE.test(senzaCommento)) trovate.push(`${file}:${i + 1}  ${riga.trim()}`);
+        if (MUTAZIONE.test(senzaCommento)) {
+            const trimmed = riga.trim();
+            if (RIGHE_CONSENTITE.has(`${file}:${trimmed}`)) return;
+            trovate.push(`${file}:${i + 1}  ${trimmed}`);
+        }
     });
     return trovate;
 }
@@ -81,6 +95,14 @@ describe('guardrail — una sola porta per il denaro', () => {
         const sorgente = fs.readFileSync(path.join(ROOT, 'money.js'), 'utf8');
         for (const fn of ['spend', 'earn', 'spendDC', 'earnDC', 'addReputation']) {
             assert.ok(new RegExp(`function ${fn}\\b`).test(sorgente), `money.js deve esporre ${fn}()`);
+        }
+    });
+
+    test('le righe consentite in deroga devono esistere davvero nel sorgente', () => {
+        for (const [chiave, motivo] of RIGHE_CONSENTITE) {
+            const [file, riga] = chiave.split(/:(.+)/);
+            const testo = fs.readFileSync(path.join(ROOT, file), 'utf8');
+            assert.ok(testo.includes(riga), `Riga consentita non trovata in ${file} (${motivo}): ${riga}`);
         }
     });
 });
