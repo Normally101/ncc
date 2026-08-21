@@ -218,6 +218,8 @@ function _vipCompletePlatinum(ride, driver, earned) {
 }
 
 window.vipPlatinumEventBlock = function(emailId) {
+    const e = gameState.emails.find(x => x.id === emailId);
+    if (!e) return;
     const fine = 300;
     if (!window.CE_money.spend(fine, 'vip_platinum_block')) return;
     _vipResolveEmail(emailId);
@@ -227,6 +229,8 @@ window.vipPlatinumEventBlock = function(emailId) {
 };
 
 window.vipPlatinumEventAllow = function(emailId) {
+    const e = gameState.emails.find(x => x.id === emailId);
+    if (!e) return;
     _vipResolveEmail(emailId);
     window.CE_money.addReputation(0.15);
     logToMap('📸 Paparazzi liberi di scattare. Hype! Reputazione +0.15★');
@@ -293,6 +297,8 @@ function _vipCompleteOnorevole(ride, driver, earned) {
 }
 
 window.vipOnorevoleEventCopera = function(emailId) {
+    const e = gameState.emails.find(x => x.id === emailId);
+    if (!e) return;
     _vipResolveEmail(emailId);
     if ((gameState.politicalTokens || 0) > 0) {
         gameState.politicalTokens--;
@@ -307,6 +313,8 @@ window.vipOnorevoleEventCopera = function(emailId) {
 };
 
 window.vipOnorevoleEventResisti = function(emailId) {
+    const e = gameState.emails.find(x => x.id === emailId);
+    if (!e) return;
     _vipResolveEmail(emailId);
     gameState.politicalTokens = (gameState.politicalTokens || 0) + 1;
     window.CE_money.addReputation(-0.05);
@@ -657,6 +665,8 @@ function _vipCompleteWedding(ride, driver, earned) {
 }
 
 window.vipWeddingEventGestisci = function(emailId) {
+    const e = gameState.emails.find(x => x.id === emailId);
+    if (!e) return;
     const cost = 800;
     if (!window.CE_money.spend(cost, 'vip_wedding_drama_cost')) return;
     _vipResolveEmail(emailId);
@@ -667,6 +677,8 @@ window.vipWeddingEventGestisci = function(emailId) {
 };
 
 window.vipWeddingEventIgnora = function(emailId) {
+    const e = gameState.emails.find(x => x.id === emailId);
+    if (!e) return;
     _vipResolveEmail(emailId);
     window.CE_money.addReputation(-0.2);
     showNotification('💥 White Lace furious! Reputazione −0.2★', 'error');
