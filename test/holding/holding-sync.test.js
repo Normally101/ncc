@@ -194,4 +194,84 @@ describe('engine-holding — sincronizzazione cassa col server (CE_money)', () =
             assert.deepEqual(syncedCash, []);
         });
     });
+
+    describe('claimHoldingDividends — guardia già pagato', () => {
+        test('ricevuto "già pagato" dal server, non accredita denaro né modifica cassa', async () => {
+            const syncedCash = [];
+            const rpcCalls = [];
+            const env = freshEnv({
+                serverState: {
+                    syncCash: async (v) => {
+                        syncedCash.push(v);
+                        return { success: true, cash: v };
+                    },
+                },
+            });
+            env.sandbox.supabaseClient = {
+                rpc: async (name, params) => {
+                    rpcCalls.push({ name, params });
+                    if (name === 'rpc_daily_dividends') {
+                        return {
+                            data: {
+                                success: true,
+                                status: 'already_paid',
+                                message: 'già pagato',
+                                credited_count: 0,
+                                total_paid: 0,
+                            },
+                            error: null,
+                        };
+                    }
+                    return { data: null, error: null };
+                },
+            };
+            env.sandbox.window.supabaseClient = env.sandbox.supabaseClient;
+            const sandbox = env.sandbox;
+            const gs = sandbox.gameState;
+            gs.cash = 100000;
+
+            const res = await sandbox.claimHoldingDividends();
+
+            assert.equal(res?.status, 'already_paid');
+            assert.equal(res?.message, 'già pagato');
+            assert.equal(gs.cash, 100000, 'la cassa non deve essere modificata se già pagato');
+            assert.deepEqual(syncedCash, [], 'non deve sincronizzare cassa se già pagato');
+            assert.equal(rpcCalls.length, 1);
+            assert.equal(rpcCalls[0].name, 'rpc_daily_dividends');
+            assert.ok(env.notifications.some(n => n.type === 'info' && n.msg.includes('già pagati')));
+        });
+
+        test('errore RPC notifica errore e non accredita denaro', async () => {
+            const syncedCash = [];
+            const rpcCalls = [];
+            const env = freshEnv({
+                serverState: {
+                    syncCash: async (v) => {
+                        syncedCash.push(v);
+                        return { success: true, cash: v };
+                    },
+                },
+            });
+            env.sandbox.supabaseClient = {
+                rpc: async (name, params) => {
+                    rpcCalls.push({ name, params });
+                    if (name === 'rpc_daily_dividends') {
+                        return { data: null, error: { message: 'Errore interno server' } };
+                    }
+                    return { data: null, error: null };
+                },
+            };
+            env.sandbox.window.supabaseClient = env.sandbox.supabaseClient;
+            const sandbox = env.sandbox;
+            const gs = sandbox.gameState;
+            gs.cash = 50000;
+
+            const res = await sandbox.claimHoldingDividends();
+
+            assert.equal(res?.success, false);
+            assert.equal(gs.cash, 50000);
+            assert.deepEqual(syncedCash, []);
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Errore interno server')));
+        });
+    });
 });

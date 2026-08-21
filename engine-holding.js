@@ -114,3 +114,39 @@ window._listCompanyIPO_NPC = function() {
     updateUI(); saveGame();
     if (typeof renderTabFinance === 'function') renderTabFinance();
 };
+
+// ── DIVIDENDI HOLDING / IPO (rpc_daily_dividends) ─────────────────
+window.claimHoldingDividends = async function() {
+    if (!window.supabaseClient?.rpc) return { success: false, reason: 'no_client' };
+    try {
+        const { data, error } = await window.supabaseClient.rpc('rpc_daily_dividends');
+        if (error) {
+            if (typeof showNotification === 'function') {
+                showNotification(error.message || 'Errore dividendi', 'error');
+            }
+            return { success: false, error };
+        }
+        if (!data) return { success: false, reason: 'empty_response' };
+
+        // Se il server risponde "già pagato", non accredita niente
+        if (data.status === 'already_paid' || data.message === 'già pagato' || data.reason === 'already_paid') {
+            if (typeof showNotification === 'function') {
+                showNotification('Dividendi di oggi già pagati.', 'info');
+            }
+            return data;
+        }
+
+        if (data.total_paid > 0 || data.credited_count > 0) {
+            if (typeof showNotification === 'function') {
+                showNotification(`Dividendi accreditati: €${(data.total_paid || 0).toLocaleString()}`, 'success');
+            }
+        }
+        return data;
+    } catch(e) {
+        if (typeof showNotification === 'function') {
+            showNotification(e.message || 'Errore dividendi', 'error');
+        }
+        return { success: false, error: e };
+    }
+};
+window.claimDailyDividends = window.claimHoldingDividends;
