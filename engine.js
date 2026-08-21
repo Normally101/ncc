@@ -810,7 +810,7 @@ function _resolveAuction() {
     } else {
         // Refund reserved bid if player had bid
         if (auc.playerBid) {
-            gameState.cash += auc.playerBid;
+            CE_money.earn(auc.playerBid, 'auction_refund');
             showNotification(`Asta: ${auc.name} vinta da un concorrente. Rimborso €${auc.playerBid.toLocaleString()}.`, 'error');
         } else {
             showNotification(`Asta: ${auc.name} vinta da un concorrente.`, 'error');
@@ -1253,7 +1253,7 @@ function _triggerVIPMidRideEvent(ride) {
         setTimeout(() => toast.remove(), 200);
 
         if (choice === 'A') {
-            if (ev.costA) gameState.cash -= ev.costA;
+            if (ev.costA) CE_money.spend(ev.costA, 'vip_event_cost');
             gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + ev.repA);
             logToMap(`${ev.icon} Evento VIP: accontentato → +${ev.repA}★${ev.costA ? ` −€${ev.costA}` : ''}`);
             if (typeof showNotification === 'function') showNotification(`${ev.icon} Richiesta accontentata! +${ev.repA}★`, 'success');
@@ -1304,10 +1304,8 @@ function _getMaxStaff() {
 window.payFine = function(fineId) {
     const fine = (gameState.activeFines || []).find(f => f.id === fineId);
     if (!fine || fine.status !== 'pending') return;
-    if (gameState.cash < fine.amount) { showNotification('Fondi insufficienti!', 'error'); return; }
-    gameState.cash -= fine.amount;
+    if (!CE_money.spend(fine.amount, 'pay_fine')) return;
     fine.status = 'paid';
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`💸 Multa pagata: €${fine.amount}`);
     showNotification(`Multa pagata: −€${fine.amount}`, 'error');
     updateUI(); saveGame();
@@ -1411,12 +1409,7 @@ window.attackTerritory = function(regionId) {
     }
 
     const warCost = Math.floor(region.price * 0.25 + 15000); // 25% del costo licenza + €15k
-    if (gameState.cash < warCost) {
-        showNotification(`Fondi insufficienti! Serve €${warCost.toLocaleString()} per la guerra dei prezzi.`, 'error'); return;
-    }
-
-    gameState.cash -= warCost;
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+    if (!CE_money.spend(warCost, 'price_war')) return;
     const warDays = 3;
     gameState.pricewars.push({
         regionId,
@@ -1757,11 +1750,7 @@ window.speedUpConstruction = function(invId) {
     if (!c) return;
     const daysLeft = Math.max(0, c.completesDay - gameState.day);
     const dcCost   = Math.ceil(daysLeft * 2); // 2 DC per day remaining
-    if ((gameState.driverCoins || 0) < dcCost) {
-        if (typeof showNotification === 'function') showNotification(`Driver Coins insufficienti! Servono ${dcCost} DC.`, 'error');
-        return;
-    }
-    gameState.driverCoins -= dcCost;
+    if (!CE_money.spendDC(dcCost, 'speed_up_construction')) return;
     // Complete immediately
     gameState.constructions = gameState.constructions.filter(x => x.invId !== invId);
     if (!gameState.investments.includes(invId)) gameState.investments.push(invId);
@@ -1784,8 +1773,7 @@ window.sellInvestment = function(invId) {
     const refund = Math.floor(item.price * 0.40);
     if (!confirm(`Vendere ${item.name} per €${refund.toLocaleString()} (40% del valore)? Non si può annullare.`)) return;
     gameState.investments.splice(idx, 1);
-    gameState.cash += refund;
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
+    CE_money.earn(refund, 'sell_investment');
     logToMap(`🏷️ Investimento venduto: ${item.name} → +€${refund.toLocaleString()}`);
     if (typeof showNotification === 'function') showNotification(`${item.name} venduto per €${refund.toLocaleString()}`, 'success');
     updateUI();
@@ -1995,7 +1983,7 @@ window.acceptDiamondContract = function(emailId) {
     if (!car) { showNotification('Serve un veicolo VIP/Ultra disponibile!', 'error'); return; }
     email.status = 'resolved';
     const price = email.offer || 30000;
-    gameState.cash += price;
+    CE_money.earn(price, 'diamond_contract');
     gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.2);
     gameState.diamondContractsCompleted = (gameState.diamondContractsCompleted || 0) + 1;
     logToMap(`🔶 Diamond Contract completato! +€${price.toLocaleString()} +0.2★`);
