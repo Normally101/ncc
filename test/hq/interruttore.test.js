@@ -55,4 +55,13 @@ describe('hq — interruttore spento', () => {
         assert.equal(typeof sandbox.window.hqGetEffect, 'undefined',
             'se qualcuno la reintroduce, va prima messa nel registro delle azioni');
     });
+
+    test('la versione morta di hqOpenBuildModal in hq.js e\' stata rimossa', () => {
+        // hq.js definiva una versione obsoleta di hqOpenBuildModal(roomId) mai chiamata
+        // e sovrascritta da hq-visual.js (che usa cityId, slotIndex).
+        // Caricando il modulo base hq.js senza il layer visuale, hqOpenBuildModal non deve esistere.
+        const { sandbox } = freshEnv();
+        assert.equal(typeof sandbox.window.hqOpenBuildModal, 'undefined',
+            'hq.js non deve definire hqOpenBuildModal: la versione attiva e corretta e\' in hq-visual.js');
+    });
 });

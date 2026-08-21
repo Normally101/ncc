@@ -334,23 +334,22 @@
 
 ## `hq.js`
 
-- `_hqNascondiNavigazione` · `hq.js:18` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqInit` · `hq.js:28` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqGetCityRooms` · `hq.js:71` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqHasRoomInCity` · `hq.js:76` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqGetRoomLevel` · `hq.js:81` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqAllEffects` · `hq.js:87` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqUpgradeRoom` · `hq.js:121` · data-ce-act: `hqUpgradeRoom` (`hq.js`) · doppioni: nessuno · denaro: CE_money (`spend, addReputation`)
-- `hqSwitchCity` · `hq.js:202` · data-ce-act: `hqSwitchCity` (`hq.js`) · doppioni: nessuno · denaro: no
-- `renderTabHQ` · `hq.js:209` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqOpenBuildModal` · `hq.js:339` · data-ce-act: `hqOpenBuildModal` (`hq-visual.js`) · doppioni: `hq-visual.js:88` · denaro: no
-- `_hqDailyTick` · `hq.js:376` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_hqBuildFromList` · `hq.js:410` · data-ce-act: `_hqBuildFromList` (`hq.js`) · doppioni: nessuno · denaro: no
+- `_hqNascondiNavigazione` · `hq.js:13` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqInit` · `hq.js:23` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqGetCityRooms` · `hq.js:66` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqHasRoomInCity` · `hq.js:71` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqGetRoomLevel` · `hq.js:76` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqAllEffects` · `hq.js:82` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `hqUpgradeRoom` · `hq.js:116` · data-ce-act: `hqUpgradeRoom` (`hq.js`) · doppioni: nessuno · denaro: CE_money (`spend, addReputation`)
+- `hqSwitchCity` · `hq.js:197` · data-ce-act: `hqSwitchCity` (`hq.js`) · doppioni: nessuno · denaro: no
+- `renderTabHQ` · `hq.js:204` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_hqDailyTick` · `hq.js:337` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_hqBuildFromList` · `hq.js:371` · data-ce-act: `_hqBuildFromList` (`hq.js`) · doppioni: nessuno · denaro: no
 
 ## `hq-visual.js`
 
 - `renderHQCampus` · `hq-visual.js:7` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqOpenBuildModal` · `hq-visual.js:88` · data-ce-act: `hqOpenBuildModal` (`hq-visual.js`) · doppioni: `hq.js:339` · denaro: no
+- `hqOpenBuildModal` · `hq-visual.js:88` · data-ce-act: `hqOpenBuildModal` (`hq-visual.js`) · doppioni: nessuno · denaro: no
 - `hqShowInfoPanel` · `hq-visual.js:139` · data-ce-act: `hqShowInfoPanel` (`hq-visual.js`) · doppioni: nessuno · denaro: no
 
 ## `quests.js`
@@ -417,8 +416,6 @@
 | `_sb` | `b2b.js:34` | `p2p-market.js:49` | Helper locali identici definiti in scope globale |
 | `_uid` | `b2b.js:35` | `p2p-market.js:50` | Helper locali identici definiti in scope globale |
 | `_save` | `vanity.js:160` | `security.js:82` |  |
-| `hqOpenBuildModal` | `hq.js:339` | `hq-visual.js:88` | Firme incompatibili tra `hq-visual.js` (passa `cityId`) e `hq.js` (passa `roomId`) |
-| `hqOpenBuildModal` | `hq-visual.js:88` | `hq.js:339` | Firme incompatibili tra `hq-visual.js` (passa `cityId`) e `hq.js` (passa `roomId`) |
 | `gs` | `vittorio.js:24` | `objective-tracker.js:15` |  |
 | `processDailyRoutines` | `vittorio.js:153` | `engine-daily.js:315` | Hook routine giornaliere sovrascritto / decorato |
 
