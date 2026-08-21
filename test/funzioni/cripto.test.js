@@ -221,9 +221,11 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
         beforeEach(() => { amb = creaAmbienteCripto(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('acquisto valido scala cassa, accredita coin nel portfolio e sincronizza', async () => {
+        test('acquisto valido scala cassa UNA sola volta e NON risincronizza verso il server', async () => {
             const { sandbox, gs, rpcLog, env } = amb;
             gs.cash = 20000;
+            let sincronizzazioni = 0;
+            sandbox.ServerState.syncCash = async () => { sincronizzazioni++; };
 
             await sandbox.cryptoBuy('EMPIRE', 5000);
 
@@ -233,12 +235,28 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
             assert.equal(buyRpc.args.v_coin_id, 'EMPIRE');
             assert.equal(buyRpc.args.v_eur_in, 5000);
 
-            // Verifica che il denaro sia stato scalato
+            // Verifica che il denaro sia stato scalato solo localmente
             assert.equal(gs.cash, 15000, 'il saldo cassa deve essere scalato di 5000');
+            assert.equal(sincronizzazioni, 0, 'il client non deve rispedire syncCash: la RPC ha già scalato il cash');
 
             // Verifica notifica di successo
             const notifica = env.notifications.find(n => n.type === 'success' && n.msg.includes('Acquistati'));
             assert.ok(notifica, 'deve mostrare notifica di successo');
+        });
+
+        test('acquisto gestisce errore "Fondi insufficienti" restituito dalla RPC', async () => {
+            const ambFondi = creaAmbienteCripto({
+                rpcHandlers: {
+                    rpc_buy_crypto: async () => ({ data: null, error: { code: 'P0001', message: 'Fondi insufficienti' } }),
+                },
+            });
+            ambFondi.gs.cash = 200;
+
+            await ambFondi.sandbox.cryptoBuy('EMPIRE', 500);
+
+            assert.equal(ambFondi.gs.cash, 200, 'il saldo non deve essere toccato');
+            assert.ok(ambFondi.env.notifications.some(n => n.type === 'error' && n.msg.includes('Fondi insufficienti')));
+            ambFondi.env.stopAllIntervals();
         });
 
         test('acquisto con importo inferiore al minimo (€100) viene bloccato', async () => {
@@ -273,9 +291,11 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
         beforeEach(() => { amb = creaAmbienteCripto(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('vendita valida accredita il ricavo in cassa e notifica il giocatore', async () => {
+        test('vendita valida accredita il ricavo UNA sola volta e NON risincronizza verso il server', async () => {
             const { sandbox, gs, rpcLog, env } = amb;
             gs.cash = 1000;
+            let sincronizzazioni = 0;
+            sandbox.ServerState.syncCash = async () => { sincronizzazioni++; };
 
             await sandbox.cryptoSell('EMPIRE', 100);
 
@@ -286,6 +306,7 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
 
             // In mock il prezzo è 10 -> 100 * 10 = 1000 EUR
             assert.equal(gs.cash, 2000, 'il ricavo della vendita deve essere accreditato in cassa');
+            assert.equal(sincronizzazioni, 0, 'il client non deve rispedire syncCash: la RPC ha già accreditato il cash');
             assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Venduti')));
         });
 
@@ -322,9 +343,11 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
         beforeEach(() => { amb = creaAmbienteCripto(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('deposito offshore valido detrae fondi, applica fee 3% e aggiorna saldo offshore', async () => {
+        test('deposito offshore valido detrae fondi, applica fee 3% e NON risincronizza verso il server', async () => {
             const { sandbox, gs, rpcLog, env } = amb;
             gs.cash = 100000;
+            let sincronizzazioni = 0;
+            sandbox.ServerState.syncCash = async () => { sincronizzazioni++; };
 
             await sandbox.cryptoDepositOffshore('cayman', 50000);
 
@@ -335,6 +358,7 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
 
             // Cassa scalata di 50000
             assert.equal(gs.cash, 50000, 'la cassa deve diminuire dell\'intero importo depositato');
+            assert.equal(sincronizzazioni, 0, 'il client non deve rispedire syncCash dopo il deposito offshore');
 
             // Notifica con netto depositato
             assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Depositato') && n.msg.includes('cayman')));
@@ -357,15 +381,18 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
         beforeEach(() => { amb = creaAmbienteCripto(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('prelievo pulito (senza sequestro) accredita l\'intero importo', async () => {
+        test('prelievo pulito (senza sequestro) accredita l\'intero importo e NON risincronizza verso il server', async () => {
             const { sandbox, gs, rpcLog, env } = amb;
             gs.cash = 5000;
+            let sincronizzazioni = 0;
+            sandbox.ServerState.syncCash = async () => { sincronizzazioni++; };
 
             await sandbox.cryptoWithdrawOffshore('cayman', 20000);
 
             const wdRpc = rpcLog.find(r => r.nome === 'rpc_withdraw_offshore');
             assert.ok(wdRpc, 'deve chiamare rpc_withdraw_offshore');
             assert.equal(gs.cash, 25000, 'accredita tutti i 20.000 EUR');
+            assert.equal(sincronizzazioni, 0, 'il client non deve rispedire syncCash dopo il prelievo offshore');
             assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Prelevati') && n.msg.includes('cayman')));
         });
 
@@ -569,6 +596,62 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
 
             assert.equal(refreshChiamato, true);
             assert.equal(switchTabChiamato, 'crypto');
+        });
+    });
+
+    describe('CE_money e allineamento saldo server (nessun doppio addebito/accredito)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteCripto(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('money.js espone addebitatoDalServer che scala cash senza chiamare syncCash', () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 10000;
+            let syncChiamato = false;
+            sandbox.ServerState.syncCash = async () => { syncChiamato = true; };
+
+            assert.equal(typeof sandbox.CE_money.addebitatoDalServer, 'function', 'addebitatoDalServer deve essere esportato');
+            const esito = sandbox.CE_money.addebitatoDalServer(3000, 'test_addebito');
+            assert.equal(esito, true);
+            assert.equal(gs.cash, 7000);
+            assert.equal(syncChiamato, false, 'addebitatoDalServer non deve invocare syncCash');
+        });
+
+        test('money.js espone accreditatoDalServer che incrementa cash senza chiamare syncCash', () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 10000;
+            let syncChiamato = false;
+            sandbox.ServerState.syncCash = async () => { syncChiamato = true; };
+
+            assert.equal(typeof sandbox.CE_money.accreditatoDalServer, 'function', 'accreditatoDalServer deve essere esportato');
+            const esito = sandbox.CE_money.accreditatoDalServer(3000, 'test_accredito');
+            assert.equal(esito, true);
+            assert.equal(gs.cash, 13000);
+            assert.equal(syncChiamato, false, 'accreditatoDalServer non deve invocare syncCash');
+        });
+
+        test('dopo un acquisto il client non rispedisce syncCash al server', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 20000;
+            let syncChiamate = 0;
+            sandbox.ServerState.syncCash = async () => { syncChiamate++; };
+
+            await sandbox.cryptoBuy('EMPIRE', 5000);
+
+            assert.equal(gs.cash, 15000, 'il saldo locale deve essere scalato');
+            assert.equal(syncChiamate, 0, 'non deve risincronizzare il cash verso il server');
+        });
+
+        test('dopo una vendita il client non rispedisce syncCash al server', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 20000;
+            let syncChiamate = 0;
+            sandbox.ServerState.syncCash = async () => { syncChiamate++; };
+
+            await sandbox.cryptoSell('EMPIRE', 500);
+
+            assert.equal(gs.cash, 25000, 'il saldo locale deve essere accreditato');
+            assert.equal(syncChiamate, 0, 'non deve risincronizzare il cash verso il server');
         });
     });
 

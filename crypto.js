@@ -71,7 +71,7 @@ window.cryptoBuy = async function(coinId, eurAmount) {
     const { data, error } = await sb.rpc('rpc_buy_crypto', { v_coin_id: coinId, v_eur_in: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Acquisto fallito', error), 'error'); return; }
 
-    if (!window.CE_money.spend(amount, 'crypto_buy')) return;
+    window.CE_money.addebitatoDalServer(amount, 'crypto_buy');
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`✅ Acquistati ${_fmtCoin(data.coins_got)} ${coinId} per €${amount.toLocaleString()}`, 'success');
     window._cryptoState._lastFetch = 0;
@@ -88,7 +88,7 @@ window.cryptoSell = async function(coinId, coinAmount) {
     const { data, error } = await sb.rpc('rpc_sell_crypto', { v_coin_id: coinId, v_coins_in: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Vendita fallita', error), 'error'); return; }
 
-    window.CE_money.earn(Math.floor(data.eur_received), 'crypto_sell');
+    window.CE_money.accreditatoDalServer(Math.floor(data.eur_received), 'crypto_sell');
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`✅ Venduti ${_fmtCoin(amount)} ${coinId} per €${Math.floor(data.eur_received).toLocaleString()}`, 'success');
     window._cryptoState._lastFetch = 0;
@@ -107,7 +107,7 @@ window.cryptoDepositOffshore = async function(jurisdiction, eurAmount) {
     const { data, error } = await sb.rpc('rpc_deposit_offshore', { v_jurisdiction: jurisdiction, v_eur_amount: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Deposito offshore fallito', error), 'error'); return; }
 
-    if (!window.CE_money.spend(amount, 'crypto_deposit_offshore')) return;
+    window.CE_money.addebitatoDalServer(amount, 'crypto_deposit_offshore');
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`🏦 Depositato €${data.net_deposited.toLocaleString()} in ${data.jurisdiction} (fee: €${data.fee.toLocaleString()})`, 'success');
     window._cryptoState._lastFetch = 0;
@@ -126,7 +126,7 @@ window.cryptoWithdrawOffshore = async function(jurisdiction, eurAmount) {
     const { data, error } = await sb.rpc('rpc_withdraw_offshore', { v_jurisdiction: jurisdiction, v_eur_amount: amount });
     if (error) { if(typeof showNotification==='function') showNotification(_cErr('Prelievo fallito', error), 'error'); return; }
 
-    window.CE_money.earn(data.received, 'crypto_withdraw_offshore');
+    window.CE_money.accreditatoDalServer(data.received, 'crypto_withdraw_offshore');
     if (typeof updateUI === 'function') updateUI();
 
     if (data.seized) {

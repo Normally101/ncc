@@ -80,6 +80,24 @@ var CE_money = (function () {
         return true;
     }
 
+    /**
+     * Allinea il saldo locale a un addebito che il SERVER ha gia' fatto.
+     *
+     * Serve quando il denaro e' gia' stato scalato dentro una RPC (come gli
+     * acquisti crypto o i depositi offshore): la colonna `companies.cash` e'
+     * gia' aggiornata dal server, e chiamare `spend` rispedirebbe indietro il
+     * saldo calcolato dal browser rischiando doppi addebiti. Qui si aggiorna
+     * solo la previsione locale, senza risincronizzare la cassa verso il server.
+     *
+     * @returns {boolean} false se l'importo non e' un numero utilizzabile.
+     */
+    function addebitatoDalServer(importo, motivo) {
+        var gs = _gs();
+        if (!Number.isFinite(importo) || importo <= 0) return false;
+        gs.cash = (gs.cash || 0) - importo;
+        return true;
+    }
+
     /* ── DRIVER COINS ─────────────────────────────────────────────────────
        I DC sono la valuta premium: si comprano con soldi veri. Anche loro
        arrivano in OVERWRITE (serverState.js:209), quindi una spesa solo
@@ -156,6 +174,7 @@ var CE_money = (function () {
     return {
         spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC,
         addReputation: addReputation, accreditatoDalServer: accreditatoDalServer,
+        addebitatoDalServer: addebitatoDalServer,
     };
 })();
 

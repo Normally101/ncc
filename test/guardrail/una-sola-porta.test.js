@@ -79,7 +79,7 @@ describe('guardrail — una sola porta per il denaro', () => {
 
     test('money.js espone la porta completa', () => {
         const sorgente = fs.readFileSync(path.join(ROOT, 'money.js'), 'utf8');
-        for (const fn of ['spend', 'earn', 'spendDC', 'earnDC', 'addReputation']) {
+        for (const fn of ['spend', 'earn', 'spendDC', 'earnDC', 'addReputation', 'accreditatoDalServer', 'addebitatoDalServer']) {
             assert.ok(new RegExp(`function ${fn}\\b`).test(sorgente), `money.js deve esporre ${fn}()`);
         }
     });
