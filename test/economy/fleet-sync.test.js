@@ -124,6 +124,20 @@ describe('flotta — sincronizzazione cassa e DC col server (CE_money)', () => {
             assert.deepEqual(syncedCash, [expectedCash], 'syncCash deve ricevere il saldo aumentato');
             assert.ok(!gs.ownedHubs.includes(hubId), 'l\'hub non deve più essere posseduto');
         });
+
+        test('sellHub su hub non posseduto non accredita nulla e non sincronizza', async () => {
+            const { env, sandbox, gs, syncedCash } = setupFleetEnv();
+            const POIS = vm.runInContext('POIS', env.sandbox);
+            const hubId = Object.keys(POIS)[0];
+            gs.ownedHubs = [];
+            gs.cash = 20000;
+
+            sandbox.sellHub(hubId);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 20000);
+            assert.deepEqual(syncedCash, []);
+        });
     });
 
     describe('buyMaintenanceContract', () => {
@@ -226,6 +240,27 @@ describe('flotta — sincronizzazione cassa e DC col server (CE_money)', () => {
             assert.deepEqual(syncedCash, []);
             assert.equal(gs.fuelTank, 0);
         });
+
+        test('buyFuelForDepot applica lo sconto lobby law_fuel_subsidy (30%) e sincronizza con ServerState.syncCash', async () => {
+            const { sandbox, gs, syncedCash } = setupFleetEnv();
+            gs.investments = ['inv_fuel_depot'];
+            gs.fuelTank = 0;
+            gs.fuelTankCapacity = 10000;
+            gs.fuelTankLevel = 1;
+            gs.fuelPrice = 2.00;
+            gs.activeLobbyLaws = ['law_fuel_subsidy'];
+            const litres = 1000;
+            const cost = Math.floor(1000 * 2.00 * 0.70); // 1400
+            gs.cash = 10000;
+            const expectedCash = gs.cash - cost;
+
+            sandbox.buyFuelForDepot(litres);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, expectedCash, 'il saldo locale deve scalare con lo sconto lobby');
+            assert.deepEqual(syncedCash, [expectedCash], 'syncCash deve ricevere il nuovo saldo');
+            assert.equal(gs.fuelTank, 1000);
+        });
     });
 
     describe('buyTiresForDepot', () => {
@@ -302,6 +337,20 @@ describe('flotta — sincronizzazione cassa e DC col server (CE_money)', () => {
             assert.equal(gs.fleet[0].fuel, 0);
             assert.equal(gs.fleet[0].outOfService, 'fuel');
         });
+
+        test('emergencyRefuel senza auto ferme non spende e non sincronizza', async () => {
+            const { sandbox, gs, syncedCash } = setupFleetEnv();
+            gs.fleet = [
+                { id: 'c1', name: 'Auto 1', fuel: 100, outOfService: null },
+            ];
+            gs.cash = 5000;
+
+            sandbox.emergencyRefuel();
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 5000);
+            assert.deepEqual(syncedCash, []);
+        });
     });
 
     describe('instantRepairDC', () => {
@@ -333,6 +382,18 @@ describe('flotta — sincronizzazione cassa e DC col server (CE_money)', () => {
             assert.deepEqual(spentDC, [], 'nessuna chiamata a spendDriverCoins');
             assert.equal(gs.fleet[0].condition, 40, 'la condizione deve rimanere invariata');
             assert.equal(gs.fleet[0].outOfService, 'condition');
+        });
+
+        test('instantRepairDC con veicolo al 100% non spende e non chiama spendDriverCoins', async () => {
+            const { sandbox, gs, spentDC } = setupFleetEnv();
+            gs.fleet = [{ id: 'c1', name: 'Auto Test', condition: 100, outOfService: null }];
+            gs.driverCoins = 10;
+
+            sandbox.instantRepairDC('c1');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.driverCoins, 10);
+            assert.deepEqual(spentDC, []);
         });
     });
 
@@ -409,6 +470,27 @@ describe('flotta — sincronizzazione cassa e DC col server (CE_money)', () => {
             assert.deepEqual(syncedCash, []);
             assert.equal(gs.fleet.length, 1);
         });
+
+        test('terminateLease annullato dall\'utente non tocca il saldo e non sincronizza', async () => {
+            const { sandbox, gs, syncedCash } = setupFleetEnv();
+            sandbox.confirm = () => false;
+            gs.fleet = [{
+                id: 'c_lease',
+                name: 'Auto Lease',
+                isLease: true,
+                leaseDuration: 12,
+                leaseElapsedDays: 30,
+                leaseMonthlyRate: 1000,
+            }];
+            gs.cash = 20000;
+
+            sandbox.terminateLease('c_lease');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 20000);
+            assert.deepEqual(syncedCash, []);
+            assert.equal(gs.fleet.length, 1);
+        });
     });
 
     describe('buyPrototypeCar', () => {
@@ -430,6 +512,41 @@ describe('flotta — sincronizzazione cassa e DC col server (CE_money)', () => {
             assert.deepEqual(syncedCash, [expectedCash], 'syncCash deve ricevere il nuovo saldo');
             assert.equal(gs.fleet.length, 1);
             assert.equal(gs.fleet[0].protoId, proto.id);
+        });
+
+        test('buyPrototypeCar con reputazione insufficiente non spende e non sincronizza', async () => {
+            const { env, sandbox, gs, syncedCash } = setupFleetEnv();
+            const PROTOTYPE_CARS = vm.runInContext('PROTOTYPE_CARS', env.sandbox);
+            const proto = PROTOTYPE_CARS[0];
+            gs.fleet = [];
+            gs.reputation = proto.reqRep - 1;
+            gs.cash = proto.price + 50000;
+
+            sandbox.buyPrototypeCar(proto.id);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, proto.price + 50000);
+            assert.deepEqual(syncedCash, []);
+            assert.equal(gs.fleet.length, 0);
+        });
+
+        test('buyPrototypeCar EV senza EV Hub non spende e non sincronizza', async () => {
+            const { env, sandbox, gs, syncedCash } = setupFleetEnv();
+            const PROTOTYPE_CARS = vm.runInContext('PROTOTYPE_CARS', env.sandbox);
+            const evProto = PROTOTYPE_CARS.find(p => p.fuel === 'electric');
+            if (!evProto) return;
+            gs.fleet = [];
+            gs.reputation = evProto.reqRep + 1;
+            gs.questStats = { totalRides: (evProto.rideGate || 0) + 10 };
+            gs.hasEVHub = false;
+            gs.cash = evProto.price + 50000;
+
+            sandbox.buyPrototypeCar(evProto.id);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, evProto.price + 50000);
+            assert.deepEqual(syncedCash, []);
+            assert.equal(gs.fleet.length, 0);
         });
     });
 
@@ -455,6 +572,28 @@ describe('flotta — sincronizzazione cassa e DC col server (CE_money)', () => {
             assert.deepEqual(syncedCash, [expectedCash], 'syncCash deve ricevere il saldo aggiornato');
             assert.equal(gs.fleet.length, 1);
             assert.equal(gs.npcMarket.length, 0);
+        });
+
+        test('buyNpcCar con fondi insufficienti non acquista e non sincronizza', async () => {
+            const { sandbox, gs, syncedCash } = setupFleetEnv();
+            gs.fleet = [];
+            gs.npcMarket = [{
+                id: 'npc_1',
+                name: 'Auto Usata',
+                tier: 'business',
+                price: 15000,
+                condition: 80,
+                mileage: 50000,
+            }];
+            gs.cash = 5000;
+
+            sandbox.buyNpcCar('npc_1');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 5000);
+            assert.deepEqual(syncedCash, []);
+            assert.equal(gs.fleet.length, 0);
+            assert.equal(gs.npcMarket.length, 1);
         });
     });
 
