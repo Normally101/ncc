@@ -62,10 +62,14 @@ describe('guardrail — gli interruttori spengono davvero', () => {
             .filter(([nome]) => !Object.values(w.TAB_DI).includes(nome))
             .map(([nome]) => nome);
 
-        /* vtk e vip non hanno una scheda propria: vivono dentro schermate accese
-           e vanno spenti nel punto in cui compaiono. Finche' quel lavoro non e'
-           fatto, restano qui dichiarati — ma dichiarati, non dimenticati. */
-        assert.deepEqual(senzaMeccanismo.sort(), ['vip', 'vtk'],
+        /* Vuoto, e deve restarci. Fino al 21/08 qui stavano vtk e vip: erano
+           dichiarati spenti ma nessuna scheda li spegneva, perche' vivono dentro
+           schermate accese. Ora sono accesi entrambi dopo il collaudo, quindi il
+           debito e' chiuso. Se un nome ricompare qui vuol dire che qualcuno ha
+           spento una funzione senza darle un modo di sparire davvero: e' il caso
+           peggiore, perche' la misura dice una cosa e il giocatore ne trova
+           un'altra. */
+        assert.deepEqual(senzaMeccanismo.sort(), [],
             'Una funzione risulta spenta in config.js ma niente la spegne davvero.\n' +
             'O le si associa una scheda in TAB_DI, o la si spegne nel punto in cui\n' +
             'compare. Dichiararla spenta e lasciarla giocabile e\' il caso peggiore:\n' +

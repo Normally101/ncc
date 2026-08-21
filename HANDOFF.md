@@ -1,7 +1,51 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 21 agosto 2026 (sera)
+> Aggiornato: 21 agosto 2026 (notte)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+---
+
+# 🟢 21/08 notte — 19 funzioni accese su 21
+
+**Nove interruttori accesi in una volta**: alleanze, cripto, vtk, turismo,
+infrastrutture, holding, nemesi, negozioDC, vip. Ognuna aveva il suo collaudo profondo
+in `test/funzioni/` — da 22 a 43 prove — con tutte le azioni eseguite nel banco e il
+denaro che passa da `CE_money` o da una RPC. Le due liste di eccezioni dei guardrail si
+sono accorciate di conseguenza: `SPENTE_ALL_INIZIO` ora contiene solo due nomi, e
+`interruttori-applicati` non ha più eccezioni (vtk e vip erano l'ultimo debito).
+
+**Restano spente due, per ragioni diverse:**
+- `mercatoP2P` — il collaudo regge, ma `p2p-market.js:60` sovrascrive
+  `window.listCarForSale` di `engine-fleet.js:414`. Accenderla **romperebbe il mercato
+  NPC**, che è nel nucleo ed è acceso. La separazione dei due nomi è in verifica.
+- `politica` — il collaudo non è ancora stato fatto (secondo tentativo in coda).
+
+**Il negozio Driver Coins è acceso e tocca soldi veri.** Tutte e dodici le funzioni di
+`engine-store.js` passano da `CE_money.spendDC`, che chiama `ServerState.spendDriverCoins`
+e riallinea sul valore che il server restituisce. Resta un buco stretto da chiudere: la
+chiamata al server è asincrona e il `.catch` la ingoia, quindi se il server rifiutasse
+la spesa l'effetto sarebbe già stato applicato in locale. Serve un client già fuori
+sincrono perché accada, ma va sistemato.
+
+**Difetto trovato accendendo le infrastrutture:** delle 41 città in `POIS`, quattro non
+compaiono in `_POI_TO_PROVINCE` (engine.js:9) — **aquila, campobasso, potenza,
+catanzaro**. Chi parte da lì non paga il pedaggio sul carburante: quattro regioni esenti
+senza che nessuno l'abbia deciso. In riserva c'è il lavoro che le mappa e aggiunge il
+test che impedisce a una città nuova di nascere esente.
+
+**Lezione operativa, da non ripetere:** non lanciare più esecuzioni di `npm test` in
+parallelo. `node --test` usa `--test-concurrency=0` (un processo per file, ~100 file);
+tre suite insieme hanno portato il carico della macchina sopra 170 e i test da 70
+secondi a quindici minuti.
+
+**Due test fragili sotto carico**, scoperti proprio così: in
+`test/funzioni/salone.test.js` i due casi sugli optional aspettano che
+un'**animazione di prezzo** converga, con `waitPriceAnim(..., timeoutMs = 600)`. A
+macchina carica i timer sono affamati, l'animazione non finisce in 600 ms e i test
+falliscono. Eseguiti da soli passano 28/28. Non è un difetto del gioco, ma è un test
+che può diventare rosso senza che nessuno abbia rotto niente — e un rosso che non
+significa niente è peggio di nessun test. Vale la pena farli aspettare la fine
+dell'animazione invece di un tempo fisso.
 
 ---
 

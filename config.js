@@ -40,20 +40,20 @@ window.FEATURES = {
 
     // Spente finché non le verifichiamo una per una.
     aste:         true,   // auctions.js — verificata 20/08/2026 (ciclo di vita + riscossione)
-    alleanze:     false,  // alliances.js
+    alleanze:     true,  // alliances.js — verificata 21/08/2026 (consorzi, perk, chat realtime, 41 prove)
     salone:       true,   // showroom.js — verificata 21/08/2026 (galleria, filtri, configuratore, optional, acquisto CE_money/ServerState)
     mercatoP2P:   false,  // p2p-market, p2p-render: scambi fra giocatori
-    cripto:       false,  // crypto.js
-    vtk:          false,  // vtk-market.js
-    turismo:      false,  // tourism.js
+    cripto:       true,  // crypto.js — verificata 21/08/2026 (mercato AMM, conti offshore, 28 prove)
+    vtk:          true,  // vtk-market.js — verificata 21/08/2026 (mercato ordini, negozio VTK, 27 prove)
+    turismo:      true,  // tourism.js — verificata 21/08/2026 (bandi, punteggi offerta, ciclo di vita, 40 prove)
     lusso:        true,   // ui-lifestyle.js — verificata 21/08/2026 (acquisti lifestyle, rendite, status CEO, diamond contracts)
     politica:     false,  // ui-politics, war_room: province e influenza
-    infrastrutture: false, // infrastructure.js
-    holding:      false,  // hostile_takeover, engine-holding
-    nemesi:       false,  // nemesis.js, black_ops.js
+    infrastrutture: true, // infrastructure.js — verificata 21/08/2026 (depositi, pedaggio, 22 prove)
+    holding:      true,  // hostile_takeover, engine-holding — verificate 21/08/2026 (OPA, azioni CEMP, 32 prove)
+    nemesi:       true,  // nemesis.js, black_ops.js — verificate 21/08/2026 (nemici VIP, agenzia ombra, 38 prove)
     vanita:       true,   // vanity.js — verificata 20/08/2026 (4 azioni, tutte eseguite nel banco)
-    negozioDC:    false,  // ui-store, engine-store: valuta premium
-    vip:          false,  // vip-clients, vip-buffs
+    negozioDC:    true,  // ui-store, engine-store — verificate 21/08/2026: tutte e 12 le spese passano dal server (43 prove)
+    vip:          true,  // vip-clients, vip-buffs — verificate 21/08/2026 (10 clienti, buff, eventi, 41 prove)
     carriera:     true,   // ui-career, quests, quests-data — verificata 21/08/2026 (progressione, bivi morali, modali, ricompense via CE_money)
 };
 

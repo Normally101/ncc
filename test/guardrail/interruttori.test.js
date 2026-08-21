@@ -42,9 +42,17 @@ function features() {
  * verificato almeno una volta.
  */
 const SPENTE_ALL_INIZIO = new Set([
-    'alleanze', 'mercatoP2P', 'cripto', 'vtk', 'turismo',
-    'politica', 'infrastrutture', 'holding', 'nemesi', 'negozioDC',
-    'vip',
+    /* Il 21/08 sera ne sono uscite nove in un colpo: alleanze, cripto, vtk,
+       turismo, infrastrutture, holding, nemesi, negozioDC, vip. Ognuna aveva il
+       suo collaudo profondo in test/funzioni/ — da 22 a 43 prove — con tutte le
+       azioni eseguite nel banco e il denaro che passa da CE_money o da una RPC.
+       Restano queste due, e per due ragioni diverse:
+       - mercatoP2P: il collaudo c'e' e regge, ma p2p-market.js sovrascrive
+         window.listCarForSale di engine-fleet.js. Accenderlo adesso romperebbe
+         il mercato NPC, che e' nel nucleo ed e' acceso. Si aspetta la
+         separazione dei due nomi.
+       - politica: il collaudo non e' ancora stato fatto. */
+    'mercatoP2P', 'politica',
 ]);
 
 describe('guardrail — gli interruttori delle funzioni', () => {
