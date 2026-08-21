@@ -11,6 +11,7 @@
 
 function renderTabStaff() {
     const container = document.getElementById('tab-container');
+    if (!container) return;
     // Zero-to-Hero: sotto le 25 corse lo Staff è in fase transitoria
     // (solo "Ragazzo di Quartiere", niente HR/Accademia). Veterani esenti.
     const _z2hLite = (typeof window._z2hRestricted === 'function') && window._z2hRestricted();
