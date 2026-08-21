@@ -22,6 +22,11 @@ export const AGENT_MODEL = process.env.GIGI_GEMINI_MODEL || 'gemini-3.7-flash';
 /** gemini-3.7-flash, dollari per milione di token (input / output). */
 const PREZZO = { input: 0.30, output: 2.50 };
 
+/* Quanto puo' costare UN tentativo prima che valga la pena fermarlo. Un lavoro
+   riuscito costa fra 0,40 e 0,80 dollari; oltre il doppio del piu' caro fra
+   quelli buoni, non sta lavorando, sta girando in tondo. */
+const TETTO_SPESA = 1.60;
+
 /** Comandi che il modello puo' lanciare. Il primo token deve combaciare esattamente. */
 const COMANDI_PERMESSI = [
   ['npm', 'test'],
@@ -262,6 +267,17 @@ export async function runGeminiAgent({
   while (turni < maxTurni) {
     if (Date.now() > scadenza) {
       return risultato(false, ultimoTesto, `tempo scaduto dopo ${turni} turni`);
+    }
+    /* Tetto di spesa. Il 21/08 un lavoro di sola esplorazione ha consumato
+       settanta turni, 8,7 milioni di token in ingresso e 2,66 dollari senza
+       toccare un file: il conto cresce a valanga perche' ogni turno rispedisce
+       tutta la conversazione, e i turni finali costano dieci volte i primi.
+       Il limite sui turni da solo non protegge — l'abbiamo alzato da 40 a 70 e
+       il fallimento e' rimasto identico, solo tre volte piu' caro. */
+    const spesoFinora = (tokenIn / 1e6) * PREZZO.input + (tokenOut / 1e6) * PREZZO.output;
+    if (spesoFinora > TETTO_SPESA) {
+      return risultato(false, ultimoTesto,
+        `tetto di spesa raggiunto ($${spesoFinora.toFixed(2)}) dopo ${turni} turni`);
     }
     turni++;
 
