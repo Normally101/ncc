@@ -3,6 +3,7 @@
 
 function renderTabFleet() {
     const container = document.getElementById('tab-container');
+    if (!window._fleetFilter) window._fleetFilter = { brand: null, tier: null };
 
     // Fleet KPI data
     const _fl        = gameState.fleet || [];
@@ -405,17 +406,20 @@ function renderTabFleet() {
 }
 
 
-window.bulkRepairFleet = function(ids) {
+window.bulkRepairFleet = async function(ids) {
+    if (typeof ids === 'string') {
+        try { ids = JSON.parse(ids); } catch (e) { ids = [ids]; }
+    }
     if (!Array.isArray(ids) || !ids.length) return;
     let count = 0;
-    ids.forEach(id => {
+    for (const id of ids) {
         const car = (gameState.fleet || []).find(c => c.id === id);
         if (car && (car.condition || 0) < 100 && typeof window.payToRepairCar === 'function') {
-            window.payToRepairCar(id);
+            await window.payToRepairCar(id);
             count++;
         }
-    });
-    if (count > 0) renderTabFleet();
+    }
+    if (count > 0 && typeof renderTabFleet === 'function') renderTabFleet();
 };
 
 window.renderTabFleet = renderTabFleet;

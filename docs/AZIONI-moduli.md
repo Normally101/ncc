@@ -9,7 +9,7 @@
 - `_p2pErrMsg` · `p2p-market.js:13` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `_sb` · `p2p-market.js:49` · data-ce-act: nessuna · doppioni: `b2b.js:34` · denaro: no
 - `_uid` · `p2p-market.js:50` · data-ce-act: nessuna · doppioni: `b2b.js:35` · denaro: no
-- `listCarForSale` · `p2p-market.js:60` · data-ce-act: `listCarForSale` (`ui-market.js`) · doppioni: `engine-fleet.js:414` · denaro: RPC (`rpc_list_car_for_sale`)
+- `listCarForSale` · `p2p-market.js:60` · data-ce-act: `listCarForSale` (`ui-market.js`) · doppioni: `engine-fleet.js:415` · denaro: RPC (`rpc_list_car_for_sale`)
 - `cancelP2PListing` · `p2p-market.js:103` · data-ce-act: `cancelP2PListing` (`p2p-render.js`) · doppioni: nessuno · denaro: RPC (`rpc_cancel_listing`)
 - `buyP2PCar` · `p2p-market.js:128` · data-ce-act: `buyP2PCar` (`p2p-render.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_buy_market_car`)
 - `createHolding` · `p2p-market.js:161` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_create_holding`)
@@ -411,7 +411,7 @@
 |---|---|---|---|
 | `_sb` | `p2p-market.js:49` | `b2b.js:34` | Helper locali identici definiti in scope globale |
 | `_uid` | `p2p-market.js:50` | `b2b.js:35` | Helper locali identici definiti in scope globale |
-| `listCarForSale` | `p2p-market.js:60` | `engine-fleet.js:414` | P2P market (`p2p-market.js`) sovrascrive la vendita flotta standard (`engine-fleet.js`) |
+| `listCarForSale` | `p2p-market.js:60` | `engine-fleet.js:415` | P2P market (`p2p-market.js`) sovrascrive la vendita flotta standard (`engine-fleet.js`) |
 | `_rpc` | `alliances.js:286` | `serverState.js:370` |  |
 | `_sb` | `b2b.js:34` | `p2p-market.js:49` | Helper locali identici definiti in scope globale |
 | `_uid` | `b2b.js:35` | `p2p-market.js:50` | Helper locali identici definiti in scope globale |
