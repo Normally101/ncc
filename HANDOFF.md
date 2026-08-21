@@ -1,7 +1,48 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 21 agosto 2026 (notte)
+> Aggiornato: 21 agosto 2026 (sera)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+---
+
+# 🟢 21/08 sera — il doppio conteggio è chiuso, e Gigi non si ferma più da solo
+
+**Doppio conteggio: campagna finita.** I diciassette casi marcati nel censimento sono tutti
+sistemati; i restanti erano già corretti e il documento lo dice riga per riga (le voci
+«RPC non tocca il saldo → corretto così» sono verifiche, non lavoro rimasto). **1092 test verdi.**
+Nota di metodo per la prossima sessione: `docs/DOPPIO-CONTEGGIO.md` è il censimento del 21/08 e
+**non è stato aggiornato** man mano che le correzioni entravano — i lavori avevano il divieto di
+toccarlo, perché tre rami paralleli ci avevano già litigato sopra. Per sapere se un caso è
+chiuso, guarda il codice (`grep DalServer <file>`), non il documento.
+
+**Interruttori: 10 accesi su 21.** Le funzioni ancora spente hanno però quasi tutte la verifica
+fatta e fusa: `test/funzioni/` contiene 14 file di collaudo profondo (22-43 casi ciascuno) per
+alleanze, cripto, holding, infrastrutture, mercatoP2P, negozioDC, nemesi, turismo, vtk, vip oltre
+alle quattro già accese. **Accendere gli interruttori è lavoro di Vlad**, a mano in `config.js`,
+dopo aver letto i riepiloghi: i lavori automatici hanno il divieto di toccarlo.
+⚠️ `mercatoP2P` NON va acceso finché non è risolta la collisione `listCarForSale` (sotto).
+
+**Quattro nomi globali definiti da due file diversi**, dove vince l'ordine dei `<script>`:
+`listCarForSale` (p2p-market.js:60 su engine-fleet.js:414 — e questo rompe il **mercato NPC**,
+che è nel nucleo e acceso), `renderTabProvinces` (war_room.js:495 su ui-ops.js:264),
+`hqOpenBuildModal` (hq-visual.js:88 su hq.js:339, **firme incompatibili**),
+`_updateActiveRouteLines`. Tutti e quattro sono in coda, più un guardrail in riserva che ne
+vieta la ricomparsa.
+
+**Gigi non si ferma più quando finisce la coda.** Era il limite che Vlad ha centrato:
+«se io sto fuori casa e Gigi ha finito, lui poi sta fermo». Adesso:
+- `~/gigi/riserva.json` è un magazzino di lavori già scritti; a coda vuota ne pesca tre e va
+  avanti, e lo dice su Telegram. File separato dalla coda apposta: riempirlo non può far perdere
+  un lavoro in corso.
+- Da Telegram basta una frase: **«gigi, lavora su: ...»** e l'istruzione completa se la scrive
+  lui, con l'elenco vero dei ~93 file del gioco davanti. Le regole di verifica (prima il test, il
+  test deve essere rosso, non si cancella un test per farlo passare, i file condivisi non si
+  toccano) **le incolla il codice**, non il modello: `jarvis/src/scrivi-lavoro.js`.
+- «riprendi» toglieva solo la pausa e con la coda vuota non serviva a niente; ora pesca, e se non
+  c'è niente da pescare lo dice invece di rispondere «riparto» restando fermo.
+
+**Tetto di spesa:** 60 lavori al giorno (oggi 41 alle 17:40), €1,60 per lavoro. Il contatore
+riparte a mezzanotte **UTC**, cioè alle 2 di notte italiane.
 
 ---
 
