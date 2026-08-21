@@ -41,7 +41,7 @@ window.FEATURES = {
     // Spente finché non le verifichiamo una per una.
     aste:         true,   // auctions.js — verificata 20/08/2026 (ciclo di vita + riscossione)
     alleanze:     false,  // alliances.js
-    salone:       false,  // showroom.js — la vetrina delle auto
+    salone:       true,   // showroom.js — verificata 21/08/2026 (galleria, filtri, configuratore, optional, acquisto CE_money/ServerState)
     mercatoP2P:   false,  // p2p-market, p2p-render: scambi fra giocatori
     cripto:       false,  // crypto.js
     vtk:          false,  // vtk-market.js

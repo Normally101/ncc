@@ -245,6 +245,18 @@ describe('funzione salone — vetrina auto e configuratore (showroom.js)', () =>
             assert.ok(content.innerHTML.includes('Riepilogo Configurazione'));
             assert.ok(content.innerHTML.includes('data-ce-act="_srmPurchase"'));
         });
+
+        test('navigazione sezioni aggiorna le classi e i colori dei bottoni nella sidebar', () => {
+            sandbox._srmOpenConfig('stellar_e_exec');
+
+            sandbox._srmSetSection('esterni');
+            const btns = sandbox.document.querySelectorAll('.srm-sec-btn');
+            const btnEsterni = Array.from(btns).find(b => b.textContent.includes('Esterni'));
+            const btnGenerali = Array.from(btns).find(b => b.textContent.includes('Generali'));
+
+            assert.ok(btnEsterni.classList.contains('srm-active'), 'il bottone Esterni deve avere la classe srm-active');
+            assert.ok(!btnGenerali.classList.contains('srm-active'), 'il bottone Generali non deve più avere la classe srm-active');
+        });
     });
 
     describe('selezione optional e calcolo prezzi (_srmToggle)', () => {
@@ -286,6 +298,33 @@ describe('funzione salone — vetrina auto e configuratore (showroom.js)', () =>
             assert.ok(html.includes('Vernice Madreperla'));
             assert.ok(html.includes('Blindatura B4'));
             assert.ok(html.includes('169.000')); // 120k + 4k + 45k
+        });
+
+        test('selezione e deselezione aggiornano le card opzione e i badge sidebar nel DOM', () => {
+            sandbox._srmSetSection('esterni');
+
+            const card = sandbox.document.querySelector('.srm-opt-card[data-ce-args*="opt_vernice_pearl"]');
+            assert.ok(card, 'la card per opt_vernice_pearl deve esistere');
+            assert.ok(!card.classList.contains('srm-sel'), 'inizialmente non selezionata');
+
+            // Attivazione
+            sandbox._srmToggle('opt_vernice_pearl');
+            assert.ok(card.classList.contains('srm-sel'), 'la card deve avere classe srm-sel');
+            const chk = card.querySelector('.srm-opt-chk');
+            assert.equal(chk.textContent, '✓', 'la spunta deve mostrare ✓');
+
+            // Badge sidebar
+            const btnEsterni = Array.from(sandbox.document.querySelectorAll('.srm-sec-btn'))
+                .find(b => b.textContent.includes('Esterni'));
+            const badge = btnEsterni.querySelector('.srm-sec-badge');
+            assert.ok(badge, 'il badge deve essere presente sulla sidebar');
+            assert.equal(badge.textContent, '1', 'il badge deve mostrare 1');
+
+            // Disattivazione
+            sandbox._srmToggle('opt_vernice_pearl');
+            assert.ok(!card.classList.contains('srm-sel'), 'la card non deve più avere srm-sel');
+            assert.equal(chk.textContent, '', 'la spunta deve essere vuota');
+            assert.equal(btnEsterni.querySelector('.srm-sec-badge'), null, 'il badge deve essere rimosso');
         });
     });
 
@@ -439,6 +478,84 @@ describe('funzione salone — vetrina auto e configuratore (showroom.js)', () =>
             assert.ok(TIER_COMPATIBILITY.business.includes(acquistata.tier), 'l auto deve essere compatibile con corse business');
             assert.equal(acquistata.outOfService, false);
             assert.equal(acquistata.condition, 100);
+        });
+    });
+
+    describe('esecuzione azioni via data-ce-act ed eventi DOM delegati', () => {
+        function clickEl(el) {
+            if (typeof el.click === 'function') {
+                el.click();
+            } else {
+                el.dispatchEvent(new sandbox.document.defaultView.MouseEvent('click', { bubbles: true, cancelable: true }));
+            }
+        }
+
+        test('ciclo completo interazione UI: filtri, apertura configuratore, cambio sezione, toggle, riepilogo, acquisto', async () => {
+            gs.cash = 500000;
+            gs.hasEVHub = true;
+            sandbox.renderTabShowroom();
+
+            // 1. Click su filtro carburante electric
+            const btnEV = sandbox.document.querySelector('[data-ce-act="_srmFilterFuel"][data-ce-args*="electric"]');
+            assert.ok(btnEV, 'bottone filtro electric non trovato');
+            clickEl(btnEV);
+            assert.ok(sandbox.document.getElementById('srm-overlay').innerHTML.includes('Volt 3-Urban'));
+
+            // 2. Click su filtro marchio volt
+            const btnVolt = sandbox.document.querySelector('[data-ce-act="_srmFilterBrand"][data-ce-args*="volt"]');
+            assert.ok(btnVolt, 'bottone filtro volt non trovato');
+            clickEl(btnVolt);
+            assert.ok(sandbox.document.getElementById('srm-overlay').innerHTML.includes('Volt 3-Urban'));
+
+            // 3. Click su card veicolo per aprire configuratore
+            const cardVolt = sandbox.document.querySelector('.srm-vcard[data-ce-act="_srmOpenConfig"]');
+            assert.ok(cardVolt, 'card configurabile non trovata');
+            clickEl(cardVolt);
+            assert.ok(sandbox.document.getElementById('srm-config'), 'configuratore non aperto');
+
+            // 4. Click su sezione esterni
+            const btnEsterni = sandbox.document.querySelector('.srm-sec-btn[data-ce-args*="esterni"]');
+            assert.ok(btnEsterni, 'tasto sezione esterni non trovato');
+            clickEl(btnEsterni);
+
+            // 5. Click su optional
+            const optCard = sandbox.document.querySelector('.srm-opt-card[data-ce-args*="opt_vernice_pearl"]');
+            assert.ok(optCard, 'card optional non trovata');
+            clickEl(optCard);
+            assert.ok(optCard.classList.contains('srm-sel'), 'card optional non selezionata');
+
+            // 6. Click su sezione riepilogo
+            const btnRiepilogo = sandbox.document.querySelector('.srm-sec-btn[data-ce-args*="riepilogo"]');
+            assert.ok(btnRiepilogo, 'tasto riepilogo non trovato');
+            clickEl(btnRiepilogo);
+
+            // 7. Click su acquisto
+            const btnBuy = sandbox.document.getElementById('srm-buy-btn');
+            assert.ok(btnBuy, 'tasto acquisto non trovato');
+            const flottaPrima = gs.fleet.length;
+            clickEl(btnBuy);
+            await new Promise(r => setImmediate(r));
+
+            // Verifica mutazione di stato gameState
+            assert.equal(gs.fleet.length, flottaPrima + 1);
+            const acquistata = gs.fleet[gs.fleet.length - 1];
+            assert.equal(acquistata.vehicleClass, 'volt_3_urban');
+            assert.ok(acquistata.upgrades.includes('opt_vernice_pearl'));
+        });
+
+        test('click su _srmBackToGallery ritorna alla galleria e _srmClose chiude showroom', () => {
+            sandbox.renderTabShowroom();
+            sandbox._srmOpenConfig('stellar_e_exec');
+
+            const btnBack = sandbox.document.getElementById('srm-cfg-back');
+            assert.ok(btnBack, 'tasto torna alla galleria non trovato');
+            clickEl(btnBack);
+            assert.ok(sandbox.document.getElementById('srm-grid'), 'non tornato alla griglia');
+
+            const btnClose = sandbox.document.querySelector('.srm-close-btn');
+            assert.ok(btnClose, 'tasto chiudi non trovato');
+            clickEl(btnClose);
+            assert.equal(sandbox.document.getElementById('srm-overlay'), null, 'overlay non rimosso');
         });
     });
 });
