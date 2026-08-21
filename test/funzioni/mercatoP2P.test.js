@@ -477,7 +477,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             await sandbox.buyP2PCar('lst_ok');
 
             assert.equal(gs.cash, 15000, 'il denaro speso deve essere scalato');
-            assert.deepEqual(syncedCashCalls, [15000]);
+            assert.deepEqual(syncedCashCalls, [], 'syncCash non deve essere chiamato (il server ha già mosso il saldo)');
 
             const purchasedCar = gs.fleet.find(c => c.name === 'Mercedes-Benz Classe E');
             assert.ok(purchasedCar, 'l auto deve essere presente in gameState.fleet');

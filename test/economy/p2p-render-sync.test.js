@@ -52,10 +52,10 @@ function setupP2PRenderEnv(rpcOverrides = {}) {
     return { env, sandbox, gs: sandbox.gameState, syncedCash, rpcCalls };
 }
 
-describe('p2p-render — sincronizzazione cassa col server (CE_money)', () => {
+describe('p2p-render — il server ha già mosso i soldi (addebitatoDalServer)', () => {
 
     describe('contributeConsorzio', () => {
-        test('contributeConsorzio scala la cifra e sincronizza con ServerState.syncCash', async () => {
+        test('contributeConsorzio scala la cifra con addebitatoDalServer SENZA chiamare syncCash', async () => {
             const { sandbox, gs, syncedCash, rpcCalls } = setupP2PRenderEnv();
             gs.cash = 50000;
 
@@ -63,11 +63,26 @@ describe('p2p-render — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 40000, 'il saldo locale deve riflettere la spesa');
-            assert.deepEqual(syncedCash, [40000], 'syncCash deve ricevere il saldo aggiornato');
+            assert.deepEqual(syncedCash, [], 'syncCash NON deve essere chiamato (il server ha già scalato)');
             assert.equal(rpcCalls.length, 1);
             assert.equal(rpcCalls[0].fn, 'rpc_contribute_consorzio');
             assert.equal(rpcCalls[0].params?.v_consorzio_id, 'cso_1');
             assert.equal(rpcCalls[0].params?.v_amount, 10000);
+        });
+
+        test('contributeConsorzio con eco realtime concorrente non risincronizza né fa doppio addebito', async () => {
+            const { sandbox, gs, syncedCash } = setupP2PRenderEnv({
+                rpc_contribute_consorzio: async () => {
+                    gs.cash = 40000;
+                    return { data: { new_cash: 40000, treasury: 10000 }, error: null };
+                },
+            });
+            gs.cash = 50000;
+
+            await sandbox.contributeConsorzio('cso_1', 10000);
+            await new Promise(r => setImmediate(r));
+
+            assert.deepEqual(syncedCash, []);
         });
 
         test('contributeConsorzio con fondi insufficienti non scala cash, non chiama syncCash né RPC', async () => {
@@ -95,7 +110,7 @@ describe('p2p-render — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(rpcCalls.length, 0);
         });
 
-        test('contributeConsorzio con errore RPC esegue rollback del denaro', async () => {
+        test('contributeConsorzio con errore RPC non scala denaro e non chiama syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PRenderEnv({
                 rpc_contribute_consorzio: async () => ({ data: null, error: { message: 'DB error' } }),
             });
@@ -104,13 +119,13 @@ describe('p2p-render — sincronizzazione cassa col server (CE_money)', () => {
             await sandbox.contributeConsorzio('cso_1', 10000);
             await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.cash, 50000, 'il saldo deve tornare a 50000 dopo il rollback');
-            assert.deepEqual(syncedCash, [40000, 50000], 'syncCash deve registrare spesa e successivo riaccredito');
+            assert.equal(gs.cash, 50000, 'il saldo non deve cambiare se l RPC fallisce');
+            assert.deepEqual(syncedCash, [], 'syncCash non deve essere chiamato');
         });
     });
 
     describe('payDonCarmine', () => {
-        test('payDonCarmine scala €50.000 e sincronizza con ServerState.syncCash', async () => {
+        test('payDonCarmine scala €50.000 con addebitatoDalServer SENZA chiamare syncCash', async () => {
             const { sandbox, gs, syncedCash, rpcCalls } = setupP2PRenderEnv({
                 rpc_pay_don_carmine: async () => ({
                     data: { immunity_until: '2026-09-01T12:00:00Z' },
@@ -124,11 +139,29 @@ describe('p2p-render — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 30000, 'il saldo locale deve essere scalato di 50.000€');
-            assert.deepEqual(syncedCash, [30000], 'syncCash deve ricevere il nuovo saldo');
+            assert.deepEqual(syncedCash, [], 'syncCash NON deve essere chiamato');
             assert.equal(sandbox._sindacatoState.gdfRisk, 0);
             assert.equal(sandbox._sindacatoState.carmineImmunityUntil, '2026-09-01T12:00:00Z');
             assert.equal(rpcCalls.length, 1);
             assert.equal(rpcCalls[0].fn, 'rpc_pay_don_carmine');
+        });
+
+        test('payDonCarmine con eco realtime concorrente non risincronizza', async () => {
+            const { sandbox, gs, syncedCash } = setupP2PRenderEnv({
+                rpc_pay_don_carmine: async () => {
+                    gs.cash = 30000;
+                    return {
+                        data: { immunity_until: '2026-09-01T12:00:00Z' },
+                        error: null,
+                    };
+                },
+            });
+            gs.cash = 80000;
+
+            await sandbox.payDonCarmine();
+            await new Promise(r => setImmediate(r));
+
+            assert.deepEqual(syncedCash, []);
         });
 
         test('payDonCarmine con fondi insufficienti non scala denaro e non chiama syncCash né RPC', async () => {
@@ -143,7 +176,7 @@ describe('p2p-render — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(rpcCalls.length, 0);
         });
 
-        test('payDonCarmine con errore RPC esegue rollback del denaro', async () => {
+        test('payDonCarmine con errore RPC non scala denaro e non chiama syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PRenderEnv({
                 rpc_pay_don_carmine: async () => ({ data: null, error: { message: 'Don Carmine non risponde' } }),
             });
@@ -153,8 +186,8 @@ describe('p2p-render — sincronizzazione cassa col server (CE_money)', () => {
             await sandbox.payDonCarmine();
             await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.cash, 80000, 'il saldo deve tornare a 80000 dopo il rollback');
-            assert.deepEqual(syncedCash, [30000, 80000], 'syncCash deve registrare spesa e riaccredito');
+            assert.equal(gs.cash, 80000, 'il saldo deve restare a 80000 se la chiamata fallisce');
+            assert.deepEqual(syncedCash, []);
             assert.equal(sandbox._sindacatoState.gdfRisk, 50, 'il rischio non deve essere azzerato se la chiamata fallisce');
         });
     });
