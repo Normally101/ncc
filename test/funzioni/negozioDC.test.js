@@ -79,6 +79,35 @@ describe('funzione negozioDC — Driver Coins & Executive Club', () => {
             assert.ok(html.includes('Polizza Kasko Corporate'), 'manca polizza kasko');
             assert.ok(html.includes('Executive Pass'), 'manca executive pass');
         });
+
+        test('renderTabPremiumStore visualizza badge e stati disabilitati nella scheda servizi', () => {
+            const rEnv = createGameEnv(CORE_FILES, { render: true });
+            rEnv.sandbox.initGame(true);
+            rEnv.stopAllIntervals();
+
+            const container = rEnv.sandbox.document.createElement('div');
+            container.id = 'tab-container';
+            rEnv.sandbox.document.body.appendChild(container);
+
+            rEnv.sandbox.gameState.driverCoins = 100;
+            rEnv.sandbox.gameState.energy = 100;
+            rEnv.sandbox.gameState.fleet = [{ id: 'c1', fuel: 100, condition: 100 }];
+            rEnv.sandbox.gameState.drivers = [{ id: 'ceo', name: 'CEO' }];
+            rEnv.sandbox.gameState.constructions = [];
+            rEnv.sandbox.gameState.driverAcademy = [];
+            rEnv.sandbox.gameState.offlineLimit = 12;
+            rEnv.sandbox.gameState.autoRestEnabled = true;
+            rEnv.sandbox.gameState.hasPrestigiousPlate = true;
+
+            rEnv.sandbox._ecSwitchTab('services');
+            const html = container.innerHTML;
+            assert.ok(html.includes('Flotta piena'), 'deve indicare flotta piena');
+            assert.ok(html.includes('Energia al 100%'), 'deve indicare energia al 100%');
+            assert.ok(html.includes('Nessuno a riposo'), 'deve indicare nessun autista a riposo');
+            assert.ok(html.includes('Massimo raggiunto'), 'deve indicare limite offline raggiunto');
+            assert.ok(html.includes('Già attivo'), 'deve indicare autorest già attivo');
+            assert.ok(html.includes('Posseduta'), 'deve indicare targa presidenziale posseduta');
+        });
     });
 
     describe('acquisizione Driver Coins (_dcSimPurchase)', () => {
@@ -91,6 +120,17 @@ describe('funzione negozioDC — Driver Coins & Executive Club', () => {
             assert.equal(rpcAddCalls[0].n, 50);
             assert.equal(rpcAddCalls[0].motivo, 'sim_purchase');
             assert.ok(env.notifications.some(n => n.msg.includes('+50 Driver Coins')));
+        });
+
+        test('ignora importi non validi o negativi per prevenire exploit', () => {
+            gs.driverCoins = 10;
+            sandbox._dcSimPurchase(-20);
+            assert.equal(gs.driverCoins, 10);
+            assert.equal(rpcAddCalls.length, 0);
+
+            sandbox._dcSimPurchase(NaN);
+            assert.equal(gs.driverCoins, 10);
+            assert.equal(rpcAddCalls.length, 0);
         });
     });
 
