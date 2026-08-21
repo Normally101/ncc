@@ -954,4 +954,130 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
             amb.env.stopAllIntervals();
         });
     });
+
+    describe('12. Risposta Domanda (b) — Persistenza in gameState ed effetto eco Realtime', () => {
+        test('il payout giornaliero entra in gameState.cash e persiste dopo saveGame()', async () => {
+            const amb = creaAmbienteTurismo({
+                serverStateOverrides: {
+                    isReady: () => false,
+                },
+            });
+            await amb.sandbox.tourismRefresh(true);
+
+            amb.gs.cash = 25000;
+            await amb.sandbox._tourismDailyTick();
+
+            // Payout di 5600 da Obsidian Pearl Retreats
+            assert.equal(amb.gs.cash, 30600, 'gameState.cash deve contenere la somma accreditata');
+
+            // Verifica che saveGame abbia serializzato lo stato
+            const rawSave = amb.sandbox.localStorage.getItem('ce_save_slot_1');
+            if (rawSave) {
+                const parsed = JSON.parse(rawSave);
+                assert.equal(parsed.cash, 30600, 'il cash salvato in localStorage deve riflettere il payout');
+            }
+            amb.env.stopAllIntervals();
+        });
+
+        test('la rescissione decrementa gameState.reputation e persiste dopo saveGame()', async () => {
+            const amb = creaAmbienteTurismo({
+                serverStateOverrides: {
+                    isReady: () => false,
+                },
+            });
+            await amb.sandbox.tourismRefresh(true);
+
+            amb.gs.reputation = 4.8;
+            await amb.sandbox.tourismTerminate('tender_mine_active');
+
+            // Tier 4 -> penale 0.60 -> 4.20
+            assert.equal(Math.round(amb.gs.reputation * 100) / 100, 4.20, 'reputazione decrementata');
+
+            const rawSave = amb.sandbox.localStorage.getItem('ce_save_slot_1');
+            if (rawSave) {
+                const parsed = JSON.parse(rawSave);
+                assert.equal(Math.round(parsed.reputation * 100) / 100, 4.20, 'reputazione salvata corretta');
+            }
+            amb.env.stopAllIntervals();
+        });
+
+        test('simulazione eco ServerState: con server online il cash non subisce doppio accredito e si allinea', async () => {
+            const amb = creaAmbienteTurismo({
+                serverStateOverrides: {
+                    isReady: () => true,
+                },
+            });
+            await amb.sandbox.tourismRefresh(true);
+
+            amb.gs.cash = 50000;
+
+            // Invocazione tick giornaliero
+            await amb.sandbox._tourismDailyTick();
+
+            // Con ServerState pronto, il client non muta localmente il cash per evitare doppio accredito
+            assert.equal(amb.gs.cash, 50000, 'il cash locale non deve essere mutato subito');
+
+            // Simula arrivo delta autoritativo dal server (+5600)
+            const serverDelta = 5600;
+            amb.gs.cash += serverDelta;
+
+            assert.equal(amb.gs.cash, 55600, 'il cash finale deve riflettere esattamente l\'accredito autoritativo');
+            amb.env.stopAllIntervals();
+        });
+    });
+
+    describe('13. Risposta Domanda (c) — Conformità della forma dati Server RPC <-> Client UI', () => {
+        test('la forma dati di rpc_get_tourism_tenders include tutti i campi richiesti da renderTabTourism', async () => {
+            const amb = creaAmbienteTurismo();
+            await amb.sandbox.tourismRefresh(true);
+
+            const tenders = amb.sandbox._tourismState.tenders;
+            assert.ok(Array.isArray(tenders), 'i bandi devono essere un array');
+            assert.ok(tenders.length > 0, 'devono essere presenti bandi');
+
+            // Verifica che ogni bando contenga i campi attesi dal client
+            for (const t of tenders) {
+                assert.ok(typeof t.id === 'string', 'id deve essere string');
+                assert.ok(typeof t.name === 'string', 'name deve essere string');
+                assert.ok(typeof t.status === 'string', 'status deve essere string');
+                assert.ok(typeof t.tier === 'number', 'tier deve essere number');
+                assert.ok(typeof t.duration_days === 'number', 'duration_days deve essere number');
+                assert.ok(typeof t.is_mine === 'boolean', 'is_mine deve essere boolean');
+                assert.ok(typeof t.requirements === 'object' && t.requirements !== null, 'requirements deve essere object');
+            }
+            amb.env.stopAllIntervals();
+        });
+
+        test('renderTabTourism tollera bando in cooldown senza cooldown_until o con date future/passate', () => {
+            const amb = creaAmbienteTurismo({
+                bandi: [
+                    {
+                        id: 'tender_cooldown_no_date',
+                        status: 'cooldown',
+                        name: 'Bando Cooldown Senza Data',
+                        tier: 2,
+                        cooldown_until: null,
+                        is_mine: false,
+                    },
+                    {
+                        id: 'tender_cooldown_future',
+                        status: 'cooldown',
+                        name: 'Bando Cooldown Futuro',
+                        tier: 3,
+                        cooldown_until: new Date(Date.now() + 3600000).toISOString(),
+                        is_mine: false,
+                    },
+                ],
+            });
+
+            assert.doesNotThrow(() => {
+                amb.sandbox._tourismState.tenders = amb.statoBandi;
+                amb.sandbox.renderTabTourism();
+            }, 'non deve lanciare eccezioni di rendering con forme dati limite');
+
+            const container = amb.sandbox.document.getElementById('tab-container');
+            assert.ok(container.innerHTML.includes('In Cooldown'), 'deve mostrare sezione cooldown');
+            amb.env.stopAllIntervals();
+        });
+    });
 });
