@@ -137,7 +137,6 @@ window.vtkFillOrder = async function(orderId, dcCost) {
         return;
     }
 
-    if (!window.CE_money.spendDC(dcCost, 'vtk_market_fill')) return;
     if (typeof updateUI === 'function') updateUI();
     if (typeof saveGame === 'function') saveGame();
     if (typeof showNotification === 'function') showNotification(`✅ Acquistati ${data?.vtk_received || 0} VTK!`, 'success');

@@ -254,7 +254,7 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
         beforeEach(() => { amb = creaAmbienteVTK(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('acquisto ordine scala DC tramite CE_money e completa transazione', async () => {
+        test('acquisto ordine invia RPC rpc_fill_vtk_order senza scalare ridondantemente i DC dal client', async () => {
             const { sandbox, gs, rpcLog, env } = amb;
             gs.driverCoins = 100;
 
@@ -264,8 +264,8 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
             assert.ok(rpc, 'deve chiamare rpc_fill_vtk_order');
             assert.equal(rpc.args.v_order_id, 'ord_2');
 
-            // Verifica spesa Driver Coins
-            assert.equal(gs.driverCoins, 75, 'il saldo DC deve essere scalato di 25');
+            // La RPC scala già i DC sul server (21_vtk_token.sql), il client non deve fare spendDriverCoins
+            assert.equal(rpcLog.filter(r => r.nome === 'rpc_ec_spend' || r.nome === 'rpc_spend_driver_coins').length, 0);
             assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Acquistati 100 VTK')));
         });
 
