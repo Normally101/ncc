@@ -41,8 +41,23 @@ vieta la ricomparsa.
 - «riprendi» toglieva solo la pausa e con la coda vuota non serviva a niente; ora pesca, e se non
   c'è niente da pescare lo dice invece di rispondere «riparto» restando fermo.
 
-**Tetto di spesa:** 60 lavori al giorno (oggi 41 alle 17:40), €1,60 per lavoro. Il contatore
-riparte a mezzanotte **UTC**, cioè alle 2 di notte italiane.
+**Il piano si chiede a Gigi, non si tiene a mente.** Su Telegram: `piano` (elenco numerato di
+tutto quello che c'è da fare, in ordine, con una riga che dice perché ogni cosa viene adesso),
+`fai 5` / `salta 5`, `quanto manca`, `gigi, lavora su: <una frase>`. L'elenco si costruisce ogni
+volta dallo stato vero — coda + riserva — quindi quello che è fatto sparisce da solo: **non
+esiste un documento del piano da tenere aggiornato**, e non va creato.
+
+**Tetto di spesa:** 60 lavori al giorno, €1,60 per lavoro. Il contatore riparte a **mezzanotte
+italiana** (era UTC, cioè le 2 di notte: corretto il 21/08 su richiesta di Vlad). Quando il tetto
+scatta il ciclo si ferma e fissa la ripartenza a mezzanotte, senza consumare i tentativi di
+riavvio tenuti per i guasti veri.
+
+**Due difetti del ciclo trovati provandolo, non leggendolo** (21/08 sera): `inRevisione` era usata
+nelle due uscite — coda vuota e tetto giornaliero — ma definita solo dentro `riepilogo()`. Tutte e
+due andavano in `ReferenceError`, quindi `fermati` non veniva mai chiamata e il ciclo restava
+"attivo" a girare a vuoto **senza avvisare nessuno**: è il motivo per cui quel pomeriggio Gigi è
+rimasto fermo in silenzio. Lezione da tenere: il ramo che non si esercita mai è quello che si
+rompe, e in questo progetto sono quasi sempre i rami di uscita.
 
 ---
 
