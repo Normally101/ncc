@@ -69,6 +69,24 @@ affatto (`engine-rides.js:595`), quindi non c'è niente da riparare.
 
 ---
 
+# ⚠️ 21/08 — LA REGOLA DEL PARALLELO (imparata sbagliando due volte in un'ora)
+
+`MAX_PARALLELI = 3` funziona, ma **i lavori paralleli non devono scrivere sullo stesso file.**
+Due fusioni fallite oggi, stessa causa, e la colpa è di chi ha scritto i lavori:
+
+1. **Il censimento** — tre lavori mandati ad appendere tutti su `docs/DOPPIO-CONTEGGIO.md`.
+2. **Le accensioni** — tre lavori che toccano tutti `config.js` e la lista in
+   `test/guardrail/interruttori.test.js` per togliere la propria funzione dalle spente.
+
+Entrambi risolti a mano (unione delle due modifiche, non una delle due). **Il fallimento è
+stato pulito**: `main` intatto, rami conservati, lavoro recuperato per intero — che è
+esattamente il comportamento voluto. Ma è lavoro manuale evitabile.
+
+**Regola:** i lavori che toccano `config.js` (cioè tutte le accensioni) vanno fatti
+**uno per volta**. Il parallelo si usa per lavori su file disgiunti.
+
+---
+
 # 🚪 21/08 12:15 — LA PORTA UNICA È CHIUSA
 
 `ECCEZIONI` in `test/guardrail/una-sola-porta.test.js` è **vuota**. `engine.js` era l'ultimo file,
