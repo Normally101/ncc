@@ -158,6 +158,25 @@ describe('funzione lusso — lifestyle assets, status e real estate', () => {
             assert.equal(gs.cash, 6670);
         });
 
+        test('processDailyRoutines somma correttamente tutti gli 8 asset lifestyle nel portfolio completo', () => {
+            gs.lifestyleAssets = [
+                'attico_milano', 'villa_porto_cervo', 'ufficio_wall_street',
+                'jet_privato', 'yacht_lusso', 'villa_como',
+                'casino_montecarlo', 'penthouse_dubai'
+            ];
+            gs.cash = 0;
+            gs.investments = [];
+            gs.fleet = [];
+            gs.staff = [];
+            gs.drivers = [];
+
+            // 3500 + 8000 + 12000 + 0 + 5000 + 7000 + 3000 + 15000 = 53500 lordi
+            // tassazione base 42% -> 53500 * 0.58 = 31030 netti
+            sandbox.processDailyRoutines();
+
+            assert.equal(gs.cash, 31030);
+        });
+
         test('gli asset lifestyle aumentano il credit score aziendale', () => {
             gs.reputation = 4.0;
             gs.cash = 100000;
@@ -173,15 +192,160 @@ describe('funzione lusso — lifestyle assets, status e real estate', () => {
             assert.equal(gs.creditScore, scoreBase + 40); // 20 per asset
         });
 
-        test('_tickFatigue applica il bonus recupero energia CEO dagli asset lifestyle', () => {
-            gs.lifestyleAssets = ['attico_milano']; // energyBonus: 0.5
+        test('_tickFatigue applica il bonus recupero energia CEO da villa_como', () => {
+            gs.lifestyleAssets = ['villa_como']; // energyBonus: 1.5
             gs.activeRides = [];
             gs.energy = 50;
 
             sandbox._tickFatigue();
 
-            // guadagno: 1.0 base + 0.5 bonus = 1.5
-            assert.equal(gs.energy, 51.5);
+            // guadagno: 1.0 base + 1.5 bonus = 2.5
+            assert.equal(gs.energy, 52.5);
+        });
+
+        test('penthouse_dubai sblocca le rotte internazionali', () => {
+            const assets = vm.runInContext('LIFESTYLE_ASSETS', sandbox);
+            const dubai = assets.find(a => a.id === 'penthouse_dubai');
+            assert.ok(dubai && dubai.intlUnlock, 'penthouse_dubai deve avere intlUnlock');
+
+            gs.cash = dubai.price + 100000;
+            gs.unlockedRegions = ['lazio'];
+
+            sandbox.buyLifestyleAsset(dubai.id);
+
+            assert.ok(gs.unlockedRegions.includes('svizzera'));
+            assert.ok(gs.unlockedRegions.includes('costa_azzurra'));
+            assert.ok(gs.lifestyleAssets.includes('penthouse_dubai'));
+        });
+
+        test('ufficio_wall_street applica +15% di rendimento su investimenti broker positivi', () => {
+            gs.staff = [{ id: 'ewm', name: 'Elite Wealth Manager', role: 'wealth_manager' }];
+            gs.lifestyleAssets = ['ufficio_wall_street'];
+            gs.day = 1;
+            gs.hour = 10;
+            gs.cash = 0;
+            gs.emails = [];
+
+            // Investimento broker terminato con rendimento positivo
+            gs.brokerInvestments = [{
+                id: 1,
+                capital: 100000,
+                risk: 'low',
+                riskName: 'Conservativo',
+                startHour: 0,
+                endsHour: 5,
+                minReturn: 0.10,
+                maxReturn: 0.10,
+                resolved: false,
+                actualGain: null
+            }];
+
+            sandbox._tickBrokerInvestments();
+
+            // minReturn=0.10, rand base -> 10000 guadagno base * 1.15 (bonus wall street) = 11500
+            // payout = capital (100000) + gain (11500) = 111500
+            assert.equal(gs.brokerInvestments[0].resolved, true);
+            assert.equal(gs.brokerInvestments[0].actualGain, 11500);
+            assert.equal(gs.cash, 111500);
+        });
+
+        test('yacht_lusso e villa_porto_cervo accelerano il recupero fatica degli autisti a riposo', () => {
+            gs.lifestyleAssets = ['yacht_lusso', 'villa_porto_cervo']; // staffBonus: 0.30 + 0.15 = 0.45
+            gs.activeRides = [];
+            gs.drivers = [
+                {
+                    id: 'd1', name: 'Mario', status: 'resting',
+                    fatigue: 50, restHoursLeft: 2,
+                    morale: 80, salary: 3000,
+                    stress_level: 0, burnout_until: null
+                }
+            ];
+
+            sandbox._tickFatigue();
+
+            // Base recovery = 20 * (1 + 0.45) = 29 -> fatigue scende da 50 a 21
+            assert.equal(gs.drivers[0].fatigue, 21);
+            assert.equal(gs.drivers[0].morale, 85);
+        });
+
+        test('la reputazione guadagnata dagli asset rispetta il tetto di 5.0 + prestige', () => {
+            const assets = vm.runInContext('LIFESTYLE_ASSETS', sandbox);
+            const villa = assets.find(a => a.id === 'villa_porto_cervo'); // repBonus: 0.5
+
+            gs.cash = villa.price * 2;
+            gs.reputation = 4.8;
+            gs.prestige = 0;
+            gs.lifestyleAssets = [];
+
+            sandbox.buyLifestyleAsset(villa.id);
+
+            // 4.8 + 0.5 = 5.3 -> limitato a 5.0
+            assert.equal(gs.reputation, 5.0);
+
+            // Con prestigio 1 -> tetto a 6.0
+            gs.prestige = 1;
+            const jet = assets.find(a => a.id === 'jet_privato'); // repBonus: 1.0
+            gs.cash = jet.price * 2;
+
+            sandbox.buyLifestyleAsset(jet.id);
+            // 5.0 + 1.0 = 6.0
+            assert.equal(gs.reputation, 6.0);
+        });
+
+        test('diamond contracts richiedono l asset appropriato e aumentano diamondContractsCompleted', () => {
+            gs.staff = [{ id: 'ewm', name: 'Elite Wealth Manager', role: 'wealth_manager' }];
+            gs.reputation = 5.0;
+            gs.lifestyleAssets = ['jet_privato'];
+            gs.emails = [];
+            gs.drivers = [
+                { id: 'tu_ceo', name: 'CEO', status: 'idle', level: 1, tier: 'standard' },
+                { id: 'd_expert', name: 'Expert Driver', status: 'idle', level: 3, tier: 'vip' }
+            ];
+            gs.fleet = [
+                { id: 'v_vip', name: 'Stellar S-Imperial', tier: 'vip', status: 'idle' }
+            ];
+
+            // Inseriamo manualmente una mail di tipo diamond
+            const diamondEmail = {
+                id: 999,
+                sender: 'Sheikh Al-Maktoum Office',
+                subject: '🔶 DIAMOND: Transfer Dubai → Montecarlo',
+                type: 'diamond',
+                offer: 45000,
+                status: 'unread',
+                expiresAt: 100
+            };
+            gs.emails.push(diamondEmail);
+
+            const cashPrima = gs.cash;
+            sandbox.acceptDiamondContract(999);
+
+            assert.equal(diamondEmail.status, 'resolved');
+            assert.equal(gs.cash, cashPrima + 45000);
+            assert.equal(gs.diamondContractsCompleted, 1);
+        });
+
+        test('click su card lifestyle tramite data-ce-act esegue buyLifestyleAsset e muta gameState', () => {
+            const container = sandbox.document.createElement('div');
+            container.id = 'tab-container';
+            sandbox.document.body.appendChild(container);
+
+            gs.cash = 10000000;
+            gs.lifestyleAssets = [];
+            gs.reputation = 3.0;
+
+            sandbox.renderTabLifestyle();
+
+            // Cerchiamo il pulsante di acquisto per attico_milano
+            const btn = container.querySelector('[data-ce-act="buyLifestyleAsset"]');
+            assert.ok(btn, 'deve esserci un pulsante con data-ce-act="buyLifestyleAsset"');
+
+            // Dispatch dell'evento di click
+            btn.dispatchEvent(new sandbox.document.defaultView.MouseEvent('click', { bubbles: true }));
+
+            assert.ok(gs.lifestyleAssets.includes('attico_milano'));
+            assert.equal(gs.cash, 10000000 - 2800000);
+            assert.equal(gs.reputation, 3.3);
         });
     });
 

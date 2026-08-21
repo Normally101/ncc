@@ -46,7 +46,7 @@ window.FEATURES = {
     cripto:       false,  // crypto.js
     vtk:          false,  // vtk-market.js
     turismo:      false,  // tourism.js
-    lusso:        false,  // ui-lifestyle: ville, orologi, status
+    lusso:        true,   // ui-lifestyle.js — verificata 21/08/2026 (acquisti lifestyle, rendite, status CEO, diamond contracts)
     politica:     false,  // ui-politics, war_room: province e influenza
     infrastrutture: false, // infrastructure.js
     holding:      false,  // hostile_takeover, engine-holding
