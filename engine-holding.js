@@ -64,7 +64,7 @@ window.divestSubsidiary = function(subId) {
 
 // ── AZIONI $CEMP ──────────────────────────────────────────────────
 window.buyCempShares = function(qty) {
-    qty = Math.max(1, Math.round(Number(qty)));
+    qty = Math.max(1, Math.round(Number(qty) || 0));
     const price = gameState.cempPrice || 10;
     const cost  = Math.round(price * qty);
     if (!window.CE_money.spend(cost, 'buy_cemp_shares')) return;
@@ -76,7 +76,7 @@ window.buyCempShares = function(qty) {
 };
 
 window.sellCempShares = function(qty) {
-    qty = Math.max(1, Math.round(Number(qty)));
+    qty = Math.max(1, Math.round(Number(qty) || 0));
     if ((gameState.cempOwnedShares || 0) < qty) { showNotification('Azioni insufficienti.', 'error'); return; }
     const price   = gameState.cempPrice || 10;
     const revenue = Math.round(price * qty);
