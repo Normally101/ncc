@@ -56,8 +56,8 @@
 ## `ui-fleet.js`
 
 - `renderTabFleet` · `ui-fleet.js:4` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `bulkRepairFleet` · `ui-fleet.js:408` · data-ce-act: `bulkRepairFleet` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
-- `renderTabFleet` · `ui-fleet.js:421` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `bulkRepairFleet` · `ui-fleet.js:409` · data-ce-act: `bulkRepairFleet` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
+- `renderTabFleet` · `ui-fleet.js:425` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-help.js`
 

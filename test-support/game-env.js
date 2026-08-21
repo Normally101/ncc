@@ -96,6 +96,10 @@ function makeServerState(sandboxRef, overrides = {}) {
             gs().cash = Math.max(0, (gs().cash || 0) - cost);
             return { success: true };
         },
+        refillCarTires: async (_serverId, cost) => {
+            gs().cash = Math.max(0, (gs().cash || 0) - cost);
+            return { success: true };
+        },
         buyVehicleUpgrade: async (_vehicleId, _upgradeId, price) => {
             gs().cash = Math.max(0, (gs().cash || 0) - price);
             return { success: true };
