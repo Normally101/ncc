@@ -7,27 +7,27 @@
 ## `p2p-market.js`
 
 - `_p2pErrMsg` · `p2p-market.js:13` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_sb` · `p2p-market.js:49` · data-ce-act: nessuna · doppioni: `b2b.js:34` · denaro: no
-- `_uid` · `p2p-market.js:50` · data-ce-act: nessuna · doppioni: `b2b.js:35` · denaro: no
-- `listCarForSale` · `p2p-market.js:60` · data-ce-act: `listCarForSale` (`ui-market.js`) · doppioni: `engine-fleet.js:414` · denaro: RPC (`rpc_list_car_for_sale`)
-- `cancelP2PListing` · `p2p-market.js:103` · data-ce-act: `cancelP2PListing` (`p2p-render.js`) · doppioni: nessuno · denaro: RPC (`rpc_cancel_listing`)
-- `buyP2PCar` · `p2p-market.js:128` · data-ce-act: `buyP2PCar` (`p2p-render.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_buy_market_car`)
-- `createHolding` · `p2p-market.js:161` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_create_holding`)
-- `joinHolding` · `p2p-market.js:172` · data-ce-act: `joinHolding` (`p2p-render.js`) · doppioni: nessuno · denaro: RPC (`rpc_join_holding`)
-- `leaveHolding` · `p2p-market.js:181` · data-ce-act: `leaveHolding` (`p2p-render.js`) · doppioni: nessuno · denaro: RPC (`rpc_leave_holding`)
-- `contributeHoldingTreasury` · `p2p-market.js:190` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_contribute_holding_treasury`)
-- `listCompanyIPO` · `p2p-market.js:231` · data-ce-act: `listCompanyIPO` (`ui-finance.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_list_company_ipo`)
-- `buyCompanyShares` · `p2p-market.js:269` · data-ce-act: `buyCompanyShares` (`p2p-render.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_buy_company_shares`)
-- `sellCompanyShares` · `p2p-market.js:291` · data-ce-act: `sellCompanyShares` (`p2p-render.js`) · doppioni: nessuno · denaro: CE_money (`accreditatoDalServer`) / RPC (`rpc_sell_company_shares`)
-- `p2pFetchMarket` · `p2p-market.js:310` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `p2pFetchShares` · `p2p-market.js:325` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `p2pFetchHoldings` · `p2p-market.js:345` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `p2pFetchConsorzi` · `p2p-market.js:369` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `p2pFetchTension` · `p2p-market.js:400` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_tick_tension`)
-- `p2pFetchGdfRisk` · `p2p-market.js:415` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_get_gdf_risk`)
-- `_sindacatoGdfDailyCheck` · `p2p-market.js:425` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_gdf_inspection_check`)
-- `p2pRefreshAll` · `p2p-market.js:445` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `p2pStartRealtime` · `p2p-market.js:464` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_p2pSb` · `p2p-market.js:49` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_p2pUid` · `p2p-market.js:50` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `listCarForSale` · `p2p-market.js:62` · data-ce-act: `listCarForSale` (`ui-market.js`) · doppioni: `engine-fleet.js:414` · denaro: RPC (`rpc_list_car_for_sale`)
+- `cancelP2PListing` · `p2p-market.js:105` · data-ce-act: `cancelP2PListing` (`p2p-render.js`) · doppioni: nessuno · denaro: RPC (`rpc_cancel_listing`)
+- `buyP2PCar` · `p2p-market.js:130` · data-ce-act: `buyP2PCar` (`p2p-render.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_buy_market_car`)
+- `createHolding` · `p2p-market.js:163` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_create_holding`)
+- `joinHolding` · `p2p-market.js:174` · data-ce-act: `joinHolding` (`p2p-render.js`) · doppioni: nessuno · denaro: RPC (`rpc_join_holding`)
+- `leaveHolding` · `p2p-market.js:183` · data-ce-act: `leaveHolding` (`p2p-render.js`) · doppioni: nessuno · denaro: RPC (`rpc_leave_holding`)
+- `contributeHoldingTreasury` · `p2p-market.js:192` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_contribute_holding_treasury`)
+- `listCompanyIPO` · `p2p-market.js:233` · data-ce-act: `listCompanyIPO` (`ui-finance.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_list_company_ipo`)
+- `buyCompanyShares` · `p2p-market.js:271` · data-ce-act: `buyCompanyShares` (`p2p-render.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_buy_company_shares`)
+- `sellCompanyShares` · `p2p-market.js:293` · data-ce-act: `sellCompanyShares` (`p2p-render.js`) · doppioni: nessuno · denaro: CE_money (`accreditatoDalServer`) / RPC (`rpc_sell_company_shares`)
+- `p2pFetchMarket` · `p2p-market.js:312` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `p2pFetchShares` · `p2p-market.js:327` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `p2pFetchHoldings` · `p2p-market.js:347` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `p2pFetchConsorzi` · `p2p-market.js:371` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `p2pFetchTension` · `p2p-market.js:402` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_tick_tension`)
+- `p2pFetchGdfRisk` · `p2p-market.js:417` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_get_gdf_risk`)
+- `_sindacatoGdfDailyCheck` · `p2p-market.js:427` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer`) / RPC (`rpc_gdf_inspection_check`)
+- `p2pRefreshAll` · `p2p-market.js:447` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `p2pStartRealtime` · `p2p-market.js:466` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `p2p-render.js`
 
@@ -159,8 +159,8 @@
 
 - `_b2bCarRank` · `b2b.js:24` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `_b2bReqRank` · `b2b.js:25` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_sb` · `b2b.js:34` · data-ce-act: nessuna · doppioni: `p2p-market.js:49` · denaro: no
-- `_uid` · `b2b.js:35` · data-ce-act: nessuna · doppioni: `p2p-market.js:50` · denaro: no
+- `_sb` · `b2b.js:34` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_uid` · `b2b.js:35` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `_b2bFetchContracts` · `b2b.js:39` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_get_b2b_contracts`)
 - `_b2bFetchActive` · `b2b.js:45` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `b2bRefresh` · `b2b.js:56` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
@@ -409,12 +409,8 @@
 
 | Nome | Definizione 1 | Definizione 2 / altre | Note |
 |---|---|---|---|
-| `_sb` | `p2p-market.js:49` | `b2b.js:34` | Helper locali identici definiti in scope globale |
-| `_uid` | `p2p-market.js:50` | `b2b.js:35` | Helper locali identici definiti in scope globale |
-| `listCarForSale` | `p2p-market.js:60` | `engine-fleet.js:414` | P2P market (`p2p-market.js`) sovrascrive la vendita flotta standard (`engine-fleet.js`) |
+| `listCarForSale` | `p2p-market.js:62` | `engine-fleet.js:414` | P2P market (`p2p-market.js`) sovrascrive la vendita flotta standard (`engine-fleet.js`) |
 | `_rpc` | `alliances.js:286` | `serverState.js:370` |  |
-| `_sb` | `b2b.js:34` | `p2p-market.js:49` | Helper locali identici definiti in scope globale |
-| `_uid` | `b2b.js:35` | `p2p-market.js:50` | Helper locali identici definiti in scope globale |
 | `_save` | `vanity.js:160` | `security.js:82` |  |
 | `gs` | `vittorio.js:24` | `objective-tracker.js:15` |  |
 | `processDailyRoutines` | `vittorio.js:153` | `engine-daily.js:315` | Hook routine giornaliere sovrascritto / decorato |
