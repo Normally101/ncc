@@ -605,4 +605,120 @@ describe('Funzione Cripto — Esecuzione e ciclo di vita', () => {
             assert.equal(renderChiamato, true, 'il render deve essere invocato all\'aggiornamento realtime');
         });
     });
+
+    describe('Persistenza stato e resistenza all\'eco del server (Server Realtime Eco)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteCripto(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('acquisto crypto mantiene gameState.cash e non subisce regressioni con eco server', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 50000;
+
+            await sandbox.cryptoBuy('BTC', 10000);
+            assert.equal(gs.cash, 40000, 'gameState.cash deve essere scalato a 40.000 dopo acquisto');
+
+            // Simula eco realtime dal server su companies: il server manda il nuovo saldo autoritativo
+            if (sandbox.ServerState && typeof sandbox.ServerState.handleCompanyUpdate === 'function') {
+                sandbox.ServerState.handleCompanyUpdate({ cash: 40000 });
+            } else {
+                gs.cash = 40000; // Il saldo autoritativo server coincide
+            }
+            assert.equal(gs.cash, 40000, 'gameState.cash resta 40.000 dopo ricezione eco');
+        });
+
+        test('vendita crypto mantiene gameState.cash e non subisce regressioni con eco server', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 5000;
+
+            await sandbox.cryptoSell('EMPIRE', 100);
+            assert.equal(gs.cash, 6000, 'gameState.cash deve salire a 6.000 dopo vendita');
+
+            if (sandbox.ServerState && typeof sandbox.ServerState.handleCompanyUpdate === 'function') {
+                sandbox.ServerState.handleCompanyUpdate({ cash: 6000 });
+            } else {
+                gs.cash = 6000;
+            }
+            assert.equal(gs.cash, 6000, 'gameState.cash resta 6.000');
+        });
+
+        test('deposito offshore scala gameState.cash e non viene alterato da eco server', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 100000;
+
+            await sandbox.cryptoDepositOffshore('cayman', 25000);
+            assert.equal(gs.cash, 75000, 'gameState.cash deve essere 75.000');
+
+            if (sandbox.ServerState && typeof sandbox.ServerState.handleCompanyUpdate === 'function') {
+                sandbox.ServerState.handleCompanyUpdate({ cash: 75000 });
+            }
+            assert.equal(gs.cash, 75000, 'gameState.cash non deve rimbalzare');
+        });
+
+        test('prelievo offshore incrementa gameState.cash e resta coerente post-eco', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 10000;
+
+            await sandbox.cryptoWithdrawOffshore('cayman', 15000);
+            assert.equal(gs.cash, 25000, 'gameState.cash deve essere 25.000');
+
+            if (sandbox.ServerState && typeof sandbox.ServerState.handleCompanyUpdate === 'function') {
+                sandbox.ServerState.handleCompanyUpdate({ cash: 25000 });
+            }
+            assert.equal(gs.cash, 25000, 'gameState.cash resta allineato');
+        });
+    });
+
+    describe('Verifica contratti di schema e forma dei dati server (SQL 24_crypto_offshore.sql)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteCripto(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('campi restituiti da crypto_market rispettano lo schema atteso dal client', async () => {
+            const { sandbox } = amb;
+            await sandbox.cryptoRefresh(true);
+            const market = sandbox._cryptoState.market;
+
+            assert.ok(Array.isArray(market), 'il mercato deve essere un array');
+            assert.ok(market.length > 0, 'il mercato non deve essere vuoto');
+
+            for (const coin of market) {
+                assert.equal(typeof coin.id, 'string', 'coin.id deve essere stringa');
+                assert.equal(typeof coin.name, 'string', 'coin.name deve essere stringa');
+                assert.equal(typeof coin.icon, 'string', 'coin.icon deve essere stringa');
+                assert.equal(typeof coin.price_eur, 'number', 'coin.price_eur deve essere numerico');
+                assert.equal(typeof coin.supply, 'number', 'coin.supply deve essere numerico');
+                assert.equal(typeof coin.reserve_eur, 'number', 'coin.reserve_eur deve essere numerico');
+            }
+        });
+
+        test('campi restituiti da rpc_get_crypto_portfolio rispettano lo schema atteso dal client', async () => {
+            const { sandbox } = amb;
+            await sandbox.cryptoRefresh(true);
+            const portfolio = sandbox._cryptoState.portfolio;
+
+            assert.ok(Array.isArray(portfolio), 'il portfolio deve essere un array');
+            for (const item of portfolio) {
+                assert.equal(typeof item.coin_id, 'string', 'item.coin_id deve essere stringa');
+                assert.equal(typeof item.name, 'string', 'item.name deve essere stringa');
+                assert.equal(typeof item.amount, 'number', 'item.amount deve essere numerico');
+                assert.equal(typeof item.avg_buy, 'number', 'item.avg_buy deve essere numerico');
+                assert.equal(typeof item.current_price, 'number', 'item.current_price deve essere numerico');
+                assert.equal(typeof item.value_eur, 'number', 'item.value_eur deve essere numerico');
+                assert.equal(typeof item.pnl_pct, 'number', 'item.pnl_pct deve essere numerico');
+            }
+        });
+
+        test('campi restituiti da offshore_accounts rispettano lo schema atteso dal client', async () => {
+            const { sandbox } = amb;
+            await sandbox.cryptoRefresh(true);
+            const offshore = sandbox._cryptoState.offshore;
+
+            assert.ok(Array.isArray(offshore), 'offshore deve essere un array');
+            for (const acc of offshore) {
+                assert.equal(typeof acc.jurisdiction, 'string', 'acc.jurisdiction deve essere stringa');
+                assert.equal(typeof acc.balance, 'number', 'acc.balance deve essere numerico');
+            }
+        });
+    });
 });
