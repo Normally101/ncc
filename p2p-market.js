@@ -141,7 +141,7 @@ window.buyP2PCar = async function(listingId) {
 
     if (error || !data) { showNotification(_p2pErrMsg('Acquisto fallito', error || {message: 'risposta vuota'}), 'error'); return; }
 
-    if (!window.CE_money.spend(data.price_paid, 'buy_p2p_car')) return;
+    window.CE_money.addebitatoDalServer(data.price_paid, 'buy_p2p_car');
     const newCar = data.car;
     newCar.id = 'c_p2p_' + Date.now(); // nuovo ID locale per evitare conflitti
     gameState.fleet.push(newCar);
@@ -199,7 +199,7 @@ window.contributeHoldingTreasury = async function(holdingId, amount) {
         v_holding_id: holdingId, v_amount: roundedAmount,
     });
     if (error) { showNotification(_p2pErrMsg('Errore contributo holding', error), 'error'); return; }
-    if (!window.CE_money.spend(roundedAmount, 'contribute_holding_treasury')) return;
+    window.CE_money.addebitatoDalServer(roundedAmount, 'contribute_holding_treasury');
     await saveGame();
 
     // rpc_contribute_holding_treasury internalizza il dampening tensione e
@@ -247,7 +247,7 @@ window.listCompanyIPO = async function() {
     if (error || !data) { showNotification(_p2pErrMsg('IPO fallita', error || {message: 'risposta vuota'}), 'error'); return; }
 
     // Aggiorna gameState locale
-    if (!window.CE_money.spend(50000, 'list_company_ipo_fee')) return;
+    window.CE_money.addebitatoDalServer(50000, 'list_company_ipo_fee');
     gameState.companyIPO = {
         listed:      true,
         listedDay:   gameState.day,
@@ -280,7 +280,7 @@ window.buyCompanyShares = async function(listingId, qty) {
     });
     if (error || !data) { showNotification(_p2pErrMsg('Acquisto azioni fallito', error || {message: 'risposta vuota'}), 'error'); return; }
 
-    if (!window.CE_money.spend(total, 'buy_company_shares')) return;
+    window.CE_money.addebitatoDalServer(total, 'buy_company_shares');
     await saveGame();
     showNotification(`✅ Comprate ${qty} azioni di ${data.company} a €${data.price}/az.`, 'success');
     updateUI();
@@ -295,7 +295,7 @@ window.sellCompanyShares = async function(listingId, qty) {
     });
     if (error || !data) { showNotification(_p2pErrMsg('Vendita azioni fallita', error || {message: 'risposta vuota'}), 'error'); return; }
 
-    window.CE_money.earn(data.total, 'sell_company_shares');
+    window.CE_money.accreditatoDalServer(data.total, 'sell_company_shares');
     await saveGame();
     showNotification(`✅ Vendute ${data.qty_sold} azioni di ${data.company} — +€${data.total.toLocaleString()}`, 'success');
     updateUI();
@@ -429,8 +429,7 @@ window._sindacatoGdfDailyCheck = async function() {
     if (data.inspected) {
         const fine = data.fine || 0;
         if (fine > 0) {
-            const daPagare = Math.min(gameState.cash || 0, fine);
-            if (daPagare > 0) window.CE_money.spend(daPagare, 'gdf_fine');
+            window.CE_money.addebitatoDalServer(fine, 'gdf_fine');
         }
         await saveGame();
         showBigEvent('🚔', 'ISPEZIONE GdF!',

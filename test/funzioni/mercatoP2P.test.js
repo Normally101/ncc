@@ -477,7 +477,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             await sandbox.buyP2PCar('lst_ok');
 
             assert.equal(gs.cash, 15000, 'il denaro speso deve essere scalato');
-            assert.deepEqual(syncedCashCalls, [15000]);
+            assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare con syncCash');
 
             const purchasedCar = gs.fleet.find(c => c.name === 'Mercedes-Benz Classe E');
             assert.ok(purchasedCar, 'l auto deve essere presente in gameState.fleet');
@@ -537,7 +537,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             await sandbox.contributeHoldingTreasury('hld_101', 20000);
 
             assert.equal(gs.cash, 30000);
-            assert.deepEqual(syncedCashCalls, [30000]);
+            assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare con syncCash');
             assert.equal(sandbox._sindacatoState.tension, 25, 'la tensione deve essere allineata al ritorno RPC');
             assert.ok(env.notifications.some(n => n.msg.includes('Contribuito') && n.msg.includes('cassa holding')));
             assert.ok(env.notifications.some(n => n.msg.includes('Barometro −2 pt')));
@@ -582,7 +582,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
 
             // ipoPrice = Math.max(10, Math.round(150000 / 1000)) = 150
             assert.equal(gs.cash, 100000, 'costo quotazione 50.000€ deve essere detratto');
-            assert.deepEqual(syncedCashCalls, [100000]);
+            assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare con syncCash');
 
             assert.ok(gs.companyIPO);
             assert.equal(gs.companyIPO.listed, true);
@@ -603,7 +603,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
 
             // 10 * 65 = 650€
             assert.equal(gs.cash, 9350);
-            assert.deepEqual(syncedCashCalls, [9350]);
+            assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare con syncCash');
             assert.ok(env.notifications.some(n => n.msg.includes('Comprate 10 azioni di Apex Mobility')));
         });
 
@@ -614,7 +614,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
 
             // Ritorna total: 650
             assert.equal(gs.cash, 5650);
-            assert.deepEqual(syncedCashCalls, [5650]);
+            assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare con syncCash');
             assert.ok(env.notifications.some(n => n.msg.includes('Vendute 10 azioni di Apex Mobility — +€650')));
         });
     });
@@ -694,7 +694,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             await sandbox._sindacatoGdfDailyCheck();
 
             assert.equal(gs.cash, 6000, 'la multa di 4000€ deve essere scalata');
-            assert.deepEqual(syncedCashCalls, [6000]);
+            assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare con syncCash');
             assert.equal(sandbox._sindacatoState.gdfRisk, 45, 'rischio deve scendere di 30 punti (75 - 30 = 45)');
         });
     });

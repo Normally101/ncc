@@ -2,9 +2,11 @@
 /* ============================================================================
    test/economy/p2p-sync.test.js
 
-   Regressione per il bug economico in p2p-market.js:
-   tutte le funzioni di spesa e incasso DEVONO passare da CE_money (spend / earn)
-   e sincronizzare la cassa col server tramite ServerState.syncCash.
+   Regressione anti-doppio-conteggio in p2p-market.js:
+   le RPC del server aggiornano già companies.cash sul DB.
+   Il client DEVE usare CE_money.addebitatoDalServer / CE_money.accreditatoDalServer
+   per allineare la cassa locale SENZA richiamare ServerState.syncCash
+   (che rispedirebbe il totale provocando doppio addebito/accredito).
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
@@ -43,10 +45,10 @@ function setupP2PEnv(rpcResponses = {}) {
     return { sandbox, gs: sandbox.gameState, syncedCash };
 }
 
-describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
+describe('p2p-market — allineamento cassa senza risincronizzazione (anti-doppio-conteggio)', () => {
 
     describe('buyP2PCar', () => {
-        test('buyP2PCar spende tramite CE_money e sincronizza con ServerState.syncCash', async () => {
+        test('buyP2PCar addebita con addebitatoDalServer senza invocare ServerState.syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PEnv({
                 rpc_buy_market_car: () => ({
                     data: {
@@ -68,7 +70,7 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 20000, 'il saldo locale deve essere scalato');
-            assert.deepEqual(syncedCash, [20000], 'syncCash deve ricevere il saldo aggiornato');
+            assert.deepEqual(syncedCash, [], 'non deve risincronizzare con syncCash perché la RPC ha già scalato companies.cash');
         });
 
         test('buyP2PCar con fondi insufficienti non chiama la RPC né syncCash', async () => {
@@ -92,10 +94,47 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(rpcCalled, false);
             assert.deepEqual(syncedCash, []);
         });
+
+        test('buyP2PCar chiama CE_money.addebitatoDalServer e non CE_money.spend', async () => {
+            const { sandbox, gs } = setupP2PEnv({
+                rpc_buy_market_car: () => ({
+                    data: {
+                        price_paid: 25000,
+                        seller_name: 'Alice',
+                        fee: 1250,
+                        car: { id: 'car_remote2', name: 'BMW 7er' },
+                    },
+                    error: null,
+                }),
+            });
+
+            let addebitatoCalled = false;
+            let spendCalled = false;
+            const origAddebitato = sandbox.CE_money.addebitatoDalServer;
+            const origSpend = sandbox.CE_money.spend;
+            sandbox.CE_money.addebitatoDalServer = (amt, reason) => {
+                addebitatoCalled = true;
+                return origAddebitato(amt, reason);
+            };
+            sandbox.CE_money.spend = (amt, reason) => {
+                spendCalled = true;
+                return origSpend(amt, reason);
+            };
+
+            sandbox._p2pMarket.listings = [
+                { id: 'listing_2', seller_user_id: 'other_user', ask_price: 25000 },
+            ];
+            gs.cash = 60000;
+
+            await sandbox.buyP2PCar('listing_2');
+            assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
+            assert.equal(spendCalled, false, 'non deve chiamare spend');
+            assert.equal(gs.cash, 35000);
+        });
     });
 
     describe('contributeHoldingTreasury', () => {
-        test('contributeHoldingTreasury spende tramite CE_money e sincronizza con ServerState.syncCash', async () => {
+        test('contributeHoldingTreasury addebita con addebitatoDalServer senza invocare ServerState.syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PEnv({
                 rpc_contribute_holding_treasury: () => ({
                     data: { treasury: 20000, tension: 15 },
@@ -109,7 +148,7 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 30000);
-            assert.deepEqual(syncedCash, [30000]);
+            assert.deepEqual(syncedCash, [], 'non deve risincronizzare con syncCash');
         });
 
         test('contributeHoldingTreasury con fondi insufficienti non sincronizza', async () => {
@@ -128,10 +167,38 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(gs.cash, 5000);
             assert.deepEqual(syncedCash, []);
         });
+
+        test('contributeHoldingTreasury chiama CE_money.addebitatoDalServer e non CE_money.spend', async () => {
+            const { sandbox, gs } = setupP2PEnv({
+                rpc_contribute_holding_treasury: () => ({
+                    data: { treasury: 15000, tension: 10 },
+                    error: null,
+                }),
+            });
+
+            let addebitatoCalled = false;
+            let spendCalled = false;
+            const origAddebitato = sandbox.CE_money.addebitatoDalServer;
+            const origSpend = sandbox.CE_money.spend;
+            sandbox.CE_money.addebitatoDalServer = (amt, reason) => {
+                addebitatoCalled = true;
+                return origAddebitato(amt, reason);
+            };
+            sandbox.CE_money.spend = (amt, reason) => {
+                spendCalled = true;
+                return origSpend(amt, reason);
+            };
+
+            gs.cash = 40000;
+            await sandbox.contributeHoldingTreasury('h1', 15000);
+            assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
+            assert.equal(spendCalled, false, 'non deve chiamare spend');
+            assert.equal(gs.cash, 25000);
+        });
     });
 
     describe('listCompanyIPO', () => {
-        test('listCompanyIPO spende 50.000€ tramite CE_money e sincronizza con ServerState.syncCash', async () => {
+        test('listCompanyIPO addebita 50.000€ tramite addebitatoDalServer senza invocare ServerState.syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PEnv({
                 rpc_list_company_ipo: () => ({
                     data: { id: 'ipo_1', shares_total: 1000, ipo_price: 100 },
@@ -147,7 +214,7 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
 
             assert.equal(gs.cash, 50000);
             assert.equal(gs.companyIPO?.listed, true);
-            assert.deepEqual(syncedCash, [50000]);
+            assert.deepEqual(syncedCash, [], 'non deve risincronizzare con syncCash');
         });
 
         test('listCompanyIPO con fondi insufficienti non quota e non chiama syncCash', async () => {
@@ -168,13 +235,42 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(gs.companyIPO?.listed, undefined);
             assert.deepEqual(syncedCash, []);
         });
+
+        test('listCompanyIPO chiama CE_money.addebitatoDalServer e non CE_money.spend', async () => {
+            const { sandbox, gs } = setupP2PEnv({
+                rpc_list_company_ipo: () => ({
+                    data: { id: 'ipo_2', shares_total: 1000, ipo_price: 120 },
+                    error: null,
+                }),
+            });
+
+            let addebitatoCalled = false;
+            let spendCalled = false;
+            const origAddebitato = sandbox.CE_money.addebitatoDalServer;
+            const origSpend = sandbox.CE_money.spend;
+            sandbox.CE_money.addebitatoDalServer = (amt, reason) => {
+                addebitatoCalled = true;
+                return origAddebitato(amt, reason);
+            };
+            sandbox.CE_money.spend = (amt, reason) => {
+                spendCalled = true;
+                return origSpend(amt, reason);
+            };
+
+            gs.reputation = 4.0;
+            gs.cash = 80000;
+            await sandbox.listCompanyIPO();
+            assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
+            assert.equal(spendCalled, false, 'non deve chiamare spend');
+            assert.equal(gs.cash, 30000);
+        });
     });
 
     describe('buyCompanyShares & sellCompanyShares', () => {
-        test('buyCompanyShares spende il costo tramite CE_money e sincronizza con ServerState.syncCash', async () => {
+        test('buyCompanyShares addebita con addebitatoDalServer senza invocare ServerState.syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PEnv({
                 rpc_buy_company_shares: () => ({
-                    data: { company: 'TestCorp', price: 50 },
+                    data: { company: 'TestCorp', price: 50, total: 5000 },
                     error: null,
                 }),
             });
@@ -186,7 +282,7 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 5000);
-            assert.deepEqual(syncedCash, [5000]);
+            assert.deepEqual(syncedCash, [], 'non deve risincronizzare con syncCash');
         });
 
         test('buyCompanyShares con fondi insufficienti non chiama la RPC né syncCash', async () => {
@@ -209,7 +305,37 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             assert.deepEqual(syncedCash, []);
         });
 
-        test('sellCompanyShares accredita tramite CE_money.earn e sincronizza con ServerState.syncCash', async () => {
+        test('buyCompanyShares chiama CE_money.addebitatoDalServer e non CE_money.spend', async () => {
+            const { sandbox, gs } = setupP2PEnv({
+                rpc_buy_company_shares: () => ({
+                    data: { company: 'TestCorp', price: 50, total: 2500 },
+                    error: null,
+                }),
+            });
+
+            let addebitatoCalled = false;
+            let spendCalled = false;
+            const origAddebitato = sandbox.CE_money.addebitatoDalServer;
+            const origSpend = sandbox.CE_money.spend;
+            sandbox.CE_money.addebitatoDalServer = (amt, reason) => {
+                addebitatoCalled = true;
+                return origAddebitato(amt, reason);
+            };
+            sandbox.CE_money.spend = (amt, reason) => {
+                spendCalled = true;
+                return origSpend(amt, reason);
+            };
+
+            sandbox._p2pMarket.shares = [{ id: 's1', current_price: 50 }];
+            gs.cash = 10000;
+
+            await sandbox.buyCompanyShares('s1', 50);
+            assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
+            assert.equal(spendCalled, false, 'non deve chiamare spend');
+            assert.equal(gs.cash, 7500);
+        });
+
+        test('sellCompanyShares accredita tramite CE_money.accreditatoDalServer senza invocare ServerState.syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PEnv({
                 rpc_sell_company_shares: () => ({
                     data: { company: 'TestCorp', total: 4000, qty_sold: 50 },
@@ -223,12 +349,40 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 9000);
-            assert.deepEqual(syncedCash, [9000]);
+            assert.deepEqual(syncedCash, [], 'non deve risincronizzare con syncCash');
+        });
+
+        test('sellCompanyShares chiama CE_money.accreditatoDalServer e non CE_money.earn', async () => {
+            const { sandbox, gs } = setupP2PEnv({
+                rpc_sell_company_shares: () => ({
+                    data: { company: 'TestCorp', total: 3000, qty_sold: 30 },
+                    error: null,
+                }),
+            });
+
+            let accreditatoCalled = false;
+            let earnCalled = false;
+            const origAccreditato = sandbox.CE_money.accreditatoDalServer;
+            const origEarn = sandbox.CE_money.earn;
+            sandbox.CE_money.accreditatoDalServer = (amt, reason) => {
+                accreditatoCalled = true;
+                return origAccreditato(amt, reason);
+            };
+            sandbox.CE_money.earn = (amt, reason) => {
+                earnCalled = true;
+                return origEarn(amt, reason);
+            };
+
+            gs.cash = 5000;
+            await sandbox.sellCompanyShares('s1', 30);
+            assert.equal(accreditatoCalled, true, 'deve chiamare accreditatoDalServer');
+            assert.equal(earnCalled, false, 'non deve chiamare earn');
+            assert.equal(gs.cash, 8000);
         });
     });
 
     describe('_sindacatoGdfDailyCheck', () => {
-        test('_sindacatoGdfDailyCheck scala la multa tramite CE_money e sincronizza con ServerState.syncCash', async () => {
+        test('_sindacatoGdfDailyCheck addebita la multa con addebitatoDalServer senza invocare ServerState.syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PEnv({
                 rpc_gdf_inspection_check: () => ({
                     data: { inspected: true, fine: 3000 },
@@ -242,7 +396,35 @@ describe('p2p-market — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 7000);
-            assert.deepEqual(syncedCash, [7000]);
+            assert.deepEqual(syncedCash, [], 'non deve risincronizzare con syncCash');
+        });
+
+        test('_sindacatoGdfDailyCheck chiama CE_money.addebitatoDalServer e non CE_money.spend', async () => {
+            const { sandbox, gs } = setupP2PEnv({
+                rpc_gdf_inspection_check: () => ({
+                    data: { inspected: true, fine: 2000 },
+                    error: null,
+                }),
+            });
+
+            let addebitatoCalled = false;
+            let spendCalled = false;
+            const origAddebitato = sandbox.CE_money.addebitatoDalServer;
+            const origSpend = sandbox.CE_money.spend;
+            sandbox.CE_money.addebitatoDalServer = (amt, reason) => {
+                addebitatoCalled = true;
+                return origAddebitato(amt, reason);
+            };
+            sandbox.CE_money.spend = (amt, reason) => {
+                spendCalled = true;
+                return origSpend(amt, reason);
+            };
+
+            gs.cash = 10000;
+            await sandbox._sindacatoGdfDailyCheck();
+            assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
+            assert.equal(spendCalled, false, 'non deve chiamare spend');
+            assert.equal(gs.cash, 8000);
         });
     });
 });
