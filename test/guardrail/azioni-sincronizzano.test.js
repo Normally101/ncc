@@ -57,9 +57,42 @@ const LETTURE = new Set([
     'getTerritorySnapshot', 'bridgeToGameState',
 ]);
 
+const EXTRA_FILES = [
+    'global_events.js', 'war_room.js', 'cmd-palette.js', 'feature-gate.js',
+    'objective-tracker.js', 'world-feed.js', 'ui-emails.js', 'ui-fleet.js',
+    'ui-help.js', 'ui-home.js', 'ui-hub.js', 'ui-investments.js', 'ui-landing.js',
+    'ui-legal.js', 'ui-market.js', 'ui-marketing.js', 'ui-politics.js',
+    'ui-ranking.js', 'ui-sidebar.js'
+];
+
 function preparaMondo() {
     const scritture = [];
     const { sandbox, stopAllIntervals } = freshEnv();
+
+    const activeTimeouts = new Set();
+    const origSetTimeout = sandbox.setTimeout;
+    sandbox.setTimeout = function (fn, ms, ...args) {
+        const id = origSetTimeout(fn, ms, ...args);
+        if (id && typeof id.unref === 'function') id.unref();
+        activeTimeouts.add(id);
+        return id;
+    };
+    const origSetInterval = sandbox.setInterval;
+    sandbox.setInterval = function (fn, ms, ...args) {
+        const id = origSetInterval(fn, ms, ...args);
+        if (id && typeof id.unref === 'function') id.unref();
+        return id;
+    };
+    for (const f of EXTRA_FILES) {
+        try {
+            const full = path.join(ROOT, f);
+            if (fs.existsSync(full)) {
+                const src = fs.readFileSync(full, 'utf8');
+                const vm = require('node:vm');
+                vm.runInContext(src, sandbox, { filename: f });
+            }
+        } catch (_) {}
+    }
     const SS = sandbox.window.ServerState;
     for (const k of Object.keys(SS)) {
         if (typeof SS[k] !== 'function') continue;
