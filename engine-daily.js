@@ -126,6 +126,7 @@ function _tickWeather() {
             const ws = WEATHER_STATES.find(w => w.id === gameState.weather);
             logToMap(`${ws.icon} Meteo cambiato: ${ws.label}${gameState.weather !== 'sole' ? ' — tariffe +' + Math.round((ws.priceMult-1)*100) + '%' : ''}`);
             _applyWeatherOverlay();
+            if (typeof _tabIs === 'function' && _tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
         }
     }
 }
