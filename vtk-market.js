@@ -376,7 +376,7 @@ function _vtkRenderMarket(vtk, dc, myOrders, otherOrders) {
                 </div>
                 <button ${ceAct('vtkFillOrder', [o.id, o.dc_price])}
                     ${dc < o.dc_price ? 'disabled' : ''}
-                    style="font-size:9px;padding:5px 12px;cursor:${dc < o.dc_price ? 'not-allowed' : 'pointer'};background:#161b228e8;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${dc < o.dc_price ? 'opacity:.4' : ''};transition:opacity .15s">
+                    style="font-size:9px;padding:5px 12px;cursor:${dc < o.dc_price ? 'not-allowed' : 'pointer'};background:#161b22;border:1px solid #c79a2a;color:#c79a2a;border-radius:4px;${dc < o.dc_price ? 'opacity:.4' : ''};transition:opacity .15s">
                     Acquista
                 </button>
             </div>`).join('')

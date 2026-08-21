@@ -165,6 +165,24 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
                 await sandbox.vtkRefreshOrders(true);
             });
         });
+
+        test('vtkRefreshOrders mantiene invariata la lista ordini in caso di errore RPC', async () => {
+            const ambErr = creaAmbienteVTK({
+                rpcHandlers: {
+                    rpc_get_vtk_market_orders: async () => ({
+                        data: null,
+                        error: { message: 'Errore di connessione' },
+                    }),
+                },
+            });
+            ambErr.sandbox._vtkState.orders = [{ id: 'preesistente' }];
+
+            await ambErr.sandbox.vtkRefreshOrders(true);
+
+            assert.equal(ambErr.sandbox._vtkState.orders.length, 1);
+            assert.equal(ambErr.sandbox._vtkState.orders[0].id, 'preesistente');
+            ambErr.env.stopAllIntervals();
+        });
     });
 
     describe('2. Pubblicazione ordine di vendita (vtkPlaceSellOrder & ceVtkSell)', () => {
@@ -247,6 +265,30 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
             assert.equal(rpc.args.v_vtk_amount, 30);
             assert.equal(rpc.args.v_dc_price, 8);
         });
+
+        test('pubblicazione ordine offline (senza supabaseClient) esce in sicurezza senza lanciare eccezioni', async () => {
+            const { sandbox, gs } = amb;
+            gs.vtkBalance = 100;
+            sandbox.supabaseClient = null;
+            sandbox.window.supabaseClient = null;
+
+            await assert.doesNotReject(async () => {
+                await sandbox.vtkPlaceSellOrder(50, 10);
+            });
+        });
+
+        test('stato e persistenza: la pubblicazione aggiorna il saldo VTK con l\'eco Realtime dal server', async () => {
+            const { sandbox, gs, rpcLog } = amb;
+            gs.vtkBalance = 100;
+
+            await sandbox.vtkPlaceSellOrder(50, 10);
+            assert.equal(rpcLog.filter(r => r.nome === 'rpc_place_vtk_sell_order').length, 1);
+
+            // Simula arrivo dell'eco Realtime dal server (50 VTK bloccati nel mercato)
+            gs.vtkBalance = 50;
+
+            assert.equal(gs.vtkBalance, 50, 'il saldo VTK deve riflettere la detrazione autoritativa');
+        });
     });
 
     describe('3. Acquisto ordine P2P (vtkFillOrder)', () => {
@@ -297,6 +339,32 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
             assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Ordine non più disponibile')));
             ambErr.env.stopAllIntervals();
         });
+
+        test('acquisto ordine offline (senza supabaseClient) esce in sicurezza', async () => {
+            const { sandbox, gs } = amb;
+            gs.driverCoins = 100;
+            sandbox.supabaseClient = null;
+            sandbox.window.supabaseClient = null;
+
+            await assert.doesNotReject(async () => {
+                await sandbox.vtkFillOrder('ord_2', 25);
+            });
+        });
+
+        test('stato e persistenza: l\'acquisto P2P accredita i VTK e scala i DC al riallineamento Realtime', async () => {
+            const { sandbox, gs } = amb;
+            gs.driverCoins = 100;
+            gs.vtkBalance = 20;
+
+            await sandbox.vtkFillOrder('ord_2', 25);
+
+            // Simula arrivo dell'eco Realtime dal server (ord_2 dava 100 VTK per 25 DC)
+            gs.driverCoins = 75;
+            gs.vtkBalance = 120;
+
+            assert.equal(gs.driverCoins, 75, 'i Driver Coins devono essere scalati');
+            assert.equal(gs.vtkBalance, 120, 'i VTK devono essere accreditati');
+        });
     });
 
     describe('4. Annullamento ordine (vtkCancelOrder)', () => {
@@ -329,6 +397,27 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
 
             assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Ordine già evaso')));
             ambErr.env.stopAllIntervals();
+        });
+
+        test('annullamento ordine offline (senza supabaseClient) esce in sicurezza', async () => {
+            const { sandbox } = amb;
+            sandbox.supabaseClient = null;
+            sandbox.window.supabaseClient = null;
+
+            await assert.doesNotReject(async () => {
+                await sandbox.vtkCancelOrder('ord_1');
+            });
+        });
+
+        test('stato e persistenza: l\'annullamento ordine ripristina il saldo VTK', async () => {
+            const { sandbox, gs } = amb;
+            gs.vtkBalance = 50;
+
+            await sandbox.vtkCancelOrder('ord_1');
+
+            // Simula eco Realtime di restituzione dei 50 VTK bloccati
+            gs.vtkBalance = 100;
+            assert.equal(gs.vtkBalance, 100, 'il saldo VTK deve essere ripristinato');
         });
     });
 
@@ -474,6 +563,82 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
             assert.ok(ambNoSql.env.notifications.some(n => n.type === 'warning' && n.msg.includes('non ancora attivo su questo server')));
             ambNoSql.env.stopAllIntervals();
         });
+
+        test('acquisto shop con id item non presente nel catalogo non compie alcuna azione', async () => {
+            const { sandbox, rpcLog } = amb;
+            await sandbox.vtkBuyShopItem('item_inesistente');
+            assert.equal(rpcLog.filter(r => r.nome === 'rpc_spend_vtk_shop_item').length, 0);
+        });
+
+        test('acquisto shop offline (senza supabaseClient) notifica errore e blocca l\'acquisto', async () => {
+            const { sandbox, gs, env } = amb;
+            gs.vtkBalance = 500;
+            gs.drivers = [{ id: 'd1', name: 'Luigi', stress_level: 50 }];
+            sandbox.supabaseClient = null;
+            sandbox.window.supabaseClient = null;
+
+            await sandbox.vtkBuyShopItem('driver_stress_reset');
+
+            assert.equal(gs.drivers[0].stress_level, 50, 'lo stress non deve cambiare offline');
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Non connesso al server')));
+        });
+
+        test('acquisto shop con errore RPC generico mostra notifica e non applica l\'effetto', async () => {
+            const ambErr = creaAmbienteVTK({
+                rpcHandlers: {
+                    rpc_spend_vtk_shop_item: async () => ({
+                        data: null,
+                        error: { code: 'P0001', message: 'Errore generico server' },
+                    }),
+                },
+            });
+            ambErr.gs.vtkBalance = 500;
+            ambErr.gs.fuelTankCapacity = 1000;
+            ambErr.gs.fuelTank = 200;
+
+            await ambErr.sandbox.vtkBuyShopItem('fuel_refill_full');
+
+            assert.equal(ambErr.gs.fuelTank, 200, 'il carburante non deve cambiare su errore');
+            assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Errore generico server')));
+            ambErr.env.stopAllIntervals();
+        });
+
+        test('acquisto shop con errore di rete catturato nel blocco catch notifica errore di rete', async () => {
+            const ambErr = creaAmbienteVTK({
+                rpcHandlers: {
+                    rpc_spend_vtk_shop_item: async () => {
+                        throw new Error('Network failure');
+                    },
+                },
+            });
+            ambErr.gs.vtkBalance = 500;
+            ambErr.gs.drivers = [{ id: 'd1', name: 'Luigi', stress_level: 50 }];
+
+            await ambErr.sandbox.vtkBuyShopItem('driver_stress_reset');
+
+            assert.equal(ambErr.gs.drivers[0].stress_level, 50);
+            assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('errore di rete')));
+            ambErr.env.stopAllIntervals();
+        });
+
+        test('stato e persistenza: gli effetti del negozio RESTANO in gameState dopo l\'acquisto ed eco Realtime', async () => {
+            const { sandbox, gs, env } = amb;
+            gs.vtkBalance = 300;
+            gs.fuelTankCapacity = 500;
+            gs.fuelTank = 100;
+
+            await sandbox.vtkBuyShopItem('fuel_refill_full');
+
+            // Verifica effetto immediato
+            assert.equal(gs.fuelTank, 500, 'la cisterna deve essere riempita a 500L');
+
+            // Simula arrivo dell'eco Realtime dal server sulla riga companies (vtk_balance scalato da 300 a 150)
+            gs.vtkBalance = 150;
+
+            // Il carburante RESTA riempito e il saldo VTK resta scalato
+            assert.equal(gs.fuelTank, 500, 'il carburante resta a capienza dopo l\'eco');
+            assert.equal(gs.vtkBalance, 150, 'il saldo VTK resta detratto');
+        });
     });
 
     describe('6. UI, Overlay modale e navigazione sub-tab (openVTKModal, renderVTKModal, ceSetRender, ceRemove)', () => {
@@ -544,6 +709,48 @@ describe('Funzione VTK — Mercato P2P e VTK Shop (vtk-market.js)', () => {
             modal = sandbox.document.getElementById('vtk-modal');
             const disabilitati = modal.querySelectorAll('button[disabled]');
             assert.ok(disabilitati.length >= 3, 'tutti i bottoni acquisto shop devono essere disabilitati con 0 VTK');
+        });
+
+        test('rendering separa correttamente "I Tuoi Ordini Attivi" da "Ordini Disponibili"', async () => {
+            const { sandbox } = amb;
+            await sandbox.openVTKModal();
+            const modal = sandbox.document.getElementById('vtk-modal');
+
+            // ord_1 appartiene a user_player_1 (currentUser)
+            // ord_2 appartiene a user_other_2
+            assert.ok(modal.innerHTML.includes('I Tuoi Ordini Attivi'), 'deve mostrare la sezione propri ordini');
+            assert.ok(modal.innerHTML.includes('Ordini Disponibili'), 'deve mostrare la sezione ordini altrui');
+            assert.ok(modal.innerHTML.includes('Annulla'), 'deve mostrare il tasto Annulla per il proprio ordine');
+            assert.ok(modal.innerHTML.includes('Marco Rossi'), 'deve mostrare il nome del venditore per l\'ordine altrui');
+        });
+
+        test('click sui bottoni DOM tramite event delegation attiva le azioni attese', async () => {
+            const { sandbox, gs, rpcLog } = amb;
+            gs.vtkBalance = 200;
+            gs.driverCoins = 50;
+
+            await sandbox.openVTKModal();
+
+            // Passa a sub-tab shop cliccando sul bottone VTK Shop
+            const btnTabShop = sandbox.document.querySelectorAll('button[data-ce-act="ceSetRender"]')[1];
+            assert.ok(btnTabShop, 'il pulsante tab shop deve esistere');
+            btnTabShop.click();
+
+            assert.equal(sandbox._vtkState._subTab, 'shop', 'il subTab deve essere passato a shop');
+
+            // Torna a market cliccando sul tab market
+            const btnTabMarket = sandbox.document.querySelectorAll('button[data-ce-act="ceSetRender"]')[0];
+            btnTabMarket.click();
+            assert.equal(sandbox._vtkState._subTab, 'market');
+
+            // Clicca sul pulsante Annulla del proprio ordine
+            const btnAnnulla = sandbox.document.querySelector('button[data-ce-act="vtkCancelOrder"]');
+            assert.ok(btnAnnulla);
+            btnAnnulla.click();
+            await new Promise(r => setImmediate(r));
+
+            const cancelRpc = rpcLog.find(r => r.nome === 'rpc_cancel_vtk_order');
+            assert.ok(cancelRpc, 'il click su Annulla deve chiamare rpc_cancel_vtk_order');
         });
     });
 });
