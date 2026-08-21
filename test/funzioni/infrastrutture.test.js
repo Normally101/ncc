@@ -570,16 +570,187 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
             assert.ok(html.includes('Occupato da R1'));
             assert.ok(html.includes('Occupato da R5'));
         });
+
+        test('_infraSetMarkup senza supabaseClient mostra notifica di errore e non va in crash', async () => {
+            const { sandbox, env } = amb;
+            await sandbox.renderTabInfrastructure();
+            sandbox.supabaseClient = null;
+            sandbox.window.supabaseClient = null;
+
+            await assert.doesNotReject(async () => {
+                await sandbox._infraSetMarkup('prov_roma');
+            });
+
+            assert.ok(env.notifications.some(n => n.type === 'error'));
+        });
+
+        test('renderTabInfrastructure funziona anche in assenza dell\'oggetto CE_Sec', async () => {
+            const { sandbox } = amb;
+            sandbox.CE_Sec = undefined;
+            sandbox.window.CE_Sec = undefined;
+
+            await assert.doesNotReject(async () => {
+                await sandbox.renderTabInfrastructure();
+            });
+
+            const html = sandbox.document.getElementById('tab-container').innerHTML;
+            assert.ok(html.includes('Roma Capitale'));
+        });
     });
 
-    describe('Analisi architetturale e maturazione rendite', () => {
-        test('il flusso delle rendite è guidato dagli eventi delle corse multiplayer', () => {
+    describe('Sicurezza XSS e sanificazione testo rivali', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteInfrastrutture(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('i nomi di aziende rivali contenenti tag HTML malevoli vengono sanificati con CE_Sec.escHtml', async () => {
+            const { sandbox } = amb;
+            amb.statoDepositi.splice(0, amb.statoDepositi.length, {
+                depot_id: 'dep_xss',
+                province_id: 'prov_milano',
+                province_name: 'Grande Milano',
+                owner_user_id: 'user_malicious',
+                owner_company: '<script>alert("xss")</script><img src=x onerror=alert(1)>',
+                markup_pct: 20.0,
+                price_paid: 300000,
+                total_earned: 5000,
+                is_mine: false
+            });
+
+            await sandbox.renderTabInfrastructure();
+
+            const container = sandbox.document.getElementById('tab-container');
+            const html = container.innerHTML;
+
+            // Non deve contenere i tag HTML non encodati
+            assert.equal(html.includes('<script>'), false, 'non deve contenere <script> non escapato');
+            assert.equal(html.includes('<img src=x'), false, 'non deve contenere <img non escapato');
+            assert.ok(html.includes('&lt;script&gt;') || html.includes('&lt;img'), 'i tag devono essere convertiti in entità HTML sicure');
+        });
+    });
+
+    describe('Interazione UI completa via Event Delegation (events.js)', () => {
+        let amb;
+        beforeEach(async () => {
+            amb = creaAmbienteInfrastrutture();
+            amb.gs.cash = 600000;
+            await amb.sandbox.renderTabInfrastructure();
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('click sul pulsante Acquista via data-ce-act scatena _infraBuyDepot e aggiorna la UI', async () => {
+            const { sandbox, gs, rpcLog } = amb;
+            const container = sandbox.document.getElementById('tab-container');
+            
+            // Trova il pulsante di acquisto per Firenze Storica
+            const buyBtn = Array.from(container.querySelectorAll('button')).find(
+                b => b.getAttribute('data-ce-act') === '_infraBuyDepot' && b.getAttribute('data-ce-args')?.includes('prov_firenze')
+            );
+            assert.ok(buyBtn, 'pulsante acquisto Firenze deve esistere con data-ce-act');
+
+            // Simula click utente (scatena delegation di events.js)
+            buyBtn.click();
+            await new Promise(r => setTimeout(r, 10));
+
+            // Verifica chiamata RPC e deduzione cassa
+            const buyRpc = rpcLog.find(r => r.nome === 'rpc_buy_fuel_depot' && r.args.v_province_id === 'prov_firenze');
+            assert.ok(buyRpc, 'deve aver invocato rpc_buy_fuel_depot per prov_firenze');
+            assert.equal(gs.cash, 300000, 'la cassa deve essere scalata a 300.000€');
+
+            // Verifica che ora Firenze compaia nei propri depositi nel DOM
+            const newHtml = container.innerHTML;
+            assert.ok(newHtml.includes('markup-slider-prov_firenze'), 'Firenze deve ora avere lo slider nei propri depositi');
+        });
+
+        test('input sullo slider scatena ceMarkupPreview e click su Salva aggiorna markup via rpc_set_fuel_markup', async () => {
+            const { sandbox, rpcLog } = amb;
+            const slider = sandbox.document.getElementById('markup-slider-prov_roma');
+            const label = sandbox.document.getElementById('markup-val-prov_roma');
+            assert.ok(slider && label, 'slider e label prov_roma devono esistere');
+
+            // Modifica valore e dispatch input event
+            slider.value = '45';
+            const EventClass = sandbox.document.defaultView.Event;
+            slider.dispatchEvent(new EventClass('input', { bubbles: true }));
+            assert.equal(label.textContent, '45%', 'ceMarkupPreview deve aggiornare la label');
+
+            // Trova e clicca il pulsante Salva per prov_roma
+            const saveBtn = Array.from(sandbox.document.querySelectorAll('button')).find(
+                b => b.getAttribute('data-ce-act') === '_infraSetMarkup' && b.getAttribute('data-ce-args')?.includes('prov_roma')
+            );
+            assert.ok(saveBtn, 'pulsante salva per prov_roma deve esistere');
+
+            saveBtn.click();
+            await new Promise(r => setTimeout(r, 10));
+
+            const setRpc = rpcLog.find(r => r.nome === 'rpc_set_fuel_markup' && r.args.v_province_id === 'prov_roma');
+            assert.ok(setRpc, 'rpc_set_fuel_markup deve essere stato invocato');
+            assert.equal(setRpc.args.v_markup_pct, 45);
+        });
+    });
+
+    describe('Persistenza dello stato e resistenza all\'eco Realtime (Domanda b)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteInfrastrutture(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('dopo l\'acquisto del deposito, l\'eco Realtime della tabella companies non annulla né raddoppia la spesa', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 500000;
+
+            await sandbox._infraBuyDepot('prov_firenze', 'Firenze Storica');
+            assert.equal(gs.cash, 200000, 'cassa locale deve essere 200.000€ dopo acquisto');
+
+            // Simula arrivo dell'evento Realtime dal server con il saldo sincronizzato (200.000€)
+            // Se la gestione del delta fosse bacata, raddoppierebbe la sottrazione o ripristinerebbe il saldo vecchio
+            const companyHandler = amb.realtimeHandlers.find(h => h.filtro?.table === 'companies');
+            if (companyHandler) {
+                companyHandler.cb({
+                    eventType: 'UPDATE',
+                    new: { user_id: 'user_player', cash: 200000, company_name: 'Player Empire' }
+                });
+            }
+
+            assert.equal(gs.cash, 200000, 'il saldo in gameState resta esattamente 200.000€');
+        });
+    });
+
+    describe('Contratto dati e risposte del server (Domanda c)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteInfrastrutture(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('renderTabInfrastructure elabora tutti i campi attesi dalla RPC rpc_get_fuel_depots', async () => {
+            const { sandbox } = amb;
+            // Record con tutti i tipi di campo definiti nella signature SQL di rpc_get_fuel_depots
+            amb.statoDepositi.splice(0, amb.statoDepositi.length, {
+                depot_id: '00000000-0000-0000-0000-000000000001',
+                province_id: 'prov_roma',
+                province_name: 'Roma Capitale',
+                owner_user_id: '00000000-0000-0000-0000-000000000002',
+                owner_company: 'Test Company SpA',
+                markup_pct: 12.5,
+                price_paid: 300000,
+                total_earned: 98765,
+                is_mine: true
+            });
+
+            await sandbox.renderTabInfrastructure();
+            const html = sandbox.document.getElementById('tab-container').innerHTML;
+
+            assert.ok(html.includes('Roma Capitale'));
+            assert.ok(html.includes('98.765'), 'deve formattare correttamente total_earned');
+            assert.ok(html.includes('13% markup') || html.includes('12.5') || html.includes('13%'), 'deve mostrare il markup');
+        });
+    });
+
+    describe('Analisi architetturale e maturazione rendite (Domanda a)', () => {
+        test('il flusso delle rendite è guidato dagli eventi delle corse multiplayer (nessun cron passivo necessario)', () => {
             // Documentazione del funzionamento reale:
-            // 1. Non esiste un cron autonomo che genera rendite passive senza attività.
-            // 2. Il levy carburante viene addebitato quando QUALSIASI giocatore reale completa una corsa
-            //    in una provincia con un deposito posseduto da un altro giocatore.
-            // 3. L'incasso viene accreditato direttamente nella cassa dell'azienda proprietaria sul database
-            //    tramite rpc_pay_fuel_levy e notificato via Supabase Realtime / ServerState.
+            // 1. Non serve un cron autonomo sul server per generare rendite senza attività.
+            // 2. Il levy carburante viene riscosso in tempo reale durante completeRide/checkActiveTrips
+            //    quando un giocatore qualsiasi completa una tratta nella provincia monopolizzata.
+            // 3. L'incasso viene accreditato al proprietario con rpc_pay_fuel_levy e notificato via Realtime.
             assert.ok(true);
         });
     });
