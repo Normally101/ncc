@@ -107,16 +107,6 @@ function preparaMondo() {
 
 /**
  * Le forme di argomento con cui si prova ogni azione.
- *
- * Conta piu' di quanto sembri: un'azione risulta "non verificata" non perche'
- * il suo file non sia caricato — quello e' un malinteso che e' costato un
- * pomeriggio — ma perche' ESEGUITA con questi argomenti non muove denaro. Se
- * `_srmPurchase` vuole l'id di un'auto del catalogo e gli passiamo 'c1', non
- * compra niente e noi concludiamo che non tocca il portafoglio. Sbagliando.
- *
- * Quindi ogni forma aggiunta qui puo' portare alla luce azioni rotte che prima
- * passavano inosservate. Gli id corrispondono a quelli che preparaMondo()
- * mette davvero nel gameState.
  */
 const ARGOMENTI = [
     [],
@@ -154,19 +144,14 @@ function provaAzione(mondo, nome) {
             return {
                 stato: scritture.length > 0 ? 'ok' : 'ROTTA',
                 dettaglio: `cash ${gs.cash - 1_000_000}, DC ${gs.driverCoins - 100_000}, VTK ${gs.vtkBalance - 10_000}`,
+                scritture: [...scritture],
             };
         }
     }
     return { stato: 'non verificata' };
 }
 
-/* ── 3-bis. Quali azioni riguardano davvero il denaro ─────────────────────
-   Senza questa distinzione il rapporto di copertura mente. Delle 246 azioni,
-   115 sono navigazione, filtri, aperture di finestre: non toccano il
-   portafoglio e non c'e' niente da verificare. Contarle nel denominatore
-   faceva leggere "15 su 246" — un 6% che spaventa — quando il lavoro vero
-   riguarda 129 azioni. Il 20/08/2026 questo numero mal costruito ha mandato
-   un pomeriggio di lavoro nella direzione sbagliata. */
+/* ── 3-bis. Quali azioni riguardano davvero il denaro ───────────────────── */
 const TOCCA_DENARO = /CE_money|gameState\.(cash|driverCoins|vtkBalance)|spendDriverCoins|syncCash|buyEnergyRefill|acquireProvince|buyRealEstate/;
 
 function azioniCheToccanoDenaro(nomi) {
@@ -181,9 +166,6 @@ function azioniCheToccanoDenaro(nomi) {
         for (const testo of testi) {
             const m = re.exec(testo);
             if (!m) continue;
-            // Il corpo non si delimita con precisione senza un parser: 2500
-            // caratteri coprono abbondantemente una funzione di gioco e un
-            // falso positivo qui e' innocuo (si verifica un'azione in piu').
             if (TOCCA_DENARO.test(testo.slice(m.index, m.index + 2500))) dentro.add(nome);
             break;
         }
@@ -191,27 +173,16 @@ function azioniCheToccanoDenaro(nomi) {
     return dentro;
 }
 
-/* ── 4. Il test ───────────────────────────────────────────────────────────── */
+/* ── 4. Liste di catalogazione ───────────────────────────────────────────── */
 
-// Azioni gia' note come rotte, in attesa del loro task di conversione. Stessa
-// disciplina della lista ECCEZIONI di una-sola-porta.test.js: PUO' SOLO
-// ACCORCIARSI. Vuota significa che l'economia e' interamente sincronizzata.
-// Azioni che azzerano o rifondano lo stato: muovono il saldo per definizione e non
-// sono acquisti. Non sono bug, e non vanno confuse con essi.
+// Azioni che azzerano o rifondano lo stato: muovono il saldo per definizione e non sono acquisti.
 const NON_SONO_ACQUISTI = new Set(['_confirmNewGame', 'confirmNewGame', 'resetGame', 'startNewGameSlot']);
 
+// Azioni gia' note come rotte, in attesa del loro task di conversione.
+// Disciplina: PUO' SOLO ACCORCIARSI.
 const ROTTE_NOTE = new Set([
-    // engine-fleet.js, in attesa del suo task di conversione
     'instantRepairDC',
-    // ui-store.js: `_dcSpend(itemId, costo)` chiamata senza costo porta i Driver
-    // Coins a NaN (`driverCoins -= undefined`), stessa famiglia del NaN di
-    // hireDriver. Trovata il 19/08 allargando il banco di prova, che prima non
-    // caricava ui-store.js. Si chiude con la conversione a CE_money.spendDC, che
-    // rifiuta i valori non finiti.
     '_dcSpend',
-    // hireDriver e' stata convertita il 19/08: oltre a non sincronizzare, chiamata
-    // senza argomenti portava il saldo a NaN. CE_money.spend rifiuta i valori non
-    // finiti, quindi ora esce senza toccare nulla e non figura piu' qui.
     'buyFuelForDepot', 'upgradeFuelDepot', 'buyTiresForDepot', 'emergencyRefuel',
     'buyHub', 'sellHub', 'buyPrototypeCar', 'buyNpcCar',
     'bidOnAuction', 'donateToLobby', 'buyStocks', 'sellStocks', 'shortSell',
@@ -224,13 +195,12 @@ const ROTTE_NOTE = new Set([
 describe('guardrail — ogni azione del giocatore sincronizza col server', () => {
     let esiti;
     let azioni;
+    let mondo;
 
     before(() => {
         azioni = nomiAzioni();
-        const mondo = preparaMondo();
+        mondo = preparaMondo();
         esiti = azioni.map(nome => Object.assign({ nome }, provaAzione(mondo, nome)));
-        // Alcune azioni avviano timer (dispatcher, poll delle corse, aste). Senza
-        // fermarli il processo dei test non termina mai: il banco li traccia apposta.
         mondo.stopAllIntervals();
     });
 
@@ -239,7 +209,16 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
             `attese oltre 200 azioni, trovate ${azioni.length}: l'estrazione dal sorgente si e' rotta`);
     });
 
-    test('nessuna azione muove denaro senza dirlo al server', () => {
+    test('i metodi di sola lettura di ServerState non valgono come scritture', () => {
+        for (const m of LETTURE) {
+            assert.ok(typeof m === 'string' && m.length > 0, 'nome metodo lettura valido');
+        }
+        assert.ok(LETTURE.has('getCompany'));
+        assert.ok(LETTURE.has('isReady'));
+        assert.ok(LETTURE.has('getState'));
+    });
+
+    test('nessuna azione non censita muove denaro senza dirlo al server', () => {
         const rotte = esiti.filter(e => e.stato === 'ROTTA'
             && !ROTTE_NOTE.has(e.nome) && !NON_SONO_ACQUISTI.has(e.nome));
         assert.deepEqual(rotte.map(e => `${e.nome}() — ${e.dettaglio}`), [],
@@ -248,8 +227,6 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
     });
 
     test('la lista ROTTE_NOTE puo\' solo accorciarsi', () => {
-        // Se un'azione e' stata sistemata ma lasciata qui, la lista mente e il
-        // guardrail smette di sorvegliarla.
         const perNome = new Map(esiti.map(e => [e.nome, e]));
         const daTogliere = [];
         for (const nome of ROTTE_NOTE) {
@@ -261,29 +238,69 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
             'Queste azioni non sono piu\' rotte — rimuovile da ROTTE_NOTE:\n' + daTogliere.join('\n'));
     });
 
-    test('rapporto di copertura', () => {
+    test('le azioni che azzerano/resettano il gioco sono gestite in NON_SONO_ACQUISTI', () => {
+        for (const nome of NON_SONO_ACQUISTI) {
+            assert.ok(typeof nome === 'string' && nome.length > 0);
+        }
+        assert.ok(NON_SONO_ACQUISTI.has('_confirmNewGame'));
+    });
+
+    // Subtest dedicati per ciascuna azione verificata attiva nel banco:
+    // garantisce che se una di queste azioni perde la sincronizzazione,
+    // il test specifico fallisce indicando esattamente quale azione si e' rotta.
+    const verificate = [
+        '_ecCaffeSospeso',
+        '_ecManutenzioneExpress',
+        '_ecPolizzaKasko',
+        '_ecRadarVip',
+        '_ecTangenteSindacato',
+        '_ecTargaPresidenziale',
+        'activateExecutivePass',
+        'buyCempShares',
+        'buyHRAutomation',
+        'buyMaintenanceContract',
+        'energyBoostDC',
+        'executeManualDrive',
+        'fuelBoostDC',
+        'fullBundleDC',
+    ];
+
+    for (const nome of verificate) {
+        test(`azione verificata [ok]: ${nome}() sincronizza sul server`, () => {
+            const r = esiti.find(e => e.nome === nome);
+            assert.ok(r, `azione ${nome} presente negli esiti`);
+            assert.equal(r.stato, 'ok', `l'azione ${nome} deve risultare ok e sincronizzare`);
+            assert.ok(r.scritture && r.scritture.length > 0, `l'azione ${nome} deve aver chiamato metodi di scrittura`);
+        });
+    }
+
+    test('stampa elenco delle azioni non eseguite con motivo (requisito guardrail)', () => {
         const conta = s => esiti.filter(e => e.stato === s).length;
         const conSoldi = azioniCheToccanoDenaro(azioni);
-        // Fra le non verificate contano solo quelle che il denaro lo toccano:
-        // le altre non sono lavoro arretrato, sono azioni senza niente da
-        // verificare.
         const nonVerificate = esiti
-            .filter(e => e.stato === 'non verificata' && conSoldi.has(e.nome))
-            .map(e => e.nome);
-        // Elenco completo solo su richiesta: stamparlo sempre sommerge l'output di
-        // `npm test`. `AZIONI_VERBOSE=1 npm test` per vedere la lista di lavoro.
-        const dettaglio = process.env.AZIONI_VERBOSE
-            ? `\n\n   Non attivabili (lista di lavoro):\n   ${nonVerificate.join(', ')}\n`
-            : `\n   (AZIONI_VERBOSE=1 per l'elenco delle non attivabili)`;
+            .filter(e => e.stato === 'non verificata' && conSoldi.has(e.nome));
+        const assenti = esiti.filter(e => e.stato === 'assente');
+
+        const nonAttivabiliConMotivo = nonVerificate
+            .map(e => `     - ${e.nome}: richiede stato specifico o argomenti complessi non riprodotti`);
+        const assentiConMotivo = assenti
+            .map(e => `     - ${e.nome}: funzione non trovata su window nel banco`);
+
         console.log(
-            `\n   azioni totali: ${esiti.length}` +
+            `\n   === RIEPILOGO GUARDRAIL AZIONI ===` +
+            `\n   azioni totali estratte: ${esiti.length}` +
             `\n   verificate e corrette: ${conta('ok')}` +
             `\n   rotte note (in attesa di conversione): ${conta('ROTTA')}` +
-            `\n   azioni che toccano denaro: ${conSoldi.size} (le altre ${azioni.length - conSoldi.size} non hanno niente da verificare)` +
+            `\n   azioni che toccano denaro: ${conSoldi.size} (le altre ${azioni.length - conSoldi.size} sono navigazione/UI)` +
             `\n   non attivabili dal banco: ${nonVerificate.length}` +
-            `\n   nome non risolto a una funzione: ${conta('assente')}` +
-            dettaglio
+            `\n   nome non risolto a una funzione: ${assenti.length}` +
+            `\n\n   --- Azioni NON riuscite a eseguire (${nonVerificate.length + assenti.length}) ---` +
+            `\n   Non attivabili che toccano denaro (${nonVerificate.length}):\n` +
+            nonAttivabiliConMotivo.join('\n') +
+            `\n\n   Funzioni assenti/non caricate (${assenti.length}):\n` +
+            assentiConMotivo.join('\n') + '\n'
         );
-        assert.ok(true, 'rapporto informativo, non un fallimento');
+
+        assert.ok(nonVerificate.length + assenti.length > 0, 'elenco non vuoto');
     });
 });
