@@ -24,15 +24,17 @@ function banco() {
     const sincronizzati = [];
     const chiamate = [];
     const addebitati = [];
+    const dcSpesi = [];
 
     const env = freshEnv({
         serverState: {
             syncCash: async (v) => { sincronizzati.push(v); return { success: true, cash: v }; },
             repairVehicle: async (id, costo) => { addebitati.push(costo); return { success: true }; },
+            spendDriverCoins: async (motivo, n) => { dcSpesi.push({ motivo, n }); return { ok: true }; },
         },
     });
 
-    for (const nome of ['spend', 'earn']) {
+    for (const nome of ['spend', 'earn', 'spendDC']) {
         const originale = env.sandbox.CE_money[nome];
         env.sandbox.CE_money[nome] = function (importo, motivo) {
             chiamate.push({ tipo: nome, importo, motivo });
@@ -40,7 +42,7 @@ function banco() {
         };
     }
 
-    return { env, sandbox: env.sandbox, gs: env.sandbox.gameState, sincronizzati, chiamate, addebitati };
+    return { env, sandbox: env.sandbox, gs: env.sandbox.gameState, sincronizzati, chiamate, addebitati, dcSpesi };
 }
 
 describe('engine.js — cassa e riparazioni', () => {
@@ -127,6 +129,111 @@ describe('engine.js — cassa e riparazioni', () => {
                 'tolta anche la copertura sugli incidenti: la Kasko non varrebbe piu\' niente');
             assert.ok(sandbox);
             assert.ok(gs);
+        });
+    });
+
+    describe('aste live — rimborso', () => {
+        test('rimborso asta persa accredita passando da CE_money.earn', async () => {
+            const { sandbox, gs, chiamate } = banco();
+            gs.activeAuction = {
+                id: 'auc_test', name: 'Auto Rara', tier: 'ultra', vehicleClass: 'majestic_spirit',
+                minBid: 250000, currentBid: 300000, playerBid: 280000, endsHour: 10,
+            };
+            sandbox.window._resolveAuction();
+            await new Promise(r => setImmediate(r));
+            const earnCalls = chiamate.filter(c => c.tipo === 'earn');
+            assert.equal(earnCalls.length, 1, 'il rimborso asta deve passare da CE_money.earn');
+            assert.equal(earnCalls[0].importo, 280000);
+        });
+    });
+
+    describe('multe — pagamento', () => {
+        test('payFine scala i soldi passando da CE_money.spend', async () => {
+            const { sandbox, gs, chiamate } = banco();
+            gs.cash = 2000;
+            gs.activeFines = [{ id: 'f_1', amount: 300, status: 'pending' }];
+            sandbox.payFine('f_1');
+            await new Promise(r => setImmediate(r));
+            const spendCalls = chiamate.filter(c => c.tipo === 'spend');
+            assert.equal(spendCalls.length, 1, 'il pagamento multa deve passare da CE_money.spend');
+            assert.equal(spendCalls[0].importo, 300);
+        });
+    });
+
+    describe('guerra dei prezzi — attackTerritory', () => {
+        test('attackTerritory spende passando da CE_money.spend', async () => {
+            const { sandbox, gs, chiamate } = banco();
+            gs.unlockedRegions = ['lazio', 'lombardia'];
+            gs.cash = 100000;
+            sandbox.attackTerritory('lombardia');
+            await new Promise(r => setImmediate(r));
+            const spendCalls = chiamate.filter(c => c.tipo === 'spend');
+            assert.equal(spendCalls.length, 1, 'attackTerritory deve passare da CE_money.spend');
+        });
+    });
+
+    describe('costruzioni — speedUpConstruction con Driver Coins', () => {
+        test('speedUpConstruction passa da CE_money.spendDC', async () => {
+            const { sandbox, gs, chiamate } = banco();
+            gs.day = 1;
+            gs.driverCoins = 50;
+            gs.constructions = [{ invId: 'inv_fuel_depot', completesDay: 4 }];
+            sandbox.speedUpConstruction('inv_fuel_depot');
+            await new Promise(r => setImmediate(r));
+            const dcCalls = chiamate.filter(c => c.tipo === 'spendDC');
+            assert.equal(dcCalls.length, 1, 'speedUpConstruction deve passare da CE_money.spendDC');
+            assert.equal(dcCalls[0].importo, 6); // (4-1)*2 = 6 DC
+        });
+    });
+
+    describe('investimenti — vendita', () => {
+        test('sellInvestment accredita passando da CE_money.earn', async () => {
+            const { sandbox, gs, chiamate } = banco();
+            sandbox.window.confirm = () => true;
+            gs.cash = 1000;
+            gs.investments = ['inv_app'];
+            sandbox.sellInvestment('inv_app');
+            await new Promise(r => setImmediate(r));
+            const earnCalls = chiamate.filter(c => c.tipo === 'earn');
+            assert.equal(earnCalls.length, 1, 'sellInvestment deve passare da CE_money.earn');
+        });
+    });
+
+    describe('email contratti diamond — acceptDiamondContract', () => {
+        test('acceptDiamondContract accredita passando da CE_money.earn', async () => {
+            const { sandbox, gs, chiamate } = banco();
+            gs.drivers = [{ id: 'd_exp', name: 'Autista Esperto', status: 'idle', level: 2, tier: 'vip' }];
+            gs.fleet = [{ id: 'c_vip', name: 'Auto VIP', tier: 'vip' }];
+            gs.emails = [{ id: 'em_diam', offer: 40000, status: 'unread' }];
+            sandbox.acceptDiamondContract('em_diam');
+            await new Promise(r => setImmediate(r));
+            const earnCalls = chiamate.filter(c => c.tipo === 'earn');
+            assert.equal(earnCalls.length, 1, 'acceptDiamondContract deve passare da CE_money.earn');
+            assert.equal(earnCalls[0].importo, 40000);
+        });
+    });
+
+    describe('eventi VIP mid-ride — scelta A con costo', () => {
+        test('scelta A con costo passa da CE_money.spend', async () => {
+            const { sandbox, gs, chiamate } = banco();
+            gs.cash = 5000;
+            gs.drivers = [{ id: 'd_vip', name: 'Driver VIP' }];
+            const ride = { id: 'r1', driverId: 'd_vip', toPoi: { name: 'Hotel' }, tier: 'vip' };
+            // Forza Math.random a scegliere il primo evento (rose, costA = 500)
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.001;
+            try {
+                sandbox.window._triggerVIPMidRideEvent(ride);
+                const btnA = sandbox.document.getElementById('vip-toast-a');
+                assert.ok(btnA, 'il pulsante di scelta A deve esistere nel toast VIP');
+                btnA.onclick();
+                await new Promise(r => setImmediate(r));
+                const spendCalls = chiamate.filter(c => c.tipo === 'spend');
+                assert.equal(spendCalls.length, 1, 'la scelta A con costo deve passare da CE_money.spend');
+                assert.equal(spendCalls[0].importo, 500);
+            } finally {
+                sandbox.Math.random = origRandom;
+            }
         });
     });
 });
