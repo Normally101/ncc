@@ -492,4 +492,3 @@ window._wrAcquire = async function (provinceId) {
 };
 
 window.renderTabWarRoom   = renderTabWarRoom;
-window.renderTabProvinces = renderTabWarRoom;
