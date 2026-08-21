@@ -111,7 +111,13 @@ window.shadowExecuteOp = async function(targetId, opId) {
 
     if (typeof confirm === 'function' && !confirm(`Eseguire "${op.name}" su ${target.name || 'target'} per €${op.cost.toLocaleString()}?`)) return;
 
-    if (!window.CE_money.spend(op.cost, 'shadow_op_' + opId)) return;
+    const curCash = (typeof gameState !== 'undefined' ? gameState.cash : (window.gameState && window.gameState.cash)) || 0;
+    if (curCash < op.cost) {
+        if (typeof showNotification === 'function') {
+            showNotification('Fondi insufficienti! Servono €' + Math.round(op.cost).toLocaleString('it-IT'), 'error');
+        }
+        return;
+    }
 
     const { data, error } = await sb.rpc('rpc_execute_shadow_op', {
         v_target_id: targetId,
@@ -120,11 +126,11 @@ window.shadowExecuteOp = async function(targetId, opId) {
     });
 
     if (error) {
-        window.CE_money.earn(op.cost, 'shadow_op_refund');
         if (typeof showNotification === 'function') showNotification(_sErr('Operazione fallita', error), 'error');
         return;
     }
 
+    window.CE_money.addebitatoDalServer(op.cost, 'shadow_op_' + opId);
     if (typeof updateUI === 'function') updateUI();
 
     if (data.success) {
@@ -157,15 +163,22 @@ window.shadowUpgradeDefense = async function() {
     const tier = _DEFENSE_TIERS[currentLevel];
     if (!tier) { if(typeof showNotification==='function') showNotification('Difesa già al massimo!', 'error'); return; }
 
-    if (!window.CE_money.spend(tier.cost, 'shadow_defense_upgrade')) return;
+    const curCash = (typeof gameState !== 'undefined' ? gameState.cash : (window.gameState && window.gameState.cash)) || 0;
+    if (curCash < tier.cost) {
+        if (typeof showNotification === 'function') {
+            showNotification('Fondi insufficienti! Servono €' + Math.round(tier.cost).toLocaleString('it-IT'), 'error');
+        }
+        return;
+    }
 
     const { data, error } = await sb.rpc('rpc_upgrade_shadow_defense', { v_cost: tier.cost });
     if (error) {
-        window.CE_money.earn(tier.cost, 'shadow_defense_refund');
         if (typeof showNotification === 'function') showNotification(_sErr('Upgrade difesa fallito', error), 'error');
         return;
     }
-    gameState._shadowDefenseLevel = data.new_level;
+    window.CE_money.addebitatoDalServer(tier.cost, 'shadow_defense_upgrade');
+    if (typeof gameState !== 'undefined') gameState._shadowDefenseLevel = data.new_level;
+    else if (window.gameState) window.gameState._shadowDefenseLevel = data.new_level;
     if (typeof saveGame === 'function') saveGame();
     if (typeof updateUI === 'function') updateUI();
     if(typeof showNotification==='function') showNotification(`🛡️ Difesa aggiornata a Livello ${data.new_level}: ${_DEFENSE_TIERS[data.new_level - 1]?.name}!`, 'success');

@@ -406,7 +406,7 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
 
             assert.equal(gs.cash, 100000);
             assert.equal(gs._shadowDefenseLevel, 2);
-            assert.deepEqual(syncedCashCalls, [100000]);
+            assert.deepEqual(syncedCashCalls, []);
             assert.ok(env.notifications.some(n => n.msg.includes('Difesa aggiornata a Livello 2')));
         });
 
@@ -435,7 +435,7 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
             assert.equal(syncedCashCalls.length, 0);
         });
 
-        test('shadowUpgradeDefense rimborsa il giocatore se la RPC restituisce errore', async () => {
+        test('shadowUpgradeDefense non tocca il cash locale se la RPC restituisce errore', async () => {
             sandbox.supabaseClient.rpc = async (name) => {
                 if (name === 'rpc_upgrade_shadow_defense') {
                     return { data: null, error: new Error('Network error') };
@@ -448,9 +448,9 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
             await sandbox.shadowUpgradeDefense();
             await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.cash, 100000, 'il cash deve essere rimborsato integralmente');
+            assert.equal(gs.cash, 100000, 'il cash non deve cambiare');
             assert.equal(gs._shadowDefenseLevel, 0);
-            assert.deepEqual(syncedCashCalls, [50000, 100000]);
+            assert.deepEqual(syncedCashCalls, []);
         });
     });
 

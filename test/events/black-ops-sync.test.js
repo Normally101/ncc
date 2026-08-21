@@ -2,9 +2,13 @@
 /* ============================================================================
    test/events/black-ops-sync.test.js
 
-   Regressione per il bug economico in black_ops.js:
-   tutte le funzioni di spesa DEVONO passare da CE_money (spend)
-   e sincronizzare la cassa col server tramite ServerState.syncCash.
+   Regressione per il difetto di doppio conteggio in black_ops.js:
+   le RPC del server (rpc_execute_shadow_op, rpc_upgrade_shadow_defense)
+   muovono GIA' il saldo `cash` sul server (23_shadow_ops.sql).
+   Pertanto il client DEVE allineare la cassa locale usando
+   `CE_money.addebitatoDalServer` SENZA chiamare `ServerState.syncCash`,
+   altrimenti il saldo si muove due volte se arriva l'eco Realtime o rispedisce
+   un totale obsoleto.
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
@@ -52,10 +56,10 @@ function setupShadowEnv(rpcOverrides = {}) {
     return { env, sandbox: env.sandbox, gs: env.sandbox.gameState, syncedCash, rpcCalls };
 }
 
-describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
+describe('black_ops — il server ha già mosso i soldi (addebitatoDalServer)', () => {
 
     describe('shadowExecuteOp', () => {
-        test('eseguire operazione ombra scala il costo e sincronizza con ServerState.syncCash', async () => {
+        test('shadowExecuteOp scala il costo dell operazione localmente via addebitatoDalServer ma NON chiama syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupShadowEnv();
             gs.cash = 100000;
             sandbox._shadowState.targets = [{ user_id: 'target_1', name: 'Rival Corp', reputation: 4.0, defense_lvl: 0 }];
@@ -65,10 +69,42 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 85000, 'il saldo locale deve essere scalato del costo operazione');
-            assert.deepEqual(syncedCash, [85000], 'syncCash deve ricevere il saldo aggiornato');
+            assert.deepEqual(syncedCash, [], 'syncCash NON deve essere chiamato: rpc_execute_shadow_op scala già companies.cash sul server');
         });
 
-        test('buy_off_client attiva l\'evento dinamico e sincronizza la cassa', async () => {
+        test('shadowExecuteOp con eco Realtime arrivato prima del ritorno della RPC non provoca doppio addebito o syncCash', async () => {
+            const synced = [];
+            const env = freshEnv({
+                serverState: {
+                    syncCash: async (v) => {
+                        synced.push(v);
+                        return { success: true, cash: v };
+                    },
+                },
+            });
+            const sandbox = env.sandbox;
+            const gs = sandbox.gameState;
+            gs.cash = 100000;
+            sandbox._shadowState.targets = [{ user_id: 'target_1', name: 'Rival Corp' }];
+            sandbox.supabaseClient = {
+                rpc: async (name, params) => {
+                    if (name === 'rpc_execute_shadow_op') {
+                        // Simula eco Realtime arrivato prima che la RPC ritorni la risposta
+                        gs.cash = 85000;
+                        return { data: { success: true, result: {} }, error: null };
+                    }
+                    return { data: [], error: null };
+                },
+            };
+            sandbox.window.supabaseClient = sandbox.supabaseClient;
+
+            await sandbox.shadowExecuteOp('target_1', 'spy_fleet');
+            await new Promise(r => setImmediate(r));
+
+            assert.deepEqual(synced, [], 'nessuna risincronizzazione');
+        });
+
+        test('buy_off_client attiva l evento dinamico e scala cash senza chiamare syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupShadowEnv();
             gs.cash = 100000;
             sandbox._shadowState.targets = [{ user_id: 'target_1', name: 'Rival Corp' }];
@@ -78,11 +114,11 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 60000);
-            assert.deepEqual(syncedCash, [60000]);
+            assert.deepEqual(syncedCash, []);
             assert.equal(gs.activeDynamicEvent?.id, 'shadow_vip_boost');
         });
 
-        test('fondi insufficienti: non esegue operazione e non chiama syncCash', async () => {
+        test('fondi insufficienti: non esegue operazione, non chiama RPC e non chiama syncCash', async () => {
             const { sandbox, gs, syncedCash, rpcCalls } = setupShadowEnv();
             gs.cash = 5000;
             sandbox._shadowState.targets = [{ user_id: 'target_1', name: 'Rival Corp' }];
@@ -94,6 +130,20 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(gs.cash, 5000, 'il cash non deve cambiare');
             assert.deepEqual(syncedCash, [], 'nessuna chiamata syncCash se mancano i fondi');
             assert.equal(rpcCalls.length, 0, 'la RPC supabase non deve essere chiamata');
+        });
+
+        test('annullamento da confirm dialog: non scala denaro, non chiama RPC e non chiama syncCash', async () => {
+            const { sandbox, gs, syncedCash, rpcCalls } = setupShadowEnv();
+            gs.cash = 100000;
+            sandbox.confirm = () => false;
+            sandbox._shadowState.targets = [{ user_id: 'target_1', name: 'Rival Corp' }];
+
+            await sandbox.shadowExecuteOp('target_1', 'spy_fleet');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 100000);
+            assert.deepEqual(syncedCash, []);
+            assert.equal(rpcCalls.length, 0);
         });
 
         test('target non valido: non scala denaro e non chiama syncCash', async () => {
@@ -122,7 +172,7 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(rpcCalls.length, 0);
         });
 
-        test('errore RPC: rimborsa la spesa e sincronizza con ServerState.syncCash', async () => {
+        test('errore RPC: non altera cassa locale e non chiama syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupShadowEnv({
                 rpc_execute_shadow_op: async () => ({ data: null, error: new Error('DB error') }),
             });
@@ -132,14 +182,13 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             await sandbox.shadowExecuteOp('target_1', 'spy_fleet');
             await new Promise(r => setImmediate(r));
 
-            // spend 15k -> 85k, refund 15k -> 100k
             assert.equal(gs.cash, 100000);
-            assert.deepEqual(syncedCash, [85000, 100000]);
+            assert.deepEqual(syncedCash, []);
         });
     });
 
     describe('shadowUpgradeDefense', () => {
-        test('potenziare difesa scala il costo del tier e sincronizza con ServerState.syncCash', async () => {
+        test('potenziare difesa scala il costo del tier via addebitatoDalServer ma NON chiama syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupShadowEnv();
             gs.cash = 100000;
             gs._shadowDefenseLevel = 0;
@@ -150,10 +199,42 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
 
             assert.equal(gs.cash, 50000, 'il saldo locale deve essere scalato del costo upgrade');
             assert.equal(gs._shadowDefenseLevel, 1, 'il livello difesa deve salire a 1');
-            assert.deepEqual(syncedCash, [50000], 'syncCash deve ricevere il saldo aggiornato');
+            assert.deepEqual(syncedCash, [], 'syncCash NON deve essere chiamato: rpc_upgrade_shadow_defense scala già companies.cash sul server');
         });
 
-        test('fondi insufficienti: non potenzia difesa e non chiama syncCash', async () => {
+        test('shadowUpgradeDefense con eco Realtime arrivato durante la RPC non provoca doppio addebito o syncCash', async () => {
+            const synced = [];
+            const env = freshEnv({
+                serverState: {
+                    syncCash: async (v) => {
+                        synced.push(v);
+                        return { success: true, cash: v };
+                    },
+                },
+            });
+            const sandbox = env.sandbox;
+            const gs = sandbox.gameState;
+            gs.cash = 100000;
+            gs._shadowDefenseLevel = 0;
+            sandbox.supabaseClient = {
+                rpc: async (name, params) => {
+                    if (name === 'rpc_upgrade_shadow_defense') {
+                        // Simula eco Realtime arrivato prima della fine RPC
+                        gs.cash = 50000;
+                        return { data: { new_level: 1 }, error: null };
+                    }
+                    return { data: [], error: null };
+                },
+            };
+            sandbox.window.supabaseClient = sandbox.supabaseClient;
+
+            await sandbox.shadowUpgradeDefense();
+            await new Promise(r => setImmediate(r));
+
+            assert.deepEqual(synced, [], 'nessuna risincronizzazione');
+        });
+
+        test('fondi insufficienti: non potenzia difesa, non chiama RPC e non chiama syncCash', async () => {
             const { sandbox, gs, syncedCash, rpcCalls } = setupShadowEnv();
             gs.cash = 20000;
             gs._shadowDefenseLevel = 0;
@@ -168,7 +249,7 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(rpcCalls.length, 0);
         });
 
-        test('difesa già al massimo (lv. 5): non scala denaro e non chiama syncCash', async () => {
+        test('difesa già al massimo (lv. 5): non scala denaro, non chiama RPC e non chiama syncCash', async () => {
             const { sandbox, gs, syncedCash, rpcCalls } = setupShadowEnv();
             gs.cash = 1000000;
             gs._shadowDefenseLevel = 5;
@@ -182,7 +263,7 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(rpcCalls.length, 0);
         });
 
-        test('errore RPC: rimborsa costo tier e sincronizza con ServerState.syncCash', async () => {
+        test('errore RPC: non scala denaro, non avanza livello e non chiama syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupShadowEnv({
                 rpc_upgrade_shadow_defense: async () => ({ data: null, error: new Error('DB error') }),
             });
@@ -192,10 +273,9 @@ describe('black_ops — sincronizzazione cassa col server (CE_money)', () => {
             await sandbox.shadowUpgradeDefense();
             await new Promise(r => setImmediate(r));
 
-            // Tier 1 costa 50k: spend 50k -> 50k, refund 50k -> 100k
             assert.equal(gs.cash, 100000);
             assert.equal(gs._shadowDefenseLevel, 0);
-            assert.deepEqual(syncedCash, [50000, 100000]);
+            assert.deepEqual(syncedCash, []);
         });
     });
 });
