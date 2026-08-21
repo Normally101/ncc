@@ -320,7 +320,13 @@ window.buyLifestyleAsset = function(assetId) {
     if (!window.CE_money.spend(asset.price, 'buy_lifestyle_asset')) return;
     if (!gameState.lifestyleAssets) gameState.lifestyleAssets = [];
     gameState.lifestyleAssets.push(assetId);
-    if (asset.repBonus) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + asset.repBonus);
+    if (asset.repBonus) {
+        if (window.CE_money && typeof window.CE_money.addReputation === 'function') {
+            window.CE_money.addReputation(asset.repBonus);
+        } else {
+            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + asset.repBonus);
+        }
+    }
     logToMap(`🏰 Acquisito: ${asset.name} (${asset.location}) — €${asset.price.toLocaleString()}`);
     showBigEvent(asset.icon, `Acquisito: ${asset.name}!`,
         `${asset.desc}\n\n${asset.repBonus > 0 ? `+${asset.repBonus}★ Reputazione immediata. ` : ''}${asset.passive > 0 ? `+€${asset.passive.toLocaleString()}/g entrate passive. ` : ''}${asset.intlUnlock ? 'Tratte internazionali sbloccate!' : ''}`
