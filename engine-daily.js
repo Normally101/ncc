@@ -111,6 +111,9 @@ function _tickFatigue() {
 
 // ─── METEO ────────────────────────────────────────────────────────
 function _tickWeather() {
+    // Se il meteo reale è attivo, non sovrascrivere con roll sintetici casuali
+    if (gameState._realWeatherData) return;
+
     if (!gameState.weatherHoursLeft) gameState.weatherHoursLeft = 6;
     gameState.weatherHoursLeft--;
     if (gameState.weatherHoursLeft <= 0) {

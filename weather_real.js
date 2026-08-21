@@ -78,6 +78,10 @@ function _applyRealWeather() {
         const ws = WEATHER_MAP[gameState.weather] || {};
         logToMap(`${ws.icon || '🌍'} Meteo reale aggiornato: ${ws.label || gameState.weather} a ${provinceId} (${realData.owm_description || ''})`);
     }
+
+    if (prevWeather !== gameState.weather && typeof _tabIs === 'function' && _tabIs('corse') && typeof renderTabCorse === 'function') {
+        renderTabCorse();
+    }
 }
 
 // Override _getTrafficMult in engine.js to include real-world traffic
