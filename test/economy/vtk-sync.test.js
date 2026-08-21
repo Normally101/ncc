@@ -2,10 +2,10 @@
 /* ============================================================================
    test/economy/vtk-sync.test.js
 
-   Regressione per il bug economico in vtk-market.js:
-   tutte le funzioni di spesa DC (es. vtkFillOrder) DEVONO passare da CE_money
-   (spendDC) e persistere la spesa autoritativa sul server tramite
-   ServerState.spendDriverCoins.
+   Regressione per il difetto di doppio conteggio in vtk-market.js:
+   `rpc_fill_vtk_order` muove GIA' il saldo Driver Coins e VTK sul server (21_vtk_token.sql).
+   Pertanto il client NON deve chiamare ServerState.spendDriverCoins / CE_money.spendDC,
+   altrimenti il saldo DC viene addebitato due volte sul server.
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
@@ -44,10 +44,10 @@ function setupVTKEnv(rpcResponses = {}) {
     return { sandbox, gs: sandbox.gameState, chiamateDC };
 }
 
-describe('vtk-market — sincronizzazione Driver Coins col server (CE_money)', () => {
+describe('vtk-market — sincronizzazione Driver Coins col server (prevenzione doppio addebito)', () => {
 
     describe('vtkFillOrder', () => {
-        test('vtkFillOrder scala DC tramite ServerState.spendDriverCoins (CE_money.spendDC)', async () => {
+        test('vtkFillOrder invoca rpc_fill_vtk_order e NON chiama spendDriverCoins (il server ha già scalato i DC)', async () => {
             const { sandbox, gs, chiamateDC } = setupVTKEnv();
             gs.driverCoins = 50;
             gs.vtkBalance = 0;
@@ -55,9 +55,30 @@ describe('vtk-market — sincronizzazione Driver Coins col server (CE_money)', (
             await sandbox.vtkFillOrder('ord_123', 10);
             await new Promise(r => setImmediate(r));
 
-            assert.equal(chiamateDC.length, 1, 'spendDriverCoins deve essere chiamata esattamente una volta');
-            assert.equal(chiamateDC[0].n, 10, 'la spesa deve essere di 10 DC');
-            assert.equal(gs.driverCoins, 40, 'il saldo locale DC deve essere scalato');
+            assert.equal(chiamateDC.length, 0, 'spendDriverCoins NON deve essere chiamata: rpc_fill_vtk_order scala già i DC sul server');
+        });
+
+        test('vtkFillOrder anche se l eco realtime arriva durante la RPC non chiama spendDriverCoins', async () => {
+            const { sandbox, gs, chiamateDC } = setupVTKEnv({
+                rpc_fill_vtk_order: () => {
+                    // Simula eco realtime dal server
+                    gs.driverCoins = 50 - 10;
+                    gs.vtkBalance = 0 + 50;
+                    return {
+                        data: { vtk_received: 50, dc_paid: 10 },
+                        error: null,
+                    };
+                },
+            });
+            gs.driverCoins = 50;
+            gs.vtkBalance = 0;
+
+            await sandbox.vtkFillOrder('ord_123', 10);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(chiamateDC.length, 0, 'nessuna chiamata ridondante a spendDriverCoins');
+            assert.equal(gs.driverCoins, 40, 'il saldo locale rispecchia l eco del server');
+            assert.equal(gs.vtkBalance, 50, 'il saldo VTK rispecchia l eco del server');
         });
 
         test('vtkFillOrder con DC insufficienti non chiama né la RPC né spendDriverCoins', async () => {

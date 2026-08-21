@@ -128,7 +128,7 @@ window.b2bTerminateContract = async function(activeId) {
     }
 
     if (data.penalty > 0) {
-        window.CE_money.spend(data.penalty, 'b2b_terminate_penalty');
+        window.CE_money.addebitatoDalServer(data.penalty, 'b2b_terminate_penalty');
     }
     if (data.rep_penalty) {
         window.CE_money.addReputation(-data.rep_penalty);
@@ -151,7 +151,7 @@ window._b2bDailyTick = async function() {
     if (error || !data) return;
 
     if (data.payout > 0) {
-        window.CE_money.earn(data.payout, 'b2b_daily_payout');
+        window.CE_money.accreditatoDalServer(data.payout, 'b2b_daily_payout');
     }
 
     if (data.completed) {
