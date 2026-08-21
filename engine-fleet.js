@@ -202,8 +202,7 @@ window.upgradeFuelDepot = function() {
 
 window.buyTiresForDepot = function(sets) {
     if (!hasInvestment('inv_fuel_depot')) { showNotification('Attiva prima il Deposito Aziendale!', 'error'); return; }
-    const costPerSet = 800;
-    const cost = sets * costPerSet;
+    const cost = sets === 10 ? 6000 : sets === 5 ? 3500 : sets * 800;
     if (!window.CE_money.spend(cost, 'buy_tires_for_depot')) return;
     gameState.depositoGomme = (gameState.depositoGomme || 0) + sets;
     logToMap(`🔧 Deposito: +${sets} treni di gomme. (Totale: ${gameState.depositoGomme})`);
