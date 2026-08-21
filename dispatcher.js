@@ -266,7 +266,7 @@ window.showNotification = window._realShowNotification = function(msg, type) {
     if (!c) return;
     const n = document.createElement('div');
     n.className = `notif${type === 'error' ? ' error-notif' : ''}`;
-    n.innerText = msg;
+    n.textContent = msg;
     c.appendChild(n);
     setTimeout(() => n.remove(), 4000);
 };
