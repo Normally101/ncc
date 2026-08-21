@@ -4,6 +4,7 @@
 
 function renderTabPolitics() {
     const container = document.getElementById('tab-container');
+    if (!container) return;
     const inflPct   = ((gameState.inflationRate || 0.020) * 100).toFixed(2);
     const ratePct   = ((gameState.interestRateBase || 0.045) * 100).toFixed(2);
     const points    = gameState.lobbyingPoints || 0;
