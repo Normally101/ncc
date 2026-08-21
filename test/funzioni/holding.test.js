@@ -585,9 +585,9 @@ describe('Funzione Holding — OPA Ostili e M&A Server (hostile_takeover.js)', (
 
             await sandbox._opaRequestBuyback('opa_001', 150000);
 
-            // Cassa scalata
+            // Cassa scalata (server-authoritative: addebitatoDalServer, no syncCash)
             assert.equal(gs.cash, 50000);
-            assert.deepEqual(syncedCash, [50000]);
+            assert.deepEqual(syncedCash, [], 'non deve rispedire syncCash perché rpc_opa_buyback muove già companies.cash');
 
             // RPC invocata con argomenti corretti
             const buyRpc = rpcLog.find(r => r.nome === 'rpc_opa_buyback');
