@@ -635,13 +635,13 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.ok(supabaseRpcCalls.some(c => c.name === 'rpc_leave_consorzio'));
         });
 
-        test('contributeConsorzio scala la cifra e gestisce rollback in caso di errore RPC', async () => {
+        test('contributeConsorzio scala la cifra via addebitatoDalServer senza syncCash e gestisce errore RPC', async () => {
             gs.cash = 30000;
             await sandbox.contributeConsorzio('cso_101', 5000);
             assert.equal(gs.cash, 25000);
-            assert.deepEqual(syncedCashCalls, [25000]);
+            assert.deepEqual(syncedCashCalls, [], 'syncCash non deve essere chiamato per contributeConsorzio');
 
-            // Simuliamo errore RPC per testare il rollback
+            // Simuliamo errore RPC
             sandbox.supabaseClient.rpc = async (name) => {
                 if (name === 'rpc_contribute_consorzio') {
                     return { data: null, error: { message: 'Errore DB consorzio' } };
@@ -650,8 +650,8 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             };
 
             await sandbox.contributeConsorzio('cso_101', 5000);
-            assert.equal(gs.cash, 25000, 'il saldo deve essere tornato al valore precedente dopo rollback');
-            assert.deepEqual(syncedCashCalls, [25000, 20000, 25000]);
+            assert.equal(gs.cash, 25000, 'il saldo non deve cambiare in caso di errore RPC');
+            assert.deepEqual(syncedCashCalls, [], 'nessuna chiamata syncCash in caso di errore');
         });
     });
 
