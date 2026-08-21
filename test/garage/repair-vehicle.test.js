@@ -34,18 +34,27 @@ describe('garage/repair-vehicle — riparazione veicolo', () => {
         assert.equal(sandbox.gameState.cash, cashBefore, 'nessun costo se la condizione è già 100%');
     });
 
-    test('con investimento Kasko la riparazione è gratuita', async () => {
+    /* 21/08/2026: la Kasko NON regala piu' la riparazione ordinaria.
+       La decisione era del 20/08 ed era stata applicata solo a `repairCostFor`;
+       `payToRepairCar` usciva prima di arrivarci, quindi il prezzo mostrato
+       diceva una cifra e il pulsante riparava gratis. La promessa della Kasko
+       («le riparazioni incidentali non costano nulla») resta mantenuta in
+       engine-rides.js, dove l'incidente con Kasko non fa danno affatto.
+       Dettaglio e conti in test/economy/engine-cassa.test.js. */
+    test('la Kasko non regala la riparazione ordinaria', async () => {
         const { sandbox } = freshEnv();
         const car = { id: 'c_dmg2', _serverId: 'srv_dmg2', name: 'Auto Danneggiata', tier: 'business', condition: 20, isLease: false };
         sandbox.gameState.fleet.push(car);
         sandbox.gameState.investments.push('inv_kasko');
         sandbox.gameState.cash = 50000;
         const cashBefore = sandbox.gameState.cash;
+        const atteso = (100 - 20) * 85;   // 6.800, nessuno sconto attivo
 
         await sandbox.payToRepairCar('c_dmg2');
 
-        assert.equal(car.condition, 100, 'Kasko ripara comunque al 100%');
-        assert.equal(sandbox.gameState.cash, cashBefore, 'Kasko: nessun addebito');
+        assert.equal(car.condition, 100, 'l\'auto va comunque riparata al 100%');
+        assert.equal(sandbox.gameState.cash, cashBefore - atteso,
+            'la Kasko ha di nuovo azzerato il costo dell\'usura ordinaria');
     });
 
     test('un meccanico in staff dimezza il costo di riparazione', async () => {
