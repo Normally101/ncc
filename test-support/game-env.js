@@ -30,8 +30,8 @@ const CORE_FILES = [
     'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
     'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',
     'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-staff.js',
-    'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-career.js', 'ui-store.js',
-    'ui-finance.js', 'daily-orders.js',
+    'ui-lifestyle.js', 'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-career.js', 'ui-store.js',
+    'ui-finance.js', 'daily-orders.js', 'ui-realestate.js',
     'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
     'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
     'hq-data.js', 'hq.js', 'hostile_takeover.js', 'nemesis.js', 'infrastructure.js',
@@ -114,6 +114,12 @@ function makeServerState(sandboxRef, overrides = {}) {
             gs().cash = (gs().cash || 0) - price;
             return { success: true };
         },
+        buyRealEstate: async (listingId) => ({
+            success: true,
+            listing_id: listingId,
+            name: 'Immobile ' + listingId,
+            daily_rent: 1000
+        }),
         unlockRegion: async (_regionId, price) => {
             gs().cash = (gs().cash || 0) - price;
             return { success: true };
