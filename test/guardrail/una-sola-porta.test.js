@@ -28,7 +28,6 @@ const AUTORIZZATI = new Set(['money.js', 'serverState.js']);
 // Ogni task di conversione RIMUOVE una riga da qui. Nessun task ne aggiunge.
 const ECCEZIONI = new Set([
     'engine.js',
-    'hq.js',
 ]);
 
 const MUTAZIONE = /gameState\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
