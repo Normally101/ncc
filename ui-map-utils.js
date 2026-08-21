@@ -127,41 +127,7 @@ window._cancelFoundingMode = function() {
     window._checkFoundingOverlay();
 };
 
-// ─── TRAFFIC COLOR ON ROUTE LINES ───────────────────────────────
-function _updateActiveRouteLinesColored() {
-    if (!map || !_mapReady) return;
-    const normalFeatures  = [];
-    const trafficFeatures = [];
-    (gameState.activeRides || []).forEach(r => {
-        if (!r.roadGeom || r.roadGeom.length < 2) return;
-        const feat = { type: 'Feature', properties: { rideId: r.id }, geometry: { type: 'LineString', coordinates: r.roadGeom } };
-        if (r.inTraffic) trafficFeatures.push(feat);
-        else normalFeatures.push(feat);
-    });
-    const allFeatures = [...normalFeatures, ...trafficFeatures];
-    const src = map.getSource('active-routes');
-    if (src) src.setData({ type: 'FeatureCollection', features: allFeatures });
 
-    // Update glow/core colors for traffic rides
-    try {
-        const hasTraffic = trafficFeatures.length > 0;
-        if (hasTraffic && map.getLayer('active-routes-glow')) {
-            map.setPaintProperty('active-routes-glow', 'line-color', '#ff4060');
-            map.setPaintProperty('active-routes-core', 'line-color', '#ff6080');
-            setTimeout(() => {
-                if (!map || !map.getSource('active-routes')) return;
-                if (trafficFeatures.length === 0) {
-                    try { map.setPaintProperty('active-routes-glow', 'line-color', '#f59e0b'); } catch(e) {}
-                    try { map.setPaintProperty('active-routes-core', 'line-color', '#fbbf24'); } catch(e) {}
-                }
-            }, 3000);
-        }
-    } catch(e) {}
-}
-
-// Hook into the visual loop — replace the old call
-const _origVisualLoopUpdateRoutes = window._updateActiveRouteLines;
-window._updateActiveRouteLines = _updateActiveRouteLinesColored;
 
 // ─── ACCADEMIA AUTISTI MODAL ─────────────────────────────────────
 window.openAcademyModal = function() {
