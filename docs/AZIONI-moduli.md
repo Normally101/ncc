@@ -343,15 +343,15 @@
 - `hqUpgradeRoom` · `hq.js:121` · data-ce-act: `hqUpgradeRoom` (`hq.js`) · doppioni: nessuno · denaro: CE_money (`spend, addReputation`)
 - `hqSwitchCity` · `hq.js:202` · data-ce-act: `hqSwitchCity` (`hq.js`) · doppioni: nessuno · denaro: no
 - `renderTabHQ` · `hq.js:209` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqOpenBuildModal` · `hq.js:339` · data-ce-act: `hqOpenBuildModal` (`hq-visual.js`) · doppioni: `hq-visual.js:88` · denaro: no
+- `hqOpenBuildModalStanza` · `hq.js:339` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `_hqDailyTick` · `hq.js:376` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `_hqBuildFromList` · `hq.js:410` · data-ce-act: `_hqBuildFromList` (`hq.js`) · doppioni: nessuno · denaro: no
 
 ## `hq-visual.js`
 
 - `renderHQCampus` · `hq-visual.js:7` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `hqOpenBuildModal` · `hq-visual.js:88` · data-ce-act: `hqOpenBuildModal` (`hq-visual.js`) · doppioni: `hq.js:339` · denaro: no
-- `hqShowInfoPanel` · `hq-visual.js:139` · data-ce-act: `hqShowInfoPanel` (`hq-visual.js`) · doppioni: nessuno · denaro: no
+- `hqOpenBuildModalSlot` · `hq-visual.js:87` · data-ce-act: `hqOpenBuildModalSlot` (`hq-visual.js`) · doppioni: nessuno · denaro: no
+- `hqShowInfoPanel` · `hq-visual.js:138` · data-ce-act: `hqShowInfoPanel` (`hq-visual.js`) · doppioni: nessuno · denaro: no
 
 ## `quests.js`
 
@@ -417,8 +417,6 @@
 | `_sb` | `b2b.js:34` | `p2p-market.js:49` | Helper locali identici definiti in scope globale |
 | `_uid` | `b2b.js:35` | `p2p-market.js:50` | Helper locali identici definiti in scope globale |
 | `_save` | `vanity.js:160` | `security.js:82` |  |
-| `hqOpenBuildModal` | `hq.js:339` | `hq-visual.js:88` | Firme incompatibili tra `hq-visual.js` (passa `cityId`) e `hq.js` (passa `roomId`) |
-| `hqOpenBuildModal` | `hq-visual.js:88` | `hq.js:339` | Firme incompatibili tra `hq-visual.js` (passa `cityId`) e `hq.js` (passa `roomId`) |
 | `gs` | `vittorio.js:24` | `objective-tracker.js:15` |  |
 | `processDailyRoutines` | `vittorio.js:153` | `engine-daily.js:315` | Hook routine giornaliere sovrascritto / decorato |
 
@@ -430,6 +428,7 @@
 |---|---|---|
 | `b2bLockedDriverIds` | `b2b.js:70` | Getter ID autisti bloccati B2B mai invocato |
 | `_vipSyncCash` | `vip-clients.js:18` | Helper non referenziato |
+| `hqOpenBuildModalStanza` | `hq.js:339` | Nessuna invocazione trovata nel codebase (JS/HTML/data-ce-act) |
 | `getMissionRequires` | `quests.js:15` | Helper requisiti missione non referenziato |
 | `driverSkillEffect` | `driver_skills.js:101` | Calcolo effetto skill non referenziato |
 
