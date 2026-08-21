@@ -9,6 +9,7 @@
    ============================================================================ */
 const { test, describe, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
+const vm = require('node:vm');
 const { freshEnv } = require('../../test-support/game-env.js');
 
 /**
@@ -790,6 +791,166 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
 
             // Payout di 5600 da Obsidian Pearl Retreats
             assert.equal(amb.gs.cash, 15600, 'il payout giornaliero entra direttamente nella cassa del giocatore');
+            amb.env.stopAllIntervals();
+        });
+    });
+
+    describe('10. Compatibilità dati e modelli reali da data.js (NEW_CARS, tiering e filtri)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteTurismo(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('NEW_CARS definisce tier minuscoli coerenti con la gerarchia del turismo', () => {
+            const { sandbox } = amb;
+            const newCars = vm.runInContext('NEW_CARS', sandbox);
+            assert.ok(Array.isArray(newCars), 'NEW_CARS deve essere un array');
+            assert.ok(newCars.length > 0, 'NEW_CARS non deve essere vuoto');
+
+            const validTiers = new Set(['business', 'vip', 'ultra']);
+            for (const car of newCars) {
+                assert.ok(validTiers.has(car.tier), `Il tier dell'auto ${car.name} (${car.tier}) deve essere standard/business/vip/ultra minuscolo`);
+            }
+        });
+
+        test('conteggio veicoli qualificanti (_tQualifyingCount) rispetta la gerarchia dei tier reali', () => {
+            const { sandbox } = amb;
+            const newCars = vm.runInContext('NEW_CARS', sandbox);
+
+            const carBus = newCars.find(c => c.tier === 'business');
+            const carVip = newCars.find(c => c.tier === 'vip');
+            const carUltra = newCars.find(c => c.tier === 'ultra');
+
+            assert.ok(carBus && carVip && carUltra, 'devono esistere auto business, vip e ultra in data.js');
+
+            sandbox.gameState.fleet = [
+                { id: 'f_bus', modelId: carBus.id, name: carBus.name, tier: carBus.tier, isLease: false, outOfService: null },
+                { id: 'f_vip', modelId: carVip.id, name: carVip.name, tier: carVip.tier, isLease: false, outOfService: null },
+                { id: 'f_ultra', modelId: carUltra.id, name: carUltra.name, tier: carUltra.tier, isLease: false, outOfService: null },
+            ];
+
+            // Ultra soddisfa tutti i requisiti (ultra >= 4, vip >= 3, business >= 2, standard >= 1)
+            assert.equal(vm.runInContext('_tQualifyingCount("standard")', sandbox), 3, 'tutti i veicoli contano per standard');
+            assert.equal(vm.runInContext('_tQualifyingCount("business")', sandbox), 3, 'business, vip e ultra contano per business');
+            assert.equal(vm.runInContext('_tQualifyingCount("vip")', sandbox), 2, 'solo vip e ultra contano per vip');
+            assert.equal(vm.runInContext('_tQualifyingCount("ultra")', sandbox), 1, 'solo ultra conta per ultra');
+        });
+
+        test('veicoli in leasing o fuori servizio sono esclusi dal conteggio qualificanti', () => {
+            const { sandbox } = amb;
+            const newCars = vm.runInContext('NEW_CARS', sandbox);
+            const carUltra = newCars.find(c => c.tier === 'ultra');
+
+            sandbox.gameState.fleet = [
+                { id: 'f_u1', modelId: carUltra.id, name: carUltra.name, tier: 'ultra', isLease: false, outOfService: null },
+                { id: 'f_u2_lease', modelId: carUltra.id, name: carUltra.name, tier: 'ultra', isLease: true, outOfService: null },
+                { id: 'f_u3_oos_bool', modelId: carUltra.id, name: carUltra.name, tier: 'ultra', isLease: false, outOfService: true },
+                { id: 'f_u4_oos_date', modelId: carUltra.id, name: carUltra.name, tier: 'ultra', isLease: false, outOfService: new Date().toISOString() },
+            ];
+
+            assert.equal(vm.runInContext('_tQualifyingCount("ultra")', sandbox), 1, 'solo l\'auto di proprietà e attiva deve qualificarsi');
+        });
+
+        test('calcolo punteggio _tPlayerScore rispetta pesi e tetti massimi (40 rep + 40 flotta + 20 pledge)', () => {
+            const { sandbox } = amb;
+            sandbox.gameState.reputation = 5.0; // 5.0 / 5.0 * 40 = 40 max
+            sandbox.gameState.fleet = [
+                { id: 'f1', tier: 'ultra', isLease: false, outOfService: null },
+                { id: 'f2', tier: 'ultra', isLease: false, outOfService: null },
+            ];
+
+            // Requisito: 2 veicoli ultra, pledge 100.000€ -> punteggio 40 + 40 + 20 = 100
+            const maxScore = vm.runInContext('_tPlayerScore("ultra", 2, 100000)', sandbox);
+            assert.equal(maxScore.rep, 40);
+            assert.equal(maxScore.fleet, 40);
+            assert.equal(maxScore.pledge, 20);
+            assert.equal(maxScore.total, 100);
+
+            // Requisito parziale: 1 veicolo su 2 (20), rep 2.5 (20), pledge 25.000 (5) -> 45
+            sandbox.gameState.reputation = 2.5;
+            sandbox.gameState.fleet = [{ id: 'f1', tier: 'ultra', isLease: false, outOfService: null }];
+            const midScore = vm.runInContext('_tPlayerScore("ultra", 2, 25000)', sandbox);
+            assert.equal(midScore.rep, 20);
+            assert.equal(midScore.fleet, 20);
+            assert.equal(midScore.pledge, 5);
+            assert.equal(midScore.total, 45);
+        });
+
+        test('controllo requisiti _tMeetsReqs distingue tra reputazione e veicoli insufficienti', () => {
+            const { sandbox } = amb;
+            sandbox.gameState.reputation = 4.0;
+            sandbox.gameState.fleet = [{ id: 'f1', tier: 'business', isLease: false, outOfService: null }];
+
+            const tender = {
+                requirements: { min_reputation: 4.5, req_tier: 'ultra', req_vehicle_count: 2 },
+            };
+
+            // Fallimento per reputazione
+            const reqRepFail = vm.runInContext(`_tMeetsReqs(${JSON.stringify(tender)})`, sandbox);
+            assert.equal(reqRepFail.ok, false);
+            assert.ok(reqRepFail.reason.includes('Reputazione insufficiente'));
+
+            // Fallimento per veicoli
+            sandbox.gameState.reputation = 5.0;
+            const reqFleetFail = vm.runInContext(`_tMeetsReqs(${JSON.stringify(tender)})`, sandbox);
+            assert.equal(reqFleetFail.ok, false);
+            assert.ok(reqFleetFail.reason.includes('Veicoli insufficienti'));
+
+            // Successo
+            sandbox.gameState.fleet = [
+                { id: 'f1', tier: 'ultra', isLease: false, outOfService: null },
+                { id: 'f2', tier: 'ultra', isLease: false, outOfService: null },
+            ];
+            const reqOk = vm.runInContext(`_tMeetsReqs(${JSON.stringify(tender)})`, sandbox);
+            assert.equal(reqOk.ok, true);
+        });
+    });
+
+    describe('11. Movimenti di denaro e sincronizzazione ServerState (online vs offline)', () => {
+        test('_tourismDailyTick con ServerState online NON muta cash locale direttamente', async () => {
+            const amb = creaAmbienteTurismo({
+                serverStateOverrides: {
+                    isReady: () => true,
+                },
+            });
+            await amb.sandbox.tourismRefresh(true);
+
+            amb.gs.cash = 10000;
+            await amb.sandbox._tourismDailyTick();
+
+            // Con ServerState pronto, l'accredito viene gestito da Supabase / Realtime bridge, non duplicato localmente
+            assert.equal(amb.gs.cash, 10000, 'il cash locale non deve essere alterato doppiamente con ServerState online');
+            amb.env.stopAllIntervals();
+        });
+
+        test('tourismTerminate con ServerState online NON applica penalità reputazione locale', async () => {
+            const amb = creaAmbienteTurismo({
+                serverStateOverrides: {
+                    isReady: () => true,
+                },
+            });
+            await amb.sandbox.tourismRefresh(true);
+
+            amb.gs.reputation = 4.5;
+            await amb.sandbox.tourismTerminate('tender_mine_active');
+
+            // Con ServerState pronto, la penalità viene applicata da Supabase RPC
+            assert.equal(amb.gs.reputation, 4.5, 'la reputazione locale non viene alterata doppiamente con ServerState online');
+            amb.env.stopAllIntervals();
+        });
+
+        test('tourismTerminate con ServerState offline decrementa reputazione locale via CE_money', async () => {
+            const amb = creaAmbienteTurismo({
+                serverStateOverrides: {
+                    isReady: () => false,
+                },
+            });
+            await amb.sandbox.tourismRefresh(true);
+
+            amb.gs.reputation = 4.0;
+            await amb.sandbox.tourismTerminate('tender_mine_active');
+
+            // Penale per tier 4: 4 * 0.15 = 0.60
+            assert.equal(Math.round(amb.gs.reputation * 100) / 100, 3.40, 'la reputazione locale deve essere decrementata di 0.60');
             amb.env.stopAllIntervals();
         });
     });
