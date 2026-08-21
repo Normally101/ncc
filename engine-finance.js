@@ -66,7 +66,7 @@ function _payStockDividends() {
         }
     });
     if (totalDiv > 0) {
-        gameState.cash += totalDiv;
+        window.CE_money.earn(totalDiv, 'stock_dividends');
         if (Math.random() < 0.1) logToMap(`💰 Dividendi azionari: +€${totalDiv}`);
     }
 }
@@ -101,7 +101,7 @@ function _tickBrokerInvestments() {
         const payout = inv.capital + gain;
         inv.resolved = true;
         inv.actualGain = gain;
-        gameState.cash += payout;
+        window.CE_money.earn(payout, 'broker_payout');
         const isProfit = gain >= 0;
         const label = isProfit ? `+€${gain.toLocaleString()}` : `−€${Math.abs(gain).toLocaleString()}`;
         const icon = isProfit ? '📈' : '📉';
@@ -207,21 +207,9 @@ function _tickStockHistory() {
 window.repayLoan = function(loanId) {
     const loan = (gameState.loans || []).find(l => l.id === loanId);
     if (!loan) return;
-    if (gameState.cash < loan.amount) {
-        showNotification(`Fondi insufficienti — servono €${loan.amount.toLocaleString()} per saldare questo prestito.`, 'error');
-        return;
-    }
-    gameState.cash -= loan.amount;
+    if (!window.CE_money.spend(loan.amount, 'repay_loan')) return;
     gameState.loans = gameState.loans.filter(l => l.id !== loanId);
     gameState.creditScore = Math.min(900, (gameState.creditScore || 300) + 20);
-    // FIX (stabilizzazione 10 agosto): senza questo, il cash resta disallineato dal
-    // companies.cash server-authoritative — rpc_buy_vehicle e altre RPC che validano il
-    // saldo lato server (vedi 49_lockdown_critical_cash_rpcs_scaffold.sql) rifiutano
-    // acquisti legittimi perché il server non ha mai visto il rimborso. Stesso pattern già
-    // usato da executeManualDrive/newGamePlus, non la RPC dedicata rpc_repay_loan (il suo
-    // modello di ammortamento con daily_payment non è mai stato collegato lato client —
-    // DESIGN_DECISION_REQUIRED, vedi HANDOFF).
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`✅ Prestito #${loanId} saldato — €${loan.amount.toLocaleString()} rimborsati. Credit Score +20`);
     showNotification(`✅ Prestito saldato! +20 Credit Score`, 'success');
     updateUI(); saveGame();
@@ -249,15 +237,8 @@ window.takeLoan = function(amount) {
         return;
     }
     const rate = creditTier.rate;
-    gameState.cash += amount;
+    window.CE_money.earn(amount, 'take_loan');
     gameState.loans.push({ id: gameState.nextId++, original: amount, amount: amount, remaining: amount, rate });
-    // FIX (stabilizzazione 10 agosto): senza questo, rpc_buy_vehicle e altre RPC che
-    // validano il saldo lato server rifiutano un acquisto legittimo subito dopo un
-    // prestito, perché companies.cash non ha mai visto l'accredito — riprodotto dal vivo
-    // ("fondi insufficienti" con cash locale abbondante). Stesso pattern di
-    // executeManualDrive/newGamePlus; vedi nota in repayLoan sopra sul perché non uso
-    // rpc_take_loan direttamente.
-    if (typeof ServerState !== 'undefined') ServerState.syncCash(gameState.cash).catch(() => {});
     logToMap(`🏦 Prestito €${amount.toLocaleString()} — tasso ${(rate*100).toFixed(1)}%/mese (Score: ${gameState.creditScore} ${creditTier.label})`);
     if (typeof showNotification === 'function') showNotification(`💰 Prestito €${amount.toLocaleString()} approvato!`, 'success');
     updateUI(); saveGame();
@@ -336,9 +317,8 @@ window.buyLifestyleAsset = function(assetId) {
     const asset = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(a => a.id === assetId);
     if (!asset) return;
     if ((gameState.lifestyleAssets || []).includes(assetId)) { showNotification('Asset già posseduto!', 'error'); return; }
-    if (gameState.cash < asset.price) { showNotification(`Fondi insufficienti! Servono €${asset.price.toLocaleString()}`, 'error'); return; }
+    if (!window.CE_money.spend(asset.price, 'buy_lifestyle_asset')) return;
     if (!gameState.lifestyleAssets) gameState.lifestyleAssets = [];
-    gameState.cash -= asset.price;
     gameState.lifestyleAssets.push(assetId);
     if (asset.repBonus) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + asset.repBonus);
     logToMap(`🏰 Acquisito: ${asset.name} (${asset.location}) — €${asset.price.toLocaleString()}`);
@@ -425,9 +405,8 @@ window.passLobbyLaw = function(lawId) {
     if (!law) return;
     if ((gameState.activeLobbyLaws || []).includes(lawId)) { showNotification('Legge già approvata!', 'error'); return; }
     if ((gameState.lobbyingPoints || 0) < law.pointsCost) { showNotification(`Servono ${law.pointsCost} punti lobbying!`, 'error'); return; }
-    if (gameState.cash < (law.cashCost || 0)) { showNotification(`Servono €${(law.cashCost||0).toLocaleString()} in cassa!`, 'error'); return; }
+    if (law.cashCost && !window.CE_money.spend(law.cashCost, 'pass_lobby_law')) return;
     gameState.lobbyingPoints -= law.pointsCost;
-    if (law.cashCost) gameState.cash -= law.cashCost;
     if (!gameState.activeLobbyLaws) gameState.activeLobbyLaws = [];
     gameState.activeLobbyLaws.push(lawId);
     logToMap(`⚖️ Legge approvata: ${law.name} — Costo: ${law.pointsCost}pt + €${(law.cashCost||0).toLocaleString()}`);
