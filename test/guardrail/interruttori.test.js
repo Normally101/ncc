@@ -42,7 +42,7 @@ function features() {
  * verificato almeno una volta.
  */
 const SPENTE_ALL_INIZIO = new Set([
-    'alleanze', 'salone', 'mercatoP2P', 'cripto', 'vtk', 'turismo',
+    'alleanze', 'mercatoP2P', 'cripto', 'vtk', 'turismo',
     'lusso', 'politica', 'infrastrutture', 'holding', 'nemesi',
     'negozioDC', 'vip', 'carriera',
 ]);

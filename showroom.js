@@ -600,6 +600,14 @@ window._srmBackToGallery = function() {
     else renderTabShowroom();
 };
 
+function _srmGetArg(el) {
+    const raw = el?.getAttribute('data-ce-args');
+    if (raw) {
+        try { return JSON.parse(raw)[0]; } catch (e) {}
+    }
+    return el?.getAttribute('onclick')?.match(/'([^']+)'/)?.[1] || null;
+}
+
 window._srmSetSection = function(sectionId) {
     _srmState.section = sectionId;
     const content = document.getElementById('srm-cfg-content');
@@ -609,9 +617,10 @@ window._srmSetSection = function(sectionId) {
         content.innerHTML = _srmSectionContent(v, meta);
     }
     document.querySelectorAll('.srm-sec-btn').forEach(btn => {
-        const sid = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+        const sid = _srmGetArg(btn);
         btn.classList.toggle('srm-active', sid === sectionId);
-        btn.querySelector('.srm-sec-label').style.color = sid === sectionId ? '#2f74c0' : '#6a7480';
+        const label = btn.querySelector('.srm-sec-label');
+        if (label) label.style.color = sid === sectionId ? '#58a6ff' : '#6b7280';
     });
 };
 
@@ -624,16 +633,16 @@ window._srmToggle = function(optId) {
     }
     // Update card UI
     document.querySelectorAll('.srm-opt-card').forEach(el => {
-        const m = el.getAttribute('onclick')?.match(/'([^']+)'/);
-        if (!m) return;
-        const sel = _srmState.selectedOpts.has(m[1]);
+        const optKey = _srmGetArg(el);
+        if (!optKey) return;
+        const sel = _srmState.selectedOpts.has(optKey);
         el.classList.toggle('srm-sel', sel);
         const chk = el.querySelector('.srm-opt-chk');
         if (chk) chk.textContent = sel ? '✓' : '';
     });
     // Update section badges
     document.querySelectorAll('.srm-sec-btn').forEach(btn => {
-        const sid = btn.getAttribute('onclick')?.match(/'([^']+)'/)?.[1];
+        const sid = _srmGetArg(btn);
         if (!sid || !['esterni','interni','speciali'].includes(sid)) return;
         const count = _srmOptCount(sid);
         let badge = btn.querySelector('.srm-sec-badge');
