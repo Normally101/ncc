@@ -250,6 +250,22 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
     });
 
     describe('4. Platinum Talent — La Diva', () => {
+        test('_maybeVipPlatinum genera email se flotta ha almeno 2 Stellar V-Carrier (>=70%)', () => {
+            gs.fleet.push({ id: 'v1', vehicleClass: 'stellar_v_carr', condition: 80, outOfService: null });
+            sandbox._maybeVipPlatinum();
+            assert.equal(gs.emails.length, 0);
+
+            gs.fleet.push({ id: 'v2', vehicleClass: 'stellar_v_carr', condition: 85, outOfService: null });
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipPlatinum();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_platinum');
+            assert.equal(gs.emails[0].vipData.price, 6500);
+        });
+
         test('acceptVipPlatinum richiede almeno 2 Stellar V-Carrier con condizione >=70%', () => {
             const emailId = 200;
             gs.emails.push({
@@ -300,6 +316,22 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
     });
 
     describe('5. L Onorevole — Politico', () => {
+        test('_maybeVipOnorevole genera email solo se auto non-EV (>=80%) e autista Lv2+ assegnato', () => {
+            const car = { id: 'c_onor', vehicleClass: 'stellar_s_imp', condition: 85, outOfService: null };
+            const driver = { id: 'd_onor', assignedCarId: 'c_onor', level: 2, restHoursLeft: 0, isOnStrike: false };
+            gs.fleet.push(car);
+            gs.drivers.push(driver);
+
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipOnorevole();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_onorevole');
+            assert.equal(gs.emails[0].vipData.price, 5000);
+        });
+
         test('acceptVipOnorevole richiede auto non elettrica (>=80%) e autista Lv2+', () => {
             const car = { id: 'c_onor', vehicleClass: 'stellar_s_imp', condition: 85, outOfService: null };
             const driver = { id: 'd_onor', assignedCarId: 'c_onor', level: 2, restHoursLeft: 0, isOnStrike: false };
@@ -356,6 +388,24 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
     });
 
     describe('6. Royal Entourage — Emiro', () => {
+        test('_maybeVipEmiro genera email solo se flotta ha almeno 4 auto di lusso (>=80%)', () => {
+            gs.fleet = [
+                { id: 'e1', vehicleClass: 'majestic_spirit', condition: 90, outOfService: null },
+                { id: 'e2', vehicleClass: 'stellar_s_imp', condition: 85, outOfService: null },
+                { id: 'e3', vehicleClass: 'volt_s_hyper', condition: 95, outOfService: null },
+                { id: 'e4', vehicleClass: 'stellar_g_over', condition: 85, outOfService: null }
+            ];
+
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipEmiro();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_emiro');
+            assert.equal(gs.emails[0].vipData.price, 18000);
+        });
+
         test('acceptVipEmiro richiede convoglio di 4 auto di lusso (>=80%)', () => {
             const emailId = 400;
             gs.emails.push({
@@ -398,6 +448,19 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
     });
 
     describe('7. Golden Boy — Calciatore', () => {
+        test('_maybeVipGolden genera email se flotta ha auto sportiva di lusso (>=80%)', () => {
+            gs.fleet.push({ id: 'c_gold', vehicleClass: 'volt_s_hyper', condition: 90, outOfService: null });
+
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipGolden();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_golden');
+            assert.equal(gs.emails[0].vipData.price, 12000);
+        });
+
         test('acceptVipGolden e _vipCompleteGolden gestiscono usura auto e reset stress autisti', () => {
             const car = { id: 'c_gold', vehicleClass: 'volt_s_hyper', condition: 90, outOfService: null };
             const driver1 = { id: 'd1', assignedCarId: 'c_gold', stress_level: 60 };
@@ -415,7 +478,7 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
             assert.equal(gs.pendingRides.length, 1);
             const ride = gs.pendingRides[0];
 
-            const origRandom = sandbox.Math.random;
+            let origRandom = sandbox.Math.random;
             sandbox.Math.random = () => 0.10; // danno auto (< 0.60)
             sandbox._vipOnComplete('golden', ride, driver1, 12000);
             sandbox.Math.random = origRandom;
@@ -425,10 +488,35 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
             // Tutti gli autisti beneficiano dell afterparty (-20 stress)
             assert.equal(driver1.stress_level, 40);
             assert.equal(driver2.stress_level, 20);
+
+            // Con Kasko attiva: nessun danno subito
+            gs.investments.push('inv_kasko');
+            car.condition = 95;
+            origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.10;
+            sandbox._vipOnComplete('golden', ride, driver1, 12000);
+            sandbox.Math.random = origRandom;
+            assert.equal(car.condition, 95);
         });
     });
 
     describe('8. Tech Bro — Innovatore Green', () => {
+        test('_maybeVipTechBro genera email se flotta ha EV (>=90%) e autista assegnato con stress <= 20', () => {
+            const evCar = { id: 'c_ev', vehicleClass: 'volt_3_urban', condition: 95, outOfService: null };
+            const driver = { id: 'd_ev', assignedCarId: 'c_ev', stress_level: 15, restHoursLeft: 0, isOnStrike: false };
+            gs.fleet.push(evCar);
+            gs.drivers.push(driver);
+
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipTechBro();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_techbro');
+            assert.equal(gs.emails[0].vipData.price, 5000);
+        });
+
         test('acceptVipTechBro richiede veicolo EV (>=90%) e autista con stress <= 20', () => {
             const evCar = { id: 'c_ev', vehicleClass: 'volt_3_urban', condition: 95, outOfService: null };
             const driver = { id: 'd_ev', assignedCarId: 'c_ev', stress_level: 15, restHoursLeft: 0, isOnStrike: false };
@@ -453,6 +541,19 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
     });
 
     describe('9. Il Garante — Figura Losca', () => {
+        test('_maybeVipGarante genera email solo se auto blindata non-EV (>=85%)', () => {
+            gs.fleet.push({ id: 'c_gar', vehicleClass: 'stellar_g_over', condition: 90, outOfService: null });
+
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipGarante();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_garante');
+            assert.equal(gs.emails[0].vipData.price, 9000);
+        });
+
         test('acceptVipGarante richiede auto pesante non-EV (>=85%)', () => {
             const car = { id: 'c_gar', vehicleClass: 'stellar_g_over', condition: 90, outOfService: null };
             gs.fleet.push(car);
@@ -501,7 +602,7 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
 
             // Intimidisci senza token: fallimento (multa x2 = 4000)
             gs.politicalTokens = 0;
-            const origRandom = sandbox.Math.random;
+            let origRandom = sandbox.Math.random;
             sandbox.Math.random = () => 0.80; // fallimento (>= 0.50)
             const emailId3 = 703;
             gs.emails.push({ id: emailId3, type: 'vip_garante_event', status: 'unread', vipEventData: { fine: 2000 } });
@@ -509,10 +610,37 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
             sandbox.vipGaranteEventIntimidisci(emailId3);
             sandbox.Math.random = origRandom;
             assert.equal(gs.cash, cashBefore3 - 4000);
+
+            // Intimidisci senza token: successo (random < 0.50)
+            origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.20; // successo (< 0.50)
+            const emailId4 = 704;
+            gs.emails.push({ id: emailId4, type: 'vip_garante_event', status: 'unread', vipEventData: { fine: 2000 } });
+            const cashBefore4 = gs.cash;
+            sandbox.vipGaranteEventIntimidisci(emailId4);
+            sandbox.Math.random = origRandom;
+            assert.equal(gs.cash, cashBefore4); // non paga nulla
         });
     });
 
     describe('10. White Lace Weddings — Matrimoni', () => {
+        test('_maybeVipWedding genera email solo con flotta di lusso al 100% di condizione', () => {
+            gs.fleet = [
+                { id: 'w_maj', vehicleClass: 'majestic_spirit', condition: 100, outOfService: null },
+                { id: 'w_v1', vehicleClass: 'stellar_v_carr', condition: 100, outOfService: null },
+                { id: 'w_v2', vehicleClass: 'stellar_v_carr', condition: 100, outOfService: null }
+            ];
+
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipWedding();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_wedding');
+            assert.equal(gs.emails[0].vipData.price, 10000);
+        });
+
         test('acceptVipWedding richiede 1 Majestic Spirit 100% e 2 Stellar V-Carrier 100%', () => {
             const emailId = 800;
             gs.emails.push({
@@ -575,6 +703,22 @@ describe('funzione vip — clienti VIP, buff ed eventi speciali', () => {
     });
 
     describe('11. L Erede Viziato', () => {
+        test('_maybeVipErede genera email solo se polizza Kasko attiva e auto lusso (>=80%)', () => {
+            gs.fleet.push({ id: 'c_erd', vehicleClass: 'volt_s_hyper', condition: 85, outOfService: null });
+            sandbox._maybeVipErede();
+            assert.equal(gs.emails.length, 0);
+
+            gs.investments.push('inv_kasko');
+            const origRandom = sandbox.Math.random;
+            sandbox.Math.random = () => 0.05;
+            sandbox._maybeVipErede();
+            sandbox.Math.random = origRandom;
+
+            assert.equal(gs.emails.length, 1);
+            assert.equal(gs.emails[0].type, 'vip_erede');
+            assert.equal(gs.emails[0].vipData.price, 9500);
+        });
+
         test('acceptVipErede richiede kasko obbligatoria e auto di lusso (>=80%)', () => {
             const car = { id: 'c_erd', vehicleClass: 'volt_s_hyper', condition: 85, outOfService: null };
             gs.fleet.push(car);
