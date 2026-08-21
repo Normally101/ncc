@@ -43,9 +43,6 @@
       return;
     }
 
-    const dynModal = document.getElementById('modal-configurator');
-    if (dynModal) { dynModal.remove(); return; }
-
     const activeItem = document.querySelector('.sidebar-item.active');
     if (activeItem && activeItem.getAttribute('data-tab') !== 'corse') {
       if (typeof window.switchTab === 'function') window.switchTab('corse');

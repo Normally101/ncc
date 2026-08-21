@@ -2,97 +2,114 @@
 /* ============================================================================
    test/economy/staff-sync.test.js
 
-   Regressione per il bug economico in ui-staff.js:
-   tutte le funzioni di acquisto / leasing veicoli quando offline o fallback
-   DEVONO passare dalla porta unica CE_money (spend) e sincronizzare la cassa
-   col server tramite ServerState.syncCash invece di mutare direttamente gameState.cash.
+   Test per le funzioni di gestione del personale di sede in ui-staff.js:
+   - hireOfficeStaff: assunzione staff ufficio con chiamata a ServerState.hireDriver
+   - verifica limite capacità sede (_getMaxStaff)
+   - fireStaff: licenziamento staff ufficio
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { freshEnv } = require('../../test-support/game-env.js');
 
 function setupStaffEnv(overrides = {}) {
-    const syncedCash = [];
-    const isReady = overrides.isReady !== undefined ? overrides.isReady : false;
+    const hiredCalls = [];
+    const isReady = overrides.isReady !== undefined ? overrides.isReady : true;
+    const hireShouldFail = !!overrides.hireShouldFail;
     const env = freshEnv({
         serverState: {
             isReady: () => isReady,
-            syncCash: async (cash) => {
-                syncedCash.push(cash);
-                return { success: true, cash };
+            hireDriver: async (name, salary, type) => {
+                hiredCalls.push({ name, salary, type });
+                if (hireShouldFail) return null;
+                return { id: 'srv_staff_' + Date.now(), name, salary };
             },
-            buyVehicle: async (modelId, price) => {
-                // Nel fallback offline il mock restituisce un record fittizio
-                return { id: 'srv_veh_' + modelId + '_' + Date.now() };
-            },
-            buyVehicleUpgrade: async () => ({ success: true }),
         },
     });
-    return { env, sandbox: env.sandbox, gs: env.sandbox.gameState, syncedCash };
+    return { env, sandbox: env.sandbox, gs: env.sandbox.gameState, hiredCalls };
 }
 
-describe('ui-staff — sincronizzazione movimenti denaro col server (CE_money)', () => {
+describe('ui-staff — gestione assunzione e licenziamento staff ufficio', () => {
 
-    describe('__cfgConfirm (acquisto veicolo da configuratore)', () => {
-        test('__cfgConfirm scala il prezzo totale e sincronizza con ServerState.syncCash via CE_money quando offline', async () => {
-            const { sandbox, gs, syncedCash } = setupStaffEnv({ isReady: false });
-            gs.cash = 200000;
-            // Apri il configuratore per impostare __cfgConfirm e sel
-            sandbox.openCarConfigurator('stellar_e_exec', 'new');
-            // stellar_e_exec: prezzo base 120.000, aggiungiamo optional se vogliamo o totale base 120.000
-            await sandbox.__cfgConfirm('stellar_e_exec', 'new');
+    describe('hireOfficeStaff', () => {
+        test('assume un membro dello staff ufficio chiamando ServerState.hireDriver e aggiornando gameState.staff', async () => {
+            const { sandbox, gs, hiredCalls } = setupStaffEnv();
+            gs.staff = [];
+            gs.drivers = [{ id: 'ceo', name: 'CEO' }];
+            sandbox._getMaxStaff = () => 5;
+
+            // Assumiamo HR Specialist (id: 'hr' in STAFF_ROLES)
+            await sandbox.hireOfficeStaff('hr');
             await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.cash, 80000, 'il saldo locale deve essere scalato di 120.000');
-            assert.deepEqual(syncedCash, [80000], 'ServerState.syncCash deve essere stato chiamato tramite CE_money.spend');
+            assert.equal(gs.staff.length, 1, 'lo staff in gameState deve contenere il membro assunto');
+            assert.equal(gs.staff[0].id, 'hr');
+            assert.equal(hiredCalls.length, 1, 'ServerState.hireDriver deve essere stato invocato');
+            assert.equal(hiredCalls[0].type, 'STAFF');
         });
 
-        test('__cfgConfirm con optional inclusi scala prezzo base + optional e sincronizza con syncCash', async () => {
-            const { sandbox, gs, syncedCash } = setupStaffEnv({ isReady: false });
-            gs.cash = 300000;
-            sandbox.openCarConfigurator('stellar_e_exec', 'new');
-            // Seleziona un optional (es. opt_wifi da CAR_UPGRADES: wifi costa 2500)
-            sandbox.__cfgToggle('wifi');
-            await sandbox.__cfgConfirm('stellar_e_exec', 'new');
+        test('blocca l\'assunzione se la capacità massima della sede è stata raggiunta', async () => {
+            const { sandbox, gs, hiredCalls } = setupStaffEnv();
+            gs.staff = [{ id: 'admin', name: 'Responsabile Amm.ne', salary: 3000 }];
+            gs.drivers = [{ id: 'ceo', name: 'CEO' }, { id: 'd1', name: 'Autista 1' }];
+            // currentStaff = 1 (staff) + 1 (driver non ceo) = 2. Con limite = 2 deve bloccare.
+            sandbox._getMaxStaff = () => 2;
+
+            await sandbox.hireOfficeStaff('hr');
             await new Promise(r => setImmediate(r));
 
-            const expectedCash = 300000 - (120000 + 2500);
-            assert.equal(gs.cash, expectedCash, 'il saldo locale deve includere gli optional');
-            assert.deepEqual(syncedCash, [expectedCash], 'ServerState.syncCash deve essere stato chiamato con il totale corretto');
+            assert.equal(gs.staff.length, 1, 'lo staff non deve aumentare');
+            assert.equal(hiredCalls.length, 0, 'nessuna chiamata a ServerState se oltre limite');
         });
 
-        test('__cfgConfirm con fondi insufficienti non modifica il cash e non chiama syncCash', async () => {
-            const { sandbox, gs, syncedCash } = setupStaffEnv({ isReady: false });
-            gs.cash = 50000; // stellar_e_exec costa 120.000
-            sandbox.openCarConfigurator('stellar_e_exec', 'new');
-            await sandbox.__cfgConfirm('stellar_e_exec', 'new');
+        test('se ServerState.hireDriver fallisce, lo staff locale non viene modificato', async () => {
+            const { sandbox, gs, hiredCalls } = setupStaffEnv({ hireShouldFail: true });
+            gs.staff = [];
+            gs.drivers = [{ id: 'ceo', name: 'CEO' }];
+            sandbox._getMaxStaff = () => 5;
+
+            await sandbox.hireOfficeStaff('hr');
             await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.cash, 50000, 'il saldo non deve cambiare se i fondi non bastano');
-            assert.deepEqual(syncedCash, [], 'nessuna sincronizzazione su spesa fallita');
+            assert.equal(gs.staff.length, 0, 'lo staff non deve essere aggiunto su errore server');
+            assert.equal(hiredCalls.length, 1);
+        });
+
+        test('ruolo inesistente non produce modifiche né chiamate', async () => {
+            const { sandbox, gs, hiredCalls } = setupStaffEnv();
+            gs.staff = [];
+            sandbox._getMaxStaff = () => 5;
+
+            await sandbox.hireOfficeStaff('ruolo_inesistente_xyz');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.staff.length, 0);
+            assert.equal(hiredCalls.length, 0);
         });
     });
 
-    describe('leaseCar (leasing veicolo)', () => {
-        test('leaseCar scala l\'anticipo (10%) e sincronizza con ServerState.syncCash via CE_money quando offline', async () => {
-            const { sandbox, gs, syncedCash } = setupStaffEnv({ isReady: false });
-            gs.cash = 100000;
-            // stellar_e_exec costa 120.000, 10% anticipo = 12.000
-            await sandbox.leaseCar('stellar_e_exec');
-            await new Promise(r => setImmediate(r));
+    describe('fireStaff', () => {
+        test('rimuove il membro dello staff da gameState.staff previa conferma', () => {
+            const { sandbox, gs } = setupStaffEnv();
+            gs.staff = [
+                { id: 'hr', name: 'HR Specialist', salary: 2800 },
+                { id: 'mech', name: 'Capo Officina', salary: 2600 },
+            ];
+            sandbox.confirm = () => true;
 
-            assert.equal(gs.cash, 88000, 'il saldo locale deve essere scalato del 10% di anticipo (12.000)');
-            assert.deepEqual(syncedCash, [88000], 'ServerState.syncCash deve essere stato chiamato tramite CE_money.spend');
+            sandbox.fireStaff('hr');
+
+            assert.equal(gs.staff.length, 1, 'deve rimanere 1 solo membro');
+            assert.equal(gs.staff[0].id, 'mech');
         });
 
-        test('leaseCar con fondi insufficienti non modifica il cash e non chiama syncCash', async () => {
-            const { sandbox, gs, syncedCash } = setupStaffEnv({ isReady: false });
-            gs.cash = 5000; // anticipo richiesto 12.000
-            await sandbox.leaseCar('stellar_e_exec');
-            await new Promise(r => setImmediate(r));
+        test('se l\'utente annulla la conferma, il membro dello staff non viene rimosso', () => {
+            const { sandbox, gs } = setupStaffEnv();
+            gs.staff = [{ id: 'hr', name: 'HR Specialist', salary: 2800 }];
+            sandbox.confirm = () => false;
 
-            assert.equal(gs.cash, 5000, 'il saldo non deve cambiare');
-            assert.deepEqual(syncedCash, []);
+            sandbox.fireStaff('hr');
+
+            assert.equal(gs.staff.length, 1, 'lo staff deve rimanere intatto');
         });
     });
 });
