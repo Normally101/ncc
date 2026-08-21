@@ -179,21 +179,21 @@
 
 - `_cCountQualifying` · `contracts.js:127` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `_cPlayerScore` · `contracts.js:134` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_cAIScore` · `contracts.js:144` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `CE_Contracts` · `contracts.js:153` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
-- `_usedIds` · `contracts.js:158` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_generateBatch` · `contracts.js:164` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_resolve` · `contracts.js:182` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
-- `_collectEarnings` · `contracts.js:214` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
-- `_expireContracts` · `contracts.js:221` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `CE_placeBid` · `contracts.js:259` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`spend, earn`)
-- `CE_cancelBid` · `contracts.js:276` · data-ce-act: `CE_cancelBid` (`contracts.js`) · doppioni: nessuno · denaro: CE_money (`earn`)
-- `CE_terminateContract` · `contracts.js:289` · data-ce-act: `CE_terminateContract` (`contracts.js`) · doppioni: nessuno · denaro: no
-- `CE_updateBidPreview` · `contracts.js:298` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `renderTabContracts` · `contracts.js:311` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_tierBorderColor` · `contracts.js:414` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_renderTenderCard` · `contracts.js:418` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_renderContractCard` · `contracts.js:487` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_cAIScore` · `contracts.js:145` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `CE_Contracts` · `contracts.js:154` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
+- `_usedIds` · `contracts.js:159` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_generateBatch` · `contracts.js:165` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_resolve` · `contracts.js:183` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
+- `_collectEarnings` · `contracts.js:215` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
+- `_expireContracts` · `contracts.js:222` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `CE_placeBid` · `contracts.js:262` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`spend, earn`)
+- `CE_cancelBid` · `contracts.js:279` · data-ce-act: `CE_cancelBid` (`contracts.js`) · doppioni: nessuno · denaro: CE_money (`earn`)
+- `CE_terminateContract` · `contracts.js:292` · data-ce-act: `CE_terminateContract` (`contracts.js`) · doppioni: nessuno · denaro: no
+- `CE_updateBidPreview` · `contracts.js:301` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `renderTabContracts` · `contracts.js:314` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_tierBorderColor` · `contracts.js:417` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_renderTenderCard` · `contracts.js:421` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_renderContractCard` · `contracts.js:490` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `nemesis.js`
 

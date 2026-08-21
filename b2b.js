@@ -211,19 +211,19 @@ window.b2bOpenAcceptModal = function(contractId) {
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
             <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
                 <div style="font-size:9px;color:#6b7280">Payout giornaliero</div>
-                <div style="font-size:12px;font-weight:700;color:#1aa06a;font-family:monospace">+€${contract.daily_payout.toLocaleString()}</div>
+                <div style="font-size:12px;font-weight:700;color:#1aa06a;font-family:monospace">+€${(contract.daily_payout || 0).toLocaleString()}</div>
             </div>
             <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
                 <div style="font-size:9px;color:#6b7280">Durata</div>
-                <div style="font-size:12px;font-weight:700;color:#e6edf3">${contract.duration_days} giorni</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">${contract.duration_days || 0} giorni</div>
             </div>
             <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
                 <div style="font-size:9px;color:#6b7280">Penale rescissione</div>
-                <div style="font-size:12px;font-weight:700;color:#db5746;font-family:monospace">−€${contract.penalty_amount.toLocaleString()}</div>
+                <div style="font-size:12px;font-weight:700;color:#db5746;font-family:monospace">−€${(contract.penalty_amount || 0).toLocaleString()}</div>
             </div>
             <div style="background:#0d1117;border:1px solid #21262d;border-radius:6px;padding:8px 12px">
                 <div style="font-size:9px;color:#6b7280">Tier richiesto</div>
-                <div style="font-size:12px;font-weight:700;color:#e6edf3">${_TIER_LABEL[contract.required_tier]}</div>
+                <div style="font-size:12px;font-weight:700;color:#e6edf3">${_TIER_LABEL[contract.required_tier] || contract.required_tier || 'Standard'}</div>
             </div>
         </div>
 
@@ -394,35 +394,35 @@ function renderTabB2B() {
             });
             const carsOk = eligibleCars.length >= c.required_count;
             const canAccept = !locked && repOk && carsOk;
-            const totalPayout = c.daily_payout * c.duration_days;
-            const roi = c.penalty_amount > 0 ? ((totalPayout / c.penalty_amount) * 100).toFixed(0) : '∞';
+            const totalPayout = (c.daily_payout || 0) * (c.duration_days || 0);
+            const roi = (c.penalty_amount || 0) > 0 ? ((totalPayout / c.penalty_amount) * 100).toFixed(0) : '∞';
 
             html += `
             <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:14px;margin-bottom:8px;${!repOk || !carsOk ? 'opacity:.5' : ''}">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
                     <div style="flex:1;min-width:0">
                         <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-                            <span style="font-size:16px">${c.client_icon}</span>
+                            <span style="font-size:16px">${c.client_icon || '💼'}</span>
                             <div>
-                                <div style="font-size:11px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title}</div>
-                                <div style="font-size:9px;color:#6b7280">${c.client_name}</div>
+                                <div style="font-size:11px;font-weight:700;color:#e6edf3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.title || ''}</div>
+                                <div style="font-size:9px;color:#6b7280">${c.client_name || ''}</div>
                             </div>
                         </div>
                         <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
-                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">${_TIER_LABEL[c.required_tier]} ×${c.required_count}</span>
+                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">${_TIER_LABEL[c.required_tier] || c.required_tier || ''} ×${c.required_count || 1}</span>
                             ${c.province_id ? `<span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">📍 ${c.province_id.replace('prov_','')}</span>` : ''}
-                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">⭐ min ${c.min_reputation}★</span>
+                            <span style="font-size:8px;background:#0d1117;border:1px solid #21262d;padding:2px 6px;border-radius:4px;color:#6b7280">⭐ min ${c.min_reputation || 0}★</span>
                         </div>
                     </div>
                     <div style="text-align:right;margin-left:8px;flex-shrink:0">
-                        <div style="font-size:11px;font-weight:700;color:#1aa06a;font-family:monospace">+€${c.daily_payout.toLocaleString()}/g</div>
-                        <div style="font-size:8px;color:#6b7280">${c.duration_days}g · tot. €${(totalPayout/1000).toFixed(0)}k</div>
+                        <div style="font-size:11px;font-weight:700;color:#1aa06a;font-family:monospace">+€${(c.daily_payout || 0).toLocaleString()}/g</div>
+                        <div style="font-size:8px;color:#6b7280">${c.duration_days || 0}g · tot. €${(totalPayout/1000).toFixed(0)}k</div>
                         <div style="font-size:8px;color:#6b7280">ROI vs penale: ${roi}%</div>
                     </div>
                 </div>
                 <div style="display:flex;justify-content:space-between;font-size:9px;margin-bottom:10px">
                     <span style="color:#6b7280">Penale rescissione:</span>
-                    <span style="color:#db5746;font-family:monospace">−€${c.penalty_amount.toLocaleString()}</span>
+                    <span style="color:#db5746;font-family:monospace">−€${(c.penalty_amount || 0).toLocaleString()}</span>
                 </div>
                 ${!repOk ? `<div style="font-size:9px;color:#db5746;margin-bottom:4px">🔒 Reputazione insufficiente (serve ${c.min_reputation}★, hai ${rep.toFixed(1)}★)</div>` : ''}
                 ${!carsOk ? `<div style="font-size:9px;color:#db5746;margin-bottom:4px">🔒 Veicoli insufficienti (serve ×${c.required_count} ${_TIER_LABEL[c.required_tier]}, disponibili ${eligibleCars.length})</div>` : ''}

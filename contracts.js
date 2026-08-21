@@ -133,9 +133,10 @@ function _cCountQualifying(vehType) {
 
 function _cPlayerScore(company, pledgeAmt) {
     const gs = gameState; if (!gs) return 0;
-    const req = company.tender_requirements;
+    const req = company?.tender_requirements || {};
     const repPct   = (gs.reputation || 0) / 5.0 * 100;
-    const fleetPct = Math.min(100, _cCountQualifying(req.required_vehicle_type) / req.min_fleet_size * 100);
+    const minFleet = req.min_fleet_size || 1;
+    const fleetPct = Math.min(100, _cCountQualifying(req.required_vehicle_type) / minFleet * 100);
     const pledgePct= Math.min(100, (pledgeAmt || 0) / 50000 * 100);
     return Math.round(repPct * 0.40 + fleetPct * 0.40 + pledgePct * 0.20);
 }
@@ -247,10 +248,12 @@ window.CE_Contracts = (() => {
             if (gameState.day >= (gameState.nextTenderDay ?? 2)) _generateBatch();
         },
         meetsRequirements(company) {
-            const req          = company.tender_requirements;
+            const req          = company?.tender_requirements || {};
             const playerRepPct = Math.round((gameState.reputation || 0) / 5.0 * 100);
             const qualifying   = _cCountQualifying(req.required_vehicle_type);
-            return { repOk: playerRepPct >= req.min_reputation, fleetOk: qualifying >= req.min_fleet_size, qualifying, playerRepPct };
+            const minRep       = req.min_reputation || 0;
+            const minFleet     = req.min_fleet_size || 0;
+            return { repOk: playerRepPct >= minRep, fleetOk: qualifying >= minFleet, qualifying, playerRepPct };
         },
     };
 })();
@@ -416,38 +419,38 @@ function _tierBorderColor(tier) {
 }
 
 function _renderTenderCard(tender) {
-    const co  = tender.company;
-    const req = co.tender_requirements;
+    const co  = tender.company || {};
+    const req = co.tender_requirements || {};
     const pb  = tender.playerBid;
     const { repOk, fleetOk, qualifying, playerRepPct } = CE_Contracts.meetsRequirements(co);
-    const daysLeft  = Math.max(0, tender.closingDay - (gameState.day || 0));
-    const daily     = Math.round(co.payout_per_hour * 16);
+    const daysLeft  = Math.max(0, (tender.closingDay || 0) - (gameState.day || 0));
+    const daily     = Math.round((co.payout_per_hour || 0) * 16);
     const baseScore = _cPlayerScore(co, 0);
     const tierCls   = ['','em-pill--gray','em-pill--green','em-pill--blue','em-pill--violet','em-pill--gold'][co.tier] || 'em-pill--gray';
-    const stars     = '★'.repeat(co.tier) + '☆'.repeat(5 - co.tier);
+    const stars     = '★'.repeat(co.tier || 1) + '☆'.repeat(5 - (co.tier || 1));
 
     return `
     <div class="em-card" style="padding:14px;margin-bottom:10px;border-color:${_tierBorderColor(co.tier)}">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div style="flex:1;min-width:0;padding-right:12px">
           <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
-            <span style="font-size:13px;font-weight:700">${co.company_name}</span>
-            <span class="em-pill ${tierCls}" style="font-size:8px">${stars} T${co.tier}</span>
-            <span class="em-pill em-pill--blue" style="font-size:8px">${co.industry}</span>
+            <span style="font-size:13px;font-weight:700">${co.company_name || ''}</span>
+            <span class="em-pill ${tierCls}" style="font-size:8px">${stars} T${co.tier || 1}</span>
+            <span class="em-pill em-pill--blue" style="font-size:8px">${co.industry || ''}</span>
           </div>
-          <div style="font-size:10px;color:var(--em-muted);font-style:italic;line-height:1.4">${co.lore_description}</div>
+          <div style="font-size:10px;color:var(--em-muted);font-style:italic;line-height:1.4">${co.lore_description || ''}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
           <div style="font-size:13px;font-weight:700;color:var(--em-green)">€${daily.toLocaleString('it-IT')}<span style="font-size:9px;color:var(--em-muted);font-weight:400">/gg</span></div>
-          <div style="font-size:10px;color:var(--em-muted)">${co.contract_duration_days}gg · €${(daily * co.contract_duration_days).toLocaleString('it-IT')} tot</div>
+          <div style="font-size:10px;color:var(--em-muted)">${co.contract_duration_days || 0}gg · €${(daily * (co.contract_duration_days || 0)).toLocaleString('it-IT')} tot</div>
           <div style="font-size:10px;color:var(--em-red);margin-top:2px">scade tra ${daysLeft}gg</div>
         </div>
       </div>
 
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;font-size:10px;margin-bottom:10px;padding-top:8px;border-top:1px solid var(--em-line)">
-        <div style="color:${repOk ? 'var(--em-green)' : 'var(--em-red)'}">${repOk?'✓':'✗'} Rep: ${req.min_reputation}% <span style="color:var(--em-muted)">(tua ${playerRepPct}%)</span></div>
-        <div style="color:${fleetOk ? 'var(--em-green)' : 'var(--em-red)'}">${fleetOk?'✓':'✗'} Flotta: ${req.min_fleet_size} <span style="color:var(--em-muted)">(tua ${qualifying})</span></div>
-        <div style="color:var(--em-muted)">🚗 ${req.required_vehicle_type.replace(/_/g,' ')}</div>
+        <div style="color:${repOk ? 'var(--em-green)' : 'var(--em-red)'}">${repOk?'✓':'✗'} Rep: ${req.min_reputation || 0}% <span style="color:var(--em-muted)">(tua ${playerRepPct}%)</span></div>
+        <div style="color:${fleetOk ? 'var(--em-green)' : 'var(--em-red)'}">${fleetOk?'✓':'✗'} Flotta: ${req.min_fleet_size || 0} <span style="color:var(--em-muted)">(tua ${qualifying})</span></div>
+        <div style="color:var(--em-muted)">🚗 ${(req.required_vehicle_type || '').replace(/_/g,' ')}</div>
       </div>
 
       ${pb ? `
@@ -485,11 +488,12 @@ function _renderTenderCard(tender) {
 }
 
 function _renderContractCard(c) {
-    const co     = c.company;
-    const total  = c.dailyPayout * co.contract_duration_days;
-    const elapsed= (gameState.day || 0) - c.startDay;
-    const remain = Math.max(0, c.endDay - (gameState.day || 0));
-    const pct    = Math.min(100, Math.round(elapsed / co.contract_duration_days * 100));
+    const co     = c.company || {};
+    const dur    = co.contract_duration_days || 1;
+    const total  = (c.dailyPayout || 0) * dur;
+    const elapsed= (gameState.day || 0) - (c.startDay || 0);
+    const remain = Math.max(0, (c.endDay || 0) - (gameState.day || 0));
+    const pct    = Math.min(100, Math.round(elapsed / dur * 100));
     const tierCls= ['','em-pill--gray','em-pill--green','em-pill--blue','em-pill--violet','em-pill--gold'][co.tier] || 'em-pill--gray';
 
     return `
@@ -497,14 +501,14 @@ function _renderContractCard(c) {
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px">
         <div>
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:3px">
-            <span style="font-size:13px;font-weight:700">🤝 ${co.company_name}</span>
-            <span class="em-pill ${tierCls}" style="font-size:8px">T${co.tier}</span>
+            <span style="font-size:13px;font-weight:700">🤝 ${co.company_name || ''}</span>
+            <span class="em-pill ${tierCls}" style="font-size:8px">T${co.tier || 1}</span>
           </div>
-          <div style="font-size:10px;color:var(--em-muted);margin-top:2px">${co.industry}</div>
+          <div style="font-size:10px;color:var(--em-muted);margin-top:2px">${co.industry || ''}</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:13px;font-weight:700;color:var(--em-green)">€${c.dailyPayout.toLocaleString('it-IT')}<span style="font-size:9px;color:var(--em-muted)">/gg</span></div>
-          <div style="font-size:10px;color:var(--em-green)">+€${c.totalEarned.toLocaleString('it-IT')} incassato</div>
+          <div style="font-size:13px;font-weight:700;color:var(--em-green)">€${(c.dailyPayout || 0).toLocaleString('it-IT')}<span style="font-size:9px;color:var(--em-muted)">/gg</span></div>
+          <div style="font-size:10px;color:var(--em-green)">+€${(c.totalEarned || 0).toLocaleString('it-IT')} incassato</div>
         </div>
       </div>
       <div class="em-prog" style="margin-bottom:8px">
