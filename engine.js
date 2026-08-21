@@ -155,7 +155,7 @@ function _applyMarketingCampaign(campaignId) {
     }
     const endsDay = gameState.day + camp.duration;
     gameState.activeCampaigns.push({ id: campaignId, startDay: gameState.day, endsDay, cooldownUntil: endsDay + (camp.cooldown || 0) });
-    if (camp.repBonus) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation || 0) + camp.repBonus);
+    if (camp.repBonus) window.CE_money.addReputation(camp.repBonus);
     showNotification(`🚀 Campagna "${camp.name}" avviata! Dura ${camp.duration} giorni.`, 'success');
     if (typeof renderTabMarketing === 'function') renderTabMarketing();
     return true;
