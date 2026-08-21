@@ -980,7 +980,13 @@ function _getItalyTime() {
 // Safe cash mutation: ignora importi non finiti (NaN/Infinity) che
 // corromperebbero il saldo propagandosi a tutto lo stato.
 window._addCash = function(amount) {
-    if (Number.isFinite(amount)) gameState.cash += amount;
+    if (Number.isFinite(amount)) {
+        if (window.CE_money && typeof window.CE_money.earn === 'function') {
+            window.CE_money.earn(amount, 'add_cash');
+        } else {
+            gameState.cash += amount;
+        }
+    }
     return gameState.cash;
 };
 
@@ -1531,13 +1537,7 @@ window.payToRepairCar = async function payToRepairCar(carId) {
     }
 
     const cost = window.repairCostFor(car);
-    if ((gameState.cash || 0) < cost) {
-        showNotification(`Fondi insufficienti — Riparazione: €${cost.toLocaleString('it-IT')}`, 'error');
-        return;
-    }
-
-    const result = await window.ServerState?.repairVehicle(car._serverId, cost);
-    if (!result) return;
+    if (!window.CE_money.spend(cost, 'pay_to_repair_car')) return;
 
     car.condition = 100;
     car.outOfService = null;
