@@ -136,14 +136,14 @@ window.openMapOverlay = function() {
     const overlay = document.getElementById('map-overlay');
     if (!overlay) return;
     overlay.classList.remove('hidden');
-    _ensureMap();
+    if (typeof _ensureMap === 'function') _ensureMap();
     window._mapOverlayOpen = true;
 };
 
 window.closeMapOverlay = function() {
     const overlay = document.getElementById('map-overlay');
     if (overlay) overlay.classList.add('hidden');
-    _destroyMap();
+    if (typeof _destroyMap === 'function') _destroyMap();
     window._mapOverlayOpen = false;
 };
 
