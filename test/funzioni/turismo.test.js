@@ -906,10 +906,12 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
     });
 
     describe('11. Movimenti di denaro e sincronizzazione ServerState (online vs offline)', () => {
-        test('_tourismDailyTick con ServerState online NON muta cash locale direttamente', async () => {
+        test('_tourismDailyTick accredita localmente via accreditatoDalServer senza chiamare syncCash', async () => {
+            const syncedCash = [];
             const amb = creaAmbienteTurismo({
                 serverStateOverrides: {
                     isReady: () => true,
+                    syncCash: async (v) => { syncedCash.push(v); return { success: true, cash: v }; },
                 },
             });
             await amb.sandbox.tourismRefresh(true);
@@ -917,8 +919,9 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
             amb.gs.cash = 10000;
             await amb.sandbox._tourismDailyTick();
 
-            // Con ServerState pronto, l'accredito viene gestito da Supabase / Realtime bridge, non duplicato localmente
-            assert.equal(amb.gs.cash, 10000, 'il cash locale non deve essere alterato doppiamente con ServerState online');
+            // L'accredito viene allineato localmente senza rispedire syncCash al server
+            assert.equal(amb.gs.cash, 15600, 'il cash locale riflette l\'accredito del server');
+            assert.deepEqual(syncedCash, [], 'nessuna chiamata a syncCash');
             amb.env.stopAllIntervals();
         });
 

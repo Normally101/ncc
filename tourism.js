@@ -154,8 +154,8 @@ window._tourismDailyTick = async function() {
     const { data, error } = await _tSb().rpc('rpc_tourism_daily_tick');
     if (error || !data || !data.total_payout) return;
 
-    if (!window.ServerState?.isReady()) {
-        window.CE_money.earn(data.total_payout, 'tourism_daily_payout');
+    if (window.CE_money) {
+        window.CE_money.accreditatoDalServer(data.total_payout, 'tourism_daily_payout');
     }
 
     const payouts = Array.isArray(data.payouts) ? data.payouts : [];
