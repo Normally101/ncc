@@ -9,7 +9,8 @@
 
 **Dalle 04:39 alle 10:25 il ciclo ha rifatto lo STESSO lavoro ogni undici minuti**, ~0,75$ a
 tentativo più i minuti di CI, senza avanzare di un passo: **23 run fallite** contro 15 riuscite.
-`main` non si muove dall'01:34. Gemini diceva il vero quando ha detto «non ho più niente da
+La notte fino a lì era andata bene — **14 fusioni in `main` fra l'01:40 e le 03:47** — poi più
+niente: l'ultima fusione è delle 03:47. Gemini diceva il vero quando ha detto «non ho più niente da
 fare»: la coda era vuota (33 fusi, 67 respinti), e l'unico lavoro rimasto era quello che si
 riproduceva da solo.
 
