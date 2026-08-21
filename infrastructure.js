@@ -164,15 +164,22 @@ function _renderRivalCard(d) {
 window._infraBuyDepot = async function(provinceId, provinceName) {
     const cost = 300000;
     if (!window.confirm(`Acquistare il deposito carburante a ${provinceName} per €300.000?`)) return;
-    if (!window.CE_money.spend(cost, 'buy_fuel_depot')) return;
+    if (((window.gameState && window.gameState.cash) || 0) < cost) {
+        if (typeof showNotification === 'function') {
+            showNotification('Fondi insufficienti! Servono €' + cost.toLocaleString('it-IT'), 'error');
+        }
+        return;
+    }
 
     try {
-        if (window.supabaseClient) {
-            const { error } = await window.supabaseClient.rpc('rpc_buy_fuel_depot', { v_province_id: provinceId });
-            if (error) throw error;
-        }
+        if (!window.supabaseClient) throw new Error('Client di rete non disponibile');
+        const { error } = await window.supabaseClient.rpc('rpc_buy_fuel_depot', { v_province_id: provinceId });
+        if (error) throw error;
+
+        window.CE_money.addebitatoDalServer(cost, 'buy_fuel_depot');
         if (typeof showNotification === 'function') showNotification(`⛽ Deposito acquistato a ${provinceName}!`, 'success');
         if (typeof saveGame === 'function') saveGame();
+        if (typeof updateUI === 'function') updateUI();
         if (typeof window.renderTabInfrastructure === 'function') window.renderTabInfrastructure();
     } catch(e) {
         const errMsg = (window.CE_Sec && typeof window.CE_Sec.userError === 'function')
