@@ -69,6 +69,40 @@ affatto (`engine-rides.js:595`), quindi non c'è niente da riparare.
 
 ---
 
+# 📊 21/08 — DOVE SIAMO A FINE POMERIGGIO
+
+**`main`: ~975 test verdi · 10 funzioni accese su 21 · 97 commit oggi.**
+Accese oggi: `salone`, `lusso`, `carriera`. Restano spente: alleanze, mercatoP2P, cripto, vtk,
+turismo, politica, infrastrutture, holding, nemesi, negozioDC, vip.
+
+**La porta unica del denaro è chiusa** — `ECCEZIONI` vuota, con tre righe autorizzate una per una
+in `RIGHE_CONSENTITE` (non sono transazioni: azzeramento a inizio partita, ripristino di un saldo
+non finito, ripiego di `_addCash`).
+
+**Il censimento del doppio conteggio** (`docs/DOPPIO-CONTEGGIO.md`) copre 12 file e ha trovato
+17 punti dove il client rimuove denaro che la RPC aveva già mosso. Corretti oggi: b2b/vtk,
+alleanze/scalate, cripto. In lavorazione: p2p, infrastrutture/turismo, black_ops.
+
+**L'orologio del mondo** (`63_orologio_del_mondo.sql`, applicato): bandi turistici ogni 15 min,
+azzeramento VTK ogni ora, tensione sindacato ogni ora. **NON schedulato di proposito**:
+`rpc_daily_dividends` paga a ogni chiamata senza guardare se ha già pagato oggi — prima serve un
+guardiano «una volta al giorno» dentro la funzione, non nella sveglia.
+
+**L'hub dice la verità**: il ciclo rispecchia la coda a ogni giro (`POST /api/gigi/coda`),
+avanzamento calcolato sui lavori veri. Gli agenti sono quelli che esistono — Gigi e Olga vivi,
+otto specialisti pre-lancio dichiarati `offline` con scritto perché.
+
+**Gigi su Telegram**: legge vocali, foto e PDF; cerca sul web (prima non aveva strumenti, per
+questo non sapeva dire dove vedere un film); orario in fuso italiano; un messaggio lento non
+zittisce più gli altri; sa dire l'obiettivo di giornata.
+
+**Ritmo e costi**: 3 lavori in parallelo, tetto 60/giorno, tetto di spesa 1,60$ per tentativo.
+Un lavoro riuscito costa ~0,63$. Credito Google residuo ~198 € al mattino, scade il 16/10; dietro
+c'è un secondo account con altri 300$. **La VM `gigi-server` è stata spenta**: non eseguiva niente
+da giorni e consumava credito. Resta viva `gigi-whatsapp`, dove girano Gigi e il ciclo.
+
+---
+
 # ⚠️ 21/08 — LA REGOLA DEL PARALLELO (imparata sbagliando due volte in un'ora)
 
 `MAX_PARALLELI = 3` funziona, ma **i lavori paralleli non devono scrivere sullo stesso file.**
