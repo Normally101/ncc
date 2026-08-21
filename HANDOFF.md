@@ -5,6 +5,48 @@
 
 ---
 
+# 🔴 21/08 mattina — il ciclo ha girato a vuoto per sei ore
+
+**Dalle 04:39 alle 10:25 il ciclo ha rifatto lo STESSO lavoro ogni undici minuti**, ~0,75$ a
+tentativo più i minuti di CI, senza avanzare di un passo: **23 run fallite** contro 15 riuscite.
+`main` non si muove dall'01:34. Gemini diceva il vero quando ha detto «non ho più niente da
+fare»: la coda era vuota (33 fusi, 67 respinti), e l'unico lavoro rimasto era quello che si
+riproduceva da solo.
+
+**Due difetti che si tenevano in piedi a vicenda**, in `code-loop.js`:
+
+1. `ramoDelLavoro` chiedeva a GitHub `?per_page=100`. Il repo ha **120 rami**, e i quattro rami
+   del lavoro in corso stavano dal **114 al 117**: fuori dalla prima pagina. Non venivano
+   trovati perché non erano nell'elenco, non perché non esistessero.
+2. Il ripiego era `rami.sort().pop()` — l'ultimo ramo in ordine alfabetico. Cioè **il ramo di un
+   altro lavoro**: il centesimo, `porta-unica-del-denaro-tourism-js-08200332`. Il cancello lo
+   verificava, lo trovava vecchio e già fuso («i test non sono cresciuti, 939 → 939»), lo
+   respingeva — e il ciclo prendeva quel rifiuto come se parlasse di sé.
+
+Poi il terzo, che trasformava l'errore in un moto perpetuo: la riprova nasceva **senza** il segno
+`giaRiprovato`, quindi poteva essere riprovata a sua volta. `-r2-r2-r2`, titolo che cresceva di
+«— correzione» a ogni giro, istruzione che si raddoppiava perché ricopiava dentro l'originale.
+Coda a **790 KB**, 2,4 milioni di token spediti per un solo tentativo.
+
+**Corretto e verificato eseguendo le due versioni contro GitHub vero**, sullo stesso titolo:
+
+| | ramo restituito |
+|---|---|
+| vecchia | `gigi/porta-unica-del-denaro-tourism-js-08200332` ← di un altro lavoro |
+| nuova | `gigi/porta-unica-engine-js-la-parte-delle-cor-08210736` ← quello giusto |
+| nuova, su un lavoro senza rami | `null` |
+
+**La lezione:** un ripiego che tira a indovinare è peggio di nessun ripiego. Se il ramo non c'è,
+`null` è una risposta vera e il ciclo segna il fallimento; un ramo qualsiasi è una risposta
+falsa che nessun controllo a valle può smascherare, perché a valle sembra tutto normale.
+
+**Da recuperare:** il ramo `…-08210736` porta **7.852 righe in 22 file** mai giudicate, e toglie
+`engine.js` dalle eccezioni del guardiano. Attenzione: è un ramo Frankenstein — le riprove ci
+hanno impilato dentro il lavoro di altri task (alleanze, carriera, holding, lusso, mercatoP2P,
+negozioDC, turismo, vip, vtk). Va aperto e diviso, non fuso com'è.
+
+---
+
 # 📌 AGENDA DI DOMATTINA — decisa da Vlad il 21/08 all'01:15
 
 Tre cose, da fare **dopo** che il ciclo notturno si è fermato (verso le 9). Nessuna va toccata
