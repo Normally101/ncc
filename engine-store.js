@@ -26,6 +26,7 @@ window.skipConstruction = function(invId) {
     if (!window.CE_money.spendDC(cost, 'skip_construction')) return;
     const constr = gameState.constructions[idx];
     gameState.constructions.splice(idx, 1);
+    if (!gameState.investments) gameState.investments = [];
     if (!gameState.investments.includes(constr.invId)) gameState.investments.push(constr.invId);
     logToMap(`⚡ Costruzione completata istantaneamente: ${constr.invId} (${cost} DC)`);
     showNotification(`⚡ Costruzione completata! (−${cost} DC)`, 'success');
@@ -148,6 +149,7 @@ window.skipAllConstructionsDC = function() {
     if (list.length === 0) { showNotification('Nessuna costruzione in corso.', 'info'); return; }
     const cost = list.length * 8;
     if (!window.CE_money.spendDC(cost, 'skip_all_constructions')) return;
+    if (!gameState.investments) gameState.investments = [];
     list.forEach(c => { if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId); });
     gameState.constructions = [];
     logToMap(`🏗️ ${list.length} costruzioni completate (${cost} DC)`);
@@ -191,6 +193,7 @@ window.fullBundleDC = function() {
     });
     gameState.driverAcademy = [];
     const constructions = (gameState.constructions || []).slice();
+    if (!gameState.investments) gameState.investments = [];
     constructions.forEach(c => { if (!gameState.investments.includes(c.invId)) gameState.investments.push(c.invId); });
     gameState.constructions = [];
     logToMap(`👑 Pacchetto Imperiale attivato (${cost} DC)`);
