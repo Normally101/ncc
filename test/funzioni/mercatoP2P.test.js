@@ -967,4 +967,164 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.equal(typeof car.condition, 'number');
         });
     });
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 11. PERSISTENZA STATO, IMMUNITÀ AD EVENTI ECO REALTIME E MODIFICATORI GAMEPLAY
+    // ────────────────────────────────────────────────────────────────────────
+    describe('Persistenza dello stato e impatto di gioco', () => {
+
+        test('l auto acquistata via P2P resta in gameState.fleet e l eco DELETE Realtime non la cancella', async () => {
+            sandbox.p2pStartRealtime();
+
+            sandbox._p2pMarket.listings = [
+                {
+                    id: 'lst_eco_test',
+                    seller_user_id: 'other_player',
+                    ask_price: 20000,
+                },
+            ];
+            gs.cash = 50000;
+            const initialFleetCount = gs.fleet.length;
+
+            sandbox.supabaseClient.rpc = async (name) => {
+                if (name === 'rpc_buy_market_car') {
+                    return {
+                        data: {
+                            price_paid: 20000,
+                            seller_name: 'GiocatoreVenditore',
+                            fee: 1000,
+                            car: {
+                                name: 'Maserati Ghibli',
+                                tier: 'vip',
+                                condition: 95,
+                                fuel: 100,
+                            },
+                        },
+                        error: null,
+                    };
+                }
+                return { data: {}, error: null };
+            };
+
+            await sandbox.buyP2PCar('lst_eco_test');
+
+            // Verifica che l'auto sia entrata in gameState.fleet
+            assert.equal(gs.fleet.length, initialFleetCount + 1);
+            const boughtCar = gs.fleet.find(c => c.name === 'Maserati Ghibli');
+            assert.ok(boughtCar, 'auto presente in gameState');
+
+            // Simula arrivo dell'eco Realtime DELETE dal server per la listing comprata
+            const marketChan = realtimeChannels.find(c => c.name === 'public:market_listings');
+            assert.ok(marketChan, 'canale Realtime market_listings deve essere attivo');
+            const deleteHandler = marketChan._handlers.find(h => h.event === 'postgres_changes');
+            assert.ok(deleteHandler, 'handler Realtime deve esistere');
+
+            // Scatena evento Realtime DELETE
+            deleteHandler.callback({
+                eventType: 'DELETE',
+                old: { id: 'lst_eco_test' },
+            });
+
+            // Verifica che l'auto NON sia stata rimossa dalla flotta del giocatore
+            assert.equal(gs.fleet.length, initialFleetCount + 1, 'l auto deve rimanere nella flotta del compratore');
+            assert.ok(gs.fleet.some(c => c.id === boughtCar.id), 'id auto ancora presente in gameState');
+            // Verifica che l inserzione sia stata tolta dalla cache annunci
+            assert.ok(!sandbox._p2pMarket.listings.some(l => l.id === 'lst_eco_test'));
+        });
+
+        test('sciopero sindacale attivo riduce gli incassi delle corse del 30%', () => {
+            sandbox._sindacatoState.strikeActive = true;
+            sandbox._sindacatoState.crumiriBoostUntil = null;
+            sandbox._sindacatoState.consorzioMembersCount = 0;
+            gs.staff = []; // nessun HR tip bonus
+
+            const car = gs.fleet[0];
+            const driver = { id: 'd_test_strike', name: 'Test Driver', assignedCarId: car.id, status: 'idle', level: 0, queue: [] };
+            gs.drivers.push(driver);
+
+            const ride = {
+                id: 888,
+                fromPoi: { id: 'poi_a', name: 'A', region: 'lazio' },
+                toPoi: { id: 'poi_b', name: 'B', region: 'lazio' },
+                tier: 'standard',
+                price: 1000,
+                driverId: driver.id,
+            };
+
+            const initialCash = gs.cash;
+            sandbox.completeRide(ride);
+
+            // Con sciopero (0.70): 1000 * 0.70 = 700 - carburante (~11€)
+            // Senza sciopero sarebbe stato: 1000 - 11 = 989€
+            const earned = gs.cash - initialCash;
+            assert.ok(earned >= 600 && earned <= 750, `Incasso deve essere ridotto dal moltiplicatore sciopero 0.70: incassato ${earned}`);
+        });
+
+        test('crumiri attivi durante lo sciopero incrementano gli incassi del 50%', () => {
+            sandbox._sindacatoState.strikeActive = true;
+            sandbox._sindacatoState.crumiriBoostUntil = new Date(Date.now() + 3600000).toISOString();
+            sandbox._sindacatoState.consorzioMembersCount = 0;
+
+            const car = gs.fleet[0];
+            const driver = { id: 'd_test_crumiri', name: 'Crumiro Driver', assignedCarId: car.id, status: 'idle', level: 0, queue: [] };
+            gs.drivers.push(driver);
+
+            const ride = {
+                id: 889,
+                fromPoi: { id: 'poi_a', name: 'A', region: 'lazio' },
+                toPoi: { id: 'poi_b', name: 'B', region: 'lazio' },
+                tier: 'standard',
+                price: 1000,
+                driverId: driver.id,
+            };
+
+            const initialCash = gs.cash;
+            sandbox.completeRide(ride);
+
+            // Calcolo atteso: 1000 * 0.70 (strike) * 1.50 (crumiri) = 1050 - carburante (~11€)
+            const earned = gs.cash - initialCash;
+            assert.ok(earned > 950 && earned <= 1050, `Incasso con crumiri e sciopero: incassato ${earned}`);
+        });
+
+        test('consorzio con >= 5 membri aumenta i ricavi delle corse del 8%', () => {
+            sandbox._sindacatoState.strikeActive = false;
+            sandbox._sindacatoState.crumiriBoostUntil = null;
+            sandbox._sindacatoState.consorzioMembersCount = 5;
+
+            const car = gs.fleet[0];
+            const driver = { id: 'd_test_cso', name: 'Consorzio Driver', assignedCarId: car.id, status: 'idle', level: 0, queue: [] };
+            gs.drivers.push(driver);
+
+            const ride = {
+                id: 890,
+                fromPoi: { id: 'poi_a', name: 'A', region: 'lazio' },
+                toPoi: { id: 'poi_b', name: 'B', region: 'lazio' },
+                tier: 'standard',
+                price: 1000,
+                driverId: driver.id,
+            };
+
+            const initialCash = gs.cash;
+            sandbox.completeRide(ride);
+
+            // Calcolo atteso: 1000 * 1.08 = 1080 - carburante (~11€)
+            const earned = gs.cash - initialCash;
+            assert.ok(earned > 1000 && earned <= 1080, `Incasso con bonus consorzio: incassato ${earned}`);
+        });
+
+        test('consorzio con >= 3 membri applica lo sconto 5% sul rifornimento deposito carburante', () => {
+            sandbox._sindacatoState.consorzioMembersCount = 3;
+            gs.investments = ['inv_fuel_depot'];
+            gs.fuelTankCapacity = 10000;
+            gs.fuelTank = 0;
+            gs.fuelPrice = 2.0;
+            gs.cash = 2000;
+
+            const initialCash = gs.cash;
+            sandbox.buyFuelForDepot(1000); // 1000 litri a 2.0€ = 2000€ base -> con sconto 5% = 1900€
+
+            const cost = initialCash - gs.cash;
+            assert.equal(cost, 1900, `Costo carburante per deposito scontato al 95%: speso ${cost}`);
+        });
+    });
 });
