@@ -977,10 +977,22 @@ function _getItalyTime() {
     };
 }
 
-// Safe cash mutation: ignora importi non finiti (NaN/Infinity) che
-// corromperebbero il saldo propagandosi a tutto lo stato.
+/* Safe cash mutation: ignora importi non finiti (NaN/Infinity) che
+   corromperebbero il saldo propagandosi a tutto lo stato.
+
+   Passa da CE_money.earn, che sincronizza col server. Prima toccava
+   `gameState.cash` e basta: chi incassava per questa strada vedeva il denaro
+   a schermo e lo perdeva al ricaricamento, perche' al server non arrivava
+   niente. Il ripiego diretto resta per l'unico caso in cui money.js non e'
+   ancora caricato — l'ordine degli script all'avvio. */
 window._addCash = function(amount) {
-    if (Number.isFinite(amount)) gameState.cash += amount;
+    if (Number.isFinite(amount)) {
+        if (window.CE_money && typeof window.CE_money.earn === 'function') {
+            window.CE_money.earn(amount, 'add_cash');
+        } else {
+            gameState.cash += amount;
+        }
+    }
     return gameState.cash;
 };
 
@@ -1519,16 +1531,16 @@ window.payToRepairCar = async function payToRepairCar(carId) {
         return;
     }
 
-    // Kasko: riparazioni incidentali gratuite
-    if (hasInvestment('inv_kasko')) {
-        car.condition = 100;
-        car.outOfService = null;
-        logToMap(`🛡️ Kasko: ${car.name} riparata gratuitamente.`);
-        if(typeof closeModals === 'function') closeModals();
-        if(typeof renderTabFleet === 'function') renderTabFleet();
-        updateUI();
-        return;
-    }
+    /* Qui c'era una seconda porta della Kasko che rendeva gratuita QUALSIASI
+       riparazione, usura ordinaria compresa. Il 20/08 la stessa regalia era
+       stata tolta da `repairCostFor` — ma questo blocco usciva prima di
+       arrivarci, quindi il prezzo mostrato diceva 5.950 euro e il pulsante
+       riparava gratis: le due schermate raccontavano cose diverse.
+
+       La promessa della Kasko («le riparazioni incidentali non costano nulla»)
+       resta mantenuta dove nasce l'incidente: engine-rides.js:595 annulla del
+       tutto il danno da incidente, quindi non c'e' niente da riparare. Coprire
+       anche l'usura significava pagare due volte la stessa promessa. */
 
     const cost = window.repairCostFor(car);
     if ((gameState.cash || 0) < cost) {
