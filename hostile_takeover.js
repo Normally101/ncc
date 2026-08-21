@@ -130,20 +130,32 @@ window._opaRequestBuyback = async function(opaId, price) {
     );
     if (!ok) return;
 
-    if (!window.CE_money.spend(price, 'opa_buyback')) return;
+    const numPrice = Number(price);
+    if (!Number.isFinite(numPrice) || numPrice <= 0) return;
+    if (((window.gameState && window.gameState.cash) || 0) < numPrice) {
+        if (typeof showNotification === 'function') {
+            showNotification('Fondi insufficienti! Servono €' + Math.round(numPrice).toLocaleString('it-IT'), 'error');
+        }
+        return;
+    }
 
     try {
         if (window.supabaseClient?.rpc) {
             const { data, error } = await window.supabaseClient.rpc('rpc_opa_buyback', { v_opa_id: opaId });
             if (error) throw error;
         }
+        window.CE_money.addebitatoDalServer(numPrice, 'opa_buyback');
+        if (typeof updateUI === 'function') updateUI();
         if (typeof showNotification === 'function') {
             showNotification('🛡️ Buyback completato! Hai ripreso il controllo della tua azienda.', 'success');
         }
         await _loadOPAList();
     } catch(e) {
         if (typeof showNotification === 'function') {
-            showNotification('❌ ' + window.CE_Sec.userError('Buyback non riuscito', e), 'error');
+            const errMsg = window.CE_Sec && typeof window.CE_Sec.userError === 'function'
+                ? window.CE_Sec.userError('Buyback non riuscito', e)
+                : (e && e.message || 'Buyback non riuscito');
+            showNotification('❌ ' + errMsg, 'error');
         }
     }
 };

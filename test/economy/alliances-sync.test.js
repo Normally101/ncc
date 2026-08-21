@@ -119,7 +119,7 @@ describe('alliances — sincronizzazione cassa col server (CE_money)', () => {
     });
 
     describe('_alDonate', () => {
-        test('_alDonate scala l\'importo donato e sincronizza con ServerState.syncCash', async () => {
+        test('_alDonate scala l\'importo donato localmente via addebitatoDalServer ma NON chiama syncCash (il server ha già scalato companies.cash)', async () => {
             const { sandbox, gs, syncedCash, rpcCalls } = setupAlliancesEnv();
             gs.cash = 20000;
             sandbox.document.body.innerHTML = `
@@ -130,10 +130,43 @@ describe('alliances — sincronizzazione cassa col server (CE_money)', () => {
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 15000, 'il saldo locale deve essere scalato di 5.000€');
-            assert.deepEqual(syncedCash, [15000], 'syncCash deve ricevere il saldo aggiornato');
+            assert.deepEqual(syncedCash, [], 'syncCash NON deve essere chiamato: rpc_donate_to_alliance scala già companies.cash');
             assert.equal(rpcCalls.length, 1);
             assert.equal(rpcCalls[0].fn, 'rpc_donate_to_alliance');
             assert.equal(rpcCalls[0].args.p_amount, 5000);
+        });
+
+        test('_alDonate con eco Realtime arrivato prima della fine RPC non provoca doppio addebito o syncCash', async () => {
+            const synced = [];
+            const env = freshEnv({
+                serverState: {
+                    syncCash: async (v) => {
+                        synced.push(v);
+                        return { success: true, cash: v };
+                    },
+                },
+            });
+            const sandbox = env.sandbox;
+            const gs = sandbox.gameState;
+            gs.cash = 20000;
+            sandbox.supabaseClient = {
+                rpc: async (fn, args) => {
+                    // Simula eco realtime dal server prima del ritorno della RPC
+                    gs.cash = 15000;
+                    return { data: 15000, error: null };
+                },
+                from: () => ({
+                    update: () => ({ eq: async () => ({}) }),
+                    select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: null }) }) }),
+                }),
+            };
+            sandbox.window.supabaseClient = sandbox.supabaseClient;
+            sandbox.document.body.innerHTML = `<input id="al-donate" value="5000">`;
+
+            await sandbox._alDonate();
+            await new Promise(r => setImmediate(r));
+
+            assert.deepEqual(synced, [], 'nessuna risincronizzazione');
         });
 
         test('_alDonate con fondi insufficienti non spende, non chiama RPC e non chiama syncCash', async () => {
@@ -164,6 +197,19 @@ describe('alliances — sincronizzazione cassa col server (CE_money)', () => {
             assert.equal(gs.cash, 20000, 'il saldo locale non deve cambiare');
             assert.deepEqual(syncedCash, []);
             assert.equal(rpcCalls.length, 0);
+        });
+
+        test('_alDonate se la RPC fallisce non tocca cash e non chiama syncCash', async () => {
+            const { sandbox, gs, syncedCash } = setupAlliancesEnv();
+            gs.cash = 20000;
+            sandbox.supabaseClient.rpc = async () => ({ data: null, error: { message: 'Errore server donazione' } });
+            sandbox.document.body.innerHTML = `<input id="al-donate" value="5000">`;
+
+            await sandbox._alDonate();
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 20000, 'il saldo non deve scalare se la RPC fallisce');
+            assert.deepEqual(syncedCash, []);
         });
     });
 });

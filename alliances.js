@@ -321,9 +321,12 @@
         const el = document.getElementById('al-donate');
         const amt = Math.floor(parseFloat(el && el.value) || 0);
         if (amt <= 0) return _notify('Importo non valido.', 'error');
-        if (!window.CE_money.spend(amt, 'donate_alliance')) return;
+        if (((window.gameState && window.gameState.cash) || 0) < amt) {
+            return _notify('Fondi insufficienti! Servono ' + fmt(amt), 'error');
+        }
         try {
             await _rpc('rpc_donate_to_alliance', { p_amount: amt });
+            window.CE_money.addebitatoDalServer(amt, 'donate_alliance');
             _notify(`Hai donato ${fmt(amt)} al consorzio.`, 'success');
             if (typeof saveGame === 'function') saveGame();
             if (typeof updateUI === 'function') updateUI();
