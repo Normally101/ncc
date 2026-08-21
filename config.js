@@ -54,7 +54,7 @@ window.FEATURES = {
     vanita:       true,   // vanity.js — verificata 20/08/2026 (4 azioni, tutte eseguite nel banco)
     negozioDC:    false,  // ui-store, engine-store: valuta premium
     vip:          false,  // vip-clients, vip-buffs
-    carriera:     false,  // ui-career
+    carriera:     true,   // ui-career, quests, quests-data — verificata 21/08/2026 (progressione, bivi morali, modali, ricompense via CE_money)
 };
 
 /** Una funzione è attiva? Sconosciuta = spenta: nel dubbio non si mostra. */
