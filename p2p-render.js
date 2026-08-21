@@ -425,6 +425,7 @@ window.contributeConsorzio = async function(consorzioId, amount) {
         return;
     }
     window.CE_money.addebitatoDalServer(roundedAmount, 'contribute_consorzio');
+    await saveGame();
     showNotification(`💰 Contribuito €${roundedAmount.toLocaleString()} alla cassa consorzio.`, 'success');
     updateUI();
     await p2pFetchConsorzi();
@@ -462,6 +463,7 @@ window.payDonCarmine = async function() {
     window.CE_money.addebitatoDalServer(cost, 'pay_don_carmine');
     window._sindacatoState.gdfRisk              = 0;
     window._sindacatoState.carmineImmunityUntil = data.immunity_until || null;
+    await saveGame();
     showBigEvent('🤵', 'Don Carmine ha parlato.',
         `Dossier GdF distrutto. Rischio azzerato.\nImmunità garantita per 24 ore.\n\n"Non dimenticare chi ti ha aiutato." — Don Carmine`);
     logToMap('🤵 Don Carmine: dossier eliminato. Immunità 24h.');

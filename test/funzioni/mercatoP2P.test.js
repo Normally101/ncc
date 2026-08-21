@@ -653,6 +653,18 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.equal(gs.cash, 25000, 'il saldo non deve cambiare in caso di errore RPC');
             assert.deepEqual(syncedCashCalls, [], 'nessuna chiamata syncCash in caso di errore');
         });
+
+        test('contributeConsorzio chiama saveGame e persiste la variazione di cassa', async () => {
+            let saved = false;
+            sandbox.saveGame = async () => { saved = true; };
+            sandbox.window.saveGame = sandbox.saveGame;
+
+            gs.cash = 40000;
+            await sandbox.contributeConsorzio('cso_101', 10000);
+
+            assert.equal(gs.cash, 30000);
+            assert.equal(saved, true, 'saveGame deve essere invocato per persistere il contributo');
+        });
     });
 
     // ────────────────────────────────────────────────────────────────────────
@@ -678,6 +690,18 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.equal(sandbox._sindacatoState.gdfRisk, 0);
             assert.ok(sandbox._sindacatoState.carmineImmunityUntil);
             assert.ok(env.logs.some(l => l.includes('Don Carmine: dossier eliminato')));
+        });
+
+        test('payDonCarmine chiama saveGame e persiste la spesa su disco', async () => {
+            let saved = false;
+            sandbox.saveGame = async () => { saved = true; };
+            sandbox.window.saveGame = sandbox.saveGame;
+
+            gs.cash = 80000;
+            await sandbox.payDonCarmine();
+
+            assert.equal(gs.cash, 30000);
+            assert.equal(saved, true, 'saveGame deve essere invocato dopo aver pagato Don Carmine');
         });
 
         test('_sindacatoGdfDailyCheck applica multa e riduce rischio GdF se ispezione ha luogo', async () => {
@@ -965,6 +989,93 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.equal(typeof car.id, 'string');
             assert.ok(car.id.startsWith('c_p2p_'));
             assert.equal(typeof car.condition, 'number');
+        });
+    });
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 11. PERMANENZA DELLO STATO (DOMANDA B) ED ECO REALTIME
+    // ────────────────────────────────────────────────────────────────────────
+    describe('Permanenza degli effetti nello stato di gioco ed eco Realtime', () => {
+
+        test('buyP2PCar: auto acquistata resta in flotta anche dopo eventi Realtime concorrenti', async () => {
+            sandbox._p2pMarket.listings = [
+                {
+                    id: 'lst_rt_test',
+                    seller_user_id: 'other_p',
+                    ask_price: 35000,
+                },
+            ];
+            gs.cash = 65000;
+            const initialFleetCount = gs.fleet.length;
+
+            sandbox.p2pStartRealtime();
+            const marketChan = realtimeChannels.find(c => c.name === 'public:market_listings');
+            assert.ok(marketChan);
+
+            await sandbox.buyP2PCar('lst_rt_test');
+
+            assert.equal(gs.fleet.length, initialFleetCount + 1);
+            assert.equal(gs.cash, 30000);
+
+            // Simuliamo eco realtime di inserimento/cancellazione sul mercato
+            const insertHandler = marketChan._handlers.find(h => h.event === 'postgres_changes');
+            insertHandler.callback({
+                eventType: 'INSERT',
+                new: {
+                    id: 'lst_new_broadcast',
+                    seller_user_id: 'third_p',
+                    seller_name: 'Bob',
+                    ask_price: 15000,
+                    car_snapshot: { name: 'Fiat Tipo' },
+                },
+            });
+            insertHandler.callback({
+                eventType: 'DELETE',
+                old: { id: 'lst_rt_test' },
+            });
+
+            // Lo stato locale della flotta e del cash non deve subire alterazioni
+            assert.equal(gs.fleet.length, initialFleetCount + 1, 'la flotta non deve perdere l auto comprata');
+            assert.equal(gs.cash, 30000, 'il cash non deve essere alterato dagli eventi realtime');
+            assert.ok(sandbox._p2pMarket.listings.some(l => l.id === 'lst_new_broadcast'));
+            assert.ok(!sandbox._p2pMarket.listings.some(l => l.id === 'lst_rt_test'));
+        });
+
+        test('listCompanyIPO: lo stato companyIPO persiste dopo saveGame e refresh dati borsa', async () => {
+            gs.reputation = 4.0;
+            gs.cash = 100000;
+            gs.day = 5;
+
+            await sandbox.listCompanyIPO();
+
+            assert.ok(gs.companyIPO);
+            assert.equal(gs.companyIPO.listed, true);
+            assert.equal(gs.cash, 50000);
+
+            // Simuliamo refresh borsa successivo
+            await sandbox.p2pRefreshAll();
+
+            assert.ok(gs.companyIPO);
+            assert.equal(gs.companyIPO.listed, true);
+            assert.equal(gs.cash, 50000);
+        });
+
+        test('_sindacatoGdfDailyCheck: multa registrata tramite addebitatoDalServer e salvata', async () => {
+            sandbox.supabaseClient.rpc = async (name) => {
+                if (name === 'rpc_gdf_inspection_check') {
+                    return { data: { inspected: true, fine: 12000 }, error: null };
+                }
+                return { data: {}, error: null };
+            };
+
+            gs.cash = 50000;
+            sandbox._sindacatoState.gdfRisk = 80;
+
+            await sandbox._sindacatoGdfDailyCheck();
+
+            assert.equal(gs.cash, 38000);
+            assert.equal(sandbox._sindacatoState.gdfRisk, 50);
+            assert.deepEqual(syncedCashCalls, [], 'nessuna chiamata syncCash per la multa GdF');
         });
     });
 });
