@@ -29,8 +29,8 @@ const CORE_FILES = [
     'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'quests-data.js',
     'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
     'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',
-    'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-staff.js',
-    'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-career.js', 'ui-store.js',
+    'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'war_room.js', 'ui-staff.js',
+    'ui-lifestyle.js', 'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-politics.js', 'ui-career.js', 'ui-store.js',
     'ui-finance.js', 'daily-orders.js',
     'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
     'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
@@ -131,6 +131,13 @@ function makeServerState(sandboxRef, overrides = {}) {
             gs().driverCoins = Math.max(0, (gs().driverCoins || 0) - amount);
             return { ok: true };
         },
+        acquireProvince: async (provinceId, offer) => {
+            gs().cash = Math.max(0, (gs().cash || 0) - offer);
+            return { success: true, province_name: 'Provincia Mock' };
+        },
+        addProvinceInfluence: async (_provinceId, _amount) => ({ success: true }),
+        getTerritorySnapshot: async () => ({ provinces: [], regions: [], influence: {} }),
+        getMyInfluence: async () => ({}),
         findServerVehicle: () => null,
         findServerDriver: () => null,
     };
