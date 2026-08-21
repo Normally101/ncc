@@ -56,9 +56,9 @@ function _payStockDividends() {
     if (typeof STOCK_TICKERS === 'undefined' || !_hasWealthManager()) return;
     let totalDiv = 0;
     STOCK_TICKERS.forEach(t => {
-        const holding = gameState.stockHoldings[t.id];
+        const holding = (gameState.stockHoldings || {})[t.id];
         if (!holding || holding.shares <= 0 || t.dividendPct <= 0) return;
-        const price = gameState.stockPrices[t.id] || t.basePrice;
+        const price = (gameState.stockPrices || {})[t.id] || t.basePrice;
         const div = Math.floor(holding.shares * price * t.dividendPct / 24); // hourly rate from annual
         if (div > 0) {
             totalDiv += div;
@@ -218,6 +218,8 @@ window.repayLoan = function(loanId) {
 };
 
 window.takeLoan = function(amount) {
+    amount = Math.round(Number(amount));
+    if (!amount || amount <= 0) return;
     if (!gameState.loans) gameState.loans = [];
     const creditTier = _getCreditTier(gameState.creditScore || 300);
     const activeLoanTotal = gameState.loans.reduce((s, l) => s + l.amount, 0);
@@ -251,10 +253,14 @@ window.buyStocks = function(tickerId, shares) {
     if (!_hasWealthManager()) { showNotification('Assumi un Elite Wealth Manager prima!', 'error'); return; }
     const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
     if (!ticker) return;
-    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    shares = Math.round(Number(shares));
+    if (!shares || shares <= 0) { showNotification('Quantità non valida.', 'error'); return; }
+    const price = (gameState.stockPrices || {})[tickerId] || ticker.basePrice;
     const totalCost = Math.round(price * shares);
     if (totalCost <= 0) { showNotification('Quantità non valida.', 'error'); return; }
     if (!window.CE_money.spend(totalCost, 'buy_stocks')) return;
+    if (!gameState.stockHoldings) gameState.stockHoldings = {};
+    if (!gameState.stockHoldings[tickerId]) gameState.stockHoldings[tickerId] = { shares: 0, avgCost: 0 };
     const holding = gameState.stockHoldings[tickerId];
     const prevTotal = holding.shares * holding.avgCost;
     holding.avgCost = +((prevTotal + totalCost) / (holding.shares + shares)).toFixed(2);
@@ -269,9 +275,12 @@ window.sellStocks = function(tickerId, shares) {
     if (!_hasWealthManager()) return;
     const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
     if (!ticker) return;
+    shares = Math.round(Number(shares));
+    if (!shares || shares <= 0) { showNotification('Quantità non valida.', 'error'); return; }
+    if (!gameState.stockHoldings) gameState.stockHoldings = {};
     const holding = gameState.stockHoldings[tickerId];
     if (!holding || holding.shares < shares) { showNotification('Quote insufficienti!', 'error'); return; }
-    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    const price = (gameState.stockPrices || {})[tickerId] || ticker.basePrice;
     const proceeds = Math.round(price * shares);
     const costBasis = Math.round(holding.avgCost * shares);
     const profit = proceeds - costBasis;
@@ -343,8 +352,8 @@ window.shortSell = function(tickerId, shares) {
     const ticker = (typeof STOCK_TICKERS !== 'undefined' ? STOCK_TICKERS : []).find(t => t.id === tickerId);
     if (!ticker) return;
     shares = Math.round(Number(shares));
-    if (shares <= 0) { showNotification('Quantità non valida.', 'error'); return; }
-    const price = gameState.stockPrices[tickerId] || ticker.basePrice;
+    if (!shares || shares <= 0) { showNotification('Quantità non valida.', 'error'); return; }
+    const price = (gameState.stockPrices || {})[tickerId] || ticker.basePrice;
     const margin = Math.round(price * shares * 0.20);
     if (!window.CE_money.spend(margin, 'short_sell')) return;
     if (!gameState.shortPositions) gameState.shortPositions = {};
@@ -369,8 +378,8 @@ window.coverShort = function(tickerId, shares) {
     const pos = (gameState.shortPositions || {})[tickerId];
     if (!pos || pos.shares <= 0) { showNotification('Nessuna posizione short su questo titolo!', 'error'); return; }
     shares = Math.min(Math.round(Number(shares)), pos.shares);
-    if (shares <= 0) return;
-    const currentPrice = gameState.stockPrices[tickerId] || ticker.basePrice;
+    if (!shares || shares <= 0) return;
+    const currentPrice = (gameState.stockPrices || {})[tickerId] || ticker.basePrice;
     const priceDiff = pos.openPrice - currentPrice;
     const profit = Math.round(priceDiff * shares);
     const marginReturn = Math.round(pos.openPrice * shares * 0.20);
@@ -389,7 +398,7 @@ window.coverShort = function(tickerId, shares) {
 // ── LOBBYING ────────────────────────────────────────────────────
 window.donateToLobby = function(amount) {
     amount = Math.round(Number(amount));
-    if (amount < 1000) { showNotification('Donazione minima: €1.000', 'error'); return; }
+    if (!amount || amount < 1000) { showNotification('Donazione minima: €1.000', 'error'); return; }
     if (!window.CE_money.spend(amount, 'lobby_donation')) return;
     const points = Math.floor(amount / 1000);
     gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) + points;
