@@ -10,7 +10,8 @@ function renderTabCorse() {
     }
     const _sig = (gameState.pendingRides.map(r => r.id).join(',')) + '|' +
                  (gameState.drivers.map(d => d.id + ':' + d.status + ':' + (d.queue?.length || 0) + ':' + (d.restHoursLeft | 0)).join(',')) + '|' +
-                 (gameState._dailySummary ? gameState._dailySummary.day : 0);
+                 (gameState._dailySummary ? gameState._dailySummary.day : 0) + '|' +
+                 (gameState.weather || 'sole');
     if (renderTabCorse._sig === _sig && container.children.length > 0) return;
     renderTabCorse._sig = _sig;
 
@@ -29,6 +30,14 @@ function renderTabCorse() {
     const tierColors = { standard:'#6a7480', business:'#2f74c0', first:'#c79a2a', ultra:'#b86b3a', presidential:'#7c5fc9' };
     const tierBg     = { standard:'#eef1f5', business:'#e7f0fb', first:'#fff3cf', ultra:'#f7e6db', presidential:'#ece4f7' };
     const typeLabel  = { Airport:'AIR', 'City-to-City':'CITY', Rail:'RAIL', Port:'PORT', Boat:'BOAT', Transfer:'TRF' };
+
+    // ── METEO ATTUALE (dinamico da WEATHER_STATES) ─────────────
+    const weatherList = (typeof WEATHER_STATES !== 'undefined' ? WEATHER_STATES : (window.WEATHER_STATES || []));
+    const ws = weatherList.find(w => w.id === (gs.weather || 'sole')) || weatherList[0] || { id:'sole', label:'Sereno', icon:'☀️', speedMult:1.0, priceMult:1.0 };
+    const speedPct = Math.round((1 - ws.speedMult) * 100);
+    const speedLabel = speedPct > 0 ? `-${speedPct}% velocità` : speedPct < 0 ? `+${Math.abs(speedPct)}% velocità` : 'velocità standard';
+    const pricePct = Math.round((ws.priceMult - 1) * 100);
+    const priceLabel = pricePct > 0 ? `+${pricePct}% tariffe` : pricePct < 0 ? `${pricePct}% tariffe` : 'tariffe standard';
 
     // ── KPI BAR ────────────────────────────────────────────────
     const energyColor = ceoEnergy < 25 ? 'var(--em-red)' : ceoEnergy < 50 ? 'var(--em-amber)' : 'var(--em-green)';
@@ -56,6 +65,14 @@ function renderTabCorse() {
     </div>
 
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px">
+        <div class="em-card" style="padding:4px 10px;display:inline-flex;align-items:center;gap:7px;font-size:11px;background:var(--em-card);border:1px solid var(--em-line)">
+            <span style="font-size:14px">${ws.icon}</span>
+            <span style="font-weight:800;color:var(--em-ink)">${ws.label}</span>
+            <span style="color:var(--em-dim)">·</span>
+            <span style="font-weight:700;color:${ws.speedMult < 1.0 ? 'var(--em-red)' : 'var(--em-dim)'}">${speedLabel}</span>
+            <span style="color:var(--em-dim)">·</span>
+            <span style="font-weight:700;color:${ws.priceMult > 1.0 ? 'var(--em-green-d)' : 'var(--em-dim)'}">${priceLabel}</span>
+        </div>
         ${alerts}
         <div style="margin-left:auto;display:flex;gap:8px">
             <button ${ceAct('openMapOverlay', [])} class="em-bbtn">🗺 Live Map</button>
