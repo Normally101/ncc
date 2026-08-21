@@ -69,6 +69,40 @@ affatto (`engine-rides.js:595`), quindi non c'è niente da riparare.
 
 ---
 
+# 🚪 21/08 12:15 — LA PORTA UNICA È CHIUSA
+
+`ECCEZIONI` in `test/guardrail/una-sola-porta.test.js` è **vuota**. `engine.js` era l'ultimo file,
+e al suo posto c'è `RIGHE_CONSENTITE`: tre righe autorizzate una per una col motivo accanto —
+l'azzeramento a inizio partita, il ripristino del saldo quando diventa non finito, e il ripiego
+in `_addCash`. Non sono transazioni, e forzarle dentro la porta avrebbe peggiorato le cose.
+
+Nello stesso minuto è entrato il **doppio conteggio di cripto**: `crypto.js` ora usa
+`addebitatoDalServer` / `accreditatoDalServer` invece di `spend`/`earn`. Mancava la gemella per
+l'addebito — c'era solo quella per l'accredito, nata per le aste — e l'ha creata.
+
+**954 test, tutti verdi.** Due rami fusi nello stesso minuto: la prima prova vera del
+parallelismo (MAX_PARALLELI = 3) e del rifacimento della fusione quando `main` si muove sotto.
+
+## Il censimento dei processi schedulati — interrogando il database vero
+
+Domanda (a) del metodo interruttori, con i dati in mano. In `cron.job` ci sono **tre lavori**, e
+l'unico di gioco è `aste-giudiziarie` (messo il 20/08). Nel database esistono **dieci** funzioni
+di tipo tick/daily. Chi le chiama:
+
+| funzione | chi la chiama |
+|---|---|
+| `_process_judicial_auctions` | cron ✅ |
+| `rpc_b2b_daily_tick` · `rpc_tourism_daily_tick` · `rpc_tick_tension` · `rpc_collect_daily_costs` | il client, al login |
+| **`rpc_daily_dividends`** | **nessuno** — le holding non pagano mai dividendi |
+| **`rpc_reset_daily_vtk`** | **nessuno** |
+| **`_process_tourism_tenders`** | **solo un test** — i bandi turistici non si chiudono mai |
+
+Le tre orfane appartengono tutte a funzioni **spente** (holding, vtk, turismo): il metodo degli
+interruttori ha fatto il suo lavoro, sono spente proprio perché nessuno le aveva verificate.
+Il cron va messo **prima** di accenderle, ed è lavoro di Claude — Gemini non ha accesso al database.
+
+---
+
 # ✅ 21/08 mattina — hub, agenti, libri (fatti)
 
 **L'hub dice la verità.** Il ciclo manda la coda intera a `POST /api/gigi/coda` a ogni giro,
