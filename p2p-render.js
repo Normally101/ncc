@@ -415,14 +415,16 @@ window.contributeConsorzio = async function(consorzioId, amount) {
     if (!_uid()) return;
     const roundedAmount = Math.round(amount);
     if (!roundedAmount || roundedAmount <= 0) return;
-    if (!window.CE_money.spend(roundedAmount, 'contribute_consorzio')) return;
+    if ((gameState.cash || 0) < roundedAmount) {
+        showNotification('Fondi insufficienti!', 'error');
+        return;
+    }
     const { data, error } = await _sb().rpc('rpc_contribute_consorzio', { v_consorzio_id: consorzioId, v_amount: roundedAmount });
     if (error) {
-        window.CE_money.earn(roundedAmount, 'contribute_consorzio_rollback');
         showNotification(_p2pErrMsg('Errore contributo consorzio', error), 'error');
         return;
     }
-    await saveGame();
+    window.CE_money.addebitatoDalServer(roundedAmount, 'contribute_consorzio');
     showNotification(`💰 Contribuito €${roundedAmount.toLocaleString()} alla cassa consorzio.`, 'success');
     updateUI();
     await p2pFetchConsorzi();
@@ -448,14 +450,16 @@ window.hireCrumiri = async function() {
 window.payDonCarmine = async function() {
     if (!_uid()) return;
     const cost = 50000;
-    if (!window.CE_money.spend(cost, 'pay_don_carmine')) return;
+    if ((gameState.cash || 0) < cost) {
+        showNotification('Fondi insufficienti!', 'error');
+        return;
+    }
     const { data, error } = await _sb().rpc('rpc_pay_don_carmine');
     if (error) {
-        window.CE_money.earn(cost, 'pay_don_carmine_rollback');
         showNotification(_p2pErrMsg('Don Carmine', error), 'error');
         return;
     }
-    await saveGame();
+    window.CE_money.addebitatoDalServer(cost, 'pay_don_carmine');
     window._sindacatoState.gdfRisk              = 0;
     window._sindacatoState.carmineImmunityUntil = data.immunity_until || null;
     showBigEvent('🤵', 'Don Carmine ha parlato.',
