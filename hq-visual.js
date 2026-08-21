@@ -69,7 +69,7 @@ window.renderHQCampus = function() {
                 html += `
                 <div class="hq-slot-pulse"
                      style="position:absolute;left:${slotDef.left};top:${slotDef.top};transform:translate(-50%,-50%);cursor:pointer;">
-                     <div ${ceAct('hqOpenBuildModal', [currentCityId, slotId])}
+                     <div ${ceAct('hqOpenBuildModalSlot', [currentCityId, slotId])}
                           style="width:56px; height:32px; border:2px dashed rgba(212,175,55,0.5); background:rgba(212,175,55,0.06); border-radius:999px; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s;"
                          >
                         <span style="color:#d4af37; font-weight:bold; font-size:18px; line-height:1">+</span>
@@ -84,8 +84,7 @@ window.renderHQCampus = function() {
     placeholder.innerHTML = html;
 };
 
-// Modifica la vecchia funzione che non accettava cityId e slotIndex assieme
-window.hqOpenBuildModal = function(cityId, slotIndex) {
+window.hqOpenBuildModalSlot = function(cityId, slotIndex) {
     const builtRooms = gameState.hqs[cityId].rooms || {};
     
     // Trova le stanze che l'utente PUO' costruire a livello 1 in questo slot
