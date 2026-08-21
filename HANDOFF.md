@@ -69,6 +69,47 @@ affatto (`engine-rides.js:595`), quindi non c'è niente da riparare.
 
 ---
 
+# ✅ 21/08 mattina — hub, agenti, libri (fatti)
+
+**L'hub dice la verità.** Il ciclo manda la coda intera a `POST /api/gigi/coda` a ogni giro,
+anche da fermo — è proprio da fermo che si va a guardare il cruscotto. 108 lavori rispecchiati,
+avanzamento **29%** calcolato su quelli veri, aggiornato ogni minuto. Tolti i cinque task di
+esempio del primo allestimento («Store listing copy», «Fix authentication flow»); i sette task
+veri creati il 18-19/08 sono rimasti, perché cancellarli avrebbe riscritto la storia invece di
+correggere un numero.
+
+Dettaglio che è costato mezz'ora: l'hub rifiutava l'intera coda con 400 perché gli id delle
+riprove arrivano a 96 caratteri (`-r2-r2-…`). L'id nell'hub è ora un'impronta di lunghezza fissa
+— tagliarlo a lunghezza fissa avrebbe fatto collidere due riprove nella stessa riga.
+
+**Gli agenti sono quelli che esistono.** Le sei righe finte (modello `olga-core-preview`, che non
+esiste) sono spente e fuori dalla scheda del progetto. Al loro posto: **Gigi** (Gemini su GitHub
+Actions, l'unico che lavora davvero — e gli sono state attribuite le **399 righe di diario** che
+prima erano senza firma), **Olga** (la chat), e otto specialisti per il pre-lancio le cui
+definizioni esistono davvero in `~/.claude/agents` — Growth Hacker, Content Creator, App Store
+Optimizer, Brand Guardian, CFO, Pricing Analyst, Game Designer, UX Researcher. Stato **offline**,
+e la descrizione dice perché: *«definizione pronta, ma nessuno le manda ancora lavoro»*. È il
+pezzo che manca, e va letto a colpo d'occhio invece di essere mascherato da «pronto».
+
+**Turni dell'agente 40 → 70, e niente più mail rossa per un lavoro riuscito.** Sei lavori su
+undici avevano esaurito i turni; leggere ne costa quanto scrivere, e su `engine.js` la sola
+esplorazione ne mangia venti. E se il ramo è pubblicato la run esce 0: uscire 1 perché il modello
+ha finito i turni mandava una mail di fallimento per un lavoro che era andato bene — tre volte in
+due giorni. Un allarme che suona senza incendio insegna solo a non guardare più gli allarmi.
+
+**Libri → una skill: `~/.claude/skills/economia-di-gioco/`.** Estratti tutti e otto i PDF in
+testo (`pypdf`), ~430.000 parole. La skill nasce da *La psicologia dei soldi* (Housel) più la
+letteratura sui dark pattern letta al contrario, come catalogo di ciò che non si fa. Sei domande
+da porre a ogni numero prima di scriverlo nel codice.
+
+**Primo difetto trovato usandola** (domanda 2, «chi sta giocando un gioco diverso»):
+`ui-ranking.js:33` mostra **una sola classifica globale**, ordinata per `liquid_assets`, primi 50.
+Un giocatore nuovo vede solo i cinquanta più ricchi e non vede mai sé stesso. Non sta perdendo:
+sta guardando un'altra partita, e il gioco non glielo dice. Da segmentare (per anzianità o per
+tempo giocato) o almeno da affiancare con la posizione propria e il confronto col sé di ieri.
+
+---
+
 # 📌 AGENDA DI DOMATTINA — decisa da Vlad il 21/08 all'01:15
 
 Tre cose, da fare **dopo** che il ciclo notturno si è fermato (verso le 9). Nessuna va toccata
