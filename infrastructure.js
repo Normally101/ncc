@@ -26,12 +26,15 @@ window.renderTabInfrastructure = async function() {
     </div></div>`;
 
     try {
+        if (!window.supabaseClient) throw new Error('Client di rete non disponibile');
         const { data: depots, error } = await window.supabaseClient.rpc('rpc_get_fuel_depots');
         if (error) throw error;
         _renderInfraContent(depots || []);
     } catch(e) {
         const el = document.getElementById('infra-loading');
-        if (el) el.textContent = window.CE_Sec.userError('Errore caricamento depositi', e);
+        if (el) el.textContent = (window.CE_Sec && typeof window.CE_Sec.userError === 'function')
+            ? window.CE_Sec.userError('Errore caricamento depositi', e)
+            : (e?.message || 'Errore caricamento depositi');
     }
 };
 
@@ -83,11 +86,14 @@ function _renderInfraContent(depots) {
 }
 
 function _renderMyDepotCard(d) {
+    const provName = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(d.province_name || '')
+        : (d.province_name || '');
     return `
     <div class="em-card" style="padding:16px;margin-bottom:10px;border-color:rgba(26,160,106,.4)">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:12px">
         <div>
-          <div style="font-weight:700;margin-bottom:2px">⛽ ${d.province_name}</div>
+          <div style="font-weight:700;margin-bottom:2px">⛽ ${provName}</div>
           <div style="font-size:11px;color:var(--em-green)">Il tuo deposito · Incassato: €${(d.total_earned||0).toLocaleString('it-IT')}</div>
         </div>
         <span class="em-pill em-pill--green">${Math.round(d.markup_pct)}% markup</span>
@@ -105,32 +111,53 @@ function _renderMyDepotCard(d) {
 }
 
 function _renderAvailableCard(prov) {
+    const pName = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(prov.name || '')
+        : (prov.name || '');
+    const pRegion = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(prov.region || '')
+        : (prov.region || '');
     return `
     <div class="em-card" style="padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${prov.name}</div>
-        <div style="font-size:11px;color:var(--em-muted)">${prov.region} · Libero</div>
+        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${pName}</div>
+        <div style="font-size:11px;color:var(--em-muted)">${pRegion} · Libero</div>
       </div>
       <button class="em-bbtn" ${ceAct('_infraBuyDepot', [prov.id,prov.name])}>Acquista €300k</button>
     </div>`;
 }
 
 function _renderOccupiedCard(prov, d) {
+    const pName = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(prov.name || '')
+        : (prov.name || '');
+    const pRegion = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(prov.region || '')
+        : (prov.region || '');
+    const owner = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(d.owner_company || 'Un rivale')
+        : (d.owner_company || 'Un rivale');
     return `
     <div class="em-card" style="padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;opacity:.6;border-color:rgba(219,87,70,.3)">
       <div>
-        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${prov.name}</div>
-        <div style="font-size:11px;color:var(--em-red)">${prov.region} · Occupato da ${d.owner_company}</div>
+        <div style="font-weight:700;font-size:12px;margin-bottom:2px">${pName}</div>
+        <div style="font-size:11px;color:var(--em-red)">${pRegion} · Occupato da ${owner}</div>
       </div>
       <span class="em-pill em-pill--red">${d.markup_pct}% markup</span>
     </div>`;
 }
 
 function _renderRivalCard(d) {
+    const pName = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(d.province_name || '')
+        : (d.province_name || '');
+    const owner = (window.CE_Sec && typeof window.CE_Sec.escHtml === 'function')
+        ? window.CE_Sec.escHtml(d.owner_company || 'Un rivale')
+        : (d.owner_company || 'Un rivale');
     return `
     <div class="em-card" style="padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:12px;font-weight:600">${d.province_name}</div>
-      <div style="font-size:11px;color:var(--em-muted)">${d.owner_company} · ${d.markup_pct}% · incassato €${(d.total_earned||0).toLocaleString('it-IT')}</div>
+      <div style="font-size:12px;font-weight:600">${pName}</div>
+      <div style="font-size:11px;color:var(--em-muted)">${owner} · ${d.markup_pct}% · incassato €${(d.total_earned||0).toLocaleString('it-IT')}</div>
     </div>`;
 }
 
@@ -148,7 +175,10 @@ window._infraBuyDepot = async function(provinceId, provinceName) {
         if (typeof saveGame === 'function') saveGame();
         if (typeof window.renderTabInfrastructure === 'function') window.renderTabInfrastructure();
     } catch(e) {
-        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Acquisto deposito non riuscito', e), 'error');
+        const errMsg = (window.CE_Sec && typeof window.CE_Sec.userError === 'function')
+            ? window.CE_Sec.userError('Acquisto deposito non riuscito', e)
+            : (e?.message || 'Acquisto deposito non riuscito');
+        if (typeof showNotification === 'function') showNotification(errMsg, 'error');
     }
 };
 
@@ -158,13 +188,18 @@ window._infraSetMarkup = async function(provinceId) {
     const markup = parseFloat(slider.value);
 
     try {
+        if (!window.supabaseClient) throw new Error('Client di rete non disponibile');
         const { error } = await window.supabaseClient.rpc('rpc_set_fuel_markup', {
             v_province_id: provinceId,
             v_markup_pct:  markup
         });
         if (error) throw error;
         if (typeof showNotification === 'function') showNotification(`Markup aggiornato a ${markup}%`, 'success');
+        if (typeof window.renderTabInfrastructure === 'function') window.renderTabInfrastructure();
     } catch(e) {
-        if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Aggiornamento markup non riuscito', e), 'error');
+        const errMsg = (window.CE_Sec && typeof window.CE_Sec.userError === 'function')
+            ? window.CE_Sec.userError('Aggiornamento markup non riuscito', e)
+            : (e?.message || 'Aggiornamento markup non riuscito');
+        if (typeof showNotification === 'function') showNotification(errMsg, 'error');
     }
 };
