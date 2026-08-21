@@ -11,7 +11,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 window.renderP2PMarketSection = function() {
-    const uid      = _uid();
+    const uid      = _p2pUid();
     const listings = window._p2pMarket.listings || [];
 
     if (!uid) return `<div style="font-size:9px;color:#6b7280;font-style:italic;margin-bottom:12px">Accedi per vedere il mercato P2P reale.</div>`;
@@ -72,7 +72,7 @@ window.renderP2PMarketSection = function() {
 };
 
 window.renderP2PSharesSection = function() {
-    const uid      = _uid();
+    const uid      = _p2pUid();
     const shares   = window._p2pMarket.shares || [];
     const myHoldings = window._p2pMarket.myShareHoldings || [];
 
@@ -126,7 +126,7 @@ window.renderP2PSharesSection = function() {
 };
 
 window.renderP2PHoldingsSection = function() {
-    const uid      = _uid();
+    const uid      = _p2pUid();
     const holdings = window._p2pMarket.holdings || [];
     const myH      = window._p2pMarket.myHolding;
 

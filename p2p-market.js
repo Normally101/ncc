@@ -46,8 +46,10 @@ window._sindacatoState = {
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPER: riferimento sicuro al client Supabase
 // ─────────────────────────────────────────────────────────────────────────────
-function _sb() { return window.supabaseClient; }
-function _uid() { return window.currentUser?.id || null; }
+function _p2pSb() { return window.supabaseClient; }
+function _p2pUid() { return window.currentUser?.id || null; }
+window._p2pSb = _p2pSb;
+window._p2pUid = _p2pUid;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEZIONE 1: MERCATO P2P — LISTING / BUY / CANCEL
@@ -58,7 +60,7 @@ function _uid() { return window.currentUser?.id || null; }
  * Rimpiazza la vecchia funzione locale window.listCarForSale.
  */
 window.listCarForSale = async function(carId, askPrice) {
-    if (!_uid()) { showNotification('Devi essere loggato per vendere.', 'error'); return; }
+    if (!_p2pUid()) { showNotification('Devi essere loggato per vendere.', 'error'); return; }
 
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
@@ -74,7 +76,7 @@ window.listCarForSale = async function(carId, askPrice) {
     await saveGame();   // salva lo stato senza l'auto
 
     // Pubblica su Supabase
-    const { data, error } = await _sb().rpc('rpc_list_car_for_sale', {
+    const { data, error } = await _p2pSb().rpc('rpc_list_car_for_sale', {
         v_car_snapshot: car,
         v_ask_price:    Math.round(askPrice),
     });
@@ -101,9 +103,9 @@ window.listCarForSale = async function(carId, askPrice) {
  * Ritira la propria inserzione dal mercato.
  */
 window.cancelP2PListing = async function(listingId) {
-    if (!_uid()) return;
+    if (!_p2pUid()) return;
 
-    const { data, error } = await _sb().rpc('rpc_cancel_listing', {
+    const { data, error } = await _p2pSb().rpc('rpc_cancel_listing', {
         v_listing_id: listingId,
     });
 
@@ -126,16 +128,16 @@ window.cancelP2PListing = async function(listingId) {
  * Compra un'auto dal mercato P2P di un altro player.
  */
 window.buyP2PCar = async function(listingId) {
-    if (!_uid()) { showNotification('Devi essere loggato per comprare.', 'error'); return; }
+    if (!_p2pUid()) { showNotification('Devi essere loggato per comprare.', 'error'); return; }
 
     const listing = window._p2pMarket.listings.find(l => l.id === listingId);
     if (!listing) { showNotification('Inserzione non trovata — potrebbe essere già venduta.', 'error'); return; }
-    if (listing.seller_user_id === _uid()) { showNotification('Non puoi comprare la tua stessa auto.', 'info'); return; }
+    if (listing.seller_user_id === _p2pUid()) { showNotification('Non puoi comprare la tua stessa auto.', 'info'); return; }
     if ((gameState.cash || 0) < listing.ask_price) {
         showNotification(`Fondi insufficienti — servono €${listing.ask_price.toLocaleString()}`, 'error'); return;
     }
 
-    const { data, error } = await _sb().rpc('rpc_buy_market_car', {
+    const { data, error } = await _p2pSb().rpc('rpc_buy_market_car', {
         v_listing_id: listingId,
     });
 
@@ -159,8 +161,8 @@ window.buyP2PCar = async function(listingId) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 window.createHolding = async function(name, description) {
-    if (!_uid()) return;
-    const { data, error } = await _sb().rpc('rpc_create_holding', {
+    if (!_p2pUid()) return;
+    const { data, error } = await _p2pSb().rpc('rpc_create_holding', {
         v_name: name, v_description: description || '',
     });
     if (error) { showNotification(_p2pErrMsg('Errore creazione holding', error), 'error'); return; }
@@ -170,8 +172,8 @@ window.createHolding = async function(name, description) {
 };
 
 window.joinHolding = async function(holdingId) {
-    if (!_uid()) return;
-    const { data, error } = await _sb().rpc('rpc_join_holding', { v_holding_id: holdingId });
+    if (!_p2pUid()) return;
+    const { data, error } = await _p2pSb().rpc('rpc_join_holding', { v_holding_id: holdingId });
     if (error) { showNotification(_p2pErrMsg('Errore ingresso holding', error), 'error'); return; }
     showNotification('✅ Sei entrato nella holding!', 'success');
     await p2pFetchHoldings();
@@ -179,8 +181,8 @@ window.joinHolding = async function(holdingId) {
 };
 
 window.leaveHolding = async function(holdingId) {
-    if (!_uid()) return;
-    const { data, error } = await _sb().rpc('rpc_leave_holding', { v_holding_id: holdingId });
+    if (!_p2pUid()) return;
+    const { data, error } = await _p2pSb().rpc('rpc_leave_holding', { v_holding_id: holdingId });
     if (error) { showNotification(_p2pErrMsg('Errore uscita holding', error), 'error'); return; }
     showNotification('Hai lasciato la holding.', 'info');
     await p2pFetchHoldings();
@@ -188,14 +190,14 @@ window.leaveHolding = async function(holdingId) {
 };
 
 window.contributeHoldingTreasury = async function(holdingId, amount) {
-    if (!_uid()) return;
+    if (!_p2pUid()) return;
     const roundedAmount = Math.round(amount);
     if (!Number.isFinite(roundedAmount) || roundedAmount <= 0) return;
     if ((gameState.cash || 0) < roundedAmount) {
         showNotification(`Fondi insufficienti — servono €${roundedAmount.toLocaleString()}`, 'error');
         return;
     }
-    const { data, error } = await _sb().rpc('rpc_contribute_holding_treasury', {
+    const { data, error } = await _p2pSb().rpc('rpc_contribute_holding_treasury', {
         v_holding_id: holdingId, v_amount: roundedAmount,
     });
     if (error) { showNotification(_p2pErrMsg('Errore contributo holding', error), 'error'); return; }
@@ -229,7 +231,7 @@ window.contributeHoldingTreasury = async function(holdingId, amount) {
  * Quota la propria azienda in borsa (rimpiazza la versione NPC).
  */
 window.listCompanyIPO = async function() {
-    if (!_uid()) { showNotification('Devi essere loggato.', 'error'); return; }
+    if (!_p2pUid()) { showNotification('Devi essere loggato.', 'error'); return; }
     if ((gameState.reputation || 0) < 3.5) {
         showNotification('Reputazione insufficiente (serve 3.5★)', 'error'); return;
     }
@@ -239,7 +241,7 @@ window.listCompanyIPO = async function() {
 
     const ipoPrice = Math.max(10, Math.round((gameState.cash || 0) / 1000));
 
-    const { data, error } = await _sb().rpc('rpc_list_company_ipo', {
+    const { data, error } = await _p2pSb().rpc('rpc_list_company_ipo', {
         v_ipo_price:    ipoPrice,
         v_shares_total: 1000,
     });
@@ -267,7 +269,7 @@ window.listCompanyIPO = async function() {
 };
 
 window.buyCompanyShares = async function(listingId, qty) {
-    if (!_uid()) return;
+    if (!_p2pUid()) return;
     const listing = window._p2pMarket.shares.find(s => s.id === listingId);
     if (!listing) return;
     const total = listing.current_price * qty;
@@ -275,7 +277,7 @@ window.buyCompanyShares = async function(listingId, qty) {
         showNotification(`Fondi insufficienti (servono €${total.toLocaleString()})`, 'error'); return;
     }
 
-    const { data, error } = await _sb().rpc('rpc_buy_company_shares', {
+    const { data, error } = await _p2pSb().rpc('rpc_buy_company_shares', {
         v_listing_id: listingId, v_qty: qty,
     });
     if (error || !data) { showNotification(_p2pErrMsg('Acquisto azioni fallito', error || {message: 'risposta vuota'}), 'error'); return; }
@@ -289,8 +291,8 @@ window.buyCompanyShares = async function(listingId, qty) {
 };
 
 window.sellCompanyShares = async function(listingId, qty) {
-    if (!_uid()) return;
-    const { data, error } = await _sb().rpc('rpc_sell_company_shares', {
+    if (!_p2pUid()) return;
+    const { data, error } = await _p2pSb().rpc('rpc_sell_company_shares', {
         v_listing_id: listingId, v_qty: qty,
     });
     if (error || !data) { showNotification(_p2pErrMsg('Vendita azioni fallita', error || {message: 'risposta vuota'}), 'error'); return; }
@@ -308,8 +310,8 @@ window.sellCompanyShares = async function(listingId, qty) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function p2pFetchMarket() {
-    if (!_sb()) return;
-    const { data, error } = await _sb()
+    if (!_p2pSb()) return;
+    const { data, error } = await _p2pSb()
         .from('market_listings')
         .select('*')
         .gt('expires_at', new Date().toISOString())
@@ -323,10 +325,10 @@ async function p2pFetchMarket() {
 }
 
 async function p2pFetchShares() {
-    if (!_sb()) return;
-    const uid = _uid();
+    if (!_p2pSb()) return;
+    const uid = _p2pUid();
 
-    const { data: listings, error: e1 } = await _sb()
+    const { data: listings, error: e1 } = await _p2pSb()
         .from('company_shares')
         .select('*')
         .order('listed_at', { ascending: false });
@@ -334,7 +336,7 @@ async function p2pFetchShares() {
     if (!e1 && listings) window._p2pMarket.shares = listings;
 
     if (uid) {
-        const { data: myH, error: e2 } = await _sb()
+        const { data: myH, error: e2 } = await _p2pSb()
             .from('share_holdings')
             .select('*, company_shares(company_name, current_price)')
             .eq('owner_user_id', uid);
@@ -343,13 +345,13 @@ async function p2pFetchShares() {
 }
 
 async function p2pFetchHoldings() {
-    if (!_sb()) return;
-    const uid = _uid();
+    if (!_p2pSb()) return;
+    const uid = _p2pUid();
 
     // Two separate queries to avoid PostgREST embedded-join schema cache issues
     const [hRes, mRes] = await Promise.all([
-        _sb().from('holdings').select('*').order('created_at', { ascending: false }),
-        _sb().from('holding_members').select('holding_id, user_id, company_name, role'),
+        _p2pSb().from('holdings').select('*').order('created_at', { ascending: false }),
+        _p2pSb().from('holding_members').select('holding_id, user_id, company_name, role'),
     ]);
 
     if (hRes.error || mRes.error) return;
@@ -367,12 +369,12 @@ async function p2pFetchHoldings() {
 }
 
 async function p2pFetchConsorzi() {
-    if (!_sb()) return;
-    const uid = _uid();
+    if (!_p2pSb()) return;
+    const uid = _p2pUid();
 
     const [cRes, mRes] = await Promise.all([
-        _sb().from('consorzi').select('*').order('created_at', { ascending: false }),
-        _sb().from('consorzio_members').select('consorzio_id, user_id, company_name, role'),
+        _p2pSb().from('consorzi').select('*').order('created_at', { ascending: false }),
+        _p2pSb().from('consorzio_members').select('consorzio_id, user_id, company_name, role'),
     ]);
     if (cRes.error || mRes.error) return;
 
@@ -398,9 +400,9 @@ async function p2pFetchConsorzi() {
 }
 
 async function p2pFetchTension() {
-    if (!_sb()) return;
+    if (!_p2pSb()) return;
     // Tick server-side (aggiorna tensione in base al tempo trascorso)
-    const { data, error } = await _sb().rpc('rpc_tick_tension');
+    const { data, error } = await _p2pSb().rpc('rpc_tick_tension');
     if (error || !data) return;
     window._sindacatoState.tension      = data.tension      ?? 0;
     window._sindacatoState.strikeActive = data.strike_active ?? false;
@@ -413,8 +415,8 @@ async function p2pFetchTension() {
 }
 
 async function p2pFetchGdfRisk() {
-    if (!_sb() || !_uid()) return;
-    const { data, error } = await _sb().rpc('rpc_get_gdf_risk');
+    if (!_p2pSb() || !_p2pUid()) return;
+    const { data, error } = await _p2pSb().rpc('rpc_get_gdf_risk');
     if (error || !data) return;
     window._sindacatoState.gdfRisk              = data.risk_level           ?? 0;
     window._sindacatoState.crumiriBoostUntil    = data.crumiri_boost_until  ?? null;
@@ -423,8 +425,8 @@ async function p2pFetchGdfRisk() {
 
 /** Check giornaliero GdF — chiamata da processDailyRoutines() in engine.js */
 window._sindacatoGdfDailyCheck = async function() {
-    if (!_sb() || !_uid()) return;
-    const { data, error } = await _sb().rpc('rpc_gdf_inspection_check');
+    if (!_p2pSb() || !_p2pUid()) return;
+    const { data, error } = await _p2pSb().rpc('rpc_gdf_inspection_check');
     if (error || !data) return;
     if (data.inspected) {
         const fine = data.fine || 0;
@@ -462,21 +464,21 @@ window.p2pRefreshAll = async function() {
  * Chiama questa funzione DOPO il login (in auth.js, dopo onAuthStateChange).
  */
 window.p2pStartRealtime = function() {
-    if (!_sb()) { console.warn('[P2P] Supabase non disponibile'); return; }
+    if (!_p2pSb()) { console.warn('[P2P] Supabase non disponibile'); return; }
 
     // Annulla sottoscrizioni precedenti
-    window._p2pMarket._subs.forEach(s => _sb().removeChannel(s));
+    window._p2pMarket._subs.forEach(s => _p2pSb().removeChannel(s));
     window._p2pMarket._subs = [];
 
     // ── Mercato P2P: nuovi annunci e rimozioni ───────────────────────────────
-    const marketChannel = _sb()
+    const marketChannel = _p2pSb()
         .channel('public:market_listings')
         .on('postgres_changes',
             { event: '*', schema: 'public', table: 'market_listings' },
             (payload) => {
                 if (payload.eventType === 'INSERT') {
                     window._p2pMarket.listings.unshift(payload.new);
-                    if (payload.new.seller_user_id !== _uid()) {
+                    if (payload.new.seller_user_id !== _p2pUid()) {
                         const car = payload.new.car_snapshot;
                         logToMap(`🏪 Nuovo annuncio: ${car?.name || 'Auto'} a €${(payload.new.ask_price || 0).toLocaleString()} (${payload.new.seller_name})`);
                     }
@@ -492,7 +494,7 @@ window.p2pStartRealtime = function() {
         .subscribe();
 
     // ── Borsa Valori: aggiornamenti prezzo azioni ────────────────────────────
-    const sharesChannel = _sb()
+    const sharesChannel = _p2pSb()
         .channel('public:company_shares')
         .on('postgres_changes',
             { event: '*', schema: 'public', table: 'company_shares' },
@@ -504,7 +506,7 @@ window.p2pStartRealtime = function() {
         .subscribe();
 
     // ── Holdings: nuove gilde, nuovi membri ─────────────────────────────────
-    const holdingChannel = _sb()
+    const holdingChannel = _p2pSb()
         .channel('public:holding_members')
         .on('postgres_changes',
             { event: '*', schema: 'public', table: 'holding_members' },
@@ -516,7 +518,7 @@ window.p2pStartRealtime = function() {
         .subscribe();
 
     // ── Consorzi: nuovi membri, nuove gilde ─────────────────────────────────
-    const consorzioChannel = _sb()
+    const consorzioChannel = _p2pSb()
         .channel('public:consorzio_members')
         .on('postgres_changes',
             { event: '*', schema: 'public', table: 'consorzio_members' },
