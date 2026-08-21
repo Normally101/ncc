@@ -30,11 +30,11 @@ function setupTourismEnv(overrides = {}) {
     return { env, sandbox, gs: sandbox.gameState, syncedCash };
 }
 
-describe('tourism — sincronizzazione cassa e reputazione col server (CE_money)', () => {
+describe('tourism — il server ha già mosso i soldi (accreditatoDalServer)', () => {
 
     describe('_tourismDailyTick', () => {
-        test('_tourismDailyTick accredita il payout e sincronizza con ServerState.syncCash via CE_money', async () => {
-            const { sandbox, gs, syncedCash } = setupTourismEnv({ isReady: false });
+        test('_tourismDailyTick accredita il payout localmente con accreditatoDalServer e NON chiama ServerState.syncCash', async () => {
+            const { sandbox, gs, syncedCash } = setupTourismEnv();
             gs.cash = 50000;
 
             sandbox.supabaseClient = {
@@ -57,11 +57,39 @@ describe('tourism — sincronizzazione cassa e reputazione col server (CE_money)
             await new Promise(r => setImmediate(r));
 
             assert.equal(gs.cash, 65000, 'il saldo locale deve includere il payout');
-            assert.deepEqual(syncedCash, [65000], 'ServerState.syncCash deve essere stato chiamato tramite CE_money.earn');
+            assert.deepEqual(syncedCash, [], 'ServerState.syncCash NON deve essere chiamato: rpc_tourism_daily_tick aggiorna già companies.cash sul server');
+        });
+
+        test('_tourismDailyTick con eco Realtime arrivato durante la RPC non provoca doppio accredito o syncCash', async () => {
+            const { sandbox, gs, syncedCash } = setupTourismEnv();
+            gs.cash = 50000;
+
+            sandbox.supabaseClient = {
+                rpc: async (name) => {
+                    if (name === 'rpc_tourism_daily_tick') {
+                        // Simula arrivo dell'eco Realtime dal server durante l'esecuzione della RPC
+                        gs.cash = 65000;
+                        return {
+                            data: {
+                                total_payout: 15000,
+                                payouts: [{ name: 'Aurevia Elite Journeys', icon: '🌟', amount: 15000 }],
+                                expiring_soon: 0,
+                            },
+                            error: null,
+                        };
+                    }
+                    return { data: null, error: new Error('RPC non trovata') };
+                },
+            };
+
+            await sandbox._tourismDailyTick();
+            await new Promise(r => setImmediate(r));
+
+            assert.deepEqual(syncedCash, [], 'nessuna risincronizzazione con syncCash');
         });
 
         test('_tourismDailyTick con errore RPC non modifica cassa né chiama syncCash', async () => {
-            const { sandbox, gs, syncedCash } = setupTourismEnv({ isReady: false });
+            const { sandbox, gs, syncedCash } = setupTourismEnv();
             gs.cash = 50000;
 
             sandbox.supabaseClient = {
@@ -76,7 +104,7 @@ describe('tourism — sincronizzazione cassa e reputazione col server (CE_money)
         });
 
         test('_tourismDailyTick con payout nullo non modifica cassa né chiama syncCash', async () => {
-            const { sandbox, gs, syncedCash } = setupTourismEnv({ isReady: false });
+            const { sandbox, gs, syncedCash } = setupTourismEnv();
             gs.cash = 50000;
 
             sandbox.supabaseClient = {

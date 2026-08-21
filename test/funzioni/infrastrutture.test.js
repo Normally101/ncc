@@ -477,7 +477,7 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
         beforeEach(() => { amb = creaAmbienteInfrastrutture(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('_infraBuyDepot senza supabaseClient non lancia eccezioni e aggiorna lo stato locale', async () => {
+        test('_infraBuyDepot senza supabaseClient non lancia eccezioni e mostra errore', async () => {
             const { sandbox, gs, env } = amb;
             sandbox.supabaseClient = null;
             sandbox.window.supabaseClient = null;
@@ -487,8 +487,8 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
                 await sandbox._infraBuyDepot('prov_roma', 'Roma Capitale');
             });
 
-            assert.equal(gs.cash, 100000, 'la spesa locale di 300k deve comunque essere scalata');
-            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Roma Capitale')));
+            assert.equal(gs.cash, 400000, 'la cassa non deve cambiare se il client di rete non è disponibile');
+            assert.ok(env.notifications.some(n => n.type === 'error'));
         });
 
         test('completeRide senza currentUser non tenta la chiamata RPC multiplayer', async () => {

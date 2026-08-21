@@ -905,11 +905,13 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
         });
     });
 
-    describe('11. Movimenti di denaro e sincronizzazione ServerState (online vs offline)', () => {
-        test('_tourismDailyTick con ServerState online NON muta cash locale direttamente', async () => {
+    describe('11. Movimenti di denaro e sincronizzazione ServerState (accreditatoDalServer)', () => {
+        test('_tourismDailyTick accredita cash locale via accreditatoDalServer senza invocare syncCash', async () => {
+            const syncedCash = [];
             const amb = creaAmbienteTurismo({
                 serverStateOverrides: {
                     isReady: () => true,
+                    syncCash: async (v) => { syncedCash.push(v); return { success: true, cash: v }; },
                 },
             });
             await amb.sandbox.tourismRefresh(true);
@@ -917,8 +919,8 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
             amb.gs.cash = 10000;
             await amb.sandbox._tourismDailyTick();
 
-            // Con ServerState pronto, l'accredito viene gestito da Supabase / Realtime bridge, non duplicato localmente
-            assert.equal(amb.gs.cash, 10000, 'il cash locale non deve essere alterato doppiamente con ServerState online');
+            assert.equal(amb.gs.cash, 15600, 'il cash locale deve essere aggiornato subito con il payout');
+            assert.deepEqual(syncedCash, [], 'syncCash NON deve essere chiamato: il server ha già mosso i soldi');
             amb.env.stopAllIntervals();
         });
 
@@ -1001,10 +1003,12 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
             amb.env.stopAllIntervals();
         });
 
-        test('simulazione eco ServerState: con server online il cash non subisce doppio accredito e si allinea', async () => {
+        test('simulazione eco ServerState: il cash viene accreditato e non risincronizzato', async () => {
+            const syncedCash = [];
             const amb = creaAmbienteTurismo({
                 serverStateOverrides: {
                     isReady: () => true,
+                    syncCash: async (v) => { syncedCash.push(v); return { success: true, cash: v }; },
                 },
             });
             await amb.sandbox.tourismRefresh(true);
@@ -1014,14 +1018,8 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
             // Invocazione tick giornaliero
             await amb.sandbox._tourismDailyTick();
 
-            // Con ServerState pronto, il client non muta localmente il cash per evitare doppio accredito
-            assert.equal(amb.gs.cash, 50000, 'il cash locale non deve essere mutato subito');
-
-            // Simula arrivo delta autoritativo dal server (+5600)
-            const serverDelta = 5600;
-            amb.gs.cash += serverDelta;
-
-            assert.equal(amb.gs.cash, 55600, 'il cash finale deve riflettere esattamente l\'accredito autoritativo');
+            assert.equal(amb.gs.cash, 55600, 'il cash locale riflette subito il payout');
+            assert.deepEqual(syncedCash, [], 'nessuna risincronizzazione con syncCash');
             amb.env.stopAllIntervals();
         });
     });
