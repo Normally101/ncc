@@ -23,8 +23,9 @@ function _fmtCurrency(n) {
 }
 
 function _countdown(endsAt) {
+    if (!endsAt) return '—';
     const diff = new Date(endsAt) - Date.now();
-    if (diff <= 0) return 'Scaduta';
+    if (isNaN(diff) || diff <= 0) return 'Scaduta';
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
@@ -234,6 +235,11 @@ window.auctionsClaim = async function(auctionId) {
     if (data?.lot_type === 'container') {
         for (const item of (data.container_data?.items || [])) {
             if (item?.type !== 'vehicle') continue;
+            const auto = _autoDalLotto(item);
+            if (auto) { window.gameState?.fleet?.push(auto); nuove.push(auto); }
+        }
+    } else if (data?.lot_type === 'fleet_pack') {
+        for (const item of (data.vehicle_data?.vehicles || [])) {
             const auto = _autoDalLotto(item);
             if (auto) { window.gameState?.fleet?.push(auto); nuove.push(auto); }
         }
