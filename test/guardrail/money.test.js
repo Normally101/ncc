@@ -17,20 +17,22 @@ const { freshEnv } = require('../../test-support/game-env.js');
 /** Ambiente con ServerState strumentato: registra le SCRITTURE, non le letture. */
 function ambiente(rispostaDC) {
     const scritture = [];
-    const { sandbox } = freshEnv({
+    const env = freshEnv({
         serverState: {
             syncCash: async (v) => { scritture.push(['syncCash', v]); return { success: true, cash: v }; },
             spendDriverCoins: async (motivo, n) => {
                 scritture.push(['spendDriverCoins', motivo, n]);
+                if (rispostaDC instanceof Error) throw rispostaDC;
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
             addDriverCoins: async (n, motivo) => {
                 scritture.push(['addDriverCoins', n, motivo]);
+                if (rispostaDC instanceof Error) throw rispostaDC;
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
         },
     });
-    return { sandbox, gs: sandbox.gameState, scritture };
+    return { sandbox: env.sandbox, gs: env.sandbox.gameState, scritture, notifications: env.notifications };
 }
 
 describe('money — la porta unica del denaro', () => {
@@ -104,6 +106,26 @@ describe('money — la porta unica del denaro', () => {
             assert.equal(esito, false);
             assert.equal(gs.driverCoins, 2);
             assert.deepEqual(scritture, []);
+        });
+
+        test('se il server rifiuta la spesa con un errore, il giocatore viene avvisato e il saldo non resta scalato', async () => {
+            const errServer = new Error('Driver Coins insufficienti sul server');
+            const { sandbox, gs, notifications } = ambiente(errServer);
+            gs.driverCoins = 50;
+            const esito = sandbox.CE_money.spendDC(10, 'acquisto_fallito');
+            await new Promise(r => setImmediate(r));
+            assert.equal(gs.driverCoins, 50, 'il saldo non deve restare scalato per una spesa rifiutata dal server');
+            assert.ok(notifications.some(n => n.type === 'error' || n.msg.includes('rifiutat') || n.msg.includes('insufficienti') || n.msg.includes('Server')),
+                'il giocatore deve ricevere un avviso per la spesa rifiutata');
+        });
+
+        test('se il server restituisce risposta non valida (null o senza saldo), il giocatore viene avvisato e il saldo ripristinato', async () => {
+            const { sandbox, gs, notifications } = ambiente(null);
+            gs.driverCoins = 50;
+            const esito = sandbox.CE_money.spendDC(10, 'acquisto_nullo');
+            await new Promise(r => setImmediate(r));
+            assert.equal(gs.driverCoins, 50, 'il saldo deve tornare al valore iniziale se la RPC ritorna null');
+            assert.ok(notifications.length > 0, 'il giocatore deve ricevere una notifica');
         });
 
         test('earnDC accredita tramite la RPC dedicata', async () => {

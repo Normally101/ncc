@@ -107,6 +107,42 @@ var CE_money = (function () {
        il saldo vero con cui riallineare il locale.
        Modello: vanity.js:125 `_spend`, l'unico posto che lo faceva giusto. */
 
+    function _riallineaDCDaServer() {
+        var SS = window.ServerState;
+        if (SS && typeof SS.getCompany === 'function') {
+            var co = SS.getCompany();
+            if (co && co.driver_coins != null) {
+                _gs().driverCoins = co.driver_coins;
+                return true;
+            }
+        }
+        if (SS && typeof SS.bridgeToGameState === 'function') {
+            SS.bridgeToGameState();
+            return true;
+        }
+        return false;
+    }
+
+    function _rifiutoSpendDC(quantita, errOrMsg) {
+        var gs = _gs();
+        if (!_riallineaDCDaServer()) {
+            gs.driverCoins = (gs.driverCoins || 0) + quantita;
+        }
+        var msg = (errOrMsg && errOrMsg.message) ? errOrMsg.message : (errOrMsg || 'Spesa Driver Coins rifiutata dal server.');
+        _avvisa(msg);
+        if (typeof updateUI === 'function') updateUI();
+    }
+
+    function _rifiutoEarnDC(quantita, errOrMsg) {
+        var gs = _gs();
+        if (!_riallineaDCDaServer()) {
+            gs.driverCoins = Math.max(0, (gs.driverCoins || 0) - quantita);
+        }
+        var msg = (errOrMsg && errOrMsg.message) ? errOrMsg.message : (errOrMsg || 'Accredito Driver Coins fallito sul server.');
+        _avvisa(msg);
+        if (typeof updateUI === 'function') updateUI();
+    }
+
     /**
      * Spende Driver Coins tramite la RPC dedicata.
      * @returns {boolean} false se i coin non bastano — in quel caso NULLA viene toccato.
@@ -126,12 +162,18 @@ var CE_money = (function () {
                 : null;
             if (p && typeof p.then === 'function') {
                 p.then(function (r) {
-                    // Il server e' l'autorita': riallinea sul valore che ci ritorna.
-                    if (r && r.driver_coins != null) {
-                        gs.driverCoins = r.driver_coins;
+                    if (r == null || r === false || (r && (r.error != null || r.ok === false))) {
+                        _rifiutoSpendDC(quantita, r && r.error);
+                    } else {
+                        // Il server e' l'autorita': riallinea sul valore che ci ritorna.
+                        if (r && r.driver_coins != null) {
+                            gs.driverCoins = r.driver_coins;
+                        }
                         if (typeof updateUI === 'function') updateUI();
                     }
-                }).catch(function () {});
+                }).catch(function (err) {
+                    _rifiutoSpendDC(quantita, err);
+                });
             }
         } catch (e) {}
         return true;
@@ -148,11 +190,17 @@ var CE_money = (function () {
                 : null;
             if (p && typeof p.then === 'function') {
                 p.then(function (r) {
-                    if (r && r.driver_coins != null) {
-                        gs.driverCoins = r.driver_coins;
+                    if (r == null || r === false || (r && (r.error != null || r.ok === false))) {
+                        _rifiutoEarnDC(quantita, r && r.error);
+                    } else {
+                        if (r && r.driver_coins != null) {
+                            gs.driverCoins = r.driver_coins;
+                        }
                         if (typeof updateUI === 'function') updateUI();
                     }
-                }).catch(function () {});
+                }).catch(function (err) {
+                    _rifiutoEarnDC(quantita, err);
+                });
             }
         } catch (e) {}
         return true;
