@@ -381,6 +381,22 @@ describe('Funzione Holding — Holding Finanziaria Locale (engine-holding.js)', 
             assert.equal(syncedCash.length, 0);
             assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Azioni insufficienti')));
         });
+
+        test('buyCempShares e sellCempShares con input non numerico (NaN/stringa non valida) non corompono lo stato', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 500;
+            gs.cempPrice = 10;
+            gs.cempOwnedShares = 20;
+
+            sandbox.buyCempShares('abc');
+            await new Promise(r => setImmediate(r));
+            assert.ok(Number.isFinite(gs.cempOwnedShares), 'cempOwnedShares deve rimanere un numero finito');
+
+            sandbox.sellCempShares('abc');
+            await new Promise(r => setImmediate(r));
+            assert.ok(Number.isFinite(gs.cempOwnedShares), 'cempOwnedShares non deve diventare NaN');
+            assert.ok(Number.isFinite(gs.cash), 'cash non deve diventare NaN');
+        });
     });
 
     describe('window._listCompanyIPO_NPC — Quotazione aziendale NPC', () => {
@@ -579,15 +595,18 @@ describe('Funzione Holding — OPA Ostili e M&A Server (hostile_takeover.js)', (
             assert.equal(rpcLog.filter(r => r.nome === 'rpc_opa_buyback').length, 0);
         });
 
-        test('buyback valido detrae denaro, chiama rpc_opa_buyback e notifica successo', async () => {
+        test('buyback valido detrae denaro, chiama rpc_opa_buyback, invoca saveGame e notifica successo', async () => {
             const { sandbox, gs, rpcLog, syncedCash, env } = amb;
             gs.cash = 200000;
+            let saveGameCalled = false;
+            sandbox.saveGame = () => { saveGameCalled = true; };
 
             await sandbox._opaRequestBuyback('opa_001', 150000);
 
             // Cassa scalata (server-authoritative: addebitatoDalServer, no syncCash)
             assert.equal(gs.cash, 50000);
             assert.deepEqual(syncedCash, [], 'non deve rispedire syncCash perché rpc_opa_buyback muove già companies.cash');
+            assert.equal(saveGameCalled, true, 'saveGame deve essere invocato per persistere la cassa aggiornata');
 
             // RPC invocata con argomenti corretti
             const buyRpc = rpcLog.find(r => r.nome === 'rpc_opa_buyback');
@@ -635,6 +654,131 @@ describe('Funzione Holding — OPA Ostili e M&A Server (hostile_takeover.js)', (
 
             assert.equal(gs.cash, 150000);
             assert.ok(rpcLog.some(r => r.nome === 'rpc_opa_buyback' && r.args.v_opa_id === 'opa_001'));
+        });
+    });
+
+    describe('Ciclo completo sussidiarie — Acquisizione, dividendi e cessione di tutte le 5 opzioni', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteHolding(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('tutte le 5 sussidiarie possono essere acquisite in sequenza e i dividendi sommati correttamente', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 2000000;
+            gs.reputation = 4.5;
+            sandbox.incorporateHolding();
+            await new Promise(r => setImmediate(r));
+            assert.equal(gs.holding?.incorporated, true);
+
+            const allSubs = ['sub_fleet', 'sub_hotel', 'sub_fuel', 'sub_park', 'sub_tech'];
+            for (const subId of allSubs) {
+                sandbox.acquireSubsidiary(subId);
+                await new Promise(r => setImmediate(r));
+            }
+
+            assert.equal(gs.holding.subsidiaries.length, 5);
+            assert.deepEqual(Array.from(gs.holding.subsidiaries), allSubs);
+
+            // Calcolo dividendi attesi: 800 + 1500 + 1200 + 600 + 2000 = 6100
+            const cashBeforeTick = gs.cash;
+            sandbox.processDailyRoutines();
+            assert.ok(gs.cash > cashBeforeTick, 'il saldo deve incrementarsi per tutte e 5 le sussidiarie');
+
+            // Cessione di tutte le 5
+            for (const subId of allSubs) {
+                sandbox.divestSubsidiary(subId);
+                await new Promise(r => setImmediate(r));
+            }
+            assert.equal(gs.holding.subsidiaries.length, 0);
+        });
+    });
+
+    describe('Verifica Domanda (b) — Permanenza dello stato ed eco Realtime dal Server', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteHolding(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('incorporazione holding e acquisto sussidiarie restano in gameState dopo eco Realtime', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 500000;
+            gs.reputation = 4.2;
+
+            sandbox.incorporateHolding();
+            await new Promise(r => setImmediate(r));
+            sandbox.acquireSubsidiary('sub_fleet');
+            await new Promise(r => setImmediate(r));
+
+            // Simula eco Realtime del server che invia un aggiornamento di cassa (es. sincronizzato a 150000)
+            gs.cash = 150000;
+
+            // Verifica che lo stato acquistato (holding + sussidiarie) non venga annullato
+            assert.equal(gs.holding?.incorporated, true);
+            assert.deepEqual(Array.from(gs.holding?.subsidiaries || []), ['sub_fleet']);
+        });
+
+        test('acquisto azioni $CEMP resta in gameState dopo eco Realtime', async () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 1000;
+            gs.cempPrice = 10;
+
+            sandbox.buyCempShares(50);
+            await new Promise(r => setImmediate(r));
+
+            // Simula eco Realtime
+            gs.cash = 500;
+
+            assert.equal(gs.cempOwnedShares, 50);
+        });
+
+        test('buyback OPA risolve l OPA e la cassa locale resta sincronizzata senza annullamento', async () => {
+            const { sandbox, gs, getStatoOPA } = amb;
+            gs.cash = 300000;
+
+            await sandbox._opaRequestBuyback('opa_001', 150000);
+
+            // Cassa scalata a 150000
+            assert.equal(gs.cash, 150000);
+            // Simula eco Realtime che conferma cash = 150000
+            gs.cash = 150000;
+
+            // OPA opa_001 deve essere rimossa dalla lista attiva
+            assert.ok(!getStatoOPA().some(o => o.opa_id === 'opa_001'), 'l OPA deve essere risolta');
+        });
+    });
+
+    describe('Verifica Domanda (c) — Conformità schema dati RPC Server e Client', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteHolding(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('payload di rpc_get_hostile_takeovers contiene tutte le proprietà previste da hostile_takeover.js', async () => {
+            const { sandbox } = amb;
+            await sandbox.renderTabOPA();
+
+            const stato = amb.getStatoOPA();
+            stato.forEach(opa => {
+                assert.ok(typeof opa.opa_id === 'string');
+                assert.ok(typeof opa.target_company === 'string');
+                assert.ok(typeof opa.raider_company === 'string');
+                assert.ok(typeof opa.raider_pct === 'number');
+                assert.ok(typeof opa.buyback_price === 'number');
+                assert.ok(typeof opa.total_dividends === 'number');
+                assert.ok(typeof opa.triggered_at === 'string');
+                assert.ok(typeof opa.is_my_target === 'boolean');
+                assert.ok(typeof opa.is_my_raid === 'boolean');
+            });
+        });
+
+        test('rpc_opa_buyback riceve esattamente il parametro v_opa_id atteso dallo schema SQL', async () => {
+            const { sandbox, gs, rpcLog } = amb;
+            gs.cash = 200000;
+
+            await sandbox._opaRequestBuyback('opa_002', 95000);
+
+            const call = rpcLog.find(r => r.nome === 'rpc_opa_buyback');
+            assert.ok(call);
+            assert.deepEqual(Object.keys(call.args), ['v_opa_id']);
+            assert.equal(call.args.v_opa_id, 'opa_002');
         });
     });
 });

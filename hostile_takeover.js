@@ -146,6 +146,7 @@ window._opaRequestBuyback = async function(opaId, price) {
         }
         window.CE_money.addebitatoDalServer(numPrice, 'opa_buyback');
         if (typeof updateUI === 'function') updateUI();
+        if (typeof saveGame === 'function') saveGame();
         if (typeof showNotification === 'function') {
             showNotification('🛡️ Buyback completato! Hai ripreso il controllo della tua azienda.', 'success');
         }
