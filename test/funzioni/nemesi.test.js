@@ -379,6 +379,29 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
             assert.equal(sandbox._shadowState.log.length, 1);
         });
 
+        test('shadowInit sincronizza il livello di difesa salvato sul DB (shadow_defense) se presente', async () => {
+            delete gs._shadowDefenseLevel;
+            sandbox.supabaseClient.from = (table) => {
+                if (table === 'shadow_defense') {
+                    return {
+                        select: () => ({
+                            eq: () => ({
+                                maybeSingle: async () => ({
+                                    data: { defense_level: 3 },
+                                    error: null,
+                                }),
+                            }),
+                        }),
+                    };
+                }
+                return { select: () => ({ neq: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }) }) };
+            };
+
+            await sandbox.shadowInit();
+
+            assert.equal(gs._shadowDefenseLevel, 3, 'shadowInit deve allineare _shadowDefenseLevel con il record DB');
+        });
+
         test('shadowRefresh rispetta il cooldown di 30 secondi se non forzato', async () => {
             sandbox._shadowState._lastFetch = Date.now();
             supabaseRpcCalls = [];
@@ -494,11 +517,13 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
             assert.ok(env.notifications.some(n => n.msg.includes('−0.15★ reputazione inflitta al target')));
         });
 
-        test('buy_off_client attiva un evento dinamico duraturo con boost corse VIP del 30%', async () => {
+        test('buy_off_client attiva un evento dinamico duraturo con boost corse VIP del 30% e lo persiste', async () => {
             gs.cash = 100000;
             gs.day = 5;
             gs.hour = 12;
             gs.activeDynamicEvent = null;
+            let saveGameChiamato = false;
+            sandbox.saveGame = () => { saveGameChiamato = true; };
 
             // Costo buy_off_client = 40.000€
             await sandbox.shadowExecuteOp('t_alpha', 'buy_off_client');
@@ -509,6 +534,7 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
             assert.equal(gs.activeDynamicEvent.id, 'shadow_vip_boost');
             assert.equal(gs.activeDynamicEvent.endsHour, 5 * 24 + 12 + 24, 'deve durare esattamente 24 ore di gioco');
             assert.equal(gs.activeDynamicEvent.tipMult, 1.30, 'deve incrementare le mance/corse VIP del 30%');
+            assert.ok(saveGameChiamato, 'shadowExecuteOp deve chiamare saveGame per persistere l effetto');
             assert.ok(env.notifications.some(n => n.msg.includes('+30% corse VIP per 24h')));
         });
 
@@ -692,6 +718,66 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
                 assert.ok(typeof op.name === 'string' && op.name.length > 0);
                 assert.ok(typeof op.desc === 'string' && op.desc.length > 0);
             });
+        });
+    });
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 10. PERSISTENZA STATO ED ECO SERVER (Domande a, b, c)
+    // ────────────────────────────────────────────────────────────────────────
+    describe('Persistenza dello stato ed eco server', () => {
+        test('lo stato dei nemici VIP e della difesa ombra entra in gameState e persiste dopo le azioni', async () => {
+            let saved = false;
+            sandbox.saveGame = () => { saved = true; };
+
+            // 1. Add nemesi VIP
+            sandbox._nemesisAddVip('vip_test', 'Barone Test', 'fallita');
+            assert.equal(gs.vipNemeses.vip_test.level, 2);
+            assert.equal(gs.vipNemeses.vip_test.anger, 60);
+            assert.ok(saved);
+
+            // 2. Corruzione VIP
+            gs.cash = 100000;
+            saved = false;
+            sandbox._nemesisBribeVip('vip_test');
+            assert.equal(gs.vipNemeses.vip_test.anger, 20);
+            assert.equal(gs.vipNemeses.vip_test.level, 1);
+            assert.ok(saved);
+
+            // 3. Upgrade difesa ombra
+            gs.cash = 200000;
+            gs._shadowDefenseLevel = 0;
+            saved = false;
+            await sandbox.shadowUpgradeDefense();
+            assert.equal(gs._shadowDefenseLevel, 1);
+            assert.ok(saved);
+
+            // 4. Esecuzione op con boost persistente
+            sandbox._shadowState.targets = [{ user_id: 't_alpha', name: 'Alpha Limo', reputation: 4.5, defense_lvl: 1 }];
+            saved = false;
+            await sandbox.shadowExecuteOp('t_alpha', 'buy_off_client');
+            assert.equal(gs.activeDynamicEvent.id, 'shadow_vip_boost');
+            assert.ok(saved);
+        });
+
+        test('l arrivo di un eco Realtime dal server non annulla né corrompe lo stato comprato', async () => {
+            gs.cash = 100000;
+            gs._shadowDefenseLevel = 0;
+            sandbox._shadowState.targets = [{ user_id: 't_alpha', name: 'Alpha Limo', reputation: 4.5, defense_lvl: 1 }];
+
+            // Esegui upgrade difesa (costo tier 1 = 50.000€)
+            const upgradePromise = sandbox.shadowUpgradeDefense();
+
+            // Simula eco realtime dal server di decremento cassa prima o durante la RPC
+            if (sandbox.window.ServerState && sandbox.window.ServerState._handleCashDelta) {
+                sandbox.window.ServerState._handleCashDelta(-50000);
+            }
+
+            await upgradePromise;
+            await new Promise(r => setImmediate(r));
+
+            // Livello difesa deve restare 1 e cassa a 50000
+            assert.equal(gs._shadowDefenseLevel, 1);
+            assert.equal(gs.cash, 50000);
         });
     });
 });

@@ -151,6 +151,7 @@ window.shadowExecuteOp = async function(targetId, opId) {
         if(typeof showNotification==='function') showNotification(`❌ ${op.name}: fallita.${detectedMsg}`, 'error');
     }
 
+    if (typeof saveGame === 'function') saveGame();
     window._shadowState._lastFetch = 0;
     await window.shadowRefresh(true);
     if (typeof window.switchTab === 'function') window.switchTab('shadow');
@@ -271,5 +272,15 @@ window.renderTabShadow = function() {
 
 window.shadowInit = async function() {
     if (!gameState._shadowDefenseLevel) gameState._shadowDefenseLevel = 0;
+    const sb = window.supabaseClient;
+    const uid = window.currentUser?.id;
+    if (sb && uid) {
+        try {
+            const { data } = await sb.from('shadow_defense').select('defense_level').eq('user_id', uid).maybeSingle();
+            if (data && typeof data.defense_level === 'number') {
+                gameState._shadowDefenseLevel = data.defense_level;
+            }
+        } catch (_) {}
+    }
     await window.shadowRefresh(true);
 };
