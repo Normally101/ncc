@@ -1,7 +1,7 @@
 'use strict';
 /* ================================================================
    p2p-market.js — Chauffeur Empire
-   P2P backend: stato cache, azioni (listCarForSale, buyP2PCar,
+   P2P backend: stato cache, azioni (p2pListCarForSale, buyP2PCar,
    createHolding, joinHolding, listCompanyIPO, buyCompanyShares,
    sellCompanyShares), fetch Supabase, Realtime subscription.
    Dipendenze: engine.js, supabase-config.js
@@ -55,9 +55,8 @@ function _uid() { return window.currentUser?.id || null; }
 
 /**
  * Metti un'auto in vendita sul mercato P2P reale.
- * Rimpiazza la vecchia funzione locale window.listCarForSale.
  */
-window.listCarForSale = async function(carId, askPrice) {
+window.p2pListCarForSale = async function(carId, askPrice) {
     if (!_uid()) { showNotification('Devi essere loggato per vendere.', 'error'); return; }
 
     const car = gameState.fleet.find(c => c.id === carId);

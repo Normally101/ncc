@@ -97,7 +97,6 @@ const DECORATORI_VOLUTI = new Set([
 // Collisioni gia' note e in attesa del loro task. PUO' SOLO ACCORCIARSI.
 const COLLISIONI_NOTE = new Set([
     'hqOpenBuildModal',        // firme incompatibili (hq.js vs hq-visual.js)
-    'listCarForSale',          // due magazzini diversi (engine-fleet vs p2p-market)
     'renderTabProvinces',      // due schermate per la stessa tab (ui-ops vs war_room)
     '_updateActiveRouteLines', // map.js vs ui-map-utils.js
     '_sb', '_uid',             // corpi identici, innocue ma fragili
