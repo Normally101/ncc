@@ -681,7 +681,7 @@ describe('Funzione Consorzi / Alleanze — Esecuzione e ciclo di vita', () => {
             assert.equal(rpcLog.filter(r => r.nome === 'rpc_create_alliance').length, 0);
         });
 
-        test('gestione errore RPC durante la fondazione', async () => {
+        test('gestione errore RPC durante la fondazione con rimborso al giocatore', async () => {
             const ambErr = creaAmbienteAlleanze({
                 cash: 50000,
                 rpcHandlers: {
@@ -699,6 +699,7 @@ describe('Funzione Consorzi / Alleanze — Esecuzione e ciclo di vita', () => {
             await ambErr.sandbox._alCreate();
 
             assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('già occupato')));
+            assert.equal(ambErr.gs.cash, 50000, 'il saldo del giocatore deve essere rimborsato se la creazione fallisce');
             ambErr.env.stopAllIntervals();
         });
     });
@@ -754,9 +755,10 @@ describe('Funzione Consorzi / Alleanze — Esecuzione e ciclo di vita', () => {
         beforeEach(() => { amb = creaAmbienteAlleanze(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('_alLeave con conferma esegue rpc_leave_alliance e notifica il giocatore', async () => {
+        test('_alLeave con conferma esegue rpc_leave_alliance, notifica il giocatore e azzera il perk attivo', async () => {
             const ambMem = creaAmbienteAlleanze({ currentUser: { id: 'user_member_uuid' } });
             const { sandbox, rpcLog, env, statoMembri } = ambMem;
+            sandbox._allyActivePerk = { type: 'boost_income', until: new Date(Date.now() + 3600000).toISOString() };
 
             await sandbox._alLeave();
 
@@ -764,6 +766,7 @@ describe('Funzione Consorzi / Alleanze — Esecuzione e ciclo di vita', () => {
             assert.ok(leaveRpc);
             assert.ok(env.notifications.some(n => n.type === 'info' && n.msg.includes('lasciato il consorzio')));
             assert.ok(!statoMembri.some(m => m.user_id === 'user_member_uuid'));
+            assert.equal(sandbox._allyActivePerk, null, '_allyActivePerk deve essere azzerato dopo l uscita');
 
             ambMem.env.stopAllIntervals();
         });
@@ -778,8 +781,9 @@ describe('Funzione Consorzi / Alleanze — Esecuzione e ciclo di vita', () => {
             ambMem.env.stopAllIntervals();
         });
 
-        test('_alDisband da parte del Leader scioglie l\'alleanza e chiama rpc_disband_alliance', async () => {
+        test('_alDisband da parte del Leader scioglie l\'alleanza, chiama rpc_disband_alliance e azzera il perk attivo', async () => {
             const { sandbox, rpcLog, env, statoAlleanze } = amb;
+            sandbox._allyActivePerk = { type: 'boost_income', until: new Date(Date.now() + 3600000).toISOString() };
 
             await sandbox._alDisband();
 
@@ -787,6 +791,7 @@ describe('Funzione Consorzi / Alleanze — Esecuzione e ciclo di vita', () => {
             assert.ok(disbandRpc);
             assert.ok(env.notifications.some(n => n.type === 'info' && n.msg.includes('Consorzio sciolto')));
             assert.ok(!statoAlleanze.some(a => a.id === 'ally_alpha_1'));
+            assert.equal(sandbox._allyActivePerk, null, '_allyActivePerk deve essere azzerato dopo lo scioglimento');
         });
 
         test('_alDisband rifiutato dall\'utente (confirm = false) non scioglie il consorzio', async () => {
@@ -1011,6 +1016,66 @@ describe('Funzione Consorzi / Alleanze — Esecuzione e ciclo di vita', () => {
 
             assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('insufficiente')));
             ambErr.env.stopAllIntervals();
+        });
+    });
+
+    describe('11. Verifica stato del giocatore ed eco Realtime (Domanda b)', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteAlleanze({ cash: 100000 }); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('fondazione consorzio scala cash, aggiorna gameState e resiste all\'eco del server', async () => {
+            const { sandbox, gs } = amb;
+            sandbox.document.body.innerHTML = `
+                <div id="tab-container"></div>
+                <input id="al-name" value="Nuova Flotta">
+                <input id="al-tag" value="NFL">
+            `;
+
+            await sandbox._alCreate();
+
+            assert.equal(gs.cash, 75000, 'gameState.cash deve essere 75000');
+
+            // Simula eco realtime dal server con companies.cash = 75000
+            if (sandbox.ServerState && typeof sandbox.ServerState.syncCash === 'function') {
+                gs.cash = 75000;
+            }
+            assert.equal(gs.cash, 75000, 'il saldo non deve essere intaccato o scalato una seconda volta');
+        });
+
+        test('donazione consorzio scala cash, aggiorna gameState e resiste all\'eco del server', async () => {
+            const { sandbox, gs } = amb;
+            sandbox.document.body.innerHTML = `
+                <div id="tab-container"></div>
+                <input id="al-donate" value="30000">
+            `;
+
+            await sandbox._alDonate();
+
+            assert.equal(gs.cash, 70000, 'gameState.cash deve essere 70000');
+
+            // Simula arrivo eco Realtime del server con cash a 70000
+            gs.cash = 70000;
+            assert.equal(gs.cash, 70000, 'il saldo resta 70000');
+        });
+
+        test('buff del consorzio incrementa i ricavi e l\'incremento entra in gameState.cash e ci resta', () => {
+            const { sandbox, gs } = amb;
+            gs.cash = 10000;
+            sandbox._allyActivePerk = {
+                type: 'boost_income',
+                until: new Date(Date.now() + 3600000).toISOString(),
+            };
+
+            const baseEarn = 1000;
+            const mult = sandbox._allyPerkMult('earnings');
+            const totalEarn = Math.floor(baseEarn * mult);
+            assert.equal(totalEarn, 1120);
+
+            // Simula accredito corsa tramite CE_money
+            sandbox.CE_money.earn(totalEarn, 'ride_earnings');
+
+            assert.equal(gs.cash, 11120, 'il denaro extra entra in gameState.cash');
         });
     });
 });

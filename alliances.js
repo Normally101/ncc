@@ -57,6 +57,8 @@
     window.renderTabConsorzi = async function () {
         const c = document.getElementById('tab-container'); if (!c) return;
         if (!sb() || !uid()) {
+            _unsubscribeChat();
+            window._allyActivePerk = null;
             c.innerHTML = `<div class="em em-page"><div class="em-wrap"><div class="em-empty" style="margin-top:40px"><div style="font-size:34px;margin-bottom:10px">🛡️</div><div style="font-size:15px;font-weight:800;color:var(--em-ink)">Consorzi non disponibili</div><div style="margin-top:4px">Accedi al tuo account per unirti a un consorzio.</div></div></div></div>`;
             return;
         }
@@ -71,8 +73,12 @@
             mem = data || null;
         } catch (e) { mem = null; }
 
-        if (mem) await _renderMember(c, mem);
-        else      await _renderBrowse(c);
+        if (mem) {
+            await _renderMember(c, mem);
+        } else {
+            _unsubscribeChat();
+            await _renderBrowse(c);
+        }
     };
 
     // ── VISTA MEMBRO ──────────────────────────────────────────────────
@@ -90,7 +96,12 @@
                 .eq('alliance_id', mem.alliance_id).order('created_at', { ascending: false }).limit(40);
             chat = (ch.data || []).reverse();
         } catch (e) { /* parziale */ }
-        if (!al) { c.innerHTML = `<div class="em em-page"><div class="em-wrap"><div class="em-empty">Consorzio non trovato.</div></div></div>`; return; }
+        if (!al) {
+            _unsubscribeChat();
+            window._allyActivePerk = null;
+            c.innerHTML = `<div class="em em-page"><div class="em-wrap"><div class="em-empty">Consorzio non trovato.</div></div></div>`;
+            return;
+        }
 
         const isLeader  = mem.role === 'leader';
         const isOfficer = mem.role === 'leader' || mem.role === 'officer';
@@ -200,6 +211,7 @@
 
     // ── VISTA BROWSE / CREATE ─────────────────────────────────────────
     async function _renderBrowse(c) {
+        window._allyActivePerk = null;
         let list = [];
         try {
             const { data } = await sb().from('alliances').select('*').order('member_count', { ascending: false }).limit(30);
@@ -294,7 +306,10 @@
             if (typeof saveGame === 'function') saveGame();
             if (typeof updateUI === 'function') updateUI();
             window.renderTabConsorzi();
-        } catch (e) { _notify(e.message, 'error'); }
+        } catch (e) {
+            window.CE_money.earn(CREATE_COST, 'create_alliance_refund');
+            _notify(e.message, 'error');
+        }
     };
 
     window._alJoin = async function (id) {
@@ -307,14 +322,24 @@
 
     window._alLeave = async function () {
         if (!confirm('Vuoi davvero uscire dal consorzio?')) return;
-        try { await _rpc('rpc_leave_alliance'); _unsubscribeChat(); _notify('Hai lasciato il consorzio.', 'info'); window.renderTabConsorzi(); }
-        catch (e) { _notify(e.message, 'error'); }
+        try {
+            await _rpc('rpc_leave_alliance');
+            _unsubscribeChat();
+            window._allyActivePerk = null;
+            _notify('Hai lasciato il consorzio.', 'info');
+            window.renderTabConsorzi();
+        } catch (e) { _notify(e.message, 'error'); }
     };
 
     window._alDisband = async function () {
         if (!confirm('Sciogliere il consorzio? Operazione irreversibile.')) return;
-        try { await _rpc('rpc_disband_alliance'); _unsubscribeChat(); _notify('Consorzio sciolto.', 'info'); window.renderTabConsorzi(); }
-        catch (e) { _notify(e.message, 'error'); }
+        try {
+            await _rpc('rpc_disband_alliance');
+            _unsubscribeChat();
+            window._allyActivePerk = null;
+            _notify('Consorzio sciolto.', 'info');
+            window.renderTabConsorzi();
+        } catch (e) { _notify(e.message, 'error'); }
     };
 
     window._alDonate = async function () {
