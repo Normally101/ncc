@@ -396,5 +396,49 @@ describe('funzione salone — vetrina auto e configuratore (showroom.js)', () =>
             await sandbox._srmPurchase();
             assert.equal(gs.fleet[gs.fleet.length - 1].tier, 'ultra');
         });
+
+        test('fallimento ServerState.buyVehicle non addebita cassa e non aggiunge auto alla flotta', async () => {
+            env = freshEnv({
+                render: true,
+                serverState: {
+                    buyVehicle: async () => null, // fallimento RPC
+                },
+            });
+            sandbox = env.sandbox;
+            gs = sandbox.gameState;
+            gs.cash = 500000;
+            const flottaPrima = gs.fleet.length;
+
+            sandbox.renderTabShowroom();
+            sandbox._srmOpenConfig('stellar_e_exec');
+            sandbox._srmSetSection('riepilogo');
+
+            await sandbox._srmPurchase();
+
+            assert.equal(gs.cash, 500000, 'il saldo non deve cambiare su errore server');
+            assert.equal(gs.fleet.length, flottaPrima, 'nessuna auto aggiunta alla flotta');
+        });
+
+        test('aprire un veicolo inesistente reindirizza pacificamente alla galleria', () => {
+            sandbox.renderTabShowroom();
+            sandbox._srmOpenConfig('veicolo_totalmente_inventato');
+
+            const overlay = sandbox.document.getElementById('srm-overlay');
+            assert.ok(overlay.innerHTML.includes('CHAUFFEUR <span>SHOWROOM</span>'));
+        });
+
+        test('l auto acquistata dal salone è idonea per le corse del suo tier in TIER_COMPATIBILITY', async () => {
+            gs.cash = 500000;
+            sandbox.renderTabShowroom();
+            sandbox._srmOpenConfig('stellar_e_exec');
+            await sandbox._srmPurchase();
+
+            const acquistata = gs.fleet[gs.fleet.length - 1];
+            // TIER_COMPATIBILITY per corsa business accetta veicoli business
+            const TIER_COMPATIBILITY = vm.runInContext('TIER_COMPATIBILITY', sandbox);
+            assert.ok(TIER_COMPATIBILITY.business.includes(acquistata.tier), 'l auto deve essere compatibile con corse business');
+            assert.equal(acquistata.outOfService, false);
+            assert.equal(acquistata.condition, 100);
+        });
     });
 });
