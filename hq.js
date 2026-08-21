@@ -336,7 +336,7 @@ window.renderTabHQ = function() {
     }
 };
 
-window.hqOpenBuildModal = function(roomId) {
+window.hqOpenBuildModalStanza = function(roomId) {
     const currentCityId = gameState.currentHQCity || 'roma';
     const grid = gameState.hqs[currentCityId].grid || {};
     
