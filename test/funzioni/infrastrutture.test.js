@@ -472,6 +472,106 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
         });
     });
 
+    describe('Casi limite e gestione assenza rete / sessione', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbienteInfrastrutture(); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('_infraBuyDepot senza supabaseClient non lancia eccezioni e aggiorna lo stato locale', async () => {
+            const { sandbox, gs, env } = amb;
+            sandbox.supabaseClient = null;
+            sandbox.window.supabaseClient = null;
+            gs.cash = 400000;
+
+            await assert.doesNotReject(async () => {
+                await sandbox._infraBuyDepot('prov_roma', 'Roma Capitale');
+            });
+
+            assert.equal(gs.cash, 100000, 'la spesa locale di 300k deve comunque essere scalata');
+            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Roma Capitale')));
+        });
+
+        test('completeRide senza currentUser non tenta la chiamata RPC multiplayer', async () => {
+            const { sandbox, gs, rpcLog } = amb;
+            sandbox.currentUser = null;
+            sandbox.window.currentUser = null;
+            gs.cash = 10000;
+
+            const car = gs.fleet[0];
+            const driver = gs.drivers[0];
+            driver.assignedCarId = car.id;
+
+            const ride = {
+                id: 301,
+                fromPoi: { id: 'roma', name: 'Roma Termini', region: 'lazio', baseFlat: 200 },
+                toPoi: { id: 'roma_fco', name: 'Fiumicino Aeroporto', region: 'lazio', baseFlat: 200 },
+                tier: 'business',
+                price: 250,
+                duration: 20000,
+                driverId: driver.id
+            };
+
+            sandbox.completeRide(ride, false);
+            await new Promise(r => setImmediate(r));
+
+            const levyRpc = rpcLog.find(r => r.nome === 'rpc_pay_fuel_levy');
+            assert.equal(levyRpc, undefined, 'senza currentUser non deve chiamare rpc_pay_fuel_levy');
+        });
+
+        test('tutti i POI principali delle 5 province mappano alle rispettive province', async () => {
+            const { sandbox, gs, rpcLog } = amb;
+            gs.cash = 50000;
+            const car = gs.fleet[0];
+            const driver = gs.drivers[0];
+            driver.assignedCarId = car.id;
+
+            const mappingPOI = [
+                { poiId: 'roma_fco', provAttesa: 'prov_roma' },
+                { poiId: 'nap_capo', provAttesa: 'prov_napoli' },
+                { poiId: 'firenze', provAttesa: 'prov_firenze' },
+                { poiId: 'venezia', provAttesa: 'prov_venezia' },
+                { poiId: 'milano', provAttesa: 'prov_milano' },
+            ];
+
+            for (let i = 0; i < mappingPOI.length; i++) {
+                const item = mappingPOI[i];
+                const ride = {
+                    id: 400 + i,
+                    fromPoi: { id: item.poiId, name: item.poiId, region: 'test', baseFlat: 100 },
+                    toPoi: { id: 'dest', name: 'Dest', region: 'test', baseFlat: 100 },
+                    tier: 'standard',
+                    price: 120,
+                    duration: 10000,
+                    driverId: driver.id
+                };
+                sandbox.completeRide(ride, false);
+                await new Promise(r => setImmediate(r));
+
+                const chiamate = rpcLog.filter(r => r.nome === 'rpc_pay_fuel_levy' && r.args.v_province_id === item.provAttesa);
+                assert.ok(chiamate.length > 0, `POI ${item.poiId} deve invocare rpc_pay_fuel_levy per ${item.provAttesa}`);
+            }
+        });
+
+        test('renderTabInfrastructure con tutti i depositi posseduti o tutti rivali renderizza correttamente', async () => {
+            const { sandbox } = amb;
+            amb.statoDepositi.splice(0, amb.statoDepositi.length,
+                { depot_id: 'd1', province_id: 'prov_roma', province_name: 'Roma', owner_user_id: 'u1', owner_company: 'R1', markup_pct: 10, total_earned: 100, is_mine: false },
+                { depot_id: 'd2', province_id: 'prov_milano', province_name: 'Milano', owner_user_id: 'u2', owner_company: 'R2', markup_pct: 20, total_earned: 200, is_mine: false },
+                { depot_id: 'd3', province_id: 'prov_firenze', province_name: 'Firenze', owner_user_id: 'u3', owner_company: 'R3', markup_pct: 30, total_earned: 300, is_mine: false },
+                { depot_id: 'd4', province_id: 'prov_napoli', province_name: 'Napoli', owner_user_id: 'u4', owner_company: 'R4', markup_pct: 40, total_earned: 400, is_mine: false },
+                { depot_id: 'd5', province_id: 'prov_venezia', province_name: 'Venezia', owner_user_id: 'u5', owner_company: 'R5', markup_pct: 50, total_earned: 500, is_mine: false }
+            );
+
+            await sandbox.renderTabInfrastructure();
+            const html = sandbox.document.getElementById('tab-container').innerHTML;
+
+            assert.ok(html.includes('Depositi Rivali'));
+            assert.equal(html.includes('I Tuoi Depositi'), false);
+            assert.ok(html.includes('Occupato da R1'));
+            assert.ok(html.includes('Occupato da R5'));
+        });
+    });
+
     describe('Analisi architetturale e maturazione rendite', () => {
         test('il flusso delle rendite è guidato dagli eventi delle corse multiplayer', () => {
             // Documentazione del funzionamento reale:
