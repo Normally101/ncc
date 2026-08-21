@@ -676,7 +676,7 @@ function completeRide(ride, _deferPay = false) {
     const _cond3 = _conditionBeforeIncident != null ? _conditionBeforeIncident : (_car3 ? (_car3.condition || 0) : 100);
     const conditionMult = _cond3 < 30 ? 0.80 : _cond3 < 50 ? 0.85 : 1.0;
     const _kmEst = _car3 && ride.fromPoi?.region !== ride.toPoi?.region ? 250 : 60;
-    const _fuelDeduction = Math.round((_kmEst / 10) * (gameState.fuelPrice || 1.85));
+    const _fuelDeduction = Math.round((_kmEst / 10) * (typeof gameState.fuelPrice === 'number' ? gameState.fuelPrice : 1.85));
     // Sindacato modifiers (server-authoritative state cached in _sindacatoState)
     const _ss = window._sindacatoState || {};
     const _strikeMult    = _ss.strikeActive ? 0.70 : 1.0;
@@ -927,6 +927,7 @@ window.generatePOIRide      = generatePOIRide;
 window.generateContractRide = generateContractRide;
 window.autoDispatchRides    = autoDispatchRides;
 window.assignRideToDriver   = assignRideToDriver;
+window.assignAllRides       = assignAllRides;
 window.startNextRide        = startNextRide;
 window.completeRide         = completeRide;
 window.checkActiveTrips     = checkActiveTrips;
