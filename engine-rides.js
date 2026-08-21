@@ -236,6 +236,68 @@ function _getRideDurationMs(ride) {
     return Math.round(minutes) * 60 * 1000;
 }
 
+function _formatDuration(ms) {
+    if (!ms || ms <= 0) return '0min';
+    const totalMinutes = Math.round(ms / 60000);
+    if (totalMinutes <= 0) return '0min';
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    if (h > 0 && m > 0) return `${h}h ${m}min`;
+    if (h > 0) return `${h}h`;
+    return `${m}min`;
+}
+
+function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? gameState : {})) {
+    if (!driver) return null;
+    const now = Date.now();
+    const activeTrip = (gs.activeTrips || []).find(t => t.driverId === driver.id);
+    const currentRemainingMs = activeTrip ? Math.max(0, activeTrip.endTime - now) : 0;
+    const isBusy = driver.status === 'busy' && !!activeTrip;
+    const queuedRides = driver.queue || [];
+    const queuedDurationMs = queuedRides.reduce((sum, r) => {
+        const fn = (typeof window !== 'undefined' && typeof window._getRideDurationMs === 'function')
+            ? window._getRideDurationMs : _getRideDurationMs;
+        return sum + (fn(r) || 0);
+    }, 0);
+    const totalQueueMs = (isBusy ? currentRemainingMs : 0) + queuedDurationMs;
+    const execActive = gs.executivePassActive && gs.day <= (gs.executivePassExpiresDay || 0);
+    const maxQueue = execActive ? 12 : 10;
+    const isFull = queuedRides.length >= maxQueue;
+    const nextSlotFreeMs = isBusy ? currentRemainingMs : 0;
+    const freeAtDate = new Date(now + totalQueueMs);
+
+    return {
+        activeTrip,
+        isBusy,
+        currentRemainingMs,
+        queuedCount: queuedRides.length,
+        maxQueue,
+        isFull,
+        queuedDurationMs,
+        totalQueueMs,
+        nextSlotFreeMs,
+        freeAtDate,
+        freeAtTimeStr: freeAtDate.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' })
+    };
+}
+
+function _previewQueueWithRide(driver, ride, gs = (typeof gameState !== 'undefined' ? gameState : {})) {
+    const info = _getDriverQueueInfo(driver, gs);
+    const fn = (typeof window !== 'undefined' && typeof window._getRideDurationMs === 'function')
+        ? window._getRideDurationMs : _getRideDurationMs;
+    const addedDurationMs = ride ? (fn(ride) || 0) : 0;
+    const currentQueueMs = info ? info.totalQueueMs : 0;
+    const newTotalQueueMs = currentQueueMs + addedDurationMs;
+    const newFreeAtDate = new Date(Date.now() + newTotalQueueMs);
+    return {
+        currentQueueMs,
+        addedDurationMs,
+        newTotalQueueMs,
+        newFreeAtDate,
+        newFreeAtTimeStr: newFreeAtDate.toLocaleTimeString('it-IT', { timeZone: 'Europe/Rome', hour: '2-digit', minute: '2-digit' })
+    };
+}
+
 function assignRideToDriver(rideId, driverId) {
     const rideIdx = gameState.pendingRides.findIndex(r => r.id == rideId);
     const driver = gameState.drivers.find(d => d.id == driverId);
@@ -930,3 +992,7 @@ window.assignRideToDriver   = assignRideToDriver;
 window.startNextRide        = startNextRide;
 window.completeRide         = completeRide;
 window.checkActiveTrips     = checkActiveTrips;
+window._getRideDurationMs   = _getRideDurationMs;
+window._formatDuration      = _formatDuration;
+window._getDriverQueueInfo  = _getDriverQueueInfo;
+window._previewQueueWithRide = _previewQueueWithRide;

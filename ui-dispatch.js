@@ -31,6 +31,13 @@ function renderTabCorse() {
     const tierBg     = { standard:'#eef1f5', business:'#e7f0fb', first:'#fff3cf', ultra:'#f7e6db', presidential:'#ece4f7' };
     const typeLabel  = { Airport:'AIR', 'City-to-City':'CITY', Rail:'RAIL', Port:'PORT', Boat:'BOAT', Transfer:'TRF' };
 
+    const getDurationFn = (typeof window !== 'undefined' && typeof window._getRideDurationMs === 'function')
+        ? window._getRideDurationMs : (typeof _getRideDurationMs === 'function' ? _getRideDurationMs : null);
+    const fmtDurationFn = (typeof window !== 'undefined' && typeof window._formatDuration === 'function')
+        ? window._formatDuration : (typeof _formatDuration === 'function' ? _formatDuration : (ms => Math.round(ms/60000) + 'min'));
+    const getQueueInfoFn = (typeof window !== 'undefined' && typeof window._getDriverQueueInfo === 'function')
+        ? window._getDriverQueueInfo : (typeof _getDriverQueueInfo === 'function' ? _getDriverQueueInfo : null);
+
     // ── METEO ATTUALE (dinamico da WEATHER_STATES) ─────────────
     const weatherList = (typeof WEATHER_STATES !== 'undefined' ? WEATHER_STATES : (window.WEATHER_STATES || []));
     const ws = weatherList.find(w => w.id === (gs.weather || 'sole')) || weatherList[0] || { id:'sole', label:'Sereno', icon:'☀️', speedMult:1.0, priceMult:1.0 };
@@ -92,7 +99,7 @@ function renderTabCorse() {
         html += `<div class="em-empty">In attesa di chiamate…</div>`;
     } else {
         html += `<table class="em-tbl">
-            <thead><tr><th>Tipo</th><th>Percorso</th><th class="r">Prezzo</th></tr></thead>
+            <thead><tr><th>Tipo</th><th>Percorso</th><th>Durata</th><th class="r">Prezzo</th></tr></thead>
             <tbody>`;
         gs.pendingRides.forEach(ride => {
             const isContract = ride.isContract;
@@ -103,13 +110,16 @@ function renderTabCorse() {
             const tBg        = tierBg[tier] || '#eef1f5';
             const tLabel     = typeLabel[ride.routeType] || (ride.routeType || 'STD').substring(0, 3).toUpperCase();
             const margin     = (ride.price || 0) - (ride.netCost || 0);
+            const durMs      = getDurationFn ? getDurationFn(ride) : 0;
+            const durTxt     = fmtDurationFn(durMs);
 
             html += `<tr class="ops-ride-card" draggable="true" data-id="${ride.id}" style="cursor:grab">
                 <td style="white-space:nowrap"><span class="em-pill" style="background:${tBg};color:${tColor}">${isContract ? 'B2B' : tLabel}</span></td>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                     ${fromName} <span style="color:var(--em-dim)">→</span> ${toName}
                     ${isContract ? `<div style="font-size:9.5px;color:var(--em-muted);margin-top:2px">margine: <span style="color:${margin >= 0 ? 'var(--em-green-d)' : 'var(--em-red)'};font-weight:700">€${margin.toLocaleString('it-IT')}</span></div>` : ''}
                 </td>
+                <td style="white-space:nowrap;font-size:11px;color:var(--em-ink)">⏱️ ${durTxt} <span style="font-size:9px;color:var(--em-dim)">(stima)</span></td>
                 <td class="r em-price" style="white-space:nowrap">€${(ride.price || 0).toLocaleString('it-IT')}</td>
             </tr>`;
         });
@@ -143,11 +153,41 @@ function renderTabCorse() {
             ? `<button ${ceAct('sendDriverToRest', [driver.id])} class="em-ghbtn" style="margin-left:7px;padding:2px 8px;font-size:9.5px">Riposo</button>`
             : '';
 
+        const qInfo = getQueueInfoFn ? getQueueInfoFn(driver, gs) : null;
+        const curRemTxt   = (qInfo && qInfo.isBusy) ? fmtDurationFn(qInfo.currentRemainingMs) : null;
+        const totQueueTxt = qInfo ? fmtDurationFn(qInfo.totalQueueMs) : null;
+        const freeTimeTxt = qInfo ? qInfo.freeAtTimeStr : null;
+        const nextSlotTxt = (qInfo && qInfo.isBusy) ? fmtDurationFn(qInfo.nextSlotFreeMs) : 'subito';
+        const queueLen    = driver.queue ? driver.queue.length : 0;
+        const maxQ        = qInfo ? qInfo.maxQueue : 10;
+
+        let queueDetailsHtml = '';
+        if (qInfo) {
+            const parts = [];
+            if (qInfo.isBusy && curRemTxt) {
+                parts.push(`<span style="color:var(--em-blue)">in corso: <strong>${curRemTxt}</strong></span>`);
+            }
+            if (qInfo.totalQueueMs > 0 && totQueueTxt) {
+                parts.push(`<span style="color:var(--em-muted)">coda tot: <strong>${totQueueTxt}</strong> (libero ore ${freeTimeTxt} stima)</span>`);
+            }
+            if (qInfo.isBusy) {
+                parts.push(`<span style="color:${qInfo.isFull ? 'var(--em-amber)' : 'var(--em-dim)'}">1° slot: <strong>${qInfo.isFull ? 'tra ' + nextSlotTxt : 'subito'}</strong></span>`);
+            }
+            if (parts.length > 0) {
+                queueDetailsHtml = `<div style="font-size:10px;color:var(--em-muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:6px">${parts.join(' · ')}</div>`;
+            }
+        }
+
         html += `<div class="ops-driver-row em-lrow" data-id="${driver.id}" style="align-items:flex-start;${isResting ? 'opacity:0.5' : ''}">
             <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${dotColor};margin-top:4px;flex-shrink:0"></span>
             <div style="flex:1;min-width:0">
                 <div class="em-lt" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${driver.name}${restBtn}</div>
-                <div class="em-lm"><span>${car ? car.name : '— nessun veicolo —'}</span>${driver.queue.length > 0 ? `<span>· coda ${driver.queue.length}</span>` : ''}</div>
+                <div class="em-lm">
+                    <span>${car ? car.name : '— nessun veicolo —'}</span>
+                    ${queueLen > 0 ? `<span>· coda ${queueLen}/${maxQ}</span>` : ''}
+                </div>
+                ${queueDetailsHtml}
+                <div class="driver-queue-preview" id="preview-${driver.id}" style="font-size:10px;color:var(--em-gold);margin-top:3px;display:none;font-weight:700"></div>
             </div>
             ${driver.id !== 'ceo' ? `<div style="display:flex;align-items:center;gap:5px;width:88px;flex-shrink:0">
                 <span class="em-prog" style="width:52px"><i style="width:${fatigue}%;background:${fatColor}"></i></span>
@@ -190,7 +230,12 @@ function _updateTrafficLabel() {
 }
 
 let draggedRideId = null;
+let _dndSetup = false;
 function setupDragAndDrop() {
+    if (_dndSetup) return;
+    if (typeof document === 'undefined' || typeof document.addEventListener !== 'function') return;
+    _dndSetup = true;
+
     document.addEventListener('dragstart', (e) => {
         const card = e.target.closest('.ops-ride-card');
         if (card) { draggedRideId = card.getAttribute('data-id'); card.style.opacity = '0.5'; }
@@ -198,21 +243,66 @@ function setupDragAndDrop() {
     document.addEventListener('dragend', (e) => {
         const card = e.target.closest('.ops-ride-card');
         if (card) { card.style.opacity = '1'; draggedRideId = null; }
+        if (typeof document.querySelectorAll === 'function') {
+            document.querySelectorAll('.driver-queue-preview').forEach(el => { el.style.display = 'none'; el.innerText = ''; });
+        }
     });
     document.addEventListener('dragover', (e) => {
         const dCard = e.target.closest('.ops-driver-row');
-        if (dCard) { e.preventDefault(); dCard.style.background = 'rgba(212,175,55,0.06)'; }
+        if (dCard) {
+            e.preventDefault();
+            dCard.style.background = 'rgba(212,175,55,0.06)';
+            if (draggedRideId) {
+                const driverId = dCard.getAttribute('data-id');
+                const driver = (gameState.drivers || []).find(d => d.id == driverId);
+                const ride = (gameState.pendingRides || []).find(r => r.id == draggedRideId);
+                const prevEl = dCard.querySelector('.driver-queue-preview') || (typeof document.getElementById === 'function' ? document.getElementById(`preview-${driverId}`) : null);
+                if (driver && ride && prevEl) {
+                    const prevFn = (typeof window !== 'undefined' && typeof window._previewQueueWithRide === 'function')
+                        ? window._previewQueueWithRide
+                        : (typeof _previewQueueWithRide === 'function' ? _previewQueueWithRide : null);
+                    const fmtFn = (typeof window !== 'undefined' && typeof window._formatDuration === 'function')
+                        ? window._formatDuration
+                        : (typeof _formatDuration === 'function' ? _formatDuration : (ms => Math.round(ms/60000) + 'min'));
+                    if (prevFn && fmtFn) {
+                        const preview = prevFn(driver, ride, gameState);
+                        prevEl.style.display = 'block';
+                        prevEl.innerText = `➕ Accodando (+${fmtFn(preview.addedDurationMs)}) → Nuova coda: ${fmtFn(preview.newTotalQueueMs)} (libero ore ${preview.newFreeAtTimeStr} stima)`;
+                    }
+                }
+            }
+        }
     });
     document.addEventListener('dragleave', (e) => {
         const dCard = e.target.closest('.ops-driver-row');
-        if (dCard) dCard.style.background = '';
+        if (dCard) {
+            dCard.style.background = '';
+            const prevEl = dCard.querySelector('.driver-queue-preview');
+            if (prevEl) { prevEl.style.display = 'none'; prevEl.innerText = ''; }
+        }
     });
     document.addEventListener('drop', (e) => {
         e.preventDefault();
         const dCard = e.target.closest('.ops-driver-row');
-        if (dCard) { dCard.style.background = ''; }
-        if (dCard && draggedRideId) { assignRideToDriver(draggedRideId, dCard.getAttribute('data-id')); renderTabCorse(); }
+        if (dCard) {
+            dCard.style.background = '';
+            const prevEl = dCard.querySelector('.driver-queue-preview');
+            if (prevEl) { prevEl.style.display = 'none'; prevEl.innerText = ''; }
+        }
+        if (dCard && draggedRideId) {
+            if (typeof assignRideToDriver === 'function') {
+                assignRideToDriver(draggedRideId, dCard.getAttribute('data-id'));
+            } else if (typeof window.assignRideToDriver === 'function') {
+                window.assignRideToDriver(draggedRideId, dCard.getAttribute('data-id'));
+            }
+            renderTabCorse();
+        }
     });
 }
 
+if (typeof document !== 'undefined' && typeof document.addEventListener === 'function') {
+    setupDragAndDrop();
+}
+
 window.renderTabCorse = renderTabCorse;
+window.setupDragAndDrop = setupDragAndDrop;
