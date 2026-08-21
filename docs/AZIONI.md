@@ -19,6 +19,7 @@ collassare, **34 funzioni morte**, 4 nomi globali sovrascritti in silenzio.
 | Riparare la carrozzeria | `payToRepairCar` (engine.js) | ~~`repairVehicle`~~ (engine-fleet.js) | Prezzo da `repairCostFor()`, **fonte unica**. Le interfacce non devono ricopiare la formula |
 | Muovere denaro / DC / reputazione | `CE_money.*` (money.js) | `gameState.cash -=` diretto, `_addCash` | Sorvegliato da `test/guardrail/una-sola-porta.test.js` |
 | Effetti HQ | `hqAllEffects` (hq.js) | ~~`hqGetEffect`~~ | HQ dietro interruttore spento |
+| Schermate War Room / Province | `renderTabWarRoom` (war_room.js), `renderTabProvinces` (ui-ops.js) | ~~`window.renderTabProvinces = renderTabWarRoom`~~ | Nomi distinti, nessuna collisione di caricamento |
 
 ---
 
@@ -61,7 +62,6 @@ L'ultimo file caricato vince, senza errori. Da risolvere:
 |---|---|---|---|
 | `hqOpenBuildModal` | `hq-visual.js:88` | `hq.js:321` | **Firme incompatibili**: chi passa un `roomId` costruisce nella città sbagliata |
 | `listCarForSale` | `p2p-market.js:60` | `engine-fleet.js:455` | Due magazzini diversi; `cancelListing` opera sull'altro |
-| `renderTabProvinces` | `ui-ops.js:268` | `war_room.js:495` | Stessa tab, **due schermate diverse** |
 | `_updateActiveRouteLines` | `ui-map-utils.js:164` | `map.js:343` | Minore |
 
 **Da NON toccare** — sembrano collisioni a una scansione per nome, ma sono decoratori
