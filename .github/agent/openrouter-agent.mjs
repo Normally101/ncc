@@ -39,9 +39,11 @@ import { execFile } from 'child_process';
  * modello in particolare.
  *
  * L'ordine e perche':
- *  1. `stealth/ox-alpha` — anteprima a tempo, non consuma la quota `:free`
- *     (verificato il 22/08: oltre 250 richieste in un giorno senza rifiuti,
- *     quando il tetto `:free` sarebbe 50). Finisce verso il 27/08.
+ *  1. `stealth/ox-alpha` — anteprima a tempo, finisce verso il 27/08.
+ *     CORREZIONE del 22/08 sera: non e' vero che «non consuma quota». Ha un
+ *     tetto suo (`free-models-per-day-stealth`) separato da quello dei `:free`,
+ *     e quel pomeriggio l'abbiamo esaurito. Due tetti distinti vogliono dire
+ *     che si puo' lavorare piu' a lungo, non per sempre.
  *  2. `nemotron-3-ultra` — il piu' grande dei gratuiti veri, contesto da 1
  *     milione, ha risposto con lo strumento giusto in 3,1 secondi.
  *  3. `laguna-s` — il piu' veloce misurato (1,5 s), pensato per il codice.
@@ -77,6 +79,23 @@ const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 /** Anche un fornitore "senza limiti" ogni tanto dice di no: si aspetta e si riprova. */
 const ATTESE_RIPROVA = [5_000, 15_000, 45_000, 90_000];
 
+/**
+ * Occupato adesso e finito per oggi non sono la stessa cosa.
+ *
+ * Il 22/08 il tetto giornaliero di OpenRouter si e' esaurito a meta' pomeriggio
+ * e ogni run successiva ha bruciato cinque minuti a riprovare: quattro attese
+ * per ciascuno dei cinque modelli della scaletta, tutte destinate a fallire
+ * perche' il tetto e' PER ACCOUNT e non si libera prima di mezzanotte. Nove
+ * lavori sono morti cosi', e nove mail di errore sono arrivate a Vlad.
+ *
+ * Un tetto giornaliero non si aspetta e non si aggira cambiando modello: si
+ * riconosce e si smette subito, dicendo a chi ci ha chiamato che il problema
+ * non era il lavoro.
+ */
+function quotaGiornalieraFinita(messaggio = '') {
+    return /free-models-per-day|per-day|daily limit|quota.*(exceeded|exhausted).*day/i.test(messaggio);
+}
+
 const MAX_BYTE_OUTPUT = 8_000;
 
 function tronca(testo, limite = MAX_BYTE_OUTPUT) {
@@ -104,7 +123,7 @@ function esegui(argv, cwd, timeoutMs = 5 * 60_000) {
  * scritta a mano due volte diventerebbe due elenchi da tenere allineati — e
  * prima o poi uno dei due resta indietro. Meglio tradurre.
  */
-function strumentiInFormatoOpenAI() {
+function strumentiInFormatoOpenAI(soloScrittura = false) {
   const minuscolo = (schema) => {
     if (!schema || typeof schema !== 'object') return schema;
     const fuori = { ...schema };
@@ -118,7 +137,15 @@ function strumentiInFormatoOpenAI() {
     return fuori;
   };
 
-  return STRUMENTI[0].functionDeclarations.map((d) => ({
+  /* Quando si toglie la lettura restano gli strumenti che producono qualcosa.
+     `esegui_comando` resta perche' serve a lanciare i test: senza, il modello
+     non potrebbe verificare quello che scrive. */
+  const dichiarazioni = soloScrittura
+    ? STRUMENTI[0].functionDeclarations.filter(
+        (d) => !['leggi_file', 'elenca_cartella'].includes(d.name))
+    : STRUMENTI[0].functionDeclarations;
+
+  return dichiarazioni.map((d) => ({
     type: 'function',
     function: {
       name: d.name,
@@ -128,7 +155,7 @@ function strumentiInFormatoOpenAI() {
   }));
 }
 
-async function chiedi(messaggi, modello, chiave) {
+async function chiedi(messaggi, modello, chiave, soloScrittura = false) {
   const r = await fetch(ENDPOINT, {
     method: 'POST',
     headers: {
@@ -141,7 +168,7 @@ async function chiedi(messaggi, modello, chiave) {
       // lungo qui faceva fallire la richiesta prima ancora di partire.
       'X-Title': 'Chauffeur Empire agent',
     },
-    body: JSON.stringify({ model: modello, messages: messaggi, tools: strumentiInFormatoOpenAI() }),
+    body: JSON.stringify({ model: modello, messages: messaggi, tools: strumentiInFormatoOpenAI(soloScrittura) }),
   });
   const dati = await r.json();
   if (dati.error) {
@@ -193,8 +220,21 @@ export async function runOpenRouterAgent({
   const SOGLIA_INERZIA = 3;
   /* Vedi gemini-agent.mjs: la soglia di inerzia scatta solo dopo la prima
      scrittura, quindi un modello che esplora e basta non la incontra mai.
-     Dodici turni di sola lettura e lo si richiama, una volta sola. */
-  const SOGLIA_SOLA_LETTURA = 12;
+     Sei turni di sola lettura e lo si richiama.
+
+     Perche' due soglie e non una. Il 22/08 il richiamo a parole c'era gia' (a
+     dodici turni, una volta sola) e NON e' bastato: quattro lavori di fila
+     hanno continuato a leggere fino al turno 22, bruciando 850.000 token in
+     ingresso per produrre 5.000 token di uscita e nessun file. L'ultima frase
+     scritta da uno di loro era «Ora ho abbastanza contesto. Scrivo il nuovo
+     file di test» — e li' sono finiti i turni.
+
+     Una richiesta si puo' ignorare; uno strumento che non c'e' piu' no. Quindi
+     a dieci turni senza scrivere gli strumenti di lettura vengono tolti dalla
+     richiesta: restano scrivi_file, modifica_file ed esegui_comando. A quel
+     punto l'unica mossa possibile e' produrre qualcosa. */
+  const SOGLIA_SOLA_LETTURA = 6;
+  const SOGLIA_TAGLIO_LETTURA = 10;
   let richiamoFatto = false;
   const scadenza = Date.now() + timeoutMs;
 
@@ -217,12 +257,18 @@ export async function runOpenRouterAgent({
       erroreUltimo = null;
       for (let tentativo = 0; tentativo <= ATTESE_RIPROVA.length; tentativo++) {
         try {
-          risposta = await chiedi(messaggi, modelloOra, chiave);
+          risposta = await chiedi(messaggi, modelloOra, chiave, !scritturaFatta && turni >= SOGLIA_TAGLIO_LETTURA);
           erroreUltimo = null;
           if (!usati.includes(modelloOra)) usati.push(modelloOra);
           break;
         } catch (e) {
           erroreUltimo = e;
+          /* Finito per oggi: non si riprova e non si scende la scaletta, perche'
+             il tetto e' dell'account e vale per tutti i modelli insieme. */
+          if (quotaGiornalieraFinita(e.message)) {
+            erroreUltimo.quotaGiornaliera = true;
+            break;
+          }
           const saturo = e.codice === 429 || e.codice === 503
             || /429|rate limit|exhausted|unavailable|overload/i.test(e.message || '');
           if (!saturo || tentativo === ATTESE_RIPROVA.length) break;
@@ -232,6 +278,7 @@ export async function runOpenRouterAgent({
         }
       }
       if (!erroreUltimo) break;
+      if (erroreUltimo.quotaGiornaliera) break; // finito per oggi: la scaletta non serve
 
       indiceModello++;
       if (indiceModello < scaletta.length) {
@@ -245,6 +292,15 @@ export async function runOpenRouterAgent({
          perche' riprovi con Gemini, invece di buttare via il lavoro. Dal
          secondo turno in poi no: il modello ha gia' toccato dei file, e
          ricominciare da capo con un altro motore farebbe danni. */
+      if (erroreUltimo.quotaGiornaliera) {
+        const e = new Error(
+          `QUOTA GIORNALIERA OPENROUTER ESAURITA: ${erroreUltimo.message}`);
+        e.quotaGiornaliera = true;
+        /* Non e' «il motore non c'e'»: e' «per oggi basta». Ripiegare su Gemini
+           non aiuta — il suo piano gratuito da' venti richieste al giorno e un
+           lavoro ne mangia trenta. Meglio fermarsi e riprendere domani. */
+        throw e;
+      }
       if (turni === 1) {
         const e = new Error(
           `nessuno dei ${scaletta.length} modelli OpenRouter risponde (ultimo: ${erroreUltimo.message})`);

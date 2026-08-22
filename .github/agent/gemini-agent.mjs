@@ -283,7 +283,15 @@ export async function runGeminiAgent({
   /* Dopo quanti turni di sola lettura si richiama il modello. Dodici e' circa
      un sesto del budget: abbastanza per orientarsi in un file grosso, troppo
      per non aver ancora deciso da dove cominciare. */
-  const SOGLIA_SOLA_LETTURA = 12;
+  const SOGLIA_SOLA_LETTURA = 6;
+  /* Vedi openrouter-agent.mjs per la storia: il richiamo a parole non basta.
+     A dieci turni senza aver scritto niente, gli strumenti di lettura spariscono
+     dalla richiesta e resta solo il modo di produrre qualcosa. */
+  const SOGLIA_TAGLIO_LETTURA = 10;
+  const soloScrittura = () => ({
+    functionDeclarations: STRUMENTI[0].functionDeclarations.filter(
+      (d) => !['leggi_file', 'elenca_cartella'].includes(d.name)),
+  });
   let richiamoFatto = false;
   const scadenza = Date.now() + timeoutMs;
 
@@ -316,7 +324,11 @@ export async function runGeminiAgent({
         risposta = await ai.models.generateContent({
           model,
           contents,
-          config: { tools: STRUMENTI, systemInstruction: ISTRUZIONI },
+          config: {
+            tools: (!scritturaFatta && turni >= SOGLIA_TAGLIO_LETTURA)
+              ? [soloScrittura()] : STRUMENTI,
+            systemInstruction: ISTRUZIONI,
+          },
         });
         erroreUltimo = null;
         break;
