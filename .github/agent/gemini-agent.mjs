@@ -280,6 +280,11 @@ export async function runGeminiAgent({
   let turniSenzaScrittura = 0;
   let scritturaFatta = false;
   const SOGLIA_INERZIA = 3;
+  /* Dopo quanti turni di sola lettura si richiama il modello. Dodici e' circa
+     un sesto del budget: abbastanza per orientarsi in un file grosso, troppo
+     per non aver ancora deciso da dove cominciare. */
+  const SOGLIA_SOLA_LETTURA = 12;
+  let richiamoFatto = false;
   const scadenza = Date.now() + timeoutMs;
 
   while (turni < maxTurni) {
@@ -340,6 +345,22 @@ export async function runGeminiAgent({
     // Il modello ha smesso di usare strumenti: ha finito. Prima di crederci,
     // facciamo girare noi il cancello.
     if (!chiamate.length) {
+      /* «Ho finito» senza aver scritto niente non e' aver finito.
+       *
+       * Il 22/08 due lavori di fila sono usciti cosi': ventuno turni, un milione
+       * di token letti, zero file toccati — e riportati come RIUSCITI, perche'
+       * `npm test` su codice immutato e' ovviamente verde. Il cancello non puo'
+       * distinguere «fatto» da «non ho fatto niente»: guarda i test, e i test
+       * non sanno che doveva succedere qualcosa.
+       *
+       * Quindi lo distinguiamo qui. Un lavoro che non ha scritto niente torna
+       * indietro con scritto perche', e la riprova parte da quel motivo invece
+       * che da capo. */
+      if (!scritturaFatta) {
+        return risultato(false, ultimoTesto,
+          `ha concluso senza scrivere niente in ${turni} turni: il cancello passa solo `
+          + `perche' il codice e' rimasto identico`);
+      }
       if (!gate) return risultato(true, ultimoTesto, null);
 
       onProgress(`cancello: ${gate}`);
@@ -374,6 +395,25 @@ export async function runGeminiAgent({
       turniSenzaScrittura = 0;
     } else {
       turniSenzaScrittura++;
+    }
+
+    /* Il richiamo per chi legge e non scrive mai.
+     *
+     * La soglia di inerzia qui sotto scatta solo DOPO la prima scrittura: un
+     * modello che si limita a esplorare non la incontra mai e arriva al limite
+     * dei turni avendo solo letto. E' successo due volte il 22/08, con un
+     * milione di token di contesto bruciati a navigare.
+     *
+     * Una volta sola, a meta' strada, gli si dice di smettere di guardarsi
+     * intorno. Una volta e non a ogni turno: ripeterlo occuperebbe il contesto
+     * proprio mentre il problema E' il contesto pieno. */
+    if (!scritturaFatta && turni >= SOGLIA_SOLA_LETTURA && !richiamoFatto) {
+      richiamoFatto = true;
+      onProgress(`${turni} turni senza scrivere niente: richiamo il modello`);
+      risposteStrumenti.push({ text:
+        `Hai usato ${turni} turni senza scrivere un solo file. Smetti di leggere: `
+        + `scrivi ORA la prima cosa, anche piccola e incompleta. Un lavoro parziale `
+        + `si puo' riprendere, un lavoro solo letto no.` });
     }
 
     // Gira a vuoto da un po' e ha gia' cambiato qualcosa: chiudiamo noi, se il

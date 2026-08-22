@@ -191,6 +191,11 @@ export async function runOpenRouterAgent({
   let turniSenzaScrittura = 0;
   let scritturaFatta = false;
   const SOGLIA_INERZIA = 3;
+  /* Vedi gemini-agent.mjs: la soglia di inerzia scatta solo dopo la prima
+     scrittura, quindi un modello che esplora e basta non la incontra mai.
+     Dodici turni di sola lettura e lo si richiama, una volta sola. */
+  const SOGLIA_SOLA_LETTURA = 12;
+  let richiamoFatto = false;
   const scadenza = Date.now() + timeoutMs;
 
   while (turni < maxTurni) {
@@ -260,6 +265,15 @@ export async function runOpenRouterAgent({
     // Nessuno strumento: il modello dice di aver finito. Prima di crederci,
     // facciamo girare noi il cancello — identico al motore Gemini.
     if (!chiamate.length) {
+      /* «Ho finito» senza aver scritto niente non e' aver finito: il cancello
+         passa perche' il codice e' identico, non perche' il lavoro sia fatto.
+         Succede davvero — due volte il 22/08, ventuno turni e un milione di
+         token per zero file. Torna indietro col motivo scritto. */
+      if (!scritturaFatta) {
+        return risultato(false, ultimoTesto,
+          `ha concluso senza scrivere niente in ${turni} turni: il cancello passa solo `
+          + `perche' il codice e' rimasto identico`);
+      }
       if (!gate) return risultato(true, ultimoTesto, null);
 
       onProgress(`cancello: ${gate}`);
@@ -310,6 +324,17 @@ export async function runOpenRouterAgent({
       turniSenzaScrittura = 0;
     } else {
       turniSenzaScrittura++;
+    }
+
+    if (!scritturaFatta && turni >= SOGLIA_SOLA_LETTURA && !richiamoFatto) {
+      richiamoFatto = true;
+      onProgress(`${turni} turni senza scrivere niente: richiamo il modello`);
+      messaggi.push({
+        role: 'user',
+        content: `Hai usato ${turni} turni senza scrivere un solo file. Smetti di leggere: `
+          + `scrivi ORA la prima cosa, anche piccola e incompleta. Un lavoro parziale `
+          + `si puo' riprendere, un lavoro solo letto no.`,
+      });
     }
 
     if (scritturaFatta && turniSenzaScrittura >= SOGLIA_INERZIA && gate) {
