@@ -71,6 +71,40 @@ function copertura() {
 }
 
 /**
+ * Quante azioni del giocatore sono nominate da almeno un test.
+ *
+ * Perche' serve accanto al numero del guardrail, e non al suo posto. Il
+ * guardrail conta le azioni che riesce a ESEGUIRE DA SOLO, partendo da uno
+ * stato di gioco che prepara lui: sono 14, e crescono pianissimo perche' ogni
+ * azione in piu' vuole uno stato su misura. Ma nel frattempo sono arrivati
+ * file di prova che quelle azioni le esercitano davvero, ognuno costruendosi
+ * lo stato che gli serve — e il guardrail non li vede.
+ *
+ * Risultato: il 22/08 il cruscotto diceva «14 su 242» mentre decine di azioni
+ * erano gia' collaudate. Un numero vero ma che raccontava il falso, che e' il
+ * modo peggiore in cui un cruscotto puo' sbagliare.
+ *
+ * Questa misura e' piu' generosa e va letta per quello che e': dice «qualcuno
+ * l'ha guardata», non «e' garantita corretta». Per questo si chiama TOCCATE e
+ * non verificate — il nome e' la parte che impedisce di prenderla per piu' di
+ * quello che vale.
+ */
+function toccateDaUnTest(nomi) {
+    let testi = '';
+    const giro = (dir) => {
+        for (const voce of fs.readdirSync(dir, { withFileTypes: true })) {
+            const p = path.join(dir, voce.name);
+            if (voce.isDirectory()) giro(p);
+            else if (voce.name.endsWith('.js')) testi += fs.readFileSync(p, 'utf8');
+        }
+    };
+    try { giro(path.join(ROOT, 'test')); } catch { return 0; }
+    /* Confine di parola da entrambi i lati: senza, `buyHub` verrebbe contata
+       anche da un test che nomina solo `buyHubUpgrade`. */
+    return nomi.filter(n => new RegExp(`\\b${n}\\b`).test(testi)).length;
+}
+
+/**
  * Un totale a zero non e' una misura: e' una lettura fallita.
  *
  * Il 22/08 il cruscotto ha mostrato per due giorni «15/246 azioni verificate»
@@ -80,7 +114,16 @@ function copertura() {
  * cambiata e la lettura non l'ha seguita. Meglio urlare che pubblicare un
  * rapporto sbagliato.
  */
-function controllaMisura(cop) {
+function controllaMisura(cop, s) {
+    /* Il controllo del 22/08 guardava SOLO le azioni, e infatti ha lasciato
+       passare un rapporto con zero test: proteggeva una porta e lasciava
+       l'altra aperta. Un numero che non puo' essere zero va difeso ovunque
+       compaia, non solo dove ci si e' bruciati la prima volta. */
+    if (s && !s.totale) {
+        throw new Error(
+            'I test risultano ZERO: la lettura del riassunto non ha funzionato.\n' +
+            'Non pubblico un cruscotto che dice «0 test» quando i test esistono.');
+    }
     if (!cop) return;
     if (!cop.totali) {
         throw new Error(
@@ -90,14 +133,44 @@ function controllaMisura(cop) {
     }
 }
 
+/**
+ * Node cambia il modo di riassumere i test a seconda di CHI sta guardando.
+ *
+ * Con un terminale attaccato scrive «ℹ tests 1678»; senza — dentro
+ * execFileSync, dentro GitHub Actions — passa al formato TAP e scrive
+ * «# tests 1678». Lo script cercava solo la prima forma, quindi in locale
+ * funzionava e su GitHub contava ZERO.
+ *
+ * Il 22/08 il primo workflow automatico ha pubblicato sul cruscotto
+ * «0 test (0 rossi) · 0 colgono il guasto sul denaro» ed e' stato riportato
+ * come RIUSCITO: i test erano girati per quindici minuti, semplicemente
+ * nessuno aveva saputo leggerne il risultato. Una misura falsa pubblicata con
+ * successo e' peggio di una misura mancante, perche' nessuno va a controllarla.
+ */
+function leggiRiassunto(out) {
+    const num = (nome) => {
+        const m = out.match(new RegExp(`^(?:ℹ|#) ${nome} (\\d+)`, 'm'));
+        return m ? Number(m[1]) : null;
+    };
+    return { totale: num('tests'), rossi: num('fail') };
+}
+
 function suite() {
+    let out;
     try {
-        const out = execFileSync('npm', ['test'], { cwd: ROOT, encoding: 'utf8', timeout: 600_000 });
-        return { totale: Number(out.match(/^ℹ tests (\d+)/m)?.[1] ?? 0), rossi: Number(out.match(/^ℹ fail (\d+)/m)?.[1] ?? 0) };
+        out = execFileSync('npm', ['test'], { cwd: ROOT, encoding: 'utf8', timeout: 600_000 });
     } catch (e) {
-        const out = (e.stdout ?? '') + (e.stderr ?? '');
-        return { totale: Number(out.match(/^ℹ tests (\d+)/m)?.[1] ?? 0), rossi: Number(out.match(/^ℹ fail (\d+)/m)?.[1] ?? 0) };
+        out = (e.stdout ?? '') + (e.stderr ?? '');
     }
+    const r = leggiRiassunto(out);
+    if (r.totale === null) {
+        throw new Error(
+            'Non sono riuscito a leggere quanti test sono girati.\n' +
+            'Node riassume in due modi diversi («ℹ tests N» col terminale, «# tests N» senza)\n' +
+            'e nessuno dei due ha combaciato. Non pubblico una misura che non so leggere.\n' +
+            'Ultime righe viste:\n' + out.split('\n').slice(-15).join('\n'));
+    }
+    return { totale: r.totale, rossi: r.rossi ?? 0 };
 }
 
 /**
@@ -124,8 +197,8 @@ const tutti = fileDelGioco();
 const banco = dentroAlBanco();
 const ecc = eccezioniDenaro();
 const cop = copertura();
-controllaMisura(cop);
 const s = suite();
+controllaMisura(cop, s);
 
 const stato = {
     misuratoIl: new Date().toISOString(),
@@ -133,7 +206,12 @@ const stato = {
     reteDiSicurezza: conMutazione,
     file: { totali: tutti.length, nelBanco: banco.length, fuori: tutti.filter(f => !banco.includes(f)) },
     denaro: { eccezioniRimaste: ecc },
-    azioni: cop ?? { totali: azioni().length },
+    azioni: {
+        ...(cop ?? { totali: azioni().length }),
+        /* Vedi toccateDaUnTest: piu' generosa di `verificate`, e il nome dice
+           quanto vale. Le due insieme raccontano la verita'; una sola no. */
+        toccate: toccateDaUnTest(azioni()),
+    },
 };
 
 if (process.argv.includes('--json')) {
@@ -147,8 +225,9 @@ if (process.argv.includes('--json')) {
     }
     console.log(`File eseguiti:     ${banco.length}/${tutti.length}  (${pct(banco.length, tutti.length)})`);
     if (cop) {
-        console.log(`Azioni verificate: ${cop.verificate}/${cop.totali}  (${pct(cop.verificate, cop.totali)})`);
-        console.log(`Azioni al buio:    ${cop.cieche}  — nessuno sa se funzionano`);
+        console.log(`Azioni toccate:    ${stato.azioni.toccate}/${cop.totali}  (${pct(stato.azioni.toccate, cop.totali)})  — nominate da almeno un test`);
+        console.log(`Azioni verificate: ${cop.verificate}/${cop.totali}  (${pct(cop.verificate, cop.totali)})  — che il guardrail sa eseguire da solo`);
+        console.log(`Azioni al buio:    ${cop.cieche}  — il guardrail non riesce ad attivarle`);
         console.log(`Azioni rotte note: ${cop.rotte}`);
     }
     console.log(`Porta del denaro:  ${ecc.length} file ancora fuori (${ecc.join(', ') || 'nessuno'})`);
@@ -171,7 +250,7 @@ if (process.argv.includes('--hub')) {
     const titolo = `${stato.test.totale} test (${stato.test.rossi} rossi) · `
         + `${conMutazione ?? '?'} colgono il guasto sul denaro · `
         + `${stato.file.nelBanco}/${stato.file.totali} file eseguiti · `
-        + `${a.verificate ?? 0}/${a.totali ?? 0} azioni verificate`;
+        + `${a.toccate ?? 0}/${a.totali ?? 0} azioni toccate da un test`;
     const risposta = await fetch(`${url}/api/gigi/metrics`, {
         method: 'POST',
         headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
