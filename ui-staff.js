@@ -388,7 +388,11 @@ window.hireOfficeStaff = async function(id) {
         return;
     }
 
-    const result = await window.ServerState?.hireDriver(s.name, s.salary, 'STAFF');
+    // Il tier deve stare nella whitelist di rpc_hire_driver (02_mmo_rpcs_extension.sql):
+    // 'STAFF' non esiste lato DB e faceva fallire con RAISE EXCEPTION OGNI assunzione
+    // di staff d'ufficio. Il finto server dei test, che accettava qualunque stringa,
+    // ha nascosto il bug finché non è stato allineato alle RPC vere.
+    const result = await window.ServerState?.hireDriver(s.name, s.salary, 'STANDARD');
     if (!result) return;
 
     gameState.staff.push(s);

@@ -82,9 +82,19 @@ function makeServerState(sandboxRef, overrides = {}) {
         getCompany: () => ({ hq_city: 'roma', cash: gs()?.cash }),
         getState: () => ({ company: base.getCompany() }),
 
-        buyVehicle: async (modelId, price) => {
+        /* rpc_buy_vehicle (01_mmo_migration.sql): RAISE se cash < price (qui: null,
+           senza toccare la cassa), poi scala e INSERT ... RETURNING della riga
+           vehicles. Il client (showroom._srmPurchase) NON scala in locale quando
+           ServerState è pronto: il finto deve muovere la cassa per lui. */
+        buyVehicle: async (modelId, price, hqCity) => {
+            if ((gs().cash || 0) < price) return null;
             gs().cash = (gs().cash || 0) - price;
-            return { id: 'srv_veh_' + modelId + '_' + Math.random().toString(36).slice(2) };
+            return {
+                id: 'srv_veh_' + modelId + '_' + Math.random().toString(36).slice(2),
+                model_id: modelId,
+                current_city: hqCity || 'roma',
+                status: 'IDLE',
+            };
         },
         sellVehicle: async (_serverId, price) => {
             gs().cash = (gs().cash || 0) + price;
@@ -110,12 +120,26 @@ function makeServerState(sandboxRef, overrides = {}) {
             gs().cash = (gs().cash || 0) + principal;
             return { id: 'loan_' + Math.random().toString(36).slice(2), principal, remaining: principal, interest_rate: interestRate, daily_payment: dailyPayment };
         },
+        /* Contratto di rpc_repay_loan (02_mmo_rpcs_extension.sql): { repaid,
+           remaining_after }. Il finto non tiene un registro dei prestiti:
+           remaining_after=0 è il caso di rimborno integrale. */
         repayLoan: async (_loanId, amount) => {
             gs().cash = Math.max(0, (gs().cash || 0) - amount);
-            return { success: true };
+            return { repaid: amount, remaining_after: 0 };
         },
-        hireDriver: async (name, _salary, tier) => ({ id: 'srv_drv_' + Math.random().toString(36).slice(2), name, tier }),
-        fireDriver: async (_driverId) => ({ success: true }),
+        /* rpc_hire_driver (02_mmo_rpcs_extension.sql): valida il tier contro la
+           whitelist del DB (RAISE per tutto il resto), scala salary×2 di costo
+           assunzione e rifiuta se la cassa non basta. Il client
+           (ui-staff.hireOfficeStaff) NON muove cassa in locale su questa strada:
+           un finto che non la scala faceva risultare gratis ogni assunzione. */
+        hireDriver: async (name, _salary, tier = 'STANDARD') => {
+            if (!['STANDARD', 'BUSINESS', 'VIP', 'ULTRA'].includes(tier)) return null;
+            const costoAssunzione = _salary * 2;
+            if ((gs().cash || 0) < costoAssunzione) return null;
+            gs().cash = (gs().cash || 0) - costoAssunzione;
+            return { id: 'srv_drv_' + Math.random().toString(36).slice(2), name, salary: _salary, tier, status: 'AVAILABLE' };
+        },
+        fireDriver: async (driverId) => ({ fired: true, driver_id: driverId }),
         buyInvestment: async (_invId, price) => {
             gs().cash = (gs().cash || 0) - price;
             return { success: true };
@@ -126,8 +150,14 @@ function makeServerState(sandboxRef, overrides = {}) {
         },
         restCeo: async (_hotelStars, cost) => {
             gs().cash = Math.max(0, (gs().cash || 0) - cost);
-            return { success: true };
+            /* Contratto di rpc_rest_ceo (02_mmo_rpcs_extension.sql):
+               energy_recovered = stelle × 20. */
+            return { stars: _hotelStars, cost, energy_recovered: _hotelStars * 20 };
         },
+        /* Stessi CAMPI di rpc_buy_real_estate (09_provinces_realestate_fuel.sql).
+           COMPORTAMENTO non riproducibile: la vera scala listing.cost letto dal DB,
+           ma la firma passa solo il listing_id — il finto non può conoscere il prezzo.
+           Un test che vuole il debit deve fare override di questo metodo. */
         buyRealEstate: async (listingId) => ({
             success: true,
             listing_id: listingId,
@@ -135,9 +165,12 @@ function makeServerState(sandboxRef, overrides = {}) {
             daily_rent: 1000
         }),
         syncCash: async (cash) => { gs().cash = cash; return { success: true, cash }; },
-        addDriverCoins: async (amount) => {
-            gs().driverCoins = (gs().driverCoins || 0) + amount;
-            return { ok: true, driver_coins: gs().driverCoins };
+        /* Stesso discorso di spendDriverCoins, lato accredito: rpc_add_driver_coins
+           (17_executive_club.sql) accredita sul SUO saldo e restituisce quello nuovo;
+           CE_money.earnDC ha gia' accreditato in locale e si riallinea sulla risposta.
+           Accreditare di nuovo qui valeva ogni premio Driver Coins il doppio. */
+        addDriverCoins: async (_amount) => {
+            return { ok: true, driver_coins: Math.max(0, gs().driverCoins || 0) };
         },
         /* Il vero server scala i Driver Coins sul SUO saldo e restituisce quello
            nuovo; CE_money.spendDC ha gia' scalato in locale e si riallinea sulla
@@ -145,8 +178,10 @@ function makeServerState(sandboxRef, overrides = {}) {
            faceva fallire test scritti su codice corretto. Qui si restituisce il
            saldo risultante, che e' quello che il server manderebbe indietro
            quando browser e server sono d'accordo. */
-        spendDriverCoins: async (_itemId, _amount) => {
-            return { ok: true, driver_coins: Math.max(0, gs().driverCoins || 0) };
+        spendDriverCoins: async (itemId, amount) => {
+            /* Contratto COMPLETO di rpc_ec_spend (17_executive_club.sql):
+               { ok, item_id, spent, driver_coins } — prima mancavano item_id e spent. */
+            return { ok: true, item_id: itemId, spent: amount, driver_coins: Math.max(0, gs().driverCoins || 0) };
         },
         findServerVehicle: () => null,
         findServerDriver: () => null,

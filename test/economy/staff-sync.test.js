@@ -39,7 +39,9 @@ describe('ui-staff — gestione assunzioni staff ufficio e sincronizzazione serv
             assert.equal(gs.staff.length, 1, 'lo staff deve contenere 1 membro');
             assert.equal(gs.staff[0].id, 'hr');
             assert.equal(hiredDrivers.length, 1, 'ServerState.hireDriver deve essere stato chiamato');
-            assert.equal(hiredDrivers[0].tier, 'STAFF');
+            // 'STANDARD': rpc_hire_driver (02_mmo_rpcs_extension.sql) rifiuta con RAISE
+            // qualsiasi tier fuori da STANDARD/BUSINESS/VIP/ULTRA — 'STAFF' non esiste.
+            assert.equal(hiredDrivers[0].tier, 'STANDARD');
         });
 
         test('hireOfficeStaff blocca l\'assunzione se il limite massimo staff della sede e raggiunto', async () => {
