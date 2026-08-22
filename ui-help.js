@@ -81,3 +81,4 @@ window.renderCurrentTab = function() {
         window.switchTab(_activeTab);
     }
 };
+window.__mutUnificato = function () {};

@@ -305,6 +305,24 @@ describe('guardrail — registro unificato delle azioni (docs/AZIONI.md)', () =>
         assert.ok(nomiScritto.size > 500, `Attese oltre 500 funzioni unificate, trovate ${nomiScritto.size}`);
     });
 
+    test('il documento elenca le stesse funzioni che il codice contiene oggi', () => {
+        /* Aggiunto alla verifica per mutazione: fino ad allora questo guardrail
+           leggeva docs/AZIONI.md senza mai confrontarlo col codice — una funzione
+           nuova restava fuori dal registro e il test restava verde. Il confronto
+           ignora i numeri di riga di proposito: cambiano a ogni modifica dei file
+           e non c'entrano con quello che il guardrail sorveglia. */
+        const generati = new Set(generateUnifiedDoc().allEntries.map(e => `${e.name} @ ${e.file}`));
+        const senzaRighe = (t) => t.replace(/:\d+/g, ':N');
+        const scritto = senzaRighe(fs.readFileSync(DOC_PATH, 'utf8'));
+        const nelDocumento = new Set(
+            [...scritto.matchAll(/\\| `([A-Za-z_$][\\w$]*)` \\| `([^`]+)` \\|/g)]
+                .map(m => `${m[1]} @ ${m[2].replace(/:N$/, '')}`)
+        );
+        const mancanti = [...generati].filter(x => !nelDocumento.has(x));
+        assert.deepEqual(mancanti.sort(), [],
+            'Queste funzioni esistono nel codice ma non nel registro docs/AZIONI.md: va rigenerato a mano.');
+    });
+
     test('i tre file di partenza esistono ancora', () => {
         assert.ok(fs.existsSync(path.join(ROOT, 'docs', 'AZIONI-interfaccia.md')), 'docs/AZIONI-interfaccia.md deve esistere');
         assert.ok(fs.existsSync(path.join(ROOT, 'docs', 'AZIONI-moduli.md')), 'docs/AZIONI-moduli.md deve esistere');
