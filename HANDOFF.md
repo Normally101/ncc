@@ -11,6 +11,49 @@
 
 ---
 
+# 🟢 22/08 — l'agente non costa piu' niente: stesso modello, endpoint gratuito
+
+**Perche'.** Il 21/08 Vertex e' costato €124,62 in un giorno. Il prezzo unitario
+era giusto (118 run del modello, ~€1,05 l'una); sbagliato era il volume, e il
+volume erano le **riprove**: 173 lavori su 279 sono riprove o ne hanno generata
+una, quasi tutte condannate in partenza dal test che sporcava il repo.
+
+Le altre run della giornata (113 verifiche di ramo, 44 fusioni, 10 di CI) girano
+solo i test e **non costano modello**: mescolarle nel conteggio e' quello che
+rendeva il numero incomprensibile.
+
+**Cosa e' cambiato.** `gemini-agent.mjs` usa l'endpoint di AI Studio quando
+trova `GEMINI_API_KEY`, altrimenti Vertex come prima. Verificato il 22/08:
+**`gemini-3.7-flash` e' disponibile anche sul piano gratuito**, quindi non si e'
+sceso di qualita' — si e' smesso di pagare lo stesso modello. (`gemini-2.5-flash`
+invece non e' piu' servito ai progetti nuovi: risponde 404.)
+
+**Il freno vero non e' un contatore.** La chiave appartiene al progetto Google
+`gigi-gratis-0822-16596`, creato **senza fatturazione**. Non puo' addebitare
+niente per costruzione. Il tetto di spesa in dollari dell'agente e' disattivato
+sul gratis, perche' li' si paga a richieste e non a token: lasciarlo attivo
+avrebbe accorciato i lavori a meta' senza motivo visibile.
+
+**Il limite si e' spostato.** Non piu' gli euro, ma le richieste: ~1.500 al
+giorno e 10 al minuto. Un lavoro puo' arrivare a 70 turni e ogni turno e' una
+richiesta — un `grep` e' un turno. I 429 vengono gia' aspettati con attese
+crescenti (5s, 15s, 45s, 90s).
+
+**Per tornare indietro** basta togliere il secret `GEMINI_API_KEY` da GitHub.
+
+**Le chiavi** stanno in `~/.config/gigi-modelli.env` (modo 600). Il repo `ncc` e'
+pubblico: non ci va mai niente di tutto questo.
+
+**Secondo motore possibile, non ancora costruito:** su OpenRouter c'e'
+`stealth/ox-alpha` — gratis, contesto da 1 milione, pensato per il lavoro
+agentico, e provato il 22/08 chiama gli strumenti correttamente. Due avvertenze
+prima di adottarlo: il fornitore e' anonimo e le sue condizioni si contraddicono
+sull'uso dei prompt per l'addestramento; e il nostro agente parla il dialetto di
+Google, quindi servirebbe portare lo strato delle chiamate a strumenti sul
+formato OpenAI. Ha senso solo se la quota gratuita di Google si rivela stretta.
+
+---
+
 # 🔴 22/08 mattina — il veleno era tornato, e due rami verdi si contraddicevano
 
 **La ricaduta.** Il 22/08 alle 04:18 il lavoro «Tre registri delle azioni in tre
