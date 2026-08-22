@@ -86,10 +86,10 @@
 - `auctionsConfirmBid` · `auctions.js:142` · data-ce-act: `auctionsConfirmBid` (`auctions.js`) · doppioni: nessuno · denaro: no
 - `_autoDalLotto` · `auctions.js:178` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `auctionsClaim` · `auctions.js:221` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`accreditatoDalServer`) / RPC (`rpc_claim_auction`)
-- `auctionsRevealWon` · `auctions.js:254` · data-ce-act: `auctionsRevealWon` (`auctions.js`) · doppioni: nessuno · denaro: no
-- `renderTabAuctions` · `auctions.js:313` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_auctionsSubscribeRealtime` · `auctions.js:437` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `auctionsInit` · `auctions.js:454` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `auctionsRevealWon` · `auctions.js:259` · data-ce-act: `auctionsRevealWon` (`auctions.js`) · doppioni: nessuno · denaro: no
+- `renderTabAuctions` · `auctions.js:318` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_auctionsSubscribeRealtime` · `auctions.js:442` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `auctionsInit` · `auctions.js:459` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `alliances.js`
 
