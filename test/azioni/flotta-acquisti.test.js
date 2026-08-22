@@ -5,7 +5,7 @@ const vm = require('node:vm');
 const { freshEnv } = require('../../test-support/game-env.js');
 
 // Banco di prova per le azioni di acquisto/vendita della flotta che muovono denaro:
-// buyHub, sellHub, buyNpcCar, buyPrototypeCar.
+// buyHub, sellHub, buyNpcCar, buyPrototypeCar, confirmLease (firma leasing).
 // Regola osservata: se il saldo si muove, la scrittura passa da window.CE_money,
 // mai da un gameState.cash -= locale. Se la RPC ha gia' mosso il saldo lato server
 // si usano addebitatoDalServer/accreditatoDalServer e NON si risincronizza.
@@ -212,5 +212,69 @@ describe('azioni/flotta-acquisti — buyPrototypeCar', () => {
 
         assert.equal(sandbox.gameState.cash, proto.price - 1, 'nessun movimento di cassa');
         assert.equal(sandbox.gameState.fleet.length, flottaPrima);
+    });
+});
+
+// ── confirmLease (engine.js, pulsante data-ce-act="confirmLease" del modal leasing) ──
+// Unica azione di acquisto veicolo rimasta senza test dedicato. Alla firma NON
+// passa denaro: il canone si paga giorno per giorno tramite dailyCost. Quello
+// che il test blocca e' la COERENZA del veicolo che entra in flotta — canone
+// mensile dalla formula del modal (base + extra km − sconto durata), flag
+// isLease (da cui terminateLease calcola la penale) e classe veicolo del tier.
+
+function montaFormLeasing(document, km, mesi) {
+    // confirmLease legge solo questi due campi della form del leasing.
+    for (const [id, valore] of [['lease-km', String(km)], ['lease-duration', String(mesi)]]) {
+        const el = document.createElement('div');
+        el.id = id;
+        el.value = valore;
+        document.body.appendChild(el);
+    }
+}
+
+describe('azioni/flotta-acquisti — confirmLease (firma del leasing)', () => {
+    test('firma il contratto: entra in flotta col canone di catalogo e senza muovere cassa', () => {
+        const { sandbox } = freshEnv();
+        montaFormLeasing(sandbox.document, 25000, 12);
+        /* openLeasingModal e' tra le funzioni di apertura modali che il banco
+           neutralizza: le scriviamo direttamente lo stato (let top-level di
+           engine.js, condiviso nello stesso contesto VM) che quella funzione
+           avrebbe impostato prima del click su "Firma Contratto". */
+        vm.runInContext('tempLeaseTier = "stellar_e_exec"', sandbox);
+        sandbox.gameState.cash = 50000;
+        const flottaPrima = sandbox.gameState.fleet.length;
+
+        sandbox.confirmLease();
+
+        const tpl = vm.runInContext('LEASING_TEMPLATES["stellar_e_exec"]', sandbox);
+        // 25000 km: 5k sopra la base, nessuno sconto durata a 12 mesi.
+        const mensile = tpl.baseRate + ((25000 - 20000) / 1000) * (tpl.kmRate * 1000) / 12;
+        assert.equal(sandbox.gameState.fleet.length, flottaPrima + 1, 'il veicolo a noleggio entra in flotta');
+        const car = sandbox.gameState.fleet[sandbox.gameState.fleet.length - 1];
+        assert.equal(car.name, tpl.name + ' (Leasing)');
+        assert.equal(car.isLease, true, 'segnato come leasing: terminateLease ci si aggancia');
+        assert.equal(car.tier, tpl.tier);
+        assert.equal(car.vehicleClass, 'stellar_e_exec');
+        assert.equal(car.leaseDuration, 12);
+        assert.equal(car.leaseElapsedDays, 0);
+        assert.equal(car.leaseMonthlyRate, Math.floor(mensile), 'canone mensile = formula del modal');
+        assert.ok(Math.abs(car.dailyCost - mensile / 30) < 1e-9, 'il costo giornaliero deriva dal canone mensile');
+        assert.equal(sandbox.gameState.cash, 50000, 'alla firma non passa denaro: il canone si paga giorno per giorno');
+    });
+
+    test('contratto lungo (>12 mesi): sconto di 5€ sul canone per ogni mese oltre il dodicesimo', () => {
+        const { sandbox } = freshEnv();
+        montaFormLeasing(sandbox.document, 20000, 24); // nessun extra km
+        vm.runInContext('tempLeaseTier = "stellar_e_exec"', sandbox);
+        const flottaPrima = sandbox.gameState.fleet.length;
+
+        sandbox.confirmLease();
+
+        const tpl = vm.runInContext('LEASING_TEMPLATES["stellar_e_exec"]', sandbox);
+        const mensileAtteso = tpl.baseRate - (24 * 5);
+        assert.equal(sandbox.gameState.fleet.length, flottaPrima + 1);
+        const car = sandbox.gameState.fleet[sandbox.gameState.fleet.length - 1];
+        assert.equal(car.leaseDuration, 24);
+        assert.equal(car.leaseMonthlyRate, mensileAtteso, '1200 − 120 di sconto durata = 1080');
     });
 });
