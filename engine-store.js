@@ -13,9 +13,30 @@ window.activateExecutivePass = function() {
     gameState.executivePassActive     = true;
     gameState.executivePassExpiresDay = gameState.day + 30;
     logToMap('💎 Executive Pass attivato — 30 giorni di benefici premium!');
-    showBigEvent('💎', 'Executive Pass Attivo!', '+25% slot corse, −50% stress accumulo, Insta-Repair a 1 DC, accesso a corse VIP extra.');
+    showBigEvent('💎', 'Executive Pass Attivo!', '−50% stress accumulo, Insta-Repair a 1 DC, accesso a corse VIP extra.');
     updateUI(); saveGame();
     if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+};
+
+// ── TETTO CODA AUTISTA IN ORE (DC) ────────────────────────────────
+/* La coda si misura in ore (Vlad 22/08/2026): 4h di base, uno scatto per
+   volta fino a 12h. Scala e prezzi sono una proposta da ratificare — vedi
+   DRIVER_QUEUE_HOURS_LADDER / DRIVER_QUEUE_UPGRADE_DC in engine-rides.js.
+   Il livello vive sull'autista e sopravvive al salvataggio. */
+window.upgradeDriverQueueDC = function(driverId) {
+    const driver = gameState.drivers.find(d => d.id == driverId);
+    if (!driver) return;
+    const ladder = window.DRIVER_QUEUE_HOURS_LADDER || [4, 6, 8, 10, 12];
+    const costs  = window.DRIVER_QUEUE_UPGRADE_DC   || [10, 18, 28, 40];
+    const level  = Math.max(0, Math.min(Math.floor(driver.queueHoursLevel || 0), ladder.length - 1));
+    if (level >= ladder.length - 1) { showNotification(`${driver.name} ha già il tetto massimo di ${ladder[ladder.length - 1]}h.`, 'info'); return; }
+    const cost = costs[level];
+    if (!window.CE_money.spendDC(cost, 'queue_hours_upgrade')) return;
+    driver.queueHoursLevel = level + 1;
+    logToMap(`⏳ ${driver.name}: monte ore coda portato a ${ladder[level + 1]}h (${cost} DC)`);
+    showNotification(`⏳ ${driver.name} può lavorare fino a ${ladder[level + 1]}h di corse! (−${cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabCorse === 'function') renderTabCorse();
 };
 
 // ── SALTA COSTRUZIONE (DC) ────────────────────────────────────────

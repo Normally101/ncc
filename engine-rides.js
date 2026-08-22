@@ -263,6 +263,25 @@ function _formatDuration(ms) {
     return `${m}min`;
 }
 
+// ─── TETTO CODA AUTISTA IN ORE ───
+/* La coda non si misura più in NUMERO di corse ma in monte ore: dieci corse
+   brevi e dieci corse lunghe sono due giornate di lavoro diverse, e al
+   giocatore serve sapere «quando rientro». Decisione Vlad 22/08/2026:
+   4 ore di base, allungabili con Driver Coins fino a 12.
+   Scala degli scatti 4→6→8→10→12 e prezzi: PROPOSTA non ancora ratificata
+   (calibrata sul negozio: offline_limit 20 DC, caffe_sospeso 10 DC). */
+const DRIVER_QUEUE_HOURS_LADDER = [4, 6, 8, 10, 12];      // ore per livello
+const DRIVER_QUEUE_UPGRADE_DC   = [10, 18, 28, 40];       // costo dello scatto verso il livello successivo
+
+function _getDriverQueueLevel(driver) {
+    const lvl = Math.floor(driver?.queueHoursLevel || 0);
+    return Math.max(0, Math.min(lvl, DRIVER_QUEUE_HOURS_LADDER.length - 1));
+}
+
+function _getDriverQueueCapMs(driver) {
+    return DRIVER_QUEUE_HOURS_LADDER[_getDriverQueueLevel(driver)] * 3600000;
+}
+
 function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? gameState : {})) {
     if (!driver) return null;
     const now = Date.now();
@@ -276,9 +295,12 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         return sum + (fn(r) || 0);
     }, 0);
     const totalQueueMs = (isBusy ? currentRemainingMs : 0) + queuedDurationMs;
-    const execActive = gs.executivePassActive && gs.day <= (gs.executivePassExpiresDay || 0);
-    const maxQueue = execActive ? 12 : 10;
-    const isFull = queuedRides.length >= maxQueue;
+    // Il limite è un MONTE ORE per autista (Vlad 22/08/2026): si confronta con
+    // totalQueueMs, non con il numero di corse. L'Executive Pass non c'entra:
+    // il tetto si allunga solo con i Driver Coins.
+    const queueHours = DRIVER_QUEUE_HOURS_LADDER[_getDriverQueueLevel(driver)];
+    const maxQueueMs = _getDriverQueueCapMs(driver);
+    const isFull = totalQueueMs >= maxQueueMs;
     const nextSlotFreeMs = isBusy ? currentRemainingMs : 0;
     const freeAtDate = new Date(now + totalQueueMs);
 
@@ -287,7 +309,8 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         isBusy,
         currentRemainingMs,
         queuedCount: queuedRides.length,
-        maxQueue,
+        queueHours,
+        maxQueueMs,
         isFull,
         queuedDurationMs,
         totalQueueMs,
@@ -319,12 +342,25 @@ function assignRideToDriver(rideId, driverId) {
     const driver = gameState.drivers.find(d => d.id == driverId);
 
     if (rideIdx > -1 && driver) {
-        const _execActive = gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0);
-        const _maxQueue = _execActive ? 12 : 10;
-        if (driver.queue.length >= _maxQueue) return;
         if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
 
         const ride = gameState.pendingRides[rideIdx];
+
+        // Coda a monte ore: la corsa entra solo se il tetto dell'autista regge
+        // (Vlad 22/08/2026). Niente più conteggio corse.
+        if (_getDriverQueueInfo(driver).totalQueueMs + _getRideDurationMs(ride) > _getDriverQueueCapMs(driver)) {
+            if (typeof showNotification === 'function') {
+                const _qInfo   = _getDriverQueueInfo(driver);
+                const _primoSpazio = _qInfo.isBusy ? _formatDuration(_qInfo.currentRemainingMs) : null;
+                showNotification(
+                    `⏳ Coda piena per ${driver.name}: ${_formatDuration(_qInfo.totalQueueMs)} su ${_qInfo.queueHours}h di monte ore.` +
+                    (_primoSpazio ? ` Primo spazio tra ${_primoSpazio}.` : '') +
+                    ' Allunga il tetto con i Driver Coins.',
+                    'error'
+                );
+            }
+            return;
+        }
 
         // Contract rides: hard vehicle class check
         if (ride.vehicleRequired) {
@@ -369,8 +405,9 @@ function _driverCanTakeRide(driver, ride) {
     if (car.condition <= 10) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
     if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
-    const _epSlots = (gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0)) ? 12 : 10;
-    if (driver.queue.length >= _epSlots) return false;
+    // Monte ore: la corsa deve stare nel tetto dell'autista (Vlad 22/08/2026)
+    const _qInfo = _getDriverQueueInfo(driver, gameState);
+    if (_qInfo.totalQueueMs + (_getRideDurationMs(ride) || 0) > _getDriverQueueCapMs(driver)) return false;
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable
     if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;
@@ -1043,3 +1080,6 @@ window._getRideDurationMs   = _getRideDurationMs;
 window._formatDuration      = _formatDuration;
 window._getDriverQueueInfo  = _getDriverQueueInfo;
 window._previewQueueWithRide = _previewQueueWithRide;
+window._getDriverQueueCapMs = _getDriverQueueCapMs;
+window.DRIVER_QUEUE_HOURS_LADDER = DRIVER_QUEUE_HOURS_LADDER;
+window.DRIVER_QUEUE_UPGRADE_DC   = DRIVER_QUEUE_UPGRADE_DC;

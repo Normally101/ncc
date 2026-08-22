@@ -159,7 +159,12 @@ function renderTabCorse() {
         const freeTimeTxt = qInfo ? qInfo.freeAtTimeStr : null;
         const nextSlotTxt = (qInfo && qInfo.isBusy) ? fmtDurationFn(qInfo.nextSlotFreeMs) : 'subito';
         const queueLen    = driver.queue ? driver.queue.length : 0;
-        const maxQ        = qInfo ? qInfo.maxQueue : 10;
+        // Il tetto è un monte ore per autista (4→12h via Driver Coins)
+        const capTxt      = qInfo ? fmtDurationFn(qInfo.maxQueueMs) : '4h';
+        const _qLvl       = driver.queueHoursLevel || 0;
+        const _ladder     = (typeof window !== 'undefined' && window.DRIVER_QUEUE_HOURS_LADDER) || [4, 6, 8, 10, 12];
+        const _upCosts    = (typeof window !== 'undefined' && window.DRIVER_QUEUE_UPGRADE_DC) || [];
+        const _upCost     = (_qLvl < _upCosts.length && _qLvl < _ladder.length - 1) ? _upCosts[_qLvl] : null;
 
         let queueDetailsHtml = '';
         if (qInfo) {
@@ -168,7 +173,13 @@ function renderTabCorse() {
                 parts.push(`<span style="color:var(--em-blue)">in corso: <strong>${curRemTxt}</strong></span>`);
             }
             if (qInfo.totalQueueMs > 0 && totQueueTxt) {
-                parts.push(`<span style="color:var(--em-muted)">coda tot: <strong>${totQueueTxt}</strong> (libero ore ${freeTimeTxt} stima)</span>`);
+                parts.push(`<span style="color:var(--em-muted)">coda tot: <strong>${totQueueTxt}</strong> su <strong>${capTxt}</strong> — lavora fino alle ${freeTimeTxt}</span>`);
+            }
+            if (qInfo.isFull) {
+                const upBtn = _upCost != null
+                    ? `<button ${ceAct('upgradeDriverQueueDC', [driver.id])} class="em-ghbtn" style="margin-left:5px;padding:1px 7px;font-size:9px">Tetto a ${_ladder[_qLvl + 1]}h (${_upCost} DC)</button>`
+                    : `<span style="color:var(--em-dim)">tetto al massimo (${_ladder[_ladder.length - 1]}h)</span>`;
+                parts.push(`<span style="color:var(--em-amber);font-weight:700">⏳ coda piena${qInfo.isBusy ? ` — primo spazio tra ${nextSlotTxt}` : ''} · allunga il monte ore con i Driver Coins</span>${upBtn}`);
             }
             if (qInfo.isBusy) {
                 parts.push(`<span style="color:${qInfo.isFull ? 'var(--em-amber)' : 'var(--em-dim)'}">1° slot: <strong>${qInfo.isFull ? 'tra ' + nextSlotTxt : 'subito'}</strong></span>`);
@@ -184,7 +195,7 @@ function renderTabCorse() {
                 <div class="em-lt" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${driver.name}${restBtn}</div>
                 <div class="em-lm">
                     <span>${car ? car.name : '— nessun veicolo —'}</span>
-                    ${queueLen > 0 ? `<span>· coda ${queueLen}/${maxQ}</span>` : ''}
+                    ${queueLen > 0 ? `<span>· coda ${queueLen} cors${queueLen === 1 ? 'a' : 'e'} — ${totQueueTxt || '0min'} su ${capTxt}</span>` : ''}
                 </div>
                 ${queueDetailsHtml}
                 <div class="driver-queue-preview" id="preview-${driver.id}" style="font-size:10px;color:var(--em-gold);margin-top:3px;display:none;font-weight:700"></div>

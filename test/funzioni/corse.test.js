@@ -1031,7 +1031,7 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             assert.equal(driver.queue.length, 10);
         });
 
-        test('assignRideToDriver consente fino a 12 slot in coda se Executive Pass è attivo', () => {
+        test('Executive Pass non alza più il tetto della coda: serve il monte ore in Driver Coins', () => {
             const { sandbox, gs } = amb;
             gs.executivePassActive = true;
             gs.day = 1;
@@ -1039,14 +1039,19 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
             const driver = gs.drivers.find(d => d.id === 'drv_1');
             driver.status = 'busy';
+            // Coda da ~9h30 di monte ore (corsa senza prezzo ≈ 57min): sfora il tetto base di 4h
             driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 920 + i, tier: 'business' }));
 
             const newRide = { id: 960, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
             gs.pendingRides = [newRide];
 
             sandbox.assignRideToDriver(960, 'drv_1');
+            assert.equal(gs.pendingRides.length, 1, 'il Pass non concede più slot a conteggio: la coda è piena in ore');
 
-            assert.equal(gs.pendingRides.length, 0, 'con Executive Pass attivo lo slot 11 deve essere accettato');
+            // Con il tetto allungato a 12h via Driver Coins la stessa corsa entra
+            driver.queueHoursLevel = 4;
+            sandbox.assignRideToDriver(960, 'drv_1');
+            assert.equal(gs.pendingRides.length, 0, 'con monte ore a 12h la corsa deve essere accettata');
             assert.equal(driver.queue.length, 11);
         });
     });
