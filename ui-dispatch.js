@@ -222,13 +222,6 @@ function renderTabCorse() {
     container.innerHTML = html;
 }
 
-function _updateTrafficLabel() {
-    const el = document.getElementById('map-traffic-label');
-    if (!el || typeof _getTrafficMult !== 'function') return;
-    const m = _getTrafficMult();
-    el.innerText = m < 1 ? `Traffico intenso (−${Math.round((1-m)*100)}% velocità)` : m > 1 ? `Strade libere (+${Math.round((m-1)*100)}% velocità)` : 'Traffico regolare';
-}
-
 let draggedRideId = null;
 let _dndSetup = false;
 function setupDragAndDrop() {

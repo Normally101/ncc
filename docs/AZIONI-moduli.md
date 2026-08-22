@@ -165,15 +165,14 @@
 - `_b2bFetchActive` · `b2b.js:45` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `b2bRefresh` · `b2b.js:56` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `b2bLockedVehicleIds` · `b2b.js:63` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `b2bLockedDriverIds` · `b2b.js:70` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `b2bAcceptContract` · `b2b.js:79` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_accept_b2b_contract`)
-- `b2bTerminateContract` · `b2b.js:117` · data-ce-act: `b2bTerminateContract` (`b2b.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer, addReputation`) / RPC (`rpc_terminate_b2b_contract`)
-- `_b2bDailyTick` · `b2b.js:148` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`accreditatoDalServer, addReputation`) / RPC (`rpc_b2b_daily_tick`)
-- `b2bOpenAcceptModal` · `b2b.js:180` · data-ce-act: `b2bOpenAcceptModal` (`b2b.js`) · doppioni: nessuno · denaro: no
-- `b2bCheckLimit` · `b2b.js:261` · data-ce-act: `b2bCheckLimit` (`b2b.js`) · doppioni: nessuno · denaro: no
-- `b2bConfirmAccept` · `b2b.js:280` · data-ce-act: `b2bConfirmAccept` (`b2b.js`) · doppioni: nessuno · denaro: no
-- `renderTabB2B` · `b2b.js:296` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `b2bInit` · `b2b.js:446` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `b2bAcceptContract` · `b2b.js:72` · data-ce-act: nessuna · doppioni: nessuno · denaro: RPC (`rpc_accept_b2b_contract`)
+- `b2bTerminateContract` · `b2b.js:110` · data-ce-act: `b2bTerminateContract` (`b2b.js`) · doppioni: nessuno · denaro: CE_money (`addebitatoDalServer, addReputation`) / RPC (`rpc_terminate_b2b_contract`)
+- `_b2bDailyTick` · `b2b.js:141` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`accreditatoDalServer, addReputation`) / RPC (`rpc_b2b_daily_tick`)
+- `b2bOpenAcceptModal` · `b2b.js:173` · data-ce-act: `b2bOpenAcceptModal` (`b2b.js`) · doppioni: nessuno · denaro: no
+- `b2bCheckLimit` · `b2b.js:254` · data-ce-act: `b2bCheckLimit` (`b2b.js`) · doppioni: nessuno · denaro: no
+- `b2bConfirmAccept` · `b2b.js:273` · data-ce-act: `b2bConfirmAccept` (`b2b.js`) · doppioni: nessuno · denaro: no
+- `renderTabB2B` · `b2b.js:289` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `b2bInit` · `b2b.js:439` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `contracts.js`
 
@@ -215,49 +214,48 @@
 
 ## `vip-clients.js`
 
-- `_vipSyncCash` · `vip-clients.js:18` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_maybeVipGrigori` · `vip-clients.js:25` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipGrigori` · `vip-clients.js:47` · data-ce-act: `acceptVipGrigori` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteGrigori` · `vip-clients.js:65` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn, addReputation`)
-- `vipGrigoriEventAccept` · `vip-clients.js:88` · data-ce-act: `vipGrigoriEventAccept` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
-- `vipGrigoriEventDecline` · `vip-clients.js:100` · data-ce-act: `vipGrigoriEventDecline` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
-- `_maybeVipStrata` · `vip-clients.js:109` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipStrata` · `vip-clients.js:130` · data-ce-act: `acceptVipStrata` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteStrata` · `vip-clients.js:146` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`spend`)
-- `_maybeVipPlatinum` · `vip-clients.js:169` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipPlatinum` · `vip-clients.js:190` · data-ce-act: `acceptVipPlatinum` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompletePlatinum` · `vip-clients.js:206` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `vipPlatinumEventBlock` · `vip-clients.js:220` · data-ce-act: `vipPlatinumEventBlock` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
-- `vipPlatinumEventAllow` · `vip-clients.js:231` · data-ce-act: `vipPlatinumEventAllow` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
-- `_maybeVipOnorevole` · `vip-clients.js:243` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipOnorevole` · `vip-clients.js:266` · data-ce-act: `acceptVipOnorevole` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteOnorevole` · `vip-clients.js:284` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `vipOnorevoleEventCopera` · `vip-clients.js:299` · data-ce-act: `vipOnorevoleEventCopera` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
-- `vipOnorevoleEventResisti` · `vip-clients.js:315` · data-ce-act: `vipOnorevoleEventResisti` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
-- `_maybeVipEmiro` · `vip-clients.js:327` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipEmiro` · `vip-clients.js:349` · data-ce-act: `acceptVipEmiro` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteEmiro` · `vip-clients.js:366` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
-- `_maybeVipGolden` · `vip-clients.js:383` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipGolden` · `vip-clients.js:404` · data-ce-act: `acceptVipGolden` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteGolden` · `vip-clients.js:420` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_maybeVipTechBro` · `vip-clients.js:454` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipTechBro` · `vip-clients.js:477` · data-ce-act: `acceptVipTechBro` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteTechBro` · `vip-clients.js:495` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_maybeVipGarante` · `vip-clients.js:503` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipGarante` · `vip-clients.js:524` · data-ce-act: `acceptVipGarante` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteGarante` · `vip-clients.js:540` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `vipGaranteEventPaga` · `vip-clients.js:562` · data-ce-act: `vipGaranteEventPaga` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
-- `vipGaranteEventIntimidisci` · `vip-clients.js:576` · data-ce-act: `vipGaranteEventIntimidisci` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
-- `_maybeVipWedding` · `vip-clients.js:601` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipWedding` · `vip-clients.js:623` · data-ce-act: `acceptVipWedding` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteWedding` · `vip-clients.js:641` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `vipWeddingEventGestisci` · `vip-clients.js:667` · data-ce-act: `vipWeddingEventGestisci` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend, earn`)
-- `vipWeddingEventIgnora` · `vip-clients.js:679` · data-ce-act: `vipWeddingEventIgnora` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
-- `vipWeddingPaymentCollect` · `vip-clients.js:688` · data-ce-act: `vipWeddingPaymentCollect` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`earn`)
-- `_maybeVipErede` · `vip-clients.js:704` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `acceptVipErede` · `vip-clients.js:726` · data-ce-act: `acceptVipErede` (`ui-emails.js`) · doppioni: nessuno · denaro: no
-- `_vipCompleteErede` · `vip-clients.js:743` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn, addReputation`)
-- `_vipOnComplete` · `vip-clients.js:772` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_maybeVipGrigori` · `vip-clients.js:11` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipGrigori` · `vip-clients.js:33` · data-ce-act: `acceptVipGrigori` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteGrigori` · `vip-clients.js:51` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn, addReputation`)
+- `vipGrigoriEventAccept` · `vip-clients.js:74` · data-ce-act: `vipGrigoriEventAccept` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
+- `vipGrigoriEventDecline` · `vip-clients.js:86` · data-ce-act: `vipGrigoriEventDecline` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
+- `_maybeVipStrata` · `vip-clients.js:95` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipStrata` · `vip-clients.js:116` · data-ce-act: `acceptVipStrata` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteStrata` · `vip-clients.js:132` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`spend`)
+- `_maybeVipPlatinum` · `vip-clients.js:155` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipPlatinum` · `vip-clients.js:176` · data-ce-act: `acceptVipPlatinum` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompletePlatinum` · `vip-clients.js:192` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `vipPlatinumEventBlock` · `vip-clients.js:206` · data-ce-act: `vipPlatinumEventBlock` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
+- `vipPlatinumEventAllow` · `vip-clients.js:217` · data-ce-act: `vipPlatinumEventAllow` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
+- `_maybeVipOnorevole` · `vip-clients.js:229` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipOnorevole` · `vip-clients.js:252` · data-ce-act: `acceptVipOnorevole` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteOnorevole` · `vip-clients.js:270` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `vipOnorevoleEventCopera` · `vip-clients.js:285` · data-ce-act: `vipOnorevoleEventCopera` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
+- `vipOnorevoleEventResisti` · `vip-clients.js:301` · data-ce-act: `vipOnorevoleEventResisti` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
+- `_maybeVipEmiro` · `vip-clients.js:313` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipEmiro` · `vip-clients.js:335` · data-ce-act: `acceptVipEmiro` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteEmiro` · `vip-clients.js:352` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn`)
+- `_maybeVipGolden` · `vip-clients.js:369` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipGolden` · `vip-clients.js:390` · data-ce-act: `acceptVipGolden` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteGolden` · `vip-clients.js:406` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_maybeVipTechBro` · `vip-clients.js:440` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipTechBro` · `vip-clients.js:463` · data-ce-act: `acceptVipTechBro` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteTechBro` · `vip-clients.js:481` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_maybeVipGarante` · `vip-clients.js:489` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipGarante` · `vip-clients.js:510` · data-ce-act: `acceptVipGarante` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteGarante` · `vip-clients.js:526` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `vipGaranteEventPaga` · `vip-clients.js:548` · data-ce-act: `vipGaranteEventPaga` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
+- `vipGaranteEventIntimidisci` · `vip-clients.js:562` · data-ce-act: `vipGaranteEventIntimidisci` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend`)
+- `_maybeVipWedding` · `vip-clients.js:587` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipWedding` · `vip-clients.js:609` · data-ce-act: `acceptVipWedding` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteWedding` · `vip-clients.js:627` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `vipWeddingEventGestisci` · `vip-clients.js:653` · data-ce-act: `vipWeddingEventGestisci` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`spend, earn`)
+- `vipWeddingEventIgnora` · `vip-clients.js:665` · data-ce-act: `vipWeddingEventIgnora` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`addReputation`)
+- `vipWeddingPaymentCollect` · `vip-clients.js:674` · data-ce-act: `vipWeddingPaymentCollect` (`ui-emails.js`) · doppioni: nessuno · denaro: CE_money (`earn`)
+- `_maybeVipErede` · `vip-clients.js:690` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `acceptVipErede` · `vip-clients.js:712` · data-ce-act: `acceptVipErede` (`ui-emails.js`) · doppioni: nessuno · denaro: no
+- `_vipCompleteErede` · `vip-clients.js:729` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earn, addReputation`)
+- `_vipOnComplete` · `vip-clients.js:758` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `vip-buffs.js`
 
@@ -425,8 +423,6 @@
 
 | Funzione | Definizione | Note |
 |---|---|---|
-| `b2bLockedDriverIds` | `b2b.js:70` | Getter ID autisti bloccati B2B mai invocato |
-| `_vipSyncCash` | `vip-clients.js:18` | Helper non referenziato |
 | `getMissionRequires` | `quests.js:15` | Helper requisiti missione non referenziato |
 | `driverSkillEffect` | `driver_skills.js:101` | Calcolo effetto skill non referenziato |
 

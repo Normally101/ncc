@@ -67,13 +67,6 @@ window.b2bLockedVehicleIds = function() {
     catch { return []; }
 };
 
-window.b2bLockedDriverIds = function() {
-    const ac = window._b2bState.activeContract;
-    if (!ac || ac.status !== 'active') return [];
-    try { return JSON.parse(typeof ac.locked_drivers === 'string' ? ac.locked_drivers : JSON.stringify(ac.locked_drivers)) || []; }
-    catch { return []; }
-};
-
 // ── AZIONI ────────────────────────────────────────────────────────────────────
 
 window.b2bAcceptContract = async function(contractId, vehicleIds, driverIds) {

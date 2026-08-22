@@ -27,10 +27,9 @@
 ## `ui-dispatch.js`
 
 - `renderTabCorse` · `ui-dispatch.js:4` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateTrafficLabel` · `ui-dispatch.js:225` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `setupDragAndDrop` · `ui-dispatch.js:234` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `renderTabCorse` · `ui-dispatch.js:307` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `setupDragAndDrop` · `ui-dispatch.js:308` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `setupDragAndDrop` · `ui-dispatch.js:227` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `renderTabCorse` · `ui-dispatch.js:300` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `setupDragAndDrop` · `ui-dispatch.js:301` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-emails.js`
 
@@ -181,11 +180,11 @@
 ## `ui-staff.js`
 
 - `renderTabStaff` · `ui-staff.js:12` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `openCarModal` · `ui-staff.js:274` · data-ce-act: `openCarModal` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
-- `closeModals` · `ui-staff.js:364` · data-ce-act: `closeModals` (`index.html`) · doppioni: nessuno · denaro: no
-- `fireStaff` · `ui-staff.js:370` · data-ce-act: `fireStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `hireOfficeStaff` · `ui-staff.js:380` · data-ce-act: `hireOfficeStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `renderTabStaff` · `ui-staff.js:399` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `openCarModal` · `ui-staff.js:275` · data-ce-act: `openCarModal` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
+- `closeModals` · `ui-staff.js:365` · data-ce-act: `closeModals` (`index.html`) · doppioni: nessuno · denaro: no
+- `fireStaff` · `ui-staff.js:371` · data-ce-act: `fireStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `hireOfficeStaff` · `ui-staff.js:381` · data-ce-act: `hireOfficeStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `renderTabStaff` · `ui-staff.js:400` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-store.js`
 
@@ -227,5 +226,4 @@ Il vecchio configuratore auto (circa 185 righe con `openCarConfigurator`, `__cfg
 | Funzione | Definizione | Note |
 |---|---|---|
 | `_carRewardLine` | `ui-career.js:172` | Nessuna invocazione trovata nel codebase (JS/HTML/data-ce-act) |
-| `_updateTrafficLabel` | `ui-dispatch.js:225` | Nessuna invocazione trovata nel codebase (JS/HTML/data-ce-act) |
 
