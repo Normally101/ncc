@@ -74,10 +74,23 @@ Il budget vero non è «quanti lavori al giorno» ma **quante richieste**: un la
 fra 30 e 50, e i due tetti insieme sono valsi **45 run**. Parallelismo riportato da 10 a
 **4** — con 10 la giornata intera si brucia in dodici minuti.
 
+## Aggiornamento — i 10 dollari sono dentro, la quota è sbloccata per sempre
+
+Vlad ha ricaricato **10 dollari** su OpenRouter. Verificato con una chiamata vera:
+`is_free_tier: false`, nessun errore di quota. Il tetto è passato da 50 a **1000 richieste
+al giorno**, permanente — non un abbonamento, un limite che si sblocca una volta e resta
+sbloccato.
+
+**Attenzione per il futuro:** la ricarica è finita su un `creator_user_id` diverso da quello
+della chiave che stavamo usando — probabilmente un secondo account creato per errore in
+precedenza, o la chiave era già stata rigenerata. La chiave nuova è ora ovunque serve:
+`~/.config/gigi-modelli.env`, `~/gigi/.telegram.env` sulla VM, e il secret `OPENROUTER_API_KEY`
+su GitHub Actions. Gigi è stato fatto ripartire subito invece di aspettare le 02:30.
+
 ## Stato
 
-15 lavori riscritti e in coda, Gigi fermo fino alle 02:30 e poi riparte da solo.
-`main` pulito. Le quattro domande nuove sull'hub hanno risposta (vedi sotto).
+15 lavori riscritti in coda, Gigi ripartito con la nuova quota. `main` pulito. Le quattro
+domande nuove sull'hub hanno risposta (vedi sotto).
 
 ---
 
