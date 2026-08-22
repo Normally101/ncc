@@ -144,9 +144,16 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             const { sandbox, gs } = amb;
             gs.pendingRides = [];
 
-            const ride = sandbox.generatePOIRide();
+            /* generatePOIRide puo' legittimamente non generare niente: se sorteggia
+               la stessa destinazione dell'origine, o una tratta che richiede il
+               taxi d'acqua a Venezia senza averlo, restituisce null. Il gioco la
+               richiama su un timer, quindi un buco non si vede. Un test che la
+               chiama una volta sola e' un lancio di dado: qui si riprova fino a
+               ottenere la corsa, e si fallisce solo se non arriva mai. */
+            let ride = null;
+            for (let i = 0; i < 40 && !ride; i++) ride = sandbox.generatePOIRide();
 
-            assert.ok(ride, 'deve ritornare l\'oggetto corsa generato');
+            assert.ok(ride, 'in 40 tentativi deve generare almeno una corsa');
             assert.equal(gs.pendingRides.length, 1, 'pendingRides deve contenere 1 corsa');
             assert.ok(ride.id > 0);
             assert.ok(ride.fromPoi && ride.toPoi);
@@ -177,9 +184,14 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
                volta blocca il cancello dell'agente su OGNI ramo. */
             gs.pricingStrategy = 'standard';
 
-            const ride = sandbox.generatePOIRide('ultra');
+            /* Fissare la strategia non basta: restano i due casi in cui la
+               funzione restituisce null di suo (origine uguale a destinazione,
+               tratta lagunare senza taxi d'acqua). Quindi si riprova, come fa
+               il gioco. */
+            let ride = null;
+            for (let i = 0; i < 40 && !ride; i++) ride = sandbox.generatePOIRide('ultra');
 
-            assert.ok(ride);
+            assert.ok(ride, 'in 40 tentativi deve generare almeno una corsa');
             assert.equal(ride.tier, 'ultra', 'il tier della corsa deve corrispondere all\'override');
         });
 
