@@ -30,15 +30,7 @@ const ECCEZIONI = new Set([]);
 
 // Righe autorizzate in deroga perche' non sono transazioni economiche:
 // ciascuna ha il motivo esplicito accanto. Non allargare l'espressione regolare.
-const RIGHE_CONSENTITE = new Map([
-    // engine.js:
-    // 1. `gameState.cash = 0` all'inizio di una partita nuova: e' inizializzazione.
-    ['engine.js:gameState.cash = 0;', 'Inizializzazione nuova partita'],
-    // 2. il ripiego dentro `_addCash` per quando money.js non e' ancora caricato.
-    ['engine.js:gameState.cash += amount;', 'Ripiego _addCash prima del caricamento di money.js'],
-    // 3. il ripristino dell'ultimo saldo valido quando il saldo diventa NaN: e' una riparazione.
-    ['engine.js:gameState.cash = (typeof window._lastValidCash === \'number\') ? window._lastValidCash : 0;', 'Ripristino ultimo saldo valido quando non-finito'],
-]);
+const RIGHE_CONSENTITE = new Map([]);
 
 const MUTAZIONE = /gameState\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
 

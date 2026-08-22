@@ -849,7 +849,11 @@ function initGame(fresh = true) {
         gameState.day    = _itaFresh.gameDay;
         // Zero-to-Hero: una partita nuova parte dal "fondo del barile".
         // 10 guidate manuali (+15€) = 150€, coerente col modal "Hai 150€ in tasca ora".
-        gameState.cash = 0;
+        if (window.CE_money && (gameState.cash || 0) > 0) {
+            CE_money.addebitatoDalServer(gameState.cash, 'init_fresh');
+        } else if (window.CE_money && (gameState.cash || 0) < 0) {
+            CE_money.accreditatoDalServer(-(gameState.cash || 0), 'init_fresh');
+        }
         gameState.drivers.push({ id: 'ceo', name: 'Tu (CEO)', status: 'idle', assignedCarId: null, queue: [], fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100, upgrades: [], hiredDay: 1, skill_efficiency: 50, skill_charisma: 50, skill_speed: 50, stress_level: 0, burnout_until: null });
         // Auto "riscattata dal pignoramento": berlina starter tier 'standard' (sotto il
         // listino showroom, che parte da 'business'). Resta NON assegnata in survival
@@ -983,15 +987,10 @@ function _getItalyTime() {
    Passa da CE_money.earn, che sincronizza col server. Prima toccava
    `gameState.cash` e basta: chi incassava per questa strada vedeva il denaro
    a schermo e lo perdeva al ricaricamento, perche' al server non arrivava
-   niente. Il ripiego diretto resta per l'unico caso in cui money.js non e'
-   ancora caricato — l'ordine degli script all'avvio. */
+   niente. */
 window._addCash = function(amount) {
-    if (Number.isFinite(amount)) {
-        if (window.CE_money && typeof window.CE_money.earn === 'function') {
-            window.CE_money.earn(amount, 'add_cash');
-        } else {
-            gameState.cash += amount;
-        }
+    if (Number.isFinite(amount) && window.CE_money && typeof window.CE_money.earn === 'function') {
+        window.CE_money.earn(amount, 'add_cash');
     }
     return gameState.cash;
 };
@@ -1000,9 +999,18 @@ function gameLoop() {
     if (gameState.paused) return;
 
     // Cash sanity guard: se una mutazione difettosa ha prodotto NaN/Infinity,
-    // ripristina l'ultimo saldo valido invece di propagare la corruzione.
+    // ripristina l'ultimo saldo valido passando da CE_money invece di propagare la corruzione.
     if (!Number.isFinite(gameState.cash)) {
-        gameState.cash = (typeof window._lastValidCash === 'number') ? window._lastValidCash : 0;
+        const _target = (typeof window._lastValidCash === 'number' && Number.isFinite(window._lastValidCash) && window._lastValidCash > 0)
+            ? window._lastValidCash
+            : 0;
+        if (window.CE_money) {
+            if (_target > 0) {
+                CE_money.accreditatoDalServer(_target, 'repair_nan');
+            } else {
+                CE_money.earn(0, 'repair_nan');
+            }
+        }
         if (typeof showNotification === 'function') showNotification('Saldo non valido corretto automaticamente.', 'error');
     } else {
         window._lastValidCash = gameState.cash;

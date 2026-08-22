@@ -32,7 +32,7 @@ function banco() {
         },
     });
 
-    for (const nome of ['spend', 'earn']) {
+    for (const nome of ['spend', 'earn', 'accreditatoDalServer', 'addebitatoDalServer']) {
         const originale = env.sandbox.CE_money[nome];
         env.sandbox.CE_money[nome] = function (importo, motivo) {
             chiamate.push({ tipo: nome, importo, motivo });
@@ -185,6 +185,38 @@ describe('engine.js — cassa e riparazioni', () => {
             assert.equal(accrediti.length, 1, 'il contratto diamond deve passare da CE_money.earn');
             assert.equal(accrediti[0].importo, 45000);
             assert.deepEqual(sincronizzati, [50000]);
+        });
+    });
+
+    describe('inizializzazione e ripristino cassa via CE_money', () => {
+        test('initGame(fresh=true) allinea cassa a 0 tramite CE_money.addebitatoDalServer senza doppio conteggio', async () => {
+            const { sandbox, gs, chiamate, sincronizzati } = banco();
+            gs.cash = 5000;
+
+            sandbox.initGame(true);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 0, 'la cassa iniziale deve essere 0');
+            const addebiti = chiamate.filter(c => c.tipo === 'addebitatoDalServer');
+            assert.equal(addebiti.length, 1, 'l\'azzeramento deve passare da CE_money.addebitatoDalServer');
+            assert.equal(addebiti[0].importo, 5000);
+            assert.deepEqual(sincronizzati, [], 'non deve inviare syncCash per evitare doppio conteggio');
+        });
+
+        test('gameLoop ripristina cash corrotto (NaN) tramite CE_money.accreditatoDalServer', async () => {
+            const { sandbox, gs, chiamate, sincronizzati } = banco();
+            sandbox.window._lastValidCash = 2500;
+            gs.cash = NaN;
+            gs.paused = false;
+
+            sandbox.gameLoop();
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(gs.cash, 2500, 'il saldo corrotto deve essere ripristinato');
+            const accrediti = chiamate.filter(c => c.tipo === 'accreditatoDalServer');
+            assert.equal(accrediti.length, 1, 'il ripristino deve passare da CE_money.accreditatoDalServer');
+            assert.equal(accrediti[0].importo, 2500);
+            assert.deepEqual(sincronizzati, [], 'non deve risincronizzare al ripristino locale');
         });
     });
 
