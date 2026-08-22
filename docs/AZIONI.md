@@ -534,7 +534,7 @@ Ordinate per gravità. Ognuna è un task.
 | `addebitatoDalServer` | `money.js:94` | nessuna | nessuno | no |
 | `addIncidentMarker` | `map.js:460` | nessuna | nessuno | no |
 | `addProvinceInfluence` | `serverState.js:441` | nessuna | nessuno | no |
-| `addReputation` | `money.js:166` | nessuna | nessuno | no |
+| `addReputation` | `money.js:170` | nessuna | nessuno | no |
 | `ago` | `world-feed.js:131` | nessuna | nessuno | no |
 | `applicaInterruttori` | `feature-gate.js:36` | nessuna | nessuno | no |
 | `applicaInterruttori` | `feature-gate.js:62` | nessuna | nessuno | no |
@@ -706,7 +706,7 @@ Ordinate per gravità. Ognuna è un task.
 | `driverUnlockSkill` | `driver_skills.js:158` | `driverUnlockSkill` (`driver_skills.js`) | nessuno | no |
 | `earlyGates` | `objective-tracker.js:34` | nessuna | nessuno | no |
 | `earn` | `money.js:56` | nessuna | nessuno | no |
-| `earnDC` | `money.js:141` | nessuna | nessuno | no |
+| `earnDC` | `money.js:143` | nessuna | nessuno | no |
 | `emergencyRefuel` | `engine-fleet.js:173` | `emergencyRefuel` (`ui-fleet.js`) | nessuno | CE_money (`spend`) |
 | `energyBoostDC` | `engine-store.js:65` | `energyBoostDC` (`index.html`, `ui-store.js`) | nessuno | CE_money (`spendDC`) |
 | `ensure` | `daily-orders.js:72` | nessuna | nessuno | no |
