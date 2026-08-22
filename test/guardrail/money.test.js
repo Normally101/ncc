@@ -17,20 +17,22 @@ const { freshEnv } = require('../../test-support/game-env.js');
 /** Ambiente con ServerState strumentato: registra le SCRITTURE, non le letture. */
 function ambiente(rispostaDC) {
     const scritture = [];
-    const { sandbox } = freshEnv({
+    const env = freshEnv({
         serverState: {
             syncCash: async (v) => { scritture.push(['syncCash', v]); return { success: true, cash: v }; },
             spendDriverCoins: async (motivo, n) => {
                 scritture.push(['spendDriverCoins', motivo, n]);
+                if (rispostaDC && rispostaDC.rifiuta) throw new Error('errore server simulato');
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
             addDriverCoins: async (n, motivo) => {
                 scritture.push(['addDriverCoins', n, motivo]);
+                if (rispostaDC && rispostaDC.rifiuta) throw new Error('errore server simulato');
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
         },
     });
-    return { sandbox, gs: sandbox.gameState, scritture };
+    return { sandbox: env.sandbox, gs: env.sandbox.gameState, scritture, notifications: env.notifications };
 }
 
 describe('money — la porta unica del denaro', () => {
@@ -112,6 +114,22 @@ describe('money — la porta unica del denaro', () => {
             sandbox.CE_money.earnDC(5, 'premio');
             await new Promise(r => setImmediate(r));
             assert.deepEqual(scritture, [['addDriverCoins', 5, 'premio']]);
+        });
+
+        test('spendDC avvisa il giocatore se la RPC del server fallisce', async () => {
+            const { sandbox, gs, notifications } = ambiente({ rifiuta: true });
+            gs.driverCoins = 50;
+            sandbox.CE_money.spendDC(4, 'energia');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifications.length > 0, 'il giocatore deve ricevere un avviso se il server rifiuta la spesa');
+        });
+
+        test('earnDC avvisa il giocatore se la RPC del server fallisce', async () => {
+            const { sandbox, gs, notifications } = ambiente({ rifiuta: true });
+            gs.driverCoins = 10;
+            sandbox.CE_money.earnDC(5, 'premio');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifications.length > 0, 'il giocatore deve ricevere un avviso se il server rifiuta l\'accredito');
         });
     });
 
