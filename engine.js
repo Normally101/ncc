@@ -676,14 +676,10 @@ function _showSaveIndicator() {
     _showSaveIndicator._t = setTimeout(() => { el.style.opacity = '0'; }, 2500);
 }
 
-// resetGame is defined in saveSystem.js (cloud-aware); this stub handles early calls
-if (!window.resetGame) {
-    window.resetGame = function() {
-        if (!confirm('Reimposta il tuo Impero? Tutti i progressi verranno eliminati.')) return;
-        localStorage.removeItem('chauffeurEmpireSlot_1');
-        location.reload();
-    };
-}
+// resetGame è definita solo in saveSystem.js (cloud-aware): index.html esegue
+// saveSystem.js prima di engine.js, quindi nessun stub qui — il vecchio fallback
+// localStorage-only divergeva dal vero reset (niente blocco salvataggi, niente
+// pulizia cloud) ed era la variante che faceva "resets never stick" (BUG 3).
 
 // ─── TRAFFICO DINAMICO ────────────────────────────────────────────
 function _getTrafficMult() {

@@ -51,7 +51,6 @@ function soloCodice(testo) {
 const ECCEZIONI = new Set([
     '_selectedColorSS',        // flag condiviso: colore scelto nel configuratore showroom
     'currentSlotIndex',        // stato condiviso: slot attivo scritto da piu' moduli
-    'resetGame',               // catena di decorator (saveSystem.js -> engine.js)
     '_suppressCloudSave',      // flag condiviso: blocco temporaneo del salvataggio cloud
     'processDailyRoutines',    // decoratore (vittorio.js avvolge engine-daily.js)
     '_fleetFilter',            // default dei filtri flotta scritto da dispatcher e ui-fleet
