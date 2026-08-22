@@ -64,4 +64,15 @@ describe('guardrail — mappa delle transazioni economiche (docs/TRANSAZIONI.md)
         assert.ok(testo.includes('rpc_repair_vehicle'), 'Manca l\'analisi di rpc_repair_vehicle');
         assert.ok(testo.includes('rpc_add_driver_coins'), 'Manca l\'analisi di rpc_add_driver_coins');
     });
+
+    test('fa riferimento a docs/ECONOMY_SERVER_AUTH.md senza duplicare lo scaffold del ledger', () => {
+        const testo = fs.readFileSync(DOC_PATH, 'utf8');
+        assert.ok(testo.includes('ECONOMY_SERVER_AUTH.md'), 'docs/TRANSAZIONI.md deve fare riferimento a docs/ECONOMY_SERVER_AUTH.md');
+    });
+
+    test('elenca in cima le azioni coperte e conclude con la raccomandazione di partenza', () => {
+        const testo = fs.readFileSync(DOC_PATH, 'utf8');
+        assert.ok(testo.includes('Azioni Coperte'), 'Manca l\'indice/elenco iniziale delle azioni coperte');
+        assert.ok(testo.includes('Da quale conviene partire e perché') || testo.includes('Da quale conviene partire'), 'Manca la sezione di raccomandazione iniziale');
+    });
 });

@@ -4,6 +4,26 @@
 > Questo documento fornisce l'analisi tecnica di fattibilità e impatto per la transizione dall'attuale modello *client-authoritative* (con sincronizzazione a specchio `rpc_sync_cash`) al modello *server-authoritative* (transazioni con validazione di regole di business, listini e proprietà lato PostgreSQL).
 >
 > **Aree coperte**: Tutte le 13 macro-aree economiche del gioco (Flotta e Officina, Corse e Dispatch, Staff, Mercato P2P e Aste, Valuta Premium DC e VTK, Contratti B2B e Turismo, Finanza e Prestiti, Consorzi e Sindacato, Infrastrutture e HQ, Black Ops e Nemesi, Marketing e Lobby, Ricompense giornaliere, Fallimento e Prestigio).
+>
+> **Relazione con `docs/ECONOMY_SERVER_AUTH.md`**: `docs/ECONOMY_SERVER_AUTH.md` definisce lo spec architettonico e lo scaffolding del ledger append-only (`cash_ledger` in `42_economy_ledger_scaffold.sql`, `rpc_earn`/`rpc_spend` e trigger di blocco). Il presente documento `TRANSAZIONI.md` non ne duplica l'infrastruttura, ma mappa **ogni singola transazione del gioco**: come si muove il denaro oggi, cosa controlla e cosa NON controlla davvero ogni RPC SQL, cosa dovrebbe validare e la gravità di exploit per ciascuna azione.
+
+---
+
+## Azioni Coperte (35 azioni in 13 macro-aree)
+
+1. **Flotta & Manutenzione**: 1.1 Acquisto Veicolo Salone, 1.2 Vendita Usato, 1.3 Noleggio/Leasing, 1.4 Riparazione Ordinaria, 1.5 Riparazione Flotta DC, 1.6 Upgrade Veicolo, 1.7 Rifornimento Carburante, 1.8 Telepass Flotta.
+2. **Corse, Dispatch & Eventi Stradali**: 2.1 Core Loop Corse (Start/Claim), 2.2 Corse VIP e Missioni, 2.3 Corse a Vuoto / Riposizionamento, 2.4 Pagamento Multe Stradali.
+3. **Autisti & Gestione Personale**: 3.1 Assunzione Autista, 3.2 Licenziamento/TFR, 3.3 Riposo CEO / Hotel, 3.4 Guarigione Autisti DC, 3.5 Assunzione Crumiri.
+4. **Mercato P2P & Aste Giudiziarie**: 4.1 Vendita Veicolo P2P, 4.2 Acquisto Veicolo P2P, 4.3 Offerte Aste Giudiziarie, 4.4 Riscossione Lotto Aste.
+5. **Valuta Premium (Driver Coins) & Token VTK**: 5.1 Acquisto DC con Denaro Reale (Stripe), 5.2 Spesa DC Booster/Shop, 5.3 Compravendita Token VTK, 5.4 Shop VTK & Vanity.
+6. **Contratti B2B & Turismo**: 6.1 Tick Giornaliero B2B, 6.2 Risoluzione Anticipata / Penale B2B, 6.3 Bandi Turismo (Gare d'Appalto).
+7. **Finanza, Prestiti, Cripto & Borsa**: 7.1 Accensione Prestito Bancario, 7.2 Rimborso Prestito, 7.3 Compravendita Criptovalute, 7.4 Quotazione Borsa IPO & Azioni, 7.5 OPA Ostile e Buyback, 7.6 Investimenti Passivi.
+8. **Consorzi, Alleanze & Sindacato**: 8.1 Creazione Consorzio/Alleanza, 8.2 Donazione Tesoreria Consorzio, 8.3 Pizzo e Tangenti Don Carmine.
+9. **Infrastruttura, HQ & Immobili**: 9.1 Acquisto Deposito Carburante, 9.2 Upgrade Stanze HQ, 9.3 Acquisto Immobili (Real Estate), 9.4 Conquista Territoriale Province, 9.5 Lifestyle Assets.
+10. **Black Ops & Nemesi**: 10.1 Operazioni Ombra (Sabotaggi/Spionaggio), 10.2 Upgrade Difese Black Ops, 10.3 Corruzione VIP / Rivali Nemesi.
+11. **Marketing, Lobby & Politica**: 11.1 Campagne Marketing, 11.2 Lobbying Politico e Decreti.
+12. **Ricompense Giornaliere & Missioni**: 12.1 Bonus Login Giornaliero / Ordini, 12.2 Ricompense Quests & Tracker.
+13. **Fallimento & Reset Prestigio**: 13.1 Pignoramento Fallimentare (Bancarotta), 13.2 New Game Plus / Prestigio.
 
 ---
 
@@ -590,3 +610,24 @@ Per implementare una vera architettura *server-authoritative* senza bloccare lo 
   1. Attivare il trigger di enforcement `_enforce_cash_via_rpc()` in `42_economy_ledger_scaffold.sql`.
   2. Rimuovere definitivamente `rpc_sync_cash` (`10_sync_cash.sql`).
   3. A questo punto, il client diventa un terminale visuale al 100% immune a qualsiasi manipolazione tramite DevTools.
+
+---
+
+## 5. Da quale conviene partire e perché
+
+La transizione al modello *server-authoritative* deve seguire un ordine strategico basato sull'impatto economico e sul rischio di compromissione:
+
+1. **Partire da: `rpc_add_driver_coins` (Priorità 1 — Valuta Premium & Monetizzazione Reale)**
+   - **Perché**: È l'unico punto in cui un exploit impatta direttamente **denaro reale** (IAP/ricavi dell'azienda). Oggi qualsiasi utente autenticato può chiamare `rpc_add_driver_coins` dalla console DevTools e accreditarsi fino a 1.000.000 DC gratis. Nessun bilanciamento di gioco ha senso se la valuta premium a pagamento è falsificabile liberamente. L'intervento è immediato: revocare `GRANT EXECUTE` dal ruolo `authenticated` e riservare l'accredito al `service_role` invocato esclusivamente da webhook crittografici firmati (Stripe HMAC).
+
+2. **Secondo passo: Mercato P2P e Aste Giudiziarie (Priorità 2 — Economia Multiplayer & Aste)**
+   - **Perché**: In un MMO, il riciclaggio e il trasferimento illecito di fondi tra account tramite compravendita di veicoli a prezzi spropositati o offerte fantasma nelle aste inquinano le interazioni PvP. L'introduzione di *escrow lock* e di fasce di prezzo (*price bands*) protegge l'ecosistema competitivo e la fiducia della community.
+
+3. **Terzo passo: Core Loop Corse `rpc_start_trip` / `rpc_claim_trip_reward` (Priorità 3)**
+   - **Perché**: È il motore principale della generazione di liquidità EUR nel gioco. Rimuovere il trust dal client sui parametri `reward` e `duration` (calcolandoli su DB tramite coordinate geografiche) impedisce il minting istantaneo di cassa senza rompere l'interfaccia utente.
+
+4. **Quarto passo: Rimozione dei parametri di costo/prezzo client da Flotta e Staff (Priorità 4)**
+   - **Perché**: Con listini server per acquisto auto (`rpc_buy_vehicle`), riparazioni (`rpc_repair_vehicle`) e stipendi (`rpc_hire_driver`), il client non può più azzerare i costi operativi o comprare supercar da 500k a 1€.
+
+5. **Passo finale: Ledger Append-Only e Deprecazione di `rpc_sync_cash` (Priorità 5 e 6)**
+   - **Perché**: Solo quando tutte le sorgenti di spesa ed entrata passano da RPC con listini server è possibile attivare il trigger di enforcement `_enforce_cash_via_rpc()` descritto in `docs/ECONOMY_SERVER_AUTH.md` ed eliminare definitivamente la sincronizzazione a specchio `rpc_sync_cash`.
