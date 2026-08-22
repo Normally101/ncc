@@ -1,6 +1,6 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 22 agosto 2026 (mattina)
+> Aggiornato: 22 agosto 2026 (sera)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 > **E leggi anche le note che Vlad ha lasciato a Gigi mentre non c'eri:**
@@ -8,6 +8,94 @@
 > Le scrive dal telefono con «nota: ...» quando è fuori casa. Dopo averle lette,
 > segnale come lette (`segnaLette()` in `jarvis/src/note.js`), altrimenti restano
 > a contarsi come nuove per sempre.
+
+---
+
+# 🟢 22/08 sera — «187 lavori da rifare» erano 43, e la vera lista di lavoro era un'altra
+
+## Il numero che non era quello
+
+Gigi ha detto a Vlad di avere «187-190 lavori falliti da rifare», e Vlad ha chiesto di
+rimetterli tutti in coda. **Non l'ho fatto, e il motivo va ricordato.**
+
+`respinto` in `code-queue.json` non conta i lavori mancanti: conta i **tentativi** respinti.
+Lo stesso titolo compare fino a quattro volte, e quasi sempre l'ultimo tentativo di quel
+titolo è poi finito `fuso`. Rimettere in coda tutti e 187 significava rifare da capo lavoro
+che è già dentro `main`, con la certezza di generare conflitti su file già corretti.
+
+Contando i titoli distinti che non hanno MAI raggiunto `fuso`: **43**, non 187. E
+verificando quei 43 contro il repository, la maggior parte risulta comunque già fatta per
+altra strada:
+
+| Titolo respinto | Stato reale, verificato nel repo |
+|---|---|
+| ~10 × «Porta unica del denaro: <file>» | **fatto**: `ECCEZIONI` in `una-sola-porta.test.js` è `new Set([])`, vuota |
+| ~8 × «Far vivere nel banco: <sistema>» | **fatto**: il banco carica 56 file; mancano solo `ui-politics.js` e `war_room.js` |
+| ~6 × «Collaudo profondo: <sistema>» | **fatto**: quei sistemi hanno l'interruttore acceso in `config.js` |
+| ~4 × «Censimento / Registro delle azioni» | **fatto**: i guardrail corrispondenti esistono in `test/guardrail/` |
+| «Funzioni morte, primo/secondo scaglione» | **fatto**: `funzioni-morte-scaglione*.test.js` |
+| «Driver Coins: il rifiuto del server non deve restare muto» | **fatto**: `spenddc-rifiuto-server.test.js` |
+| **politica** (ui-politics.js, war_room.js) | **davvero da fare**, 11 tentativi falliti |
+
+**La regola da tenere:** lo stato della coda dice cosa ha fatto l'agente, non cosa manca al
+gioco. Per sapere cosa manca si guarda il repository — i guardrail sono scritti apposta per
+rispondere a quella domanda, e rispondono meglio della coda.
+
+## Perché politica falliva sempre, undici volte
+
+Il verdetto è sempre lo stesso: *«I test non sono cresciuti (523 → 523): manca la prova che
+il bug fosse reale.»* I tentativi aggiungevano i due file all'elenco del banco in
+`test-support/game-env.js` **e si fermavano lì**.
+
+Aggiungere un file a un elenco non è una prova, e il cancello ha ragione a respingerlo. Il
+lavoro finisce quando esiste un test **che può passare solo se quel file si è caricato**. Il
+task nuovo lo dice a chiare lettere, dà il permesso esplicito di toccare `game-env.js` (solo
+lui lo tocca) e chiede di riallineare su `main` prima di consegnare, perché l'altro motivo
+ricorrente di rifiuto era «non si unisce a main senza conflitti».
+
+## La lista di lavoro vera: 110 azioni cieche
+
+`test/guardrail/azioni-sincronizzano.test.js` estrae **241 azioni** del giocatore e ne prova
+l'esecuzione. In fondo stampa quelle che non riesce ad attivare, e quel blocco è la vera
+coda di lavoro:
+
+```
+azioni totali estratte: 241
+azioni che toccano denaro: 128
+Non attivabili che toccano denaro: 110
+```
+
+Non sono azioni sbagliate: sono azioni **cieche**. Vogliono uno stato di gioco che nessuno
+prepara, quindi se domani una smette di avvisare il server nessun test diventa rosso.
+
+Messi in coda **12 lavori**: nove gruppi di azioni cieche (vip, società, flotta-officina,
+autisti, mercati, ombra, finanza-obblighi, alleanze-consorzi, dc-vanità), ognuno con un file
+di prova **nuovo e suo** (`test/azioni/<gruppo>.test.js`) così non fanno conflitto fra loro;
+più politica-nel-banco, il tetto della reputazione (24 copie, non tutte uguali) e i nove nomi
+ancora definiti due volte.
+
+## Il motore al massimo
+
+- `GIGI_PARALLELI` 4 → **10** e `GIGI_LAVORI_MAX` 35 → **200** in `~/gigi/.telegram.env`.
+  Il tetto giornaliero nasceva per limitare la **spesa**; con ox-alpha su OpenRouter la spesa
+  è zero, quindi limitava solo il lavoro. Erano già 30 su 35 alle 15.
+- Attenzione al `motivoStop: 'coda vuota'`: il ciclo **si ferma da solo** quando finisce i
+  lavori e **non riparte da solo** quando ne accodi di nuovi. Va chiamato `riprendi()` e poi
+  riavviato il servizio, altrimenti la coda resta piena e non parte niente.
+- Riavviare `gigi-telegram` è sicuro con lavori in volo: lo stato sta su disco e il ciclo
+  riprende a sorvegliare i `runId` già partiti.
+
+## I numeri di oggi, per stimare
+
+Tasso di riuscita **per tentativo**: 39% oggi (27 fusi su 69 conclusi), 29% ieri. Durata
+media di una run: **19 minuti**, massimo 44. Quindi un lavoro costa in media ~2,5 tentativi,
+e 12 lavori valgono ~30 tentativi: con 10 in parallelo sono tre ondate, **due o tre ore**.
+
+## Stato
+
+**1539 prove verdi**, `main` pulito. 104 lavori fusi. Quattro domande nuove sull'hub:
+la fase successiva, il quartier generale, l'imbroglio lato server, e una aperta —
+«cosa manca al gioco, secondo te?».
 
 ---
 
