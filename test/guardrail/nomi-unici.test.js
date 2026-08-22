@@ -43,48 +43,76 @@ function soloCodice(testo) {
         .replace(/(^|[^:])\/\/.*$/gm, '$1');
 }
 
+/* Collisioni gia' presenti alla data della verifica per mutazione: decoratori
+   voluti e stato condiviso scritto da piu' file (stessa natura di DECORATORI_VOLUTI
+   e delle variabili comuni in legami-tra-file.test.js).
+   PUO' SOLO ACCORCIARSI: quando un nome smette di essere duplicato va tolto di
+   qui, e la prova sotto lo pretende. */
+const ECCEZIONI = new Set([
+    '_selectedColorSS',        // flag condiviso: colore scelto nel configuratore showroom
+    'currentSlotIndex',        // stato condiviso: slot attivo scritto da piu' moduli
+    'resetGame',               // catena di decorator (saveSystem.js -> engine.js)
+    '_suppressCloudSave',      // flag condiviso: blocco temporaneo del salvataggio cloud
+    'processDailyRoutines',    // decoratore (vittorio.js avvolge engine-daily.js)
+    '_fleetFilter',            // default dei filtri flotta scritto da dispatcher e ui-fleet
+    'switchTab',               // catena di decorator documentata in legami-tra-file
+    '_decreesCountdownTimer',  // timer decreti gestito da dispatcher e ui-politics
+    'updateUI',                // catena di decorator (objective-tracker avvolge ui-sidebar)
+]);
+
+/** nome -> [{ file, riga, testo }] di tutte le assegnazioni a window.<nome>. */
+function raccogliAssegnazioni() {
+    const map = new Map();
+
+    // Regex per estrarre assegnazioni a window:
+    // window.x = ... o window['x'] = ... o window["x"] = ...
+    // Attenzione a non prendere == o === o =>
+    const regex = /(?:^|[^.\w$])window(?:\.([A-Za-z_$][\w$]*)|\[\s*['"]([A-Za-z_$][\w$]*)['"]\s*\])\s*=(?!=|>)/g;
+
+    for (const file of fileInOrdine()) {
+        const codice = soloCodice(sorgente(file));
+        const righe = codice.split('\n');
+        righe.forEach((riga, i) => {
+            let m;
+            regex.lastIndex = 0;
+            while ((m = regex.exec(riga)) !== null) {
+                const nome = m[1] || m[2];
+                if (!map.has(nome)) map.set(nome, []);
+                map.get(nome).push({ file, riga: i + 1, testo: riga.trim() });
+            }
+        });
+    }
+    return map;
+}
+
 describe('guardrail — nomi unici su window', () => {
-    test('esplorazione', () => {
-        const files = fileInOrdine();
-        const map = new Map(); // nome -> [{ file, riga, testo }]
-
-        // Regex per estrarre assegnazioni a window:
-        // window.x = ... o window['x'] = ... o window["x"] = ...
-        // Attenzione a non prendere == o === o =>
-        const regex = /(?:^|[^.\w$])window(?:\.([A-Za-z_$][\w$]*)|\[\s*['"]([A-Za-z_$][\w$]*)['"]\s*\])\s*=(?!=|>)/g;
-
-        for (const file of files) {
-            const codice = soloCodice(sorgente(file));
-            const righe = codice.split('\n');
-            righe.forEach((riga, i) => {
-                let m;
-                regex.lastIndex = 0;
-                while ((m = regex.exec(riga)) !== null) {
-                    const nome = m[1] || m[2];
-                    if (!map.has(nome)) map.set(nome, []);
-                    map.get(nome).push({ file, riga: i + 1, testo: riga.trim() });
-                }
-            });
-        }
+    test('nessun nome su window e\' assegnato da piu\' di un file (fuori dalle ECCEZIONI)', () => {
+        const map = raccogliAssegnazioni();
+        assert.ok(map.size > 400,
+            `attesi oltre 400 nomi su window, trovati ${map.size}: l'estrazione dal sorgente si e' rotta`);
 
         const duplicati = [];
         for (const [nome, entries] of map) {
+            if (ECCEZIONI.has(nome)) continue;
             const fileSet = new Set(entries.map(e => e.file));
             if (fileSet.size > 1) {
-                duplicati.push({
-                    nome,
-                    files: [...fileSet],
-                    entries
-                });
+                duplicati.push(`${nome} in [${[...fileSet].join(', ')}]`);
             }
         }
-        console.log(`Trovati ${map.size} nomi unici su window.`);
-        console.log(`Trovati ${duplicati.length} nomi assegnati in piu file:`);
-        for (const d of duplicati) {
-            console.log(`  - ${d.nome} in [${d.files.join(', ')}]`);
-            for (const e of d.entries) {
-                console.log(`      ${e.file}:${e.riga} -> ${e.testo.slice(0, 80)}`);
-            }
-        }
+        assert.deepEqual(duplicati.sort(), [],
+            'Questi nomi window.* sono assegnati da piu\' file: l\'ultimo caricato vince\n' +
+            'in silenzio, senza errori ne\' a build ne\' a console. Se la sovrascrittura\n' +
+            'e\' voluta (decoratore o stato condiviso) documentala in ECCEZIONI;\n' +
+            'altrimenti lascia una sola definizione.');
+    });
+
+    test('la lista ECCEZIONI puo\' solo accorciarsi: ogni voce deve ancora collidere', () => {
+        const map = raccogliAssegnazioni();
+        const risolte = [...ECCEZIONI].filter(nome => {
+            const entries = map.get(nome) || [];
+            return new Set(entries.map(e => e.file)).size < 2;
+        });
+        assert.deepEqual(risolte, [],
+            'Questi nomi non sono piu\' duplicati — rimuovili da ECCEZIONI:\n' + risolte.join('\n'));
     });
 });
