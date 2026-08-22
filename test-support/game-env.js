@@ -31,8 +31,13 @@ const CORE_FILES = [
     'quests-data.js',
     'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
     'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',
-    'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-fleet.js', 'ui-staff.js',
-    'ui-lifestyle.js', 'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-career.js', 'ui-store.js',
+    'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js',
+    // war_room → ui-marketing: stesso ordine relativo di index.html (dispatcher
+    // definisce switchTab, che ui-sidebar/em-chrome vanno a decorare più avanti).
+    'war_room.js', 'dispatcher.js', 'map.js', 'map-router.js', 'map-garage.js',
+    'ui-emails.js', 'ui-marketing.js',
+    'ui-fleet.js', 'ui-staff.js',
+    'ui-lifestyle.js', 'ui-ops.js', 'ui-ranking.js', 'alliances.js', 'vanity.js', 'ui-career.js', 'ui-store.js',
     'ui-finance.js', 'daily-orders.js', 'ui-realestate.js', 'ui-dispatch.js',
     'onboarding-core.js', 'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
     'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
