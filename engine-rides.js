@@ -765,17 +765,25 @@ function completeRide(ride, _deferPay = false) {
         gameState.todayEarnings = (gameState.todayEarnings || 0) + earned;
         // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
         if (window.supabaseClient && window.currentUser) {
+            // Entrambe le RPC scalano companies.cash SUL SERVER (27_hostile_takeovers.sql,
+            // 29_infrastructure_monopoly.sql): il totale appena sincronizzato da earn()
+            // contiene ancora quei soldi. Quando la RPC ritorna l'importo scalato,
+            // allineiamo la previsione locale con addebitatoDalServer SENZA risincronizzare.
             window.supabaseClient.rpc('rpc_pay_majority_dividend', {
                 v_target_user_id: window.currentUser.id,
                 v_ride_earnings:  earned
-            }).then(null, () => { /* silent — offline o nessuna OPA attiva */ });
+            }).then((dividendo) => {
+                if (dividendo > 0) window.CE_money.addebitatoDalServer(dividendo, 'opa_majority_dividend');
+            }, () => { /* silent — offline o nessuna OPA attiva */ });
             // Espansione 12: levy deposito carburante
             const _levyProv = ride.fromPoi?.id ? _POI_TO_PROVINCE[ride.fromPoi.id] : null;
             if (_levyProv) {
                 window.supabaseClient.rpc('rpc_pay_fuel_levy', {
                     v_province_id: _levyProv,
                     v_fare: earned
-                }).then(null, () => {});
+                }).then((levyRes) => {
+                    if (levyRes && levyRes.levy > 0) window.CE_money.addebitatoDalServer(levyRes.levy, 'fuel_levy');
+                }, () => {});
             }
         }
     }
@@ -946,17 +954,24 @@ function checkActiveTrips() {
             gameState.todayEarnings = (gameState.todayEarnings || 0) + trip.earnings;
             // Dividendo OPA: se il giocatore è sotto OPA ostile, paga il 20% al raider
             if (window.supabaseClient && window.currentUser) {
+                // Stessa ragione del ramo completeRide: le RPC scalano companies.cash sul
+                // server, quindi l'importo ritornato va tolto anche dalla previsione locale
+                // (addebitatoDalServer, senza risincronizzare) prima o dopo il earn() del totale.
                 window.supabaseClient.rpc('rpc_pay_majority_dividend', {
                     v_target_user_id: window.currentUser.id,
                     v_ride_earnings:  trip.earnings
-                }).then(null, () => { /* silent — offline o nessuna OPA attiva */ });
+                }).then((dividendo) => {
+                    if (dividendo > 0) window.CE_money.addebitatoDalServer(dividendo, 'opa_majority_dividend');
+                }, () => { /* silent — offline o nessuna OPA attiva */ });
                 // Espansione 12: levy deposito carburante
                 const _tripProvince = trip.fromPoiId ? _POI_TO_PROVINCE[trip.fromPoiId] : null;
                 if (_tripProvince) {
                     window.supabaseClient.rpc('rpc_pay_fuel_levy', {
                         v_province_id: _tripProvince,
                         v_fare: trip.earnings
-                    }).then(null, () => {});
+                    }).then((levyRes) => {
+                        if (levyRes && levyRes.levy > 0) window.CE_money.addebitatoDalServer(levyRes.levy, 'fuel_levy');
+                    }, () => {});
                 }
             }
             const fmt = trip.earnings >= 1000
