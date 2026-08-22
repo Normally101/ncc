@@ -1,6 +1,6 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 21 agosto 2026 (notte)
+> Aggiornato: 22 agosto 2026 (mattina)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 > **E leggi anche le note che Vlad ha lasciato a Gigi mentre non c'eri:**
@@ -8,6 +8,68 @@
 > Le scrive dal telefono con «nota: ...» quando è fuori casa. Dopo averle lette,
 > segnale come lette (`segnaLette()` in `jarvis/src/note.js`), altrimenti restano
 > a contarsi come nuove per sempre.
+
+---
+
+# 🔴 22/08 mattina — il veleno era tornato, e due rami verdi si contraddicevano
+
+**La ricaduta.** Il 22/08 alle 04:18 il lavoro «Tre registri delle azioni in tre
+file: farne uno solo» ha reintrodotto la stessa causa corretta poche ore prima:
+`test/guardrail/temp-genera.js` riscriveva `docs/AZIONI.md` a ogni `npm test`.
+Il file si chiamava `.js` e non `.test.js`, ma `node --test` prende tutto quello
+che sta sotto `test/`, quindi girava lo stesso — e ogni ramo tornava a litigare
+con main. Riprodotto in diretta: dopo una suite intera su main pulito, il repo
+risultava sporco con `docs/AZIONI.md` modificato.
+
+**Adesso il divieto è un test**, non una frase in un documento:
+`test/guardrail/un-test-non-scrive.test.js` fallisce se un file sotto `test/`
+contiene `writeFileSync`/`unlinkSync`/`mkdirSync` e simili fuori da `/tmp`.
+Verificato per mutazione: rimettendo `temp-genera.js` diventa rosso e indica
+file, riga e funzione.
+
+**Le vere cause delle 56 respinte di stanotte**, lette dai verdetti salvati:
+- *main ha 1 test rosso: non posso giudicare niente* — il cancello si blocca
+  tutto quando main non è verde;
+- *N test rossi una volta unito a main* — quasi sempre test scritti su
+  assunzioni sbagliate, non codice rotto.
+
+**Sei lavori recuperati a mano** invece di rifarli (erano già pagati):
+
+| Ramo | Cosa mancava davvero |
+|---|---|
+| collisione `listCarForSale` | conflitto sull'elenco eccezioni, risolto |
+| collaudo finanza | niente: la fusione non era mai partita |
+| collaudo aste | niente: idem |
+| funzioni morte 1° scaglione | niente: idem |
+| tetto reputazione | il ramo portava i test **senza la correzione** |
+| collaudo flotta | 6 test rossi, tutti per assunzioni sbagliate |
+
+**Bug veri trovati recuperandoli:**
+- `bulkRepairFleet` (ui-fleet.js) non aspettava `payToRepairCar`, che è
+  asincrona: ridisegnava la schermata prima che le riparazioni finissero, e il
+  giocatore vedeva ancora le auto rotte.
+- Il **finto server del banco** scalava i Driver Coins una seconda volta dopo
+  `CE_money.spendDC`. Il server vero restituisce il saldo e non si somma: il
+  banco simulava un doppio conteggio che nel gioco non c'è, e faceva fallire
+  test scritti su codice corretto.
+- `INVESTMENTS`, `MARKETING_CAMPAIGNS`, `LIFESTYLE_ASSETS`, `VTK_SHOP_ITEMS`,
+  `CAR_UPGRADES` erano `const`: nel browser funzionano, ma non diventano
+  `window.X` e il banco di prova non le vede. Ora sono `var`, come dice la
+  regola del progetto.
+
+**Due rami verdi che insieme si rompevano** (caso nuovo, da ricordare):
+il cancello giudica ogni ramo contro main, ma non i rami *fra loro*. Due volte
+un ramo toglieva una funzione come morta mentre un altro aggiungeva test che la
+usavano come spia: `b2bLockedDriverIds` e le cinque della flotta
+(`superchargeVehicle`, `refillTires`, `buyStandardFuel`, `buyBlackMarketFuel`,
+`getDepotLevelData`). Prima di accettare la cancellazione ho verificato che
+fossero davvero irraggiungibili: il carburante passa da `emergencyRefuel` e dal
+deposito, le gomme dal deposito al cambio giorno.
+
+**Buco di design emerso, da decidere:** `chargeLevel` degli EV viene solo
+mostrato, non cala mai. Gli elettrici non consumano batteria e non c'è più nulla
+per ricaricarli. O la batteria cala (e serve una ricarica), o la barra non va
+mostrata.
 
 ---
 
