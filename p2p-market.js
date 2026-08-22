@@ -279,7 +279,14 @@ window.buyCompanyShares = async function(listingId, qty) {
     });
     if (error || !data) { showNotification(_p2pErrMsg('Acquisto azioni fallito', error || {message: 'risposta vuota'}), 'error'); return; }
 
-    window.CE_money.addebitatoDalServer(total, 'buy_company_shares');
+    /* Si scala quello che il SERVER ha davvero preso, non il prezzo che avevamo
+       in cache. La RPC blocca la riga `FOR UPDATE`, rilegge il prezzo aggiornato
+       — che sale a ogni acquisto, anche di altri giocatori — e lo restituisce in
+       `data.total`. Usare `total` calcolato qui significava, ogni volta che
+       qualcuno comprava un istante prima di noi, mostrare al giocatore piu'
+       soldi di quanti ne avesse davvero fino al ricaricamento successivo.
+       `sellCompanyShares`, due funzioni piu' sotto, lo faceva gia' bene. */
+    window.CE_money.addebitatoDalServer(data.total ?? total, 'buy_company_shares');
     await saveGame();
     showNotification(`✅ Comprate ${qty} azioni di ${data.company} a €${data.price}/az.`, 'success');
     updateUI();

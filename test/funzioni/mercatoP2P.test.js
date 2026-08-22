@@ -27,6 +27,10 @@ const { freshEnv } = require('../../test-support/game-env.js');
 describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa', () => {
     let env, sandbox, gs;
     let syncedCashCalls;
+    /* Il prezzo che il SERVER applica. Di norma coincide con quello in cache;
+       un test lo fa divergere apposta, perche' e' esattamente quello che
+       succede nel gioco quando qualcun altro compra un istante prima. */
+    let supabaseMockPrezzoAzione;
     let supabaseRpcCalls;
     let realtimeChannels;
 
@@ -235,7 +239,23 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
                     };
                 }
                 if (name === 'rpc_buy_company_shares') {
-                    return { data: { company: 'Apex Mobility', price: 65 }, error: null };
+                    /* La RPC vera (08_mmo_p2p_marketplace.sql:613) blocca la riga
+                       `FOR UPDATE`, rilegge il prezzo AGGIORNATO e restituisce
+                       qty/price/total/company. Il finto server restituiva solo
+                       company e price, e quel buco nascondeva un bug vero: il
+                       client si addebitava il prezzo che aveva in cache invece
+                       di quello che il server aveva davvero preso. */
+                    const prezzoServer = supabaseMockPrezzoAzione;
+                    const qty = params?.v_qty ?? 0;
+                    return {
+                        data: {
+                            company: 'Apex Mobility',
+                            qty,
+                            price: prezzoServer,
+                            total: prezzoServer * qty,
+                        },
+                        error: null,
+                    };
                 }
                 if (name === 'rpc_sell_company_shares') {
                     return { data: { company: 'Apex Mobility', total: 650, qty_sold: 10 }, error: null };
@@ -308,6 +328,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
 
     beforeEach(() => {
         syncedCashCalls = [];
+        supabaseMockPrezzoAzione = 65;
         env = freshEnv({
             render: true,
             serverState: {
@@ -609,6 +630,29 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.equal(gs.cash, 9350);
             assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare con syncCash');
             assert.ok(env.notifications.some(n => n.msg.includes('Comprate 10 azioni di Apex Mobility')));
+        });
+
+        test('buyCompanyShares scala quello che il SERVER ha preso, non il prezzo in cache', async () => {
+            /* Il prezzo delle azioni sale a ogni acquisto (la RPC lo alza:
+               08_mmo_p2p_marketplace.sql:600). Fra il momento in cui il browser
+               ha letto il listino e quello in cui la RPC gira, un altro
+               giocatore puo' aver comprato — e allora il server addebita piu'
+               di quanto il client credeva.
+
+               Se il client si scala il prezzo vecchio, il saldo a schermo resta
+               PIU' ALTO di quello vero finche' non si ricarica la pagina: il
+               giocatore vede soldi che non ha. `sellCompanyShares` gia' faceva
+               la cosa giusta usando `data.total`; l'acquisto no. */
+            sandbox._p2pMarket.shares = [
+                { id: 'sh_apex', company_name: 'Apex Mobility', current_price: 65, shares_available: 100 },
+            ];
+            supabaseMockPrezzoAzione = 70;   // qualcuno ha comprato prima di noi
+            gs.cash = 10000;
+
+            await sandbox.buyCompanyShares('sh_apex', 10);
+
+            assert.equal(gs.cash, 9300, 'devono uscire 700 (10 x 70 del server), non 650 del listino in cache');
+            assert.deepEqual(syncedCashCalls, [], 'non deve risincronizzare: il server ha gia\' mosso il saldo');
         });
 
         test('sellCompanyShares vende azioni e accredita ricavi', async () => {
