@@ -131,6 +131,38 @@ describe('p2p-market — allineamento cassa senza risincronizzazione (anti-doppi
             assert.equal(spendCalled, false, 'non deve chiamare spend');
             assert.equal(gs.cash, 35000);
         });
+
+        test('buyP2PCar con eco Realtime arrivato prima della fine RPC non provoca doppio addebito né syncCash', async () => {
+            let rpcChiamate = 0;
+            const { sandbox, gs, syncedCash } = setupP2PEnv({
+                rpc_buy_market_car: () => {
+                    rpcChiamate++;
+                    // La RPC risponde a scrittura già avvenuta: l'eco Realtime
+                    // di companies.cash (80000 − 30000) ha già toccato il
+                    // gameState locale prima che il gestore ripartisse.
+                    gs.cash = 50000;
+                    return {
+                        data: {
+                            price_paid: 30000, seller_name: 'Bob', fee: 1500,
+                            car: { id: 'car_remote', name: 'Mercedes S-Class' },
+                        },
+                        error: null,
+                    };
+                },
+            });
+
+            sandbox._p2pMarket.listings = [
+                { id: 'listing_echo', seller_user_id: 'other_user', ask_price: 30000 },
+            ];
+            gs.cash = 80000;
+
+            await sandbox.buyP2PCar('listing_echo');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(rpcChiamate, 1, 'l\'acquisto deve passare dalla RPC, non da un movimento locale');
+            assert.deepEqual(syncedCash, [],
+                'con l\'eco già arrivato, rispedire il totale al server conterebbe i soldi due volte');
+        });
     });
 
     describe('contributeHoldingTreasury', () => {
@@ -194,6 +226,27 @@ describe('p2p-market — allineamento cassa senza risincronizzazione (anti-doppi
             assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
             assert.equal(spendCalled, false, 'non deve chiamare spend');
             assert.equal(gs.cash, 25000);
+        });
+
+        test('contributeHoldingTreasury con eco Realtime arrivato prima della fine RPC non provoca doppio addebito né syncCash', async () => {
+            let rpcChiamate = 0;
+            const { sandbox, gs, syncedCash } = setupP2PEnv({
+                rpc_contribute_holding_treasury: () => {
+                    rpcChiamate++;
+                    // Eco Realtime: il server ha già scritto 50000 − 20000.
+                    gs.cash = 30000;
+                    return { data: { treasury: 20000, tension: 15 }, error: null };
+                },
+            });
+
+            gs.cash = 50000;
+
+            await sandbox.contributeHoldingTreasury('h1', 20000);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(rpcChiamate, 1, 'il contributo deve passare dalla RPC, non da un movimento locale');
+            assert.deepEqual(syncedCash, [],
+                'con l\'eco già arrivato, rispedire il totale al server conterebbe i soldi due volte');
         });
     });
 
@@ -263,6 +316,28 @@ describe('p2p-market — allineamento cassa senza risincronizzazione (anti-doppi
             assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
             assert.equal(spendCalled, false, 'non deve chiamare spend');
             assert.equal(gs.cash, 30000);
+        });
+
+        test('listCompanyIPO con eco Realtime arrivato prima della fine RPC non provoca doppio addebito né syncCash', async () => {
+            let rpcChiamate = 0;
+            const { sandbox, gs, syncedCash } = setupP2PEnv({
+                rpc_list_company_ipo: () => {
+                    rpcChiamate++;
+                    // Eco Realtime: il server ha già scalato la quota di 50.000€.
+                    gs.cash = 70000;
+                    return { data: { id: 'ipo_echo', shares_total: 1000, ipo_price: 100 }, error: null };
+                },
+            });
+
+            gs.reputation = 4.0;
+            gs.cash = 120000;
+
+            await sandbox.listCompanyIPO();
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(rpcChiamate, 1, 'la quotazione deve passare dalla RPC, non da un movimento locale');
+            assert.deepEqual(syncedCash, [],
+                'con l\'eco già arrivato, rispedire il totale al server conterebbe i soldi due volte');
         });
     });
 
@@ -335,6 +410,28 @@ describe('p2p-market — allineamento cassa senza risincronizzazione (anti-doppi
             assert.equal(gs.cash, 7500);
         });
 
+        test('buyCompanyShares con eco Realtime arrivato prima della fine RPC non provoca doppio addebito né syncCash', async () => {
+            let rpcChiamate = 0;
+            const { sandbox, gs, syncedCash } = setupP2PEnv({
+                rpc_buy_company_shares: () => {
+                    rpcChiamate++;
+                    // Eco Realtime: il server ha già scalato 15000 − 5000.
+                    gs.cash = 10000;
+                    return { data: { company: 'TestCorp', price: 50, total: 5000 }, error: null };
+                },
+            });
+
+            sandbox._p2pMarket.shares = [{ id: 's1', current_price: 50 }];
+            gs.cash = 15000;
+
+            await sandbox.buyCompanyShares('s1', 100);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(rpcChiamate, 1, 'l\'acquisto deve passare dalla RPC, non da un movimento locale');
+            assert.deepEqual(syncedCash, [],
+                'con l\'eco già arrivato, rispedire il totale al server conterebbe i soldi due volte');
+        });
+
         test('sellCompanyShares accredita tramite CE_money.accreditatoDalServer senza invocare ServerState.syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupP2PEnv({
                 rpc_sell_company_shares: () => ({
@@ -378,6 +475,28 @@ describe('p2p-market — allineamento cassa senza risincronizzazione (anti-doppi
             assert.equal(accreditatoCalled, true, 'deve chiamare accreditatoDalServer');
             assert.equal(earnCalled, false, 'non deve chiamare earn');
             assert.equal(gs.cash, 8000);
+        });
+
+        test('sellCompanyShares con eco Realtime arrivato prima della fine RPC non provoca doppio accredito né syncCash', async () => {
+            let rpcChiamate = 0;
+            const { sandbox, gs, syncedCash } = setupP2PEnv({
+                rpc_sell_company_shares: () => {
+                    rpcChiamate++;
+                    // Eco Realtime: il server ha già accreditato 5000 + 4000.
+                    // Sulle entrate il doppio movimento sono soldi regalati.
+                    gs.cash = 9000;
+                    return { data: { company: 'TestCorp', total: 4000, qty_sold: 50 }, error: null };
+                },
+            });
+
+            gs.cash = 5000;
+
+            await sandbox.sellCompanyShares('s1', 50);
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(rpcChiamate, 1, 'la vendita deve passare dalla RPC, non da un movimento locale');
+            assert.deepEqual(syncedCash, [],
+                'con l\'eco già arrivato, rispedire il totale al server conterebbe i soldi due volte');
         });
     });
 
@@ -425,6 +544,27 @@ describe('p2p-market — allineamento cassa senza risincronizzazione (anti-doppi
             assert.equal(addebitatoCalled, true, 'deve chiamare addebitatoDalServer');
             assert.equal(spendCalled, false, 'non deve chiamare spend');
             assert.equal(gs.cash, 8000);
+        });
+
+        test('_sindacatoGdfDailyCheck con eco Realtime arrivato prima della fine RPC non provoca doppio addebito né syncCash', async () => {
+            let rpcChiamate = 0;
+            const { sandbox, gs, syncedCash } = setupP2PEnv({
+                rpc_gdf_inspection_check: () => {
+                    rpcChiamate++;
+                    // Eco Realtime: il server ha già scalato la multa (10000 − 3000).
+                    gs.cash = 7000;
+                    return { data: { inspected: true, fine: 3000 }, error: null };
+                },
+            });
+
+            gs.cash = 10000;
+
+            await sandbox._sindacatoGdfDailyCheck();
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(rpcChiamate, 1, 'l\'ispezione deve passare dalla RPC, non da un movimento locale');
+            assert.deepEqual(syncedCash, [],
+                'con l\'eco già arrivato, rispedire il totale al server conterebbe i soldi due volte');
         });
     });
 });
