@@ -1016,10 +1016,12 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             assert.equal(sandbox._driverCanTakeRide(driver, intercityRide), true, 'veicolo aeronautico deve accettare tratte intercity');
         });
 
-        test('assignRideToDriver rifiuta se la coda dell\'autista raggiunge il limite massimo', () => {
+        test('assignRideToDriver rifiuta se il monte ore dell\'autista è esaurito', () => {
             const { sandbox, gs } = amb;
             const driver = gs.drivers.find(d => d.id === 'drv_1');
             driver.status = 'busy';
+            // Monte ore (decisione Vlad 22/08/2026): finte corse senza prezzo valgono
+            // 30min l'una -> 10 corse = 5h > 4h di base.
             driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 910 + i, tier: 'business' }));
 
             const newRide = { id: 950, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
@@ -1027,18 +1029,21 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
             sandbox.assignRideToDriver(950, 'drv_1');
 
-            assert.equal(gs.pendingRides.length, 1, 'la corsa deve rimanere in pending se la coda è piena (10)');
+            assert.equal(gs.pendingRides.length, 1, 'la corsa deve rimanere in pending se il monte ore è esaurito');
             assert.equal(driver.queue.length, 10);
         });
 
-        test('assignRideToDriver consente fino a 12 slot in coda se Executive Pass è attivo', () => {
-            const { sandbox, gs } = amb;
+        test('assignRideToDriver accetta oltre le 4h solo col monte ore allungato, non con l\'Executive Pass', () => {
+            const { sandbox, gs, env } = amb;
+            // Dal 22/08/2026 l'Executive Pass NON estende più la coda: il tetto è un
+            // monte ore per autista (4→12h) che si compra a parte con Driver Coins.
             gs.executivePassActive = true;
             gs.day = 1;
             gs.executivePassExpiresDay = 5;
 
             const driver = gs.drivers.find(d => d.id === 'drv_1');
             driver.status = 'busy';
+            // 10 finte corse x 30min = 5h: oltre le 4h di base
             driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 920 + i, tier: 'business' }));
 
             const newRide = { id: 960, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
@@ -1046,7 +1051,14 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
             sandbox.assignRideToDriver(960, 'drv_1');
 
-            assert.equal(gs.pendingRides.length, 0, 'con Executive Pass attivo lo slot 11 deve essere accettato');
+            assert.equal(gs.pendingRides.length, 1, 'l\'Executive Pass da solo non deve sbloccare la coda satura');
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('monte ore')),
+                'il rifiuto deve spiegare il monte ore e come allungarlo');
+
+            driver.queueHours = 8; // monte ore allungato a 8h: le stesse 5h ci stanno
+            sandbox.assignRideToDriver(960, 'drv_1');
+
+            assert.equal(gs.pendingRides.length, 0, 'col monte ore allungato la corsa deve essere accettata');
             assert.equal(driver.queue.length, 11);
         });
     });

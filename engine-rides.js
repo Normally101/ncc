@@ -247,6 +247,33 @@ function _formatDuration(ms) {
     return `${m}min`;
 }
 
+// ── MONTE ORE CODA AUTISTA (decisione Vlad 22/08/2026) ────────────
+// Il tetto della coda non è più un NUMERO di corse ma un monte ore per
+// autista: 4h di base, allungabili con Driver Coins fino a 12h. Il limite si
+// confronta con totalQueueMs (corsa attiva rimanente + coda), non con
+// queue.length: la domanda vera del giocatore è «quando devo rientrare?».
+// NB: la scala degli scatti e i prezzi NON sono stati decisi da Vlad — sono
+// una proposta da ratificare (+2h a scatto, prezzi in linea con
+// «Limite Offline +2h» che costa 20 DC per lo stesso valore di gioco).
+const DRIVER_QUEUE_HOURS = {
+    base: 4,
+    max:  12,
+    steps: [
+        { hours: 6,  cost: 20 },
+        { hours: 8,  cost: 35 },
+        { hours: 10, cost: 50 },
+        { hours: 12, cost: 70 },
+    ],
+};
+
+function _getDriverQueueCapMs(driver) {
+    const raw = Number(driver && driver.queueHours);
+    const h = Number.isFinite(raw)
+        ? Math.max(DRIVER_QUEUE_HOURS.base, Math.min(DRIVER_QUEUE_HOURS.max, raw))
+        : DRIVER_QUEUE_HOURS.base; // autisti salvati prima del cambio: 4h di base
+    return h * 60 * 60 * 1000;
+}
+
 function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? gameState : {})) {
     if (!driver) return null;
     const now = Date.now();
@@ -260,9 +287,8 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         return sum + (fn(r) || 0);
     }, 0);
     const totalQueueMs = (isBusy ? currentRemainingMs : 0) + queuedDurationMs;
-    const execActive = gs.executivePassActive && gs.day <= (gs.executivePassExpiresDay || 0);
-    const maxQueue = execActive ? 12 : 10;
-    const isFull = queuedRides.length >= maxQueue;
+    const queueCapMs = _getDriverQueueCapMs(driver);
+    const isFull = totalQueueMs >= queueCapMs;
     const nextSlotFreeMs = isBusy ? currentRemainingMs : 0;
     const freeAtDate = new Date(now + totalQueueMs);
 
@@ -271,7 +297,8 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         isBusy,
         currentRemainingMs,
         queuedCount: queuedRides.length,
-        maxQueue,
+        queueCapMs,
+        queueRemainingMs: Math.max(0, queueCapMs - totalQueueMs),
         isFull,
         queuedDurationMs,
         totalQueueMs,
@@ -303,9 +330,17 @@ function assignRideToDriver(rideId, driverId) {
     const driver = gameState.drivers.find(d => d.id == driverId);
 
     if (rideIdx > -1 && driver) {
-        const _execActive = gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0);
-        const _maxQueue = _execActive ? 12 : 10;
-        if (driver.queue.length >= _maxQueue) return;
+        // Monte ore coda: si confronta la durata TOTALE (attiva + accodate), non il numero corse
+        const _qInfo = _getDriverQueueInfo(driver, gameState);
+        if (_qInfo.isFull) {
+            if (typeof showNotification === 'function') {
+                showNotification(
+                    `🚫 ${driver.name}: monte ore coda pieno (${_formatDuration(_qInfo.totalQueueMs)}/${Math.round(_qInfo.queueCapMs / 3600000)}h) — libero verso le ${_qInfo.freeAtTimeStr}. Allungalo con Driver Coins dalla sua riga nel Dispatch.`,
+                    'error'
+                );
+            }
+            return;
+        }
         if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
 
         const ride = gameState.pendingRides[rideIdx];
@@ -353,8 +388,8 @@ function _driverCanTakeRide(driver, ride) {
     if (car.condition <= 10) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
     if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
-    const _epSlots = (gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0)) ? 12 : 10;
-    if (driver.queue.length >= _epSlots) return false;
+    const _queueInfo = _getDriverQueueInfo(driver);
+    if (_queueInfo && _queueInfo.isFull) return false;
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable
     if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;
@@ -1010,4 +1045,6 @@ window.checkActiveTrips     = checkActiveTrips;
 window._getRideDurationMs   = _getRideDurationMs;
 window._formatDuration      = _formatDuration;
 window._getDriverQueueInfo  = _getDriverQueueInfo;
+window._getDriverQueueCapMs = _getDriverQueueCapMs;
+window.DRIVER_QUEUE_HOURS   = DRIVER_QUEUE_HOURS;
 window._previewQueueWithRide = _previewQueueWithRide;

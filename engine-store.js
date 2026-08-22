@@ -13,9 +13,32 @@ window.activateExecutivePass = function() {
     gameState.executivePassActive     = true;
     gameState.executivePassExpiresDay = gameState.day + 30;
     logToMap('💎 Executive Pass attivato — 30 giorni di benefici premium!');
-    showBigEvent('💎', 'Executive Pass Attivo!', '+25% slot corse, −50% stress accumulo, Insta-Repair a 1 DC, accesso a corse VIP extra.');
+    // Dal 22/08/2026 il pass NON tocca più la coda: il tetto è un monte ore per
+    // autista (4→12h) comprabile a parte con i Driver Coins.
+    showBigEvent('💎', 'Executive Pass Attivo!', '−50% stress accumulo, Insta-Repair a 1 DC, accesso a corse VIP extra.');
     updateUI(); saveGame();
     if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
+};
+
+// ── MONTE ORE CODA AUTISTA (DC) ───────────────────────────────────
+// Decisione Vlad 22/08/2026: il tetto della coda è un monte ore per autista
+// (4h base, max 12), non più un numero di corse. Ogni acquisto porta
+// l'autista allo scatto successivo della scala DRIVER_QUEUE_HOURS
+// (engine-rides.js); il livello raggiunto vive sull'autista (queueHours) e
+// sopravvive al ricaricamento tramite il salvataggio standard.
+window.buyQueueHoursDC = function(driverId) {
+    const driver = gameState.drivers.find(d => d.id === driverId);
+    if (!driver || typeof DRIVER_QUEUE_HOURS === 'undefined') return;
+    const currentH = Math.max(DRIVER_QUEUE_HOURS.base,
+        Math.min(DRIVER_QUEUE_HOURS.max, Number(driver.queueHours) || DRIVER_QUEUE_HOURS.base));
+    const nextStep = DRIVER_QUEUE_HOURS.steps.find(s => s.hours > currentH);
+    if (!nextStep) { showNotification(`${driver.name} ha già il monte ore massimo (${DRIVER_QUEUE_HOURS.max}h).`, 'info'); return; }
+    if (!window.CE_money.spendDC(nextStep.cost, 'driver_queue_hours')) return;
+    driver.queueHours = nextStep.hours;
+    logToMap(`⏳ Monte ore coda di ${driver.name} esteso a ${nextStep.hours}h! (${nextStep.cost} DC)`);
+    showNotification(`⏳ ${driver.name}: monte ore coda → ${nextStep.hours}h (−${nextStep.cost} DC)`, 'success');
+    updateUI(); saveGame();
+    if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
 };
 
 // ── SALTA COSTRUZIONE (DC) ────────────────────────────────────────

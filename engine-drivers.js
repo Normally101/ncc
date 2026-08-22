@@ -137,6 +137,10 @@ window.hireDriver = function hireDriver(name, salary) {
     const recruit = (gameState.availableRecruits || []).find(r => r.name === name);
     gameState.drivers.push({
         id: 'd_' + Date.now(), name, salary, status: 'idle', assignedCarId: null, queue: [],
+        // Monte ore coda di base (decisione Vlad 22/08/2026): la scala vive in
+        // engine-rides.js (DRIVER_QUEUE_HOURS); i salvataggi vecchi non hanno il
+        // campo e _getDriverQueueCapMs li riporta comunque a 4h.
+        queueHours: (typeof DRIVER_QUEUE_HOURS !== 'undefined' ? DRIVER_QUEUE_HOURS.base : 4),
         fatigue: 0, restHoursLeft: 0, xp: 0, level: 0, morale: 100,
         trait: recruit?.trait || null, upgrades: [], hiredDay: gameState.day,
         skill_efficiency: recruit?.skill_efficiency ?? 50,

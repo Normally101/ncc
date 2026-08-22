@@ -202,7 +202,7 @@ function renderTabPremiumStore() {
           sub: tempKaskoActive ? `Attiva fino al giorno ${tempKaskoDay} (${tempKaskoDay-gameState.day} gg rimasti)` : kaskoActive&&!tempKaskoActive ? 'Polizza permanente attiva' : 'Copertura incidenti per 7 giorni di gioco',
           disabled:kaskoActive&&!tempKaskoActive, disabledLabel:'Attiva' },
         { label:'Executive Pass', icon:'💎', iconBg:'rgba(212,175,55,0.15)', cost:150, act:ceAct('activateExecutivePass',[]),
-          sub: execPassActive ? `Attivo — ${(gameState.executivePassExpiresDay||0)-gameState.day} giorni rimasti` : '+25% slot corse · −50% stress · Insta-Repair 1DC · corse VIP extra',
+          sub: execPassActive ? `Attivo — ${(gameState.executivePassExpiresDay||0)-gameState.day} giorni rimasti` : '−50% stress · Insta-Repair 1DC · corse VIP extra',
           disabled:execPassActive, disabledLabel:'Attivo' },
         { label:'Radar VIP', icon:'📡', iconBg:'rgba(167,139,250,0.15)', cost:200, act:ceAct('_ecRadarVip',[]),
           sub: radarActive ? 'Attivo — corse VIP in priorità assoluta' : 'Priority queue +100% per 72 ore di gioco',

@@ -159,7 +159,7 @@ function renderTabCorse() {
         const freeTimeTxt = qInfo ? qInfo.freeAtTimeStr : null;
         const nextSlotTxt = (qInfo && qInfo.isBusy) ? fmtDurationFn(qInfo.nextSlotFreeMs) : 'subito';
         const queueLen    = driver.queue ? driver.queue.length : 0;
-        const maxQ        = qInfo ? qInfo.maxQueue : 10;
+        const capH        = qInfo ? Math.round((qInfo.queueCapMs || 0) / 3600000) : 4;
 
         let queueDetailsHtml = '';
         if (qInfo) {
@@ -168,14 +168,21 @@ function renderTabCorse() {
                 parts.push(`<span style="color:var(--em-blue)">in corso: <strong>${curRemTxt}</strong></span>`);
             }
             if (qInfo.totalQueueMs > 0 && totQueueTxt) {
-                parts.push(`<span style="color:var(--em-muted)">coda tot: <strong>${totQueueTxt}</strong> (libero ore ${freeTimeTxt} stima)</span>`);
+                parts.push(`<span style="color:${qInfo.isFull ? 'var(--em-red)' : 'var(--em-muted)'}">monte ore: <strong>${totQueueTxt}/${capH}h</strong>${qInfo.isFull ? ' — pieno' : ''}</span>`);
+                // L'informazione vera per chi esce di casa è l'orario di rientro, non la durata.
+                parts.push(`<span style="color:var(--em-muted)">lavora fino alle <strong>${freeTimeTxt}</strong></span>`);
             }
             if (qInfo.isBusy) {
                 parts.push(`<span style="color:${qInfo.isFull ? 'var(--em-amber)' : 'var(--em-dim)'}">1° slot: <strong>${qInfo.isFull ? 'tra ' + nextSlotTxt : 'subito'}</strong></span>`);
             }
-            if (parts.length > 0) {
-                queueDetailsHtml = `<div style="font-size:10px;color:var(--em-muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:6px">${parts.join(' · ')}</div>`;
-            }
+            // Lo scatto successivo resta visibile anche a coda vuota: il monte ore si allunga in anticipo.
+            const _steps = ((typeof window.DRIVER_QUEUE_HOURS === 'object' && window.DRIVER_QUEUE_HOURS) || {}).steps || [];
+            const nextStep = _steps.find(s => s.hours > capH);
+            const extendCtl = nextStep
+                ? `<button ${ceAct('buyQueueHoursDC', [driver.id])} class="em-ghbtn" style="margin-left:auto;padding:2px 8px;font-size:9.5px">Monte ore →${nextStep.hours}h (${nextStep.cost} DC)</button>`
+                : `<span style="color:var(--em-dim);margin-left:auto">monte ore max ${capH}h</span>`;
+            const inner = parts.length > 0 ? parts.join(' · ') : '<span style="color:var(--em-dim)">nessuna corsa in programma</span>';
+            queueDetailsHtml = `<div style="font-size:10px;color:var(--em-muted);margin-top:3px;display:flex;flex-wrap:wrap;gap:6px;align-items:center">${inner}${extendCtl}</div>`;
         }
 
         html += `<div class="ops-driver-row em-lrow" data-id="${driver.id}" style="align-items:flex-start;${isResting ? 'opacity:0.5' : ''}">
@@ -184,7 +191,7 @@ function renderTabCorse() {
                 <div class="em-lt" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${driver.name}${restBtn}</div>
                 <div class="em-lm">
                     <span>${car ? car.name : '— nessun veicolo —'}</span>
-                    ${queueLen > 0 ? `<span>· coda ${queueLen}/${maxQ}</span>` : ''}
+                    ${queueLen > 0 ? `<span>· ${queueLen} cors${queueLen === 1 ? 'a' : 'e'} in coda</span>` : ''}
                 </div>
                 ${queueDetailsHtml}
                 <div class="driver-queue-preview" id="preview-${driver.id}" style="font-size:10px;color:var(--em-gold);margin-top:3px;display:none;font-weight:700"></div>
