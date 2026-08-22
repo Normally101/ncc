@@ -1,6 +1,11 @@
 # Censimento doppio conteggio cassa / valuta
 
-Data: 21/08/2026
+Data: 21/08/2026 · aggiornato al 22/08/2026
+
+**STATO AL 22/08/2026: ZERO casi ancora aperti.** Tutti i diciassette casi marcati
+DOPPIO CONTEGGIO nel censimento sono stati corretti e riverificati sul codice attuale:
+ciascuno ora usa `CE_money.accreditatoDalServer` / `CE_money.addebitatoDalServer`,
+oppure ha perso la chiamata `CE_money` dove era la RPC stessa a muovere il saldo.
 
 **Il difetto cercato:** la RPC muove i soldi sul server, e POI il client li muove
 di nuovo con `CE_money`, che rispedisce al server il totale calcolato dal browser.
@@ -18,8 +23,9 @@ File esaminati: p2p-market.js, p2p-render.js, vtk-market.js, auctions.js,
 alliances.js, hostile_takeover.js, infrastructure.js, b2b.js, nemesis.js,
 tourism.js, black_ops.js, vip-clients.js — dodici in tutto.
 
-**NON è ancora una correzione.** Ogni riga marcata DOPPIO CONTEGGIO è un lavoro
-successivo, uno per file, con il suo test che diventa rosso sul codice di adesso.
+**Come si legge oggi:** le righe del censimento non si cancellano. Un caso chiuso
+porta il marcatore storico seguito dal verdetto `CORRETTO:` con il meccanismo della
+correzione; un eventuale caso nuovo porterebbe `ANCORA APERTO:`.
 
 ## p2p-market.js
 - riga 77 — `listCarForSale` chiama `rpc_list_car_for_sale` (nessuna chiamata CE_money successiva)
@@ -27,7 +33,8 @@ successivo, uno per file, con il suo test che diventa rosso sul codice di adesso
 - riga 106 — `cancelP2PListing` chiama `rpc_cancel_listing` (nessuna chiamata CE_money successiva)
   RPC: 08_mmo_p2p_marketplace.sql:127 — RPC non tocca il saldo → corretto cosi'
 - riga 138 — `buyP2PCar` chiama `rpc_buy_market_car` poi `CE_money.spend` (riga 144)
-  RPC: 52_fix_p2p_sindacato_cash_source_of_truth.sql:143 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 52_fix_p2p_sindacato_cash_source_of_truth.sql:143 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo la RPC ora chiama `CE_money.addebitatoDalServer(data.price_paid, 'buy_p2p_car')` — aggiorna solo la previsione locale con l'importo pagato, senza risincronizzare dal client.
 - riga 163 — `createHolding` chiama `rpc_create_holding` (nessuna chiamata CE_money successiva)
   RPC: 08_mmo_p2p_marketplace.sql:318 — RPC non tocca il saldo → corretto cosi'
 - riga 174 — `joinHolding` chiama `rpc_join_holding` (nessuna chiamata CE_money successiva)
@@ -35,19 +42,24 @@ successivo, uno per file, con il suo test che diventa rosso sul codice di adesso
 - riga 183 — `leaveHolding` chiama `rpc_leave_holding` (nessuna chiamata CE_money successiva)
   RPC: 08_mmo_p2p_marketplace.sql:389 — RPC non tocca il saldo → corretto cosi'
 - riga 198 — `contributeHoldingTreasury` chiama `rpc_contribute_holding_treasury` poi `CE_money.spend` (riga 202)
-  RPC: 08_mmo_p2p_marketplace.sql:440 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 08_mmo_p2p_marketplace.sql:440 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo la RPC ora chiama `CE_money.addebitatoDalServer(roundedAmount, 'contribute_holding_treasury')`.
 - riga 242 — `listCompanyIPO` chiama `rpc_list_company_ipo` poi `CE_money.spend` (riga 250)
-  RPC: 08_mmo_p2p_marketplace.sql:534 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 08_mmo_p2p_marketplace.sql:534 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo la RPC ora chiama `CE_money.addebitatoDalServer(50000, 'list_company_ipo_fee')`.
 - riga 278 — `buyCompanyShares` chiama `rpc_buy_company_shares` poi `CE_money.spend` (riga 283)
-  RPC: 52_fix_p2p_sindacato_cash_source_of_truth.sql:206 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 52_fix_p2p_sindacato_cash_source_of_truth.sql:206 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo la RPC ora chiama `CE_money.addebitatoDalServer(total, 'buy_company_shares')`.
 - riga 293 — `sellCompanyShares` chiama `rpc_sell_company_shares` poi `CE_money.earn` (riga 298)
-  RPC: 08_mmo_p2p_marketplace.sql:660 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 08_mmo_p2p_marketplace.sql:660 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo la RPC ora chiama `CE_money.accreditatoDalServer(data.total, 'sell_company_shares')` col totale calcolato dal server.
 - riga 403 — `p2pFetchTension` chiama `rpc_tick_tension` (nessuna chiamata CE_money successiva)
   RPC: 15_sindacato_mechanics.sql:32 — RPC non tocca il saldo → corretto cosi'
 - riga 417 — `p2pFetchGdfRisk` chiama `rpc_get_gdf_risk` (nessuna chiamata CE_money successiva)
   RPC: 15_sindacato_mechanics.sql:280 — RPC non tocca il saldo → corretto cosi'
 - riga 427 — `_sindacatoGdfDailyCheck` chiama `rpc_gdf_inspection_check` poi `CE_money.spend` (riga 433)
-  RPC: 15_sindacato_mechanics.sql:382 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 15_sindacato_mechanics.sql:382 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo la RPC ora chiama `CE_money.addebitatoDalServer(fine, 'gdf_fine')` con la multa decisa dal server.
 
 ## p2p-render.js
 - riga 389 — `createConsorzio` chiama `rpc_create_consorzio` (nessuna chiamata CE_money successiva)
@@ -57,11 +69,13 @@ successivo, uno per file, con il suo test che diventa rosso sul codice di adesso
 - riga 407 — `leaveConsorzio` chiama `rpc_leave_consorzio` (nessuna chiamata CE_money successiva)
   RPC: 15_sindacato_mechanics.sql:198 — RPC non tocca il saldo → corretto cosi'
 - riga 419 — `contributeConsorzio` chiama `rpc_contribute_consorzio` preceduta da `CE_money.spend` (riga 418)
-  RPC: 15_sindacato_mechanics.sql:239 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 15_sindacato_mechanics.sql:239 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: l'ordine si è invertito — prima la RPC, poi `CE_money.addebitatoDalServer(roundedAmount, 'contribute_consorzio')`.
 - riga 438 — `hireCrumiri` chiama `rpc_hire_crumiri` (nessuna chiamata CE_money successiva)
   RPC: 15_sindacato_mechanics.sql:303 — RPC non tocca il saldo → corretto cosi'
 - riga 452 — `payDonCarmine` chiama `rpc_pay_don_carmine` preceduta da `CE_money.spend` (riga 451)
-  RPC: 15_sindacato_mechanics.sql:338 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → DOPPIO CONTEGGIO
+  RPC: 15_sindacato_mechanics.sql:338 / 52_fix_p2p_sindacato_cash_source_of_truth.sql:47 — `UPDATE public.companies SET cash = cash + v_delta` → era DOPPIO CONTEGGIO
+  CORRETTO: l'ordine si è invertito — prima la RPC, poi `CE_money.addebitatoDalServer(cost, 'pay_don_carmine')`.
 
 ## vtk-market.js
 - riga 94 — `vtkRefreshOrders` chiama `rpc_get_vtk_market_orders` (nessuna chiamata CE_money successiva)
@@ -69,7 +83,8 @@ successivo, uno per file, con il suo test che diventa rosso sul codice di adesso
 - riga 112 — `vtkPlaceSellOrder` chiama `rpc_place_vtk_sell_order` (nessuna chiamata CE_money successiva)
   RPC: 21_vtk_token.sql:98 — `UPDATE companies SET vtk_balance = ...` ma non tocca cash / DC e client non chiama CE_money → corretto cosi'
 - riga 134 — `vtkFillOrder` chiama `rpc_fill_vtk_order` poi `CE_money.spendDC` (riga 140)
-  RPC: 21_vtk_token.sql:128 — `UPDATE companies SET driver_coins = driver_coins - v_cost, vtk_balance = vtk_balance + v_order.vtk_amount ...` → DOPPIO CONTEGGIO (driver_coins)
+  RPC: 21_vtk_token.sql:128 — `UPDATE companies SET driver_coins = driver_coins - v_cost, vtk_balance = vtk_balance + v_order.vtk_amount ...` → era DOPPIO CONTEGGIO (driver_coins)
+  CORRETTO: la chiamata `CE_money.spendDC` è stata rimossa — la RPC muove già i driver_coins e il client non rispedisce più alcun saldo.
 - riga 152 — `vtkCancelOrder` chiama `rpc_cancel_vtk_order` (nessuna chiamata CE_money successiva)
   RPC: 21_vtk_token.sql:154 — `UPDATE companies SET vtk_balance = ...` ma client non chiama CE_money → corretto cosi'
 - riga 208 — `vtkBuyShopItem` chiama `rpc_spend_vtk_shop_item` (nessuna chiamata CE_money successiva)
@@ -87,21 +102,26 @@ successivo, uno per file, con il suo test che diventa rosso sul codice di adesso
 - riga 288 — `_alCreate` chiama `CE_money.spend` poi `rpc_create_alliance`
   RPC: non presente nel repo (definita su Supabase) — RPC non tocca il saldo → corretto cosi'
 - riga 324 — `_alDonate` chiama `CE_money.spend` poi `rpc_donate_to_alliance`
-  RPC: 54_fix_donate_to_alliance_cash_source_of_truth.sql:57 — `UPDATE public.companies SET cash = cash - p_amount::bigint WHERE user_id = v_uid;` → DOPPIO CONTEGGIO
+  RPC: 54_fix_donate_to_alliance_cash_source_of_truth.sql:57 — `UPDATE public.companies SET cash = cash - p_amount::bigint WHERE user_id = v_uid;` → era DOPPIO CONTEGGIO
+  CORRETTO: l'ordine si è invertito — prima `rpc_donate_to_alliance`, poi `CE_money.addebitatoDalServer(amt, 'donate_alliance')`.
 
 ## hostile_takeover.js
 - riga 133 — `_opaRequestBuyback` chiama `CE_money.spend` poi `rpc_opa_buyback`
-  RPC: 27_hostile_takeovers.sql:177 — `UPDATE public.companies SET cash = cash - v_opa.buyback_price WHERE user_id = v_uid;` → DOPPIO CONTEGGIO
+  RPC: 27_hostile_takeovers.sql:177 — `UPDATE public.companies SET cash = cash - v_opa.buyback_price WHERE user_id = v_uid;` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo `rpc_opa_buyback` ora chiama `CE_money.addebitatoDalServer(numPrice, 'opa_buyback')`.
 
 ## infrastructure.js
 - riga 140 — `_infraBuyDepot` chiama `CE_money.spend` poi `rpc_buy_fuel_depot`
-  RPC: 30_sql_patch.sql:81 — `UPDATE companies SET cash = cash - v_cost, liquid_assets = GREATEST(0, liquid_assets - v_cost) WHERE user_id = v_uid;` → DOPPIO CONTEGGIO
+  RPC: 30_sql_patch.sql:81 — `UPDATE companies SET cash = cash - v_cost, liquid_assets = GREATEST(0, liquid_assets - v_cost) WHERE user_id = v_uid;` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo `rpc_buy_fuel_depot` ora chiama `CE_money.addebitatoDalServer(cost, 'buy_fuel_depot')`.
 
 ## b2b.js
 - riga 121 — `b2bTerminateContract` chiama `rpc_terminate_b2b_contract` poi `CE_money.spend` (riga 131)
-  RPC: 19_b2b_contracts.sql:241 — `UPDATE public.companies SET cash = cash - v_penalty, liquid_assets = GREATEST(0, liquid_assets - v_penalty)...` → DOPPIO CONTEGGIO
+  RPC: 19_b2b_contracts.sql:241 — `UPDATE public.companies SET cash = cash - v_penalty, liquid_assets = GREATEST(0, liquid_assets - v_penalty)...` → era DOPPIO CONTEGGIO
+  CORRETTO: usa la penale restituita dalla RPC — `CE_money.addebitatoDalServer(data.penalty, 'b2b_terminate_penalty')` solo se `data.penalty > 0`.
 - riga 144 — `_b2bDailyTick` chiama `rpc_b2b_daily_tick` poi `CE_money.earn` (riga 154)
-  RPC: 19_b2b_contracts.sql:207 — `UPDATE public.companies SET cash = cash + v_payout, liquid_assets = liquid_assets + v_payout...` → DOPPIO CONTEGGIO
+  RPC: 19_b2b_contracts.sql:207 — `UPDATE public.companies SET cash = cash + v_payout, liquid_assets = liquid_assets + v_payout...` → era DOPPIO CONTEGGIO
+  CORRETTO: usa il payout restituito dalla RPC — `CE_money.accreditatoDalServer(data.payout, 'b2b_daily_payout')`.
 
 ## nemesis.js
 - riga 87 — `_nemesisFundRival` chiama `rpc_nemesis_fund_rival`
@@ -119,15 +139,18 @@ successivo, uno per file, con il suo test che diventa rosso sul codice di adesso
 - riga 125 — `tourismTerminate` chiama `rpc_terminate_tourism_contract` poi `CE_money.addReputation`
   RPC: 33_tourism_tenders.sql:410 — RPC non tocca il saldo (aggiorna solo companies.reputation) → corretto cosi'
 - riga 142 — `_tourismDailyTick` chiama `rpc_tourism_daily_tick` poi `CE_money.earn` (riga 145)
-  RPC: 33_tourism_tenders.sql:530 — `UPDATE public.companies SET cash = cash + v_total_pay, liquid_assets = liquid_assets + v_total_pay WHERE user_id = v_uid;` → DOPPIO CONTEGGIO
+  RPC: 33_tourism_tenders.sql:530 — `UPDATE public.companies SET cash = cash + v_total_pay, liquid_assets = liquid_assets + v_total_pay WHERE user_id = v_uid;` → era DOPPIO CONTEGGIO
+  CORRETTO: usa il totale restituito dalla RPC — `CE_money.accreditatoDalServer(data.total_payout, 'tourism_daily_payout')`.
 
 ## black_ops.js
 - riga 83 — `shadowRefresh` chiama `rpc_get_shadow_targets` e `rpc_get_shadow_ops_log`
   RPC: 23_shadow_ops.sql:181, 203 — RPC non tocca il saldo → corretto cosi'
 - riga 100 — `shadowExecuteOp` chiama `CE_money.spend` prima di `rpc_execute_shadow_op` (riga 102) e `CE_money.earn` su errore (riga 108)
-  RPC: 23_shadow_ops.sql:83 — `UPDATE public.companies SET cash = cash - v_op_cost, liquid_assets = GREATEST(0, liquid_assets - v_op_cost) WHERE user_id = v_uid;` → DOPPIO CONTEGGIO
+  RPC: 23_shadow_ops.sql:83 — `UPDATE public.companies SET cash = cash - v_op_cost, liquid_assets = GREATEST(0, liquid_assets - v_op_cost) WHERE user_id = v_uid;` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo `rpc_execute_shadow_op` ora chiama `CE_money.addebitatoDalServer(op.cost, 'shadow_op_' + opId)`; su errore la funzione esce prima di toccare il saldo e il rimborso `earn` non serve più.
 - riga 135 — `shadowUpgradeDefense` chiama `CE_money.spend` prima di `rpc_upgrade_shadow_defense` (riga 137) e `CE_money.earn` su errore (riga 139)
-  RPC: 23_shadow_ops.sql:248 — `UPDATE public.companies SET cash = cash - v_cost, liquid_assets = GREATEST(0, liquid_assets - v_cost) WHERE user_id = v_uid;` → DOPPIO CONTEGGIO
+  RPC: 23_shadow_ops.sql:248 — `UPDATE public.companies SET cash = cash - v_cost, liquid_assets = GREATEST(0, liquid_assets - v_cost) WHERE user_id = v_uid;` → era DOPPIO CONTEGGIO
+  CORRETTO: dopo `rpc_upgrade_shadow_defense` ora chiama `CE_money.addebitatoDalServer(tier.cost, 'shadow_defense_upgrade')`; su errore esce prima di toccare il saldo.
 
 ## vip-clients.js
 - nessun punto in cui si chiama una RPC del server e SUBITO DOPO si chiama CE_money.spend / CE_money.earn / _addCash (il file non effettua chiamate RPC dirette, i movimenti di cassa passano da CE_money e _vipSyncCash chiama solo syncCash) → corretto cosi'
