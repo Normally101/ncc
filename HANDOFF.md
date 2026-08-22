@@ -11,6 +11,71 @@
 
 ---
 
+# 🟢 22/08 pomeriggio — le cinque decisioni di Vlad, e due buchi chiusi nel motore
+
+## Le decisioni, prese sull'hub (pagina «Decisioni», nuova)
+
+| Domanda | Scelta di Vlad |
+|---|---|
+| Durata delle corse | nuova curva `10 + 3.8 × √prezzo`, **tetto rimosso** — GIA' FATTO |
+| Coda | **in ore: 4 di base, fino a 12 con i Driver Coins** (sua nota, non la mia proposta di 8 fisse) |
+| Executive Pass | **togliere** l'allungamento coda, niente al suo posto |
+| Batteria elettrici | **farla calare**, con una ricarica raggiungibile |
+| Modelli | cercare un'altra anteprima gratuita, restando aperto ai 10$ una-tantum |
+
+La durata l'ho implementata io (formula + test riscritti). Le altre tre sono in
+coda per l'agente.
+
+**I test della durata non ricopiano piu' la formula.** Prima dicevano «100€ = 20
+minuti», cioe' che il codice fa quello che fa; ora verificano le proprieta' per
+cui la formula e' stata scelta: non satura mai, cresce sempre, ha un pavimento.
+Un ritocco di bilanciamento non li fa piu' diventare rossi per niente.
+
+**Idea di Vlad salvata nel vault** (`00 Mappa/Idee e Backlog.md`): alimentazione
+degli elettrici — colonnine sul territorio, abbonamenti di ricarica, tessere
+carburante.
+
+## Due buchi nel motore dell'agente, trovati guardando i fallimenti
+
+**1. «Ho finito» senza aver scritto niente veniva riportato come RIUSCITO.**
+Due lavori di fila (i collaudi del mercato P2P): 21 turni, un milione di token
+letti, zero file toccati, esito `ok: true`. Il cancello e' `npm test`, e su
+codice immutato e' ovviamente verde — non puo' distinguere «fatto» da «non ho
+fatto niente». Ora chi conclude senza aver mai scritto torna indietro col motivo
+scritto, e dopo 12 turni di sola lettura viene richiamato una volta sola. La
+soglia di inerzia che c'era scattava solo DOPO la prima scrittura, quindi chi
+esplorava e basta non la incontrava mai.
+
+**2. Il finto server del banco e' piu' semplice di quello vero, e nasconde i
+bug.** Due bug sui soldi in un giorno, stessa causa:
+- `spendDriverCoins` scalava due volte e non restituiva il saldo;
+- `rpc_buy_company_shares` restituiva 2 campi invece di 4, e mancava proprio
+  `total`. Il client si addebitava il **prezzo in cache** invece di quello preso
+  dal server: siccome il prezzo sale a ogni acquisto, il giocatore vedeva piu'
+  soldi di quanti ne avesse fino al ricaricamento. `sellCompanyShares`, due
+  funzioni sotto nello stesso file, lo faceva gia' bene.
+
+Corretto, con test rosso prima. C'e' un lavoro in coda che confronta OGNI metodo
+finto con la sua RPC vera nell'SQL.
+
+**Regola che ne esce:** quando un finto server e' piu' semplice di quello vero,
+la semplificazione nasconde proprio i bug che il test dovrebbe trovare.
+
+## I modelli
+
+L'agente ha ora una **scaletta**, non un modello solo: quando uno finisce si
+passa al successivo, anche a meta' conversazione. Cinque provati con una vera
+chiamata a strumento — ox-alpha, nemotron-3-ultra, laguna-s, nemotron-3-super,
+north-mini-code. Scartati glm-5.2 e gemma-4 (429 a freddo) e inkling (piano
+dedicato).
+
+**Da sapere:** i modelli `:free` di OpenRouter condividono UNA quota d'account —
+50 richieste al giorno, che diventano **1.000 dopo un acquisto una-tantum da 10
+dollari**, per sempre. Allungare la scaletta da' continuita', non capacita'. Per
+piu' quota servono fornitori diversi.
+
+---
+
 # 🟢 22/08 — l'agente non costa piu' niente: stesso modello, endpoint gratuito
 
 **Perche'.** Il 21/08 Vertex e' costato €124,62 in un giorno. Il prezzo unitario
