@@ -1,0 +1,69 @@
+# Rimisura il progetto e manda i numeri all'hub, a ogni cambiamento di main.
+#
+# Perche' esiste. Il cruscotto sull'hub ha mostrato per due giorni i numeri del
+# 20 agosto — «344 test, 15/246 azioni verificate» — mentre la realta' era
+# 1.564 test e 242 azioni. Non era rotto: era che la misura la lanciava una
+# persona a mano, e nessuno l'ha piu' lanciata. Un cruscotto che non si
+# aggiorna da solo non e' un cruscotto, e' una fotografia — e col tempo comincia
+# a mentire proprio a chi si fida di lui per decidere.
+#
+# Gira solo su main, e solo quando cambia qualcosa che puo' spostare i numeri:
+# il codice del gioco, i test, o gli script di misura.
+name: Misura lo stato del progetto
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.js'
+      - 'test/**'
+      - 'test-support/**'
+      - 'scripts/stato-progetto.mjs'
+      - 'index.html'
+  # A mano dalla pagina Actions, quando serve una misura senza aspettare un push.
+  workflow_dispatch:
+
+# Due misure insieme si sovrascriverebbero a vicenda sull'hub, e vincerebbe la
+# piu' lenta invece della piu' recente. Meglio tenere solo l'ultima.
+concurrency:
+  group: misura-stato
+  cancel-in-progress: true
+
+jobs:
+  misura:
+    name: Conta e manda all'hub
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout via GitHub API
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          curl -fsSL \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${{ github.repository }}/tarball/${{ github.sha }}" \
+            | tar xz --strip-components=1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+
+      - name: Installa le dipendenze
+        run: npm ci --no-audit --no-fund || npm install --no-audit --no-fund
+
+      # Misura COMPLETA, senza --veloce. La prova per mutazione — si rompe di
+      # proposito la sincronizzazione del denaro e si contano i test che se ne
+      # accorgono — costa una seconda passata della suite, non una per ogni
+      # guasto: qualche minuto in tutto. Ed e' il numero che dice davvero se la
+      # rete di sicurezza tiene, quindi saltarlo per risparmiare tre minuti
+      # significherebbe pubblicare un cruscotto senza il dato piu' importante.
+      #
+      # Nota: la prova riscrive money.js e lo rimette a posto alla fine. Qui gira
+      # su una copia usa-e-getta, quindi non puo' sporcare niente.
+      - name: Misura e manda all'hub
+        env:
+          HUB_URL: ${{ secrets.HUB_URL }}
+          GIGI_API_TOKEN: ${{ secrets.GIGI_API_TOKEN }}
+        run: npm run stato -- --hub
