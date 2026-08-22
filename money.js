@@ -131,9 +131,13 @@ var CE_money = (function () {
                         gs.driverCoins = r.driver_coins;
                         if (typeof updateUI === 'function') updateUI();
                     }
-                }).catch(function () {});
+                }).catch(function (err) {
+                    _avvisa((err && err.message) || 'Operazione non andata a buon fine. Riprova.');
+                });
             }
-        } catch (e) {}
+        } catch (e) {
+            _avvisa((e && e.message) || 'Operazione non andata a buon fine. Riprova.');
+        }
         return true;
     }
 
@@ -152,9 +156,13 @@ var CE_money = (function () {
                         gs.driverCoins = r.driver_coins;
                         if (typeof updateUI === 'function') updateUI();
                     }
-                }).catch(function () {});
+                }).catch(function (err) {
+                    _avvisa((err && err.message) || 'Operazione non andata a buon fine. Riprova.');
+                });
             }
-        } catch (e) {}
+        } catch (e) {
+            _avvisa((e && e.message) || 'Operazione non andata a buon fine. Riprova.');
+        }
         return true;
     }
 

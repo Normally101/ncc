@@ -17,20 +17,22 @@ const { freshEnv } = require('../../test-support/game-env.js');
 /** Ambiente con ServerState strumentato: registra le SCRITTURE, non le letture. */
 function ambiente(rispostaDC) {
     const scritture = [];
-    const { sandbox } = freshEnv({
+    const env = freshEnv({
         serverState: {
             syncCash: async (v) => { scritture.push(['syncCash', v]); return { success: true, cash: v }; },
             spendDriverCoins: async (motivo, n) => {
                 scritture.push(['spendDriverCoins', motivo, n]);
+                if (rispostaDC instanceof Error) throw rispostaDC;
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
             addDriverCoins: async (n, motivo) => {
                 scritture.push(['addDriverCoins', n, motivo]);
+                if (rispostaDC instanceof Error) throw rispostaDC;
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
         },
     });
-    return { sandbox, gs: sandbox.gameState, scritture };
+    return { sandbox: env.sandbox, gs: env.sandbox.gameState, scritture, notifications: env.notifications };
 }
 
 describe('money — la porta unica del denaro', () => {
@@ -112,6 +114,22 @@ describe('money — la porta unica del denaro', () => {
             sandbox.CE_money.earnDC(5, 'premio');
             await new Promise(r => setImmediate(r));
             assert.deepEqual(scritture, [['addDriverCoins', 5, 'premio']]);
+        });
+
+        test('quando il server rifiuta spendDC, il giocatore riceve un avviso', async () => {
+            const { sandbox, gs, notifications } = ambiente(new Error('Saldo DC non valido sul server'));
+            gs.driverCoins = 50;
+            sandbox.CE_money.spendDC(4, 'energia');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifications.length > 0, 'deve essere mostrata una notifica di errore');
+        });
+
+        test('quando il server rifiuta earnDC, il giocatore riceve un avviso', async () => {
+            const { sandbox, gs, notifications } = ambiente(new Error('Errore accredito DC sul server'));
+            gs.driverCoins = 10;
+            sandbox.CE_money.earnDC(5, 'premio');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifications.length > 0, 'deve essere mostrata una notifica di errore');
         });
     });
 
