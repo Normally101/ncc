@@ -242,7 +242,12 @@ describe('azioni autisti — assunzione, bonus, stress, riposo, benessere DC, sc
             sandbox.ServerState.spendDriverCoins = async () => null; // RPC rigetta
 
             sandbox.healAllDriversDC();
-            await new Promise(r => setTimeout(r, 25)); // lascia risolvere la promessa
+            // Aspetta il FATTO "saldo ripristinato", non un tempo fisso: il rollback
+            // di spendDC avviene dopo la risoluzione della promessa della RPC, e un
+            // timeout corto non garantisce che sia già avvenuto (esito flaky).
+            for (let giri = 0; giri < 500 && gs.driverCoins !== 100; giri++) {
+                await new Promise(r => setImmediate(r));
+            }
 
             assert.equal(gs.driverCoins, 100, 'l\'addebito locale deve essere annullato');
         });
