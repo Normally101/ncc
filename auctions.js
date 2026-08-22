@@ -237,6 +237,11 @@ window.auctionsClaim = async function(auctionId) {
             const auto = _autoDalLotto(item);
             if (auto) { window.gameState?.fleet?.push(auto); nuove.push(auto); }
         }
+    } else if (data?.lot_type === 'fleet_pack') {
+        for (const item of (data.vehicle_data?.vehicles || [])) {
+            const auto = _autoDalLotto(item);
+            if (auto) { window.gameState?.fleet?.push(auto); nuove.push(auto); }
+        }
     } else {
         const auto = _autoDalLotto(data?.vehicle_data);
         if (auto) { window.gameState?.fleet?.push(auto); nuove.push(auto); }
