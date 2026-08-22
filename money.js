@@ -131,7 +131,9 @@ var CE_money = (function () {
                         gs.driverCoins = r.driver_coins;
                         if (typeof updateUI === 'function') updateUI();
                     }
-                }).catch(function () {});
+                }).catch(function () {
+                    _avvisa('Operazione non andata a buon fine.');
+                });
             }
         } catch (e) {}
         return true;
@@ -152,7 +154,9 @@ var CE_money = (function () {
                         gs.driverCoins = r.driver_coins;
                         if (typeof updateUI === 'function') updateUI();
                     }
-                }).catch(function () {});
+                }).catch(function () {
+                    _avvisa('Operazione non andata a buon fine.');
+                });
             }
         } catch (e) {}
         return true;

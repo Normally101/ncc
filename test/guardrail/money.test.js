@@ -113,6 +113,42 @@ describe('money — la porta unica del denaro', () => {
             await new Promise(r => setImmediate(r));
             assert.deepEqual(scritture, [['addDriverCoins', 5, 'premio']]);
         });
+
+        test('spendDC avvisa il giocatore se la RPC del server fallisce', async () => {
+            const notifiche = [];
+            const env = freshEnv({
+                serverState: {
+                    spendDriverCoins: async () => {
+                        throw new Error('Server RPC failed');
+                    },
+                },
+            });
+            env.sandbox.showNotification = (msg, tipo) => {
+                notifiche.push({ msg, tipo });
+            };
+            env.sandbox.gameState.driverCoins = 50;
+            env.sandbox.CE_money.spendDC(10, 'energia');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifiche.length > 0, 'il giocatore deve ricevere un avviso quando spendDC fallisce sul server');
+        });
+
+        test('earnDC avvisa il giocatore se la RPC del server fallisce', async () => {
+            const notifiche = [];
+            const env = freshEnv({
+                serverState: {
+                    addDriverCoins: async () => {
+                        throw new Error('Server RPC failed');
+                    },
+                },
+            });
+            env.sandbox.showNotification = (msg, tipo) => {
+                notifiche.push({ msg, tipo });
+            };
+            env.sandbox.gameState.driverCoins = 10;
+            env.sandbox.CE_money.earnDC(5, 'premio');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifiche.length > 0, 'il giocatore deve ricevere un avviso quando earnDC fallisce sul server');
+        });
     });
 
     describe('reputazione', () => {
