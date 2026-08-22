@@ -3,11 +3,24 @@
 > Aggiornato: 22 agosto 2026 (sera)
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
-> **E leggi anche le note che Vlad ha lasciato a Gigi mentre non c'eri:**
-> `gcloud compute ssh gigi-whatsapp --zone=us-central1-a --command='cat ~/gigi/per-claude.md'`
-> Le scrive dal telefono con «nota: ...» quando è fuori casa. Dopo averle lette,
-> segnale come lette (`segnaLette()` in `jarvis/src/note.js`), altrimenti restano
-> a contarsi come nuove per sempre.
+> **LEGGI SEMPRE il diario di quello che Vlad ha detto a Gigi mentre non c'eri.**
+> Un solo comando, prende sia il diario che le note:
+> ```
+> gcloud compute ssh gigi-whatsapp --zone=us-central1-a \
+>   --command='tail -120 ~/gigi/diario-vlad.md; echo; cat ~/gigi/per-claude.md'
+> ```
+> - **`diario-vlad.md`** — si scrive DA SOLO a ogni messaggio, **vocali trascritti
+>   compresi**. È la fonte principale: Vlad parla molto con Gigi dal telefono e
+>   quasi sempre a voce. Nato il 22/08, dopo che cinque vocali con dentro
+>   decisioni sul gioco sono andati persi per sempre — Gigi non ha memoria, e
+>   l'audio veniva ascoltato e buttato senza essere scritto da nessuna parte.
+> - **`per-claude.md`** — le note che Vlad lascia apposta con «nota: ...». Dopo
+>   averle lette, segnale con `segnaLette()` (`jarvis/src/note.js`), altrimenti
+>   restano a contarsi come nuove per sempre.
+>
+> **Non fidarti di quello che Gigi dice di aver fatto.** Non ricorda niente fra un
+> messaggio e l'altro, quindi quando afferma «l'ho segnalato a Claude» non sta
+> mentendo: sta completando la frase più probabile. Verifica nei file.
 
 ---
 
