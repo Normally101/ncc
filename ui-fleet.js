@@ -3,6 +3,9 @@
 
 function renderTabFleet() {
     const container = document.getElementById('tab-container');
+    if (!container) return;
+
+    if (!window._fleetFilter) window._fleetFilter = { brand: null, tier: null };
 
     // Fleet KPI data
     const _fl        = gameState.fleet || [];
@@ -406,6 +409,9 @@ function renderTabFleet() {
 
 
 window.bulkRepairFleet = function(ids) {
+    if (typeof ids === 'string') {
+        try { ids = JSON.parse(ids); } catch(e) { ids = []; }
+    }
     if (!Array.isArray(ids) || !ids.length) return;
     let count = 0;
     ids.forEach(id => {
