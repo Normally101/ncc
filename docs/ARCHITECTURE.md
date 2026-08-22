@@ -251,6 +251,24 @@ window.myFunction(args);
 
 Vedi sezione "Ordine di caricamento script" più avanti.
 
+### 6. Il denaro si muove solo da `CE_money` (money.js)
+
+`money.js` espone `window.CE_money`: l'unica porta legale per cash, Driver Coins e reputazione.
+- `spend/earn` muovono il saldo e comunicano il nuovo valore al server (`ServerState.syncCash`); `spendDC/earnDC` passano dalle RPC dedicate e riallineano il locale sul saldo che il server RESTITUISCE; `addReputation` applica da sola il tetto corretto `5.0 + prestige` (non `5`).
+- Quando è la RPC del server ad aver GIÀ mosso `companies.cash` (aste giudiziarie, OPA, P2P, crypto, consorzi, infrastrutture...), NON chiamare `spend/earn`: rispedirebbero al server un totale calcolato dal browser. Servono `addebitatoDalServer` / `accreditatoDalServer`, che aggiornano solo la previsione locale SENZA risincronizzare.
+
+Scavalcare la porta significa comprare gratis: la spesa fatta solo in locale torna indietro al primo overwrite del server, mentre l'oggetto comprato resta. La sorveglianza non è la buona volontà: `test/guardrail/una-sola-porta.test.js` fallisce se cash/driverCoins/vtkBalance si muovono fuori da money.js (la sua lista ECCEZIONI può solo accorciarsi); il contratto di `CE_money` è collaudato in `test/guardrail/money.test.js`.
+
+### 7. Gli interruttori delle funzioni (config.js) — acceso = verificato
+
+Dal 20/08/2026 la regola è invertita: una parte del gioco si mostra SOLO se qualcuno l'ha verificata. In `config.js`:
+- `window.FEATURES` — mappa nome→bool (`corse`, `flotta`, `aste`, ...). Una voce passa a true solo quando: le sue azioni sono state eseguite tutte nel banco di prova (`test/funzioni/`), quelle che muovono denaro passano da `CE_money`, e un test le sorveglia da lì in avanti. Da quel momento non si torna indietro.
+- `window.attiva(nome)` — una funzione è attiva? Sconosciuta = spenta: nel dubbio non si mostra.
+- `window.TAB_DI` — a quale funzione appartiene ogni scheda. Una scheda assente dalla mappa è nucleo e resta sempre visibile; due schede possono dipendere dalla stessa funzione (`politics` + `provinces` → `politica`) e sparire insieme.
+- `window.tabSpenta(tab)` — la scheda è nascosta perché la sua funzione è spenta.
+
+Spegnere NON significa cancellare codice: il codice resta caricato, si nascondono i punti d'ingresso. L'effetto reale lo produce `feature-gate.js` (caricato subito dopo config.js: regola CSS `display:none` su `[data-tab]` e `data-ce-args`, così valgono anche per i pulsanti ridisegnati dopo) più il blocco dentro `switchTab` (dispatcher.js) che blocca le chiamate dirette. Le funzioni senza scheda propria (`vtk`, `vip`) vivono in schermate accese e vanno spente nel punto in cui compaiono. Sorveglianza: `test/guardrail/interruttori.test.js` (l'elenco delle spente può solo accorciarsi; una funzione ACCESA non ha movimenti di denaro fuori dal server) e `test/guardrail/interruttori-applicati.test.js` (gli interruttori spengono davvero). Caso a parte: `window.HQ_ENABLED = false` stacca l'HQ Base Builder finché non è convertito a `CE_money` (sorvegliato da `test/hq/interruttore.test.js`).
+
 ---
 
 ## Architettura globale
@@ -453,6 +471,12 @@ window.switchTab(name)    // navigazione tab (dispatcher.js)
 window.showNotification(msg, type)  // toast notifica (dispatcher.js)
 window.saveGame()         // salva su localStorage + cloud (engine.js)
 window.ServerState        // oggetto con metodi cloud (saveSystem.js)
+window.CE_money           // porta unica del denaro: spend/earn/spendDC/earnDC/addReputation,
+                          // accreditatoDalServer/addebitatoDalServer (money.js) — Regola 6
+window.FEATURES           // interruttori funzioni: nome → bool (config.js) — Regola 7
+window.attiva(nome)       // la funzione è accesa? Sconosciuta = spenta (config.js)
+window.TAB_DI             // scheda → funzione che la governa (config.js)
+window.tabSpenta(tab)     // scheda nascosta perché la sua funzione è spenta (config.js)
 window.QUEST_DB           // array quests statiche (quests-data.js) — NON ridichiarare
 var map                   // istanza Mapbox GL JS (map.js) — var per essere window.map
 ```
