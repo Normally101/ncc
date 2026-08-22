@@ -53,7 +53,12 @@ function copertura() {
     try {
         const out = execFileSync('node', ['--test', 'test/guardrail/azioni-sincronizzano.test.js'],
             { cwd: ROOT, encoding: 'utf8', env: { ...process.env, AZIONI_VERBOSE: '1' }, timeout: 300_000 });
-        const num = (etichetta) => Number(out.match(new RegExp(etichetta + ':\\s*(\\d+)'))?.[1] ?? 0);
+        /* `[^:\n]*` fra l'etichetta e i due punti: il guardrail scrive «azioni
+           totali ESTRATTE: 242» e cercando «azioni totali:» il numero diventava
+           zero in silenzio — il cruscotto mostrava «14/0» senza che niente si
+           lamentasse. Un'etichetta che cambia di una parola non deve poter
+           spegnere una misura. */
+        const num = (etichetta) => Number(out.match(new RegExp(etichetta + '[^:\\n]*:\\s*(\\d+)'))?.[1] ?? 0);
         return {
             totali: num('azioni totali'),
             verificate: num('verificate e corrette'),
@@ -62,6 +67,26 @@ function copertura() {
         };
     } catch {
         return null; // il guardrail non gira: meglio nessun dato che un dato inventato
+    }
+}
+
+/**
+ * Un totale a zero non e' una misura: e' una lettura fallita.
+ *
+ * Il 22/08 il cruscotto ha mostrato per due giorni «15/246 azioni verificate»
+ * e poi «14/0», e nessuno se n'e' accorto perche' uno zero sembra un numero
+ * come un altro. Ma le azioni del gioco non possono essere zero: se il
+ * denominatore sparisce vuol dire che l'etichetta stampata dal guardrail e'
+ * cambiata e la lettura non l'ha seguita. Meglio urlare che pubblicare un
+ * rapporto sbagliato.
+ */
+function controllaMisura(cop) {
+    if (!cop) return;
+    if (!cop.totali) {
+        throw new Error(
+            'Le azioni totali risultano ZERO: la lettura del guardrail non ha funzionato.\n' +
+            'Controlla che le etichette stampate da test/guardrail/azioni-sincronizzano.test.js\n' +
+            'corrispondano a quelle cercate in copertura(). Non mando misure inventate all\'hub.');
     }
 }
 
@@ -99,6 +124,7 @@ const tutti = fileDelGioco();
 const banco = dentroAlBanco();
 const ecc = eccezioniDenaro();
 const cop = copertura();
+controllaMisura(cop);
 const s = suite();
 
 const stato = {
