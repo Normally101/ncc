@@ -139,8 +139,34 @@ window._maybeLaunchTutorial = function() {
         localStorage.setItem(_TUT_KEY, '1');
         return;
     }
-    setTimeout(() => window.startTutorial(), 1200);
+    // L'overlay di fondazione (#founding-overlay, z-index 300) deve restare visibile:
+    // il tutorial (z-index 9500) lo coprirebbe. Si parte solo a fondazione conclusa;
+    // se la fondazione non serve (regioni già sbloccate: ricaricamento/slot esistente)
+    // il tutorial parte subito, senza attese.
+    if (_foundingPending()) { _waitFoundingEnd(); return; }
+    window.startTutorial();
 };
+
+// Fondazione in sospeso = nessuna regione ancora sbloccata (stesso criterio
+// di _checkFoundingOverlay in ui-map-utils.js)
+function _foundingPending() {
+    return typeof gameState !== 'undefined' && !!gameState &&
+           ((gameState.unlockedRegions || []).length === 0);
+}
+
+// Attende la chiusura della fondazione SENZA gare a tempo: un MutationObserver
+// nota la rimozione di #founding-overlay (da foundCompany o da _cancelFoundingMode).
+// All'annullamento l'overlay viene riaperto subito → si continua ad aspettare.
+function _waitFoundingEnd() {
+    if (window._tutFoundingObserver) return;
+    window._tutFoundingObserver = new MutationObserver(() => {
+        if (_foundingPending()) return;
+        window._tutFoundingObserver.disconnect();
+        window._tutFoundingObserver = null;
+        window.startTutorial();
+    });
+    window._tutFoundingObserver.observe(document.body, { childList: true });
+}
 
 /* ──────────────────────────────────────────────────────────────
    CORE RENDER
