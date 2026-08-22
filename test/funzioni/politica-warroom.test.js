@@ -112,7 +112,10 @@ function creaAmbienteWarRoom(opzioni = {}) {
 
     const territorySnapshot = opzioni.territorySnapshot !== undefined ? opzioni.territorySnapshot : defaultTerritory;
 
-    const env = createGameEnv([...CORE_FILES, 'war_room.js'], {
+    // war_room.js e' ormai dentro CORE_FILES: aggiungerlo qui lo caricerebbe
+    // due volte nello stesso contesto VM (i `const` top-level esplodono con
+    // "already declared").
+    const env = createGameEnv(CORE_FILES, {
         render: true,
         serverState: {
             getTerritorySnapshot: async () => {
