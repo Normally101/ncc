@@ -9,10 +9,10 @@
    Questo guardiano difende due cose:
    - che tutti e dodici i file restino censiti — se qualcuno riscrive il
      documento perdendone metà, il test lo dice;
-   - che i casi trovati non spariscano in silenzio. Le correzioni arriveranno
-     una per volta, e quando un caso è corretto la sua riga va CAMBIATA
-     (marcata «corretto il …»), non cancellata: un elenco che si accorcia da
-     solo non lascia traccia di cosa è stato deciso.
+   - che i casi trovati non spariscano in silenzio. Le correzioni sono arrivate
+     una per volta e ogni riga chiusa resta scritta col suo verdetto
+     («CORRETTO:» con il come, o «ANCORA APERTO:»): un elenco che si accorcia
+     da solo non lascia traccia di cosa è stato deciso.
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
@@ -49,9 +49,27 @@ describe('guardrail — censimento del doppio conteggio', () => {
             `il censimento elenca solo ${casi} casi: sembra svuotato`);
     });
 
-    test('dice a cosa serve, non solo cosa ha trovato', () => {
+    test('dichiara quanti casi restano aperti', () => {
         const testo = fs.readFileSync(DOC, 'utf8');
-        assert.match(testo, /NON è ancora una correzione/i,
-            'senza questa avvertenza il documento sembra un lavoro finito');
+        /* Al 22/08 tutti i casi sono chiusi: il documento deve dirlo esplicitamente,
+           e l'avvertenza d'epoca («NON è ancora una correzione») non deve tornare,
+           sarebbe di nuovo una menzogna. */
+        assert.match(testo, /ZERO casi ancora aperti/i,
+            'manca la dichiarazione di quanti casi restano aperti');
+        assert.doesNotMatch(testo, /NON è ancora una correzione/i,
+            'è tornata l\'avvertenza d\'epoca, ormai falsa: tutti i casi sono chiusi');
+    });
+
+    test('ogni caso storico ha un verdetto: CORRETTO o ANCORA APERTO', () => {
+        const testo = fs.readFileSync(DOC, 'utf8');
+        /* Ogni blocco che porta il marcatore storico «era DOPPIO CONTEGGIO» deve
+           essere stato chiuso con un verdetto esplicito, mai lasciato a metà. */
+        const blocchi = testo.split(/\n(?=- )/);
+        const casi = blocchi.filter(b => b.includes('era DOPPIO CONTEGGIO'));
+        assert.ok(casi.length >= 17,
+            `il censimento storico aveva 17 casi, nei blocchi ne trovo ${casi.length}`);
+        const senzaVerdetto = casi.filter(b => !/(CORRETTO|ANCORA APERTO):/.test(b));
+        assert.deepEqual(senzaVerdetto, [],
+            `${senzaVerdetto.length} casi senza verdetto esplicito`);
     });
 });
