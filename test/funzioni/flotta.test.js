@@ -5,7 +5,7 @@
    Verifica completa e sistematica delle azioni e della logica esposta da:
    - `engine-fleet.js` (superchargeVehicle, refillTires, repairEngine, instantRepairDC,
      buyStandardFuel, buyBlackMarketFuel, buyFuelForDepot, upgradeFuelDepot,
-     buyTiresForDepot, emergencyRefuel, getDepotLevelData, buyCARUpgrade,
+     buyTiresForDepot, emergencyRefuel, buyCARUpgrade,
      returnToHub, buyMaintenanceContract, setPricingStrategy, applyVehicleSkin,
      terminateLease, buyPrototypeCar, buyHub, sellHub, listCarForSale,
      cancelListing, buyNpcCar, bidOnAuction, acceptGreyMarket)
@@ -75,110 +75,13 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
     // ────────────────────────────────────────────────────────────────────────
     // 1. SUPERCHARGER E VEICOLI ELETTRICI (superchargeVehicle)
     // ────────────────────────────────────────────────────────────────────────
-    describe('1. Supercharger EV (superchargeVehicle)', () => {
-        let amb;
-        beforeEach(() => { amb = creaAmbienteFlotta(); });
-        afterEach(() => amb.env.stopAllIntervals());
+    /* Le sezioni su superchargeVehicle, refillTires, buyStandardFuel e
+       buyBlackMarketFuel sono state tolte insieme alle funzioni: il registro le
+       ha trovate irraggiungibili e la verifica lo conferma — il carburante passa
+       da emergencyRefuel e dal deposito, le gomme dal deposito al cambio giorno,
+       e la batteria degli EV non cala mai. Test di codice che nessuno puo'
+       eseguire non dimostrano niente. */
 
-        test('ricarica al 100% veicolo EV, ripristina outOfService e scala €80 via ServerState', async () => {
-            const { sandbox, gs, rpcCalls, env } = amb;
-            const evCar = {
-                id: 'c_ev_1', _serverId: 'srv_ev_1', name: 'Volt 3-Urban',
-                tier: 'business', vehicleClass: 'volt_3_urban', chargeLevel: 25,
-                fuel: 25, outOfService: 'fuel'
-            };
-            gs.fleet.push(evCar);
-            gs.cash = 1000;
-
-            await sandbox.superchargeVehicle('c_ev_1');
-
-            assert.equal(evCar.chargeLevel, 100);
-            assert.equal(evCar.outOfService, null);
-            assert.equal(gs.cash, 920, '€80 detratti');
-            assert.equal(rpcCalls.length, 1);
-            assert.equal(rpcCalls[0].name, 'refuelVehicle');
-            assert.equal(rpcCalls[0].cost, 80);
-            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Supercharger')));
-        });
-
-        test('rifiuta ricarica se il veicolo non è elettrico', async () => {
-            const { sandbox, gs, rpcCalls } = amb;
-            const gasCar = {
-                id: 'c_gas_1', _serverId: 'srv_gas_1', name: 'Stellar E-Executive',
-                tier: 'business', vehicleClass: 'stellar_e_exec', chargeLevel: 30, fuel: 30
-            };
-            gs.fleet.push(gasCar);
-
-            await sandbox.superchargeVehicle('c_gas_1');
-
-            assert.equal(gasCar.chargeLevel, 30);
-            assert.equal(rpcCalls.length, 0);
-        });
-
-        test('rifiuta ricarica se la batteria è già al 100%', async () => {
-            const { sandbox, gs, rpcCalls, env } = amb;
-            const evCar = {
-                id: 'c_ev_full', _serverId: 'srv_ev_full', name: 'Volt 3-Urban',
-                tier: 'business', vehicleClass: 'volt_3_urban', chargeLevel: 100
-            };
-            gs.fleet.push(evCar);
-
-            await sandbox.superchargeVehicle('c_ev_full');
-
-            assert.equal(rpcCalls.length, 0);
-            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('già al 100%')));
-        });
-
-        test('id veicolo inesistente non produce errori né mutazioni', async () => {
-            const { sandbox, rpcCalls } = amb;
-            await sandbox.superchargeVehicle('veicolo_fantasma');
-            assert.equal(rpcCalls.length, 0);
-        });
-    });
-
-    // ────────────────────────────────────────────────────────────────────────
-    // 2. PRESSIONE GOMME (refillTires)
-    // ────────────────────────────────────────────────────────────────────────
-    describe('2. Pressione Gomme (refillTires)', () => {
-        let amb;
-        beforeEach(() => { amb = creaAmbienteFlotta(); });
-        afterEach(() => amb.env.stopAllIntervals());
-
-        test('ripristina pressione al 100%, cancella outOfService "tires" e addebita costo', async () => {
-            const { sandbox, gs, rpcCalls } = amb;
-            const car = {
-                id: 'c_tire_1', _serverId: 'srv_tire_1', name: 'Stellar E-Executive',
-                tier: 'business', tirePressure: 40, outOfService: 'tires'
-            };
-            gs.fleet.push(car);
-            gs.cash = 2000;
-
-            // missing = 60 -> cost = Math.ceil(60 * 0.8) = 48
-            await sandbox.refillTires('c_tire_1');
-
-            assert.equal(car.tirePressure, 100);
-            assert.equal(car.outOfService, null, 'outOfService "tires" deve essere azzerato');
-            assert.equal(gs.cash, 1952);
-            assert.equal(rpcCalls.length, 1);
-            assert.equal(rpcCalls[0].name, 'refillCarTires');
-            assert.equal(rpcCalls[0].cost, 48);
-        });
-
-        test('pressione già al 100% rifiuta l operazione', async () => {
-            const { sandbox, gs, rpcCalls, env } = amb;
-            const car = { id: 'c_tire_ok', _serverId: 'srv_tire_ok', name: 'Auto OK', tirePressure: 100 };
-            gs.fleet.push(car);
-
-            await sandbox.refillTires('c_tire_ok');
-
-            assert.equal(rpcCalls.length, 0);
-            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('ottimale')));
-        });
-    });
-
-    // ────────────────────────────────────────────────────────────────────────
-    // 3. RIPARAZIONE MOTORE (repairEngine)
-    // ────────────────────────────────────────────────────────────────────────
     describe('3. Riparazione Motore (repairEngine)', () => {
         let amb;
         beforeEach(() => { amb = creaAmbienteFlotta(); });
@@ -259,62 +162,6 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
 
     // ────────────────────────────────────────────────────────────────────────
     // 5. RIFORNIMENTO STANDARD E GASOLIO AGRICOLO (buyStandardFuel, buyBlackMarketFuel)
-    // ────────────────────────────────────────────────────────────────────────
-    describe('5. Rifornimento Standard e Gasolio Agricolo', () => {
-        let amb;
-        beforeEach(() => { amb = creaAmbienteFlotta(); });
-        afterEach(() => amb.env.stopAllIntervals());
-
-        test('buyStandardFuel riempie serbatoio al 100%, azzera outOfService e scala costo', async () => {
-            const { sandbox, gs, rpcCalls } = amb;
-            const car = { id: 'c_std_f', _serverId: 'srv_sf', name: 'Stellar E-Executive', fuel: 40, engineHealth: 100, outOfService: 'fuel' };
-            gs.fleet.push(car);
-            gs.fuelPrice = 1.80;
-            gs.cash = 1000;
-
-            // fuelNeeded = 60 -> litres = 30 -> cost = Math.floor(30 * 1.80) = 54
-            await sandbox.buyStandardFuel('c_std_f');
-
-            assert.equal(car.fuel, 100);
-            assert.equal(car.outOfService, null);
-            assert.equal(gs.cash, 946);
-            assert.equal(rpcCalls.length, 1);
-            assert.equal(rpcCalls[0].name, 'refuelVehicle');
-            assert.equal(rpcCalls[0].cost, 54);
-            assert.equal(rpcCalls[0].amount, 30);
-        });
-
-        test('buyStandardFuel bloccato se motore fuso (engineHealth <= 0)', async () => {
-            const { sandbox, gs, rpcCalls, env } = amb;
-            const car = { id: 'c_dead_e', _serverId: 'srv_de', name: 'Stellar', fuel: 20, engineHealth: 0 };
-            gs.fleet.push(car);
-
-            await sandbox.buyStandardFuel('c_dead_e');
-
-            assert.equal(car.fuel, 20);
-            assert.equal(rpcCalls.length, 0);
-            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Motore fuso')));
-        });
-
-        test('buyBlackMarketFuel applica sconto 40% (prezzo x 0.60)', async () => {
-            const { sandbox, gs, rpcCalls } = amb;
-            const car = { id: 'c_bm_f', _serverId: 'srv_bm', name: 'Stellar E-Executive', fuel: 40, engineHealth: 100 };
-            gs.fleet.push(car);
-            gs.fuelPrice = 2.00;
-            gs.cash = 1000;
-
-            // fuelNeeded = 60 -> litres = 30 -> price = 2.00 * 0.60 = 1.20 -> cost = 36
-            await sandbox.buyBlackMarketFuel('c_bm_f');
-
-            assert.equal(car.fuel, 100);
-            assert.equal(gs.cash, 964);
-            assert.equal(rpcCalls.length, 1);
-            assert.equal(rpcCalls[0].cost, 36);
-        });
-    });
-
-    // ────────────────────────────────────────────────────────────────────────
-    // 6. DEPOSITO CARBURANTE E GOMME (buyFuelForDepot, upgradeFuelDepot, buyTiresForDepot, emergencyRefuel)
     // ────────────────────────────────────────────────────────────────────────
     describe('6. Deposito Carburante e Treni Gomme', () => {
         let amb;
@@ -1120,9 +967,7 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
             amb.gs.cash = 100000;
 
             await amb.sandbox.payToRepairCar('c_t');
-            await amb.sandbox.buyStandardFuel('c_t');
             await amb.sandbox.repairEngine('c_t');
-            await amb.sandbox.refillTires('c_t');
 
             // Tutte le azioni passano dalle RPC dirette, nessuna chiama doppiamente syncCash
             assert.deepEqual(syncedCash, [], 'nessun doppio conteggio con syncCash simultaneo');
