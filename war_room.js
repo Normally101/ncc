@@ -487,7 +487,10 @@ window._wrAcquire = async function (provinceId) {
             renderTabWarRoom();
         }
     } catch (e) {
-        showNotification(window.CE_Sec.userError('Operazione OPA non riuscita', e), 'error');
+        const errMsg = (window.CE_Sec && typeof window.CE_Sec.userError === 'function')
+            ? window.CE_Sec.userError('Operazione OPA non riuscita', e)
+            : 'Operazione OPA non riuscita';
+        showNotification(errMsg, 'error');
     }
 };
 
