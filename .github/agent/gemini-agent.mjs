@@ -236,14 +236,32 @@ export async function runGeminiAgent({
   timeoutMs = 15 * 60_000,
   model = AGENT_MODEL,
 }) {
-  const ai = new GoogleGenAI({
-    vertexai: true,
-    project: process.env.GOOGLE_CLOUD_PROJECT,
-    // gemini-3.7-flash vive solo sull'endpoint globale: nelle regioni classiche
-    // l'API risponde 404. Di proposito NON leggiamo GOOGLE_CLOUD_LOCATION, che
-    // nel .env vale us-central1 e serve alle altre parti di Gigi.
-    location: process.env.GIGI_GEMINI_LOCATION || 'global',
-  });
+  /* Due strade per lo stesso modello.
+   *
+   * Con GEMINI_API_KEY si passa dall'endpoint di AI Studio, che ha un piano
+   * gratuito permanente. Verificato il 22/08/2026: `gemini-3.7-flash` c'e'
+   * anche li', quindi non si scende di qualita' — si smette solo di pagarlo.
+   * Il 21/08 Vertex e' costato 124,62 euro in un giorno.
+   *
+   * Senza la chiave si torna a Vertex esattamente come prima, quindi il
+   * ritorno indietro e' togliere una variabile d'ambiente.
+   *
+   * Quello che cambia davvero e' il limite: il piano gratuito conta le
+   * RICHIESTE, non i token. Un lavoro puo' arrivare a 70 turni e ogni turno e'
+   * una richiesta, quindi il collo di bottiglia si sposta dal portafoglio al
+   * contatore giornaliero — ed e' per questo che qui sotto i 429 si aspettano
+   * invece di far fallire il lavoro. */
+  const chiaveGratis = process.env.GEMINI_API_KEY || '';
+  const ai = chiaveGratis
+    ? new GoogleGenAI({ apiKey: chiaveGratis })
+    : new GoogleGenAI({
+        vertexai: true,
+        project: process.env.GOOGLE_CLOUD_PROJECT,
+        // gemini-3.7-flash vive solo sull'endpoint globale: nelle regioni classiche
+        // l'API risponde 404. Di proposito NON leggiamo GOOGLE_CLOUD_LOCATION, che
+        // nel .env vale us-central1 e serve alle altre parti di Gigi.
+        location: process.env.GIGI_GEMINI_LOCATION || 'global',
+      });
 
   const contents = [{
     role: 'user',
@@ -275,7 +293,12 @@ export async function runGeminiAgent({
        Il limite sui turni da solo non protegge — l'abbiamo alzato da 40 a 70 e
        il fallimento e' rimasto identico, solo tre volte piu' caro. */
     const spesoFinora = (tokenIn / 1e6) * PREZZO.input + (tokenOut / 1e6) * PREZZO.output;
-    if (spesoFinora > TETTO_SPESA) {
+    /* Sul piano gratuito il conto in dollari resta utile per capire quanto
+       AVREBBE speso, ma non deve fermare niente: li' non si paga a token, si
+       paga a richieste, e il freno giusto sono i turni. Senza questa riga il
+       passaggio al gratis avrebbe accorciato i lavori a meta' senza che nessuno
+       capisse perche'. */
+    if (!chiaveGratis && spesoFinora > TETTO_SPESA) {
       return risultato(false, ultimoTesto,
         `tetto di spesa raggiunto ($${spesoFinora.toFixed(2)}) dopo ${turni} turni`);
     }

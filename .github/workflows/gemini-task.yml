@@ -65,4 +65,10 @@ jobs:
           GOOGLE_CLOUD_PROJECT: ${{ secrets.GOOGLE_CLOUD_PROJECT }}
           GIGI_GEMINI_LOCATION: global
           GIGI_GEMINI_MODEL: ${{ inputs.modello }}
+          # Se c'e', l'agente usa l'endpoint gratuito di AI Studio invece di
+          # Vertex: stesso modello (gemini-3.7-flash c'e' anche li'), zero costo.
+          # La chiave vive in un progetto Google SENZA fatturazione, quindi non
+          # puo' spendere per costruzione, non per via di un contatore.
+          # Togliere questo secret fa tornare tutto su Vertex.
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: node .github/agent/run-task.mjs
