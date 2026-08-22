@@ -2,10 +2,14 @@
 /* ============================================================================
    test/contracts/tourism-sync.test.js
 
-   Regressione per il bug economico in tourism.js:
-   tutte le funzioni di accredito/spesa e reputazione DEVONO passare da CE_money
-   (earn / spend / addReputation) e sincronizzare la cassa col server tramite
-   ServerState.syncCash.
+   Regressione per il doppio conteggio in tourism.js (_tourismDailyTick):
+   la RPC rpc_tourism_daily_tick accredita GIA' companies.cash sul server
+   (33_tourism_tenders.sql: UPDATE public.companies SET cash = cash +
+   v_total_pay …), quindi il client deve solo riallineare la previsione locale
+   con CE_money.accreditatoDalServer — SENZA richiamare ServerState.syncCash,
+   che rispedirebbe al server il totale calcolato dal browser e, se arriva
+   prima l'eco Realtime della scrittura del server, accrediterebbe il payout
+   due volte. Le penali reputazione restano su CE_money.addReputation.
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');

@@ -2,9 +2,14 @@
 /* ============================================================================
    test/economy/infrastructure-sync.test.js
 
-   Regressione per il bug economico in infrastructure.js:
-   le funzioni di spesa e incasso DEVONO passare da CE_money (spend / earn)
-   e sincronizzare la cassa col server tramite ServerState.syncCash.
+   Regressione per il doppio conteggio in infrastructure.js (_infraBuyDepot):
+   la RPC rpc_buy_fuel_depot scala GIA' companies.cash sul server
+   (30_sql_patch.sql: UPDATE companies SET cash = cash - v_cost …), quindi il
+   client deve solo riallineare la previsione locale con
+   CE_money.addebitatoDalServer — SENZA richiamare ServerState.syncCash, che
+   rispedirebbe al server il totale calcolato dal browser e, se arriva prima
+   l'eco Realtime della scrittura del server, addebiterrebbe il deposito due
+   volte.
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
