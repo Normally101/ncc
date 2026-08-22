@@ -170,6 +170,17 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
             assert.deepEqual(ids, ['prov_roma', 'prov_milano', 'prov_firenze', 'prov_napoli', 'prov_venezia']);
         });
 
+        test('ogni città in POIS ha una provincia mappata in _POI_TO_PROVINCE (tabella completa)', () => {
+            const { sandbox } = amb;
+            const pois = vm.runInContext('POIS', sandbox);
+            const poiToProv = vm.runInContext('_POI_TO_PROVINCE', sandbox);
+            assert.ok(pois, 'POIS deve esistere');
+            assert.ok(poiToProv, '_POI_TO_PROVINCE deve esistere');
+
+            const missing = Object.keys(pois).filter(id => !poiToProv[id]);
+            assert.deepEqual(missing, [], `I seguenti POI non hanno una provincia in _POI_TO_PROVINCE: ${missing.join(', ')}`);
+        });
+
         test('le funzioni pubbliche sono esportate correttamente su window', () => {
             const { sandbox } = amb;
             assert.equal(typeof sandbox.renderTabInfrastructure, 'function');
@@ -414,7 +425,7 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
             assert.ok(levyRpc.args.v_fare > 0, 'la tariffa deve essere passata all\'RPC');
         });
 
-        test('completeRide non invoca rpc_pay_fuel_levy se il POI non ha una provincia mappata in _POI_TO_PROVINCE', async () => {
+        test('la tabella _POI_TO_PROVINCE è completa per tutti i POI di gioco e il fallback senza pedaggio scatta solo per POI sintetici/esteri non mappati', async () => {
             const { sandbox, gs, rpcLog } = amb;
             gs.cash = 10000;
 
@@ -422,9 +433,10 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
             const driver = gs.drivers[0];
             driver.assignedCarId = car.id;
 
-            const ride = {
+            // Fallback difensivo per POI sintetici fuori catalogo
+            const rideSintetica = {
                 id: 102,
-                fromPoi: { id: 'poi_non_mappato', name: 'Sconosciuto', region: 'estero', baseFlat: 100 },
+                fromPoi: { id: 'poi_sintetico_estero', name: 'Sconosciuto', region: 'estero', baseFlat: 100 },
                 toPoi: { id: 'milano', name: 'Milano Centrale', region: 'lombardia', baseFlat: 100 },
                 tier: 'standard',
                 price: 150,
@@ -432,11 +444,11 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
                 driverId: driver.id
             };
 
-            sandbox.completeRide(ride, false);
+            sandbox.completeRide(rideSintetica, false);
             await new Promise(r => setImmediate(r));
 
-            const levyRpc = rpcLog.find(r => r.nome === 'rpc_pay_fuel_levy');
-            assert.equal(levyRpc, undefined, 'non deve chiamare rpc_pay_fuel_levy per POI non mappati');
+            const levyRpcSintetica = rpcLog.find(r => r.nome === 'rpc_pay_fuel_levy' && r.args.v_province_id === undefined);
+            assert.equal(levyRpcSintetica, undefined, 'non deve chiamare rpc_pay_fuel_levy per POI sintetici non mappati');
         });
 
         test('checkActiveTrips alla conclusione di un viaggio in differita chiama rpc_pay_fuel_levy', async () => {

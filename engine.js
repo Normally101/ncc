@@ -25,6 +25,10 @@ const _POI_TO_PROVINCE = {
     // Puglia
     'bari':         'prov_bari',    'brindisi':    'prov_bari',
     'lecce':        'prov_bari',    'borgo_egnazia':'prov_egnazia',
+    // Basilicata
+    'potenza':      'prov_potenza',
+    // Calabria
+    'catanzaro':    'prov_catanzaro',
     // Sicilia
     'palermo':      'prov_palermo', 'catania':     'prov_palermo',
     'taormina':     'prov_taormina',
@@ -44,6 +48,10 @@ const _POI_TO_PROVINCE = {
     'trento':       'prov_trento',
     // Umbria/Marche
     'perugia':      'prov_perugia', 'ancona':      'prov_perugia',
+    // Abruzzo
+    'aquila':       'prov_aquila',
+    // Molise
+    'campobasso':   'prov_campobasso',
     // Valle d'Aosta
     'aosta':        'prov_aosta',
 };
