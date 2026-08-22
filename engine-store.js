@@ -13,7 +13,7 @@ window.activateExecutivePass = function() {
     gameState.executivePassActive     = true;
     gameState.executivePassExpiresDay = gameState.day + 30;
     logToMap('💎 Executive Pass attivato — 30 giorni di benefici premium!');
-    showBigEvent('💎', 'Executive Pass Attivo!', '+25% slot corse, −50% stress accumulo, Insta-Repair a 1 DC, accesso a corse VIP extra.');
+    showBigEvent('💎', 'Executive Pass Attivo!', '−50% stress accumulo, Insta-Repair a 1 DC, accesso a corse VIP extra.');
     updateUI(); saveGame();
     if (typeof renderTabPremiumStore === 'function') renderTabPremiumStore();
 };
