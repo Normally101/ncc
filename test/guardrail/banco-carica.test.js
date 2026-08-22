@@ -18,3 +18,4 @@ test('il banco carica tutti i file di CORE_FILES e avvia una partita nuova', () 
         env.stopAllIntervals();
     }
 });
+
