@@ -187,7 +187,7 @@ function renderTabFleet() {
                 const _mgAvgCond = Math.round(_mg.reduce((s, c) => s + (c.condition || 0), 0) / _mg.length);
                 const _mgCondColor = _mgAvgCond < 40 ? 'var(--em-red)' : _mgAvgCond < 70 ? 'var(--em-amber)' : 'var(--em-green)';
                 const _mgNeedsRepair = _mg.some(c => (c.condition || 0) < 90);
-                const _mgRepairIds = JSON.stringify(_mg.filter(c => (c.condition || 0) < 100).map(c => c.id));
+                const _mgRepairIds = _mg.filter(c => (c.condition || 0) < 100).map(c => c.id);
                 html += `<tr style="background:#0d1117"><td colspan="7" style="padding:6px 12px">
                     <div style="display:flex;align-items:center;justify-content:space-between">
                         <span style="font-size:11px;font-weight:800;color:var(--em-ink)">${_carModel} <span style="font-weight:500;color:var(--em-muted)">${_mg.length}× · cond. media <span style="color:${_mgCondColor};font-weight:700">${_mgAvgCond}%</span></span></span>
@@ -406,6 +406,9 @@ function renderTabFleet() {
 
 
 window.bulkRepairFleet = function(ids) {
+    if (typeof ids === 'string') {
+        try { ids = JSON.parse(ids); } catch (_) { ids = []; }
+    }
     if (!Array.isArray(ids) || !ids.length) return;
     let count = 0;
     ids.forEach(id => {

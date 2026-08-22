@@ -37,6 +37,7 @@ window.refillTires = async function(carId) {
     const result = await window.ServerState?.refillCarTires(car._serverId, cost);
     if (!result) return;
     car.tirePressure = 100;
+    if (car.outOfService === 'tires') car.outOfService = null;
     logToMap(`🔧 ${car.name}: pressione gomme ripristinata. (−€${cost})`);
     if (typeof closeModals === 'function') closeModals();
     if (typeof renderTabFleet === 'function') renderTabFleet();
