@@ -15,22 +15,24 @@ const assert = require('node:assert/strict');
 const { freshEnv } = require('../../test-support/game-env.js');
 
 /** Ambiente con ServerState strumentato: registra le SCRITTURE, non le letture. */
-function ambiente(rispostaDC) {
+function ambiente(rispostaDC, opzioni = {}) {
     const scritture = [];
-    const { sandbox } = freshEnv({
+    const { sandbox, notifications } = freshEnv({
         serverState: {
             syncCash: async (v) => { scritture.push(['syncCash', v]); return { success: true, cash: v }; },
             spendDriverCoins: async (motivo, n) => {
                 scritture.push(['spendDriverCoins', motivo, n]);
+                if (opzioni.rifiutaDC) throw new Error('Errore server spendDC');
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
             addDriverCoins: async (n, motivo) => {
                 scritture.push(['addDriverCoins', n, motivo]);
+                if (opzioni.rifiutaDC) throw new Error('Errore server addDC');
                 return rispostaDC !== undefined ? rispostaDC : { ok: true };
             },
         },
     });
-    return { sandbox, gs: sandbox.gameState, scritture };
+    return { sandbox, gs: sandbox.gameState, scritture, notifications };
 }
 
 describe('money — la porta unica del denaro', () => {
@@ -112,6 +114,24 @@ describe('money — la porta unica del denaro', () => {
             sandbox.CE_money.earnDC(5, 'premio');
             await new Promise(r => setImmediate(r));
             assert.deepEqual(scritture, [['addDriverCoins', 5, 'premio']]);
+        });
+
+        test('spendDC con rifiuto del server avvisa il giocatore', async () => {
+            const { sandbox, gs, notifications } = ambiente(undefined, { rifiutaDC: true });
+            gs.driverCoins = 50;
+            sandbox.CE_money.spendDC(4, 'energia');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifications.length > 0, 'il giocatore deve ricevere un avviso se il server rifiuta');
+            assert.equal(notifications[0].type, 'error');
+        });
+
+        test('earnDC con rifiuto del server avvisa il giocatore', async () => {
+            const { sandbox, gs, notifications } = ambiente(undefined, { rifiutaDC: true });
+            gs.driverCoins = 50;
+            sandbox.CE_money.earnDC(5, 'premio');
+            await new Promise(r => setImmediate(r));
+            assert.ok(notifications.length > 0, 'il giocatore deve ricevere un avviso se il server rifiuta');
+            assert.equal(notifications[0].type, 'error');
         });
     });
 
