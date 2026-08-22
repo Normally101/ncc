@@ -8,25 +8,69 @@
  * traduce soltanto il modo di parlare, e tutto il resto si importa da
  * `gemini-agent.mjs` — un solo posto dove cambiare cosa l'agente sa fare.
  *
- * A cosa serve davvero: il piano gratuito di Google da' 10 richieste al minuto,
- * e questo mette un tetto a quanti lavori possono girare insieme. I modelli in
- * anteprima su OpenRouter dichiarano limiti molto piu' alti, quindi il guadagno
- * non e' un modello "piu' potente" — e' poter lavorare in parallelo.
+ * A cosa serve davvero: il piano gratuito di Google da' 10 richieste al minuto e
+ * 20 al giorno sul modello che usiamo — mezzo lavoro. Qui invece c'e' una
+ * SCALETTA di modelli gratuiti, e quando uno finisce il lavoro passa al
+ * successivo senza fermarsi. Il guadagno non e' un modello "piu' potente": e' la
+ * continuita'.
  *
  * Cosa sapere prima di usarlo:
  *   • I modelli `stealth/` sono anteprime a tempo. `ox-alpha` e' comparso il
- *     20/08/2026 ed e' annunciato gratis per circa una settimana: quando la
- *     finestra chiude, o diventa a pagamento sotto il suo vero nome o sparisce.
- *     Per questo resta un SECONDO motore e non il principale: se sparisce di
- *     notte, si torna su Gemini togliendo una variabile.
- *   • Il fornitore e' anonimo e le sue condizioni si contraddicono sull'uso dei
- *     prompt per l'addestramento. Il repository del gioco e' pubblico, quindi
- *     non c'e' un segreto che scappa — ma non ci passa mai niente d'altro.
+ *     20/08/2026 ed e' annunciato gratis per circa una settimana. Quando
+ *     sparira', la scaletta scorrera' da sola sui gratuiti permanenti: e'
+ *     esattamente il caso per cui la scaletta esiste.
+ *   • Il fornitore delle anteprime e' anonimo e le sue condizioni si
+ *     contraddicono sull'uso dei prompt per l'addestramento. Il repository del
+ *     gioco e' pubblico, quindi non c'e' un segreto che scappa — ma non ci passa
+ *     mai niente d'altro.
+ *   • Se TUTTA la scaletta tace al primo turno, l'errore porta
+ *     `motoreNonDisponibile` e run-task.mjs rifa' il lavoro con Gemini.
  */
 import { STRUMENTI, ISTRUZIONI, eseguiStrumento } from './gemini-agent.mjs';
 import { execFile } from 'child_process';
 
-export const MODELLO_OPENROUTER = process.env.GIGI_OPENROUTER_MODEL || 'stealth/ox-alpha';
+/**
+ * La scaletta dei modelli, in ordine di preferenza.
+ *
+ * Non e' un elenco di ripieghi per i guasti: e' il modo in cui questo agente
+ * continua a lavorare quando un modello gratuito finisce. Il primo che risponde
+ * fa il lavoro; quando smette di rispondere si passa al successivo, anche a
+ * meta' conversazione — i messaggi sono testo, non appartengono a nessun
+ * modello in particolare.
+ *
+ * L'ordine e perche':
+ *  1. `stealth/ox-alpha` — anteprima a tempo, non consuma la quota `:free`
+ *     (verificato il 22/08: oltre 250 richieste in un giorno senza rifiuti,
+ *     quando il tetto `:free` sarebbe 50). Finisce verso il 27/08.
+ *  2. `nemotron-3-ultra` — il piu' grande dei gratuiti veri, contesto da 1
+ *     milione, ha risposto con lo strumento giusto in 3,1 secondi.
+ *  3. `laguna-s` — il piu' veloce misurato (1,5 s), pensato per il codice.
+ *  4. `nemotron-3-super` e 5. `north-mini-code` — la riserva.
+ *
+ * Tutti provati il 22/08 con una vera chiamata a strumento: questi cinque
+ * l'hanno fatta. Scartati perche' NON funzionano: `glm-5.2` e `gemma-4` (il
+ * fornitore risponde 429 anche a freddo), `inkling` (accessibile solo a chi ha
+ * un piano dedicato).
+ *
+ * ATTENZIONE, e' la cosa che conta di piu': i modelli con il suffisso `:free`
+ * condividono UNA SOLA quota d'account — 50 richieste al giorno, che diventano
+ * 1.000 dopo aver comprato 10 dollari di credito una volta sola, per sempre.
+ * Quindi allungare questa lista NON aumenta quanto si puo' lavorare: aumenta la
+ * probabilita' di non fermarsi quando uno dei fornitori ha un problema suo.
+ * Per avere piu' quota servono fornitori DIVERSI, non piu' modelli sullo stesso.
+ */
+export const SCALETTA_MODELLI = (process.env.GIGI_OPENROUTER_MODELLI
+  ? process.env.GIGI_OPENROUTER_MODELLI.split(',').map((s) => s.trim()).filter(Boolean)
+  : [
+      'stealth/ox-alpha',
+      'nvidia/nemotron-3-ultra-550b-a55b:free',
+      'poolside/laguna-s-2.1:free',
+      'nvidia/nemotron-3-super-120b-a12b:free',
+      'cohere/north-mini-code:free',
+    ]);
+
+/** Il primo della scaletta, per chi vuole solo sapere «con cosa stiamo lavorando». */
+export const MODELLO_OPENROUTER = process.env.GIGI_OPENROUTER_MODEL || SCALETTA_MODELLI[0];
 
 const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
 
@@ -115,7 +159,10 @@ export async function runOpenRouterAgent({
   onProgress = () => {},
   maxTurni = 70,
   timeoutMs = 45 * 60_000,
-  model = MODELLO_OPENROUTER,
+  /* Una scaletta, non un modello: `model` resta accettato per compatibilita'
+     e per i collaudi mirati, ma il funzionamento normale e' la rotazione. */
+  model = null,
+  modelli = SCALETTA_MODELLI,
 }) {
   const chiave = process.env.OPENROUTER_API_KEY;
   if (!chiave) throw new Error('manca OPENROUTER_API_KEY');
@@ -127,6 +174,15 @@ export async function runOpenRouterAgent({
       content: `${richiesta}\n\nCartella di lavoro: ${cwd}${gate ? `\nComando di verifica: ${gate}` : ''}`,
     },
   ];
+
+  /* La scaletta vera: se qualcuno ha chiesto un modello preciso si rispetta e
+     basta, altrimenti si scorre l'elenco. */
+  const scaletta = model ? [model] : [...modelli];
+  let indiceModello = 0;
+  /* Quali modelli hanno davvero lavorato. Serve nel riepilogo: sapere che un
+     lavoro l'ha finito il terzo della lista dice che i primi due erano esauriti,
+     ed e' l'unico modo di accorgersene senza leggere i log. */
+  const usati = [];
 
   let tokenIn = 0;
   let tokenOut = 0;
@@ -145,19 +201,36 @@ export async function runOpenRouterAgent({
 
     let risposta;
     let erroreUltimo = null;
-    for (let tentativo = 0; tentativo <= ATTESE_RIPROVA.length; tentativo++) {
-      try {
-        risposta = await chiedi(messaggi, model, chiave);
-        erroreUltimo = null;
-        break;
-      } catch (e) {
-        erroreUltimo = e;
-        const saturo = e.codice === 429 || e.codice === 503
-          || /429|rate limit|exhausted|unavailable|overload/i.test(e.message || '');
-        if (!saturo || tentativo === ATTESE_RIPROVA.length) break;
-        const attesa = ATTESE_RIPROVA[tentativo];
-        onProgress(`quota satura, riprovo fra ${attesa / 1000}s`);
-        await new Promise((r) => setTimeout(r, attesa));
+    /* Due cicli annidati, e la differenza fra i due e' il punto di tutto:
+       quello interno aspetta (il modello e' momentaneamente occupato, fra
+       novanta secondi torna); quello esterno cambia modello (questo e' finito
+       per oggi, aspettare non serve). Confonderli significa o aspettare invano
+       una quota che non torna prima di domani, o abbandonare un modello che
+       aveva solo un minuto di traffico. */
+    while (indiceModello < scaletta.length) {
+      const modelloOra = scaletta[indiceModello];
+      erroreUltimo = null;
+      for (let tentativo = 0; tentativo <= ATTESE_RIPROVA.length; tentativo++) {
+        try {
+          risposta = await chiedi(messaggi, modelloOra, chiave);
+          erroreUltimo = null;
+          if (!usati.includes(modelloOra)) usati.push(modelloOra);
+          break;
+        } catch (e) {
+          erroreUltimo = e;
+          const saturo = e.codice === 429 || e.codice === 503
+            || /429|rate limit|exhausted|unavailable|overload/i.test(e.message || '');
+          if (!saturo || tentativo === ATTESE_RIPROVA.length) break;
+          const attesa = ATTESE_RIPROVA[tentativo];
+          onProgress(`${modelloOra}: occupato, riprovo fra ${attesa / 1000}s`);
+          await new Promise((r) => setTimeout(r, attesa));
+        }
+      }
+      if (!erroreUltimo) break;
+
+      indiceModello++;
+      if (indiceModello < scaletta.length) {
+        onProgress(`${modelloOra} non risponde piu' → passo a ${scaletta[indiceModello]}`);
       }
     }
     if (erroreUltimo) {
@@ -168,7 +241,8 @@ export async function runOpenRouterAgent({
          secondo turno in poi no: il modello ha gia' toccato dei file, e
          ricominciare da capo con un altro motore farebbe danni. */
       if (turni === 1) {
-        const e = new Error(`OpenRouter non risponde: ${erroreUltimo.message}`);
+        const e = new Error(
+          `nessuno dei ${scaletta.length} modelli OpenRouter risponde (ultimo: ${erroreUltimo.message})`);
         e.motoreNonDisponibile = true;
         throw e;
       }
@@ -266,6 +340,7 @@ export async function runOpenRouterAgent({
       // zero da entrambi i lati. Se un giorno smettesse di esserlo, il conto
       // non lo scoprirebbe questo file — lo scoprirebbe la dashboard.
       costo: 0,
+      modelliUsati: usati,
       turni,
       tokenIn,
       tokenOut,

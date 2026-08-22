@@ -125,7 +125,11 @@ if (process.env.GITHUB_STEP_SUMMARY) {
     '',
     `- Branch: \`${branch}\``,
     suOpenRouter
-      ? `- Motore: ${nomeMotore} · **gratis** (anteprima OpenRouter)`
+      /* Quali modelli hanno lavorato davvero, non quale era il primo della
+         scaletta: se il lavoro l'ha finito il terzo, vuol dire che i primi due
+         erano esauriti — e senza scriverlo qui nessuno se ne accorge finche'
+         non si ferma tutto. */
+      ? `- Motore: ${(esito.modelliUsati || [nomeMotore]).join(' → ')} · **gratis**`
       : `- Motore: ${nomeMotore} · **$${esito.costo.toFixed(3)}** di crediti Google`,
     `- Turni: ${esito.turni} · token ${esito.tokenIn} in / ${esito.tokenOut} out`,
     `- File toccati: ${cambiati.length ? cambiati.map((f) => `\`${f}\``).join(', ') : 'nessuno'}`,
