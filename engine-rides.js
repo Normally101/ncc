@@ -564,8 +564,24 @@ function startNextRide(driver) {
             car.fuel = Math.max(0, car.fuel - (baseFuel * (_ehMult - 1) * serbatoioMult));
         }
     } else {
+        // Consumo batteria: ~un terzo del gasolio a parità di corsa (tabella fuelCost qui sopra).
+        // L'elettrico deve costare MENO del diesel per chilometro, altrimenti non ha motivo di esistere.
+        if (car.chargeLevel === undefined) car.chargeLevel = 100;
+        const evChargeCost = { standard:4, business:5, vip:7, ultra:8, group:6 };
+        const _evEcoMult = (driver && typeof window.driverAllEffects === 'function') ? (window.driverAllEffects(driver).fuelMult || 1.0) : 1.0;
+        car.chargeLevel = Math.max(0, car.chargeLevel - (ride.fromPoi.region !== ride.toPoi.region ? evChargeCost[ride.tier] * 1.5 : evChargeCost[ride.tier]) * _evEcoMult);
+
         // EV: engine seized check still applies
         if ((car.engineHealth || 100) === 0) { car.outOfService = 'engine'; return; }
+
+        // Batteria scarica: fermo macchina con motivo distinto dal gasolio, perché
+        // refillVehicle NON tocca gli EV — l'unica via d'uscita è la ricarica pagata.
+        if (car.chargeLevel <= 0) {
+            car.chargeLevel = 0;
+            car.outOfService = 'battery';
+            logToMap(`🔋 ${car.name}: batteria scarica! Ricarica dal pannello Flotta.`);
+            if (typeof showNotification === 'function') showNotification(`🔋 ${car.name} ha la batteria scarica: veicolo fermo finché non lo ricarichi.`, 'error');
+        }
     }
 
     // Mileage tracking

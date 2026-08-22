@@ -266,7 +266,11 @@ function refillVehicle(carId) {
         }
     }
 
-    car.outOfService = outReason || null;
+    // Gli EV non si riforniscono di gasolio (la ricarica è manuale, pulsante nel
+    // pannello Flotta): il loro flag 'battery' esce solo con la ricarica pagata,
+    // non da questo rito finale che altrimenti lo cancellerebbe a ogni corsa.
+    const _evFermoPerBatteria = _isElectric(car) && !outReason && car.outOfService === 'battery';
+    if (!_evFermoPerBatteria) car.outOfService = outReason || null;
 }
 
 // Dopo ogni acquisto al deposito, riprova a rifornire le auto ferme
