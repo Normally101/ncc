@@ -287,4 +287,24 @@ describe('guardrail — censimento azioni interfaccia (ui-*.js)', () => {
         assert.ok(content.includes('Funzioni che nessuno chiama'), 'Manca la sezione codice morto');
         assert.ok(content.includes('Configuratore auto in `ui-staff.js`'), 'Manca la nota sul configuratore ui-staff.js');
     });
+
+    test('la porta del denaro registrata coincide con quella del codice di oggi', () => {
+        /* Verificato per mutazione il 22/08: bastava aggiungere una
+           CE_money.spend() dentro una funzione ui gia' censita perché il
+           registro diventasse falso (`denaro: no` al posto di CE_money) senza
+           che nessun test lo vedesse: il confronto sopra guarda solo i NOMI,
+           non cosa dice il registro di ognuna. Qui si confronta anche la
+           colonna `denaro:`, ignorando i numeri di riga come sopra. */
+        const senzaRighe = (t) => t.replace(/:\d+/g, ':N');
+        const generato = senzaRighe(generateDoc().md);
+        const scritto  = senzaRighe(fs.readFileSync(DOC_PATH, 'utf8'));
+        const porte = (t) => new Map([...t.matchAll(/^- `([A-Za-z0-9_$]+)` · .*· denaro: (.*)$/gm)]
+            .map(m => [m[1], m[2].trim()]));
+        const nelCodice = porte(generato), nelDocumento = porte(scritto);
+        const diverse = [...nelCodice]
+            .filter(([nome, porta]) => nelDocumento.get(nome) !== porta)
+            .map(([nome, porta]) => `${nome}: registro dice "${nelDocumento.get(nome)}", il codice fa "${porta}"`);
+        assert.deepEqual(diverse, [],
+            'La colonna denaro del registro non corrisponde al codice: va rigenerato a mano.');
+    });
 });
