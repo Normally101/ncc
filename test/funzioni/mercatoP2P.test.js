@@ -4,8 +4,8 @@
 
    Verifica completa delle funzioni di mercatoP2P (p2p-market.js e p2p-render.js).
    Collauda:
-   - Mercato compravendita auto tra giocatori (listCarForSale, cancelP2PListing, buyP2PCar)
-   - Analisi del conflitto/sovrascrittura tra listCarForSale (P2P vs NPC engine-fleet)
+   - Mercato compravendita auto tra giocatori (p2pListCarForSale, cancelP2PListing, buyP2PCar)
+   - Separazione tra listCarForSale (NPC engine-fleet) e p2pListCarForSale (P2P)
    - Sindacati e Holdings (createHolding, joinHolding, leaveHolding, contributeHoldingTreasury)
    - Borsa Valori P2P (listCompanyIPO, buyCompanyShares, sellCompanyShares)
    - Consorzi Cooperativi (createConsorzio, joinConsorzio, leaveConsorzio, contributeConsorzio)
@@ -333,55 +333,55 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
     });
 
     // ────────────────────────────────────────────────────────────────────────
-    // 1. MERCATO P2P VEICOLI (listCarForSale, cancelP2PListing, buyP2PCar)
+    // 1. MERCATO P2P VEICOLI (p2pListCarForSale, cancelP2PListing, buyP2PCar)
     // ────────────────────────────────────────────────────────────────────────
     describe('Mercato P2P Veicoli — compravendita tra giocatori', () => {
 
-        test('listCarForSale rifiuta se l utente non è autenticato', async () => {
+        test('p2pListCarForSale rifiuta se l utente non è autenticato', async () => {
             sandbox.currentUser = null;
             sandbox.window.currentUser = null;
 
             const car = gs.fleet[0];
-            await sandbox.listCarForSale(car.id, 25000);
+            await sandbox.p2pListCarForSale(car.id, 25000);
 
             assert.equal(supabaseRpcCalls.length, 0, 'non deve invocare RPC se non loggato');
             assert.ok(env.notifications.some(n => n.msg.includes('loggato')));
         });
 
-        test('listCarForSale non esegue nulla se l auto non esiste in flotta', async () => {
-            await sandbox.listCarForSale('auto_inesistente_999', 25000);
+        test('p2pListCarForSale non esegue nulla se l auto non esiste in flotta', async () => {
+            await sandbox.p2pListCarForSale('auto_inesistente_999', 25000);
             assert.equal(supabaseRpcCalls.length, 0);
         });
 
-        test('listCarForSale blocca la vendita di auto in edizione limitata o in leasing', async () => {
+        test('p2pListCarForSale blocca la vendita di auto in edizione limitata o in leasing', async () => {
             gs.fleet.push({ id: 'c_ltd', name: 'Ferrari Limited', isLimitedEdition: true });
             gs.fleet.push({ id: 'c_lease', name: 'Audi Lease', isLease: true });
 
-            await sandbox.listCarForSale('c_ltd', 50000);
+            await sandbox.p2pListCarForSale('c_ltd', 50000);
             assert.ok(env.notifications.some(n => n.msg.includes('limitate non si vendono')));
 
-            await sandbox.listCarForSale('c_lease', 30000);
+            await sandbox.p2pListCarForSale('c_lease', 30000);
             assert.ok(env.notifications.some(n => n.msg.includes('leasing non si vendono')));
 
             assert.equal(supabaseRpcCalls.length, 0);
         });
 
-        test('listCarForSale blocca la vendita se l autista assegnato è occupato', async () => {
+        test('p2pListCarForSale blocca la vendita se l autista assegnato è occupato', async () => {
             const car = gs.fleet[0];
             gs.drivers.push({ id: 'drv_1', name: 'Mario', assignedCarId: car.id, status: 'busy' });
 
-            await sandbox.listCarForSale(car.id, 25000);
+            await sandbox.p2pListCarForSale(car.id, 25000);
 
             assert.ok(env.notifications.some(n => n.msg.includes('Autista in servizio')));
             assert.equal(supabaseRpcCalls.length, 0);
         });
 
-        test('listCarForSale rimuove l auto dalla flotta e chiama rpc_list_car_for_sale con snapshot e prezzo', async () => {
+        test('p2pListCarForSale rimuove l auto dalla flotta e chiama rpc_list_car_for_sale con snapshot e prezzo', async () => {
             const car = gs.fleet[0];
             const carId = car.id;
             gs.drivers.push({ id: 'drv_2', name: 'Luigi', assignedCarId: carId, status: 'idle' });
 
-            await sandbox.listCarForSale(carId, 28500.6);
+            await sandbox.p2pListCarForSale(carId, 28500.6);
 
             // Verifica chiamata RPC
             assert.equal(supabaseRpcCalls.length, 1);
@@ -396,7 +396,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.ok(env.notifications.some(n => n.msg.includes('in vendita! (mercato P2P)')));
         });
 
-        test('listCarForSale esegue rollback locale se la RPC restituisce errore', async () => {
+        test('p2pListCarForSale esegue rollback locale se la RPC restituisce errore', async () => {
             sandbox.supabaseClient.rpc = async (name) => {
                 if (name === 'rpc_list_car_for_sale') {
                     return { data: null, error: { message: 'Errore DB simulato' } };
@@ -408,7 +408,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             const carId = car.id;
             gs.drivers.push({ id: 'drv_3', name: 'Paolo', assignedCarId: carId, status: 'idle' });
 
-            await sandbox.listCarForSale(carId, 30000);
+            await sandbox.p2pListCarForSale(carId, 30000);
 
             // Auto e autista devono essere stati ripristinati
             assert.ok(gs.fleet.some(c => c.id === carId), 'auto deve tornare in flotta');
@@ -487,20 +487,24 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
     });
 
     // ────────────────────────────────────────────────────────────────────────
-    // 2. CONFLITTO E SOVRASCRITTURA CON ENGINE-FLEET.JS
+    // 2. SEPARAZIONE DEI MERCATI (ENGINE-FLEET.JS VS P2P-MARKET.JS)
     // ────────────────────────────────────────────────────────────────────────
-    describe('Analisi architetturale: conflitto listCarForSale vs cancelListing', () => {
-        test('listCarForSale di p2p-market.js sovrascrive quella di engine-fleet.js e non scrive in gameState.marketplace', async () => {
+    describe('Analisi architetturale: separazione listCarForSale vs p2pListCarForSale', () => {
+        test('listCarForSale scrive in gameState.marketplace e cancelListing rimuove l annuncio', async () => {
             gs.marketplace = [];
             const car = gs.fleet[0];
 
-            // Invocando listCarForSale, p2p-market.js non inserisce in gameState.marketplace
-            await sandbox.listCarForSale(car.id, 20000);
+            // Invocando listCarForSale (NPC), inserisce in gameState.marketplace
+            sandbox.listCarForSale(car.id, 20000);
 
-            assert.equal(gs.marketplace.length, 0, 'gameState.marketplace rimane vuoto perché p2p-market usa Supabase');
-            // La funzione di cancelListing di engine-fleet cerca in gameState.marketplace e quindi non trova l annuncio
-            sandbox.cancelListing('m_finto');
-            assert.equal(gs.marketplace.length, 0);
+            assert.equal(gs.marketplace.length, 1, 'gameState.marketplace contiene l annuncio per il mercato NPC');
+            assert.equal(gs.marketplace[0].carId, car.id);
+            assert.equal(gs.marketplace[0].askPrice, 20000);
+
+            // cancelListing di engine-fleet trova e rimuove l annuncio da gameState.marketplace
+            const listingId = gs.marketplace[0].id;
+            sandbox.cancelListing(listingId);
+            assert.equal(gs.marketplace.length, 0, 'cancelListing rimuove l annuncio da gameState.marketplace');
         });
     });
 
@@ -920,11 +924,14 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
         });
 
         test('ceListCar invoca listCarForSale', async () => {
+            gs.marketplace = [];
             const car = gs.fleet[0];
             sandbox.ceListCar(car.id, 22000);
             await new Promise(r => setImmediate(r));
 
-            assert.ok(supabaseRpcCalls.some(c => c.name === 'rpc_list_car_for_sale' && c.params.v_ask_price === 22000));
+            assert.equal(gs.marketplace.length, 1);
+            assert.equal(gs.marketplace[0].carId, car.id);
+            assert.equal(gs.marketplace[0].askPrice, 22000);
         });
     });
 
