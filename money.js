@@ -107,8 +107,29 @@ var CE_money = (function () {
        il saldo vero con cui riallineare il locale.
        Modello: vanity.js:125 `_spend`, l'unico posto che lo faceva giusto. */
 
+    /* Il server ha RIFIUTATO una spesa DC: annulla l'addebito fatto in locale
+       in attesa della risposta e avvisa il giocatore. Serve perche' il chiamante
+       applica subito l'effetto comprato su `true`: se il saldo restasse scalato,
+       la spesa rifiutata diventerebbe un oggetto regalato con saldo falsato.
+       La ricostruzione locale viene sostituita dal saldo che il server dichiara,
+       quando ServerState riesce a dirlo (getCompany).
+       SOLO per la spesa: earnDC non deve annullare il credito qui, perche' i
+       suoi chiamanti con rollback proprio (daily-orders.js claimDailyOrder)
+       lo disfarebbero una seconda volta. */
+    function _annullaMovimentoDC(deltaDaAnnullare) {
+        var gs = _gs();
+        gs.driverCoins = (gs.driverCoins || 0) + deltaDaAnnullare;
+        var azienda = window.ServerState && typeof window.ServerState.getCompany === 'function'
+            ? window.ServerState.getCompany() : null;
+        if (azienda && azienda.driver_coins != null) gs.driverCoins = azienda.driver_coins;
+        _avvisa('Operazione non andata a buon fine. Riprova più tardi.');
+        if (typeof updateUI === 'function') updateUI();
+    }
+
     /**
      * Spende Driver Coins tramite la RPC dedicata.
+     * Se il server rifiuta la spesa, l'addebito locale viene annullato e il
+     * giocatore avvisato.
      * @returns {boolean} false se i coin non bastano — in quel caso NULLA viene toccato.
      */
     function spendDC(quantita, motivo) {
@@ -130,9 +151,15 @@ var CE_money = (function () {
                     if (r && r.driver_coins != null) {
                         gs.driverCoins = r.driver_coins;
                         if (typeof updateUI === 'function') updateUI();
+                    } else if (!r) {
+                        // Un null NON e' un successo senza saldo: e' un rifiuto.
+                        // Il vero serverState (_rpc) non rigetta mai: trasforma
+                        // l'errore della RPC in null, quindi il .catch qui sotto
+                        // non scatterebbe — va gestito anche questa forma.
+                        _annullaMovimentoDC(quantita);
                     }
                 }).catch(function () {
-                    _avvisa('Operazione non andata a buon fine. Riprova più tardi.');
+                    _annullaMovimentoDC(quantita);
                 });
             }
         } catch (e) {}
