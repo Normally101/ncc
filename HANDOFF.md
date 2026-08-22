@@ -11,6 +11,76 @@
 
 ---
 
+# 🔴 22/08 sera — tredici run fallite, due cause diverse, e nessuna era il lavoro
+
+Vlad ha ricevuto tredici mail di errore da GitHub e Gigi si è fermato. Le tredici run
+sembravano lo stesso guasto e non lo erano.
+
+## Causa 1 — quattro run hanno letto e basta (colpa mia, nella consegna)
+
+`ok: false | turni: 22 | token in/out: 853236 / 5266 | file toccati: (nessuno)`
+
+L'ultima frase scritta da una di quelle run: **«Ora ho abbastanza contesto. Scrivo il nuovo
+file di test.»** E lì sono finiti i turni.
+
+Il guardrail «senza scrivere non hai finito» ha funzionato — le ha respinte. Ma il difetto
+stava a monte, nella consegna: avevo scritto lavori da **13 funzioni ciascuno**, e un elenco
+di tredici funzioni invita a studiarle tutte prima di cominciare. Nel lavoro sul mercato P2P
+avevo messo l'istruzione giusta («prendi UNA funzione, scrivi il suo test, poi la
+successiva») e **non l'avevo ricopiata** in questi.
+
+Due correzioni, e servono entrambe:
+
+- **Nella consegna:** gruppi da 5-6 funzioni, non 13, con in testa la regola *«scrivi il file
+  entro il terzo turno, anche con un test solo»* e l'indicazione di quale funzione fare per
+  prima (la più semplice, così il primo test fa da scheletro alle altre).
+- **Nel motore:** il richiamo a parole c'era già a dodici turni e **non è bastato**. Adesso a
+  dieci turni senza aver scritto niente **gli strumenti di lettura spariscono dalla
+  richiesta**: restano `scrivi_file`, `modifica_file`, `esegui_comando`. Una richiesta si può
+  ignorare, uno strumento che non c'è no. Soglia del richiamo a parole abbassata da 12 a 6.
+
+## Causa 2 — nove run morte sul tetto giornaliero di OpenRouter
+
+```
+Rate limit exceeded: free-models-per-day. Add 10 credits to unlock 1000 free model requests per day
+Rate limit exceeded: free-models-per-day-stealth.
+```
+
+**Due tetti distinti, tutti e due esauriti.** E qui va corretta una cosa che avevo scritto
+stamattina nel codice: *«ox-alpha non consuma la quota `:free`»* era vero solo a metà. Non
+consuma quella dei `:free`, ma **ha un tetto suo** (`free-models-per-day-stealth`), e con 45
+run lanciate in un pomeriggio l'abbiamo finito.
+
+Ogni run moriva dopo **cinque minuti di riprove inutili**: quattro attese (5s, 15s, 45s, 90s)
+per ciascuno dei cinque modelli della scaletta. Un tetto giornaliero è **per account**: non
+si aspetta e non si aggira cambiando modello.
+
+Tre correzioni:
+
+1. **Nell'agente:** un tetto giornaliero viene riconosciuto (`free-models-per-day`) e
+   interrompe subito, senza riprove e senza scendere la scaletta.
+2. **Nel ciclo:** prima di lanciare, si **chiede al fornitore** se c'è ancora quota, con una
+   richiesta da un token. Il tetto che tenevamo noi non poteva accorgersene — conta le nostre
+   partenze, non le richieste consumate, e un lavoro ne mangia fra trenta e cinquanta.
+   Verificato dal vivo: con la quota esaurita risponde *«si ferma (giusto)»*.
+3. **L'orologio giusto:** la quota si azzera a **mezzanotte UTC**, che d'estate sono le **2
+   di notte** da noi. Il ciclo ripartiva a mezzanotte italiana, avrebbe trovato il tetto
+   ancora chiuso, bruciato la sua unica riprova automatica e sarebbe rimasto fermo fino al
+   mattino. Ora riparte alle **02:30**.
+
+## Il numero da ricordare per programmare le giornate
+
+Il budget vero non è «quanti lavori al giorno» ma **quante richieste**: un lavoro ne consuma
+fra 30 e 50, e i due tetti insieme sono valsi **45 run**. Parallelismo riportato da 10 a
+**4** — con 10 la giornata intera si brucia in dodici minuti.
+
+## Stato
+
+15 lavori riscritti e in coda, Gigi fermo fino alle 02:30 e poi riparte da solo.
+`main` pulito. Le quattro domande nuove sull'hub hanno risposta (vedi sotto).
+
+---
+
 # 🟢 22/08 sera — «187 lavori da rifare» erano 43, e la vera lista di lavoro era un'altra
 
 ## Il numero che non era quello
