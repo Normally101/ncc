@@ -6,19 +6,7 @@
    Dipendenze: vip-buffs.js (helpers), engine.js (gameState, saveGame)
    ================================================================ */
 
-/**
- * Il cash mosso da un'azione email VIP va anche al server.
- * saveGame() scrive solo il blob del salvataggio (game_saves): `companies.cash`,
- * che è quello che leggono le RPC (P2P, alleanze, IPO, province), resterebbe
- * indietro fino alla prima azione che sincronizza per conto suo. Stesso pattern
- * di engine-rides.js e engine-daily.js.
- * Le _vipComplete* non ne hanno bisogno: girano dentro il completamento corsa,
- * che sincronizza già alla fine.
- */
-function _vipSyncCash() {
-    if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
-        window.ServerState.syncCash(gameState.cash).catch(() => {});
-}
+
 
 // ─── 1. GRIGORI V. — OLIGARCA PARANOICO ──────────────────────────────────────
 
