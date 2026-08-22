@@ -32,7 +32,7 @@ const CORE_FILES = [
     'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-staff.js',
     'ui-lifestyle.js', 'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-career.js', 'ui-store.js',
     'ui-finance.js', 'daily-orders.js', 'ui-realestate.js', 'ui-dispatch.js',
-    'onboarding-core.js', 'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
+    'ui-fleet.js', 'onboarding-core.js', 'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
     'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
     'hq-data.js', 'hq.js', 'hostile_takeover.js', 'nemesis.js', 'infrastructure.js',
     'contracts.js', 'tourism.js'
@@ -93,6 +93,10 @@ function makeServerState(sandboxRef, overrides = {}) {
             return { success: true };
         },
         refuelVehicle: async (_serverId, _amount, cost) => {
+            gs().cash = Math.max(0, (gs().cash || 0) - cost);
+            return { success: true };
+        },
+        refillCarTires: async (_serverId, cost) => {
             gs().cash = Math.max(0, (gs().cash || 0) - cost);
             return { success: true };
         },
