@@ -11,6 +11,51 @@
 
 ---
 
+# 🔴 22/08 notte — un test riscriveva un documento e faceva respingere OGNI ramo
+
+**152 lavori respinti, ~115 euro di modello spesi per niente, una causa sola.**
+
+Il sintomo che ha permesso di trovarla: nei log del cancello, ogni ramo respinto
+diceva «non si unisce a main senza conflitti» e fra i `fileToccati` c'era sempre
+`docs/AZIONI-interfaccia.md`, con le stesse identiche 10 righe cambiate — solo
+numeri di riga.
+
+Il colpevole era `test/guardrail/censimento-azioni-interfaccia.test.js`: rigenerava
+il documento e lo **scriveva nel repo** a ogni esecuzione. Ogni lavoro dell'agente
+lancia `npm test`, quindi ogni ramo si portava dietro quella modifica e litigava
+con main — qualunque cosa contenesse. Lo stesso test scriveva il file e poi
+verificava il file appena scritto: non poteva fallire.
+Tolti anche `test/temp_analyze.test.js` e `test/temp_nucleo.test.js`, impalcature
+lasciate indietro da un agente; il primo faceva la stessa cosa con
+`docs/AZIONI-moduli.md`.
+
+**Regola che ne esce, da non violare mai: un test guarda, non tocca.** Se un test
+scrive nel repo, tutto il lavoro automatico si avvelena a valle e il sintomo
+compare lontanissimo dalla causa.
+
+**Due test resi deterministici**, che rendevano main rosso a intermittenza — e con
+main rosso il cancello **si rifiuta di giudicare qualunque ramo**, quindi due test
+fragili bloccavano ogni fusione:
+- `salone`: aspettava un'animazione con un tempo fisso di 600 ms, ma l'animazione
+  avvicina il valore del 14% a fotogramma e ne servono ~50. Ora aspetta la fine.
+- `corse`: `generatePOIRide` rifiuta di generare il 30% delle volte quando
+  `pricingStrategy === 'premium'` (voluto: i clienti ricchi non chiamano sempre),
+  e il test non fissava la strategia.
+
+**Il motivo di una respinta adesso si salva** (`t.nota`) e si legge raggruppato per
+causa: su Telegram, `problemi`. Prima il motivo esisteva solo dentro l'istruzione
+della riprova e sul lavoro non restava niente — ed è per questo che una causa
+comune è rimasta invisibile per un giorno intero.
+
+**I soldi.** Google ha segnalato 124,62 euro di Vertex il 21/08 contro 0,42
+previsti. Il costo unitario era giusto (~0,76 euro a run); sbagliato era il
+volume, e il tetto non frenava: nella giornata in cui il contatore dichiarava 67
+lavori, GitHub ne aveva eseguiti 148. Ora il freno **conta le run vere chiedendole
+a GitHub**, si misura in euro (`GIGI_SPESA_MAX`, 60/giorno), e i lavori in
+parallelo sono scesi da 3 a 2 per distribuire la spesa sulla notte.
+
+---
+
 # 🟢 21/08 notte — 19 funzioni accese su 21
 
 **Nove interruttori accesi in una volta**: alleanze, cripto, vtk, turismo,
