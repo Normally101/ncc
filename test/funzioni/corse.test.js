@@ -1031,7 +1031,10 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             assert.equal(driver.queue.length, 10);
         });
 
-        test('assignRideToDriver consente fino a 12 slot in coda se Executive Pass è attivo', () => {
+        /* Decisione Vlad 22/08/2026: l'Executive Pass non allunga più la coda
+           (più coda = meno motivi per riaprire il gioco). Il limite deve restare
+           identico con e senza Pass, su tutti i punti codice che lo leggevano. */
+        test('assignRideToDriver con Executive Pass attivo rifiuta la corsa a coda piena come senza Pass', () => {
             const { sandbox, gs } = amb;
             gs.executivePassActive = true;
             gs.day = 1;
@@ -1046,8 +1049,40 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
             sandbox.assignRideToDriver(960, 'drv_1');
 
-            assert.equal(gs.pendingRides.length, 0, 'con Executive Pass attivo lo slot 11 deve essere accettato');
-            assert.equal(driver.queue.length, 11);
+            assert.equal(gs.pendingRides.length, 1, 'con Executive Pass attivo lo slot 11 non esiste: la corsa resta in attesa');
+            assert.equal(driver.queue.length, 10);
+        });
+
+        test('con Executive Pass attivo _getDriverQueueInfo riporta lo stesso maxQueue del caso senza Pass', () => {
+            const { sandbox, gs } = amb;
+            gs.executivePassActive = true;
+            gs.day = 1;
+            gs.executivePassExpiresDay = 5;
+
+            const driver = gs.drivers.find(d => d.id === 'drv_3');
+
+            assert.equal(sandbox._getDriverQueueInfo(driver, gs).maxQueue, 10,
+                'il Pass non deve alzare il limite della coda oltre 10');
+
+            driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 940 + i, tier: 'ultra' }));
+
+            assert.equal(sandbox._getDriverQueueInfo(driver, gs).isFull, true,
+                'con 10 corse la coda è piena anche con il Pass attivo');
+        });
+
+        test('con Executive Pass attivo _driverCanTakeRide rifiuta una coda di 10 corse', () => {
+            const { sandbox, gs } = amb;
+            gs.executivePassActive = true;
+            gs.day = 1;
+            gs.executivePassExpiresDay = 5;
+
+            const driver = gs.drivers.find(d => d.id === 'drv_3');
+            driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 945 + i, tier: 'ultra' }));
+
+            const rideUltra = { id: 970, tier: 'ultra', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
+
+            assert.equal(sandbox._driverCanTakeRide(driver, rideUltra), false,
+                'coda piena blocca l\'assegnazione anche con il Pass attivo');
         });
     });
 
