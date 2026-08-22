@@ -35,7 +35,7 @@ const CORE_FILES = [
     'onboarding-core.js', 'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
     'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
     'hq-data.js', 'hq.js', 'hostile_takeover.js', 'nemesis.js', 'infrastructure.js',
-    'contracts.js', 'tourism.js'
+    'contracts.js', 'tourism.js', 'ui-politics.js'
 ];
 
 // document reale via jsdom — necessario perché il codice del gioco usa
