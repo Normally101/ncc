@@ -39,8 +39,8 @@ function cePlaceBroker() {
 }
 
 /* ── politica / lobby / ranking ──────────────────────────────── */
-function ceDonateLobby() { donateToLobby(document.getElementById('lobby-donate-amt').value); }
-function ceVoteDecree(did, inputId) { voteServerDecree(did, document.getElementById(inputId).value); }
+function ceDonateLobby() { var el = document.getElementById('lobby-donate-amt'); donateToLobby(el ? el.value : 0); }
+function ceVoteDecree(did, inputId) { var el = document.getElementById(inputId); return voteServerDecree(did, el ? el.value : 0); }
 function ceAttackTerritory() { attackTerritory(document.getElementById('attack-region-select').value); }
 
 /* ── VTK ─────────────────────────────────────────────────────── */

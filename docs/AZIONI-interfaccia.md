@@ -152,8 +152,8 @@
 ## `ui-politics.js`
 
 - `renderTabPolitics` · `ui-politics.js:5` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `renderTabPolitics` · `ui-politics.js:108` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_renderDecreesSection` · `ui-politics.js:110` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `renderTabPolitics` · `ui-politics.js:109` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_renderDecreesSection` · `ui-politics.js:111` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-ranking.js`
 
@@ -181,11 +181,11 @@
 ## `ui-staff.js`
 
 - `renderTabStaff` · `ui-staff.js:12` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `openCarModal` · `ui-staff.js:274` · data-ce-act: `openCarModal` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
-- `closeModals` · `ui-staff.js:364` · data-ce-act: `closeModals` (`index.html`) · doppioni: nessuno · denaro: no
-- `fireStaff` · `ui-staff.js:370` · data-ce-act: `fireStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `hireOfficeStaff` · `ui-staff.js:380` · data-ce-act: `hireOfficeStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `renderTabStaff` · `ui-staff.js:399` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `openCarModal` · `ui-staff.js:275` · data-ce-act: `openCarModal` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
+- `closeModals` · `ui-staff.js:365` · data-ce-act: `closeModals` (`index.html`) · doppioni: nessuno · denaro: no
+- `fireStaff` · `ui-staff.js:371` · data-ce-act: `fireStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `hireOfficeStaff` · `ui-staff.js:381` · data-ce-act: `hireOfficeStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `renderTabStaff` · `ui-staff.js:400` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-store.js`
 

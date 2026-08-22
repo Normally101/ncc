@@ -389,7 +389,7 @@ window.coverShort = function(tickerId, shares) {
 // ── LOBBYING ────────────────────────────────────────────────────
 window.donateToLobby = function(amount) {
     amount = Math.round(Number(amount));
-    if (amount < 1000) { showNotification('Donazione minima: €1.000', 'error'); return; }
+    if (!amount || amount < 1000) { showNotification('Donazione minima: €1.000', 'error'); return; }
     if (!window.CE_money.spend(amount, 'lobby_donation')) return;
     const points = Math.floor(amount / 1000);
     gameState.lobbyingPoints = (gameState.lobbyingPoints || 0) + points;
