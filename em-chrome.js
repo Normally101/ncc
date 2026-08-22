@@ -46,7 +46,6 @@
         const h = Math.ceil(chrome.getBoundingClientRect().height);
         if (h > 0) panel.style.setProperty('top', h + 'px', 'important');
     }
-    window._emSyncChromeOffset = syncChromeOffset;
 
     function scheduleSync() {
         syncChromeOffset();
@@ -77,6 +76,4 @@
         try { highlightCategory('home'); } catch (e) {}
         scheduleSync();
     });
-
-    window._emHighlightCategory = highlightCategory;
 })();

@@ -9,39 +9,7 @@
    POIS, CAR_UPGRADES, PROTOTYPE_CARS, ServerState)
    ================================================================ */
 
-// ── SUPERCHARGER (EV) ─────────────────────────────────────────────
-window.superchargeVehicle = async function(carId) {
-    const car = gameState.fleet.find(c => c.id === carId);
-    if (!car || !_isElectric(car)) return;
-    const charge = car.chargeLevel ?? 100;
-    if (charge >= 100) { showNotification('Batteria già al 100%!', 'error'); return; }
-    const cost = 80;
-    const result = await window.ServerState?.refuelVehicle(car._serverId, 0, cost);
-    if (!result) return;
-    car.chargeLevel = 100;
-    if (car.outOfService === 'fuel') car.outOfService = null;
-    logToMap(`⚡ ${car.name}: ricaricata al Supercharger. −€${cost}`);
-    showNotification(`⚡ Supercharger: batteria al 100% · −€${cost}`, 'success');
-    saveGame();
-    if (typeof renderTabFleet === 'function') renderTabFleet();
-};
 
-// ── PRESSIONE GOMME ───────────────────────────────────────────────
-window.refillTires = async function(carId) {
-    const car = gameState.fleet.find(c => c.id === carId);
-    if (!car) return;
-    if (car.tirePressure === undefined) car.tirePressure = 0;
-    const missing = 100 - car.tirePressure;
-    if (missing <= 0) { showNotification('Pressione gomme ottimale!', 'error'); return; }
-    const cost = Math.ceil(missing * 0.8);
-    const result = await window.ServerState?.refillCarTires(car._serverId, cost);
-    if (!result) return;
-    car.tirePressure = 100;
-    logToMap(`🔧 ${car.name}: pressione gomme ripristinata. (−€${cost})`);
-    if (typeof closeModals === 'function') closeModals();
-    if (typeof renderTabFleet === 'function') renderTabFleet();
-    saveGame();
-};
 
 // ── RIPARAZIONE CONDIZIONI ────────────────────────────────────────
 /* `repairVehicle` viveva qui ed era il gemello rotto di `payToRepairCar`
@@ -84,54 +52,7 @@ window.instantRepairDC = function(carId) {
     if (typeof renderTabFleet === 'function') renderTabFleet();
 };
 
-// ── CARBURANTE STANDARD ───────────────────────────────────────────
-window.buyStandardFuel = async function(carId) {
-    const car = gameState.fleet.find(c => c.id === carId);
-    if (!car) return;
-    if (car.engineHealth <= 0) { showNotification('⚙️ Motore fuso! Ripara prima il motore.', 'error'); return; }
-    const fuelNeeded = 100 - (car.fuel || 0);
-    if (fuelNeeded < 1) { showNotification('Il serbatoio è già pieno!', 'error'); return; }
-    const litres = fuelNeeded * 0.5;
-    const price  = gameState.fuelPrice || 1.85;
-    const cost   = Math.floor(litres * price);
-    const result = await window.ServerState?.refuelVehicle(car._serverId, Math.ceil(litres), cost);
-    if (!result) return;
-    car.fuel = 100;
-    if (car.outOfService === 'fuel') car.outOfService = null;
-    logToMap(`⛽ ${car.name}: rifornito al distributore. −€${cost}`);
-    showNotification(`⛽ Rifornimento standard: +${Math.floor(fuelNeeded)}% · −€${cost}`, 'success');
-    saveGame();
-    if (typeof renderTabFleet === 'function') renderTabFleet();
-};
 
-// ── GASOLIO AGRICOLO (black market) ──────────────────────────────
-window.buyBlackMarketFuel = async function(carId) {
-    const car = gameState.fleet.find(c => c.id === carId);
-    if (!car) return;
-    if (car.engineHealth <= 0) { showNotification('⚙️ Motore fuso! Ripara prima il motore.', 'error'); return; }
-    const fuelNeeded = 100 - (car.fuel || 0);
-    if (fuelNeeded < 1) { showNotification('Il serbatoio è già pieno!', 'error'); return; }
-    const litres = fuelNeeded * 0.5;
-    const price  = (gameState.fuelPrice || 1.85) * 0.60;
-    const cost   = Math.floor(litres * price);
-    const result = await window.ServerState?.refuelVehicle(car._serverId, Math.ceil(litres), cost);
-    if (!result) return;
-    car.fuel = 100;
-    if (car.outOfService === 'fuel') car.outOfService = null;
-    logToMap(`⛽🖤 ${car.name}: rifornito con gasolio agricolo. −€${cost}`);
-    showNotification(`⛽ Gasolio agricolo: +${Math.floor(fuelNeeded)}% · −€${cost}`, 'success');
-    if (Math.random() < 0.10) {
-        car.engineHealth = Math.max(0, (car.engineHealth || 100) - 20);
-        logToMap(`⚙️ RISCHIO MOTORE: ${car.name} danneggiato (${car.engineHealth}%)!`);
-        showNotification(`⚠️ Gasolio agricolo ha danneggiato il motore di ${car.name}! Salute motore: ${car.engineHealth}%`, 'error');
-        if (car.engineHealth <= 0) {
-            car.outOfService = 'engine';
-            showNotification(`🔴 MOTORE FUSO: ${car.name} necessita riparazione urgente!`, 'error');
-        }
-    }
-    saveGame();
-    if (typeof renderTabFleet === 'function') renderTabFleet();
-};
 
 // ── DEPOSITO CARBURANTE AZIENDALE ─────────────────────────────────
 const _DEPOT_LEVELS = [
@@ -165,10 +86,7 @@ window.buyFuelForDepot = function(litres) {
     if (typeof renderTabFleet === 'function') renderTabFleet();
 };
 
-window.getDepotLevelData = function() {
-    const lvl = gameState.fuelTankLevel || 1;
-    return _DEPOT_LEVELS.find(d => d.level === lvl) || _DEPOT_LEVELS[0];
-};
+
 
 window.emergencyRefuel = function() {
     const stoppedCars = gameState.fleet.filter(c => c.outOfService === 'fuel');
