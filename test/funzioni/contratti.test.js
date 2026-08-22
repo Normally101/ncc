@@ -669,7 +669,11 @@ describe('Funzione Contratti & B2B — Esecuzione e ciclo di vita', () => {
             assert.equal(active.contract_title, 'Servizio Navetta Dirigenziale');
             assert.equal(active.daily_payout, 4200);
             assert.deepEqual(Array.from(sandbox.b2bLockedVehicleIds()), ['v_bus1', 'v_bus2'], 'i veicoli devono essere bloccati');
-            assert.deepEqual(Array.from(sandbox.b2bLockedDriverIds()), ['d1'], 'i driver devono essere bloccati');
+            /* b2bLockedDriverIds() e' stata rimossa: nessuno la chiamava tranne
+               questo test. Gli autisti bloccati stanno nel contratto attivo, che
+               e' lo stato vero — osservarlo li' vale piu' di tenere in vita una
+               funzione che esiste solo per essere collaudata. */
+            assert.deepEqual(active.locked_drivers, ['d1'], 'i driver devono essere bloccati');
             assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('accettato')));
         });
 
