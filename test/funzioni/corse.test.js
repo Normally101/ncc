@@ -1031,7 +1031,10 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             assert.equal(driver.queue.length, 10);
         });
 
-        test('assignRideToDriver consente fino a 12 slot in coda se Executive Pass è attivo', () => {
+        /* Il Pass Executive NON allunga più la coda (decisione Vlad 22/08/2026):
+           vendere "più coda" significa premiare chi gioca di meno. Il limite
+           resta 10 con o senza Pass. */
+        test('assignRideToDriver non allunga la coda oltre 10 nemmeno con Executive Pass attivo', () => {
             const { sandbox, gs } = amb;
             gs.executivePassActive = true;
             gs.day = 1;
@@ -1046,8 +1049,41 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
             sandbox.assignRideToDriver(960, 'drv_1');
 
-            assert.equal(gs.pendingRides.length, 0, 'con Executive Pass attivo lo slot 11 deve essere accettato');
-            assert.equal(driver.queue.length, 11);
+            assert.equal(driver.queue.length, 10, 'con Executive Pass attivo lo slot 11 deve essere rifiutato come senza');
+            assert.equal(gs.pendingRides.length, 1, 'la corsa deve rimanere in pending se la coda è piena');
+        });
+
+        test('_getDriverQueueInfo restituisce lo stesso maxQueue con e senza Executive Pass', () => {
+            const { sandbox, gs } = amb;
+            const driver = gs.drivers.find(d => d.id === 'drv_1');
+
+            gs.executivePassActive = true;
+            gs.day = 1;
+            gs.executivePassExpiresDay = 5;
+            const infoConPass = sandbox._getDriverQueueInfo(driver, gs);
+
+            gs.executivePassActive = false;
+            const infoSenzaPass = sandbox._getDriverQueueInfo(driver, gs);
+
+            assert.equal(infoConPass.maxQueue, infoSenzaPass.maxQueue,
+                'il Pass Executive non deve cambiare il limite della coda');
+            assert.equal(infoConPass.maxQueue, 10);
+        });
+
+        test('_driverCanTakeRide rifiuta alla decima corsa in coda anche con Executive Pass attivo', () => {
+            const { sandbox, gs } = amb;
+            gs.executivePassActive = true;
+            gs.day = 1;
+            gs.executivePassExpiresDay = 5;
+
+            const driver = gs.drivers.find(d => d.id === 'drv_1');
+            driver.status = 'busy';
+            driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 930 + i, tier: 'business' }));
+
+            const ride = { id: 961, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
+
+            assert.equal(sandbox._driverCanTakeRide(driver, ride), false,
+                'con la coda a 10 il Pass non deve aprire l\'undicesimo slot');
         });
     });
 
