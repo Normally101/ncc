@@ -91,8 +91,11 @@ describe('progression/tetto-reputazione — il tetto è 5.0 + prestige in tutte 
         gs.fleet.push({ id: 'c_dia', tier: 'ultra', vehicleClass: 'majestic_spirit', condition: 100 });
         gs.drivers.push({ id: 'd_dia', name: 'Elite Driver', status: 'idle', level: 3, tier: 'ultra', queue: [] });
 
+        /* acceptDiamondContract riceve l'ID e cerca l'email nello stato: passarle
+           l'oggetto la faceva uscire subito, e il test falliva sul codice giusto. */
         const email = { id: 999, offer: 50000, status: 'unread' };
-        sandbox.acceptDiamondContract(email);
+        gs.emails.push(email);
+        sandbox.acceptDiamondContract(email.id);
 
         assert.equal(gs.reputation, 5.2, 'diamond contract deve portare la rep a 5.2 con prestigio 2');
     });
@@ -100,12 +103,17 @@ describe('progression/tetto-reputazione — il tetto è 5.0 + prestige in tutte 
     test('repayVittorio a saldo estinto accredita +0.3★ reputazione oltre 5.0 con prestigio > 0', () => {
         const { sandbox } = freshEnv();
         const gs = sandbox.gameState;
-        gs.prestige = 2; // tetto 7.0
         gs.reputation = 5.0;
         gs.cash = 5000;
 
+        /* L'ordine qui e' obbligato, e dice una cosa vera sul gioco: il debito di
+           Vittorio non esiste per chi ha prestigio (`ensureDebt` esce subito per i
+           veterani). Quindi prima si crea il debito da esordiente, poi si alza il
+           prestigio — altrimenti il test chiede uno stato che nel gioco non
+           esiste, e fallisce su codice corretto. */
         const debt = sandbox._vittorioDebt();
         assert.ok(debt, 'vittorioDebt deve essere attivo');
+        gs.prestige = 2; // tetto 7.0
 
         sandbox.repayVittorio(debt.outstanding);
         assert.equal(debt.status, 'repaid');

@@ -23,7 +23,7 @@ window._vtkState = {
    in `rpc_spend_vtk_shop_item` (46_vtk_shop_purchase_scaffold.sql). Se i due
    divergono, il server vince e l'acquisto viene rifiutato — mai fidarsi del client.
    Aggiungendo un item QUI va aggiunto anche LÌ, altrimenti resta non acquistabile. */
-const VTK_SHOP_ITEMS = [
+var VTK_SHOP_ITEMS = [
     {
         id:    'driver_stress_reset',
         icon:  '💆',

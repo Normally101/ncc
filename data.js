@@ -225,7 +225,7 @@ const FINE_TEMPLATES = [
 ];
 
 // ─── INVESTIMENTI ESPANSI ───────────────────────────────────────
-const INVESTMENTS = [
+var INVESTMENTS = [
     // ─── TIER 1: CONSOLIDAMENTO ──────────────────────────────────
     { id:'inv_garage_hq',        tier:1, name:'Garage HQ Roma',              price:45000,    passive:0,     rep:0.2, desc:'Riduce del 10% tutti i costi fissi giornalieri.' },
     { id:'inv_carwash',          tier:1, name:'Autolavaggio Automatico',      price:18000,    passive:150,   rep:0.1, desc:'+€150/g. Mantiene le auto al +5% condizione costante.' },
@@ -389,7 +389,7 @@ const CAR_UPGRADES = [
 ];
 
 // ─── MARKETING CAMPAIGNS ──────────────────────────────────────────
-const MARKETING_CAMPAIGNS = [
+var MARKETING_CAMPAIGNS = [
     // ═══ STARTER ════════════════════════════════════════════════════
     {
         id: 'google_ads',
@@ -2089,7 +2089,7 @@ const BROKER_RISK_PROFILES = [
 ];
 
 // ─── LIFESTYLE ASSETS ────────────────────────────────────────────
-const LIFESTYLE_ASSETS = [
+var LIFESTYLE_ASSETS = [
     // ── REAL ESTATE ──────────────────────────────────────────────
     {
         id:'attico_milano', name:'Attico CityLife', location:'Milano, Italia',
