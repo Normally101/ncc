@@ -276,8 +276,8 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         return sum + (fn(r) || 0);
     }, 0);
     const totalQueueMs = (isBusy ? currentRemainingMs : 0) + queuedDurationMs;
-    const execActive = gs.executivePassActive && gs.day <= (gs.executivePassExpiresDay || 0);
-    const maxQueue = execActive ? 12 : 10;
+    // Il Pass non allunga più la coda: limite fisso a 10 (decisione Vlad 22/08/2026)
+    const maxQueue = 10;
     const isFull = queuedRides.length >= maxQueue;
     const nextSlotFreeMs = isBusy ? currentRemainingMs : 0;
     const freeAtDate = new Date(now + totalQueueMs);
@@ -319,9 +319,8 @@ function assignRideToDriver(rideId, driverId) {
     const driver = gameState.drivers.find(d => d.id == driverId);
 
     if (rideIdx > -1 && driver) {
-        const _execActive = gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0);
-        const _maxQueue = _execActive ? 12 : 10;
-        if (driver.queue.length >= _maxQueue) return;
+        // Il Pass non allunga più la coda: limite fisso a 10 (decisione Vlad 22/08/2026)
+        if (driver.queue.length >= 10) return;
         if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
 
         const ride = gameState.pendingRides[rideIdx];
@@ -369,8 +368,8 @@ function _driverCanTakeRide(driver, ride) {
     if (car.condition <= 10) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
     if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
-    const _epSlots = (gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0)) ? 12 : 10;
-    if (driver.queue.length >= _epSlots) return false;
+    // Il Pass non allunga più la coda: limite fisso a 10 (decisione Vlad 22/08/2026)
+    if (driver.queue.length >= 10) return false;
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable
     if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;

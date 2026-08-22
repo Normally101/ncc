@@ -1031,7 +1031,11 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             assert.equal(driver.queue.length, 10);
         });
 
-        test('assignRideToDriver consente fino a 12 slot in coda se Executive Pass è attivo', () => {
+        test('Executive Pass non allunga più la coda: limite identico con e senza Pass', () => {
+            /* Decisione Vlad 22/08/2026: il Pass perde l'allungamento della coda
+               da 10 a 12 (più coda = meno motivi per riaprire il gioco) e nessun
+               altro vantaggio lo sostituisce. Con il Pass attivo il limite deve
+               restare 10 su tutte le vie che lo leggono. */
             const { sandbox, gs } = amb;
             gs.executivePassActive = true;
             gs.day = 1;
@@ -1041,13 +1045,22 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             driver.status = 'busy';
             driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 920 + i, tier: 'business' }));
 
+            // 1) La coda informativa mostra lo stesso massimo che senza Pass
+            const info = sandbox._getDriverQueueInfo(driver, gs);
+            assert.equal(info.maxQueue, 10, '_getDriverQueueInfo non deve segnalare 12 slot con il Pass attivo');
+
+            // 2) Lo smistamento (manuale e automatico passa da qui) vede l'autista saturo
+            const rideProbe = { id: 961, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
+            assert.equal(sandbox._driverCanTakeRide(driver, rideProbe), false, '_driverCanTakeRide non deve accettare un undicesimo incarico con il Pass attivo');
+
+            // 3) L'assegnazione manuale rifiuta lo slot oltre il 10 anche con il Pass
             const newRide = { id: 960, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
             gs.pendingRides = [newRide];
 
             sandbox.assignRideToDriver(960, 'drv_1');
 
-            assert.equal(gs.pendingRides.length, 0, 'con Executive Pass attivo lo slot 11 deve essere accettato');
-            assert.equal(driver.queue.length, 11);
+            assert.equal(gs.pendingRides.length, 1, 'con Executive Pass attivo la coda si ferma a 10, come senza');
+            assert.equal(driver.queue.length, 10);
         });
     });
 
