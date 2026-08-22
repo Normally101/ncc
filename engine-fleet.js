@@ -37,6 +37,7 @@ window.refillTires = async function(carId) {
     const result = await window.ServerState?.refillCarTires(car._serverId, cost);
     if (!result) return;
     car.tirePressure = 100;
+    if (car.outOfService === 'tires') car.outOfService = null;
     logToMap(`🔧 ${car.name}: pressione gomme ripristinata. (−€${cost})`);
     if (typeof closeModals === 'function') closeModals();
     if (typeof renderTabFleet === 'function') renderTabFleet();
@@ -414,6 +415,7 @@ window.sellHub = function(hubId) {
 window.listCarForSale = function(carId, askPrice) {
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
+    if (car.isLease) { showNotification('Le auto in leasing non possono essere messe in vendita.', 'error'); return; }
     if (car.isLimitedEdition) { showNotification('Le edizioni limitate non possono essere messe in vendita.', 'error'); return; }
     if ((gameState.marketplace||[]).some(l => l.carId === carId)) { showNotification('Veicolo già in vendita.', 'info'); return; }
     const driver = gameState.drivers.find(d => d.assignedCarId === carId && d.id !== 'ceo');
