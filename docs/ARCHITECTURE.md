@@ -350,81 +350,107 @@ La funzione `_safeRender(fn)` in `dispatcher.js` wrappa ogni chiamata con try/ca
 L'ordine in `index.html` definisce le dipendenze. Non spostare script senza verificare.
 
 ```
+Tutti gli script sono `defer` tranne l'ultimo, `boot.js` (non defer: deve girare
+dopo l'esecuzione di tutti gli altri). I vincoli d'ordine sono sorvegliati da
+`test/guardrail/ordine-script.test.js` — se aggiungi/sposti un tag, quel test è
+il primo da guardare. Elenco rigenerato da index.html (93 script):
+
+```
 1.  security.js          — CE_Sec: escapeHTML, sanitize, escHtml()
-2.  design-system.js     — window.DS (componenti), window.CE_Alert (alert in-game)
-3.  supabase-config.js   — window.supabaseClient
-4.  config.js            — window.GAME_CONFIG (SUPPORT_EMAIL, GAME_NAME, GAME_URL)
-5.  geoCoords.js         — coordinate POI (587 righe)
-6.  routesDB.js          — DB rotte (GROSSO — 17750 righe, NON leggere mai intero)
-7.  data.js              — dati statici veicoli/staff (2270 righe, NON leggere mai intero)
-8.  lang.js              — traduzioni
-9.  syncManager.js       — sync multi-tab browser
-10. saveSystem.js        — slot salvataggio, leaderboard, ServerState wrapper
-11. serverState.js       — sync Supabase Realtime (companies, drivers, vehicles)
-12. ui-landing.js        — landing page HTML + form auth UI (_showAuthOverlay, _authLogin, ecc.)
-13. auth.js              — core autenticazione: _mmoBootSequence, _onAuthSuccess, bootstrap
-14. quests-data.js       — QUEST_DB array statico (1509 righe), VG const, window.QUEST_DB
-15. quests.js            — logica quest: checkQuestProgress, claimQuestReward, completeMissionRun
-16. engine.js            — CORE: gameLoop, saveGame, loadGame, helpers (~1956 righe)
-17. engine-daily.js      — tick giornalieri + processDailyRoutines + _checkDailyReward (~1093 righe)
-18. engine-rides.js      — generazione corse, completeRide, checkActiveTrips (~904 righe)
-19. engine-finance.js    — tick mercato + AZIONI PLAYER: buyStocks, takeLoan, shortSell, ecc.
-20. engine-drivers.js    — azioni autisti: hireDriver, sendDriverToRest, startAcademyCourse, ecc.
-21. engine-fleet.js      — azioni flotta: repairVehicle, buyHub, buyStandardFuel, ecc.
-22. engine-store.js      — DC boosters: fuelBoostDC, wakeDriverDC, activateExecutivePass, ecc.
-23. engine-holding.js    — holding, sussidiarie, $CEMP, IPO NPC fallback
-24. engine-rivals.js     — sistema rivali/NPC AI (148 righe)
-25. engine-events.js     — eventi casuali, incidenti, strike, fines (386 righe)
-26. vip-buffs.js         — buff system (_applyBuff, _getBuffValue) + helper VIP privati
-27. vip-clients.js       — 9 handler clienti VIP + _vipOnComplete dispatcher
-28. war_room.js          — province War Room, renderTabWarRoom
-29. dispatcher.js        — switchTab routing, showNotification, togglePanel (~247 righe)
-30. map.js               — Mapbox: var map (GLOBALE), initMap, layer setup (~461 righe)
-31. map-router.js        — BFS highway router, calculateInterpolatedPosition (~143 righe)
-32. map-garage.js        — openGarage3D, closeGarage3D, _generateVehicleSVG (~227 righe)
-33. map-visual.js        — visualLoop, vehicle markers, trail scia (~170 righe)
-29. ui-emails.js         — renderTabEmails
-30. ui-marketing.js      — renderTabMarketing: Dual Brand, campagne, ROI tracker
-31. ui-finance.js        — renderTabFinance: Bloomberg dashboard, stocks, broker, _flashTicker
-32. ui-dispatch.js       — renderTabCorse (195 righe)
-33. ui-fleet.js          — renderTabFleet, bulkRepairFleet (508 righe)
-34. ui-staff.js          — renderTabStaff, openCarModal, openCarConfigurator, buyCar, leaseCar
-35. ui-lifestyle.js      — renderTabLifestyle + Server Decrees (decreesRefresh, voteServerDecree)
-36. ui-ops.js            — renderTabRegions, renderTabProvinces, buyHRAutomation, doAcquireProvince
-37. ui-ranking.js        — renderTabRanking: classifica globale Supabase
-38. ui-investments.js    — renderTabInvestments: infrastrutture, holding, finanza
-39. ui-legal.js          — renderTabLegal: gestione multe e contenzioso
-40. ui-politics.js       — renderTabPolitics: lobbying, decreti, macroeconomia
-41. ui-career.js         — renderTabCareer, startMissionRun, _showBivioModal
-42. ui-store.js          — renderTabPremiumStore, _dcSpend, EC action handlers
-43. ui-market.js         — renderTabMarket: mercato P2P auto + aste live
-44. ui-home.js           — renderTabHome, home KPI/rides/drivers/notifiche, _homeTimer (auto-refresh 5s)
-45. ui-help.js           — renderTabHelp, renderCurrentTab
-46. ui-hub.js            — Smart Hub: toggleHub, openHub, hubNavigate
-47. ui-realestate.js     — renderTabRealEstate, doBuyRealEstate (Supabase)
-47. ui-map-utils.js      — spawnMoneyParticles, day/night, HQ marker, founding overlay,
+2.  events.js            — dispatcher azioni: delega `data-ce-act` → funzione azione
+3.  ce-actions.js        — le funzioni azione del giocatore chiamate da events.js
+4.  design-system.js     — window.DS (componenti), window.CE_Alert (alert in-game)
+5.  supabase-config.js   — window.supabaseClient
+6.  config.js            — GAME_CONFIG + interruttori FEATURES/attiva/TAB_DI/tabSpenta
+7.  feature-gate.js      — applica gli interruttori: nasconde le schede spente
+8.  geoCoords.js         — coordinate POI (587 righe)
+9.  routesDB.js          — DB rotte (GROSSO — 17750 righe, NON leggere mai intero)
+10. data.js              — dati statici veicoli/staff (2270 righe, NON leggere mai intero)
+11. lang.js              — traduzioni
+12. syncManager.js       — sync multi-tab browser
+13. saveSystem.js        — slot salvataggio, leaderboard, ServerState wrapper
+14. serverState.js       — sync Supabase Realtime (companies, drivers, vehicles)
+15. money.js             — CE_money: l'UNICA porta del denaro (subito dopo serverState.js)
+16. ui-landing.js        — landing page HTML + form auth UI (_showAuthOverlay, _authLogin, ecc.)
+17. auth.js              — core autenticazione: _mmoBootSequence, _onAuthSuccess, bootstrap
+18. quests-data.js       — QUEST_DB array statico (1509 righe), VG const, window.QUEST_DB
+19. quests.js            — logica quest: checkQuestProgress, claimQuestReward, completeMissionRun
+20. engine.js            — CORE: gameLoop, saveGame, loadGame, helpers (~1956 righe)
+21. engine-daily.js      — tick giornalieri + processDailyRoutines + _checkDailyReward (~1093 righe)
+22. engine-rides.js      — generazione corse, completeRide, checkActiveTrips (~904 righe)
+23. engine-finance.js    — tick mercato + AZIONI PLAYER: buyStocks, takeLoan, shortSell, ecc.
+24. engine-drivers.js    — azioni autisti: hireDriver, sendDriverToRest, startAcademyCourse, ecc.
+25. engine-fleet.js      — azioni flotta: repairVehicle, buyHub, buyStandardFuel, ecc.
+26. engine-store.js      — DC boosters: fuelBoostDC, wakeDriverDC, activateExecutivePass, ecc.
+27. engine-holding.js    — holding, sussidiarie, $CEMP, IPO NPC fallback
+28. engine-rivals.js     — sistema rivali/NPC AI (148 righe)
+29. engine-events.js     — eventi casuali, incidenti, strike, fines (386 righe)
+30. vip-buffs.js         — buff system (_applyBuff, _getBuffValue) + helper VIP privati
+31. vip-clients.js       — 9 handler clienti VIP + _vipOnComplete dispatcher
+32. war_room.js          — province War Room, renderTabWarRoom
+33. dispatcher.js        — switchTab routing (+ blocco schede spente), showNotification, togglePanel
+34. map.js               — Mapbox: var map (GLOBALE), initMap, layer setup (~461 righe)
+35. map-router.js        — BFS highway router, calculateInterpolatedPosition (~143 righe)
+36. map-garage.js        — openGarage3D, closeGarage3D, _generateVehicleSVG (~227 righe)
+37. map-visual.js        — visualLoop, vehicle markers, trail scia (~170 righe)
+38. ui-emails.js         — renderTabEmails
+39. ui-marketing.js      — renderTabMarketing: Dual Brand, campagne, ROI tracker
+40. ui-finance.js        — renderTabFinance: Bloomberg dashboard, stocks, broker, _flashTicker
+41. ui-dispatch.js       — renderTabCorse (195 righe)
+42. ui-fleet.js          — renderTabFleet, bulkRepairFleet (508 righe)
+43. ui-staff.js          — renderTabStaff, openCarModal (configuratore/acquisto auto: showroom.js)
+44. ui-lifestyle.js      — renderTabLifestyle + Server Decrees (decreesRefresh, voteServerDecree)
+45. ui-ops.js            — renderTabRegions, renderTabProvinces, buyHRAutomation, doAcquireProvince
+46. ui-ranking.js        — renderTabRanking: classifica globale Supabase (Punteggio Potere)
+47. alliances.js         — consorzi: roster/tesoro/chat realtime, perk
+48. vanity.js            — tab prestigio: cosmetici DC
+49. ui-investments.js    — renderTabInvestments: infrastrutture, holding, finanza
+50. ui-legal.js          — renderTabLegal: gestione multe e contenzioso
+51. ui-politics.js       — renderTabPolitics: lobbying, decreti, macroeconomia
+52. ui-career.js         — renderTabCareer, startMissionRun, _showBivioModal
+53. ui-store.js          — renderTabPremiumStore, _dcSpend, EC action handlers
+54. ui-market.js         — renderTabMarket: mercato P2P auto + aste live
+55. world-feed.js        — feed Mondo NCC (reali+NPC) + striscia conflitto
+56. daily-orders.js      — ordini giornalieri
+57. onboarding-core.js   — window.ceOnb: stato sblocchi (letto da onboarding/zero-to-hero/objective-tracker/vittorio)
+58. onboarding.js        — soft-lock progressivo + checklist
+59. ui-home.js           — renderTabHome, home KPI/rides/drivers/notifiche, _homeTimer (auto-refresh 5s)
+60. ui-help.js           — renderTabHelp, renderCurrentTab
+61. ui-hub.js            — Smart Hub: toggleHub, openHub, hubNavigate
+62. ui-realestate.js     — renderTabRealEstate, doBuyRealEstate (Supabase)
+63. ui-map-utils.js      — spawnMoneyParticles, day/night, HQ marker, founding overlay,
                            openAcademyModal, _traitBadgeHTML, traffic route colors
-48. ui-sidebar.js        — accordion nav, _sidebarToggle, updateSidebarStats, toggleSidebar
-49. showroom.js          — showroom auto, renderTabShowroom, SRM functions
-50. p2p-market.js        — P2P backend: listCarForSale, buyP2PCar, createHolding, listCompanyIPO
-51. p2p-render.js        — P2P UI: renderP2PMarketSection, renderP2PSharesSection, p2pInit
-52. b2b.js               — contratti B2B
-53. auctions.js          — aste giudiziarie
-54. driver_skills.js     — albero skill autisti
-55. global_events.js     — eventi globali MMO
-56. black_ops.js         — agenzia ombra, SHADOW_OPS, shadowRefresh, shadowExecuteOp
-57. crypto.js            — crypto/offshore
-58. weather_real.js      — meteo reale (OpenWeather API)
-59. hq.js                — costruzioni HQ, HQ_ROOMS, hqBuildRoom, hqHasRoom
-60. hq-visual.js         — rendering visuale campus isometrico HQ, window.renderHQCampus
-61. mobile_dispatcher.js — UI mobile
-62. hostile_takeover.js  — acquisizioni ostili, renderTabOPA
-63. nemesis.js           — nemici VIP, renderTabNemesis
-64. infrastructure.js    — carburante/depositi, renderTabInfrastructure
-65. contracts.js         — gare d'appalto, renderTabContracts (496 righe)
-66. tourism.js           — bandi turismo, renderTabTourism (485 righe)
-67. tutorial.js          — onboarding
-68. premium-ui.js        — hash routing (#tab → switchTab on load)
+64. ui-sidebar.js        — accordion nav, wrapper di switchTab/updateUI, toggleSidebar
+65. zero-to-hero.js      — modalità survival: redirect a corse via wrapper di switchTab
+66. objective-tracker.js — tracker obiettivi (legge ceOnb.GATES)
+67. vittorio.js          — debito iniziale veterani (legge ceOnb.veteran)
+68. em-chrome.js         — wrapper switchTab/updateUI: topbar fissa, offset #main-panel
+69. showroom.js          — showroom auto, renderTabShowroom, configuratore/acquisto auto, SRM
+70. vtk-market.js        — mercato ordini VTK + negozio VTK
+71. p2p-market.js        — P2P backend: listCarForSale, buyP2PCar, createHolding, listCompanyIPO
+72. p2p-render.js        — P2P UI: renderP2PMarketSection, renderP2PSharesSection, p2pInit
+73. b2b.js               — contratti B2B
+74. auctions.js          — aste giudiziarie
+75. driver_skills.js     — albero skill autisti
+76. global_events.js     — eventi globali MMO
+77. black_ops.js         — agenzia ombra, SHADOW_OPS, shadowRefresh, shadowExecuteOp
+78. crypto.js            — crypto/offshore
+79. weather_real.js      — meteo reale (OpenWeather API)
+80. hq-data.js           — HQ_CITIES / HQ_ROOMS (dati, prima di hq.js)
+81. hq.js                — costruzioni HQ, hqBuildRoom, hqHasRoom
+82. hq-visual.js         — rendering visuale campus isometrico HQ, window.renderHQCampus
+83. hostile_takeover.js  — acquisizioni ostili, renderTabOPA
+84. nemesis.js           — nemici VIP, renderTabNemesis
+85. infrastructure.js    — carburante/depositi, renderTabInfrastructure
+86. contracts.js         — gare d'appalto, renderTabContracts (496 righe)
+87. tourism.js           — bandi turismo, renderTabTourism (485 righe)
+88. tutorial.js          — onboarding
+89. premium-ui.js        — hash routing (#tab → switchTab on load)
+90. motion.js            — micro-interazioni: ripple bottoni, reveal allo scroll
+91. cmd-palette.js       — palette comandi ⌘K / Ctrl+K (legge i .sidebar-item dal DOM)
+92. push-notifications.js — Web Push (chiave VAPID pubblica in config.js)
+93. boot.js              — ULTIMO, unico NON defer: window.onerror, ticker, switchTab('corse')
+```
 ```
 
 ### File da NON caricare (obsoleti — presenti nel repo ma non referenziati in index.html)
@@ -465,12 +491,65 @@ window.GAME_CONFIG = {
     SUPPORT_SUBJECT_BUG:    'Segnalazione%20Bug%20-%20ID%20Compagnia%3A%20',
     GAME_NAME:              'Chauffeur Empire',
     GAME_URL:               'https://www.chauffeurempire.com',
+    VAPID_PUBLIC_KEY:       'BE9VSQ…', // chiave PUBBLICA Web Push; la privata è segreto della Edge Function send-push su Supabase
 };
 ```
 
+### Interruttori delle funzioni — `window.FEATURES`, `window.attiva`, `window.TAB_DI` (config.js)
+
+Dal 20/08/2026 la regola è invertita: **una funzione si mostra solo dopo il
+collaudo**. `config.js` dichiara lo stato in `window.FEATURES` (solo booleani);
+`window.attiva(nome)` legge quella mappa e ciò che non conosce è SPENTO
+(sconosciuto ≠ `true`). `window.TAB_DI` mappa ogni scheda sulla sua funzione —
+due schede possono stare sulla stessa funzione (`politics` e `provinces` su
+`politica`) e spariscono insieme; le schede fuori mappa sono nucleo e restano
+sempre visibili.
+
+(Il predecessore `window.HQ_ENABLED` — spegne solo l'HQ Base Builder, tab `hq`,
+in attesa della conversione a CE_money — è rimasto com'era.)
+
+Chi rende vero l'interruttore:
+- `feature-gate.js` — le porte visibili: scrive un `<style>` che nasconde
+  `[data-tab="…"]` e i riquadri home `[data-ce-args='[…]']` delle schede spente.
+- `dispatcher.js` (`switchTab`) — la porta di servizio: un `switchTab('…')`
+  chiamato a mano su una funzione spenta rimanda alla home senza spiegazioni
+  (guardiano: `window.tabSpenta`).
+
+**Regola da non violare:** una voce passa a `true` SOLO quando la funzione ha
+passato il collaudo profondo in `test/funzioni/` (azioni eseguite tutte, denaro
+via CE_money, test che la sorvegliano da lì in avanti). Spegnere NON cancella
+codice: si nascondono solo i punti d'ingresso. Sorvegliato da
+`test/guardrail/interruttori.test.js` (l'elenco) e
+`test/guardrail/interruttori-applicati.test.js` (che l'elenco abbia effetto).
+
+### Denaro — `money.js` è l'unica porta (`CE_money`)
+
+Dove: `money.js`, caricato subito dopo `serverState.js` e prima di ogni file di
+gioco (vincolo sorvegliato da `test/guardrail/ordine-script.test.js`).
+
+Cosa fa: `CE_money.spend/earn` per la cassa, `CE_money.spendDC/earnDC` per i
+Driver Coins (via RPC dedicata, riallineati al saldo che il server restituisce;
+una spesa DC rifiutata viene annullata e segnalata) e `CE_money.addReputation`
+(tetto `5.0 + prestige`, non `5`). Ogni movimento avvisa il server
+(`ServerState.syncCash`): `cash` arriva in OVERWRITE dal server, il saldo locale
+è una previsione che solo la sincronizzazione rende vera.
+
+Quando è una RPC ad aver GIÀ mosso il saldo sul database (aste giudiziarie,
+dividendo OPA, levy carburante) NON si usano spend/earn: si allinea solo la
+previsione locale con `CE_money.accreditatoDalServer(importo)` /
+`CE_money.addebitatoDalServer(importo)` — senza risincronizzare, altrimenti il
+browser rispedirebbe una cifra che il server aveva già deciso (doppio addebito o
+rimborso fantasma).
+
+**Regola da non violare:** mai mutare `gameState.cash` / `gameState.driverCoins`
+fuori da money.js — lo vieta `test/guardrail/una-sola-porta.test.js` (autorizzati
+solo money.js, che È la porta, e serverState.js, il ponte col server). Il censimento
+dei punti dove client e server muovono lo stesso denaro sta in
+`docs/DOPPIO-CONTEGGIO.md`.
+
 ---
 
-## engine.js — Struttura interna (3908 righe)
+## engine.js — Struttura interna (~1956 righe, post split Maggio 2026)
 
 ### Sezioni principali (per navigare il file)
 
@@ -763,7 +842,13 @@ Le sezioni "career dark" (`bg-[#111120]`) sono INTENZIONALMENTE scure — non so
 - `rpc_acquire_province` — acquisisce provincia (server-authoritative)
 - `rpc_buy_real_estate` — acquisto immobile
 
-**Regola critica:** Il client legge `gameState` localmente. Le mutazioni di cash importanti (acquisto province, real estate) devono passare via RPC Supabase → Realtime callback → aggiorna gameState. **Non mutare `gameState.cash` direttamente per operazioni server-authoritative.**
+**Regola critica:** Il client legge `gameState` localmente, ma il denaro non si
+muove a mano: ogni movimento passa da **`CE_money` (money.js)** — spend/earn, o
+accreditatoDalServer/addebitatoDalServer quando la RPC ha già aggiornato
+`companies.cash` (vedi sezione "Denaro"). Mutare `gameState.cash` direttamente è
+un bug sorvegliato da `test/guardrail/una-sola-porta.test.js`: al ricaricamento
+il saldo del server vince e la spesa solo-locale torna indietro con l'oggetto
+comprato rimasto (acquisto gratis).
 
 ---
 
@@ -787,6 +872,21 @@ function gameLoop()       // setInterval ogni 600ms — sync da _getItalyTime()
 4. Se `day !== _prevDay` → `processDailyRoutines()` (redditi, manutenzione, interessi)
 5. Loop visual `activeRides`: elapsed += 5000ms, completa a `ride.duration`
 
+**Due durate DIVERSE, non confonderle (engine-rides.js):**
+- `ride.duration` — i millisecondi dell'ANIMAZIONE sulla mappa: parte da
+  20000/40000 ms alla generazione, viene ritoccato in `startNextRide` (traffico,
+  meteo, stress ≥80%, Telepass, cantieri) ed è consumato dal loop visual
+  `activeRides` del gameLoop.
+- `_getRideDurationMs(ride)` — i millisecondi VERI per cui l'autista resta
+  occupato: deriva dal prezzo della corsa (~0.2 min per €, pavimento 10 / tetto
+  360 min, modulata da routeType e tratta interregionale), finisce in
+  `activeTrips.endTime` e libera l'autista quando `checkActiveTrips` la vede
+  scaduta. La usano anche le anteprime coda (`_getDriverQueueInfo`,
+  `_previewQueueWithRide`, ui-dispatch).
+
+Le due scale non coincidono: usarle l'una per l'altra sbaglia o il movimento
+sulla mappa o il tempo di occupazione dell'autista.
+
 **Generazione corse:** ogni 5 min reali (POI), ogni 8 min (contratto). Queue cap: 15 pending.
 
 **Offline catchup:** `saveGame()` salva `lastOnlineTimestamp`. Al reload, se offline > 1 giorno, chiama `processDailyRoutines()` per ogni giorno perso (max 7).
@@ -799,6 +899,8 @@ function gameLoop()       // setInterval ogni 600ms — sync da _getItalyTime()
 switchTab('home')         → renderTabHome()            // ui-home.js
 switchTab('corse')        → renderTabCorse()           // ui-dispatch.js
 switchTab('ranking')      → renderTabRanking()         // ui-ranking.js
+switchTab('consorzi')     → renderTabConsorzi()        // alliances.js
+switchTab('prestigio')    → renderTabPrestigio()       // vanity.js
 switchTab('staff')        → renderTabStaff()           // ui-staff.js
 switchTab('fleet')        → renderTabFleet()           // ui-fleet.js
 switchTab('emails')       → renderTabEmails()          // ui-emails.js
@@ -827,6 +929,48 @@ switchTab('infrastructure') → renderTabInfrastructure() // infrastructure.js
 switchTab('contracts')    → renderTabContracts()       // contracts.js
 switchTab('tourism')      → renderTabTourism()         // tourism.js
 ```
+
+---
+
+## Test — collaudi profondi e guardrail
+
+Tutto su `node:test`. Mentre lavori usa un file singolo (`node --test
+test/funzioni/corse.test.js`); la suite intera è lenta e va a fine lavoro.
+
+### `test/funzioni/` — un collaudo per funzione
+
+Una suite per ogni voce di `window.FEATURES`: corse, flotta, autisti, finanza,
+contratti, aste, alleanze, salone, cripto, vtk, turismo, lusso, infrastrutture,
+holding, nemesi, vanita, negozioDC, vip, carriera (più i mercati P2P). Non sono
+unit test su mock: eseguono il VERO codice del repo dentro Node tramite il banco
+di prova `test-support/game-env.js` (`createGameEnv`), che carica `CORE_FILES`
+nello stesso ordine di index.html in un contesto VM con jsdom e un mock di
+`window.ServerState`. È IL collaudo che dà diritto a mettere `true` in
+`window.FEATURES` (vedi "Interruttori delle funzioni").
+
+### `test/guardrail/` — le regole che nessun singolo modulo può far rispettare
+
+| Guardrail | Che cosa vieta |
+|---|---|
+| `una-sola-porta.test.js` | mutare cash/driverCoins/vtkBalance fuori da money.js |
+| `money.test.js` | rompere il contratto di CE_money (saldo non sincronizzato, rollback mancanti) |
+| `interruttori.test.js` | voci FEATURES malformate; funzioni dichiarate accese che muovono denaro senza il server |
+| `interruttori-applicati.test.js` | interruttori senza effetto: attiva/tabSpenta non usati da feature-gate/dispatcher |
+| `nomi-unici.test.js` | due file che definiscono lo stesso `window.X` (sovrascrittura silenziosa) |
+| `legami-tra-file.test.js` | script promessi ma non caricati in index.html; pulsanti che chiamano funzioni inesistenti |
+| `ordine-script.test.js` | l'ordine dei tag `<script>` (config prima di feature-gate, serverState prima di money, money prima di engine, boot.js ultimo…) |
+| `azioni-sincronizzano.test.js` | azioni giocatore (dispatcher `data-ce-act` di events.js) che scalano denaro senza avvisare il server |
+| `spenddc-rifiuto-server.test.js` | spesa DC rifiutata dal server che lascia il saldo scalato o il giocatore all'oscuro |
+| `banco-carica.test.js` / `banco-file-mancanti.test.js` | il banco deve caricare CORE_FILES senza errori; i file fuori dal banco sono censiti col motivo |
+| `censimento-*.test.js` | i registri `docs/AZIONI*.md`, `docs/TRANSAZIONI.md`, `docs/DOPPIO-CONTEGGIO.md` devono restare completi (le liste possono solo accorciarsi) |
+| `poi-province-mapping.test.js` | POI di città non registrato in `_POI_TO_PROVINCE` (pedaggio carburante mai calcolato) |
+| `trova-morte.test.js` / `funzioni-morte-scaglione*.test.js` | funzioni morte: censimento e certificazione delle rimozioni fatte |
+| `mobile-dispatcher-rimosso.test.js` / `ui-staff-configuratore-rimosso.test.js` | resurrezioni di codice già rimosso dal repo |
+| `un-test-non-scrive.test.js` | un test che genera o modifica file del repo (un test guarda, non tocca) |
+
+**Regola:** un guardrail non si cancella né si mette in skip per far passare un
+ramo. Le liste di eccezioni interne (ECCEZIONI, COLLISIONI_NOTE, RIGHE_CONSENTITE…)
+possono SOLO accorciarsi.
 
 ---
 
