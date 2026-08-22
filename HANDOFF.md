@@ -24,6 +24,54 @@
 
 ---
 
+# 🟢 22/08 notte — cruscotto corretto, diario di Gigi, gerarchia sparring + smistatore competenze, 26 falliti smaltiti
+
+**Cruscotto:** due bug corretti in `scripts/stato-progetto.mjs` — leggeva male "azioni totali
+estratte" (denominatore a zero) e non riconosceva il formato TAP di GitHub Actions ("# tests"
+contro "ℹ tests" del terminale), quindi il primo workflow automatico aveva pubblicato «0 test»
+dandosi per riuscito. Aggiunta la misura «azioni toccate da un test» (193/242, l'80%) accanto a
+«verificate» (quella che il guardrail sa eseguire da solo, 14/242) — sono numeri diversi e vanno
+tenuti separati.
+
+**Il diario di Gigi** (`jarvis/src/diario.js` + `diario-vlad.md` sulla VM): ogni messaggio che
+Vlad manda a Gigi, vocali trascritti compresi, si scrive da solo su disco. Nato dopo che cinque
+vocali del 22/08 con decisioni sul gioco sono spariti per sempre — Gigi non ha memoria, e
+l'audio veniva ascoltato e buttato. **Leggerlo a inizio sessione**, vedi istruzione in cima a
+questo file.
+
+**Le tre richieste di infrastruttura dello studio** (Vlad: «molto importanti»), tutte costruite
+e provate dal vivo, non solo lette:
+- **Gerarchia supervisor + mini-agenti "sparring"** — Game Designer (missioni/economia/
+  progressione) e CFO (sorgenti/pozzi/inflazione), sei nuove persona in `jarvis/agenti/`. Ogni
+  mini scrive senza vedere gli altri; il supervisor sintetizza e deve riportare i disaccordi in
+  una sezione dedicata, non appiattirli.
+- **Smistatore di 240 competenze** copiate da `~/.claude/skills/` in `jarvis/competenze/`. La
+  prima versione sceglieva per parole in comune (compiti italiani contro descrizioni inglesi:
+  falliva sempre). Ora sceglie un modello — verificato con chiamate reali.
+- **Memoria comune dello studio**: non un vault nuovo, una sezione in fondo a
+  `jarvis/ROADMAP.md` (rispetta la regola del 18/08 "niente nuovi sistemi di organizzazione").
+- Due compiti veri già creati sull'hub per collaudare la gerarchia: missioni (Game Designer) e
+  calibrazione economica (CFO), assegnati e in attesa che Gigi li peschi.
+
+**I 26 task "falliti" nella coda di Gigi**: diagnosi completa in
+`docs/agenti/triage-falliti.md`. **21 erano già superati** — il lavoro era stato rifatto altrove
+con nomi diversi e nessuno se n'era accorto (verificato file per file, non per titolo). 1 da
+rilanciare senza modifiche. 4 riscritti con la causa vera diagnosticata (in particolare
+"politica nel banco", fallito 11+12 volte: il blocco non era mai tecnico, il branch giusto era
+118 commit indietro rispetto a main). Tutti e 6 i nuovi/rilanciati sono già in coda.
+
+**Revisione dei branch fermi**: 4 fusi con test verificati per mutazione, 2 respinti
+esplicitamente (uno prometteva 5 azioni e ne conteneva 1; l'altro dominio — nemesi/mercato
+grigio — aveva due tentativi opposti, uno con test rosso e uno con scope ristretto troppo).
+Entrambi rimessi in coda con le istruzioni corrette. `main` verde: 1732 test.
+
+**Decisione di Vlad da tenere a mente per le missioni**: tutto il gioco resta disponibile
+dall'inizio, **nessuna area sbloccabile**. Le missioni insegnano mostrando, non aprendo porte —
+i 100 "sblocchi" finti (`gs.unlockedFeatures`, letto da nessun tab) vanno tolti o trasformati in
+status visibile, non riparati come se fossero un cancello vero.
+
+---
+
 # 🔴 22/08 sera — tredici run fallite, due cause diverse, e nessuna era il lavoro
 
 Vlad ha ricevuto tredici mail di errore da GitHub e Gigi si è fermato. Le tredici run
