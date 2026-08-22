@@ -139,4 +139,80 @@ describe('hq — sincronizzazione cassa col server (CE_money)', () => {
         assert.deepEqual(syncedCash, [expectedCash], 'syncCash deve ricevere il nuovo saldo');
         assert.equal(sandbox.hqGetRoomLevel('roma', 'workshop'), 1, 'workshop deve essere a livello 1');
     });
+
+    // ── Prova del bug originario ─────────────────────────────────────────────
+    // Prima della conversione hqUpgradeRoom faceva `gameState.cash -= cost` in
+    // locale (nessun syncCash, nessuna porta): questi tre test diventano ROSSI
+    // su quel codice.
+
+    test('la spesa passa da CE_money.spend, la porta unica, non da un -= sul saldo', async () => {
+        const { sandbox, gs, syncedCash, hqRooms } = setupHqEnv();
+        const garageDef = hqRooms.find(r => r.id === 'garage_main');
+        const tier2 = garageDef.tiers.find(t => t.level === 2);
+
+        // Spia sulla porta: registra la chiamata e lascia passare la spesa vera.
+        const chiamate = [];
+        const spendVera = sandbox.CE_money.spend;
+        sandbox.CE_money.spend = (importo, motivo) => {
+            chiamate.push([importo, motivo]);
+            return spendVera.call(sandbox.CE_money, importo, motivo);
+        };
+
+        gs.cash = 500000;
+        gs.reputation = 4.0;
+
+        await sandbox.hqUpgradeRoom('roma', 'garage_main');
+        await new Promise(r => setImmediate(r));
+
+        assert.deepEqual(chiamate, [[tier2.cost, 'hq_upgrade']],
+            'l\'upgrade deve pagare SOLO tramite CE_money.spend: un -= diretto non avvisa il server');
+        assert.equal(gs.cash, 500000 - tier2.cost, 'il saldo locale deve essere scalato del costo');
+        assert.deepEqual(syncedCash, [500000 - tier2.cost], 'il server deve ricevere il nuovo saldo');
+    });
+
+    test('se la porta rifiuta la spesa la stanza non viene costruita (niente costruzioni gratis)', async () => {
+        const { sandbox, gs, syncedCash } = setupHqEnv();
+
+        // La porta dice no anche se la cassa locale basterebbe: e' lei
+        // l'autorita', il pre-check del browser e' solo un'anteprima.
+        sandbox.CE_money.spend = () => false;
+
+        gs.cash = 500000;
+        gs.reputation = 4.0;
+
+        await sandbox.hqUpgradeRoom('roma', 'garage_main');
+        await new Promise(r => setImmediate(r));
+
+        assert.equal(sandbox.hqGetRoomLevel('roma', 'garage_main'), 1, 'nessun livello senza pagamento');
+        assert.equal(gs.cash, 500000, 'il saldo deve restare intatto');
+        assert.deepEqual(syncedCash, [], 'nessuna scrittura se la spesa e\' rifiutata');
+    });
+
+    test('il bonus reputazione passa da CE_money.addReputation', async () => {
+        const { sandbox, gs, hqRooms } = setupHqEnv();
+        const vipLounge = hqRooms.find(r => r.id === 'vip_lounge');
+        assert.ok(vipLounge, 'HQ_ROOMS deve contenere vip_lounge');
+        const tier1 = vipLounge.tiers.find(t => t.level === 1);
+        assert.ok(tier1 && tier1.effect.reputationBonus > 0, 'vip_lounge lv 1 deve avere un bonus reputazione');
+
+        const chiamate = [];
+        const addRepVera = sandbox.CE_money.addReputation;
+        sandbox.CE_money.addReputation = (delta) => {
+            chiamate.push(delta);
+            return addRepVera.call(sandbox.CE_money, delta);
+        };
+
+        gs.hqs['firenze'].rooms['garage_main'] = 1;
+        gs.hqs['firenze'].rooms['mission_room'] = 1;
+        gs.hqs['firenze'].rooms['control_tower'] = 1;
+        gs.cash = 1000000;
+        gs.reputation = 3.0;
+
+        await sandbox.hqUpgradeRoom('firenze', 'vip_lounge', 0);
+        await new Promise(r => setImmediate(r));
+
+        assert.deepEqual(chiamate, [tier1.effect.reputationBonus],
+            'il bonus reputazione deve passare dalla porta CE_money.addReputation');
+        assert.equal(gs.reputation, 3.0 + tier1.effect.reputationBonus, 'la reputazione deve salire del bonus');
+    });
 });
