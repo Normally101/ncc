@@ -146,6 +146,7 @@ window.hireDriver = function hireDriver(name, salary) {
     });
     const idx = (gameState.availableRecruits || []).findIndex(r => r.name === name);
     if (idx > -1) gameState.availableRecruits.splice(idx, 1);
+    if (typeof window._addPlayerXp === 'function') window._addPlayerXp(20); // autista assunto
     _refreshRecruits();
     if(typeof showNotification==='function') showNotification(`${name} assunto!`, 'success');
     updateUI(); saveGame();

@@ -732,6 +732,7 @@ window._srmPurchase = async function() {
         tirePressure: 100, engineHealth: 100, outOfService: false,
         upgrades: opts, vehicleClass: v.id,
     });
+    if (typeof window._addPlayerXp === 'function') window._addPlayerXp(25); // auto acquistata
     _srmState.selectedOpts.clear();
     updateUI();
     if (typeof saveGame === 'function') saveGame();

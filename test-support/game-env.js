@@ -29,7 +29,7 @@ const CORE_FILES = [
     'geoCoords.js', 'routesDB.js',
     'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'ui-landing.js', 'auth.js',
     'quests-data.js',
-    'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
+    'quests.js', 'engine.js', 'player-level.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
     'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',
     'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-fleet.js', 'ui-staff.js',
     'ui-lifestyle.js', 'ui-ops.js', 'alliances.js', 'vanity.js', 'ui-career.js', 'ui-store.js',

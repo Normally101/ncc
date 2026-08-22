@@ -204,6 +204,9 @@ let gameState = {
     activeStrike: null,        // { endsHour }
     // Prestige (unlocked after 5.0★)
     prestige: 0,
+    // Livello giocatore (player-level.js): sale spesso nei primi passi, mai indietro
+    playerLevel: 1,
+    playerXp: 0,
     // Price War system
     pricewars: [],          // [{ regionId, endsDay, monopolyEndsDay, discountPct }]
     // Shadow mission counter
@@ -499,6 +502,9 @@ function loadGame() {
         if (!save._hubNewEvent) save._hubNewEvent = false;
         if (save.activeStrike === undefined) save.activeStrike = null;
         if (save.prestige === undefined) save.prestige = 0;
+        // Livello giocatore: i salvataggi precedenti alla feature ripartono da Lv 1
+        if (save.playerXp === undefined) save.playerXp = 0;
+        if (save.playerLevel === undefined) save.playerLevel = 1;
         if (save.depositoGomme === undefined) save.depositoGomme = 0;
         if (!save.pricewars) save.pricewars = [];
         if (save.shadowMissionsTotal === undefined) save.shadowMissionsTotal = 0;
@@ -1826,6 +1832,7 @@ window.newGamePlus = function() {
         depositoGomme: 0, seizedCars: [], policeHeat: 0, consecutiveRedDays: 0,
         blacklistedClients: [], hqLevel: 0, activeDynamicEvent: null, activeStrike: null,
         prestige: 0,
+        playerLevel: 1, playerXp: 0,
         stockPrices: {}, stockHoldings: {}, brokerInvestments: [],
         lifestyleAssets: [], creditScore: 300,
         totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,
@@ -1888,6 +1895,7 @@ window.sellCompanyNGP = function() {
         newGamePlusCount: ngpCount, fuelTank: 0, fuelTankCapacity: 10000, fuelPrice: 1.85,
         depositoGomme: 0, seizedCars: [], policeHeat: 0, consecutiveRedDays: 0,
         blacklistedClients: [], hqLevel: 0, activeDynamicEvent: null, activeStrike: null, prestige: 0,
+        playerLevel: 1, playerXp: 0,
         stockPrices: {}, stockHoldings: {}, brokerInvestments: [], lifestyleAssets: [],
         creditScore: 400 + ngpCount * 50,
         totalDividendsEarned: 0, totalStockProfit: 0, diamondContractsCompleted: 0,

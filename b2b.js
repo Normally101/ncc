@@ -151,6 +151,7 @@ window._b2bDailyTick = async function() {
 
     if (data.completed) {
         window._b2bState.activeContract = null;
+        if (typeof window._addPlayerXp === 'function') window._addPlayerXp(40); // appalto B2B chiuso
         showBigEvent('💼', 'Contratto Completato!',
             `"${data.title}"\n\n✅ SLA rispettato al 100%.\nBonus reputazione: +${data.rep_bonus}★\n\nEseguita la consegna finale. Il cliente è soddisfatto.`);
         logToMap(`💼 Appalto B2B completato: "${data.title}" — +${data.rep_bonus}★ reputazione`);

@@ -883,6 +883,8 @@ function completeRide(ride, _deferPay = false) {
     }
     const qs = gameState.questStats;
     qs.totalRides++;
+    // XP giocatore: ogni corsa completata fa salire il livello numerico (player-level.js)
+    if (typeof window._addPlayerXp === 'function') window._addPlayerXp(window._playerXpForRide(ride.tier));
     if (ride.tier === 'ultra') qs.ultraRides++;
     if (ride.tier === 'vip' || ride.tier === 'ultra') qs.vipRides++;
     if (ride.fromPoi?.id === 'roma_fco' || ride.toPoi?.id === 'roma_fco') qs.fcoRides++;

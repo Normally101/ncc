@@ -19,6 +19,18 @@ function _homeLevel(prestige) {
     return level;
 }
 
+/* Progresso XP verso il prossimo livello numerico. Il grado (_homeLevel) e il
+   livello restano due cose visibilmente diverse: il numero sale spesso, il
+   titolo cambia di rado — in UI «Livello 7 · Imprenditore». */
+function _homePlayerProgress(gs) {
+    const xp = gs.playerXp || 0;
+    const lvl = gs.playerLevel || 1;
+    const soglie = window.PLAYER_LEVELS_XP || [];
+    const next = soglie[lvl]; // soglia cumulativa del livello successivo
+    if (!next) return 'Livello massimo';
+    return `${xp}/${next} XP`;
+}
+
 function _homeCashFmt(n) {
     if (n >= 1e9) return '€' + (n/1e9).toFixed(2) + 'B';
     if (n >= 1e6) return '€' + (n/1e6).toFixed(2) + 'M';
@@ -161,6 +173,7 @@ window.renderTabHome = function() {
                    : _r >= 2.5 ? 'Obiettivo 3.5★ → VIP'
                    : 'Punta a 3★ con corse top';
     const level    = _homeLevel(gs.prestige);
+    const plvProg  = _homePlayerProgress(gs);
     const driversOnDuty = (gs.drivers||[]).filter(d => d.status === 'busy' || d.status === 'idle');
 
     // tier → tile colors
@@ -254,7 +267,7 @@ window.renderTabHome = function() {
     <div class="em-kpi"><div class="l">Guadagno Oggi</div><div class="v" style="color:#1aa06a" data-countup="${todayEarn}" data-fmt="eur">${earnFmt}</div><div class="s" style="color:${deltaColor}">${deltaTxt}</div></div>
     <div class="em-kpi"><div class="l">Corse Attive</div><div class="v" data-countup="${totalActive}" data-fmt="int">${totalActive}</div><div class="s">${totalPending} in attesa</div></div>
     <div class="em-kpi"><div class="l">Rating Medio</div><div class="v" style="color:#c79a2a" data-countup="${gs.reputation||0}" data-fmt="float2">${rep}</div><div class="s" style="color:${_r>=3.5?'var(--em-green)':'var(--em-muted)'}">${repTrend}</div></div>
-    <div class="em-kpi"><div class="l">Livello</div><div class="v" style="font-size:17px;color:#2f74c0">${_homeEsc(level.label)}</div><div class="s">${level.next ? 'Prossimo: ' + level.next : 'Massimo'}</div></div>
+    <div class="em-kpi"><div class="l">Livello</div><div class="v" style="font-size:17px;color:#2f74c0">Livello ${gs.playerLevel || 1} · ${_homeEsc(level.label)}</div><div class="s">${plvProg}${level.next ? ' · Grado: ' + level.next : ''}</div></div>
   </div>
 
   ${(typeof window.renderOnboardingHTML==='function') ? window.renderOnboardingHTML() : ''}
