@@ -48,6 +48,10 @@ window._sindacatoState = {
 // ─────────────────────────────────────────────────────────────────────────────
 function _sb() { return window.supabaseClient; }
 function _uid() { return window.currentUser?.id || null; }
+window._sb = _sb;
+window._uid = _uid;
+window._p2pSb = _sb;
+window._p2pUid = _uid;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // SEZIONE 1: MERCATO P2P — LISTING / BUY / CANCEL

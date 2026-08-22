@@ -31,23 +31,25 @@ const _TIER_LABEL = {
     ULTRA:        '💎 Ultra',
 };
 
-function _sb()  { return window.supabaseClient; }
-function _uid() { return window.currentUser?.id || null; }
+function _b2bSb()  { return window.supabaseClient; }
+function _b2bUid() { return window.currentUser?.id || null; }
+window._b2bSb = _b2bSb;
+window._b2bUid = _b2bUid;
 
 // ── FETCH ─────────────────────────────────────────────────────────────────────
 
 async function _b2bFetchContracts() {
-    if (!_sb()) return;
-    const { data, error } = await _sb().rpc('rpc_get_b2b_contracts');
+    if (!_b2bSb()) return;
+    const { data, error } = await _b2bSb().rpc('rpc_get_b2b_contracts');
     if (!error && data) window._b2bState.contracts = data;
 }
 
 async function _b2bFetchActive() {
-    if (!_sb() || !_uid()) return;
-    const { data, error } = await _sb()
+    if (!_b2bSb() || !_b2bUid()) return;
+    const { data, error } = await _b2bSb()
         .from('b2b_active_contracts')
         .select('*')
-        .eq('user_id', _uid())
+        .eq('user_id', _b2bUid())
         .eq('status', 'active')
         .maybeSingle();
     if (!error) window._b2bState.activeContract = data || null;
@@ -77,9 +79,9 @@ window.b2bLockedDriverIds = function() {
 // ── AZIONI ────────────────────────────────────────────────────────────────────
 
 window.b2bAcceptContract = async function(contractId, vehicleIds, driverIds) {
-    if (!_uid()) { showNotification('Devi essere loggato.', 'error'); return; }
+    if (!_b2bUid()) { showNotification('Devi essere loggato.', 'error'); return; }
 
-    const { data, error } = await _sb().rpc('rpc_accept_b2b_contract', {
+    const { data, error } = await _b2bSb().rpc('rpc_accept_b2b_contract', {
         v_contract_id: contractId,
         v_vehicle_ids: vehicleIds,
         v_driver_ids:  driverIds,
@@ -115,10 +117,10 @@ window.b2bAcceptContract = async function(contractId, vehicleIds, driverIds) {
 };
 
 window.b2bTerminateContract = async function(activeId) {
-    if (!_uid()) return;
+    if (!_b2bUid()) return;
     if (!confirm('Terminare anticipatamente il contratto? Pagherai la penale e perderai reputazione.')) return;
 
-    const { data, error } = await _sb().rpc('rpc_terminate_b2b_contract', {
+    const { data, error } = await _b2bSb().rpc('rpc_terminate_b2b_contract', {
         v_active_id: activeId,
     });
 
@@ -146,8 +148,8 @@ window.b2bTerminateContract = async function(activeId) {
 // ── TICK GIORNALIERO (chiamato da processDailyRoutines in engine.js) ──────────
 
 window._b2bDailyTick = async function() {
-    if (!_sb() || !_uid()) return;
-    const { data, error } = await _sb().rpc('rpc_b2b_daily_tick');
+    if (!_b2bSb() || !_b2bUid()) return;
+    const { data, error } = await _b2bSb().rpc('rpc_b2b_daily_tick');
     if (error || !data) return;
 
     if (data.payout > 0) {
@@ -297,7 +299,7 @@ function renderTabB2B() {
     const container = document.getElementById('tab-container');
     if (!container) return;
 
-    const uid      = _uid();
+    const uid      = _b2bUid();
     const active   = window._b2bState.activeContract;
     const contracts = window._b2bState.contracts || [];
     const rep      = gameState.reputation || 0;
@@ -444,7 +446,7 @@ window.renderTabB2B = renderTabB2B;
 // ── INIT ──────────────────────────────────────────────────────────────────────
 
 window.b2bInit = async function() {
-    if (!_sb() || !_uid()) return;
+    if (!_b2bSb() || !_b2bUid()) return;
     await window.b2bRefresh();
     console.log('[B2B] Modulo inizializzato.');
 };
