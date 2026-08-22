@@ -305,6 +305,29 @@ describe('guardrail — registro unificato delle azioni (docs/AZIONI.md)', () =>
         assert.ok(nomiScritto.size > 500, `Attese oltre 500 funzioni unificate, trovate ${nomiScritto.size}`);
     });
 
+    test('il documento elenca esattamente le funzioni che il codice contiene oggi', () => {
+        /* Fino al 22/08 questo guardrail contava solo i nomi DENTRO il documento:
+           generateUnifiedDoc() esisteva ma nessun test la chiamava, quindi una
+           funzione nata nel codice dopo l'ultima rigenerazione a mano restava
+           fuori dal registro e il test restava verde. Il confronto ignora i
+           numeri di riga di proposito (cambiano a ogni modifica e non c'entrano
+           con quello che il registro sorveglia); contano i NOMI, in entrambe le
+           direzioni: assente dal registro = azione non censita; presente solo
+           nel registro = riferimento a codice che non esiste piu'. */
+        const senzaRighe = (t) => t.replace(/:\d+/g, ':N');
+        const scritto = senzaRighe(fs.readFileSync(DOC_PATH, 'utf8'));
+        const nomiScritto = new Set([...scritto.matchAll(/\| `([A-Za-z_$][\w$]*)` \| `[^`]+` \|/g)].map(m => m[1]));
+        const nelCodice = new Set(generateUnifiedDoc().allEntries.map(e => e.name));
+        const mancanti = [...nelCodice].filter(n => !nomiScritto.has(n));
+        const stale = [...nomiScritto].filter(n => !nelCodice.has(n));
+        assert.deepEqual(mancanti, [],
+            'Queste funzioni esistono nel codice ma non nel registro unificato: rigenerare a mano docs/AZIONI.md:\n' +
+            mancanti.join(', '));
+        assert.deepEqual(stale, [],
+            'Queste funzioni sono nel registro ma non esistono piu\' nel codice (righe da rigenerare):\n' +
+            stale.join(', '));
+    });
+
     test('i tre file di partenza esistono ancora', () => {
         assert.ok(fs.existsSync(path.join(ROOT, 'docs', 'AZIONI-interfaccia.md')), 'docs/AZIONI-interfaccia.md deve esistere');
         assert.ok(fs.existsSync(path.join(ROOT, 'docs', 'AZIONI-moduli.md')), 'docs/AZIONI-moduli.md deve esistere');
