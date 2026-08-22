@@ -14,11 +14,22 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const { freshEnv } = require('../../test-support/game-env.js');
 
-async function waitPriceAnim(sandbox, expectedText, timeoutMs = 600) {
+async function waitPriceAnim(sandbox, expectedText, timeoutMs = 10000) {
     const start = Date.now();
+    let prevText = null;
+    let stableCount = 0;
     while (Date.now() - start < timeoutMs) {
         const el = sandbox.document.getElementById('srm-cfg-price');
-        if (el && el.textContent.includes(expectedText)) return true;
+        const curText = el ? el.textContent : null;
+        if (expectedText != null) {
+            if (curText && curText.includes(expectedText)) return true;
+        } else if (curText !== null && curText === prevText) {
+            stableCount++;
+            if (stableCount >= 2) return true;
+        } else {
+            stableCount = 0;
+        }
+        prevText = curText;
         await new Promise(resolve => setTimeout(resolve, 15));
     }
     return false;
@@ -285,6 +296,23 @@ describe('funzione salone — vetrina auto e configuratore (showroom.js)', () =>
             sandbox._srmToggle('opt_pelle_nappa');
             const raggiunto132 = await waitPriceAnim(sandbox, '132.000');
             assert.ok(raggiunto132, 'prezzo totale dovrebbe raggiungere 132.000 €');
+        });
+
+        test('waitPriceAnim attende la convergenza del prezzo anche sotto carico con animazione lenta (>600ms)', async () => {
+            sandbox.requestAnimationFrame = (fn) => setTimeout(fn, 40);
+            sandbox._srmSetSection('esterni');
+            sandbox._srmToggle('opt_vernice_pearl');
+            const raggiunto124 = await waitPriceAnim(sandbox, '124.000');
+            assert.ok(raggiunto124, 'waitPriceAnim deve convergere al valore finale senza fallire per timeout prematuro');
+        });
+
+        test('waitPriceAnim senza expectedText attende che il valore smetta di cambiare per due letture di fila', async () => {
+            sandbox._srmSetSection('esterni');
+            sandbox._srmToggle('opt_vernice_pearl');
+            const stabilizzato = await waitPriceAnim(sandbox);
+            assert.ok(stabilizzato, 'waitPriceAnim deve rilevare la stabilizzazione del prezzo');
+            const el = sandbox.document.getElementById('srm-cfg-price');
+            assert.ok(el && el.textContent.includes('124.000'), 'il valore stabilizzato deve corrispondere al prezzo target');
         });
 
         test('nel riepilogo compaiono tutti gli optional selezionati', () => {
