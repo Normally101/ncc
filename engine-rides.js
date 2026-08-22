@@ -263,6 +263,44 @@ function _formatDuration(ms) {
     return `${m}min`;
 }
 
+// ─── TETTO CODA IN ORE ───────────────────────────────────────────
+/* La coda non si misura più a corse ma a ore di lavoro coperte.
+ * Decisione Vlad 22/08/2026: 4h di base, estendibili con Driver Coins
+ * fino a 12h. Scala degli scatti 4→6→8→10→12; i prezzi DC crescono
+ * col livello già posseduto (vedi RIEPILOGO per la motivazione).
+ * Con la curva attuale (10 + 3.8·√prezzo) 4h ≈ 2 corse intercity o
+ * ~5 corse urbane: è la testa scelta da Vlad, non va alzata di sana autoria. */
+const QUEUE_HOURS_BASE = 4;
+const QUEUE_HOURS_MAX  = 12;
+const QUEUE_HOURS_STEPS     = [4, 6, 8, 10, 12];
+const QUEUE_UPGRADE_COST_DC = { 4: 2, 6: 4, 8: 7, 10: 11 }; // costo per passare allo scatto successivo
+
+function _getDriverQueueCapMs(driver) {
+    const h = Math.max(QUEUE_HOURS_BASE, Math.min(QUEUE_HOURS_MAX, driver?.queueCapHours || QUEUE_HOURS_BASE));
+    return h * 3600000;
+}
+
+function _buyQueueHours(driverId) {
+    const driver = gameState.drivers.find(d => d.id === driverId);
+    if (!driver) return false;
+    const currentH = Math.max(QUEUE_HOURS_BASE, Math.min(QUEUE_HOURS_MAX, driver.queueCapHours || QUEUE_HOURS_BASE));
+    if (currentH >= QUEUE_HOURS_MAX) {
+        if (typeof showNotification === 'function') showNotification(`⏱️ ${driver.name} ha già il tetto massimo di ${QUEUE_HOURS_MAX} ore.`, 'error');
+        return false;
+    }
+    const idx   = QUEUE_HOURS_STEPS.indexOf(currentH);
+    const nextH = (idx > -1 && QUEUE_HOURS_STEPS[idx + 1]) || QUEUE_HOURS_MAX;
+    const cost  = QUEUE_UPGRADE_COST_DC[currentH];
+    if (!cost || !window.CE_money || typeof window.CE_money.spendDC !== 'function') return false;
+    // spendDC è l'unica via: mai toccare gameState.driverCoins direttamente
+    const spent = window.CE_money.spendDC(cost, `queue_hours_${currentH}_to_${nextH}`);
+    if (spent === false) return false;
+    driver.queueCapHours = nextH; // salvato sull'autista: sopravvive al ricaricamento
+    if (typeof showNotification === 'function') showNotification(`⏱️ Coda di ${driver.name} estesa a ${nextH} ore (−${cost} DC).`, 'success');
+    if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();
+    return true;
+}
+
 function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? gameState : {})) {
     if (!driver) return null;
     const now = Date.now();
@@ -276,9 +314,11 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         return sum + (fn(r) || 0);
     }, 0);
     const totalQueueMs = (isBusy ? currentRemainingMs : 0) + queuedDurationMs;
-    const execActive = gs.executivePassActive && gs.day <= (gs.executivePassExpiresDay || 0);
-    const maxQueue = execActive ? 12 : 10;
-    const isFull = queuedRides.length >= maxQueue;
+    // Tetto in ORE: si confronta totalQueueMs con il monte ore dell'autista,
+    // non più il conteggio delle corse (il vecchio 10/12 Executive Pass).
+    const capHours = Math.max(QUEUE_HOURS_BASE, Math.min(QUEUE_HOURS_MAX, driver.queueCapHours || QUEUE_HOURS_BASE));
+    const capMs = capHours * 3600000;
+    const isFull = totalQueueMs >= capMs;
     const nextSlotFreeMs = isBusy ? currentRemainingMs : 0;
     const freeAtDate = new Date(now + totalQueueMs);
 
@@ -287,7 +327,9 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         isBusy,
         currentRemainingMs,
         queuedCount: queuedRides.length,
-        maxQueue,
+        capHours,
+        capMs,
+        remainingMs: Math.max(0, capMs - totalQueueMs),
         isFull,
         queuedDurationMs,
         totalQueueMs,
@@ -319,9 +361,9 @@ function assignRideToDriver(rideId, driverId) {
     const driver = gameState.drivers.find(d => d.id == driverId);
 
     if (rideIdx > -1 && driver) {
-        const _execActive = gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0);
-        const _maxQueue = _execActive ? 12 : 10;
-        if (driver.queue.length >= _maxQueue) return;
+        // Monte ore: la coda è piena quando le ore coperte raggiungono il tetto dell'autista
+        const _info = _getDriverQueueInfo(driver);
+        if (_info && _info.totalQueueMs >= _getDriverQueueCapMs(driver)) return;
         if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
 
         const ride = gameState.pendingRides[rideIdx];
@@ -369,8 +411,8 @@ function _driverCanTakeRide(driver, ride) {
     if (car.condition <= 10) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
     if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
-    const _epSlots = (gameState.executivePassActive && gameState.day <= (gameState.executivePassExpiresDay || 0)) ? 12 : 10;
-    if (driver.queue.length >= _epSlots) return false;
+    const _qInfo = _getDriverQueueInfo(driver);
+    if (_qInfo && _qInfo.totalQueueMs >= _getDriverQueueCapMs(driver)) return false;
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable
     if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;
@@ -1043,3 +1085,5 @@ window._getRideDurationMs   = _getRideDurationMs;
 window._formatDuration      = _formatDuration;
 window._getDriverQueueInfo  = _getDriverQueueInfo;
 window._previewQueueWithRide = _previewQueueWithRide;
+window._getDriverQueueCapMs = _getDriverQueueCapMs;
+window._buyQueueHours       = _buyQueueHours;
