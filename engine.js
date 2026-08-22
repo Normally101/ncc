@@ -113,23 +113,7 @@ function _applyEmailTemplate(emailObj, type, vars) {
     emailObj.signature   = sub(tpl.signature);
 }
 
-function _getBrandVolumeBonus() {
-    const bv = gameState.brandVolume || 0;
-    if (bv >= 100) return 0.40;
-    if (bv >= 75)  return 0.30;
-    if (bv >= 50)  return 0.18;
-    if (bv >= 25)  return 0.08;
-    return 0;
-}
 
-function _getBrandPrestigeBonus() {
-    const bp = gameState.brandPrestige || 0;
-    if (bp >= 100) return 0.55;
-    if (bp >= 75)  return 0.40;
-    if (bp >= 50)  return 0.25;
-    if (bp >= 25)  return 0.10;
-    return 0;
-}
 
 function _applyMarketingCampaign(campaignId) {
     if (!gameState.activeCampaigns) gameState.activeCampaigns = [];
@@ -1163,7 +1147,6 @@ function _checkDriverLevel(driver) {
 }
 
 // ─── REPUTAZIONE 2.0 ─────────────────────────────────────────────
-function _getPrestige() { return Math.max(0, +(gameState.reputation - 5.0).toFixed(2)); }
 
 // ATTENZIONE: NON è il tasso che il gioco applica ai prestiti. Quello lo decide
 // _getCreditTier(score).rate (engine-finance.js:151), scritto in loan.rate da takeLoan
