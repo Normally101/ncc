@@ -220,6 +220,7 @@ function renderTabFleet() {
             const outReason = car.outOfService;
             const outLabel  = (outReason === 'fuel' && energyPct > 5) ? null
                             : outReason === 'fuel'   ? (isElectric ? '🔴 Batteria scarica' : '🔴 Serbatoio esaurito')
+                            : outReason === 'battery'? '🔴 Batteria scarica'
                             : outReason === 'tires'  ? '🔴 Gomme esaurite'
                             : outReason === 'engine' ? '🔴 Motore fuso'
                             : null;
@@ -293,6 +294,7 @@ function renderTabFleet() {
                 <td class="r" style="white-space:nowrap">
                     ${condPct < 100 ? `<button ${ceAct('payToRepairCar', [car.id])} class="em-goldbtn" style="font-size:9.5px;padding:3px 8px;margin-right:5px" title="Ripara carrozzeria">🔧 €${repairCostCond.toLocaleString()}</button>` : ''}
                     ${eh < 70 ? `<button ${ceAct('repairEngine', [car.id])} class="em-pill" style="border:1px solid #f0d2a8;background:#fdeede;color:var(--em-amber);cursor:pointer;font-size:9.5px;padding:4px 8px;margin-right:5px" title="Ripara motore">⚙ €${repairCostEng.toLocaleString()}</button>` : ''}
+                    ${isElectric && energyPct < 100 ? `<button ${ceAct('chargeVehicle', [car.id])} class="em-bbtn" style="font-size:9.5px;padding:3px 8px;margin-right:5px" title="Ricarica batteria">⚡ €${window.chargeCostFor(car).toLocaleString()}</button>` : ''}
                     <button ${ceAct('openCarModal', [car.id])} class="em-bbtn" style="padding:5px 11px">Gestisci →</button>
                 </td>
             </tr>`;

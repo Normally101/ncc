@@ -103,6 +103,34 @@ window.emergencyRefuel = function() {
     if (typeof renderTabFleet === 'function') renderTabFleet();
 };
 
+// ── RICARICA BATTERIA (veicoli elettrici) ─────────────────────────
+/* Prezzo: €0,50 per punto percentuale mancante, cioè €50 per una ricarica
+   completa contro i ~€93 di un pieno di gasolio (50 L al prezzo medio di
+   €1,85/L). Sommato ai consumi di engine-rides.js (~un terzo del diesel per
+   corsa) l'elettrico viaggia a meno di un quarto del costo energetico per km:
+   è il motivo economico per comprarlo. */
+window.chargeCostFor = function(car) {
+    if (typeof _isElectric !== 'function' || !_isElectric(car)) return 0;
+    const mancante = 100 - Math.max(0, Math.min(100, car.chargeLevel ?? 100));
+    return Math.ceil(mancante * 0.5);
+};
+
+window.chargeVehicle = function(carId) {
+    const car = gameState.fleet.find(c => c.id === carId);
+    if (!car) return;
+    if (!_isElectric(car)) { showNotification('La ricarica vale solo per i veicoli elettrici.', 'error'); return; }
+    if (car.chargeLevel === undefined) car.chargeLevel = 100;
+    if (car.chargeLevel >= 100) { showNotification('La batteria è già carica.', 'info'); return; }
+    const cost = window.chargeCostFor(car);
+    if (!window.CE_money.spend(cost, 'charge_vehicle')) return;
+    car.chargeLevel = 100;
+    if (car.outOfService === 'battery') car.outOfService = null;
+    logToMap(`⚡ ${car.name}: batteria ricaricata al 100%. Costo: −€${cost.toLocaleString()}`);
+    showNotification(`⚡ ${car.name} ricaricato! −€${cost.toLocaleString()}`, 'success');
+    updateUI(); saveGame();
+    if (typeof renderTabFleet === 'function') renderTabFleet();
+};
+
 window.upgradeFuelDepot = function() {
     if (!hasInvestment('inv_fuel_depot')) { showNotification('Acquista prima il Deposito Carburante!', 'error'); return; }
     const lvl  = gameState.fuelTankLevel || 1;
