@@ -427,11 +427,14 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
             gs.fleet.push(car);
             gs.cash = 20000;
 
-            // Centralina costa 6500 € in CAR_UPGRADES
+            /* Il prezzo si legge dal catalogo invece di scriverlo a mano: cosi'
+               il test resta vero anche se il prezzo cambia, e non si rompe per
+               un numero inventato. */
+            const prezzo = sandbox.CAR_UPGRADES.find(u => u.id === 'centralina').price;
             sandbox.buyCARUpgrade('c_upg_1', 'centralina');
 
             assert.ok(car.upgrades.includes('centralina'));
-            assert.equal(gs.cash, 13500);
+            assert.equal(gs.cash, 20000 - prezzo);
         });
 
         test('rifiuta duplicazione di upgrade già presente', () => {
@@ -660,18 +663,21 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
 
         test('acquista prototipo con requisiti soddisfatti e lo inserisce in flotta', () => {
             const { sandbox, gs } = amb;
-            gs.reputation = 4.8;
-            gs.questStats.totalRides = 300;
-            gs.hasEVHub = true;
-            gs.cash = 500000;
-
             const proto = vm.runInContext('PROTOTYPE_CARS[0]', sandbox);
             assert.ok(proto);
+
+            /* I requisiti si prendono dal prototipo stesso: scritti a mano erano
+               piu' bassi di quelli veri (1.000 corse, 1,4 milioni) e l'acquisto
+               veniva rifiutato — su codice corretto. */
+            gs.reputation = proto.reqRep;
+            gs.questStats.totalRides = proto.rideGate;
+            gs.hasEVHub = true;
+            gs.cash = proto.price + 100000;
 
             sandbox.buyPrototypeCar(proto.id);
 
             assert.ok(gs.fleet.some(c => c.protoId === proto.id));
-            assert.equal(gs.cash, 500000 - proto.price);
+            assert.equal(gs.cash, 100000);
         });
 
         test('rifiuta acquisto se prototipo già in flotta', () => {
@@ -915,7 +921,7 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
         beforeEach(() => { amb = creaAmbienteFlotta(); });
         afterEach(() => amb.env.stopAllIntervals());
 
-        test('ripara tutte le auto dell elenco fornite come array', () => {
+        test('ripara tutte le auto dell elenco fornite come array', async () => {
             const { sandbox, gs, rpcCalls } = amb;
             const c1 = { id: 'c_b1', _serverId: 'srv_b1', name: 'Stellar', condition: 60 };
             const c2 = { id: 'c_b2', _serverId: 'srv_b2', name: 'Stellar', condition: 70 };
@@ -923,7 +929,7 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
             gs.fleet.push(c1, c2, c3);
             gs.cash = 50000;
 
-            sandbox.bulkRepairFleet(['c_b1', 'c_b2', 'c_b3']);
+            await sandbox.bulkRepairFleet(['c_b1', 'c_b2', 'c_b3']);
 
             assert.equal(c1.condition, 100);
             assert.equal(c2.condition, 100);
@@ -931,13 +937,13 @@ describe('Funzione Flotta — Collaudo completo (engine-fleet.js, ui-fleet.js, e
             assert.equal(rpcCalls.length, 2, 'solo le 2 auto danneggiate vengono riparate');
         });
 
-        test('supporta parametro passato come stringa JSON (da template ceAct)', () => {
+        test('supporta parametro passato come stringa JSON (da template ceAct)', async () => {
             const { sandbox, gs, rpcCalls } = amb;
             const c1 = { id: 'c_json_1', _serverId: 'srv_j1', name: 'Auto', condition: 80 };
             gs.fleet.push(c1);
             gs.cash = 20000;
 
-            sandbox.bulkRepairFleet(JSON.stringify(['c_json_1']));
+            await sandbox.bulkRepairFleet(JSON.stringify(['c_json_1']));
 
             assert.equal(c1.condition, 100);
             assert.equal(rpcCalls.length, 1);

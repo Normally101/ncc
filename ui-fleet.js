@@ -408,19 +408,22 @@ function renderTabFleet() {
 }
 
 
-window.bulkRepairFleet = function(ids) {
+/* payToRepairCar e' asincrona: prima si lanciavano le riparazioni senza
+   aspettarle e si ridisegnava subito, quindi la schermata mostrava ancora le
+   auto rotte finche' qualcos'altro non la ridisegnava. Ora si aspetta. */
+window.bulkRepairFleet = async function(ids) {
     if (typeof ids === 'string') {
         try { ids = JSON.parse(ids); } catch(e) { ids = []; }
     }
     if (!Array.isArray(ids) || !ids.length) return;
     let count = 0;
-    ids.forEach(id => {
+    for (const id of ids) {
         const car = (gameState.fleet || []).find(c => c.id === id);
         if (car && (car.condition || 0) < 100 && typeof window.payToRepairCar === 'function') {
-            window.payToRepairCar(id);
+            await window.payToRepairCar(id);
             count++;
         }
-    });
+    }
     if (count > 0) renderTabFleet();
 };
 

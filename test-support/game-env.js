@@ -137,9 +137,14 @@ function makeServerState(sandboxRef, overrides = {}) {
             gs().driverCoins = (gs().driverCoins || 0) + amount;
             return { ok: true, driver_coins: gs().driverCoins };
         },
-        spendDriverCoins: async (_itemId, amount) => {
-            gs().driverCoins = Math.max(0, (gs().driverCoins || 0) - amount);
-            return { ok: true };
+        /* Il vero server scala i Driver Coins sul SUO saldo e restituisce quello
+           nuovo; CE_money.spendDC ha gia' scalato in locale e si riallinea sulla
+           risposta. Un finto server che scala di nuovo li toglie due volte — e
+           faceva fallire test scritti su codice corretto. Qui si restituisce il
+           saldo risultante, che e' quello che il server manderebbe indietro
+           quando browser e server sono d'accordo. */
+        spendDriverCoins: async (_itemId, _amount) => {
+            return { ok: true, driver_coins: Math.max(0, gs().driverCoins || 0) };
         },
         findServerVehicle: () => null,
         findServerDriver: () => null,

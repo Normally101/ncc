@@ -369,7 +369,7 @@ const TEMP_EVENTS = [
 ];
 
 // ─── UPGRADE VEICOLI ─────────────────────────────────────────────
-const CAR_UPGRADES = [
+var CAR_UPGRADES = [
     { id:'wifi',           name:'Wi-Fi Starlink',        price:2500,  priceMult:1.10, desc:'+10% tariffa. Requisito per clienti Corporate.' },
     { id:'frigobar',       name:'Mini-Bar VIP',           price:3500,  priceMult:1.15, desc:'+15% tariffa. Mance extra garantite.' },
     { id:'blindatura',     name:'Blindatura (Lv.2)',      price:18000, priceMult:1.40, desc:'+40% tariffa. Richiesto per missioni politiche.' },
