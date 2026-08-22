@@ -25,8 +25,10 @@ const ROOT = path.resolve(__dirname, '..');
 // (IntersectionObserver), e i file che avviano l'applicazione (boot.js, tutorial,
 // onboarding, push-notifications), che mandano il caricamento in stallo.
 const CORE_FILES = [
-    'security.js', 'events.js', 'ce-actions.js', 'config.js', 'geoCoords.js', 'routesDB.js',
-    'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'quests-data.js',
+    'security.js', 'events.js', 'ce-actions.js', 'design-system.js', 'config.js', 'feature-gate.js',
+    'geoCoords.js', 'routesDB.js',
+    'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'ui-landing.js', 'auth.js',
+    'quests-data.js',
     'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
     'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',
     'engine-rivals.js', 'engine-events.js', 'vip-buffs.js', 'vip-clients.js', 'ui-fleet.js', 'ui-staff.js',
