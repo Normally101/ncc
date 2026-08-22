@@ -44,13 +44,34 @@ crescenti (5s, 15s, 45s, 90s).
 **Le chiavi** stanno in `~/.config/gigi-modelli.env` (modo 600). Il repo `ncc` e'
 pubblico: non ci va mai niente di tutto questo.
 
-**Secondo motore possibile, non ancora costruito:** su OpenRouter c'e'
-`stealth/ox-alpha` — gratis, contesto da 1 milione, pensato per il lavoro
-agentico, e provato il 22/08 chiama gli strumenti correttamente. Due avvertenze
-prima di adottarlo: il fornitore e' anonimo e le sue condizioni si contraddicono
-sull'uso dei prompt per l'addestramento; e il nostro agente parla il dialetto di
-Google, quindi servirebbe portare lo strato delle chiamate a strumenti sul
-formato OpenAI. Ha senso solo se la quota gratuita di Google si rivela stretta.
+**La quota di Google si e' rivelata inutilizzabile, e il secondo motore e'
+stato costruito.** Il piano gratuito da' **20 richieste al giorno** per
+`gemini-3.7-flash` (quota `GenerateRequestsPerDayPerProjectPerModel-FreeTier`),
+non le 1.500 che valgono per i modelli piu' vecchi: un solo lavoro ne consuma
+venti-trenta, quindi il primo lavoro le brucia tutte e i successivi muoiono con
+«quota superata». E' successo il 22/08 alle 09:50, tre lavori di fila.
+
+`openrouter-agent.mjs` e' il secondo motore, si sceglie con la variabile
+`GIGI_MOTORE=openrouter` e usa `stealth/ox-alpha`. Il cervello resta uno: gli
+stessi strumenti, le stesse istruzioni, lo stesso cancello — il file nuovo
+traduce solo dal dialetto Google a quello OpenAI.
+
+Misurato il 22/08: **20 richieste in contemporanea, venti riuscite, zero
+rifiuti** (Google ne concede 10 al minuto). I primi tre lavori veri: riusciti,
+27 / 28 / 20 turni, in linea con Gemini — non e' un modello che sbaglia di piu'
+e recupera riprovando. `MAX_PARALLELI` e' salito da 2 a 4.
+
+**Quattro e non venti**: il limite non e' mai stato il calcolo, e' che a valle
+c'e' un solo `main`. Piu' rami aperti insieme, piu' probabilita' che due tocchino
+lo stesso file — il meccanismo che il 21/08 ha bruciato ~115 euro.
+
+**E' un'anteprima a tempo**: comparsa il 20/08, annunciata gratis per circa una
+settimana. Verso il 26/08 va decisa la strada permanente (Vertex a pagamento col
+freno vero, o un'altra anteprima). Nel frattempo se OpenRouter smette di
+rispondere al primo turno, `run-task.mjs` rifa' il lavoro con Gemini invece di
+buttarlo — provato con una chiave finta. Il fornitore resta anonimo e le sue
+condizioni si contraddicono sull'uso dei prompt per l'addestramento: il repo e'
+pubblico, quindi non c'e' un segreto che scappa, ma non ci passa mai altro.
 
 ---
 
