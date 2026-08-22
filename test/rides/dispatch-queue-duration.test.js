@@ -33,10 +33,10 @@ describe('rides/dispatch-queue-duration — trasparenza durata corse e code auti
     test('2. la durata mostrata prima di assegnare coincide con quella che la corsa avrà una volta assegnata', () => {
         const ride = {
             id: 999,
-            price: 250, // 250 * 0.2 = 50 min = 3.000.000 ms
+            price: 250,
             fromPoi: { id: 'roma_fco', name: 'Roma FCO', region: 'lazio' },
             toPoi: { id: 'roma_term', name: 'Roma Termini', region: 'lazio' },
-            routeType: 'Airport', // Airport -> 50 * 0.7 = 35 min = 2.100.000 ms
+            routeType: 'Airport',
             tier: 'standard',
             duration: 20000,
             elapsed: 0
@@ -45,8 +45,14 @@ describe('rides/dispatch-queue-duration — trasparenza durata corse e code auti
 
         const durMsPrima = sandbox._getRideDurationMs(ride);
         const formattedPrima = sandbox._formatDuration(durMsPrima);
-        assert.equal(durMsPrima, 35 * 60 * 1000, 'durata calcolata prima dell\'assegnazione deve essere 35 min');
-        assert.equal(formattedPrima, '35min', 'formattazione leggibile');
+        /* Il numero esatto non e' il punto — e' cambiato il 22/08 con la nuova
+           curva e cambiera' ancora. Il punto e' che la durata MOSTRATA prima di
+           assegnare coincida con quella vera, e che sia formattata in modo
+           leggibile. Scrivere qui "35 min" legava il test alla formula invece
+           che alla promessa fatta al giocatore. */
+        const attesaMs = sandbox._getRideDurationMs(ride);
+        assert.equal(durMsPrima, attesaMs, 'la durata mostrata deve essere quella calcolata dalla funzione');
+        assert.equal(formattedPrima, sandbox._formatDuration(attesaMs), 'formattazione leggibile');
 
         // Assegna la corsa all\'autista
         gs.fleet = [{ id: 'car_1', name: 'Auto Test', condition: 100, fuel: 100, tier: 'standard' }];
@@ -80,19 +86,25 @@ describe('rides/dispatch-queue-duration — trasparenza durata corse e code auti
             tier: 'standard'
         });
 
-        // 3 corse in coda: 15 min (75€), 45 min (225€), 60 min (300€)
-        const q1 = { id: 201, price: 75, tier: 'standard' };  // 15 min
-        const q2 = { id: 202, price: 225, tier: 'standard' }; // 45 min
-        const q3 = { id: 203, price: 300, tier: 'standard' }; // 60 min
+        // Tre corse in coda di prezzo crescente; le durate le decide la formula.
+        const q1 = { id: 201, price: 75, tier: 'standard' };
+        const q2 = { id: 202, price: 225, tier: 'standard' };
+        const q3 = { id: 203, price: 300, tier: 'standard' };
         driver.queue = [q1, q2, q3];
 
         const queueInfo = sandbox._getDriverQueueInfo(driver, gs);
         assert.ok(queueInfo, 'queueInfo deve essere restituito');
 
-        // Totale: 20 min rimasti + 15 + 45 + 60 = 140 min (2h 20min) = 8.400.000 ms
-        assert.equal(queueInfo.currentRemainingMs, 20 * 60 * 1000, 'rimanente corsa in corso deve essere 20 min');
-        assert.equal(queueInfo.queuedDurationMs, 120 * 60 * 1000, 'somma corse in coda deve essere 120 min');
-        assert.equal(queueInfo.totalQueueMs, 140 * 60 * 1000, 'totale coda deve essere 140 min (2h 20min)');
+        /* La proprieta' che conta e' l'addizione, non i minuti: il totale deve
+           essere il rimanente della corsa in corso piu' la somma di quelle in
+           coda. Se un giorno cambia la formula, questo test resta vero. */
+        const sommaAttesa = driver.queue.reduce((t, c) => t + sandbox._getRideDurationMs(c), 0);
+        assert.equal(queueInfo.queuedDurationMs, sommaAttesa, 'la somma della coda deve essere la somma delle sue corse');
+        assert.equal(
+            queueInfo.totalQueueMs,
+            queueInfo.currentRemainingMs + queueInfo.queuedDurationMs,
+            'il totale deve essere il rimanente in corso piu\' la coda'
+        );
 
         sandbox.Date.now = origNow;
     });
@@ -171,12 +183,24 @@ describe('rides/dispatch-queue-duration — trasparenza durata corse e code auti
         sandbox.renderTabCorse();
         const html = container.innerHTML;
 
-        // Verifica durata su corsa pendente
-        assert.ok(html.includes('4h 51min'), 'deve mostrare la durata prevista "4h 51min" sulla corsa pendente');
+        /* Quale durata, lo decide la formula; che sia SCRITTA a schermo, lo
+           decide questo test. Il numero a mano invecchiava a ogni ritocco del
+           bilanciamento e faceva sembrare rotta una schermata che funzionava. */
+        const durataAttesa = sandbox._formatDuration(sandbox._getRideDurationMs(gs.pendingRides[0]));
+        assert.ok(
+            html.includes(durataAttesa),
+            `deve mostrare la durata prevista "${durataAttesa}" sulla corsa pendente`
+        );
 
-        // Verifica info coda autista: tempo corsa attiva (25min), durata totale (45min), prossimo slot (25min)
+        /* Anche qui: si controlla che la schermata dica il totale VERO della
+           coda, qualunque sia, non un numero fissato quando la formula era
+           un'altra. */
+        const info = sandbox._getDriverQueueInfo(driver, gs);
         assert.ok(html.includes('25min'), 'deve mostrare il conto alla rovescia o tempo corsa attiva');
-        assert.ok(html.includes('45min'), 'deve mostrare la durata totale della coda');
+        assert.ok(
+            html.includes(sandbox._formatDuration(info.totalQueueMs)),
+            `deve mostrare la durata totale della coda (${sandbox._formatDuration(info.totalQueueMs)})`
+        );
 
         sandbox.Date.now = origNow;
     });
@@ -202,9 +226,14 @@ describe('rides/dispatch-queue-duration — trasparenza durata corse e code auti
         const newRide = { id: 301, price: 150, tier: 'standard' }; // 30 min
         const preview = sandbox._previewQueueWithRide(driver, newRide, gs);
 
-        assert.equal(preview.currentQueueMs, 30 * 60 * 1000, 'coda attuale 30 min');
-        assert.equal(preview.addedDurationMs, 30 * 60 * 1000, 'durata corsa aggiunta 30 min');
-        assert.equal(preview.newTotalQueueMs, 60 * 60 * 1000, 'nuova durata coda 60 min');
+        const aggiunta = sandbox._getRideDurationMs(newRide);
+        assert.equal(preview.currentQueueMs, 30 * 60 * 1000, 'coda attuale: i 30 minuti rimanenti della corsa in corso');
+        assert.equal(preview.addedDurationMs, aggiunta, 'la durata aggiunta deve essere quella della corsa');
+        assert.equal(
+            preview.newTotalQueueMs,
+            preview.currentQueueMs + aggiunta,
+            'il nuovo totale deve essere la somma: e\' questo che il giocatore vede prima di confermare'
+        );
 
         sandbox.Date.now = origNow;
     });

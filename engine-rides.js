@@ -223,9 +223,25 @@ const TIER_COMPATIBILITY = {
 
 function _getRideDurationMs(ride) {
     const price = ride.sellingPrice || ride.basePrice || ride.price || 150;
-    // Pacing (17/08/2026): 0.4 rendeva una corsa da ~90€ lunga 36 minuti reali,
-    // misurato dal vivo — dimezzato a 0.2, stesso tetto/pavimento.
-    let minutes = Math.max(10, Math.min(360, price * 0.2));
+    /* Durata legata al prezzo per radice quadrata, senza tetto.
+     *
+     * Deciso da Vlad il 22/08/2026. La formula lineare precedente
+     * (`price * 0.2`, tetto 360) aveva un difetto misurato sul gioco vero:
+     * il 12% delle corse era incollato al tetto, quindi da 1.800€ in su
+     * duravano tutte uguali e pagare di piu' non costava piu' niente in tempo.
+     * La scelta fra una corsa ricca e una ricchissima smetteva di essere una
+     * scelta.
+     *
+     * La radice quadrata fa due cose insieme: toglie l'appiattimento in cima
+     * (3.000€ e 6.000€ tornano a distinguersi, 218 contro 304 minuti) e
+     * comprime la scala complessiva — la durata media misurata scende da ~194
+     * a ~128 minuti. Le corse economiche si allungano un po' (50€: da 10 a 37
+     * minuti): e' il prezzo da pagare per avere una curva che non satura, ed
+     * era scritto nell'opzione scelta.
+     *
+     * Il pavimento resta a 10 minuti; il tetto non c'e' piu' — sono i
+     * moltiplicatori qui sotto a fare il resto. */
+    let minutes = Math.max(10, 10 + 3.8 * Math.sqrt(price));
     // routeType is set by generateContractRide from routesDB route.type ('Airport','Rail','Transfer','Boat','Port','City-to-City')
     const rType = ride.routeType || '';
     if (rType === 'Airport' || rType === 'Rail' || rType === 'Transfer') minutes *= 0.7;
