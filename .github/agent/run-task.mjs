@@ -11,6 +11,19 @@
 import { execFileSync } from 'child_process';
 import fs from 'fs';
 import { runGeminiAgent, AGENT_MODEL } from './gemini-agent.mjs';
+import { runOpenRouterAgent, MODELLO_OPENROUTER } from './openrouter-agent.mjs';
+
+/* Quale motore parla col modello.
+ *
+ * `GIGI_MOTORE=openrouter` usa OpenRouter (e serve OPENROUTER_API_KEY);
+ * qualunque altra cosa, o niente, usa Gemini come sempre. La scelta e' una
+ * variabile e non una modifica al codice apposta: i modelli in anteprima
+ * spariscono senza preavviso, e tornare indietro deve costare un secondo. */
+const MOTORE = (process.env.GIGI_MOTORE || 'gemini').toLowerCase();
+const suOpenRouter = MOTORE === 'openrouter';
+const motoreScelto = suOpenRouter ? runOpenRouterAgent : runGeminiAgent;
+const nomeMotore = suOpenRouter ? MODELLO_OPENROUTER : AGENT_MODEL;
+console.log(`Motore: ${nomeMotore}`);
 
 const istruzione = process.env.INSTRUCTION?.trim();
 if (!istruzione) {
@@ -41,7 +54,21 @@ const branch = `gigi/${etichetta}-${stampo}`;
 sh('git', ['checkout', '-b', branch]);
 console.log(`Branch ${branch} creato da ${sh('git', ['rev-parse', '--short', 'HEAD'])}.`);
 
-const esito = await runGeminiAgent({
+/* Il motore in anteprima puo' sparire da un giorno all'altro: quando succede,
+   il lavoro non deve morire con lui. Se OpenRouter non risponde al primo turno
+   si rifa' tutto con Gemini, che e' gratuito e permanente. */
+async function lavora(opzioni) {
+  try {
+    return await motoreScelto(opzioni);
+  } catch (e) {
+    if (!e?.motoreNonDisponibile) throw e;
+    console.log(`  · ${e.message}`);
+    console.log(`  · ripiego su ${AGENT_MODEL}`);
+    return runGeminiAgent(opzioni);
+  }
+}
+
+const esito = await lavora({
   richiesta: istruzione,
   cwd,
   gate: 'npm test',
@@ -97,7 +124,9 @@ if (process.env.GITHUB_STEP_SUMMARY) {
     `**Richiesta:** ${istruzione}`,
     '',
     `- Branch: \`${branch}\``,
-    `- Motore: ${AGENT_MODEL} · **$${esito.costo.toFixed(3)}** di crediti Google`,
+    suOpenRouter
+      ? `- Motore: ${nomeMotore} · **gratis** (anteprima OpenRouter)`
+      : `- Motore: ${nomeMotore} · **$${esito.costo.toFixed(3)}** di crediti Google`,
     `- Turni: ${esito.turni} · token ${esito.tokenIn} in / ${esito.tokenOut} out`,
     `- File toccati: ${cambiati.length ? cambiati.map((f) => `\`${f}\``).join(', ') : 'nessuno'}`,
     esito.dettaglio ? `- Nota: ${esito.dettaglio}` : '',

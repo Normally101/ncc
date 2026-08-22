@@ -71,4 +71,10 @@ jobs:
           # puo' spendere per costruzione, non per via di un contatore.
           # Togliere questo secret fa tornare tutto su Vertex.
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Secondo motore. Con GIGI_MOTORE=openrouter l'agente usa il modello
+          # in anteprima (gratis, limiti molto piu' alti: 20 richieste insieme
+          # senza un rifiuto, misurate il 22/08). E' un'anteprima a tempo:
+          # quando finisce, run-task ripiega su Gemini da solo.
+          GIGI_MOTORE: ${{ vars.GIGI_MOTORE || 'gemini' }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: node .github/agent/run-task.mjs

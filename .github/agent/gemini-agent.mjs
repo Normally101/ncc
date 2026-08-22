@@ -82,7 +82,7 @@ function esegui(argv, cwd, timeoutMs = 5 * 60_000) {
   });
 }
 
-const STRUMENTI = [{
+export const STRUMENTI = [{
   functionDeclarations: [
     {
       name: 'leggi_file',
@@ -150,7 +150,7 @@ const STRUMENTI = [{
 }];
 
 /** Esegue una chiamata a strumento e restituisce il risultato da rimandare al modello. */
-async function eseguiStrumento(nome, args, cwd, onProgress) {
+export async function eseguiStrumento(nome, args, cwd, onProgress) {
   try {
     switch (nome) {
       case 'leggi_file': {
@@ -209,7 +209,7 @@ async function eseguiStrumento(nome, args, cwd, onProgress) {
   }
 }
 
-const ISTRUZIONI = `Sei un programmatore che lavora su un repository gia' esistente.
+export const ISTRUZIONI = `Sei un programmatore che lavora su un repository gia' esistente.
 
 Regole:
 - Leggi il codice prima di cambiarlo: non inventare nomi di funzioni o di file.
