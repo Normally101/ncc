@@ -37,6 +37,7 @@ window.refillTires = async function(carId) {
     const result = await window.ServerState?.refillCarTires(car._serverId, cost);
     if (!result) return;
     car.tirePressure = 100;
+    if (car.outOfService === 'tires') car.outOfService = null;
     logToMap(`🔧 ${car.name}: pressione gomme ripristinata. (−€${cost})`);
     if (typeof closeModals === 'function') closeModals();
     if (typeof renderTabFleet === 'function') renderTabFleet();
@@ -203,7 +204,9 @@ window.upgradeFuelDepot = function() {
 window.buyTiresForDepot = function(sets) {
     if (!hasInvestment('inv_fuel_depot')) { showNotification('Attiva prima il Deposito Aziendale!', 'error'); return; }
     const costPerSet = 800;
-    const cost = sets * costPerSet;
+    let cost = sets * costPerSet;
+    if (sets === 5) cost = 3500;
+    else if (sets === 10) cost = 6000;
     if (!window.CE_money.spend(cost, 'buy_tires_for_depot')) return;
     gameState.depositoGomme = (gameState.depositoGomme || 0) + sets;
     logToMap(`🔧 Deposito: +${sets} treni di gomme. (Totale: ${gameState.depositoGomme})`);
@@ -284,6 +287,7 @@ window.returnToHub = function(carId) {
     if (typeof showNotification === 'function') showNotification(`🏠 ${driver.name} in rientro all'Hub — ${travelHours}h, €${totalCost} (carb.+pedaggi).`, 'info');
     if (typeof renderTabFleet === 'function') renderTabFleet();
     if (typeof updateUI === 'function') updateUI();
+    if (typeof saveGame === 'function') saveGame();
 };
 
 // ── CONTRATTO MANUTENZIONE ────────────────────────────────────────
@@ -414,6 +418,7 @@ window.sellHub = function(hubId) {
 window.listCarForSale = function(carId, askPrice) {
     const car = gameState.fleet.find(c => c.id === carId);
     if (!car) return;
+    if (car.isLease) { showNotification('I veicoli in leasing non possono essere messi in vendita.', 'error'); return; }
     if (car.isLimitedEdition) { showNotification('Le edizioni limitate non possono essere messe in vendita.', 'error'); return; }
     if ((gameState.marketplace||[]).some(l => l.carId === carId)) { showNotification('Veicolo già in vendita.', 'info'); return; }
     const driver = gameState.drivers.find(d => d.assignedCarId === carId && d.id !== 'ceo');
