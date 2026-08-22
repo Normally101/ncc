@@ -168,6 +168,14 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
         test('generatePOIRide applica l\'override del tier se specificato', () => {
             const { sandbox, gs } = amb;
             gs.pendingRides = [];
+            /* La strategia di prezzo va fissata, altrimenti questo test falla a
+               caso una volta su tre. Con `pricingStrategy = 'premium'`
+               generatePOIRide (engine-rides.js:41) rifiuta di generare il 30%
+               delle volte — e' voluto, ed e' giusto che lo faccia: i clienti
+               ricchi non chiamano sempre. Ma un test che dipende da un dado non
+               misura niente, e questo faceva diventare rosso main, che a sua
+               volta blocca il cancello dell'agente su OGNI ramo. */
+            gs.pricingStrategy = 'standard';
 
             const ride = sandbox.generatePOIRide('ultra');
 

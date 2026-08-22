@@ -233,15 +233,45 @@ function generateDoc() {
     }
     md += '\n';
 
-    fs.writeFileSync(DOC_PATH, md, 'utf8');
-    return { duplicates, deadFunctions };
+    /* NON si scrive il file.
+     *
+     * Fino al 22/08 questa riga era `fs.writeFileSync(DOC_PATH, md)`, e ha fatto
+     * un danno grosso e invisibile: ogni lavoro dell'agente esegue `npm test`,
+     * il test riscriveva il documento con i numeri di riga aggiornati, il ramo
+     * se lo portava dietro, e il cancello lo respingeva con «non si unisce a
+     * main senza conflitti». Centocinquantadue lavori respinti per questo, e
+     * circa 115 euro di modello spesi per niente.
+     *
+     * C'era anche un difetto piu' banale: il test scriveva il file e poi
+     * verificava il file appena scritto, quindi non poteva fallire mai.
+     *
+     * Un test guarda, non tocca. Il documento si rigenera a mano quando serve. */
+    return { md, duplicates, deadFunctions };
 }
 
 describe('guardrail — censimento azioni interfaccia (ui-*.js)', () => {
 
-    test('genera o aggiorna docs/AZIONI-interfaccia.md', () => {
-        generateDoc();
+    test('il documento esiste e non lo riscrive il test', () => {
         assert.ok(fs.existsSync(DOC_PATH), 'docs/AZIONI-interfaccia.md non esiste');
+        const prima = fs.readFileSync(DOC_PATH, 'utf8');
+        generateDoc();
+        assert.equal(fs.readFileSync(DOC_PATH, 'utf8'), prima,
+            'Il test ha modificato docs/AZIONI-interfaccia.md. Un test guarda, non tocca:\n' +
+            'ogni ramo si porterebbe dietro la modifica e verrebbe respinto per conflitto.');
+    });
+
+    test('il documento elenca le stesse funzioni che il codice contiene oggi', () => {
+        /* Il confronto ignora i numeri di riga di proposito: cambiano a ogni
+           modifica di un file, e farebbero diventare rosso il test per motivi
+           che non c'entrano niente con quello che sorveglia. */
+        const senzaRighe = (t) => t.replace(/:\d+/g, ':N');
+        const generato = senzaRighe(generateDoc().md);
+        const scritto  = senzaRighe(fs.readFileSync(DOC_PATH, 'utf8'));
+        const nomi = (t) => new Set([...t.matchAll(/`([A-Za-z_$][\w$]*)` ·/g)].map(m => m[1]));
+        const nelCodice = nomi(generato), nelDocumento = nomi(scritto);
+        const mancanti = [...nelCodice].filter(x => !nelDocumento.has(x));
+        assert.deepEqual(mancanti, [],
+            'Queste funzioni esistono nel codice ma non nel registro: va rigenerato a mano.');
     });
 
     test('il documento censisce tutti i 22 file ui-*.js', () => {

@@ -14,11 +14,34 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const { freshEnv } = require('../../test-support/game-env.js');
 
-async function waitPriceAnim(sandbox, expectedText, timeoutMs = 600) {
+/* Aspetta che il prezzo animato arrivi al valore atteso.
+ *
+ * Prima qui c'era un tempo fisso di 600 ms, e il 21/08 ha fatto un danno che non
+ * sembrava suo: con la macchina carica l'animazione non faceva in tempo, questi
+ * due casi diventavano rossi, e main risultava rosso. Il cancello dell'agente si
+ * rifiuta di giudicare qualunque ramo finche' main non e' verde — quindi due
+ * test fragili bloccavano TUTTE le fusioni.
+ *
+ * L'animazione (`_srmAnimatePrice` in showroom.js) avvicina il valore del 14% a
+ * ogni fotogramma e si ferma quando ci arriva: da 120.000 a 124.000 servono una
+ * cinquantina di fotogrammi, cioe' quasi un secondo gia' a macchina scarica. Il
+ * tempo fisso era sbagliato in partenza.
+ *
+ * Adesso si aspetta che l'animazione FINISCA, non che passi un tot. Il tetto di
+ * 10 secondi resta solo perche' un test che non finisce mai e' peggio di uno che
+ * fallisce. */
+async function waitPriceAnim(sandbox, expectedText, timeoutMs = 10_000) {
     const start = Date.now();
+    let ultimo = null, fermoDa = 0;
     while (Date.now() - start < timeoutMs) {
         const el = sandbox.document.getElementById('srm-cfg-price');
-        if (el && el.textContent.includes(expectedText)) return true;
+        const testo = el ? el.textContent : null;
+        if (testo && testo.includes(expectedText)) return true;
+        // Il valore non si muove piu' e non e' quello atteso: e' finita male,
+        // e aspettare altri nove secondi non cambierebbe niente.
+        fermoDa = (testo === ultimo) ? fermoDa + 1 : 0;
+        ultimo = testo;
+        if (fermoDa >= 20) return false;
         await new Promise(resolve => setTimeout(resolve, 15));
     }
     return false;
