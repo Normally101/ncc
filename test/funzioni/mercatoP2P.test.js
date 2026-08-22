@@ -1129,4 +1129,125 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             assert.deepEqual(syncedCashCalls, [], 'nessuna chiamata syncCash per la multa GdF');
         });
     });
+
+    // ────────────────────────────────────────────────────────────────────────
+    // 12. PORTA UNICA DEL DENARO — le azioni P2P muovono cassa una volta sola,
+    //     solo via CE_money (il server l'ha giá mossa dentro la RPC), mai con
+    //     gameState.cash -= e mai con syncCash.
+    // ────────────────────────────────────────────────────────────────────────
+    describe('Porta unica del denaro nelle azioni P2P', () => {
+
+        function spiaCEMoney() {
+            const addebiti = [];
+            const accrediti = [];
+            const origAddebito = sandbox.CE_money.addebitatoDalServer;
+            const origAccredito = sandbox.CE_money.accreditatoDalServer;
+            const origSpend = sandbox.CE_money.spend;
+            sandbox.CE_money.addebitatoDalServer = function (importo, motivo) {
+                addebiti.push({ importo, motivo });
+                return origAddebito.call(sandbox.CE_money, importo, motivo);
+            };
+            sandbox.CE_money.accreditatoDalServer = function (importo, motivo) {
+                accrediti.push({ importo, motivo });
+                return origAccredito.call(sandbox.CE_money, importo, motivo);
+            };
+            sandbox.CE_money.spend = function (importo, motivo) {
+                addebiti.push({ importo, motivo, via: 'spend' });
+                return origSpend.call(sandbox.CE_money, importo, motivo);
+            };
+            return { addebiti, accrediti };
+        }
+
+        test('buyP2PCar addebita UNA volta sola, via CE_money, il prezzo pagato dal server', async () => {
+            sandbox._p2pMarket.listings = [
+                { id: 'lst_once', seller_user_id: 'other_player', ask_price: 35000 },
+            ];
+            gs.cash = 50000;
+            const { addebiti } = spiaCEMoney();
+
+            await sandbox.buyP2PCar('lst_once');
+
+            assert.equal(addebiti.length, 1, 'esattamente un movimento in uscita');
+            assert.equal(addebiti[0].via, undefined, 'non deve usare CE_money.spend: il server ha giá mosso il saldo');
+            assert.equal(addebiti[0].importo, 35000, 'l\'importo deve essere il price_paid del server');
+            assert.equal(gs.cash, 15000);
+            assert.deepEqual(syncedCashCalls, []);
+        });
+
+        test('buyP2PCar su annuncio già venduto: errore RPC, zero denaro mosso, zero auto in flotta', async () => {
+            sandbox._p2pMarket.listings = [
+                { id: 'lst_sold', seller_user_id: 'other_player', ask_price: 35000 },
+            ];
+            gs.cash = 50000;
+            const fleetCount = gs.fleet.length;
+            sandbox.supabaseClient.rpc = async (name) => {
+                if (name === 'rpc_buy_market_car') {
+                    /* Stesso esito della RPC vera (08_mmo_p2p_marketplace.sql):
+                       la riga è sparita sotto il lock FOR UPDATE, il compratore
+                       arriva secondo e riceve l'eccezione. */
+                    return { data: null, error: { message: 'rpc_buy_market_car: inserzione non trovata (già venduta?)' } };
+                }
+                return { data: {}, error: null };
+            };
+            const { addebiti } = spiaCEMoney();
+
+            await sandbox.buyP2PCar('lst_sold');
+
+            assert.equal(addebiti.length, 0, 'nessun addebito se la vendita è già andata');
+            assert.equal(gs.cash, 50000);
+            assert.equal(gs.fleet.length, fleetCount, 'nessuna auto fantasma in flotta');
+            assert.ok(env.notifications.some(n => n.type === 'error'));
+        });
+
+        test('contributeHoldingTreasury addebita una volta sola l importo roundato che il server prende', async () => {
+            gs.cash = 50000;
+            const { addebiti } = spiaCEMoney();
+
+            await sandbox.contributeHoldingTreasury('hld_101', 20000.4);
+
+            assert.equal(addebiti.length, 1);
+            assert.equal(addebiti[0].importo, 20000, 'la RPC prende v_amount roundato, non 20000.4');
+            assert.equal(addebiti[0].via, undefined);
+            assert.equal(gs.cash, 30000);
+            assert.deepEqual(syncedCashCalls, []);
+        });
+
+        test('payDonCarmine addebita 50.000 una volta sola; se la RPC fallisce zero movimenti', async () => {
+            gs.cash = 75000;
+            let spia = spiaCEMoney();
+
+            await sandbox.payDonCarmine();
+
+            assert.equal(spia.addebiti.length, 1);
+            assert.equal(spia.addebiti[0].importo, 50000);
+            assert.equal(spia.addebiti[0].via, undefined);
+            assert.equal(gs.cash, 25000);
+
+            // Secondo tentativo: il server rifiuta
+            sandbox.supabaseClient.rpc = async (name) => {
+                if (name === 'rpc_pay_don_carmine') {
+                    return { data: null, error: { message: 'Immunità già attiva' } };
+                }
+                return { data: {}, error: null };
+            };
+            spia = spiaCEMoney();
+            gs.cash = 75000;
+
+            await sandbox.payDonCarmine();
+
+            assert.equal(spia.addebiti.length, 0, 'errore RPC = nessun addebito locale');
+            assert.equal(gs.cash, 75000);
+        });
+
+        test('contributeConsorzio con fondi insufficienti non chiama RPC né muove denaro', async () => {
+            gs.cash = 4000;
+            const { addebiti } = spiaCEMoney();
+
+            await sandbox.contributeConsorzio('cso_101', 5000);
+
+            assert.equal(supabaseRpcCalls.length, 0);
+            assert.equal(addebiti.length, 0);
+            assert.equal(gs.cash, 4000);
+        });
+    });
 });
