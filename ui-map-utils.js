@@ -22,6 +22,16 @@ window.spawnMoneyParticles = function(x, y, amount) {
     }
 };
 
+// ─── LA MAPPA, GUARDATA DA UN PUNTO SOLO ─────────────────────────
+// map.js dichiara `var map` e `let _mapReady`: in un browser sono visibili
+// anche da qui, ma se map.js non e' caricato il solo NOMINARLI e' un
+// ReferenceError, non un `undefined`. Questa e' l'unica funzione del file che
+// li tocca; tutto il resto passa da qui.
+function _mapPronta() {
+    return (typeof map !== 'undefined' && !!map)
+        && (typeof _mapReady !== 'undefined' && !!_mapReady);
+}
+
 // ─── DAY/NIGHT CYCLE ────────────────────────────────────────────
 let _lastNightState = null;
 function _updateDayNight() {
@@ -32,7 +42,7 @@ function _updateDayNight() {
     const overlay = document.getElementById('night-overlay');
     if (overlay) overlay.style.background = isNight ? 'rgba(0,0,20,0.18)' : 'rgba(0,0,20,0)';
     // Sky atmosphere sun angle
-    if (map && _mapReady && map.getLayer('sky')) {
+    if (_mapPronta() && map.getLayer('sky')) {
         const sunAngle = isNight ? [0.0, 110.0] : [0.0, 90.0];
         try { map.setPaintProperty('sky', 'sky-atmosphere-sun', sunAngle); } catch(e) {}
     }
@@ -53,7 +63,7 @@ const _HQ_MARKER_STYLES = [
 ];
 
 window._updateHQMarker = function() {
-    if (!map || !_mapReady) return;
+    if (!_mapPronta()) return;
     const hq = gameState.hq;
     if (!hq || hq.lng === null) return;
 
@@ -74,7 +84,7 @@ window._updateHQMarker = function() {
 
 window.flyToHQ = function() {
     const hq = gameState.hq;
-    if (!map || !hq || hq.lng === null) return;
+    if (!_mapPronta() || !hq || hq.lng === null) return;
     map.flyTo({ center: [hq.lng, hq.lat], zoom: 14, pitch: 60, bearing: -20, duration: 2500, essential: true });
 };
 
@@ -91,13 +101,85 @@ window._checkFoundingOverlay = function() {
         <div style="text-align:center;max-width:520px;padding:32px;">
             <div style="font-size:4rem;margin-bottom:16px;">🏢</div>
             <h1 style="font-size:2rem;font-weight:900;color:#d4af37;text-transform:uppercase;letter-spacing:4px;margin-bottom:12px;">SCEGLI LA TUA SEDE</h1>
-            <p style="color:#9ca3af;font-size:0.9rem;line-height:1.7;margin-bottom:32px;">Ogni grande impero inizia con un indirizzo. Clicca su qualsiasi punto della mappa italiana per fondare la tua Agenzia NCC. La regione sarà tua, gratuitamente.</p>
-            <button ${ceAct('_startFoundingMode', [])} style="padding:16px 40px;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.6);border-radius:12px;color:#d4af37;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:2px;text-transform:uppercase;">📍 Scegli sulla Mappa</button>
+            <p style="color:#9ca3af;font-size:0.9rem;line-height:1.7;margin-bottom:32px;">Ogni grande impero inizia con un indirizzo. Scegli la regione della tua Agenzia NCC: sarà tua, gratuitamente.</p>
+            <div style="display:flex;flex-direction:column;gap:12px;align-items:stretch;">
+                <button ${ceAct('_startFoundingList', [])} style="padding:16px 40px;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.6);border-radius:12px;color:#d4af37;font-size:1rem;font-weight:700;cursor:pointer;letter-spacing:2px;text-transform:uppercase;">🇮🇹 Scegli la Regione</button>
+                <button ${ceAct('_startFoundingMode', [])} style="padding:12px 40px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.14);border-radius:12px;color:#9ca3af;font-size:0.8rem;font-weight:600;cursor:pointer;letter-spacing:1px;text-transform:uppercase;">📍 Oppure clicca sulla mappa</button>
+            </div>
         </div>`;
     document.body.appendChild(ov);
 };
 
+// ─── FONDAZIONE DALL'ELENCO DELLE REGIONI ────────────────────────
+// Fondare l'azienda richiedeva un click SULLA mappa, e la mappa non viene
+// nemmeno creata sotto i 768px (map.js::_ensureMap). Da telefono non c'era
+// nessuna strada per cominciare a giocare. L'elenco e' la strada che non
+// dipende dalla mappa: stessa foundCompany, coordinate prese dal centroide
+// della regione.
+// Le coordinate sono quelle di un POI REALE della regione, non il centroide.
+// foundCompany sceglie la regione dal POI piu' vicino: partendo dal centroide
+// di Puglia [16.30,40.80] il piu' vicino e' Potenza, e il giocatore che chiede
+// Puglia si ritrova la Basilicata. Partendo da un POI della regione la
+// distanza minima e' zero e la regione e' quella chiesta, per costruzione.
+window._foundingRegions = function() {
+    const regs = typeof REGIONS !== 'undefined' ? REGIONS : {};
+    const pois = typeof POIS !== 'undefined' ? POIS : {};
+    const cent = typeof REGION_CENTROIDS !== 'undefined' ? REGION_CENTROIDS : {};
+    const perRegione = {};
+    for (const k in pois) {
+        const p = pois[k];
+        if (!p || !p.region) continue;
+        const attuale = perRegione[p.region];
+        if (!attuale || (attuale.type !== 'hub' && p.type === 'hub')) perRegione[p.region] = p;
+    }
+    return Object.keys(regs).map(id => {
+        const p = perRegione[id];
+        const c = cent[id];
+        if (!p && !(Array.isArray(c) && c.length === 2)) return null;
+        return {
+            id,
+            name: regs[id].name || id,
+            citta: p ? p.name : '',
+            lng: p ? p.lng : c[0],
+            lat: p ? p.lat : c[1],
+        };
+    }).filter(Boolean).sort((a, b) => a.name.localeCompare(b.name, 'it'));
+};
+
+window._startFoundingList = function() {
+    _foundingMode = false;
+    const ov = document.getElementById('founding-overlay');
+    if (!ov) return;
+    const voci = window._foundingRegions().map(r => `
+        <button ${ceAct('_foundFromRegion', [r.id])}
+          style="text-align:left;padding:11px 14px;border-radius:10px;border:1px solid rgba(212,175,55,0.22);background:rgba(212,175,55,0.05);color:#e5e7eb;font-size:0.85rem;font-weight:600;cursor:pointer;">${r.name}<div style="font-size:0.7rem;color:#6b7280;font-weight:400;margin-top:2px;">${r.citta}</div></button>`).join('');
+    ov.innerHTML = `
+        <div style="width:100%;max-width:560px;padding:20px;display:flex;flex-direction:column;max-height:100%;">
+            <h2 style="font-size:1.2rem;font-weight:900;color:#d4af37;letter-spacing:3px;text-transform:uppercase;text-align:center;">Dove apri la sede</h2>
+            <input id="founding-name" type="text" placeholder="Nome della sede" value="Sede Principale"
+              style="margin:16px 0 12px;padding:11px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.04);color:#f3f4f6;font-size:0.9rem;">
+            <div style="overflow-y:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;padding:4px;">${voci}</div>
+            <button ${ceAct('_cancelFoundingMode', [])} style="margin-top:14px;padding:8px 24px;align-self:center;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;color:#ef4444;font-size:0.8rem;cursor:pointer;">✕ Annulla</button>
+        </div>`;
+};
+
+window._foundFromRegion = function(regionId) {
+    const r = window._foundingRegions().find(x => x.id === regionId);
+    if (!r) return false;
+    _foundingMode = false;
+    const campo = document.getElementById('founding-name');
+    const nome = (campo && campo.value && campo.value.trim()) || 'Sede Principale';
+    const ov = document.getElementById('founding-overlay');
+    if (ov) ov.remove();
+    window.foundCompany(r.lng, r.lat, nome);
+    if (typeof window.flyToHQ === 'function') window.flyToHQ();
+    return true;
+};
+
 window._startFoundingMode = function() {
+    // Senza mappa non c'e' niente da cliccare: invece di esplodere su
+    // `map.once`, si passa all'elenco delle regioni.
+    if (!_mapPronta()) { window._startFoundingList(); return; }
     _foundingMode = true;
     const ov = document.getElementById('founding-overlay');
     if (ov) ov.innerHTML = `

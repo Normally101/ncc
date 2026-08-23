@@ -27,10 +27,9 @@
 ## `ui-dispatch.js`
 
 - `renderTabCorse` · `ui-dispatch.js:4` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateTrafficLabel` · `ui-dispatch.js:225` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `setupDragAndDrop` · `ui-dispatch.js:234` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `renderTabCorse` · `ui-dispatch.js:307` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `setupDragAndDrop` · `ui-dispatch.js:308` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `setupDragAndDrop` · `ui-dispatch.js:229` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `renderTabCorse` · `ui-dispatch.js:302` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `setupDragAndDrop` · `ui-dispatch.js:303` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-emails.js`
 
@@ -56,8 +55,8 @@
 ## `ui-fleet.js`
 
 - `renderTabFleet` · `ui-fleet.js:4` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `bulkRepairFleet` · `ui-fleet.js:408` · data-ce-act: `bulkRepairFleet` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
-- `renderTabFleet` · `ui-fleet.js:421` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `bulkRepairFleet` · `ui-fleet.js:416` · data-ce-act: `bulkRepairFleet` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
+- `renderTabFleet` · `ui-fleet.js:432` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-help.js`
 
@@ -119,16 +118,20 @@
 ## `ui-map-utils.js`
 
 - `spawnMoneyParticles` · `ui-map-utils.js:8` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateDayNight` · `ui-map-utils.js:27` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateDayNight` · `ui-map-utils.js:40` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateHQMarker` · `ui-map-utils.js:55` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `flyToHQ` · `ui-map-utils.js:75` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_checkFoundingOverlay` · `ui-map-utils.js:83` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_startFoundingMode` · `ui-map-utils.js:100` · data-ce-act: `_startFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_cancelFoundingMode` · `ui-map-utils.js:123` · data-ce-act: `_cancelFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `openAcademyModal` · `ui-map-utils.js:133` · data-ce-act: `openAcademyModal` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `_academySelectDriver` · `ui-map-utils.js:221` · data-ce-act: `_academySelectDriver` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_traitBadgeHTML` · `ui-map-utils.js:228` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_mapPronta` · `ui-map-utils.js:30` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_updateDayNight` · `ui-map-utils.js:37` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_updateDayNight` · `ui-map-utils.js:50` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_updateHQMarker` · `ui-map-utils.js:65` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `flyToHQ` · `ui-map-utils.js:85` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_checkFoundingOverlay` · `ui-map-utils.js:93` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_foundingRegions` · `ui-map-utils.js:124` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_startFoundingList` · `ui-map-utils.js:149` · data-ce-act: `_startFoundingList` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_foundFromRegion` · `ui-map-utils.js:166` · data-ce-act: `_foundFromRegion` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_startFoundingMode` · `ui-map-utils.js:179` · data-ce-act: `_startFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_cancelFoundingMode` · `ui-map-utils.js:205` · data-ce-act: `_cancelFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `openAcademyModal` · `ui-map-utils.js:215` · data-ce-act: `openAcademyModal` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `_academySelectDriver` · `ui-map-utils.js:303` · data-ce-act: `_academySelectDriver` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_traitBadgeHTML` · `ui-map-utils.js:310` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-market.js`
 
@@ -175,7 +178,7 @@
 - `_sidebarActivateTab` · `ui-sidebar.js:45` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `switchTab` · `ui-sidebar.js:64` · data-ce-act: `switchTab` (`index.html`, `onboarding.js`, `ui-finance.js`, `ui-home.js`, `vanity.js`, `world-feed.js`) · doppioni: `dispatcher.js:150`, `em-chrome.js:32`, `motion.js:164`, `premium-ui.js:12`, `zero-to-hero.js:182` · denaro: no
 - `updateSidebarStats` · `ui-sidebar.js:71` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `updateUI` · `ui-sidebar.js:85` · data-ce-act: nessuna · doppioni: `engine.js:1995`, `objective-tracker.js:147` · denaro: no
+- `updateUI` · `ui-sidebar.js:85` · data-ce-act: nessuna · doppioni: `engine.js:1986`, `objective-tracker.js:147` · denaro: no
 - `toggleSidebar` · `ui-sidebar.js:92` · data-ce-act: `toggleSidebar` (`index.html`) · doppioni: nessuno · denaro: no
 
 ## `ui-staff.js`
@@ -185,7 +188,7 @@
 - `closeModals` · `ui-staff.js:365` · data-ce-act: `closeModals` (`index.html`) · doppioni: nessuno · denaro: no
 - `fireStaff` · `ui-staff.js:371` · data-ce-act: `fireStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
 - `hireOfficeStaff` · `ui-staff.js:381` · data-ce-act: `hireOfficeStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `renderTabStaff` · `ui-staff.js:400` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `renderTabStaff` · `ui-staff.js:404` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-store.js`
 
@@ -218,7 +221,7 @@ Il vecchio configuratore auto (circa 185 righe con `openCarConfigurator`, `__cfg
 | `buyHRAutomation` | `ui-ops.js:218` | `serverState.js:534` |  |
 | `_kpi` | `ui-ranking.js:105` | `ui-finance.js:87` |  |
 | `switchTab` | `ui-sidebar.js:64` | `dispatcher.js:150, em-chrome.js:32, motion.js:164, premium-ui.js:12, zero-to-hero.js:182` | Decoratore / catena di rendering UI deliberata |
-| `updateUI` | `ui-sidebar.js:85` | `engine.js:1995, objective-tracker.js:147` | Decoratore / catena di rendering UI deliberata |
+| `updateUI` | `ui-sidebar.js:85` | `engine.js:1986, objective-tracker.js:147` | Decoratore / catena di rendering UI deliberata |
 
 ---
 
@@ -227,5 +230,4 @@ Il vecchio configuratore auto (circa 185 righe con `openCarConfigurator`, `__cfg
 | Funzione | Definizione | Note |
 |---|---|---|
 | `_carRewardLine` | `ui-career.js:172` | Nessuna invocazione trovata nel codebase (JS/HTML/data-ce-act) |
-| `_updateTrafficLabel` | `ui-dispatch.js:225` | Nessuna invocazione trovata nel codebase (JS/HTML/data-ce-act) |
 
