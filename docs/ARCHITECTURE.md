@@ -6,7 +6,7 @@
 
 # Chauffeur Empire — Codebase Guide for Claude / Gemini
 
-Browser MMO gestionale di auto di lusso. Vanilla HTML/CSS/JS puro. Nessun framework, nessun bundler tranne Tailwind CLI. Backend Supabase (PostgreSQL + Realtime). Mappa Mapbox GL JS.
+Browser MMO gestionale di auto di lusso. Vanilla HTML/CSS/JS puro. Nessun framework, nessun bundler tranne Tailwind CLI. Backend Supabase (PostgreSQL + Realtime). Mappa SVG 2D disegnata in locale.
 
 > **Nota per l'AI:** Questo file è la fonte di verità del progetto. Aggiornarlo dopo ogni sessione di lavoro significativa. Leggilo sempre per intero prima di fare modifiche.
 
@@ -184,7 +184,7 @@ const _THR = t => `<th style="padding:7px 14px;font-size:9px;font-family:monospa
 | Frontend | Vanilla JS (ES2020+, `'use strict'` ovunque) |
 | Stile | `style.css` + `premium-ui.css` + `tailwind.min.css` (compilato) |
 | Backend | Supabase (Postgres + Auth + Realtime + RPC) |
-| Mappa | Mapbox GL JS v3.6 |
+| Mappa | **SVG 2D locale** (`map-svg.js` + `geo-italia.js`) — Mapbox rimosso il 23/08/2026 |
 | Font | Montserrat (UI), Roboto Mono (numeri), Cinzel (titoli) |
 | Deploy | **Vercel** (auto-deploy da `main`) → `https://www.chauffeurempire.com` · `.vercelignore` esclude i file interni (NON è GitHub Pages) |
 | Repo | `https://github.com/Normally101/ncc` (branch `main`) |
@@ -389,10 +389,13 @@ il primo da guardare. Elenco rigenerato da index.html (93 script):
 31. vip-clients.js       — 9 handler clienti VIP + _vipOnComplete dispatcher
 32. war_room.js          — province War Room, renderTabWarRoom
 33. dispatcher.js        — switchTab routing (+ blocco schede spente), showNotification, togglePanel
-34. map.js               — Mapbox: var map (GLOBALE), initMap, layer setup (~461 righe)
-35. map-router.js        — BFS highway router, calculateInterpolatedPosition (~143 righe)
-36. map-garage.js        — openGarage3D, closeGarage3D, _generateVehicleSVG (~227 righe)
-37. map-visual.js        — visualLoop, vehicle markers, trail scia (~170 righe)
+34. map-dati.js          — CE_mapData.istantanea(): da gameState al modello di vista (sola lettura)
+35. map-svg.js           — CE_map: monta/disegna/hover/click/zoom/pan + backend 'svg2d'
+36. map-router.js        — BFS highway router, calculateInterpolatedPosition (~143 righe)
+37. map-garage.js        — openGarage3D, closeGarage3D, _generateVehicleSVG (~227 righe)
+    (map-proiezione.js, geo-italia.js e map-api.js si caricano molto prima, vedi sotto)
+38. ride-progress.js     — tickRideProgress(now): progresso e posizione delle corse
+39. map-animazione.js    — CE_mapAnim: auto, scie e rotte sulla mappa 2D
 38. ui-emails.js         — renderTabEmails
 39. ui-marketing.js      — renderTabMarketing: Dual Brand, campagne, ROI tracker
 40. ui-finance.js        — renderTabFinance: Bloomberg dashboard, stocks, broker, _flashTicker
@@ -480,7 +483,11 @@ window.showNotification(msg, type)  // toast notifica (dispatcher.js)
 window.saveGame()         // salva su localStorage + cloud (engine.js)
 window.ServerState        // oggetto con metodi cloud (saveSystem.js)
 window.QUEST_DB           // array quests statiche (quests-data.js) — NON ridichiarare
-var map                   // istanza Mapbox GL JS (map.js) — var per essere window.map
+window.MapBackend         // la giuntura fra gioco e mappa (map-api.js)
+window.CE_proj            // proiezione Mercatore condivisa (map-proiezione.js)
+window.GEO_ITALIA         // confini delle 20 regioni, semplificati (geo-italia.js)
+window.CE_map             // la mappa 2D montata (map-svg.js)
+window.CE_mapData         // istantanea del gioco per la mappa (map-dati.js)
 ```
 
 **GAME_CONFIG (config.js):**
@@ -1325,3 +1332,72 @@ Se usi classi Tailwind hardcoded in template JS (es. `text-white`, `bg-gray-800`
 | `serverState.js` | Sync Supabase Realtime, ServerState | 609 |
 | `style.css` | Tutto il CSS — tema, layout, componenti, overrides Tailwind | ~3900 |
 | `ui-sidebar.js` | Accordion nav, patch switchTab + updateUI | 120 |
+
+
+---
+
+## La mappa (rifatta il 23/08/2026)
+
+Prima era Mapbox GL v3.6 con stile satellitare, terreno 3D e cielo atmosferico.
+Oggi e' un SVG disegnato in locale, senza rete e senza piastrelle. Il perche':
+un gestionale strategico vuole regioni cliccabili, e i confini di Mapbox erano
+LINEE di un vector tile, non poligoni — la funzione "clicco una regione e si
+apre il pannello" non poteva esistere.
+
+### I file, e chi puo' girare dove
+
+| File | Ruolo | Gira in VM nuda? |
+|---|---|---|
+| `map-api.js` | `window.MapBackend`: registro dei backend di mappa | si' |
+| `map-proiezione.js` | `window.CE_proj`: gradi ↔ unita' SVG, punto-in-poligono | si' |
+| `geo-italia.js` | `window.GEO_ITALIA`: i confini semplificati (GENERATO) | si' |
+| `map-dati.js` | `window.CE_mapData.istantanea()`: gameState → modello di vista | jsdom |
+| `map-svg.js` | `window.CE_map`: disegno, hover, click, zoom, pan, pannello | jsdom |
+| `ride-progress.js` | `window.tickRideProgress(now)`: orologio delle corse | si' |
+| `map-animazione.js` | `window.CE_mapAnim`: auto, scie, rotte | jsdom |
+
+I primi tre devono caricarsi **senza jsdom**: e' quel vincolo che li tiene puri.
+Gli altri girano in jsdom, il che impone: nessun effetto al caricamento del file,
+niente `requestAnimationFrame` fuori da una funzione, e **mai** `getBBox()` o
+`getScreenCTM()` — jsdom non fa layout. Zoom e pan si calcolano con aritmetica
+sul `viewBox`.
+
+### Le tre regole che tengono in piedi il tutto
+
+1. **La mappa e' una vista, non un database.** `map-dati.js` legge `gameState` e
+   non lo scrive mai. Il test `test/mappa/mappa-e-una-vista.test.js` congela
+   `gameState` e costruisce l'istantanea sopra: una sola scrittura lo fa
+   diventare rosso. `ride-progress.js` invece SCRIVE (e' l'orologio, deve
+   ricordarsi dov'era) — per questo sta in un file separato.
+2. **`[lon, lat]` ovunque**, come GeoJSON. Il gioco ha due convenzioni: `POIS`
+   usa campi separati, `HIGHWAYS` usa coppie `[lat, lon]`. La conversione avviene
+   in due punti soli (`map-dati.js` e `ride-progress.js`) e un test la sorveglia:
+   scambiando gli assi Roma finisce in Sudan.
+3. **Una mappa alla volta.** `MapBackend.use()` e' distruttiva e idempotente. Due
+   mappe montate insieme vorrebbero dire due mappe impilate e un ciclo di
+   animazione orfano.
+
+### Il dato geografico
+
+`geo-italia.js` e' **generato** da `scripts/semplifica-geo.mjs`, mai modificato a
+mano. Sorgente: il GeoJSON ISTAT di openpolis, 2.750.289 byte, che
+`war_room.js` scaricava da `raw.githubusercontent.com` **a ogni apertura**.
+
+Il criterio di semplificazione e' il budget in pixel, non l'estetica: il riquadro
+e' largo 500 unita' per 12,4 gradi, quindi al massimo zoom (4x) un pixel vale
+0,0062 gradi. Douglas-Peucker a **0,003 gradi** tiene l'errore sotto mezzo pixel.
+Risultato: 124.559 byte, 8.493 vertici. I tetti nello script (130 KB, 9.000
+vertici) sono MISURATI: servono a cogliere una regressione, non a esprimere un
+desiderio.
+
+Ogni regione porta un `label`, punto verificato **dentro** i propri confini: il
+baricentro della Calabria cade nel Tirreno. (Nel calcolarlo e' saltato fuori che
+due dei venti `REGION_CENTROIDS` scritti a mano in `geoCoords.js` — Liguria e
+Calabria — cadono in mare; il test lo registra dov'e', senza toccarli.)
+
+### Se un giorno la mappa va cambiata di nuovo
+
+Si scrive un backend nuovo e lo si registra con `MapBackend.register(nome, impl)`.
+Il motore non va toccato: chiama `MapBackend.drawPOIs()`, `.updateHQMarker()`,
+`.onceMapClick(cb)` e non sa chi risponde. E' esattamente cosi' che Mapbox e'
+stato sostituito senza fermare il gioco per un giorno.

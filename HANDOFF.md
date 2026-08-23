@@ -1,6 +1,6 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 22 agosto 2026 (sera)
+> Aggiornato: 23 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 > **LEGGI SEMPRE il diario di quello che Vlad ha detto a Gigi mentre non c'eri.**
@@ -21,6 +21,54 @@
 > **Non fidarti di quello che Gigi dice di aver fatto.** Non ricorda niente fra un
 > messaggio e l'altro, quindi quando afferma «l'ho segnalato a Claude» non sta
 > mentendo: sta completando la frase più probabile. Verifica nei file.
+
+---
+
+# 🟢 23/08 — la mappa non e' piu' Mapbox
+
+Otto passi, otto commit sul ramo **`mappa-2d`** (NON ancora unito a `main`).
+`npm test` verde: **1888 prove**, erano 1752.
+
+**Cosa vede il giocatore.** Una carta politica dell'Italia in SVG: venti regioni
+cliccabili (grigio = bloccata, verde = sbloccata, oro = tua), le 41 citta', la
+rete autostradale, le auto che si muovono con la loro scia, zoom 1x-4x e pan.
+Cliccando una regione si apre un pannello con prezzo della licenza e reputazione
+richiesta; l'acquisto passa da `window.buyRegion`, la stessa della scheda
+Licenze. Nessuna porta nuova per il denaro.
+
+**Il difetto piu' importante chiuso:** da telefono **non si poteva cominciare a
+giocare**. Fondare l'azienda richiedeva un click sulla mappa, e `map.js` si
+rifiutava di creare Mapbox sotto i 768 px. Ora c'e' l'elenco delle 20 regioni, e
+su schermo stretto la mappa 2D viene scelta da sola.
+
+**Cosa e' cambiato sotto.**
+- `window.MapBackend` (`map-api.js`) e' la giuntura: il motore chiede la mappa a
+  un nome, non a un file. E' quello che ha permesso di far convivere le due mappe
+  e di alternarle senza ricaricare la pagina.
+- `geo-italia.js` porta i confini nel repo: **2.750.289 byte scaricati a ogni
+  apertura della War Room diventano 124.559 nel repo**, e cadono tre origini di
+  terze parti dalla CSP (api.mapbox.com, events.mapbox.com,
+  raw.githubusercontent.com).
+- `ride-progress.js` tira fuori l'orologio delle corse da `map-visual.js`: era
+  l'unico pezzo del motore delle corse che il banco di prova non poteva caricare.
+  Ora ha 15 test suoi. L'elenco dei file esclusi dal banco scende da tre a due.
+- Il ciclo di animazione non parte piu' al caricamento del file. Prima girava per
+  sempre — a mappa chiusa e a scheda del browser nascosta.
+
+**Difetti vecchi trovati per strada e riparati:** aprire la mappa, chiuderla e
+riaprirla dava uno schermo vuoto (`_destroyMap` nascondeva `#leaflet-map` e
+nessuno lo rimostrava); il centroide della Puglia faceva fondare in Basilicata;
+un click in mare poteva mettere la sede in Sardegna.
+
+## ⚠️ Due cose da fare a mano
+
+1. **Revocare il token Mapbox sulla dashboard.** E' un `pk.` pubblico ristretto
+   per dominio, ma resta nella storia di git e finche' e' valido consuma quota.
+   Non posso farlo io.
+2. **Decidere quanto del ramo mandare in produzione.** I commit sono separati
+   apposta: fino a `70b3797` Mapbox e' ancora caricabile con `?mappa=mapbox` (il
+   paracadute). L'ultimo commit lo cancella. Se vuoi il paracadute per una
+   release, unisci fino a `70b3797` e tieni l'ultimo per dopo.
 
 ---
 
