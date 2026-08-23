@@ -40,20 +40,14 @@ function features() {
  * Le funzioni spente il 20/08/2026, quando la regola e' stata invertita.
  * PUO' SOLO ACCORCIARSI. Vuota significa che tutto il gioco e' stato
  * verificato almeno una volta.
+ *
+ * VUOTA DAL 22/08/2026. Le ultime due (mercatoP2P, politica) sono uscite quel
+ * giorno per decisione di Vlad: tutto il gioco resta disponibile dall'inizio,
+ * nessuna area sbloccabile (HANDOFF.md). Da allora nessuna voce di FEATURES
+ * puo' tornare false: lo sorveglia anche
+ * test/guardrail/tutto-visibile-e-dati-veri.test.js.
  */
-const SPENTE_ALL_INIZIO = new Set([
-    /* Il 21/08 sera ne sono uscite nove in un colpo: alleanze, cripto, vtk,
-       turismo, infrastrutture, holding, nemesi, negozioDC, vip. Ognuna aveva il
-       suo collaudo profondo in test/funzioni/ — da 22 a 43 prove — con tutte le
-       azioni eseguite nel banco e il denaro che passa da CE_money o da una RPC.
-       Restano queste due, e per due ragioni diverse:
-       - mercatoP2P: il collaudo c'e' e regge, ma p2p-market.js sovrascrive
-         window.listCarForSale di engine-fleet.js. Accenderlo adesso romperebbe
-         il mercato NPC, che e' nel nucleo ed e' acceso. Si aspetta la
-         separazione dei due nomi.
-       - politica: il collaudo non e' ancora stato fatto. */
-    'mercatoP2P', 'politica',
-]);
+const SPENTE_ALL_INIZIO = new Set([]);
 
 describe('guardrail — gli interruttori delle funzioni', () => {
     test('ogni funzione dichiarata vale true o false', () => {
