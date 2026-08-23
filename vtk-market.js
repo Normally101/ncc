@@ -65,10 +65,14 @@ var VTK_SHOP_ITEMS = [
         desc:  'Incremento immediato della reputazione aziendale.',
         cost:  300,
         apply: (gs) => {
-            const cap = 5.0 + (gs.prestige || 0);
-            const before = gs.reputation || 0;
-            if (before >= cap) return { ok: false, msg: 'Reputazione già al massimo.' };
-            gs.reputation = Math.min(cap, before + 0.2);
+            if (!window.CE_money || typeof window.CE_money.reputazioneDopo !== 'function')
+                return { ok: false, msg: 'Porta reputazione non disponibile.' };
+            // Dry-run-safe: qui puo' arrivare una COPIA dello stato (vtkBuyShopItem
+            // prova prima di pagare), quindi si usa la funzione pura della porta e
+            // si scrive solo sullo stato ricevuto. "Al massimo" = il delta non cresce.
+            const dopo = window.CE_money.reputazioneDopo(gs, 0.2);
+            if (dopo <= (gs.reputation || 0)) return { ok: false, msg: 'Reputazione già al massimo.' };
+            gs.reputation = dopo;
             return { ok: true, msg: '⭐ Reputazione +0.2★.' };
         },
     },
