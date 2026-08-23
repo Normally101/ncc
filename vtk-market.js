@@ -136,7 +136,6 @@ window.vtkFillOrder = async function(orderId, dcCost) {
         if (typeof showNotification === 'function') showNotification(window.CE_Sec.userError('Acquisto non riuscito', error), 'error');
         return;
     }
-
     if (typeof updateUI === 'function') updateUI();
     if (typeof saveGame === 'function') saveGame();
     if (typeof showNotification === 'function') showNotification(`✅ Acquistati ${data?.vtk_received || 0} VTK!`, 'success');

@@ -41,7 +41,7 @@ function setupVTKEnv(rpcResponses = {}) {
     };
     sandbox.window.supabaseClient = sandbox.supabaseClient;
 
-    return { sandbox, gs: sandbox.gameState, chiamateDC };
+    return { sandbox, gs: sandbox.gameState, chiamateDC, notifications: env.notifications };
 }
 
 describe('vtk-market — sincronizzazione Driver Coins col server (prevenzione doppio addebito)', () => {
@@ -115,6 +115,28 @@ describe('vtk-market — sincronizzazione Driver Coins col server (prevenzione d
 
             assert.equal(chiamateDC.length, 0, 'in caso di errore RPC non deve spendere DC');
             assert.equal(gs.driverCoins, 50, 'il saldo DC non deve cambiare');
+        });
+
+        test('vtkFillOrder se la RPC fallisce si ferma: notifica errore, nessun messaggio di successo', async () => {
+            // Un errore RPC deve terminare il flusso: se il ramo error non facesse
+            // return, il codice proseguirebbe nel percorso di successo e mostrerebbe
+            // anche "✅ Acquistati N VTK!" su un ordine che il server ha rifiutato.
+            const { sandbox, gs, notifications } = setupVTKEnv({
+                rpc_fill_vtk_order: () => ({
+                    data: null,
+                    error: { message: 'Ordine già acquistato' },
+                }),
+            });
+
+            gs.driverCoins = 50;
+
+            await sandbox.vtkFillOrder('ord_123', 10);
+            await new Promise(r => setImmediate(r));
+
+            assert.ok(notifications.some(n => n.type === 'error'),
+                'un fallimento RPC deve notificare un errore');
+            assert.ok(!notifications.some(n => n.type === 'success'),
+                'un fallimento RPC NON deve produrre alcuna notifica di successo');
         });
     });
 });
