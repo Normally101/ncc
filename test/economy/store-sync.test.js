@@ -2,9 +2,12 @@
 /* ============================================================================
    test/economy/store-sync.test.js
 
-   Regressione per il bug economico delle spese Driver Coins nel negozio (engine-store.js):
-   ogni spesa DEVE passare da CE_money.spendDC e sincronizzarsi col server tramite
-   ServerState.spendDriverCoins.
+   Regressione per gli acquisti Driver Coins del negozio (engine-store.js),
+   forma decisa dal server: ogni spesa DEVE passare da CE_money.acquistoServer
+   -> rpc_economy_purchase. Il browser dichiara cosa compra (e quanta cosa,
+   per le voci a prezzo unitario); il finto economyPurchase di game-env.js
+   legge il SUO listino, controlla il saldo, scala lui e restituisce il saldo
+   nuovo — ed e' solo quello che il client scrive.
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
@@ -12,31 +15,31 @@ const { freshEnv } = require('../../test-support/game-env.js');
 
 function setupStoreEnv() {
     const rpcCalls = [];
-    const env = freshEnv({
-        serverState: {
-            spendDriverCoins: async (motivo, n) => {
-                rpcCalls.push({ motivo, n });
-                return { ok: true, driver_coins: (env.sandbox.gameState.driverCoins || 0) };
-            },
-        },
-    });
+    const env = freshEnv();
+    // Avvolge la mock fedele di game-env per registrare le chiamate RPC.
+    const vera = env.sandbox.ServerState.economyPurchase.bind(env.sandbox.ServerState);
+    env.sandbox.ServerState.economyPurchase = async (...a) => {
+        rpcCalls.push({ tipo: a[0], itemId: a[1], quantita: a[2] });
+        return vera(...a);
+    };
     return { env, sandbox: env.sandbox, gs: env.sandbox.gameState, rpcCalls };
 }
 
-describe('engine-store — sincronizzazione Driver Coins col server (CE_money.spendDC)', () => {
+describe('engine-store — acquisti DC sincronizzati col server (CE_money.acquistoServer)', () => {
 
     describe('activateExecutivePass', () => {
-        test('attiva pass, scala 150 DC e invia RPC al server', async () => {
+        test('attiva pass e lascia il saldo dichiarato dal server', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 200;
             sandbox.activateExecutivePass();
             await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 50, 'il saldo locale DC deve diminuire di 150');
+            assert.equal(gs.driverCoins, 50, 'il server ha scalato 150 e restituito 50');
             assert.equal(gs.executivePassActive, true);
-            assert.deepEqual(rpcCalls, [{ motivo: 'executive_pass', n: 150 }]);
+            assert.deepEqual(rpcCalls.map(c => ({ itemId: c.itemId, quantita: c.quantita })),
+                [{ itemId: 'executive_pass', quantita: 1 }]);
         });
 
-        test('fondi insufficienti: non attiva pass e non chiama spendDriverCoins', async () => {
+        test('fondi insufficienti: non attiva pass e non chiama la RPC con esito ok', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 100;
             gs.executivePassActive = false;
@@ -44,12 +47,13 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 100);
             assert.equal(gs.executivePassActive, false);
-            assert.deepEqual(rpcCalls, []);
+            // Il tentativo parte e il server lo RIFIUTA: nessun effetto, nessun saldo toccato.
+            assert.equal(rpcCalls.length, 1);
         });
     });
 
     describe('skipConstruction', () => {
-        test('completa costruzione, scala 8 DC e chiama spendDriverCoins', async () => {
+        test('completa costruzione e scala 8 DC dal saldo del server', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 20;
             gs.constructions = [{ invId: 'garage_roma' }];
@@ -58,14 +62,14 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 12);
             assert.ok(gs.investments.includes('garage_roma'));
-            assert.equal(gs.constructions.length, 0);
-            assert.deepEqual(rpcCalls, [{ motivo: 'skip_construction', n: 8 }]);
+            assert.deepEqual(rpcCalls.map(c => c.itemId), ['skip_construction']);
         });
 
-        test('costruzione non trovata: non scala DC e non chiama RPC', async () => {
+        test('costruzione non trovata: non chiama la RPC', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 20;
             gs.constructions = [];
+            gs.investments = [];
             sandbox.skipConstruction('inesistente');
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 20);
@@ -76,165 +80,134 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 5;
             gs.constructions = [{ invId: 'garage_roma' }];
+            gs.investments = [];
             sandbox.skipConstruction('garage_roma');
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 5);
+            assert.deepEqual(gs.investments, []);
             assert.equal(gs.constructions.length, 1);
-            assert.deepEqual(rpcCalls, []);
+            assert.equal(rpcCalls.length, 1, 'il server rifiuta: nessun effetto applicato');
         });
     });
 
     describe('fuelBoostDC', () => {
-        test('rifornisce la flotta, scala 3 DC e chiama spendDriverCoins', async () => {
+        test('rifornisce la flotta e scala 3 DC dal saldo del server', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 10;
-            gs.fleet = [{ id: 'v1', fuel: 20 }, { id: 'v2', fuel: 50 }];
+            gs.driverCoins = 20;
+            gs.fleet = [{ id: 'v1', fuel: 10 }];
             sandbox.fuelBoostDC();
             await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 7);
+            assert.equal(gs.driverCoins, 17);
             assert.equal(gs.fleet[0].fuel, 100);
-            assert.equal(gs.fleet[1].fuel, 100);
-            assert.deepEqual(rpcCalls, [{ motivo: 'fuel_boost', n: 3 }]);
+            assert.deepEqual(rpcCalls.map(c => c.itemId), ['fuel_boost']);
         });
 
         test('fondi insufficienti: flotta non rifornita', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 2;
-            gs.fleet = [{ id: 'v1', fuel: 20 }];
+            gs.fleet = [{ id: 'v1', fuel: 10 }];
             sandbox.fuelBoostDC();
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 2);
-            assert.equal(gs.fleet[0].fuel, 20);
-            assert.deepEqual(rpcCalls, []);
+            assert.equal(gs.fleet[0].fuel, 10);
+            assert.equal(rpcCalls.length, 1, 'il server rifiuta: nessun effetto applicato');
         });
     });
 
     describe('wakeDriverDC', () => {
-        test('risveglia autista a riposo, scala 3 DC e chiama spendDriverCoins', async () => {
+        test('risveglia autista a riposo e scala 3 DC dal saldo del server', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 10;
-            gs.drivers = [{ id: 'drv1', name: 'Mario', status: 'resting', restHoursLeft: 5, fatigue: 40 }];
-            sandbox.wakeDriverDC('drv1');
+            gs.driverCoins = 20;
+            gs.drivers = [{ id: 'd1', name: 'Mario', status: 'resting', restHoursLeft: 4, fatigue: 50 }];
+            sandbox.wakeDriverDC('d1');
             await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 7);
+            assert.equal(gs.driverCoins, 17);
             assert.equal(gs.drivers[0].status, 'idle');
-            assert.equal(gs.drivers[0].restHoursLeft, 0);
-            assert.equal(gs.drivers[0].fatigue, 10);
-            assert.deepEqual(rpcCalls, [{ motivo: 'wake_driver', n: 3 }]);
+            assert.deepEqual(rpcCalls.map(c => c.itemId), ['wake_driver']);
         });
 
         test('autista non a riposo: non scala DC', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 10;
-            gs.drivers = [{ id: 'drv1', name: 'Mario', status: 'idle' }];
-            sandbox.wakeDriverDC('drv1');
-            await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 10);
-            assert.deepEqual(rpcCalls, []);
-        });
-    });
-
-    describe('energyBoostDC', () => {
-        test('ricarica energia CEO al 100%, scala 4 DC e chiama spendDriverCoins', async () => {
-            const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 10;
-            gs.energy = 30;
-            sandbox.energyBoostDC();
-            await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 6);
-            assert.equal(gs.energy, 100);
-            assert.deepEqual(rpcCalls, [{ motivo: 'energy_boost', n: 4 }]);
-        });
-
-        test('energia già al 100%: non scala DC', async () => {
-            const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 10;
-            gs.energy = 100;
-            sandbox.energyBoostDC();
-            await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 10);
-            assert.deepEqual(rpcCalls, []);
-        });
-    });
-
-    describe('instaHealDC', () => {
-        test('azzera stress e burnout, scala 2 DC e chiama spendDriverCoins', async () => {
-            const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 10;
-            gs.drivers = [{ id: 'drv1', name: 'Mario', status: 'resting', stress_level: 60, burnout_until: 5, fatigue: 70 }];
-            sandbox.instaHealDC('drv1');
-            await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 8);
-            assert.equal(gs.drivers[0].stress_level, 0);
-            assert.equal(gs.drivers[0].burnout_until, null);
-            assert.equal(gs.drivers[0].fatigue, 20);
-            assert.equal(gs.drivers[0].status, 'idle');
-            assert.deepEqual(rpcCalls, [{ motivo: 'insta_heal', n: 2 }]);
-        });
-
-        test('autista già in forma: non scala DC', async () => {
-            const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 10;
-            gs.drivers = [{ id: 'drv1', name: 'Mario', status: 'idle', stress_level: 0, burnout_until: null }];
-            sandbox.instaHealDC('drv1');
-            await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 10);
-            assert.deepEqual(rpcCalls, []);
-        });
-    });
-
-    describe('wakeAllDriversDC', () => {
-        test('risveglia tutti gli autisti a riposo (escluso CEO) e spende DC calcolati', async () => {
-            const { sandbox, gs, rpcCalls } = setupStoreEnv();
-            gs.driverCoins = 20;
-            gs.drivers = [
-                { id: 'ceo', name: 'CEO', status: 'resting' },
-                { id: 'd1', name: 'Mario', status: 'resting', restHoursLeft: 3, fatigue: 40 },
-                { id: 'd2', name: 'Luigi', status: 'resting', restHoursLeft: 2, fatigue: 50 },
-            ];
-            sandbox.wakeAllDriversDC();
-            await new Promise(r => setImmediate(r));
-            // 2 autisti * 2 = 4 DC
-            assert.equal(gs.driverCoins, 16);
-            assert.equal(gs.drivers[1].status, 'idle');
-            assert.equal(gs.drivers[2].status, 'idle');
-            assert.deepEqual(rpcCalls, [{ motivo: 'wake_all_drivers', n: 4 }]);
-        });
-
-        test('nessun autista a riposo: non scala DC', async () => {
-            const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 20;
             gs.drivers = [{ id: 'd1', name: 'Mario', status: 'idle' }];
-            sandbox.wakeAllDriversDC();
+            sandbox.wakeDriverDC('d1');
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 20);
             assert.deepEqual(rpcCalls, []);
         });
     });
 
-    describe('healAllDriversDC', () => {
-        test('guarisce tutti gli autisti stressati (escluso CEO) e spende DC calcolati', async () => {
+    describe('energyBoostDC', () => {
+        test('ricarica il CEO e scala 4 DC dal saldo del server', async () => {
+            const { sandbox, gs, rpcCalls } = setupStoreEnv();
+            gs.driverCoins = 20;
+            gs.energy = 40;
+            sandbox.energyBoostDC();
+            await new Promise(r => setImmediate(r));
+            assert.equal(gs.driverCoins, 16);
+            assert.equal(gs.energy, 100);
+            assert.deepEqual(rpcCalls.map(c => c.itemId), ['energy_boost']);
+        });
+
+        test('fondi insufficienti: energia invariata', async () => {
+            const { sandbox, gs, rpcCalls } = setupStoreEnv();
+            gs.driverCoins = 3;
+            gs.energy = 40;
+            sandbox.energyBoostDC();
+            await new Promise(r => setImmediate(r));
+            assert.equal(gs.driverCoins, 3);
+            assert.equal(gs.energy, 40);
+            assert.equal(rpcCalls.length, 1, 'il server rifiuta: nessun effetto applicato');
+        });
+    });
+
+    describe('instaHealDC', () => {
+        test('azzera lo stress e scala 2 DC dal saldo del server', async () => {
+            const { sandbox, gs, rpcCalls } = setupStoreEnv();
+            gs.driverCoins = 20;
+            gs.drivers = [{ id: 'd1', name: 'Mario', status: 'resting', stress_level: 80, fatigue: 60 }];
+            sandbox.instaHealDC('d1');
+            await new Promise(r => setImmediate(r));
+            assert.equal(gs.driverCoins, 18);
+            assert.equal(gs.drivers[0].stress_level, 0);
+            assert.equal(gs.drivers[0].status, 'idle');
+            assert.deepEqual(rpcCalls.map(c => c.itemId), ['insta_heal']);
+        });
+
+        test('autista gia\' in forma: non scala DC', async () => {
+            const { sandbox, gs, rpcCalls } = setupStoreEnv();
+            gs.driverCoins = 20;
+            gs.drivers = [{ id: 'd1', name: 'Mario', status: 'idle', stress_level: 0, burnout_until: null }];
+            sandbox.instaHealDC('d1');
+            await new Promise(r => setImmediate(r));
+            assert.equal(gs.driverCoins, 20);
+            assert.deepEqual(rpcCalls, []);
+        });
+    });
+
+    describe('wakeAllDriversDC', () => {
+        test('sveglia tutti e dichiara al server QUANTI autisti', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 20;
             gs.drivers = [
-                { id: 'ceo', name: 'CEO', stress_level: 50 },
-                { id: 'd1', name: 'Mario', status: 'idle', stress_level: 40, fatigue: 60 },
-                { id: 'd2', name: 'Luigi', status: 'resting', stress_level: 0, burnout_until: 3, fatigue: 70 },
+                { id: 'ceo', name: 'CEO', status: 'resting' },
+                { id: 'd1', name: 'Mario', status: 'resting', restHoursLeft: 4, fatigue: 60 },
+                { id: 'd2', name: 'Anna', status: 'resting', restHoursLeft: 2, fatigue: 30 },
             ];
-            sandbox.healAllDriversDC();
+            sandbox.wakeAllDriversDC();
             await new Promise(r => setImmediate(r));
-            // 2 autisti * 2 = 4 DC
+            // Il totale lo decide il server dal suo listino: unitario 2 × 2 autisti.
             assert.equal(gs.driverCoins, 16);
-            assert.equal(gs.drivers[1].stress_level, 0);
-            assert.equal(gs.drivers[2].burnout_until, null);
+            assert.equal(gs.drivers[1].status, 'idle');
             assert.equal(gs.drivers[2].status, 'idle');
-            assert.deepEqual(rpcCalls, [{ motivo: 'heal_all_drivers', n: 4 }]);
+            assert.deepEqual(rpcCalls.map(c => ({ itemId: c.itemId, quantita: c.quantita })),
+                [{ itemId: 'wake_all_drivers', quantita: 2 }]);
         });
 
-        test('nessun autista stressato: non scala DC', async () => {
+        test('nessun autista a riposo: non chiama la RPC', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 20;
-            gs.drivers = [{ id: 'd1', name: 'Mario', stress_level: 0, burnout_until: null }];
+            gs.drivers = [{ id: 'd1', name: 'Mario', status: 'idle', stress_level: 0, burnout_until: null }];
             sandbox.healAllDriversDC();
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 20);
@@ -243,7 +216,7 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
     });
 
     describe('skipAllAcademyDC', () => {
-        test('completa tutti i corsi accademia, scala 5 DC per corso e chiama spendDriverCoins', async () => {
+        test('completa i corsi e dichiara al server QUANTI corsi', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 30;
             gs.drivers = [
@@ -256,15 +229,16 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             ];
             sandbox.skipAllAcademyDC();
             await new Promise(r => setImmediate(r));
-            // 2 corsi * 5 = 10 DC
+            // Il totale lo decide il server dal suo listino: unitario 5 × 2 corsi.
             assert.equal(gs.driverCoins, 20);
             assert.equal(gs.drivers[0].driving, 60);
             assert.equal(gs.drivers[1].comfort, 75);
             assert.equal(gs.driverAcademy.length, 0);
-            assert.deepEqual(rpcCalls, [{ motivo: 'skip_all_academy', n: 10 }]);
+            assert.deepEqual(rpcCalls.map(c => ({ itemId: c.itemId, quantita: c.quantita })),
+                [{ itemId: 'skip_all_academy', quantita: 2 }]);
         });
 
-        test('nessun corso attivo: non scala DC', async () => {
+        test('nessun corso attivo: non chiama la RPC', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 30;
             gs.driverAcademy = [];
@@ -276,21 +250,22 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
     });
 
     describe('skipAllConstructionsDC', () => {
-        test('completa tutte le costruzioni, scala 8 DC per costruzione e chiama spendDriverCoins', async () => {
+        test('completa le costruzioni e dichiara al server QUANTE sono', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 30;
             gs.investments = [];
             gs.constructions = [{ invId: 'garage_1' }, { invId: 'garage_2' }];
             sandbox.skipAllConstructionsDC();
             await new Promise(r => setImmediate(r));
-            // 2 costruzioni * 8 = 16 DC
+            // Il totale lo decide il server dal suo listino: unitario 8 × 2.
             assert.equal(gs.driverCoins, 14);
             assert.deepEqual(gs.investments, ['garage_1', 'garage_2']);
             assert.equal(gs.constructions.length, 0);
-            assert.deepEqual(rpcCalls, [{ motivo: 'skip_all_constructions', n: 16 }]);
+            assert.deepEqual(rpcCalls.map(c => ({ itemId: c.itemId, quantita: c.quantita })),
+                [{ itemId: 'skip_all_constructions', quantita: 2 }]);
         });
 
-        test('nessuna costruzione attiva: non scala DC', async () => {
+        test('nessuna costruzione attiva: non chiama la RPC', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 30;
             gs.constructions = [];
@@ -302,7 +277,7 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
     });
 
     describe('opsBundleDC', () => {
-        test('attiva Pacchetto Operativo, scala 9 DC e chiama spendDriverCoins', async () => {
+        test('attiva Pacchetto Operativo e scala 9 DC dal saldo del server', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 20;
             gs.fleet = [{ id: 'v1', fuel: 10 }];
@@ -314,7 +289,7 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             assert.equal(gs.fleet[0].fuel, 100);
             assert.equal(gs.energy, 100);
             assert.equal(gs.drivers[0].status, 'idle');
-            assert.deepEqual(rpcCalls, [{ motivo: 'ops_bundle', n: 9 }]);
+            assert.deepEqual(rpcCalls.map(c => c.itemId), ['ops_bundle']);
         });
 
         test('fondi insufficienti: pacchetto operativo non attivato', async () => {
@@ -325,12 +300,12 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 5);
             assert.equal(gs.energy, 30);
-            assert.deepEqual(rpcCalls, []);
+            assert.equal(rpcCalls.length, 1, 'il server rifiuta: nessun effetto applicato');
         });
     });
 
     describe('fullBundleDC', () => {
-        test('attiva Pacchetto Imperiale, scala 35 DC e chiama spendDriverCoins', async () => {
+        test('attiva Pacchetto Imperiale e scala 35 DC dal saldo del server', async () => {
             const { sandbox, gs, rpcCalls } = setupStoreEnv();
             gs.driverCoins = 50;
             gs.fleet = [{ id: 'v1', fuel: 10 }];
@@ -349,7 +324,7 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             assert.deepEqual(gs.investments, ['c1']);
             assert.equal(gs.constructions.length, 0);
             assert.equal(gs.driverAcademy.length, 0);
-            assert.deepEqual(rpcCalls, [{ motivo: 'full_bundle', n: 35 }]);
+            assert.deepEqual(rpcCalls.map(c => c.itemId), ['full_bundle']);
         });
 
         test('fondi insufficienti: pacchetto imperiale non attivato', async () => {
@@ -360,7 +335,7 @@ describe('engine-store — sincronizzazione Driver Coins col server (CE_money.sp
             await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 10);
             assert.equal(gs.energy, 20);
-            assert.deepEqual(rpcCalls, []);
+            assert.equal(rpcCalls.length, 1, 'il server rifiuta: nessun effetto applicato');
         });
     });
 });

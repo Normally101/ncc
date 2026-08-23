@@ -192,6 +192,27 @@ function makeServerState(sandboxRef, overrides = {}) {
                { ok, item_id, spent, driver_coins } — prima mancavano item_id e spent. */
             return { ok: true, item_id: itemId, spent: amount, driver_coins: Math.max(0, gs().driverCoins || 0) };
         },
+        /* rpc_economy_purchase (65_economy_server_purchases.sql): la forma nuova.
+           Come il vero server NON riceve nessun prezzo dal browser: lo legge dal
+           SUO catalogo, controlla il saldo, scala lui e restituisce quello nuovo
+           — che e' cio' che CE_money.acquistoServer scrive in gameState. Un finto
+           che si fidasse dell'importo mandato dal client sarebbe esattamente il
+           bug che questo lavoro toglie. */
+        economyPurchase: async (tipo, itemId, quantita) => {
+            const CATALOGO_DC = {
+                executive_pass: 150, skip_construction: 8, fuel_boost: 3, wake_driver: 3,
+                energy_boost: 4, insta_heal: 2, wake_all_drivers: 2, heal_all_drivers: 2,
+                skip_all_academy: 5, skip_all_constructions: 8, ops_bundle: 9, full_bundle: 35,
+            };
+            const prezzo = CATALOGO_DC[itemId];
+            if (tipo !== 'driver_coins_shop' || !prezzo) return null; // voce di catalogo inesistente -> rifiuto
+            const q = Math.max(1, Math.min(quantita || 1, 100));
+            const saldo = gs().driverCoins || 0;
+            if (saldo < prezzo * q) return null; // fondi insufficienti: rifiuto, nulla toccato
+            gs().driverCoins = saldo - prezzo * q;
+            return { ok: true, purchase_type: tipo, item_id: itemId, quantity: q,
+                     currency: 'driver_coins', spent: prezzo * q, driver_coins: gs().driverCoins, cash: null };
+        },
         findServerVehicle: () => null,
         findServerDriver: () => null,
     };

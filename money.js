@@ -189,6 +189,56 @@ var CE_money = (function () {
         return true;
     }
 
+    /* ── ACQUISTI DECISI DAL SERVER ───────────────────────────────────────
+       La forma giusta (decisione Vlad 22/08/2026): il browser dice COSA vuole
+       comprare, il server legge il prezzo dalla sua tabella (rpc_economy_
+       purchase, 65_economy_server_purchases.sql), controlla il saldo, scala
+       lui e RESTITUISCE il saldo nuovo. Qui non si calcola niente: si scrive
+       soltanto il saldo che il server dichiara, come gia' fanno le aste con
+       accreditatoDalServer/addebitatoDalServer.
+       A differenza di spendDC NON c'e' addebito locale in attesa: finche' la
+       RPC non risponde l'effetto comprato non parte, quindi un rifiuto non
+       deve annullare nulla. */
+
+    /**
+     * Chiede al server un acquisto del catalogo economico e scrive il saldo
+     * che il server restituisce. Non calcola prezzi ne' saldi.
+     * @param {string} tipo      famiglia di acquisto ('driver_coins_shop', ...)
+     * @param {string} itemId    identificativo della cosa comprata
+     * @param {number} [quantita] quanta cosa (default 1; per le voci a costo
+     *                           unitario resta 1) — il prezzo lo decide comunque
+     *                           il server dal catalogo.
+     * @returns {Promise<boolean>} true solo se il server ha accettato e scritto il saldo.
+     */
+    function acquistoServer(tipo, itemId, quantita) {
+        var gs = _gs();
+        var SS = window.ServerState;
+        var p = SS && typeof SS.economyPurchase === 'function'
+            ? SS.economyPurchase(tipo, itemId, quantita || 1)
+            : null;
+        if (!p || typeof p.then !== 'function') {
+            _avvisa('Operazione non andata a buon fine. Riprova più tardi.');
+            return Promise.resolve(false);
+        }
+        return p.then(function (r) {
+            // Un null NON e' un successo senza saldo: e' un rifiuto (la vera
+            // _rpc trasforma l'errore della RPC in null).
+            if (!r || r.ok !== true) {
+                _avvisa('Operazione non andata a buon fine. Riprova più tardi.');
+                return false;
+            }
+            // Il browser scrive e basta: vale il saldo dichiarato dal server,
+            // anche se quello locale diceva tutt'altra cosa prima dell'acquisto.
+            if (r.driver_coins != null) gs.driverCoins = r.driver_coins;
+            if (r.cash != null) gs.cash = r.cash;
+            if (typeof updateUI === 'function') updateUI();
+            return true;
+        }).catch(function () {
+            _avvisa('Operazione non andata a buon fine. Riprova più tardi.');
+            return false;
+        });
+    }
+
     /* ── REPUTAZIONE ──────────────────────────────────────────────────────
        Il tetto e' `5.0 + prestige`, non `5`: copiato a mano ~22 volte nel
        codice e gia' sbagliato in daily-orders.js:157, dove chi ha fatto
@@ -205,7 +255,7 @@ var CE_money = (function () {
     return {
         spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC,
         addReputation: addReputation, accreditatoDalServer: accreditatoDalServer,
-        addebitatoDalServer: addebitatoDalServer,
+        addebitatoDalServer: addebitatoDalServer, acquistoServer: acquistoServer,
     };
 })();
 
