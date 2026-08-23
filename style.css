@@ -54,7 +54,7 @@
     --r-sm: 6px; --r-md: 10px; --r-lg: 14px; --r-xl: 20px;
     --font-mono:    'Roboto Mono', monospace;
     --font-display: 'Orbitron', sans-serif;
-    --font-body:    'Inter', system-ui, sans-serif;
+    --font-body:    'Inter', 'Open Sans', Arial, Helvetica, sans-serif;
     --ease-fast:  0.12s ease;
     --ease-std:   0.20s ease;
     --ease-slow:  0.35s ease;
@@ -72,7 +72,8 @@
 }
 
 body {
-    font-family: 'Inter', system-ui, sans-serif;
+    /* Font globale stile eRepublik (richiesta Vlad): stack sans-serif pulito */
+    font-family: 'Inter', 'Open Sans', Arial, Helvetica, sans-serif;
     background: #0a0c12;
     font-size: 14px;
     -webkit-font-smoothing: antialiased;
@@ -482,7 +483,7 @@ body.ceo-exhausted #main-panel::after {
 }
 
 /* Base font upgrade for data elements */
-body { font-family: 'Montserrat', 'Inter', system-ui, sans-serif; }
+body { font-family: 'Inter', 'Open Sans', Arial, Helvetica, sans-serif; }
 .font-mono { font-family: 'Roboto Mono', monospace !important; }
 
 /* ── Finance Header ──────────────────────────────────────────── */
@@ -688,7 +689,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     margin-bottom: 0.25rem;
 }
 .ss-subtitle {
-    font-size: 0.75rem; color: #6b7280;
+    font-size: 0.75rem; color: #9ca3af;
     letter-spacing: 0.08em;
     margin-bottom: 0.25rem;
 }
@@ -2890,13 +2891,13 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .campaign-desc {
     font-size: 8px;
-    color: #6b7280;
+    color: #e5e7eb;
     margin-bottom: 6px;
     line-height: 1.5;
 }
 .campaign-strat {
     font-size: 8px;
-    color: #4b5563;
+    color: #e5e7eb;
     line-height: 1.5;
     margin-bottom: 8px;
     font-style: italic;
@@ -2965,7 +2966,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     font-size: 9px;
     margin-bottom: 4px;
 }
-.mkt-roi-label { color: #6b7280; }
+.mkt-roi-label { color: #9ca3af; }
 .mkt-roi-value { color: #22c55e; font-weight: 600; font-family: 'Courier New', monospace; }
 
 /* ================================================================
@@ -4681,7 +4682,7 @@ select:focus {
    non vengono convertite. Vedi DESIGN.md sezione "EM".
    ════════════════════════════════════════════════════════════════════ */
 .em{
-  --em-card:#161b22; --em-ink:#e6edf3; --em-muted:#6b7280; --em-dim:#6b7280;
+  --em-card:#161b22; --em-ink:#e6edf3; --em-muted:#9ca3af; --em-dim:#9ca3af;
   --em-line:#21262d; --em-line2:#21262d;
   --em-blue:#2f74c0; --em-blue-d:#245d9c; --em-green:#1aa06a; --em-green-d:#15885a;
   --em-gold:#c79a2a; --em-amber:#e0922e; --em-violet:#7c5fc9; --em-red:#db5746;
