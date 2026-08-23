@@ -141,10 +141,12 @@ describe('rides/driver-can-take-ride — idoneità autista per assegnazione cors
         assert.equal(sandbox._driverCanTakeRide(driver, rideMismatch), false, 'con vehicleClass diversa da quella richiesta deve rifiutare');
     });
 
-    test('altri vincoli: autista a riposo (resting) o coda piena bloccano l\'assegnazione', () => {
+    test('altri vincoli: autista a riposo (resting) o monte ore esaurito bloccano l\'assegnazione', () => {
         const { sandbox } = freshEnv();
         const car = { id: 'car1', tier: 'standard', condition: 90, outOfService: false };
         const driverResting = { id: 'd1', name: 'Mario', status: 'resting', assignedCarId: 'car1', queue: [] };
+        // 10 corse dummy senza prezzo → durata default ~57min l'una: ~9h30m totali,
+        // oltre il tetto di 4h per autista (la coda si misura in ore dal 22/08/2026).
         const driverFullQueue = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: new Array(10).fill({ id: 'dummy' }) };
 
         sandbox.gameState.fleet = [car];
@@ -153,21 +155,23 @@ describe('rides/driver-can-take-ride — idoneità autista per assegnazione cors
         const ride = { id: 'r1', tier: 'standard' };
 
         assert.equal(sandbox._driverCanTakeRide(driverResting, ride), false, 'autista a riposo non deve poter accettare corse');
-        assert.equal(sandbox._driverCanTakeRide(driverFullQueue, ride), false, 'autista con coda di 10 corse (senza Executive Pass) deve rifiutare nuove corse');
+        assert.equal(sandbox._driverCanTakeRide(driverFullQueue, ride), false, 'autista con il monte ore esaurito deve rifiutare nuove corse');
     });
 
-    test('limite coda: un autista con 10 corse in coda non può prendere la corsa mentre con 9 può', () => {
+    test('limite coda in ORE: sotto tetto (3h45m) passa, oltre tetto (4h20m) no — qualunque sia il numero di corse', () => {
         const { sandbox } = freshEnv();
         const car = { id: 'car1', tier: 'standard', condition: 90, outOfService: false };
-        const driverWith9 = { id: 'd1', name: 'Mario', status: 'idle', assignedCarId: 'car1', queue: new Array(9).fill({ id: 'dummy' }) };
-        const driverWith10 = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: new Array(10).fill({ id: 'dummy' }) };
+        // price 15 → ~25min l'una: 9 × 25min = 3h45m < tetto 4h
+        const sottoTetto = { id: 'd1', name: 'Mario', status: 'idle', assignedCarId: 'car1', queue: Array.from({ length: 9 }, () => ({ price: 15 })) };
+        // price 1000 → ~2h10m l'una: 2 × 130min = 4h20m > tetto 4h, con sole DUE corse
+        const oltreTetto = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: [{ price: 1000 }, { price: 1000 }] };
 
         sandbox.gameState.fleet = [car];
-        sandbox.gameState.drivers = [driverWith9, driverWith10];
+        sandbox.gameState.drivers = [sottoTetto, oltreTetto];
 
         const ride = { id: 'r1', tier: 'standard' };
 
-        assert.equal(sandbox._driverCanTakeRide(driverWith9, ride), true, 'con 9 elementi in coda deve poter prendere la corsa');
-        assert.equal(sandbox._driverCanTakeRide(driverWith10, ride), false, 'con 10 elementi in coda (piena) non deve poter prendere la corsa');
+        assert.equal(sandbox._driverCanTakeRide(sottoTetto, ride), true, '3h45m stanno nel tetto di 4h: può prendere la corsa');
+        assert.equal(sandbox._driverCanTakeRide(oltreTetto, ride), false, '4h20m superano il tetto di 4h anche con 2 sole corse');
     });
 });

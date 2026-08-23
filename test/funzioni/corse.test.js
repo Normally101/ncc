@@ -1032,9 +1032,10 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
         });
 
         /* Il Pass Executive NON allunga più la coda (decisione Vlad 22/08/2026):
-           vendere "più coda" significa premiare chi gioca di meno. Il limite
-           resta 10 con o senza Pass. */
-        test('assignRideToDriver non allunga la coda oltre 10 nemmeno con Executive Pass attivo', () => {
+           vendere "più coda" significa premiare chi gioca di meno. Dal 22/08 la
+           coda si misura in ORE (tetto per autista comprabile a scatti), e il
+           Pass non tocca quel tetto. */
+        test('assignRideToDriver non allunga il monte ore nemmeno con Executive Pass attivo', () => {
             const { sandbox, gs } = amb;
             gs.executivePassActive = true;
             gs.day = 1;
@@ -1053,7 +1054,7 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             assert.equal(gs.pendingRides.length, 1, 'la corsa deve rimanere in pending se la coda è piena');
         });
 
-        test('_getDriverQueueInfo restituisce lo stesso maxQueue con e senza Executive Pass', () => {
+        test('_getDriverQueueInfo restituisce lo stesso tetto ore con e senza Executive Pass', () => {
             const { sandbox, gs } = amb;
             const driver = gs.drivers.find(d => d.id === 'drv_1');
 
@@ -1065,9 +1066,9 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             gs.executivePassActive = false;
             const infoSenzaPass = sandbox._getDriverQueueInfo(driver, gs);
 
-            assert.equal(infoConPass.maxQueue, infoSenzaPass.maxQueue,
-                'il Pass Executive non deve cambiare il limite della coda');
-            assert.equal(infoConPass.maxQueue, 10);
+            assert.equal(infoConPass.capHours, infoSenzaPass.capHours,
+                'il Pass Executive non deve cambiare il tetto della coda');
+            assert.equal(infoConPass.capHours, 4, 'il tetto di base è 4 ore');
         });
 
         test('_driverCanTakeRide rifiuta alla decima corsa in coda anche con Executive Pass attivo', () => {

@@ -263,6 +263,48 @@ function _formatDuration(ms) {
     return `${m}min`;
 }
 
+// ─── TETTO CODA AUTISTA: MONTE ORE ───────────────────────────────
+// Decisione Vlad 22/08/2026: il tetto della coda non è più un numero di
+// corse ma un monte ore per autista — 4h di base, allungabili coi Driver
+// Coins fino a 12h. Scala degli scatti: 4→6→8→10→12 (ogni scatto +2h);
+// i prezzi crescono col livello e sono in linea con il resto del negozio DC.
+const DRIVER_QUEUE_STEPS = [
+    { hours: 4,  cost: 0 },
+    { hours: 6,  cost: 15 },
+    { hours: 8,  cost: 30 },
+    { hours: 10, cost: 50 },
+    { hours: 12, cost: 80 },
+];
+const DRIVER_QUEUE_BASE_HOURS = DRIVER_QUEUE_STEPS[0].hours;
+const DRIVER_QUEUE_MAX_HOURS  = DRIVER_QUEUE_STEPS[DRIVER_QUEUE_STEPS.length - 1].hours;
+
+function _getDriverQueueCapHours(driver) {
+    const h = Number(driver?.queueCapHours);
+    if (!Number.isFinite(h) || h <= DRIVER_QUEUE_BASE_HOURS) return DRIVER_QUEUE_BASE_HOURS;
+    // Il valore salvato vince, ma mai oltre il massimo vendibile.
+    return Math.min(DRIVER_QUEUE_MAX_HOURS, h);
+}
+
+/* Allunga il tetto ore dell'autista di uno scatto. L'unico pagamento legale
+   è spendDC (mai driverCoins -= diretto): il livello finisce su driver.queueCapHours
+   e sopravvive al ricaricamento perché gli autisti vengono serializzati interi. */
+function upgradeDriverQueueCap(driverId) {
+    const driver = gameState.drivers.find(d => d.id === driverId);
+    if (!driver) return false;
+    const cur = _getDriverQueueCapHours(driver);
+    const next = DRIVER_QUEUE_STEPS.find(s => s.hours === cur + 2);
+    if (!next) {
+        if (typeof showNotification === 'function') showNotification(`${driver.name} ha già il tetto massimo di ${DRIVER_QUEUE_MAX_HOURS}h.`, 'info');
+        return false;
+    }
+    if (!window.CE_money.spendDC(next.cost, 'driver_queue_cap')) return false;
+    driver.queueCapHours = next.hours;
+    saveGame();
+    if (typeof showNotification === 'function') showNotification(`⏳ ${driver.name}: tetto coda a ${next.hours}h (−${next.cost} DC).`, 'success');
+    if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();
+    return true;
+}
+
 function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? gameState : {})) {
     if (!driver) return null;
     const now = Date.now();
@@ -277,9 +319,11 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
     }, 0);
     const totalQueueMs = (isBusy ? currentRemainingMs : 0) + queuedDurationMs;
     // Il Pass Executive non allunga più la coda (decisione Vlad 22/08/2026):
-    // "più coda" premia chi gioca meno, quindi non si vende.
-    const maxQueue = 10;
-    const isFull = queuedRides.length >= maxQueue;
+    // "più coda" premia chi gioca meno, quindi non si vende. La adesso la si
+    // compra a scatti col tetto ore per autista (4h base → 12h).
+    const capHours = _getDriverQueueCapHours(driver);
+    const capMs = capHours * 3_600_000;
+    const isFull = totalQueueMs >= capMs;
     const nextSlotFreeMs = isBusy ? currentRemainingMs : 0;
     const freeAtDate = new Date(now + totalQueueMs);
 
@@ -288,7 +332,8 @@ function _getDriverQueueInfo(driver, gs = (typeof gameState !== 'undefined' ? ga
         isBusy,
         currentRemainingMs,
         queuedCount: queuedRides.length,
-        maxQueue,
+        capHours,
+        capMs,
         isFull,
         queuedDurationMs,
         totalQueueMs,
@@ -320,7 +365,13 @@ function assignRideToDriver(rideId, driverId) {
     const driver = gameState.drivers.find(d => d.id == driverId);
 
     if (rideIdx > -1 && driver) {
-        if (driver.queue.length >= 10) return;
+        const _qInfo = _getDriverQueueInfo(driver);
+        if (_qInfo.isFull) {
+            // Coda piena in ORE: al giocatore serve sapere quando rientra e come allargare.
+            if (typeof showNotification === 'function')
+                showNotification(`⏳ Coda piena per ${driver.name}: lavora fino alle ${_qInfo.freeAtTimeStr} (ancora ${window._formatDuration(_qInfo.totalQueueMs)}). Allarga il tetto ore con i Driver Coins.`, 'error');
+            return;
+        }
         if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
 
         const ride = gameState.pendingRides[rideIdx];
@@ -367,7 +418,7 @@ function _driverCanTakeRide(driver, ride) {
     if (car.condition <= 10) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
     if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
-    if (driver.queue.length >= 10) return false;
+    if (_getDriverQueueInfo(driver).isFull) return false; // tetto in ore, non a numero corse
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable
     if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;
@@ -1039,4 +1090,7 @@ window.checkActiveTrips     = checkActiveTrips;
 window._getRideDurationMs   = _getRideDurationMs;
 window._formatDuration      = _formatDuration;
 window._getDriverQueueInfo  = _getDriverQueueInfo;
+window._getDriverQueueCapHours = _getDriverQueueCapHours;
+window.upgradeDriverQueueCap = upgradeDriverQueueCap;
+window.DRIVER_QUEUE_STEPS   = DRIVER_QUEUE_STEPS;
 window._previewQueueWithRide = _previewQueueWithRide;
