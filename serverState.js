@@ -528,6 +528,11 @@ const ServerState = (() => {
     async function addDriverCoins(amount, itemId = 'sim_purchase') {
         return _rpc('rpc_add_driver_coins', { p_amount: amount, p_item_id: itemId });
     }
+    // Acquisto pacchetti Executive Club: il client passa solo l'ID del pacchetto,
+    // e' la RPC a decidere quanto accreditare (catalogo lato server).
+    async function purchaseDriverCoinPack(packId) {
+        return _rpc('rpc_purchase_dc_pack', { v_pack_id: packId });
+    }
     async function spendDriverCoins(itemId, amount) {
         return _rpc('rpc_ec_spend', { p_item_id: itemId, p_amount: amount });
     }
@@ -614,6 +619,7 @@ const ServerState = (() => {
         buyFleetRepair,
         buyVipContact,
         addDriverCoins,
+        purchaseDriverCoinPack,
         spendDriverCoins,
         buyHRAutomation,
         getState,

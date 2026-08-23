@@ -245,16 +245,15 @@ Nel sistema attuale coesistono tre paradigmi di movimento economico:
 ### Sezione 5: Valuta Premium (Driver Coins) & Token VTK
 
 #### 5.1. Acquisto Driver Coins con Denaro Reale (IAP / Stripe)
-- **Come si muove oggi**: `_dcSimPurchase` o webhook chiama `rpc_add_driver_coins(p_amount, p_item_id)` (`41_cap_driver_coins.sql`).
+- **Come si muove oggi**: dal fix del bypass dell'Executive Club (`65_executive_pack_server_purchase.sql`) i pacchetti dello store passano SOLO da `_dcSimPurchase(packId)` → `rpc_purchase_dc_pack(v_pack_id)`: catalogo prezzi/DC in tabella (`ec_dc_packs`), accredito solo se esiste una riga di pagamento confermato non ancora riscossa in `ec_pack_payments`, consumo della riga nella stessa transazione e registrazione in `coin_transactions`. Il client non passa mai un importo; senza conferma di pagamento nessun coin arriva. Il client allinea il saldo con `CE_money.dcAccreditatiDalServer(saldoAutoritativo)` (nessuna seconda RPC).
 - **Cosa controlla lato server**:
-  - Controlla che `p_amount > 0` e un tetto massimo di sicurezza per chiamata (max 1.000.000 DC).
-  - Rate limiting in `43_ratelimit_driver_coins.sql`.
+  - Pacchetto esistente nel catalogo server (`ec_dc_packs`).
+  - Pagamento confermato e non riscosso (`ec_pack_payments.redeed = FALSE`).
+  - Utente autenticato, row lock su `companies`, saldo restituito come verità.
 - **Cosa NON controlla**:
-  - La RPC è `GRANT EXECUTE TO authenticated`: qualsiasi utente loggato può invocare `supabase.rpc('rpc_add_driver_coins', { p_amount: 5000 })` dalla console del browser e regalarsi monete premium senza pagare!
-- **Cosa dovrebbe controllare una RPC sicura**:
-  - **Revoca immediata** di `rpc_add_driver_coins` da `authenticated`.
-  - Accredito consentito SOLO tramite firma HMAC del webhook Stripe o tramite token di sessione server-side (`service_role`).
-- **Gravità imbroglio**: **MASSIMA / CATASTROFICA**. Danneggia direttamente i ricavi reali dello sviluppatore e dell'azienda.
+  - L'integrazione col vero PSP (firma HMAC webhook Stripe) non c'è ancora: finché manca, nessuna riga di pagamento può esistere e lo store rifiuta ogni acquisto invece di regalare DC.
+  - `rpc_add_driver_coins` resta usata dai premi di gioco (quest/daily): è invocabibile da `authenticated` con il cap di `41_cap_driver_coins.sql` e il rate limit di `43_ratelimit_driver_coins.sql`.
+- **Gravità imbroglio residua**: **Alta** (per via di `rpc_add_driver_coins` sui premi); per l'acquisto pacchetti il bypass client-side è chiuso.
 
 #### 5.2. Spesa Driver Coins per Booster, Automazione e Riparazioni
 - **Come si muove oggi**: `ServerState.spendDriverCoins` / `CE_money.spendDC` chiama `rpc_ec_spend(p_item_id, p_amount)` (`05_mmo_driver_coins.sql`).

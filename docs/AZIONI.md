@@ -170,7 +170,7 @@ Ordinate per gravità. Ognuna è un task.
 | `_cryptoUpdatePreview` | `crypto.js:192` | nessuna | nessuno | no |
 | `_currentUserId` | `push-notifications.js:42` | nessuna | nessuno | no |
 | `_dayCompleted` | `ui-career.js:351` | nessuna | nessuno | no |
-| `_dcSimPurchase` | `ui-store.js:261` | `_dcSimPurchase` (`ui-store.js`) | nessuno | CE_money (`earnDC`) |
+| `_dcSimPurchase` | `ui-store.js:261` | `_dcSimPurchase` (`ui-store.js`) | nessuno | CE_money (`dcAccreditatiDalServer`) |
 | `_dcSpend` | `ui-store.js:269` | `_dcSpend` (`ui-store.js`) | nessuno | CE_money (`spendDC`) |
 | `_deserializeRide` | `engine.js:446` | nessuna | nessuno | no |
 | `_destroyMap` | `map.js:279` | nessuna | nessuno | no |
@@ -915,7 +915,7 @@ Ordinate per gravità. Ognuna è un task.
 | `renderTabPolitics` | `ui-politics.js:5` | nessuna | nessuno | no |
 | `renderTabPolitics` | `ui-politics.js:108` | nessuna | nessuno | no |
 | `renderTabPremiumStore` | `ui-store.js:10` | nessuna | nessuno | no |
-| `renderTabPremiumStore` | `ui-store.js:259` | nessuna | nessuno | CE_money (`earnDC`) |
+| `renderTabPremiumStore` | `ui-store.js:259` | nessuna | nessuno | CE_money (`dcAccreditatiDalServer`) |
 | `renderTabPrestigio` | `vanity.js:45` | nessuna | nessuno | no |
 | `renderTabProvinces` | `ui-ops.js:88` | nessuna | nessuno | no |
 | `renderTabProvinces` | `ui-ops.js:264` | nessuna | nessuno | no |

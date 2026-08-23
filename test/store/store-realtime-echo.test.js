@@ -56,6 +56,15 @@ describe('Store & Executive Club — Banco Completo con Realtime Server Echo', (
                         driver_coins: serverCompanyRow.driver_coins,
                     };
                 },
+                /* rpc_purchase_dc_pack (65_executive_pack_server_purchase.sql):
+                   il client passa solo l'ID pacchetto, l'importo lo decide il
+                   catalogo lato server; qui simulata con pagamento confermato. */
+                purchaseDriverCoinPack: async (packId) => {
+                    const catalogo = { starter: 50, corporate: 220, offshore: 600, fondo_sovrano: 1300 };
+                    if (!catalogo[packId]) return { ok: false };
+                    serverCompanyRow.driver_coins += catalogo[packId];
+                    return { ok: true, driver_coins: serverCompanyRow.driver_coins };
+                },
                 getCompany: () => serverCompanyRow,
             },
         });
@@ -453,20 +462,21 @@ describe('Store & Executive Club — Banco Completo con Realtime Server Echo', (
             assert.equal(gs.driverCoins, 165);
         });
 
-        test('13. _dcSimPurchase (earnDC) — accredito DC persiste dopo echo', async () => {
-            gs.driverCoins = 50;
-            serverCompanyRow.driver_coins = 50;
+        test('13. _dcSimPurchase — pacchetto Corporate via RPC di acquisto: accredito persiste dopo echo', async () => {
+            gs.driverCoins = 0;
+            serverCompanyRow.driver_coins = 0;
 
-            sandbox._dcSimPurchase(100);
+            sandbox._dcSimPurchase('corporate');
             await new Promise(r => setImmediate(r));
 
-            assert.equal(rpcAddCalls.length, 1);
-            assert.equal(rpcAddCalls[0].n, 100);
-            assert.equal(gs.driverCoins, 150);
+            // Il credito NON passa piu' da earnDC/rpc_add_driver_coins (minting
+            // senza pagamento): solo dalla RPC dedicata rpc_purchase_dc_pack.
+            assert.equal(rpcAddCalls.length, 0);
+            assert.equal(gs.driverCoins, 220);
 
             simulateServerRealtimeEcho();
 
-            assert.equal(gs.driverCoins, 150);
+            assert.equal(gs.driverCoins, 220);
         });
 
         test('14. _dcSpend offline_limit (20 DC) — limite offline persiste dopo echo', async () => {

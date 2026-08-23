@@ -192,8 +192,8 @@
 
 - `_ecSwitchTab` · `ui-store.js:7` · data-ce-act: `_ecSwitchTab` (`ui-store.js`) · doppioni: nessuno · denaro: no
 - `renderTabPremiumStore` · `ui-store.js:10` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `renderTabPremiumStore` · `ui-store.js:259` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`earnDC`)
-- `_dcSimPurchase` · `ui-store.js:261` · data-ce-act: `_dcSimPurchase` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`earnDC`)
+- `renderTabPremiumStore` · `ui-store.js:259` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`dcAccreditatiDalServer`)
+- `_dcSimPurchase` · `ui-store.js:261` · data-ce-act: `_dcSimPurchase` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`dcAccreditatiDalServer`)
 - `_dcSpend` · `ui-store.js:269` · data-ce-act: `_dcSpend` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
 - `_ecCaffeSospeso` · `ui-store.js:318` · data-ce-act: `_ecCaffeSospeso` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
 - `_ecManutenzioneExpress` · `ui-store.js:331` · data-ce-act: `_ecManutenzioneExpress` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
