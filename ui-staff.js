@@ -46,7 +46,11 @@ function renderTabStaff() {
         html += `<div class="em-card" style="padding:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;${owned ? 'border-color:#ecd9a0' : ''}">
             <div style="flex:1;min-width:0">
                 <div style="font-weight:700;color:${owned?'var(--em-gold)':'var(--em-ink)'}">${s.name}</div>
-                <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">€${s.salary.toLocaleString()}/mese</div>
+                <!-- rpc_hire_driver deduce stipendio × 2 come costo di assunzione
+                     una tantum (02_mmo_rpcs_extension.sql): va mostrato PRIMA del click. -->
+                <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">${owned
+                    ? `Stipendio: €${s.salary.toLocaleString()}/mese`
+                    : `Costo assunzione: €${(s.salary * 2).toLocaleString()}  ·  Stipendio: €${s.salary.toLocaleString()}/mese`}</div>
                 <div style="font-size:10.5px;color:var(--em-dim);margin-top:4px;line-height:1.4">${s.desc}</div>
             </div>
             <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
