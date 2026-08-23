@@ -86,4 +86,91 @@ describe('economy/daily-reward — login streak (_checkDailyReward)', () => {
 
         assert.deepEqual(calls, [500], 'la ricompensa del giorno 1 (+€500) deve essere sincronizzata col server');
     });
+
+    // ── Tier intermedi (giorni 2, 3, 5, 14, 30) ──────────────────────────
+    // Nessun test li copriva: raddoppiare una riga della tabella DAILY_REWARDS
+    // lasciava tutta la suite verde. Ogni test fissa l'importo ESATTO di cash e
+    // il delta di Driver Coin che deve arrivare al server per quel tier.
+    function bancoTier() {
+        const dcCalls = [];
+        const { sandbox } = freshEnv({
+            serverState: {
+                syncCash: async (v) => ({ success: true, cash: v }),
+                addDriverCoins: async (amount) => {
+                    dcCalls.push(amount);
+                    return { ok: true, driver_coins: 777 }; // valore autoritativo simulato
+                },
+            },
+        });
+        return { sandbox, dcCalls };
+    }
+
+    function setupClaim(sandbox, giaFatti) {
+        // Come se fossero già stati reclamati `giaFatti` giorni consecutivi e
+        // il prossimo claim avvenga oggi (24h dopo l'ultimo: oltre la finestra
+        // di 20h, dentro quella di 48h).
+        sandbox.gameState.cash = 0;
+        sandbox.gameState.loginStreak = giaFatti;
+        sandbox.gameState.lastDailyClaim = giaFatti > 0 ? Date.now() - 24 * 3600 * 1000 : 0;
+    }
+
+    test('tier giorno 2: €1000, nessun Driver Coin', async () => {
+        const { sandbox, dcCalls } = bancoTier();
+        setupClaim(sandbox, 1);
+
+        sandbox._checkDailyReward();
+        await new Promise(r => setTimeout(r, 20));
+
+        assert.equal(sandbox.gameState.loginStreak, 2);
+        assert.equal(sandbox.gameState.cash, 1000, 'tier "Giorno 2" — €1000');
+        assert.deepEqual(dcCalls, [], 'il tier giorno 2 non prevede Driver Coin');
+    });
+
+    test('tier giorno 3: €1500 e primo Driver Coin (delta 1, server-authoritative)', async () => {
+        const { sandbox, dcCalls } = bancoTier();
+        setupClaim(sandbox, 2);
+
+        sandbox._checkDailyReward();
+        await new Promise(r => setTimeout(r, 20));
+
+        assert.equal(sandbox.gameState.loginStreak, 3);
+        assert.equal(sandbox.gameState.cash, 1500, 'tier "Giorno 3" — €1500');
+        assert.deepEqual(dcCalls, [1], 'il tier giorno 3 regala esattamente 1 Driver Coin');
+        assert.equal(sandbox.gameState.driverCoins, 777, 'il finale è il valore del server');
+    });
+
+    test('tier giorno 5: €2500 e 2 Driver Coin', async () => {
+        const { sandbox, dcCalls } = bancoTier();
+        setupClaim(sandbox, 4);
+
+        sandbox._checkDailyReward();
+        await new Promise(r => setTimeout(r, 20));
+
+        assert.equal(sandbox.gameState.cash, 2500, 'tier "Giorno 5" — €2500');
+        assert.deepEqual(dcCalls, [2]);
+    });
+
+    test('tier giorno 14: €10000 e 10 Driver Coin', async () => {
+        const { sandbox, dcCalls } = bancoTier();
+        setupClaim(sandbox, 13);
+
+        sandbox._checkDailyReward();
+        await new Promise(r => setTimeout(r, 20));
+
+        // 10000 del tier × 1.1 (extraMult: +10% ogni 7 giorni oltre il 7°)
+        assert.equal(sandbox.gameState.cash, 11000, 'tier "2 Settimane!" — €10000 × 1.1');
+        assert.deepEqual(dcCalls, [10]);
+    });
+
+    test('tier giorno 30: €25000 e 25 Driver Coin', async () => {
+        const { sandbox, dcCalls } = bancoTier();
+        setupClaim(sandbox, 29);
+
+        sandbox._checkDailyReward();
+        await new Promise(r => setTimeout(r, 20));
+
+        // 25000 del tier × 1.3 (extraMult con streak 30: 3 scatti da +10%)
+        assert.equal(sandbox.gameState.cash, 32500, 'tier "Un Mese!" — €25000 × 1.3');
+        assert.deepEqual(dcCalls, [25]);
+    });
 });
