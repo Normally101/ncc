@@ -258,7 +258,6 @@ window.renderTabHome = function() {
   </div>
 
   ${(typeof window.renderOnboardingHTML==='function') ? window.renderOnboardingHTML() : ''}
-  ${(typeof window.renderConflictHTML==='function') ? window.renderConflictHTML() : ''}
 
   ${_homeStreakCard(gs)}
 

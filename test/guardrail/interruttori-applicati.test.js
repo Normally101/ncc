@@ -15,6 +15,14 @@
    Qui il codice vero (config.js, feature-gate.js, dispatcher.js) gira sulla
    pagina vera (index.html), e si controllano le due strade per arrivare a una
    parte del gioco: il menu e la chiamata diretta.
+
+   DAL 22/08/2026 la politica si è ribaltata di nuovo (decisione di Vlad,
+   HANDOFF.md): tutto il gioco resta disponibile dall'inizio, nessuna area
+   sbloccabile. Le stesse due strade ora sorvegliano il contrario: che nessuna
+   voce di menu stia dietro un gate. Il meccanismo (tabSpenta, foglio di stile,
+   guardia in switchTab) resta caricato e funzionante — è la rete di sicurezza
+   se un giorno una funzione tornerà da collaudare — ma con tutte le voci di
+   FEATURES a true non deve nascondere nulla.
    ============================================================================ */
 const { test, describe, before } = require('node:test');
 const assert = require('node:assert/strict');
@@ -40,21 +48,9 @@ function apriIlGioco() {
     return w;
 }
 
-/** I selettori che il foglio di stile generato usa per nascondere le porte. */
-function selettoriNascosti(w) {
-    const foglio = w.document.getElementById('feature-gate-style');
-    assert.ok(foglio, 'feature-gate.js non ha scritto nessun foglio di stile');
-    return foglio.textContent
-        .replace(/\/\*[\s\S]*?\*\//g, '')
-        .split('{')[0]
-        .split(',')
-        .map(s => s.trim())
-        .filter(Boolean);
-}
-
-describe('guardrail — gli interruttori spengono davvero', () => {
-    let w, nascosti;
-    before(() => { w = apriIlGioco(); nascosti = selettoriNascosti(w); });
+describe('guardrail — gli interruttori spengono davvero (e ora non spengono niente)', () => {
+    let w;
+    before(() => { w = apriIlGioco(); });
 
     test('ogni funzione spenta ha un meccanismo che la spegne', () => {
         const senzaMeccanismo = Object.entries(w.FEATURES)
@@ -76,60 +72,43 @@ describe('guardrail — gli interruttori spengono davvero', () => {
             'la misura dice una cosa e il giocatore ne trova un\'altra.');
     });
 
-    test('nessuna porta d\'ingresso resta aperta nella pagina vera', () => {
-        const aperte = [];
-        let esaminate = 0;
-        for (const el of w.document.querySelectorAll('[data-tab]')) {
-            const tab = el.getAttribute('data-tab');
-            if (!w.tabSpenta(tab)) continue;
-            esaminate++;
-            if (!nascosti.some(sel => el.matches(sel))) aperte.push(tab);
-        }
-        /* Senza questa riga il test diventa verde proprio quando il guardiano
-           smette di funzionare: se niente risulta spento, il ciclo non entra
-           mai nel corpo e la lista dei guasti resta vuota per finta. */
-        assert.ok(esaminate > 0,
-            'Nessuna voce di menu risulta spenta: o config.js le ha accese tutte,\n' +
-            'o tabSpenta() ha smesso di rispondere. In entrambi i casi questo test\n' +
-            'non stava piu\' controllando niente.');
-        assert.deepEqual([...new Set(aperte)], [],
-            'Queste schede sono spente ma index.html ha ancora una voce di menu\n' +
-            'visibile che ci porta. Il giocatore ci clicca sopra e non capisce.');
+    test('nessuna voce di menu della pagina vera sta dietro un gate', () => {
+        const voci = [...w.document.querySelectorAll('[data-tab]')];
+        /* Senza questa riga il test sarebbe verde anche se la pagina restasse
+           senza voci di menu: il ciclo non entri mai e la lista dei guasti
+           resta vuota per finta. */
+        assert.ok(voci.length > 0,
+            'index.html non ha nessuna voce [data-tab]: il test non controlla niente.');
+
+        const nascoste = [...new Set(
+            voci.map(el => el.getAttribute('data-tab')).filter(tab => w.tabSpenta(tab))
+        )];
+        /* Vuoto dal 22/08, e deve restarci: una scheda che ricompare qui è
+           stata rispenta in config.js contro la decisione che tutto il gioco
+           sia disponibile dall'inizio. */
+        assert.deepEqual(nascoste, [],
+            'Queste schede risultano spente ma sono nel menu del giocatore.\n' +
+            'Nessuna area del gioco deve stare dietro un gate.');
     });
 
-    test('le scorciatoie della home puntano solo a schede accese', () => {
-        const aperte = [];
-        let esaminate = 0;
-        for (const el of w.document.querySelectorAll('[data-ce-act="hubNavigate"]')) {
-            const args = JSON.parse(el.getAttribute('data-ce-args') || '[]');
-            const tab = args[0];
-            if (typeof tab !== 'string' || !w.tabSpenta(tab)) continue;
-            esaminate++;
-            if (!nascosti.some(sel => el.matches(sel))) aperte.push(tab);
-        }
-        assert.ok(esaminate > 0, 'nessuna scorciatoia risulta spenta: il test non controlla piu\' niente');
-        assert.deepEqual([...new Set(aperte)], [], 'scorciatoie ancora visibili');
+    test('le scorciatoie della home portano tutte a schede raggiungibili', () => {
+        const target = [...w.document.querySelectorAll('[data-ce-act="hubNavigate"]')]
+            .map(el => JSON.parse(el.getAttribute('data-ce-args') || '[]')[0])
+            .filter(tab => typeof tab === 'string');
+
+        const chiuse = [...new Set(target.filter(tab => w.tabSpenta(tab)))];
+        assert.deepEqual(chiuse, [],
+            'Queste scorciatoie della home puntano a schede dietro un gate:\n' +
+            'il giocatore ci clicca sopra e non capisce.');
     });
 
-    test('switchTab rifiuta una scheda spenta e riporta alla home', () => {
-        const spenta = Object.keys(w.TAB_DI).find(t => w.tabSpenta(t));
-        assert.ok(spenta, 'nessuna scheda spenta: questo test non prova piu\' niente');
-
-        let dove = null;
-        const vero = w.switchTab;
-        /* Si intercetta la seconda chiamata (il rimbalzo alla home) invece di
-           guardare cosa e' finito a schermo: qui non ci sono le funzioni di
-           rendering, e il punto da provare e' la decisione, non il disegno. */
-        w.switchTab = function (tab) {
-            if (dove === null) { dove = 'chiamata'; return vero.call(w, tab); }
-            dove = tab;
-        };
-        w.switchTab(spenta);
-        w.switchTab = vero;
-
-        assert.equal(dove, 'home',
-            `switchTab('${spenta}') doveva rimbalzare sulla home. Se non lo fa,\n` +
-            'chiunque abbia un vecchio link o la console aperta entra lo stesso.');
+    test('switchTab non ha piu\u0300 nulla da rifiutare', () => {
+        /* La guardia in dispatcher.js resta in piedi per il futuro; con tutte
+           le funzioni accese nessuna scheda deve finirci dentro. */
+        const spente = Object.keys(w.TAB_DI).filter(t => w.tabSpenta(t));
+        assert.deepEqual(spente, [],
+            'tabSpenta() spegne ancora qualcosa: switchTab la bloccherebbe e la\n' +
+            'scheda risulterebbe invisibile o cliccata a vuoto per il giocatore.');
     });
 
     test('una scheda accesa passa senza ostacoli', () => {
