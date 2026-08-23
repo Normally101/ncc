@@ -271,6 +271,13 @@ function initMap() {
 }
 
 function _ensureMap() {
+    /* _destroyMap nasconde #leaflet-map e non lo rimostrava mai nessuno:
+       chi apriva la mappa, la chiudeva e la riapriva trovava uno schermo
+       vuoto. Si rimostra qui, che e' l'unico punto d'ingresso. */
+    const el = document.getElementById('leaflet-map');
+    if (el) el.classList.remove('hidden');
+    const nuovo = document.getElementById('map2d-root');
+    if (nuovo) nuovo.classList.add('hidden');
     if (map) return;
     if (window.innerWidth < 768) return;
     initMap();
