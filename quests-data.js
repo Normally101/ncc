@@ -117,7 +117,7 @@ const QUEST_DB = [
     bivio:{
       prompt:'Un funzionario GdF ti offre una proposta. Come rispondi?',
       options:[
-        { id:'rifiuta', label:'Rifiuta', desc:'Mantieni la reputazione pulita.', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.2); else gs.reputation = Math.min(5.0+(gs.prestige||0), (gs.reputation||0)+0.2); } },
+        { id:'rifiuta', label:'Rifiuta', desc:'Mantieni la reputazione pulita.', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.2); } },
         { id:'accetta', label:'Accetta', desc:'€5.000 subito, ma rischi una multa GdF.', effect: gs => { if (window.CE_money?.earn) window.CE_money.earn(5000, 'quest_bivio'); else { gs.cash = (gs.cash||0)+5000; window.ServerState?.syncCash?.(gs.cash)?.catch?.(()=>{}); } } }
       ]
     },
@@ -135,7 +135,7 @@ const QUEST_DB = [
     bivio:{
       prompt:'Un rivale vuole acquistare il tuo silenzio.',
       options:[
-        { id:'rifiuta', label:'Rifiuta', desc:'+Reputazione', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.2); else gs.reputation = Math.min(5.0+(gs.prestige||0), (gs.reputation||0)+0.2); } },
+        { id:'rifiuta', label:'Rifiuta', desc:'+Reputazione', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.2); } },
         { id:'accetta', label:'Accetta deviazione', desc:'+€150.000 ma -0.5★', effect: gs => { if (window.CE_money?.earn) window.CE_money.earn(150000, 'quest_bivio'); else { gs.cash = (gs.cash||0)+150000; window.ServerState?.syncCash?.(gs.cash)?.catch?.(()=>{}); } if (window.CE_money?.addReputation) window.CE_money.addReputation(-0.5); else gs.reputation = Math.max(0, (gs.reputation||0)-0.5); } }
       ]
     },
@@ -152,7 +152,7 @@ const QUEST_DB = [
     bivio:{
       prompt:'I paparazzi bloccano il percorso.',
       options:[
-        { id:'rifiuta', label:'Rifiuta stop', desc:'+0.1★', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.1); else gs.reputation = Math.min(5.0+(gs.prestige||0), (gs.reputation||0)+0.1); } },
+        { id:'rifiuta', label:'Rifiuta stop', desc:'+0.1★', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.1); } },
         { id:'accetta', label:'Accetta stop', desc:'+€20.000 ma -0.3★', effect: gs => { if (window.CE_money?.earn) window.CE_money.earn(20000, 'quest_bivio'); else { gs.cash = (gs.cash||0)+20000; window.ServerState?.syncCash?.(gs.cash)?.catch?.(()=>{}); } if (window.CE_money?.addReputation) window.CE_money.addReputation(-0.3); else gs.reputation = Math.max(0, (gs.reputation||0)-0.3); } }
       ]
     },
@@ -169,7 +169,7 @@ const QUEST_DB = [
     bivio:{
       prompt:'Blocco stradale imprevisto: deviare o forzare?',
       options:[
-        { id:'rifiuta', label:'Devia regolare', desc:'+0.15★', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.15); else gs.reputation = Math.min(5.0+(gs.prestige||0), (gs.reputation||0)+0.15); } },
+        { id:'rifiuta', label:'Devia regolare', desc:'+0.15★', effect: gs => { if (window.CE_money?.addReputation) window.CE_money.addReputation(0.15); } },
         { id:'accetta', label:'Forza blocco', desc:'Loyalty staff +10%', effect: gs => { (gs.staff||[]).forEach(s=>{ s.loyalty = Math.min(100,(s.loyalty||50)+10); }); } }
       ]
     },

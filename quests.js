@@ -95,9 +95,8 @@ window.claimQuestReward = function(questId) {
   if (r.rep) {
     if (window.CE_money && typeof window.CE_money.addReputation === 'function') {
       window.CE_money.addReputation(r.rep);
-    } else {
-      gs.reputation = Math.min(5.0 + (gs.prestige || 0), (gs.reputation || 0) + r.rep);
     }
+    // Il tetto (5.0 + prestige) vive solo in money.js: niente fallback manuale.
   }
   if (r.shadowCoin) gs.shadowCoin = (gs.shadowCoin || 0) + r.shadowCoin;
   if (r.unlock)     { if (!gs.unlockedFeatures) gs.unlockedFeatures = []; if (!gs.unlockedFeatures.includes(r.unlock)) gs.unlockedFeatures.push(r.unlock); }

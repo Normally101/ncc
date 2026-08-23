@@ -213,17 +213,25 @@ var CE_money = (function () {
        codice e gia' sbagliato in daily-orders.js:157, dove chi ha fatto
        prestigio non guadagnava piu' reputazione. Qui sta una volta sola. */
 
+    /* Unico posto dove esiste la formula del tetto: addReputation la usa per
+       scrivere, i flussi con stato di prova (dry-run di vtkBuyShopItem) la
+       chiamano direttamente perche' sono PURA — non toccano nulla. */
+    function reputazioneDopo(gs, delta) {
+        var tetto = 5.0 + (gs.prestige || 0);
+        return Math.max(0, Math.min(tetto, (gs.reputation || 0) + delta));
+    }
+
     function addReputation(delta) {
         var gs = _gs();
         if (!Number.isFinite(delta)) return false;
-        var tetto = 5.0 + (gs.prestige || 0);
-        gs.reputation = Math.max(0, Math.min(tetto, (gs.reputation || 0) + delta));
+        gs.reputation = reputazioneDopo(gs, delta);
         return true;
     }
 
     return {
         spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC,
-        addReputation: addReputation, accreditatoDalServer: accreditatoDalServer,
+        addReputation: addReputation, reputazioneDopo: reputazioneDopo,
+        accreditatoDalServer: accreditatoDalServer,
         addebitatoDalServer: addebitatoDalServer,
         dcAccreditatiDalServer: dcAccreditatiDalServer,
     };

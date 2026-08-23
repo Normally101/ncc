@@ -147,7 +147,7 @@ function _applyMarketingCampaign(campaignId) {
     }
     const endsDay = gameState.day + camp.duration;
     gameState.activeCampaigns.push({ id: campaignId, startDay: gameState.day, endsDay, cooldownUntil: endsDay + (camp.cooldown || 0) });
-    if (camp.repBonus) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), (gameState.reputation || 0) + camp.repBonus);
+    if (camp.repBonus) window.CE_money.addReputation(camp.repBonus);
     showNotification(`🚀 Campagna "${camp.name}" avviata! Dura ${camp.duration} giorni.`, 'success');
     if (typeof renderTabMarketing === 'function') renderTabMarketing();
     return true;
@@ -1245,7 +1245,7 @@ function _triggerVIPMidRideEvent(ride) {
 
         if (choice === 'A') {
             if (ev.costA) CE_money.spend(ev.costA, 'vip_event_cost');
-            gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + ev.repA);
+            window.CE_money.addReputation(ev.repA);
             logToMap(`${ev.icon} Evento VIP: accontentato → +${ev.repA}★${ev.costA ? ` −€${ev.costA}` : ''}`);
             if (typeof showNotification === 'function') showNotification(`${ev.icon} Richiesta accontentata! +${ev.repA}★`, 'success');
         } else {
@@ -1722,7 +1722,7 @@ window.buyInvestment = async function buyInvestment(invId) {
         if (typeof showNotification === 'function') showNotification(`🏗️ ${item.name}: costruzione avviata (${item.buildTime} giorni)!`, 'success');
     } else {
         gameState.investments.push(invId);
-        if (item.rep) gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + item.rep);
+        if (item.rep) window.CE_money.addReputation(item.rep);
         if (invId === 'inv_kasko') gameState._permKasko = true;
         if (invId === 'inv_ev_hub') gameState.hasEVHub = true;
         if (invId === 'inv_acquire') applyAcquisition();
@@ -1975,7 +1975,7 @@ window.acceptDiamondContract = function(emailId) {
     email.status = 'resolved';
     const price = email.offer || 30000;
     CE_money.earn(price, 'diamond_contract');
-    gameState.reputation = Math.min(5.0 + (gameState.prestige || 0), gameState.reputation + 0.2);
+    window.CE_money.addReputation(0.2);
     gameState.diamondContractsCompleted = (gameState.diamondContractsCompleted || 0) + 1;
     logToMap(`🔶 Diamond Contract completato! +€${price.toLocaleString()} +0.2★`);
     showBigEvent('🔶', 'Diamond Contract Completato!', `€${price.toLocaleString()} incassati. +0.2★ Reputazione. Totale Diamond: ${gameState.diamondContractsCompleted}.`);
