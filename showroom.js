@@ -563,7 +563,18 @@ function _srmSectionContent(v, meta) {
         </div>
         <button class="srm-buy-btn" id="srm-buy-btn" ${ceAct('_srmPurchase', [])} ${!canAfford ? 'disabled' : ''}>
             Acquista ${v.name}
-        </button>`;
+        </button>
+        <div style="margin-top:14px;border:1px solid #21262d;border-radius:10px;padding:12px 14px;background:rgba(255,255,255,0.02);">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">
+                🔑 Noleggio breve — pagamento unico, l'auto torna al concessionario alla scadenza
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:6px;">
+                ${RENTAL_DURATIONS.map(g => `<button class="srm-vcard-btn" style="text-align:center;padding:8px 4px;" ${ceAct('_srmRent', [v.id, g])}>
+                    <div style="font-weight:800;">${g} giorni</div>
+                    <div style="font-size:11px;color:#d4af37;font-family:monospace;">€ ${_srmRentPrice(v.price, g).toLocaleString('it-IT')}</div>
+                </button>`).join('')}
+            </div>
+        </div>`;
     }
 
     // Esterni / Interni / Speciali — option cards
@@ -690,6 +701,58 @@ function _srmAnimatePrice(instant) {
     };
     _srmState.animFrame = requestAnimationFrame(tick);
 }
+
+// ── Noleggio a breve termine ─────────────────────────────────────────
+// Durate offerta fissa: prezzo calibrato perché il costo si ripaghi con le corse
+// del periodo (tariffa/giorno ~4% del listino, calante sulle durate lunghe),
+// ma proiettata su 30 giorni costi più dell'acquisto — è un noleggio, non un affare.
+// Globale var (regola repo): letta anche dai test e dal riepilogo configuratore.
+var RENTAL_DURATIONS = [3, 5, 7, 14, 30];
+
+const _RENTAL_DAY_RATE = { 3: 0.042, 5: 0.038, 7: 0.036, 14: 0.034, 30: 0.034 };
+
+window._srmRentPrice = function(basePrice, days) {
+    const rate = _RENTAL_DAY_RATE[days];
+    if (!rate || !Number.isFinite(basePrice)) return 0;
+    return Math.floor(basePrice * rate * days);
+};
+
+/**
+ * Noleggia un veicolo del catalogo per `days` giorni, pagando TUTTO subito.
+ * L'auto entra in flotta come isLease: si guida come una di proprietà, ma non
+ * si vende (stesso blocco delle auto in leasing su P2P/ui-market) e a scadenza
+ * engine-daily la rimuove dalla flotta (torna al concessionario).
+ */
+window.rentCar = async function(vehicleId, days) {
+    const v = _srmVehicle(vehicleId);
+    if (!v || !RENTAL_DURATIONS.includes(days)) return;
+
+    const prezzo = _srmRentPrice(v.price, days);
+    // CE_money.spend rifiuta da solo se i fondi non bastano: nulla viene toccato.
+    if (!window.CE_money.spend(prezzo, 'rent_car')) return;
+
+    const _SHOWROOM_TIER_MAP = {
+        BUSINESS:'business', PREMIUM:'business', STANDARD:'standard',
+        PRESIDENTIAL:'ultra', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group'
+    };
+    gameState.fleet.push({
+        id: 'c_' + Date.now(), name: v.name + ' (Noleggio)',
+        tier: _SHOWROOM_TIER_MAP[(v.tier||'').toUpperCase()] || 'business',
+        condition: 100, isLease: true,
+        rentalDays: days, leaseElapsedDays: 0,
+        dailyCost: 0, // costo pagato upfront: nessun canone giornaliero
+        fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100,
+        outOfService: false, upgrades: [], vehicleClass: v.id,
+    });
+    if (typeof updateUI === 'function') updateUI();
+    if (typeof saveGame === 'function') saveGame();
+    showNotification(`🔑 ${v.name} noleggiata per ${days} giorni — € ${prezzo.toLocaleString('it-IT')} pagati.`, 'success');
+};
+
+// Bottone della sezione Riepilogo: passa dallo stesso flusso di rentCar.
+window._srmRent = function(vehicleId, days) {
+    return window.rentCar(vehicleId, days);
+};
 
 // ── Purchase ─────────────────────────────────────────────────────────
 window._srmPurchase = async function() {

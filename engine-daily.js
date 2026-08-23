@@ -341,7 +341,9 @@ function processDailyRoutines() {
         if (car.isLease) {
             expenses += car.dailyCost;
             car.leaseElapsedDays++;
-            if (car.leaseElapsedDays >= (car.leaseDuration * 30)) {
+            // Noleggio breve (rentalDays): scadenza in giorni netti.
+            // Leasing classico: leaseDuration è in mesi → mesi × 30 giorni.
+            if (car.leaseElapsedDays >= (car.rentalDays || car.leaseDuration * 30)) {
                 logToMap(`🔴 Il Leasing per ${car.name} è scaduto.`);
                 let driver = gameState.drivers.find(d => d.assignedCarId === car.id);
                 if (driver) driver.assignedCarId = null;
