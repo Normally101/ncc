@@ -92,12 +92,8 @@ window.claimQuestReward = function(questId) {
           ?.catch(() => {});
     }
   }
-  if (r.rep) {
-    if (window.CE_money && typeof window.CE_money.addReputation === 'function') {
-      window.CE_money.addReputation(r.rep);
-    } else {
-      gs.reputation = Math.min(5.0 + (gs.prestige || 0), (gs.reputation || 0) + r.rep);
-    }
+  if (r.rep && window.CE_money && typeof window.CE_money.addReputation === 'function') {
+    window.CE_money.addReputation(r.rep);   // il tetto (5.0 + prestigio) lo applica solo la porta
   }
   if (r.shadowCoin) gs.shadowCoin = (gs.shadowCoin || 0) + r.shadowCoin;
   if (r.unlock)     { if (!gs.unlockedFeatures) gs.unlockedFeatures = []; if (!gs.unlockedFeatures.includes(r.unlock)) gs.unlockedFeatures.push(r.unlock); }

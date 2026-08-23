@@ -194,18 +194,23 @@ var CE_money = (function () {
        codice e gia' sbagliato in daily-orders.js:157, dove chi ha fatto
        prestigio non guadagnava piu' reputazione. Qui sta una volta sola. */
 
+    // Esposto in lettura per chi deve solo CONOSCERE il tetto (pre-controlli,
+    // dry-run su copia): il calcolo resta qui dentro, mai ricopiato fuori.
+    function reputationCap() {
+        return 5.0 + (_gs().prestige || 0);
+    }
+
     function addReputation(delta) {
         var gs = _gs();
         if (!Number.isFinite(delta)) return false;
-        var tetto = 5.0 + (gs.prestige || 0);
-        gs.reputation = Math.max(0, Math.min(tetto, (gs.reputation || 0) + delta));
+        gs.reputation = Math.max(0, Math.min(reputationCap(), (gs.reputation || 0) + delta));
         return true;
     }
 
     return {
         spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC,
         addReputation: addReputation, accreditatoDalServer: accreditatoDalServer,
-        addebitatoDalServer: addebitatoDalServer,
+        addebitatoDalServer: addebitatoDalServer, reputationCap: reputationCap,
     };
 })();
 

@@ -86,7 +86,7 @@
             window.ServerState.syncCash(g.cash).catch(function () {});
         if (d.outstanding <= 0) {
             d.outstanding = 0; d.status = 'repaid';
-            g.reputation = Math.min(5.0 + (g.prestige || 0), (g.reputation || 0) + 0.3);
+            window.CE_money.addReputation(0.3);
             if (typeof window.showBigEvent === 'function')
                 window.showBigEvent('✅', 'DEBITO SALDATO',
                     'Hai chiuso col passato. Vittorio sparisce — per ora. Da qui in poi l\'impero è solo tuo.');
