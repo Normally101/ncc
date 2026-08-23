@@ -64,6 +64,20 @@ describe('economy/daily-reward — login streak (_checkDailyReward)', () => {
         assert.equal(sandbox.gameState.driverCoins, 55, 'il valore finale è quello restituito dal server, non il bump ottimistico locale');
     });
 
+    test('bonus oltre la settimana: al giorno 14 il cash del tier è maggiorato del +10% (extraMult ogni 7 giorni)', () => {
+        const { sandbox } = freshEnv();
+        sandbox.gameState.cash = 0;
+        sandbox.gameState.loginStreak = 13;
+        sandbox.gameState.lastDailyClaim = Date.now() - 24 * 3600 * 1000; // ieri: oltre le 20h, entro le 48h → lo streak continua
+
+        sandbox._checkDailyReward();
+
+        assert.equal(sandbox.gameState.loginStreak, 14);
+        // Tier "2 Settimane!" = €10000; extraMult = 1 + floor((14-7)/7)*0.1 = 1.1 → €11000.
+        // Audit mutazione 23/08: ponendo extraMult = 1 fisso nessun test diventava rosso.
+        assert.equal(sandbox.gameState.cash, 11000, 'manca il bonus del +10% per il secondo giro di 7 giorni');
+    });
+
     test('interruzione streak: più di 48h dall\'ultimo claim azzera lo streak prima di ricontare', () => {
         const { sandbox } = freshEnv();
         sandbox.gameState.cash = 0;

@@ -86,6 +86,28 @@ describe('doppio conteggio 21/08 — infrastructure.js e tourism.js', () => {
                 'il client NON deve sincronizzare: rpc_buy_fuel_depot aggiorna gia\' companies.cash');
         });
 
+        test('fondi insufficienti: la guardia blocca PRIMA della RPC, saldo e server intatti', async () => {
+            /* Audit mutazione 23/08: invertendo la guardia ((cash||0) < cost → if (false))
+               nessun test diventava rosso — tutti i banchi avevano almeno 300k in cassa. */
+            const { sandbox, gs, syncedCash } = setupSyncRecorder();
+            let rpcCalled = false;
+            sandbox.supabaseClient = {
+                rpc: async (name) => {
+                    if (name === 'rpc_buy_fuel_depot') { rpcCalled = true; return { data: { success: true }, error: null }; }
+                    return { data: null, error: null };
+                },
+            };
+            sandbox.window.supabaseClient = sandbox.supabaseClient;
+
+            gs.cash = 100000; // servono 300.000
+            await sandbox._infraBuyDepot('prov_roma', 'Roma Capitale');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(rpcCalled, false, 'senza fondi la RPC non deve nemmeno partire');
+            assert.equal(gs.cash, 100000, 'il saldo non si tocca');
+            assert.deepEqual(syncedCash, []);
+        });
+
         test('RPC fallita: nessuna mossa locale e nessun syncCash', async () => {
             const { sandbox, gs, syncedCash } = setupSyncRecorder();
             sandbox.supabaseClient = {

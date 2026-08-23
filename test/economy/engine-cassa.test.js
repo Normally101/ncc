@@ -260,6 +260,28 @@ describe('engine.js — cassa e riparazioni', () => {
             assert.equal(auto.condition, 30, 'auto riparata gratis: la scorciatoia Kasko e\' tornata');
         });
 
+        test('il prezzo minimo: un solo punto di usura si paga comunque RIPARAZIONE_MINIMO (€500), non 85', async () => {
+            /* Audit mutazione 23/08: togliendo Math.max(RIPARAZIONE_MINIMO, …)
+               nessun test diventava rosso — tutte le auto nei banchi avevano
+               abbastanza punti mancanti da superare i 500 euro. */
+            const { sandbox, gs, addebitati } = banco();
+            const auto = {
+                id: 'car_usura', _serverId: 'srv_usura', name: 'Usura Lieve',
+                tier: 'business', condition: 99, isLease: false, outOfService: 'condition',
+            };
+            gs.fleet.push(auto);
+            gs.cash = 100000;
+
+            const mostrato = sandbox.window.repairCostFor(auto);
+            await sandbox.payToRepairCar('car_usura');
+            await new Promise(r => setImmediate(r));
+
+            assert.equal(mostrato, 500, '1 punto × €85 = 85: il minimo deve alzare il prezzo a 500');
+            assert.deepEqual(addebitati, [500],
+                'prezzo mostrato e addebito vero devono coincidere anche sotto il minimo');
+            assert.equal(auto.condition, 100);
+        });
+
         test('l\'incidente resta coperto: con la Kasko l\'auto non si danneggia', () => {
             const { sandbox, gs } = banco();
             /* La promessa della Kasko vive qui, non nella riparazione: se
