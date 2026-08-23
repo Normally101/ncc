@@ -66,7 +66,8 @@
 
         // 2b) Vittorio: ripaga il debito quando hai contanti (o se ha perso la pazienza)
         const vd = (typeof window._vittorioDebt === 'function') ? window._vittorioDebt() : null;
-        if (vd && vd.status === 'active' && ((gs().cash || 0) >= 80 || vd.finalNoticeShown))
+        // Il banner non deve comparire a debito saldato (outstanding 0): niente "devi €0".
+        if (vd && vd.status === 'active' && (vd.outstanding || 0) > 0 && ((gs().cash || 0) >= 80 || vd.finalNoticeShown))
             return { icon: '📵', text: `Ripaga Vittorio — devi €${(vd.outstanding || 0).toLocaleString('it-IT')}`, action: 'vittorio', glow: !!vd.finalNoticeShown };
 
         if (nFleet() < 2)
