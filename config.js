@@ -12,19 +12,14 @@
    Per riaccenderlo basta rimettere true, ma prima va convertito a CE_money. */
 window.HQ_ENABLED = false;
 
-/* ── Cosa è acceso, e perché è spento tutto il resto ─────────────────────────
-   Regola invertita, dal 20/08/2026: una parte del gioco è accesa solo se
-   qualcuno l'ha verificata. Prima era il contrario — tutto acceso, e nessuno
-   sapeva cosa funzionasse davvero.
+/* ── Interruttori di funzionalità ────────────────────────────────────────────
+   Dal 22/08/2026 (decisione di Vlad): TUTTO il gioco è disponibile
+   dall'inizio, nessuna area sbloccabile — le missioni insegnano mostrando,
+   non aprendo porte. A riposo gli interruttori stanno tutti su true.
 
-   Il motivo del cambio: il gioco non è ancora uscito, quindi possiamo
-   permetterci di mostrarne meno. E "meno funzioni, tutte funzionanti" è un
-   gioco migliore di "tutte le funzioni, metà rotte" — soprattutto al lancio,
-   dove un giocatore che perde soldi per un bug non torna.
-
-   Una voce passa a true quando: le sue azioni sono state eseguite tutte nel
-   banco di prova, quelle che muovono denaro passano da CE_money, e un test le
-   sorveglia da lì in avanti. Da quel momento non si torna indietro.
+   Restano come paracadute per staccare all'istante una funzione rotta:
+   feature-gate.js nasconde i suoi punti d'ingresso e il guardiano dentro
+   switchTab ne blocca il cambio scheda.
 
    ATTENZIONE: spegnere una funzione non significa cancellarne il codice. Il
    codice resta, intatto e caricato: si nascondono i punti d'ingresso (schede,
@@ -38,16 +33,17 @@ window.FEATURES = {
     finanza:      true,   // engine-finance: prestiti, borsa (in conversione)
     contratti:    true,   // contracts, b2b: le entrate ricorrenti
 
-    // Spente finché non le verifichiamo una per una.
+    // Verificate una per una: azioni eseguite nel banco, denaro via CE_money,
+    // test di sorveglia — ma visibili dall'inizio come da decisione del 22/08.
     aste:         true,   // auctions.js — verificata 20/08/2026 (ciclo di vita + riscossione)
     alleanze:     true,  // alliances.js — verificata 21/08/2026 (consorzi, perk, chat realtime, 41 prove)
     salone:       true,   // showroom.js — verificata 21/08/2026 (galleria, filtri, configuratore, optional, acquisto CE_money/ServerState)
-    mercatoP2P:   false,  // p2p-market, p2p-render: scambi fra giocatori
+    mercatoP2P:   true,   // p2p-market, p2p-render: scambi fra giocatori
     cripto:       true,  // crypto.js — verificata 21/08/2026 (mercato AMM, conti offshore, 28 prove)
     vtk:          true,  // vtk-market.js — verificata 21/08/2026 (mercato ordini, negozio VTK, 27 prove)
     turismo:      true,  // tourism.js — verificata 21/08/2026 (bandi, punteggi offerta, ciclo di vita, 40 prove)
     lusso:        true,   // ui-lifestyle.js — verificata 21/08/2026 (acquisti lifestyle, rendite, status CEO, diamond contracts)
-    politica:     false,  // ui-politics, war_room: province e influenza
+    politica:     true,   // ui-politics, war_room: province e influenza
     infrastrutture: true, // infrastructure.js — verificata 21/08/2026 (depositi, pedaggio, 22 prove)
     holding:      true,  // hostile_takeover, engine-holding — verificate 21/08/2026 (OPA, azioni CEMP, 32 prove)
     nemesi:       true,  // nemesis.js, black_ops.js — verificate 21/08/2026 (nemici VIP, agenzia ombra, 38 prove)

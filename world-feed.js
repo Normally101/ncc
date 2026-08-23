@@ -1,10 +1,11 @@
 'use strict';
 /* ════════════════════════════════════════════════════════════════════
    world-feed.js — "Mondo NCC" vivo
-   Feed attività globale che mescola:
-   • eventi REALI cross-player (tabella Supabase `global_news` + realtime)
-   • eventi NPC simulati (aziende rivali che conquistano, comprano, attaccano)
-   Rende la home abitata anche con pochi giocatori reali.
+   Feed attività globale con SOLO eventi reali cross-player (tabella Supabase
+   `global_news` + realtime). Nessun evento simulato: se il mondo è quiete,
+   si vede la quiete — lo stato vuoto dedicato lo dice al giocatore.
+   Il contatore online è solo il numero misurato dal server
+   (window._worldRealOnline, scritto da ui-ranking.js): 0 se non c'è nulla.
    Esporta: window.renderWorldFeedHTML(), window._worldOnline()
    Caricato dopo engine.js (usa supabaseClient se presente).
    ════════════════════════════════════════════════════════════════════ */
@@ -20,11 +21,6 @@
         'Garda Elite Mobility', 'Etna Prestige Drive', 'Borghese Car Service',
         'Riviera Gold Transfers', 'Quirinale Executive', 'San Babila Limos',
     ];
-    const CARS = ['Stellar S-Imperial', 'Majestic Spirit', 'Volt S-Hyper',
-        'Stellar G-Overlord', 'Majestic E-Specter', 'Volt Apex GT',
-        'Stellar V-Carrier', 'Majestic Citadel', 'Stellar E-Executive'];
-    const REG = ['Lazio', 'Lombardia', 'Campania', 'Veneto', 'Toscana', 'Sicilia',
-        'Sardegna', 'Liguria', 'Piemonte', 'Puglia', 'Emilia-Romagna'];
     const PROV = ['Roma', 'Milano', 'Napoli', 'Venezia', 'Firenze', 'Catania',
         'Olbia', 'Genova', 'Torino', 'Bari', 'Como', 'Verona', 'Rimini',
         'Cortina', 'Portofino', 'Taormina', 'Forte dei Marmi'];
@@ -32,24 +28,6 @@
     const pick = a => a[Math.floor(Math.random() * a.length)];
     const rnd  = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
     const esc  = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // ── Template eventi NPC ───────────────────────────────────────────
-    function npcEvent() {
-        const c = esc(pick(NPC));
-        const t = [
-            () => ({ i: '🏴', bg: '#fff3cf', x: `<b>${c}</b> ha conquistato la provincia di <b>${pick(PROV)}</b>` }),
-            () => ({ i: '🚗', bg: '#e7f0fb', x: `<b>${c}</b> ha aggiunto una <b>${pick(CARS)}</b> alla flotta` }),
-            () => ({ i: '⚔️', bg: '#fde8e4', x: `<b>${c}</b> ha lanciato un'<b>OPA ostile</b> su ${pick(PROV)}` }),
-            () => ({ i: '💎', bg: '#ece4f7', x: `<b>${c}</b> ha chiuso un <b>contratto Diamond</b> · €${(rnd(80, 420) * 1000).toLocaleString('it-IT')}` }),
-            () => ({ i: '🏛️', bg: '#e7f6ee', x: `<b>${c}</b> è ora <b>Governatore</b> della ${pick(REG)}` }),
-            () => ({ i: '📈', bg: '#e7f6ee', x: `<b>${c}</b> è salita al <b>#${rnd(2, 18)}</b> in classifica globale` }),
-            () => ({ i: '🤝', bg: '#fdeede', x: `<b>${c}</b> ha soffiato un autista a un rivale` }),
-            () => ({ i: '🔥', bg: '#fde8e4', x: `<b>${c}</b> ha avviato una <b>guerra dei prezzi</b> a ${pick(PROV)}` }),
-            () => ({ i: '🏗️', bg: '#e7f0fb', x: `<b>${c}</b> ha aperto una nuova sede a ${pick(PROV)}` }),
-            () => ({ i: '⭐', bg: '#fff3cf', x: `<b>${c}</b> ha raggiunto <b>${(rnd(35, 49) / 10).toFixed(1)}★</b> di reputazione` }),
-        ];
-        return pick(t)();
-    }
 
     // ── Mappa messaggio reale → icona ─────────────────────────────────
     function mapReal(msg) {
@@ -72,12 +50,6 @@
         FEED.unshift(ev);
         if (FEED.length > 50) FEED.length = 50;
     }
-
-    // Seed iniziale (così la home non è mai vuota) — timestamp scaglionati
-    (function seed() {
-        for (let k = 7; k >= 1; k--) { const e = npcEvent(); e.ts = Date.now() - k * rnd(40, 160) * 1000; e.real = false; FEED.push(e); }
-        FEED.sort((a, b) => b.ts - a.ts);
-    })();
 
     // ── Eventi REALI da Supabase global_news (best-effort) ────────────
     async function loadReal() {
@@ -104,26 +76,12 @@
         } catch (e) { /* silenzioso: NPC riempiono comunque */ }
     }
 
-    // ── Generatore NPC continuo ───────────────────────────────────────
-    let _timer = null;
-    function startNPC() {
-        if (_timer) return;
-        const tick = () => {
-            add(npcEvent(), false);
-            _timer = setTimeout(tick, rnd(8000, 16000)); // cadenza variabile = più vivo
-        };
-        _timer = setTimeout(tick, rnd(6000, 12000));
-    }
-
-    // ── Presenza: "N aziende online" (reale se disponibile, +drift) ───
+    // ── Presenza: "N aziende online" — solo il numero reale dal server ─
+    // ui-ranking.js scrive window._worldRealOnline contando le righe con
+    // last_active fresche ricevute dal server. Nessuna base simulata: se il
+    // server non misura nulla, il numero mostrato è 0 — mai inventato qui.
     function onlineCount() {
-        // base credibile che oscilla con l'ora del giorno (picco serale)
-        const h = (window.gameState && gameState.hour != null) ? gameState.hour : new Date().getHours();
-        const dayCurve = 0.55 + 0.45 * Math.sin((h - 7) / 24 * Math.PI * 2); // ~ picco 19-21
-        const base = Math.round(40 + 90 * Math.max(0.25, dayCurve));
-        const jitter = Math.round(8 * Math.sin(Date.now() / 47000));
-        const real = window._worldRealOnline || 0;
-        return Math.max(7, base + jitter + real);
+        return window._worldRealOnline || 0;
     }
     window._worldOnline = onlineCount;
 
@@ -194,7 +152,7 @@
     };
 
     // ── Avvio ─────────────────────────────────────────────────────────
-    function boot() { loadReal(); startNPC(); }
+    function boot() { loadReal(); }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
     else boot();
 })();
