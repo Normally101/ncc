@@ -380,6 +380,8 @@
     background:rgba(5,10,20,0.82); border:1px solid rgba(255,255,255,0.18);
     color:#e5e7eb; font:700 14px system-ui,sans-serif; }
 #ce-map2d-zoom button:hover { border-color:rgba(212,175,55,0.6); color:#d4af37; }
+.ce-auto { pointer-events:none; }
+.ce-scia { pointer-events:none; }
 @media (prefers-reduced-motion: reduce) { .ce-regione { transition:none; } }
 `;
         document.head.appendChild(st);
@@ -626,8 +628,14 @@
 
     if (window.MapBackend) {
         window.MapBackend.register('svg2d', {
-            ensure:  () => { monta(); },
-            destroy: smonta,
+            ensure: () => {
+                monta();
+                if (window.CE_mapAnim) window.CE_mapAnim.avvia(_svg);
+            },
+            destroy: () => {
+                if (window.CE_mapAnim) window.CE_mapAnim.ferma();
+                smonta();
+            },
             isReady: () => _costruita,
 
             // Un cambio di stato del gioco: si mutano attributi, non si ricostruisce.

@@ -1,11 +1,25 @@
 'use strict';
 /* ================================================================
    map-visual.js — Chauffeur Empire
-   Visual animation loop: vehicle markers + trail scia su Mapbox.
-   Dipendenze: map.js (map, _mapReady, _updateVehicleLayer, _updateActiveRouteLines)
-               dispatcher.js (_vehicleMarkers, _rideGeomCache)
-               map-router.js (calculateInterpolatedPosition, _trailGeom)
+   Disegno dei veicoli e delle scie SULLA MAPPA MAPBOX.
+   Dipendenze: map.js (map, _mapReady, _updateVehicleLayer,
+               _updateActiveRouteLines), dispatcher.js (_vehicleMarkers,
+               _rideGeomCache), ride-progress.js (tickRideProgress).
    Caricato dopo: map-router.js
+   ================================================================
+
+   Due cose che questo file NON fa piu', ed erano due difetti veri:
+
+   1. Non calcola piu' il progresso delle corse. Quel pezzo e' l'orologio
+      del gioco, non disegno, e vive in ride-progress.js — dove il banco di
+      prova lo carica e lo collauda. Finche' stava qui era intoccabile.
+
+   2. Non avvia piu' il ciclo di animazione al caricamento del file. La
+      vecchia ultima riga era `visualLoop();`, e da quel momento il ciclo
+      girava per sempre: a mappa chiusa, a scheda del browser nascosta,
+      sessanta volte al secondo, protetto solo da `if (!map)`. Ora parte in
+      `avviaCicloVisivo()` e si ferma in `fermaCicloVisivo()`, che la mappa
+      chiama montandosi e smontandosi.
    ================================================================ */
 
 // ─── TIER COLOR MAP for trails ────────────────────────────────────
@@ -27,130 +41,62 @@ function _trailGeom(roadGeom, progress) {
 
 // ─── VISUAL LOOP (Mapbox vehicle markers + trail scia) ────────────
 let _visualLoopRafId = null;
+
 function visualLoop() {
     _visualLoopRafId = requestAnimationFrame(visualLoop);
-    if (!map || !_mapReady || !gameState || gameState.paused) return;
-    const now = Date.now();
+    if (!map || !_mapReady || typeof gameState === 'undefined' || !gameState || gameState.paused) return;
+    /* Scheda nascosta: il browser rallenta gia' i fotogrammi, ma non li
+       ferma sempre. Disegnare per nessuno e' lavoro sprecato. Si guarda
+       visibilityState e non `document.hidden`, che vale true anche per
+       'prerender'. */
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+
+    const veicoli = typeof window.tickRideProgress === 'function' ? window.tickRideProgress(Date.now()) : [];
     const trailFeatures = [];
+    const visti = new Set();
 
-    // ── Phase 1: animate rides using real server timestamps ───────
-    gameState.activeRides.forEach(ride => {
-        const serverTrip = (gameState.activeTrips || []).find(t => t.id === ride.id);
-        let progress;
-        if (serverTrip?.start_time && serverTrip?.end_time) {
-            const startMs = new Date(serverTrip.start_time).getTime();
-            const endMs   = new Date(serverTrip.end_time).getTime();
-            const span    = endMs - startMs;
-            progress = span > 0 ? Math.min(1, Math.max(0, (now - startMs) / span)) : 1;
-        } else {
-            if (!ride.lastVisualUpdate) ride.lastVisualUpdate = now;
-            const delta = now - ride.lastVisualUpdate;
-            ride.lastVisualUpdate = now;
-            if (ride.visualElapsed == null) ride.visualElapsed = ride.elapsed;
-            ride.visualElapsed = Math.min(ride.duration, ride.visualElapsed + delta);
-            progress = ride.visualElapsed / ride.duration;
-        }
+    veicoli.forEach(v => {
+        visti.add(v.id);
 
-        const bar = document.getElementById(`prog-${ride.driverId}`);
-        if (bar) bar.style.width = `${Math.min(100, progress * 100)}%`;
-
-        const pos = calculateInterpolatedPosition(ride, progress * ride.duration);
-        if (!pos) return;
-
-        _rideGeomCache[ride.id] = {
-            roadGeom:  ride.roadGeom || null,
-            fromPoi:   ride.fromPoi,
-            toPoi:     ride.toPoi,
-            tier:      ride.tier,
-            lastPos:   pos,
-            lastAngle: ride._lastAngle || 0,
-            progress,
+        _rideGeomCache[v.id] = {
+            roadGeom:  v.percorso || null,
+            tier:      v.tier,
+            lastPos:   [v.lat, v.lon],
+            lastAngle: v.angolo,
+            progress:  v.progresso,
         };
 
-        let angle = ride._lastAngle || 0;
-        if (ride._lastPos) {
-            const dy = pos[0] - ride._lastPos[0];
-            const dx = pos[1] - ride._lastPos[1];
-            if (Math.abs(dx) + Math.abs(dy) > 1e-6) {
-                angle = Math.atan2(dx, dy) * (180 / Math.PI);
-                ride._lastAngle = angle;
-            }
-        }
-        ride._lastPos = pos;
-        _rideGeomCache[ride.id].lastAngle = angle;
-
-        if (!_vehicleMarkers[ride.id]) {
+        if (!_vehicleMarkers[v.id]) {
             const wrap = document.createElement('div');
-            wrap.className = 'car-marker-wrap';
+            wrap.className = 'car-marker-wrap' + (v.inAttesa ? ' waiting' : '');
             const arrow = document.createElement('div');
             arrow.className = 'car-arrow';
-            arrow.style.transform = `rotate(${angle}deg)`;
+            arrow.style.transform = `rotate(${v.angolo}deg)`;
             wrap.appendChild(arrow);
-            _vehicleMarkers[ride.id] = new mapboxgl.Marker({ element: wrap })
-                .setLngLat([pos[1], pos[0]])
+            _vehicleMarkers[v.id] = new mapboxgl.Marker({ element: wrap })
+                .setLngLat([v.lon, v.lat])
                 .addTo(map);
         } else {
-            _vehicleMarkers[ride.id].setLngLat([pos[1], pos[0]]);
-            const el = _vehicleMarkers[ride.id].getElement();
-            el?.classList.remove('waiting');
+            _vehicleMarkers[v.id].setLngLat([v.lon, v.lat]);
+            const el = _vehicleMarkers[v.id].getElement();
+            el?.classList.toggle('waiting', !!v.inAttesa);
             const arrow = el?.querySelector('.car-arrow');
-            if (arrow) arrow.style.transform = `rotate(${angle}deg)`;
+            if (arrow) arrow.style.transform = `rotate(${v.angolo}deg)`;
         }
 
-        const geom = _trailGeom(ride.roadGeom, _rideGeomCache[ride.id].progress);
+        const geom = _trailGeom(v.percorso, v.progresso);
         if (geom && geom.length >= 2) {
             trailFeatures.push({
                 type: 'Feature',
-                properties: { color: _TRAIL_COLOR[ride.tier] || '#9ca3af' },
+                properties: { color: _TRAIL_COLOR[v.tier] || '#9ca3af' },
                 geometry: { type: 'LineString', coordinates: geom }
             });
         }
     });
 
-    // ── Phase 2: keep markers for activeTrips past visual completion ─
-    const activeRideIds = new Set(gameState.activeRides.map(r => r.id));
-    (gameState.activeTrips || []).forEach(trip => {
-        if (activeRideIds.has(trip.id)) return;
-        const cached = _rideGeomCache[trip.id];
-        if (!cached) return;
-
-        let pos = cached.lastPos;
-        if (cached.roadGeom && cached.roadGeom.length >= 2) {
-            const dest = cached.roadGeom[cached.roadGeom.length - 1];
-            pos = [dest[1], dest[0]];
-        } else if (cached.toPoi) {
-            pos = [cached.toPoi.lat, cached.toPoi.lng];
-        }
-        if (!pos) return;
-
-        if (!_vehicleMarkers[trip.id]) {
-            const wrap = document.createElement('div');
-            wrap.className = 'car-marker-wrap waiting';
-            const arrow = document.createElement('div');
-            arrow.className = 'car-arrow';
-            arrow.style.transform = `rotate(${cached.lastAngle || 0}deg)`;
-            wrap.appendChild(arrow);
-            _vehicleMarkers[trip.id] = new mapboxgl.Marker({ element: wrap })
-                .setLngLat([pos[1], pos[0]])
-                .addTo(map);
-        } else {
-            const el = _vehicleMarkers[trip.id].getElement();
-            el?.classList.add('waiting');
-        }
-
-        if (cached.roadGeom && cached.roadGeom.length >= 2) {
-            trailFeatures.push({
-                type: 'Feature',
-                properties: { color: _TRAIL_COLOR[trip.tier] || '#9ca3af' },
-                geometry: { type: 'LineString', coordinates: cached.roadGeom }
-            });
-        }
-    });
-
-    // ── Cleanup: remove markers when ride is gone from both ─────────
-    const activeTripIds = new Set((gameState.activeTrips || []).map(t => t.id));
+    // ── Cleanup: via i marcatori delle corse che non esistono piu' ──
     for (const id in _vehicleMarkers) {
-        if (!activeRideIds.has(+id) && !activeTripIds.has(+id)) {
+        if (!visti.has(+id)) {
             _vehicleMarkers[id].remove();
             delete _vehicleMarkers[id];
             delete _rideGeomCache[id];
@@ -166,5 +112,17 @@ function visualLoop() {
     if (++visualLoop._frame % 60 === 0) _updateActiveRouteLines();
 }
 
-if (_visualLoopRafId) cancelAnimationFrame(_visualLoopRafId);
-visualLoop();
+function avviaCicloVisivo() {
+    if (_visualLoopRafId !== null) return;
+    visualLoop();
+}
+
+function fermaCicloVisivo() {
+    if (_visualLoopRafId === null) return;
+    cancelAnimationFrame(_visualLoopRafId);
+    _visualLoopRafId = null;
+}
+
+window.avviaCicloVisivo = avviaCicloVisivo;
+window.fermaCicloVisivo = fermaCicloVisivo;
+window._trailGeom = _trailGeom;

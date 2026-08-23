@@ -28,9 +28,14 @@ const ROOT = path.resolve(__dirname, '..', '..');
    pezzi che vivono solo dentro un browser vero. */
 const NON_CARICABILI = {
     'supabase-config.js': 'serve la libreria Supabase (createClient) che nel banco non c\'e\'',
-    'map-visual.js':      'usa la globale `map` di Mapbox, che esiste solo con la mappa vera',
     'motion.js':          'usa IntersectionObserver, che jsdom non fornisce',
 };
+
+/* map-visual.js e' uscito da questo elenco il 23/08. Non perche' sia
+   diventato caricabile per caso: l'orologio delle corse e' stato tolto da
+   dentro (ora sta in ride-progress.js, dentro il banco) e il ciclo di
+   animazione non parte piu' all'ultima riga del file. Erano quelle due cose
+   a renderlo intoccabile. */
 
 describe('guardrail — il banco di prova e i file che ancora non carica', () => {
     test('i file esclusi sono solo i tre noti, con il loro motivo', () => {
@@ -54,7 +59,7 @@ describe('guardrail — il banco di prova e i file che ancora non carica', () =>
         /* L'elenco puo' solo accorciarsi: ogni file portato dentro al banco esce
            di qui, e non ci rientra. */
         assert.ok(
-            Object.keys(NON_CARICABILI).length <= 3,
+            Object.keys(NON_CARICABILI).length <= 2,
             'i file che il banco non riesce a caricare devono diminuire, non aumentare'
         );
     });

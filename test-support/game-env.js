@@ -20,8 +20,7 @@ const ROOT = path.resolve(__dirname, '..');
 // il comportamento resta quello di prima ma le loro funzioni diventano testabili.
 //
 // Restano fuori: serverState.js (sostituito dal mock, altrimenti sovrascriverebbe
-// window.ServerState), supabase-config.js (vuole l'SDK), map-visual.js (vuole la
-// mappa vera e avvia un timer che fa cadere il processo), motion.js
+// window.ServerState), supabase-config.js (vuole l'SDK), motion.js
 // (IntersectionObserver), e i file che avviano l'applicazione (boot.js, tutorial,
 // onboarding, push-notifications), che mandano il caricamento in stallo.
 const CORE_FILES = [
@@ -32,6 +31,14 @@ const CORE_FILES = [
        'function'` che ha sostituito. */
     'map-api.js',
     'geoCoords.js', 'routesDB.js',
+    /* map-router.js e ride-progress.js: matematica dell'instradamento e
+       orologio delle corse. Vivevano dentro i file di mappa e per questo non
+       erano collaudabili; ora sono nel banco, che e' il punto di tutto il
+       lavoro del 23/08. */
+    'map-router.js', 'ride-progress.js',
+    /* map-visual.js: dal 23/08 non avvia piu' il ciclo al caricamento e non
+       calcola piu' il progresso, quindi entra nel banco come tutti gli altri. */
+    'map-visual.js',
     'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'ui-landing.js', 'auth.js',
     'quests-data.js',
     'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',

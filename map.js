@@ -502,8 +502,15 @@ let _onceClickHandler = null;
 
 if (window.MapBackend) {
     window.MapBackend.register('mapbox', {
-        ensure:  _ensureMap,
-        destroy: () => { _onceClickHandler = null; _destroyMap(); },
+        ensure:  () => {
+            _ensureMap();
+            if (typeof window.avviaCicloVisivo === 'function') window.avviaCicloVisivo();
+        },
+        destroy: () => {
+            _onceClickHandler = null;
+            if (typeof window.fermaCicloVisivo === 'function') window.fermaCicloVisivo();
+            _destroyMap();
+        },
         isReady: () => !!map && _mapReady,
 
         drawHighways,
