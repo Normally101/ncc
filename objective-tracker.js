@@ -65,8 +65,11 @@
             return { icon: '👔', text: 'Assumi il Ragazzo di Quartiere (gratis): guida la tua auto e incassa mentre riposi', tab: 'staff' };
 
         // 2b) Vittorio: ripaga il debito quando hai contanti (o se ha perso la pazienza)
+        // Il residuo > 0 è parte della condizione di visualizzazione: uno stato 'active'
+        // con saldo già a zero (salvataggi vecchi / sync esterni) è un passo completato
+        // e non deve più mostrare "devi €0".
         const vd = (typeof window._vittorioDebt === 'function') ? window._vittorioDebt() : null;
-        if (vd && vd.status === 'active' && ((gs().cash || 0) >= 80 || vd.finalNoticeShown))
+        if (vd && vd.status === 'active' && (vd.outstanding || 0) > 0 && ((gs().cash || 0) >= 80 || vd.finalNoticeShown))
             return { icon: '📵', text: `Ripaga Vittorio — devi €${(vd.outstanding || 0).toLocaleString('it-IT')}`, action: 'vittorio', glow: !!vd.finalNoticeShown };
 
         if (nFleet() < 2)
