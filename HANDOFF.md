@@ -24,6 +24,48 @@
 
 ---
 
+# 🟢 23/08 sera — hub ripulito, Gigi non si arena piu', 16 lavori recuperati
+
+**Il difetto che teneva fermo il lavoro.** Il ciclo di Gigi chiamava
+`fermati('coda vuota')` appena non c'era piu' niente da LANCIARE, senza guardare
+se c'era ancora qualcosa da RACCOGLIERE. Il giro dopo usciva subito su
+`if (!s.attivo) return`, quindi i passi 1-3 — leggere l'esito delle run,
+giudicare i rami, fonderli — non giravano mai piu'. Le run finivano su GitHub e
+il risultato non lo leggeva nessuno. E' la causa dei 40 lavori trovati arenati
+alle 10:05 e dei 17 di stasera. Corretto in `jarvis/src/code-loop.js`: ci si
+ferma solo quando in volo non resta niente che si sciolga da solo
+(`in_revisione` e `attende_ok` restano motivo di stop, aspettano una persona).
+
+**⚠️ Errore mio, riparato.** Cancellando i 452 rami `gigi/*` ho tolto anche
+quelli di **16 lavori vivi** che avevano passato il cancello (`promuovibile:
+true`). Si vedeva dalla nota «ha passato i controlli ma la fusione e' fallita»:
+senza ramo la fusione non poteva riuscire. Recuperati con `git fsck
+--unreachable` + `git push origin <sha>:refs/heads/<nome>`, fusi in `161a006`,
+suite verde a **1891**. **Regola:** i rami `gigi/*` si classificano dallo `stato`
+in `code-queue.json`, non da git — terminali sono solo `fuso`, `respinto`,
+`fallito`, `sostituito`.
+
+Fra i 16 c'era la correzione del **test instabile**: `initGame(true)` piantava un
+`setTimeout` reale a 800ms che `stopAllIntervals` non uccideva, e nei test che
+vivono piu' di 800ms scattava a meta' test mutando `pendingRides`. Ora i timeout
+sono tracciati: la suite scende da **210 a 76 secondi**.
+
+**I 6 bug del playtest di Vlad** (dal diario Telegram, 14:43-14:54) sono in coda
+e in verifica: Executive Club regala Driver Coins senza pagamento (il piu'
+grave), banner Vittorio fisso a «devi 0», costo di assunzione una tantum mai
+mostrato, noleggio veicoli mancante, tab nascoste + «137 ONLINE» finto,
+contrasto testo illeggibile.
+
+**Hub.** Lo specchio della coda ora TOGLIE le righe che non arrivano piu' (solo
+se il ciclo dichiara `completa: true`): 79 lavori «in revisione» che non
+esistevano da giorni sono spariti. `in_revisione` mancava dalla tabella di
+traduzione e finiva in `backlog`. La home mostra solo cose generali — «Fai
+lavorare» aveva il repository scritto dentro il codice ed e' passato dentro la
+scheda progetto (`LavoroSulCodice`). La pagina Tasks separa i compiti macchina
+da quelli da leggere.
+
+---
+
 # 🟢 23/08 — la mappa non e' piu' Mapbox
 
 Otto passi, otto commit sul ramo **`mappa-2d`** (NON ancora unito a `main`).
