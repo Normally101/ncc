@@ -105,12 +105,38 @@ try {
     }
 }
 
+/* ── 2-bis. Che cosa tocca davvero questo ramo ────────────────────────── */
+/* Serve per distinguere tre cose che meritano metri diversi: un ramo che
+   cambia il gioco, un ramo che aggiunge test, e un ramo che scrive solo un
+   rapporto in docs/. Fino al 23/08 erano tutti misurati con lo stesso metro. */
+const cambiati = sh('git', ['diff', '--name-only', `${BASE}...origin/${RAMO}`])
+    .split('\n').map(r => r.trim()).filter(Boolean);
+const tocca = (p) => cambiati.some(f => f.startsWith(p));
+const soloDocumenti = cambiati.length > 0 && cambiati.every(f => f.startsWith('docs/'));
+const codiceDiGioco = cambiati.filter(f => !f.startsWith('test/') && !f.startsWith('docs/')
+    && !f.startsWith('.github/') && !f.startsWith('scripts/') && f.endsWith('.js'));
+
 /* ── 3. I test, sul risultato dell'unione ─────────────────────────────── */
 const dopo = conflitti.length ? { totale: -1, falliti: -1 } : test();
 if (dopo.falliti > 0) problemi.push(`${dopo.falliti} test rossi una volta unito a ${BASE}.`);
-if (dopo.totale >= 0 && base.totale >= 0 && dopo.totale <= base.totale) {
+/* Un rapporto in docs/ non puo' rompere niente e non ha motivo di far crescere
+   il conteggio: chiedergli un test nuovo lo condannava a essere sempre
+   «non promuovibile», ed e' il motivo per cui i lavori di audit del 23/08
+   tornavano indietro anche quando avevano fatto esattamente il loro dovere. */
+if (!soloDocumenti && dopo.totale >= 0 && base.totale >= 0 && dopo.totale <= base.totale) {
     // Una correzione senza un test nuovo non e' verificabile: e' una promessa.
     problemi.push(`I test non sono cresciuti (${base.totale} → ${dopo.totale}): manca la prova che il bug fosse reale.`);
+}
+
+/* ── 3-bis. Codice cambiato e nessun test toccato = mutazione dimenticata ─ */
+/* Il 23/08 due rami di audit sono arrivati qui contenendo la mutazione di
+   prova invece del test: `crypto.js` senza piu' l'addebito dei soldi, e
+   `b2b.js` con il rango 'vip' declassato — uno dei due si firmava perfino
+   «// mutazione». Chi rompe il codice di proposito deve ripristinarlo: se un
+   ramo cambia il gioco e non lascia UNA riga di test, non e' una correzione. */
+if (codiceDiGioco.length && !tocca('test/')) {
+    problemi.push(`Cambia il codice del gioco (${codiceDiGioco.join(', ')}) senza toccare un solo test: `
+        + `se e' la mutazione di prova, andava ripristinata con git checkout prima di pubblicare.`);
 }
 
 /* ── 4. Nessun test cancellato o messo a dormire ──────────────────────── */
@@ -145,8 +171,7 @@ if (!problemi.length) {
 }
 
 /* ── Verdetto ─────────────────────────────────────────────────────────── */
-const toccati = sh('git', ['diff', '--name-only', `${BASE}...origin/${RAMO}`])
-    .split('\n').map(r => r.trim()).filter(Boolean);
+const toccati = cambiati;   // calcolato una volta sola, piu' su
 
 const verdetto = {
     ramo: RAMO,
