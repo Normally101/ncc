@@ -395,3 +395,77 @@ describe('map-svg — il pannello laterale', () => {
         assert.doesNotThrow(() => s.window._mapSbloccaRegione('lombardia'));
     });
 });
+
+/* I marcatori di evento — incidenti, posti di blocco, cantieri.
+   Sono le tre cose che sarebbero sparite in silenzio invertendo la mappa
+   predefinita: il motore le chiedeva a map.js per nome, protette da una
+   guardia `typeof` che non distingue "non c'e'" da "non fa niente". */
+describe('map-svg — marcatori di evento', () => {
+
+    let env, s;
+    beforeEach(() => {
+        ({ env, s } = ambiente({ sbloccate: ['lazio'] }));
+        s.window.MapBackend.use('svg2d');
+        s.window.MapBackend.ensure();
+    });
+    afterEach(() => { s.window.MapBackend.destroy(); env.stopAllIntervals(); });
+
+    const eventi = () => s.document.querySelectorAll('#ce-g-eventi .ce-evento');
+
+    test('un incidente compare sulla mappa, col nome dell\'autista', () => {
+        s.window.MapBackend.addIncidente(12.4964, 41.9028, 'Marco Rossi');
+        assert.equal(eventi().length, 1);
+        assert.match(eventi()[0].textContent, /Marco Rossi/);
+    });
+
+    test('un posto di blocco compare e si toglie per id di corsa', () => {
+        s.window.MapBackend.addPostoBlocco(12.4, 41.8, 77);
+        assert.equal(eventi().length, 1);
+        s.window.MapBackend.removePostoBlocco(77);
+        assert.equal(eventi().length, 0);
+    });
+
+    test('togliere un posto di blocco inesistente non lancia', () => {
+        assert.doesNotThrow(() => s.window.MapBackend.removePostoBlocco(999));
+    });
+
+    test('un cantiere resta finche\' non lo si toglie, e non si duplica', () => {
+        s.window.MapBackend.addCantiere('roma-firenze', 12.0, 42.5);
+        s.window.MapBackend.addCantiere('roma-firenze', 12.0, 42.5);
+        assert.equal(eventi().length, 1, 'lo stesso cantiere non deve comparire due volte');
+        s.window.MapBackend.removeCantiere('roma-firenze');
+        assert.equal(eventi().length, 0);
+    });
+
+    test('la posizione del marcatore e\' quella geografica, senza NaN', () => {
+        s.window.MapBackend.addCantiere('x', 12.4964, 41.9028);
+        const n = eventi()[0];
+        const atteso = s.window.CE_proj.proietta(12.4964, 41.9028);
+        assert.equal(n.getAttribute('x'), atteso[0].toFixed(1));
+        assert.equal(n.getAttribute('y'), atteso[1].toFixed(1));
+    });
+
+    test('un marcatore con coordinate guaste non entra nella mappa', () => {
+        s.window.MapBackend.addCantiere('rotto', NaN, 41.9);
+        assert.equal(eventi().length, 0);
+    });
+
+    test('smontando la mappa i marcatori se ne vanno con lei', () => {
+        s.window.MapBackend.addCantiere('roma-firenze', 12.0, 42.5);
+        s.window.MapBackend.destroy();
+        assert.equal(s.document.querySelectorAll('.ce-evento').length, 0);
+        s.window.MapBackend.use('svg2d');
+        s.window.MapBackend.ensure();
+        assert.equal(eventi().length, 0, 'non devono resuscitare al rimontaggio');
+    });
+
+    test('senza mappa montata chiedere un marcatore non lancia', () => {
+        s.window.MapBackend.destroy();
+        assert.doesNotThrow(() => {
+            s.window.MapBackend.addIncidente(12, 42, 'x');
+            s.window.MapBackend.addPostoBlocco(12, 42, 1);
+            s.window.MapBackend.addCantiere('k', 12, 42);
+            s.window.MapBackend.removeCantiere('k');
+        });
+    });
+});

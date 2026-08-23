@@ -252,7 +252,7 @@ function _maybeGenerateCantieri() {
     const hw = HIGHWAYS[hwKey];
     const midIdx = Math.floor(hw.path.length / 2);
     const [lat, lng] = hw.path[midIdx];
-    if (typeof drawCantiereMarker === 'function') drawCantiereMarker(hwKey, lat, lng);
+    MapBackend.addCantiere(hwKey, lng, lat);
     logToMap(`🚧 Cantieri su ${hwKey.replace('-',' ↔ ')}: rallentamento per ${dur} giorni.`);
 }
 
@@ -260,7 +260,7 @@ function _tickCantieri() {
     for (const key in _activeCantieri) {
         if (gameState.day >= _activeCantieri[key].endsDay) {
             delete _activeCantieri[key];
-            if (typeof removeCantiereMarker === 'function') removeCantiereMarker(key);
+            MapBackend.removeCantiere(key);
             logToMap(`✅ Cantieri terminati su ${key.replace('-',' ↔ ')}.`);
         }
     }

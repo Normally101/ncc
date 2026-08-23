@@ -25,6 +25,12 @@ function caricaEngine() {
         " p2: { id: 'p2', name: 'Milano', lat: 45.4, lng: 9.1 } };",
         ctx
     );
+    /* map-api.js: dal 23/08 engine.js chiede la mappa a MapBackend invece di
+       chiamare drawPOIs & co. per nome. Senza backend registrato ogni metodo
+       e' un no-op, quindi il comportamento resta identico — ma la giuntura
+       deve esserci, o `MapBackend` e' un ReferenceError dentro il setTimeout
+       del posto di blocco. */
+    vm.runInContext(fs.readFileSync(path.join(RADICE, 'map-api.js'), 'utf8'), ctx);
     vm.runInContext(fs.readFileSync(path.join(RADICE, 'engine.js'), 'utf8'), ctx);
     // Funzioni esterne chiamate senza guardie typeof: sostituite dopo il caricamento.
     ctx.logToMap = () => {};

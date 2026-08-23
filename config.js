@@ -70,7 +70,7 @@ window.FEATURES = {
    Si puo' scavalcare senza toccare i file: `?mappa=2d` o `?mappa=mapbox`
    nell'indirizzo. E dentro la mappa c'e' un pulsante che alterna i due senza
    ricaricare la pagina, per confrontarli sulla stessa scena. */
-window.MAPPA_2D = false;
+window.MAPPA_2D = true;
 
 /** Una funzione è attiva? Sconosciuta = spenta: nel dubbio non si mostra. */
 window.attiva = function attiva(nome) {

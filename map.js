@@ -521,6 +521,12 @@ if (window.MapBackend) {
         flyToHQ:          () => { if (typeof window.flyToHQ === 'function') window.flyToHQ(); },
         dayNight:         () => { if (typeof window._updateDayNight === 'function') window._updateDayNight(); },
 
+        addIncidente:      (lon, lat, nome) => window.addIncidentMarker(lat, lon, nome),
+        addPostoBlocco:    (lon, lat, id)   => window.addCheckpointMarker(lat, lon, id),
+        removePostoBlocco: (id)             => window.removeCheckpointMarker(id),
+        addCantiere:       (chiave, lon, lat) => drawCantiereMarker(chiave, lat, lon),
+        removeCantiere:    (chiave)         => removeCantiereMarker(chiave),
+
         onceMapClick(cb) {
             if (!map) return false;
             _onceClickHandler = (e) => {

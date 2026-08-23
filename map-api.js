@@ -35,7 +35,17 @@
         'flyToHQ',          // inquadra la sede
         'updateVehicles',   // posizione dei veicoli in corsa
         'updateRouteLines', // le linee delle corse attive
-        'dayNight'          // atmosfera giorno/notte
+        'dayNight',         // atmosfera giorno/notte
+
+        /* Marcatori di evento. Passano di qui perche' altrimenti cambiando
+           mappa sparirebbero in silenzio: sono chiamati da engine-rides,
+           engine.js ed engine-events con una guardia `typeof`, che non
+           distingue "non implementato" da "implementato male". */
+        'addIncidente',     // (lon, lat, nomeAutista)
+        'addPostoBlocco',   // (lon, lat, idCorsa)
+        'removePostoBlocco',// (idCorsa)
+        'addCantiere',      // (chiaveTratta, lon, lat)
+        'removeCantiere'    // (chiaveTratta)
     ];
 
     var backends = Object.create(null);

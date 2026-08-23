@@ -697,8 +697,8 @@ function completeRide(ride, _deferPay = false) {
     }
 
     // Incident map marker
-    if (ride.hasIncident && typeof addIncidentMarker === 'function') {
-        addIncidentMarker(ride.toPoi.lat, ride.toPoi.lng, driver?.name || '?');
+    if (ride.hasIncident) {
+        MapBackend.addIncidente(ride.toPoi.lng, ride.toPoi.lat, driver?.name || '?');
     }
     // Permadeath roll (Espansione 2: Alberi Abilità)
     if (ride.hasIncident && driver && driver.id !== 'ceo' && typeof window.driverPermadeathRoll === 'function') {

@@ -1380,7 +1380,7 @@ window.acceptShadowMission = function(emailId) {
     const _cpLng = (from.lng + to.lng) / 2 + (Math.random() - 0.5) * 0.5;
     const _cpRideId = ride.id;
     setTimeout(() => {
-        if (typeof addCheckpointMarker === 'function') addCheckpointMarker(_cpLat, _cpLng, _cpRideId);
+        MapBackend.addPostoBlocco(_cpLng, _cpLat, _cpRideId);
     }, 300);
     if (typeof renderTabEmails === 'function') renderTabEmails();
     if (_tabIs('corse') && typeof renderTabCorse === 'function') renderTabCorse();

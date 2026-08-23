@@ -192,6 +192,7 @@
             <g id="ce-g-hq" pointer-events="none">${hq}</g>
             <g id="ce-g-scie" pointer-events="none"></g>
             <g id="ce-g-veicoli" pointer-events="none"></g>
+            <g id="ce-g-eventi" pointer-events="none"></g>
         </svg>`;
     }
 
@@ -246,6 +247,41 @@
        selettore, ma meglio non fidarsi di cosa arrivera' domani. */
     function CSS_escape(s) {
         return String(s).replace(/["\\]/g, '\\$&');
+    }
+
+    /* ═══ Marcatori di evento ══════════════════════════════════════════
+       Incidenti, posti di blocco, cantieri. Sono le tre cose che sarebbero
+       sparite in silenzio passando dalla mappa satellitare a questa: il
+       motore le chiedeva a map.js per nome, e una guardia `typeof` non
+       distingue "non c'e'" da "non fa niente". Ora passano da MapBackend e
+       qui hanno una faccia. */
+
+    const _eventi = {};   // chiave → nodo SVG
+
+    function segna(chiave, lon, lat, simbolo, titolo, durataMs) {
+        const g = _svg && _svg.querySelector('#ce-g-eventi');
+        if (!g || !proj()) return;
+        smarca(chiave);
+        const [x, y] = proj().proietta(lon, lat);
+        if (!isFinite(x) || !isFinite(y)) return;
+        const t = document.createElementNS(NS, 'text');
+        t.setAttribute('class', 'ce-evento');
+        t.setAttribute('x', x.toFixed(1));
+        t.setAttribute('y', y.toFixed(1));
+        t.textContent = simbolo;
+        const titoloNodo = document.createElementNS(NS, 'title');
+        titoloNodo.textContent = titolo;
+        t.appendChild(titoloNodo);
+        g.appendChild(t);
+        _eventi[chiave] = t;
+        if (durataMs) setTimeout(() => smarca(chiave), durataMs);
+    }
+
+    function smarca(chiave) {
+        const n = _eventi[chiave];
+        if (!n) return;
+        if (n.remove) n.remove();
+        delete _eventi[chiave];
     }
 
     /* ═══ Pannello laterale ════════════════════════════════════════════
@@ -380,6 +416,7 @@
     background:rgba(5,10,20,0.82); border:1px solid rgba(255,255,255,0.18);
     color:#e5e7eb; font:700 14px system-ui,sans-serif; }
 #ce-map2d-zoom button:hover { border-color:rgba(212,175,55,0.6); color:#d4af37; }
+.ce-evento { font:9px system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
 .ce-auto { pointer-events:none; }
 .ce-scia { pointer-events:none; }
 @media (prefers-reduced-motion: reduce) { .ce-regione { transition:none; } }
@@ -579,6 +616,7 @@
         _tooltip = null;
         _pannello = null;
         _selezione = null;
+        Object.keys(_eventi).forEach(k => delete _eventi[k]);
         _vista = null;
         _trascina = null;
         _clickUnaVolta = null;
@@ -646,6 +684,15 @@
                 const gs = typeof gameState !== 'undefined' ? gameState : null;
                 if (gs && gs.hq && gs.hq.lng != null) inquadra(gs.hq.lng, gs.hq.lat, 3);
             },
+
+            addIncidente:      (lon, lat, nome) =>
+                segna('inc:' + lon + ':' + lat + ':' + Date.now(), lon, lat, '\u{1F6A8}', 'Incidente: ' + nome, 60000),
+            addPostoBlocco:    (lon, lat, id) =>
+                segna('blocco:' + id, lon, lat, '\u{1F693}', 'Posto di blocco', 90000),
+            removePostoBlocco: (id) => smarca('blocco:' + id),
+            addCantiere:       (chiave, lon, lat) =>
+                segna('cantiere:' + chiave, lon, lat, '\u{1F6A7}', 'Cantieri in corso'),
+            removeCantiere:    (chiave) => smarca('cantiere:' + chiave),
 
             onceMapClick(cb) {
                 if (!_costruita) return false;
