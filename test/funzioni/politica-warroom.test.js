@@ -17,37 +17,21 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { createGameEnv, CORE_FILES } = require('../../test-support/game-env.js');
 
-// GeoJSON minimale sintetico con Piemonte, Lombardia e Lazio
-const MOCK_GEOJSON = {
-    type: 'FeatureCollection',
-    features: [
-        {
-            type: 'Feature',
-            properties: { reg_name: 'Piemonte' },
-            geometry: {
-                type: 'Polygon',
-                coordinates: [[[7.0, 45.0], [8.0, 45.0], [8.0, 46.0], [7.0, 46.0], [7.0, 45.0]]],
-            },
-        },
-        {
-            type: 'Feature',
-            properties: { reg_name: 'Lombardia' },
-            geometry: {
-                type: 'Polygon',
-                coordinates: [[[9.0, 45.0], [10.0, 45.0], [10.0, 46.0], [9.0, 46.0], [9.0, 45.0]]],
-            },
-        },
-        {
-            type: 'Feature',
-            properties: { reg_name: 'Lazio' },
-            geometry: {
-                type: 'MultiPolygon',
-                coordinates: [
-                    [[[12.0, 41.5], [13.0, 41.5], [13.0, 42.5], [12.0, 42.5], [12.0, 41.5]]],
-                ],
-            },
-        },
-    ],
+/* Confini minimali sintetici: Piemonte, Lombardia, Lazio.
+   Dal 23/08 la War Room non scarica piu' il GeoJSON da un CDN: legge
+   window.GEO_ITALIA, generato nel repo da scripts/semplifica-geo.mjs. Gli
+   anelli sono PIATTI ([lon,lat,lon,lat,…]), come nel file vero. */
+const MOCK_GEO = {
+    bbox: [7.0, 41.5, 13.0, 46.0],
+    aliases: { 'Piemonte': 'piemonte', 'Lombardia': 'lombardia', 'Lazio': 'lazio' },
+    regions: {
+        piemonte:  { id: 'piemonte',  name: 'Piemonte',  label: [7.5, 45.5],
+                     coordinates: [[[7, 45, 8, 45, 8, 46, 7, 46, 7, 45]]] },
+        lombardia: { id: 'lombardia', name: 'Lombardia', label: [9.5, 45.5],
+                     coordinates: [[[9, 45, 10, 45, 10, 46, 9, 46, 9, 45]]] },
+        lazio:     { id: 'lazio',     name: 'Lazio',     label: [12.5, 42.0],
+                     coordinates: [[[12, 41.5, 13, 41.5, 13, 42.5, 12, 42.5, 12, 41.5]]] },
+    },
 };
 
 function creaAmbienteWarRoom(opzioni = {}) {
@@ -112,7 +96,7 @@ function creaAmbienteWarRoom(opzioni = {}) {
 
     const territorySnapshot = opzioni.territorySnapshot !== undefined ? opzioni.territorySnapshot : defaultTerritory;
 
-    const env = createGameEnv([...CORE_FILES, 'war_room.js'], {
+    const env = createGameEnv([...CORE_FILES, 'map-proiezione.js', 'war_room.js'], {
         render: true,
         serverState: {
             getTerritorySnapshot: async () => {
@@ -139,17 +123,10 @@ function creaAmbienteWarRoom(opzioni = {}) {
 
     const sandbox = env.sandbox;
 
-    // Mock fetch per GeoJSON
-    sandbox.fetch = async (url) => {
-        if (opzioni.fetchError) {
-            return { ok: false, status: 500 };
-        }
-        return {
-            ok: true,
-            status: 200,
-            json: async () => (opzioni.geojson !== undefined ? opzioni.geojson : MOCK_GEOJSON),
-        };
-    };
+    /* I confini arrivano dal repo, non dalla rete. `geoMancante: true`
+       riproduce il caso in cui geo-italia.js non e' stato caricato. */
+    sandbox.window.GEO_ITALIA = opzioni.geoMancante ? undefined
+        : (opzioni.geo !== undefined ? opzioni.geo : MOCK_GEO);
 
     sandbox.showBigEvent = (icon, title, subtitle) => {
         bigEvents.push({ icon, title, subtitle });
@@ -257,8 +234,8 @@ describe('Funzioni War Room Politica (war_room.js)', () => {
             ambOffline.env.stopAllIntervals();
         });
 
-        test('renderTabWarRoom gestisce errore di caricamento GeoJSON mostrando messaggio di errore', async () => {
-            const ambNoGeo = creaAmbienteWarRoom({ fetchError: true });
+        test('renderTabWarRoom mostra un errore se i confini non sono caricati', async () => {
+            const ambNoGeo = creaAmbienteWarRoom({ geoMancante: true });
 
             await ambNoGeo.sandbox.renderTabWarRoom();
 

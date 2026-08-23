@@ -60,45 +60,27 @@ let _wrGeoCache    = null;   // cached GeoJSON
 let _wrSelectedSvg = null;
 
 // ─── Mercator projection for Italy ──────────────────────────────────────────
+// La proiezione vive in map-proiezione.js ed e' condivisa con la mappa
+// principale: se ce ne fossero due, un giorno divergerebbero e nessuno
+// saprebbe quale delle due Italie e' quella giusta. I numeri sono gli stessi
+// che erano qui.
 const _WR_PROJ = { W:500, H:660, minLon:6.4, maxLon:18.8, minLat:35.1, maxLat:47.3 };
 
 function _wrProject(lon, lat) {
-    const p = _WR_PROJ;
-    const x = (lon - p.minLon) / (p.maxLon - p.minLon) * p.W;
-    const toM = l => Math.log(Math.tan(Math.PI / 4 + l * Math.PI / 360));
-    const y = (1 - (toM(lat) - toM(p.minLat)) / (toM(p.maxLat) - toM(p.minLat))) * p.H;
-    return [x, y];
-}
-
-function _wrRingToD(ring) {
-    return ring.map(([lon, lat], i) => {
-        const [x, y] = _wrProject(lon, lat);
-        return (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
-    }).join('') + 'Z';
+    return window.CE_proj.proietta(lon, lat);
 }
 
 function _wrFeatureToPath(feature) {
-    const g = feature.geometry;
-    if (g.type === 'Polygon')
-        return g.coordinates.map(_wrRingToD).join('');
-    if (g.type === 'MultiPolygon')
-        return g.coordinates.flatMap(p => p.map(_wrRingToD)).join('');
-    return '';
+    return window.CE_proj.coordsAPath(feature.coordinates || []);
 }
 
+/* Il punto dove va l'etichetta. Non e' piu' il baricentro dell'anello
+   maggiore: quello della Calabria cade nel Tirreno. geo-italia.js porta per
+   ogni regione un punto verificato DENTRO i confini. */
 function _wrFeatureCentroid(feature) {
-    const g = feature.geometry;
-    let ring;
-    if (g.type === 'Polygon') {
-        ring = g.coordinates[0];
-    } else if (g.type === 'MultiPolygon') {
-        // pick the polygon with the most vertices (usually the mainland)
-        ring = g.coordinates.reduce((a, b) => a[0].length >= b[0].length ? a : b)[0];
-    }
-    if (!ring || !ring.length) return [250, 330];
-    let sLon = 0, sLat = 0;
-    ring.forEach(([lon, lat]) => { sLon += lon; sLat += lat; });
-    return _wrProject(sLon / ring.length, sLat / ring.length);
+    const l = feature.label;
+    if (!l) return [250, 330];
+    return _wrProject(l[0], l[1]);
 }
 
 function _wrGetSvgId(props) {
@@ -106,13 +88,27 @@ function _wrGetSvgId(props) {
     return _WR_NAME_TO_SVG[raw] || null;
 }
 
-// ─── GeoJSON fetch (cached) ──────────────────────────────────────────────────
+// ─── Confini regionali (dal repo, non dalla rete) ───────────────────────────
+// Fino al 23/08 qui si scaricavano 2.750.289 byte da raw.githubusercontent.com
+// A OGNI APERTURA della War Room, con quel dominio dichiarato nella CSP.
+// Adesso il dato e' in geo-italia.js, generato una volta sola da
+// scripts/semplifica-geo.mjs.
+//
+// Resta la forma "features con properties.name" perche' _wrGetSvgId traduce
+// per NOME: i nomi arrivano anche dal server, e quel vocabolario non si puo'
+// perdere.
 async function _wrLoadGeo() {
     if (_wrGeoCache) return _wrGeoCache;
-    const url = 'https://raw.githubusercontent.com/openpolis/geojson-italy/master/geojson/limits_IT_regions.geojson';
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error('GeoJSON fetch failed ' + resp.status);
-    _wrGeoCache = await resp.json();
+    const geo = window.GEO_ITALIA;
+    if (!geo || !geo.regions) throw new Error('geo-italia.js non caricato');
+    _wrGeoCache = {
+        type: 'FeatureCollection',
+        features: Object.values(geo.regions).map(r => ({
+            properties:  { name: r.name },
+            coordinates: r.coordinates,
+            label:       r.label,
+        })),
+    };
     return _wrGeoCache;
 }
 
