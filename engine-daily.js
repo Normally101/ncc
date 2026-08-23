@@ -447,7 +447,7 @@ function processDailyRoutines() {
         const base = Math.min(1, gameState.hqLevel || 0);
         gameState.hqLevel = base; if (gameState.hq) gameState.hq.level = base;
     }
-    if (typeof _updateHQMarker === 'function') _updateHQMarker();
+    MapBackend.updateHQMarker();
 
     // Watchdog: libera driver bloccati in 'busy' senza corsa attiva
     (gameState.drivers || []).forEach(d => {

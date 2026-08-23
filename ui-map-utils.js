@@ -114,8 +114,8 @@ window._checkFoundingOverlay = function() {
 // Fondare l'azienda richiedeva un click SULLA mappa, e la mappa non viene
 // nemmeno creata sotto i 768px (map.js::_ensureMap). Da telefono non c'era
 // nessuna strada per cominciare a giocare. L'elenco e' la strada che non
-// dipende dalla mappa: stessa foundCompany, coordinate prese dal centroide
-// della regione.
+// dipende dalla mappa: stessa foundCompany, coordinate prese dal gioco.
+//
 // Le coordinate sono quelle di un POI REALE della regione, non il centroide.
 // foundCompany sceglie la regione dal POI piu' vicino: partendo dal centroide
 // di Puglia [16.30,40.80] il piu' vicino e' Potenza, e il giocatore che chiede
@@ -172,15 +172,28 @@ window._foundFromRegion = function(regionId) {
     const ov = document.getElementById('founding-overlay');
     if (ov) ov.remove();
     window.foundCompany(r.lng, r.lat, nome);
-    if (typeof window.flyToHQ === 'function') window.flyToHQ();
+    MapBackend.flyToHQ();
     return true;
 };
 
 window._startFoundingMode = function() {
-    // Senza mappa non c'e' niente da cliccare: invece di esplodere su
-    // `map.once`, si passa all'elenco delle regioni.
-    if (!_mapPronta()) { window._startFoundingList(); return; }
     _foundingMode = true;
+    // Il click lo prende in carico la mappa, qualunque sia. Se nessuna mappa
+    // puo' farlo (nessun backend montato, o finestra da telefono), si passa
+    // all'elenco delle regioni invece di lasciare il giocatore fermo.
+    const preso = MapBackend.onceMapClick((lng, lat) => {
+        if (!_foundingMode) return;
+        _foundingMode = false;
+        const name = (typeof prompt === 'function'
+            ? prompt('Dai un nome alla tua sede (es: Via Nazionale 12, Roma):', 'Sede Principale')
+            : null) || 'Sede Principale';
+        const ov2 = document.getElementById('founding-overlay');
+        if (ov2) ov2.remove();
+        window.foundCompany(lng, lat, name);
+        MapBackend.flyToHQ();
+    });
+    if (!preso) { _foundingMode = false; window._startFoundingList(); return; }
+
     const ov = document.getElementById('founding-overlay');
     if (ov) ov.innerHTML = `
         <div style="text-align:center;max-width:480px;padding:24px;">
@@ -190,20 +203,11 @@ window._startFoundingMode = function() {
             <button ${ceAct('_cancelFoundingMode', [])} style="margin-top:20px;padding:8px 24px;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:8px;color:#ef4444;font-size:0.8rem;cursor:pointer;">✕ Annulla</button>
         </div>`;
 
-    map.once('click', (e) => {
-        if (!_foundingMode) return;
-        _foundingMode = false;
-        const lng = e.lngLat.lng, lat = e.lngLat.lat;
-        const name = prompt('Dai un nome alla tua sede (es: Via Nazionale 12, Roma):', 'Sede Principale') || 'Sede Principale';
-        const ov2 = document.getElementById('founding-overlay');
-        if (ov2) ov2.remove();
-        window.foundCompany(lng, lat, name);
-        map.flyTo({ center: [lng, lat], zoom: 12, pitch: 55, bearing: -15, duration: 2000, essential: true });
-    });
 };
 
 window._cancelFoundingMode = function() {
     _foundingMode = false;
+    MapBackend.cancelMapClick();
     const ov = document.getElementById('founding-overlay');
     if (ov) ov.remove();
     window._checkFoundingOverlay();

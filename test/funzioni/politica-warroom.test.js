@@ -283,14 +283,22 @@ describe('Funzioni War Room Politica (war_room.js)', () => {
             await sandbox.renderTabWarRoom();
             assert.ok(sandbox.document.getElementById('wr-overlay'));
 
+            /* La War Room copre la mappa: chiudendola la mappa sotto va
+               smontata, qualunque backend sia montato. Dal 23/08 non chiama
+               piu' _destroyMap per nome ma passa da MapBackend. */
             let destroyCalled = false;
-            sandbox._destroyMap = () => { destroyCalled = true; };
+            sandbox.window.MapBackend.register('finto-per-il-test', {
+                destroy: () => { destroyCalled = true; }
+            });
+            sandbox.window.MapBackend.use('finto-per-il-test');
 
             sandbox._wrClose();
 
             assert.equal(sandbox.document.getElementById('wr-overlay'), null);
             assert.equal(mainPanel.style.display, '');
-            assert.equal(destroyCalled, true, 'deve invocare _destroyMap se presente');
+            assert.equal(destroyCalled, true, 'deve smontare la mappa montata');
+            assert.equal(sandbox.window.MapBackend.attuale(), null,
+                'dopo la chiusura non deve restare nessuna mappa montata');
         });
 
         test('_wrClose non crasha se l overlay o il pannello principale non esistono', () => {

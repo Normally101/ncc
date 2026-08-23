@@ -899,8 +899,8 @@ function initGame(fresh = true) {
         setTimeout(checkActiveTrips, 200); // resolve any trips that completed while offline
         // Redraw map with saved unlocked regions
         setTimeout(() => {
-            if (typeof drawHighways === 'function') drawHighways();
-            if (typeof drawPOIs === 'function') drawPOIs();
+            MapBackend.drawHighways();
+            MapBackend.drawPOIs();
         }, 400);
     }
 
@@ -1669,9 +1669,9 @@ window.foundCompany = function(lng, lat, customName) {
     if (typeof showBigEvent === 'function') showBigEvent('🏢', 'Agenzia Fondata!', `La tua sede è ora operativa in ${nearestRegion}. Regione sbloccata gratuitamente. Le prime corse ti attendono!`);
     // Launch tutorial on first-ever company founding
     if (typeof window._maybeLaunchTutorial === 'function') window._maybeLaunchTutorial();
-    if (typeof _updateHQMarker === 'function') _updateHQMarker();
-    if (typeof drawHighways === 'function') drawHighways();
-    if (typeof drawPOIs === 'function') drawPOIs();
+    MapBackend.updateHQMarker();
+    MapBackend.drawHighways();
+    MapBackend.drawPOIs();
     if (typeof updateUI === 'function') updateUI();
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
     saveGame();
@@ -1691,8 +1691,8 @@ window.buyRegion = async function buyRegion(regionId) {
     gameState.unlockedRegions.push(regionId);
     updateUI();
     if(typeof renderTabRegions==='function') renderTabRegions();
-    if (typeof drawHighways === 'function') drawHighways();
-    if (typeof drawPOIs === 'function') drawPOIs();
+    MapBackend.drawHighways();
+    MapBackend.drawPOIs();
     if (typeof window.checkQuestProgress === 'function') window.checkQuestProgress();
     saveGame();
 };
@@ -1797,8 +1797,8 @@ function applyNationalLicense() {
     });
     logToMap('🇮🇹 Licenza Nazionale: tutte le regioni d\'Italia sbloccate!');
     showBigEvent('🇮🇹', 'Italia Tua!', 'Hai acquistato la Licenza Nazionale NCC. Tutte le 19 regioni italiane sono ora operative. Sei il padrone assoluto del mercato NCC.');
-    if (typeof drawHighways === 'function') drawHighways();
-    if (typeof drawPOIs === 'function') drawPOIs();
+    MapBackend.drawHighways();
+    MapBackend.drawPOIs();
     if (typeof renderTabRegions === 'function') renderTabRegions();
 }
 

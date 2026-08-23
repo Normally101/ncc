@@ -26,6 +26,11 @@ const ROOT = path.resolve(__dirname, '..');
 // onboarding, push-notifications), che mandano il caricamento in stallo.
 const CORE_FILES = [
     'security.js', 'events.js', 'ce-actions.js', 'design-system.js', 'config.js', 'feature-gate.js',
+    /* map-api.js: puro, senza DOM e senza effetti al caricamento. Nel banco
+       nessun backend viene registrato, quindi ogni MapBackend.* e' un no-op —
+       lo stesso comportamento che davano le guardie `typeof drawPOIs ===
+       'function'` che ha sostituito. */
+    'map-api.js',
     'geoCoords.js', 'routesDB.js',
     'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'ui-landing.js', 'auth.js',
     'quests-data.js',

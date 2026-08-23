@@ -486,3 +486,40 @@ window.removeCheckpointMarker = function(rideId) {
     if (_checkpointMarkers[rideId]) { _checkpointMarkers[rideId].remove(); delete _checkpointMarkers[rideId]; }
 };
 
+
+// ─── REGISTRAZIONE COME BACKEND DELLA MAPPA ──────────────────────
+// Il gioco non chiama piu' queste funzioni per nome: chiede a MapBackend.
+// Qui map.js si presenta al registro come l'implementazione 'mapbox'.
+// Vedi map-api.js per il perche'.
+let _onceClickHandler = null;
+
+if (window.MapBackend) {
+    window.MapBackend.register('mapbox', {
+        ensure:  _ensureMap,
+        destroy: () => { _onceClickHandler = null; _destroyMap(); },
+        isReady: () => !!map && _mapReady,
+
+        drawHighways,
+        drawPOIs,
+        updateRouteLines: _updateActiveRouteLines,
+        updateVehicles:   _updateVehicleLayer,
+        updateHQMarker:   () => { if (typeof window._updateHQMarker === 'function') window._updateHQMarker(); },
+        flyToHQ:          () => { if (typeof window.flyToHQ === 'function') window.flyToHQ(); },
+        dayNight:         () => { if (typeof window._updateDayNight === 'function') window._updateDayNight(); },
+
+        onceMapClick(cb) {
+            if (!map) return false;
+            _onceClickHandler = (e) => {
+                _onceClickHandler = null;
+                cb(e.lngLat.lng, e.lngLat.lat);
+            };
+            map.once('click', _onceClickHandler);
+            return true;
+        },
+        cancelMapClick() {
+            if (map && _onceClickHandler) { map.off('click', _onceClickHandler); }
+            _onceClickHandler = null;
+        }
+    });
+    window.MapBackend.use('mapbox');
+}

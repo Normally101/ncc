@@ -338,8 +338,8 @@ window.buyLifestyleAsset = function(assetId) {
         ['svizzera', 'costa_azzurra'].forEach(r => {
             if (!gameState.unlockedRegions.includes(r)) gameState.unlockedRegions.push(r);
         });
-        if (typeof drawHighways === 'function') drawHighways();
-        if (typeof drawPOIs === 'function') drawPOIs();
+        MapBackend.drawHighways();
+        MapBackend.drawPOIs();
         logToMap('✈️ Tratte internazionali sbloccate: Ginevra, Montecarlo, Nizza, Cannes!');
     }
     updateUI(); saveGame();

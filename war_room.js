@@ -355,8 +355,8 @@ window._wrClose = function () {
     document.getElementById('wr-overlay')?.remove();
     const panel = document.getElementById('main-panel');
     if (panel) panel.style.display = '';
-    // Distruggi la mappa Mapbox che era attiva sotto l'overlay
-    if (typeof window._destroyMap === 'function') window._destroyMap();
+    // Smonta la mappa che era attiva sotto l'overlay, qualunque essa sia
+    MapBackend.destroy();
 };
 
 // ─── INTERACTIONS ─────────────────────────────────────────────────────────────
