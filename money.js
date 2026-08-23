@@ -208,6 +208,44 @@ var CE_money = (function () {
         return true;
     }
 
+    /**
+     * Acquisto DC a PREZZO SERVER (rpc_dc_purchase, 66_server_priced_dc_purchase.sql).
+     *
+     * Forma giusta per l'economia custodita dal server: il chiamante dice solo
+     * COSA compra (id di catalogo) e quante unita'; NESSUN prezzo, NESSUN calcolo
+     * locale. Il server legge dc_item_prices, blocca la riga del giocatore,
+     * controlla il saldo, scala lui e RESTITUISCE il saldo nuovo: e' quello, e
+     * solo quello, che qui viene scritto in gameState.
+     *
+     * Differenze chiave rispetto a spendDC:
+     *  - non controlla i fondi in locale (il saldo locale e' una previsione);
+     *  - non addebita prima della risposta: se il server rifiuta, non c'e'
+     *    niente da annullare;
+     *  - un saldo dichiarato falso dal browser viene SOVRASCRITTO dalla verita'.
+     *
+     * @returns {Promise<Object|null>} l'esito del server ({ok, spent, driver_coins})
+     *   o null se rifiutato/non disponibile — in quel caso NULLA e' cambiato.
+     */
+    function acquistoDC(itemId, units) {
+        var gs = _gs();
+        var SS = window.ServerState;
+        if (!itemId || typeof itemId !== 'string') return Promise.resolve(null);
+        if (!SS || typeof SS.purchaseDCItem !== 'function') return Promise.resolve(null);
+        return SS.purchaseDCItem(itemId, units).then(function (r) {
+            if (r && r.ok && r.driver_coins != null) {
+                // Il saldo che vale e' quello restituito dal server.
+                gs.driverCoins = r.driver_coins;
+                if (typeof updateUI === 'function') updateUI();
+                return r;
+            }
+            // Rifiuto del server (fondi insufficienti, articolo sconosciuto…):
+            // nessun effetto, nessun tocco al saldo locale.
+            return null;
+        }).catch(function () {
+            return null;
+        });
+    }
+
     /* ── REPUTAZIONE ──────────────────────────────────────────────────────
        Il tetto e' `5.0 + prestige`, non `5`: copiato a mano ~22 volte nel
        codice e gia' sbagliato in daily-orders.js:157, dove chi ha fatto
@@ -223,6 +261,7 @@ var CE_money = (function () {
 
     return {
         spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC,
+        acquistoDC: acquistoDC,
         addReputation: addReputation, accreditatoDalServer: accreditatoDalServer,
         addebitatoDalServer: addebitatoDalServer,
         dcAccreditatiDalServer: dcAccreditatiDalServer,

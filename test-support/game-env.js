@@ -81,6 +81,23 @@ function makeLocalStorage() {
 // restano comunque testabili passando overrides.isReady).
 // Override per test: passa funzioni sostitutive (es. una che rigetta) per simulare fallimenti
 // RPC, come nel test di rollback di daily-orders.
+
+/* Specchio di dc_item_prices (66_server_priced_dc_purchase.sql): il prezzo e'
+   conoscenza del SERVER, quindi vive nel mock del server — mai nel client. */
+const DC_ITEM_PRICES = {
+    executive_pass:      { unit_price: 150, min_total: 1 },
+    skip_construction:   { unit_price: 8,   min_total: 1 },
+    academy_skip:        { unit_price: 5,   min_total: 1 },
+    fuel_boost:          { unit_price: 3,   min_total: 1 },
+    wake_driver:         { unit_price: 3,   min_total: 1 },
+    energy_boost:        { unit_price: 4,   min_total: 1 },
+    insta_heal:          { unit_price: 2,   min_total: 1 },
+    wake_all_drivers:    { unit_price: 2,   min_total: 3 },
+    heal_all_drivers:    { unit_price: 2,   min_total: 4 },
+    ops_bundle:          { unit_price: 9,   min_total: 1 },
+    full_bundle:         { unit_price: 35,  min_total: 1 },
+};
+
 function makeServerState(sandboxRef, overrides = {}) {
     let ready = true;
     const gs = () => sandboxRef.gameState;
@@ -191,6 +208,20 @@ function makeServerState(sandboxRef, overrides = {}) {
             /* Contratto COMPLETO di rpc_ec_spend (17_executive_club.sql):
                { ok, item_id, spent, driver_coins } — prima mancavano item_id e spent. */
             return { ok: true, item_id: itemId, spent: amount, driver_coins: Math.max(0, gs().driverCoins || 0) };
+        },
+        /* Contratto di rpc_dc_purchase (66_server_priced_dc_purchase.sql): il
+           finto server legge IL SUO catalogo prezzi, rifiuta senza toccare nulla
+           se il saldo non basta e restituisce { ok, item_id, units, spent,
+           driver_coins }. Il client (CE_money.acquistoDC) non calcola niente:
+           scrive solo il saldo che gli torna indietro — quindi qui la mutazione
+           del saldo va fatta dal mock, come farebbe il bridge Realtime vero. */
+        purchaseDCItem: async (itemId, units = 1) => {
+            const prezzo = DC_ITEM_PRICES[itemId];
+            if (!prezzo) return null;
+            const spent = Math.max(prezzo.min_total, prezzo.unit_price * Math.max(1, units));
+            if ((gs().driverCoins || 0) < spent) return null; // RAISE della vera RPC -> _rpc -> null
+            gs().driverCoins = (gs().driverCoins || 0) - spent;
+            return { ok: true, item_id: itemId, units, spent, driver_coins: gs().driverCoins };
         },
         findServerVehicle: () => null,
         findServerDriver: () => null,
