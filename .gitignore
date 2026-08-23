@@ -31,3 +31,6 @@ preview-*.html
 
 # Configurazione locale estensione Continue (contiene il projectId Google Cloud)
 .continue/
+
+# Copia di lavoro del GeoJSON ISTAT (2,75 MB) — la rigenera scripts/semplifica-geo.mjs
+scripts/.cache/

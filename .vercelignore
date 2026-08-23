@@ -11,6 +11,10 @@
 # Script interni
 *.py
 *.sh
+# Utilita' di sviluppo eseguite a mano (stato progetto, semplificazione geo).
+# Fino al 23/08 scripts/stato-progetto.mjs finiva sul sito pubblico: innocuo,
+# ma non c'e' ragione perche' ci sia.
+scripts
 
 # Edge Functions server-side (codice backend, mai pubblico)
 supabase
