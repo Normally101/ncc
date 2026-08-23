@@ -25,6 +25,13 @@
  *     mai niente d'altro.
  *   • Se TUTTA la scaletta tace al primo turno, l'errore porta
  *     `motoreNonDisponibile` e run-task.mjs rifa' il lavoro con Gemini.
+ *   • Dal 23/08 la scaletta puo' avere un secondo fornitore, NVIDIA NIM, se
+ *     `NVIDIA_NIM_API_KEY` e' presente: si accoda dopo OpenRouter e scatta solo
+ *     quando il TETTO GIORNALIERO di OpenRouter chiude (non per un modello
+ *     singolo occupato). E' la differenza fra "un modello in piu'" e "un conto
+ *     in piu'": la scaletta OpenRouter da sola non aiuta contro il suo stesso
+ *     tetto perche' e' per account, un fornitore con chiave e conto separati
+ *     si'. Vedi SCALETTA_NVIDIA piu' sotto.
  */
 import { STRUMENTI, ISTRUZIONI, eseguiStrumento } from './gemini-agent.mjs';
 import { execFile } from 'child_process';
@@ -74,7 +81,25 @@ export const SCALETTA_MODELLI = (process.env.GIGI_OPENROUTER_MODELLI
 /** Il primo della scaletta, per chi vuole solo sapere «con cosa stiamo lavorando». */
 export const MODELLO_OPENROUTER = process.env.GIGI_OPENROUTER_MODEL || SCALETTA_MODELLI[0];
 
-const ENDPOINT = 'https://openrouter.ai/api/v1/chat/completions';
+const ENDPOINT_OPENROUTER = 'https://openrouter.ai/api/v1/chat/completions';
+
+/**
+ * Secondo fornitore: stesso protocollo (Chat Completions, `tool_calls`), ma
+ * conto NVIDIA a se' stante. Serve SOLO per il caso che il commento sopra
+ * descrive gia': il tetto di OpenRouter e' per account, quindi scorrere altri
+ * modelli OpenRouter quando scatta non aiuta. Un fornitore diverso si', perche'
+ * la sua quota non condivide nulla con quella di OpenRouter.
+ *
+ * Si attiva da solo se NVIDIA_NIM_API_KEY e' presente — altrimenti la scaletta
+ * resta quella di sempre, un solo fornitore. Non ancora provato con una vera
+ * chiamata a strumento (a differenza dei cinque della scaletta sopra, tutti
+ * collaudati il 22/08): la prima run reale con la chiave dira' se il
+ * tool-calling funziona cosi' com'e' o se il modello va cambiato.
+ */
+const ENDPOINT_NVIDIA = 'https://integrate.api.nvidia.com/v1/chat/completions';
+export const SCALETTA_NVIDIA = (process.env.GIGI_NVIDIA_MODELLI
+  ? process.env.GIGI_NVIDIA_MODELLI.split(',').map((s) => s.trim()).filter(Boolean)
+  : ['nvidia/nemotron-3-super-120b-a12b']);
 
 /** Anche un fornitore "senza limiti" ogni tanto dice di no: si aspetta e si riprova. */
 const ATTESE_RIPROVA = [5_000, 15_000, 45_000, 90_000];
@@ -155,14 +180,15 @@ function strumentiInFormatoOpenAI(soloScrittura = false) {
   }));
 }
 
-async function chiedi(messaggi, modello, chiave, soloScrittura = false) {
-  const r = await fetch(ENDPOINT, {
+async function chiedi(messaggi, modello, chiave, endpoint, soloScrittura = false) {
+  const r = await fetch(endpoint, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${chiave}`,
       'Content-Type': 'application/json',
       // OpenRouter chiede di identificare il chiamante; e' anche il modo in cui
-      // il consumo si legge nella dashboard.
+      // il consumo si legge nella dashboard. NVIDIA la ignora, ma non le da'
+      // fastidio riceverla.
       'HTTP-Referer': 'https://www.chauffeurempire.com',
       // Solo ASCII: le intestazioni HTTP non accettano altro, e un trattino
       // lungo qui faceva fallire la richiesta prima ancora di partire.
@@ -203,8 +229,22 @@ export async function runOpenRouterAgent({
   ];
 
   /* La scaletta vera: se qualcuno ha chiesto un modello preciso si rispetta e
-     basta, altrimenti si scorre l'elenco. */
-  const scaletta = model ? [model] : [...modelli];
+     basta (resta su OpenRouter, e' il caso dei collaudi mirati). Altrimenti si
+     scorre l'elenco OpenRouter e, se c'e' una chiave NVIDIA, si accoda anche
+     quello — un fornitore in piu' con un conto suo, non un modello in piu'
+     sullo stesso conto. Ogni voce porta la propria chiave ed endpoint, cosi'
+     il resto del ciclo non deve sapere chi sta chiamando davvero. */
+  const chiaveNvidia = process.env.NVIDIA_NIM_API_KEY;
+  const scaletta = model
+    ? [{ modello: model, fornitore: 'openrouter', chiave, endpoint: ENDPOINT_OPENROUTER }]
+    : [
+        ...modelli.map((modello) => (
+          { modello, fornitore: 'openrouter', chiave, endpoint: ENDPOINT_OPENROUTER })),
+        ...(chiaveNvidia
+          ? SCALETTA_NVIDIA.map((modello) => (
+              { modello, fornitore: 'nvidia', chiave: chiaveNvidia, endpoint: ENDPOINT_NVIDIA }))
+          : []),
+      ];
   let indiceModello = 0;
   /* Quali modelli hanno davvero lavorato. Serve nel riepilogo: sapere che un
      lavoro l'ha finito il terzo della lista dice che i primi due erano esauriti,
@@ -253,18 +293,22 @@ export async function runOpenRouterAgent({
        una quota che non torna prima di domani, o abbandonare un modello che
        aveva solo un minuto di traffico. */
     while (indiceModello < scaletta.length) {
-      const modelloOra = scaletta[indiceModello];
+      const voce = scaletta[indiceModello];
       erroreUltimo = null;
       for (let tentativo = 0; tentativo <= ATTESE_RIPROVA.length; tentativo++) {
         try {
-          risposta = await chiedi(messaggi, modelloOra, chiave, !scritturaFatta && turni >= SOGLIA_TAGLIO_LETTURA);
+          risposta = await chiedi(
+            messaggi, voce.modello, voce.chiave, voce.endpoint,
+            !scritturaFatta && turni >= SOGLIA_TAGLIO_LETTURA);
           erroreUltimo = null;
-          if (!usati.includes(modelloOra)) usati.push(modelloOra);
+          if (!usati.includes(voce.modello)) usati.push(voce.modello);
           break;
         } catch (e) {
           erroreUltimo = e;
-          /* Finito per oggi: non si riprova e non si scende la scaletta, perche'
-             il tetto e' dell'account e vale per tutti i modelli insieme. */
+          /* Finito per oggi: non si riprova e non si scende la scaletta dello
+             STESSO fornitore, perche' il tetto e' del suo account e vale per
+             tutti i suoi modelli insieme. Un fornitore diverso pero' ha un
+             conto suo: la gestione e' subito sotto, fuori da questo for. */
           if (quotaGiornalieraFinita(e.message)) {
             erroreUltimo.quotaGiornaliera = true;
             break;
@@ -273,16 +317,27 @@ export async function runOpenRouterAgent({
             || /429|rate limit|exhausted|unavailable|overload/i.test(e.message || '');
           if (!saturo || tentativo === ATTESE_RIPROVA.length) break;
           const attesa = ATTESE_RIPROVA[tentativo];
-          onProgress(`${modelloOra}: occupato, riprovo fra ${attesa / 1000}s`);
+          onProgress(`${voce.modello}: occupato, riprovo fra ${attesa / 1000}s`);
           await new Promise((r) => setTimeout(r, attesa));
         }
       }
       if (!erroreUltimo) break;
-      if (erroreUltimo.quotaGiornaliera) break; // finito per oggi: la scaletta non serve
+
+      if (erroreUltimo.quotaGiornaliera) {
+        /* Salta avanti fino al primo modello di un fornitore DIVERSO da quello
+           appena esaurito — scorrere altri modelli dello stesso non serve, la
+           quota e' condivisa. Se non ne resta nessuno, e' davvero finita. */
+        let prossimo = indiceModello + 1;
+        while (prossimo < scaletta.length && scaletta[prossimo].fornitore === voce.fornitore) prossimo++;
+        if (prossimo >= scaletta.length) break; // nessun fornitore diverso rimasto
+        onProgress(`${voce.fornitore}: tetto giornaliero esaurito → passo a ${scaletta[prossimo].fornitore}`);
+        indiceModello = prossimo;
+        continue;
+      }
 
       indiceModello++;
       if (indiceModello < scaletta.length) {
-        onProgress(`${modelloOra} non risponde piu' → passo a ${scaletta[indiceModello]}`);
+        onProgress(`${voce.modello} non risponde piu' → passo a ${scaletta[indiceModello].modello}`);
       }
     }
     if (erroreUltimo) {
@@ -294,16 +349,17 @@ export async function runOpenRouterAgent({
          ricominciare da capo con un altro motore farebbe danni. */
       if (erroreUltimo.quotaGiornaliera) {
         const e = new Error(
-          `QUOTA GIORNALIERA OPENROUTER ESAURITA: ${erroreUltimo.message}`);
+          `QUOTA GIORNALIERA ESAURITA su tutti i fornitori disponibili: ${erroreUltimo.message}`);
         e.quotaGiornaliera = true;
-        /* Non e' «il motore non c'e'»: e' «per oggi basta». Ripiegare su Gemini
-           non aiuta — il suo piano gratuito da' venti richieste al giorno e un
-           lavoro ne mangia trenta. Meglio fermarsi e riprendere domani. */
+        /* Non e' «il motore non c'e'»: e' «per oggi basta, anche con NVIDIA se
+           era in scaletta». Ripiegare su Gemini non aiuta — il suo piano
+           gratuito da' venti richieste al giorno e un lavoro ne mangia trenta.
+           Meglio fermarsi e riprendere domani. */
         throw e;
       }
       if (turni === 1) {
         const e = new Error(
-          `nessuno dei ${scaletta.length} modelli OpenRouter risponde (ultimo: ${erroreUltimo.message})`);
+          `nessuno dei ${scaletta.length} modelli disponibili risponde (ultimo: ${erroreUltimo.message})`);
         e.motoreNonDisponibile = true;
         throw e;
       }

@@ -77,4 +77,9 @@ jobs:
           # quando finisce, run-task ripiega su Gemini da solo.
           GIGI_MOTORE: ${{ vars.GIGI_MOTORE || 'gemini' }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          # Secondo fornitore nella scaletta OpenRouter: entra in gioco solo
+          # quando scatta il tetto GIORNALIERO di OpenRouter (conto separato,
+          # non un modello in piu' sullo stesso). Se il secret manca, il
+          # comportamento resta identico a oggi. Vedi .github/agent/openrouter-agent.mjs.
+          NVIDIA_NIM_API_KEY: ${{ secrets.NVIDIA_NIM_API_KEY }}
         run: node .github/agent/run-task.mjs
