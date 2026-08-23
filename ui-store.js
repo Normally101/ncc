@@ -99,25 +99,25 @@ function renderTabPremiumStore() {
     // ── TAB: PACCHETTI DC ────────────────────────────────────────────────────
     const ecPkgs = [
         {
-            dc:50,   price:'€4,99',  label:'Starter Pack',       sub:'Per iniziare con il piede giusto',
+            dc:50,   price:'€4,99',  eur:4.99,  label:'Starter Pack',       sub:'Per iniziare con il piede giusto',
             art:'🪙', artBg:'linear-gradient(160deg,#1a1200,#2d1e00)',
             border:'rgba(184,134,11,0.35)', btnBg:'linear-gradient(135deg,#b8860b,#d4af37)', btnColor:'#000',
             badge:null, coins:'🟡',
         },
         {
-            dc:220,  price:'€19,99', label:'Corporate Pack',      sub:'+10% Executive Yield incluso',
+            dc:220,  price:'€19,99', eur:19.99, label:'Corporate Pack',      sub:'+10% Executive Yield incluso',
             art:'💰', artBg:'linear-gradient(160deg,#0a1525,#102040)',
             border:'rgba(96,165,250,0.35)', btnBg:'linear-gradient(135deg,#1d4ed8,#3b82f6)', btnColor:'#fff',
             badge:{cls:'ec-badge-popular',txt:'POPOLARE'}, coins:'🟡🟡',
         },
         {
-            dc:600,  price:'€49,99', label:'Offshore Pack',       sub:'+20% Rendimento garantito',
+            dc:600,  price:'€49,99', eur:49.99, label:'Offshore Pack',       sub:'+20% Rendimento garantito',
             art:'💎', artBg:'linear-gradient(160deg,#0c1a0c,#163016)',
             border:'rgba(34,197,94,0.40)', btnBg:'linear-gradient(135deg,#15803d,#22c55e)', btnColor:'#fff',
             badge:{cls:'ec-badge-value',txt:'BEST VALUE'}, coins:'🟡🟡🟡',
         },
         {
-            dc:1300, price:'€99,99', label:'Il Fondo Sovrano',    sub:'+30% Rendimento massimizzato',
+            dc:1300, price:'€99,99', eur:99.99, label:'Il Fondo Sovrano',    sub:'+30% Rendimento massimizzato',
             art:'👑', artBg:'linear-gradient(160deg,#16080a,#2d0f15)',
             border:'rgba(212,175,55,0.60)', btnBg:'linear-gradient(135deg,#b8860b,#f0d060,#b8860b)', btnColor:'#000',
             badge:{cls:'ec-badge-limited',txt:'PREMIUM'}, coins:'🟡🟡🟡🟡', featured:false,
@@ -141,7 +141,7 @@ function renderTabPremiumStore() {
       <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${p.sub}</div>
     </div>
     <button class="ec-buy-btn" style="background:${p.btnBg};color:${p.btnColor}"
-      ${ceAct('_dcSimPurchase', [p.dc])}>
+      ${ceAct('_dcSimPurchase', [p.dc, p.eur, p.label])}>
       Acquista · ${p.price}
     </button>
   </div>
@@ -149,7 +149,7 @@ function renderTabPremiumStore() {
 
     const _acqHtml = `
 <div style="font-size:10px;color:rgba(212,175,55,0.45);text-align:center;margin-bottom:16px">
-  Acquisti simulati (demo) — i Driver Coins si accumulano anche completando missioni Presidential e trasferimenti VIP
+  Ogni acquisto richiede la conferma del pagamento — i Driver Coins si accumulano anche completando missioni Presidential e trasferimenti VIP
 </div>
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
   ${ecPkgs.map(_packCard).join('')}
@@ -258,11 +258,54 @@ function renderTabPremiumStore() {
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
-window._dcSimPurchase = function(amount) {
-    if (!window.CE_money.earnDC(amount, 'sim_purchase')) return;
+/* Il click su un pacchetto NON tocca alcun saldo: apre solo la conferma di
+   pagamento. Prima _dcSimPurchase accreditava i DC direttamente via earnDC:
+   bypass totale della cassa. Ora l'UNICO percorso di accredito e'
+   _dcConfirmPurchase, che scala il prezzo via CE_money.spend (money.js) prima
+   di accreditare i DC. */
+window._dcSimPurchase = function(amount, eur) {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    if (!Number.isFinite(eur) || eur < 0) return;
+    const old = document.getElementById('ec-purchase-modal');
+    if (old) old.remove();
+    const overlay = document.createElement('div');
+    overlay.id = 'ec-purchase-modal';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.72);display:flex;align-items:center;justify-content:center';
+    overlay.innerHTML = `
+<div style="background:#161b22;border:1px solid rgba(212,175,55,0.4);border-radius:14px;max-width:380px;width:88%;padding:26px 22px;text-align:center;font-family:Inter,system-ui,sans-serif">
+  <div style="font-size:34px;line-height:1">🪙</div>
+  <div style="font-size:17px;font-weight:900;color:#d4af37;margin-top:8px">Conferma acquisto</div>
+  <div style="font-size:13px;color:var(--text);margin-top:10px">
+    Acquistare <strong style="color:#d4af37">${amount} Driver Coins</strong> al prezzo di
+    <strong>€${eur.toFixed(2)}</strong>?
+  </div>
+  <div style="display:flex;gap:10px;margin-top:20px">
+    <button ${ceAct('_ecClosePurchaseModal', [])} style="flex:1;padding:11px;border:none;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;background:#21262d;color:#6b7280">Annulla</button>
+    <button ${ceAct('_dcConfirmPurchase', [amount, eur])} style="flex:1;padding:11px;border:none;border-radius:8px;font-weight:800;font-size:12px;cursor:pointer;background:linear-gradient(135deg,#b8860b,#d4af37);color:#000">Conferma pagamento</button>
+  </div>
+</div>`;
+    document.body.appendChild(overlay);
+};
+
+window._ecClosePurchaseModal = function() {
+    const m = document.getElementById('ec-purchase-modal');
+    if (m) m.remove();
+};
+
+window._dcConfirmPurchase = function(amount, eur) {
+    if (!Number.isFinite(amount) || amount <= 0) return;
+    if (!Number.isFinite(eur) || eur < 0) return;
+    // Prima il pagamento: se non passa dalla porta unica (fondi insufficienti,
+    // importo invalido) qui si esce e non arriva un solo DC.
+    if (!window.CE_money.spend(eur, 'pacchetto_driver_coins')) {
+        window._ecClosePurchaseModal();
+        return;
+    }
+    if (!window.CE_money.earnDC(amount, 'pacchetto_driver_coins')) return;
+    window._ecClosePurchaseModal();
     renderTabPremiumStore();
     updateUI();
-    if (typeof showNotification === 'function') showNotification(`🪙 +${amount} Driver Coins! (Acquisto simulato)`, 'success');
+    if (typeof showNotification === 'function') showNotification(`🪙 +${amount} Driver Coins! Pagamento confermato.`, 'success');
     saveGame();
 };
 
