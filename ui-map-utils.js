@@ -176,14 +176,35 @@ window._foundFromRegion = function(regionId) {
     return true;
 };
 
+/**
+ * Un click in mare non e' un errore del giocatore: e' un dito che ha
+ * mancato la costa di due chilometri.
+ *
+ * Senza questo, foundCompany prende il POI col `Math.hypot` piu' piccolo e
+ * puo' pescare dall'altra parte del Tirreno — chi clicca al largo di Ostia
+ * si ritrova la sede in Sardegna. Qui il punto viene agganciato alla
+ * terraferma piu' vicina, misurata sulla COSTA, prima di consegnarlo.
+ * Se il punto e' gia' su terra non cambia niente.
+ */
+window._agganciaAllaTerraferma = function(lng, lat) {
+    const P = window.CE_proj;
+    const regioni = window.GEO_ITALIA && window.GEO_ITALIA.regions;
+    if (!P || !regioni) return [lng, lat];
+    if (P.regioneAlPunto(lng, lat, regioni)) return [lng, lat];
+    const id = P.regionePiuVicina(lng, lat, regioni);
+    const r = id && window._foundingRegions().find(x => x.id === id);
+    return r ? [r.lng, r.lat] : [lng, lat];
+};
+
 window._startFoundingMode = function() {
     _foundingMode = true;
     // Il click lo prende in carico la mappa, qualunque sia. Se nessuna mappa
     // puo' farlo (nessun backend montato, o finestra da telefono), si passa
     // all'elenco delle regioni invece di lasciare il giocatore fermo.
-    const preso = MapBackend.onceMapClick((lng, lat) => {
+    const preso = MapBackend.onceMapClick((lngGrezza, latGrezza) => {
         if (!_foundingMode) return;
         _foundingMode = false;
+        const [lng, lat] = window._agganciaAllaTerraferma(lngGrezza, latGrezza);
         const name = (typeof prompt === 'function'
             ? prompt('Dai un nome alla tua sede (es: Via Nazionale 12, Roma):', 'Sede Principale')
             : null) || 'Sede Principale';

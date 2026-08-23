@@ -127,11 +127,12 @@
 - `_foundingRegions` · `ui-map-utils.js:124` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `_startFoundingList` · `ui-map-utils.js:149` · data-ce-act: `_startFoundingList` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
 - `_foundFromRegion` · `ui-map-utils.js:166` · data-ce-act: `_foundFromRegion` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_startFoundingMode` · `ui-map-utils.js:179` · data-ce-act: `_startFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_cancelFoundingMode` · `ui-map-utils.js:205` · data-ce-act: `_cancelFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `openAcademyModal` · `ui-map-utils.js:215` · data-ce-act: `openAcademyModal` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `_academySelectDriver` · `ui-map-utils.js:303` · data-ce-act: `_academySelectDriver` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_traitBadgeHTML` · `ui-map-utils.js:310` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_agganciaAllaTerraferma` · `ui-map-utils.js:189` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_startFoundingMode` · `ui-map-utils.js:199` · data-ce-act: `_startFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_cancelFoundingMode` · `ui-map-utils.js:229` · data-ce-act: `_cancelFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `openAcademyModal` · `ui-map-utils.js:240` · data-ce-act: `openAcademyModal` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `_academySelectDriver` · `ui-map-utils.js:328` · data-ce-act: `_academySelectDriver` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_traitBadgeHTML` · `ui-map-utils.js:335` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-market.js`
 

@@ -661,9 +661,14 @@
            MAPPA_2D di config.js. In mancanza di entrambi resta montato
            quello che c'e', cioe' Mapbox. */
         const q = (window.location && window.location.search) || '';
+        /* Su schermo stretto vince comunque la 2D: map.js si rifiuta di
+           creare Mapbox sotto i 768 px (troppo pesante per un telefono), e
+           finora questo voleva dire NESSUNA mappa. Meglio quella leggera
+           che nessuna. */
+        const stretto = typeof window.innerWidth === 'number' && window.innerWidth < 768;
         const scelta = /[?&]mappa=2d\b/.test(q) ? 'svg2d'
                      : /[?&]mappa=mapbox\b/.test(q) ? 'mapbox'
-                     : (window.MAPPA_2D === true ? 'svg2d' : null);
+                     : (window.MAPPA_2D === true || stretto) ? 'svg2d' : null;
         if (scelta) window.MapBackend.use(scelta);
     }
 

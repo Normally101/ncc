@@ -108,3 +108,81 @@ describe('fondazione — elenco delle regioni (senza mappa)', () => {
         assert.equal(s.document.getElementById('founding-overlay'), null);
     });
 });
+
+/* ─── Fondazione cliccando sulla mappa 2D ────────────────────────────────
+   Passo 6 del piano mappa: il click passa da MapBackend, la funzione pura
+   foundCompany non si tocca, e un click in mare non manda piu' la sede
+   dall'altra parte del Tirreno. */
+const FILES_MAPPA = [...CORE_FILES, 'map-proiezione.js', 'geo-italia.js',
+                     'map-dati.js', 'map-svg.js', 'ui-map-utils.js'];
+
+describe('fondazione — cliccando sulla mappa 2D', () => {
+
+    let env2, m;
+    beforeEach(() => {
+        env2 = createGameEnv(FILES_MAPPA);
+        m = env2.sandbox;
+        m.setTimeout = () => 0;
+        m.initGame(true);
+        env2.stopAllIntervals();
+        m.gameState.unlockedRegions = [];
+        m.gameState.hq = { lng: null, lat: null, region: null, name: null, level: 0 };
+        const root = m.document.createElement('div');
+        root.id = 'map2d-root';
+        m.document.body.appendChild(root);
+        m.window.MapBackend.use('svg2d');
+        m.window.MapBackend.ensure();
+    });
+    afterEach(() => { env2.stopAllIntervals(); });
+
+    const clicca = (nodo) => nodo.dispatchEvent(
+        new (m.document.defaultView.MouseEvent)('click', { bubbles: true, cancelable: true }));
+
+    test('la mappa 2D prende in carico il click di fondazione', () => {
+        m.window._checkFoundingOverlay();
+        m.window._startFoundingMode();
+        // l'overlay chiede di cliccare, quindi la mappa ha accettato
+        assert.match(m.document.getElementById('founding-overlay').innerHTML, /Clicca sulla Mappa/);
+    });
+
+    test('cliccare la mappa fonda l\'azienda passando dalla stessa foundCompany', () => {
+        m.window._checkFoundingOverlay();
+        m.window._startFoundingMode();
+        clicca(m.document.querySelector('[data-regione="lazio"]'));
+        assert.ok(m.gameState.hq.region, 'la sede doveva essere fondata');
+        assert.ok(m.gameState.unlockedRegions.length === 1);
+        assert.equal(m.document.getElementById('founding-overlay'), null);
+    });
+
+    /* Il difetto che si aggiusta qui: senza aggancio, foundCompany prende il
+       POI col Math.hypot piu' piccolo, e al largo di Ostia puo' essere la
+       Sardegna. */
+    test('un click in mare si aggancia alla costa piu\' vicina', () => {
+        // al largo di Ostia: mare aperto
+        assert.equal(m.window.CE_proj.regioneAlPunto(11.9, 41.7, m.window.GEO_ITALIA.regions), null);
+        const [lng, lat] = m.window._agganciaAllaTerraferma(11.9, 41.7);
+        assert.equal(m.window.CE_proj.regioneAlPunto(lng, lat, m.window.GEO_ITALIA.regions), 'lazio',
+            'il punto agganciato deve stare nel Lazio');
+        m.window.foundCompany(lng, lat, 'Prova');
+        assert.equal(m.gameState.hq.region, 'lazio');
+    });
+
+    test('un click sulla terraferma non viene spostato di un millimetro', () => {
+        const [lng, lat] = m.window._agganciaAllaTerraferma(12.4964, 41.9028);
+        assert.equal(lng, 12.4964);
+        assert.equal(lat, 41.9028);
+    });
+
+    test('senza confini caricati l\'aggancio restituisce il punto originale', () => {
+        m.window.GEO_ITALIA = undefined;
+        assert.deepEqual([...m.window._agganciaAllaTerraferma(1, 2)], [1, 2]);
+    });
+
+    test('annullare stacca il gancio: un click successivo non fonda niente', () => {
+        m.window._checkFoundingOverlay();
+        m.window._startFoundingMode();
+        m.window._cancelFoundingMode();
+        clicca(m.document.querySelector('[data-regione="lazio"]'));
+        assert.equal(m.gameState.hq.region, null, 'dopo l\'annullamento il click non deve fondare');
+    });
+});
