@@ -6,7 +6,10 @@
    • notificationclick → focus sulla tab del gioco
    ═══════════════════════════════════════════════════════════════════════ */
 
-const CACHE_NAME = 'ce-shell-v2';
+/* v3, 23/08/2026: la mappa non e' piu' Mapbox. La cache va invalidata o
+   i browser che hanno il vecchio index.html continuano a chiedere
+   api.mapbox.com, che ora la CSP blocca. */
+const CACHE_NAME = 'ce-shell-v3';
 const SHELL_ASSETS = [
   '/',
   '/index.html',

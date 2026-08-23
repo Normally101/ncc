@@ -104,7 +104,7 @@ body {
     background: #050510;
 }
 #map-overlay:not(.hidden) { display: flex; flex-direction: column; }
-#leaflet-map { flex: 1; position: relative; min-height: 0; }
+#map2d-root { flex: 1; position: relative; min-height: 0; }
 
 /* ── Top Navigation Bar — steel-blue eRepublik style ─── */
 .top-nav-btn {
@@ -218,12 +218,6 @@ body {
     background: rgba(74,222,128,0.08) !important;
 }
 
-/* ── Map (Mapbox) ─────────────────────────────────────── */
-#leaflet-map { background: #050510 !important; }
-.mapboxgl-canvas { outline: none; }
-.mapboxgl-ctrl-attrib, .mapboxgl-ctrl-logo { display: none !important; }
-.mapboxgl-ctrl-group { display: none !important; }
-
 /* ── POI Markers (custom HTML) ───────────────────────── */
 .poi-marker {
     width: 10px; height: 10px; border-radius: 50%;
@@ -236,18 +230,6 @@ body {
 .poi-marker.city   { background: rgba(255,255,255,0.85); }
 .poi-marker.locked { background: #2a2a3a; opacity: 0.35; border-color: #111; }
 
-/* ── Mapbox Popup ─────────────────────────────────────── */
-.mapboxgl-popup-content {
-    background: rgba(5,5,20,0.97) !important;
-    border: 1px solid rgba(0,242,255,0.4) !important;
-    color: #c0e8ff !important; font-weight: 600; font-size: 10px;
-    border-radius: 6px; padding: 6px 10px;
-    box-shadow: 0 2px 16px rgba(0,0,0,0.9);
-    font-family: 'Inter', sans-serif;
-}
-.mapboxgl-popup-anchor-bottom .mapboxgl-popup-tip { border-top-color: rgba(0,242,255,0.4) !important; }
-.mapboxgl-popup-anchor-top    .mapboxgl-popup-tip { border-bottom-color: rgba(0,242,255,0.4) !important; }
-.mapboxgl-popup-close-button { color: rgba(0,242,255,0.6); font-size: 14px; }
 
 /* ── Car Arrow ────────────────────────────────────────── */
 .car-arrow {
@@ -360,7 +342,6 @@ body {
    specificity; map controls are excluded; reduced-motion is honored. */
 button { transition: transform .09s ease, opacity .15s ease; }
 button:active:not(:disabled) { transform: scale(0.97); }
-.mapboxgl-ctrl button, .mapboxgl-ctrl button:active { transform: none; }
 @media (prefers-reduced-motion: reduce) { button:active { transform: none !important; } }
 
 .btn-blue {
@@ -3795,11 +3776,6 @@ details[open] .finance-section-title { color: #00f2ff; }
 .ceo-week-banner { box-shadow: 0 0 24px rgba(212,175,55,0.06), inset 0 1px 0 rgba(212,175,55,0.05); }
 
 /* ── 37. Mapbox popup: deeper glass ────────────────────────────── */
-.mapboxgl-popup-content {
-    box-shadow: 0 4px 28px rgba(0,0,0,0.9), 0 0 12px rgba(0,242,255,0.1) !important;
-    backdrop-filter: blur(8px) !important;
-    -webkit-backdrop-filter: blur(8px) !important;
-}
 
 /* ── 38. Academic course buttons: glow ──────────────────────────── */
 .academy-course-btn:hover { box-shadow: 0 4px 16px rgba(168,85,247,0.12); }

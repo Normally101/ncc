@@ -24,9 +24,16 @@
         group: '#34d399', standard: '#9ca3af', economy: '#9ca3af',
     };
 
+    /* La rotta intera della corsa, disegnata sotto la scia. Ambra normale,
+       rossa quando la corsa e' incolonnata: e' l'unica informazione che la
+       vecchia mappa satellitare dava e che qui non si puo' perdere. */
+    const ROTTA        = '#f59e0b';
+    const ROTTA_TRAFFICO = '#ff4060';
+
     let _rafId = null;
     let _gVeicoli = null;
     let _gScie = null;
+    let _gRotte = null;
     const _nodi = {};      // id corsa → { auto, scia }
     const _percorsi = {};  // id corsa → { d, lunghezza }
 
@@ -47,6 +54,15 @@
     }
 
     function creaNodi(v) {
+        const rotta = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        rotta.setAttribute('class', 'ce-rotta');
+        rotta.setAttribute('fill', 'none');
+        rotta.setAttribute('stroke', ROTTA);
+        rotta.setAttribute('stroke-width', '0.8');
+        rotta.setAttribute('stroke-dasharray', '3 4');
+        rotta.setAttribute('opacity', '0.7');
+        _gRotte.appendChild(rotta);
+
         const auto = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         auto.setAttribute('class', 'ce-auto');
         // Triangolo che punta a nord: la rotazione lo orienta.
@@ -65,7 +81,7 @@
         scia.setAttribute('opacity', '0.75');
         _gScie.appendChild(scia);
 
-        return { auto: auto, scia: scia };
+        return { auto: auto, scia: scia, rotta: rotta };
     }
 
     /* Le auto restano della stessa dimensione a schermo mentre si ingrandisce:
@@ -86,7 +102,7 @@
 
     function giro() {
         _rafId = requestAnimationFrame(giro);
-        if (!_gVeicoli || !_gScie) return;
+        if (!_gVeicoli || !_gScie || !_gRotte) return;
         if (schedaNascosta()) return;
         if (typeof window.tickRideProgress !== 'function') return;
 
@@ -110,8 +126,11 @@
                 if (_percorsi[v.id]) {
                     n.scia.setAttribute('d', _percorsi[v.id].d);
                     n.scia.setAttribute('stroke-dasharray', _percorsi[v.id].lunghezza.toFixed(1));
+                    n.rotta.setAttribute('d', _percorsi[v.id].d);
                 }
             }
+            n.rotta.setAttribute('stroke', v.traffico ? ROTTA_TRAFFICO : ROTTA);
+            n.rotta.setAttribute('stroke-width', v.traffico ? '1.2' : '0.8');
             const p = _percorsi[v.id];
             if (p) {
                 n.scia.setAttribute('stroke-dashoffset',
@@ -123,6 +142,7 @@
             if (visti.has(Number(id)) || visti.has(id)) continue;
             _nodi[id].auto.remove();
             _nodi[id].scia.remove();
+            _nodi[id].rotta.remove();
             delete _nodi[id];
             delete _percorsi[id];
         }
@@ -133,7 +153,8 @@
         if (!radice) return false;
         _gVeicoli = radice.querySelector('#ce-g-veicoli');
         _gScie    = radice.querySelector('#ce-g-scie');
-        if (!_gVeicoli || !_gScie) return false;
+        _gRotte   = radice.querySelector('#ce-g-rotte');
+        if (!_gVeicoli || !_gScie || !_gRotte) return false;
         if (_rafId !== null) return true;
         giro();
         return true;
@@ -144,6 +165,7 @@
         for (const id in _nodi) { delete _nodi[id]; delete _percorsi[id]; }
         _gVeicoli = null;
         _gScie = null;
+        _gRotte = null;
     }
 
     window.CE_mapAnim = {

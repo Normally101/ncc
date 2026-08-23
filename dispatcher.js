@@ -11,10 +11,11 @@ function _isMobile() {
 }
 window._fleetFilter = { brand: null, tier: null };
 let _fleetFilter = window._fleetFilter;
-let _poiMarkers = {};
-let _vehicleMarkers = {};
-let _routeLines = {};
-let _rideGeomCache = {}; // survives ride removal from activeRides so activeTrips can position marker at dest
+/* _poiMarkers, _vehicleMarkers, _routeLines e _rideGeomCache erano i registri
+   dei marcatori di Mapbox: li teneva map.js e li consumava map-visual.js.
+   Tolti quei due file non aveva piu' senso tenerli in vita — la mappa 2D
+   tiene i propri nodi dentro map-animazione.js, che li crea e li distrugge
+   col ciclo. */
 
 const HIGHWAYS = {
     // ─── LAZIO INTERNO ───────────────────────────────────────────────────

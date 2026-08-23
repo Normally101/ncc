@@ -57,20 +57,11 @@ window.FEATURES = {
     carriera:     true,   // ui-career, quests, quests-data — verificata 21/08/2026 (progressione, bivi morali, modali, ricompense via CE_money)
 };
 
-/* ── Quale mappa disegna il gioco ────────────────────────────────────────────
-   `false` = Mapbox satellitare, come e' sempre stato. `true` = la mappa 2D
-   stilizzata di map-svg.js, che si disegna dai confini locali e non chiede
-   niente alla rete.
-
-   Non sta in FEATURES di proposito: FEATURES governa PARTI DI GIOCO, ognuna
-   con una scheda che la nasconde (vedi TAB_DI e il guardrail
-   interruttori-applicati). Questa non e' una parte di gioco che si puo'
-   nascondere: e' una scelta fra due modi di disegnare la stessa cosa.
-
-   Si puo' scavalcare senza toccare i file: `?mappa=2d` o `?mappa=mapbox`
-   nell'indirizzo. E dentro la mappa c'e' un pulsante che alterna i due senza
-   ricaricare la pagina, per confrontarli sulla stessa scena. */
-window.MAPPA_2D = true;
+/* La mappa del gioco e' una sola: map-svg.js, 2D e locale. L'interruttore
+   MAPPA_2D e' servito per le due release in cui Mapbox e questa hanno
+   convissuto; ora non ha piu' due termini fra cui scegliere ed e' stato
+   tolto. La giuntura window.MapBackend (map-api.js) invece resta: e' quella
+   che ha permesso di sostituire una mappa senza toccare il motore. */
 
 /** Una funzione è attiva? Sconosciuta = spenta: nel dubbio non si mostra. */
 window.attiva = function attiva(nome) {

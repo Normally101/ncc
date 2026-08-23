@@ -5,7 +5,7 @@
    Dipendenze: engine.js (gameState, tutte le private helpers),
                quests.js (checkQuestProgress, completeMissionRun),
                vip-buffs.js (_getBuffValue), vip-clients.js (_vipOnComplete),
-               map-router.js (_buildRideWaypoints), map.js (_fetchRoadGeom)
+               map-router.js (_buildRideWaypoints)
    Caricato dopo: engine.js
    ================================================================ */
 
@@ -347,13 +347,12 @@ function assignRideToDriver(rideId, driverId) {
         gameState.pendingRides.splice(rideIdx, 1);
         driver.queue.push(ride);
 
-        // Fetch real road geometry for smooth map animation (async, non-blocking)
-        // resolveCoords returns [lat,lng]; _fetchRoadGeom (Mapbox) needs [lng,lat]
-        if (typeof window._fetchRoadGeom === 'function') {
-            const from = ride.originCoords ? [ride.originCoords[1], ride.originCoords[0]] : (ride.fromPoi ? [ride.fromPoi.lng, ride.fromPoi.lat] : null);
-            const to   = ride.destCoords   ? [ride.destCoords[1],   ride.destCoords[0]]   : (ride.toPoi   ? [ride.toPoi.lng,   ride.toPoi.lat]   : null);
-            if (from && to) window._fetchRoadGeom(from, to).then(geom => { if (geom) ride.roadGeom = geom; });
-        }
+        /* Qui si chiedeva a Mapbox Directions la geometria stradale vera, per
+           far seguire all'auto le strade nell'animazione. Era una chiamata di
+           rete puramente cosmetica — durata, prezzo e pedaggi non l'hanno mai
+           letta — e aveva gia' il ripiego silenzioso sull'instradamento BFS
+           delle autostrade del gioco. Tolto Mapbox, resta solo il ripiego, che
+           e' quello che disegna le auto sulle autostrade stilizzate. */
 
         if (driver.status === 'idle') startNextRide(driver);
         if (_tabIs('corse') && typeof renderTabCorse==='function') renderTabCorse();

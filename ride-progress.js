@@ -103,6 +103,7 @@
                 lat: pos[0],
                 angolo: angoloDi(ride, pos),
                 inAttesa: false,
+                traffico: !!ride.inTraffic,
                 percorso: percorsoDi(ride),
             });
         });
@@ -125,6 +126,7 @@
                 lat: dest.lat,
                 angolo: 0,
                 inAttesa: true,
+                traffico: false,
                 percorso: null,
             });
         });

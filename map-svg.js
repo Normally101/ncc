@@ -162,25 +162,26 @@
                 data-etichetta="${esc(r.id)}">${esc(r.name)}</text>`;
         }).join('');
 
+        /* Ogni citta' e' un gruppo traslato al suo punto e disegnato attorno
+           all'origine: cosi' `controscala()` puo' tenerla della stessa
+           dimensione a schermo a ogni livello di zoom, cambiando un solo
+           attributo. Una citta' che si gonfia fino a coprire mezza regione
+           non e' un ingrandimento, e' un difetto. */
         const citta = dati.citta.map(c => {
             const [x, y] = P.proietta(c.lon, c.lat);
             if (!isFinite(x) || !isFinite(y)) return '';
             const raggio = c.tipo === 'hub' ? 3 : 2.2;
             return `<g class="ce-citta" data-citta="${esc(c.id)}" data-nome="${esc(c.name)}"
+                data-x="${x.toFixed(1)}" data-y="${y.toFixed(1)}"
+                transform="translate(${x.toFixed(1)},${y.toFixed(1)})"
                 opacity="${c.sbloccata ? 1 : 0.38}">
-                <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${raggio}" fill="${coloreCitta(c)}"
-                    stroke="rgba(0,0,0,0.55)" stroke-width="0.6"/>
-                ${c.mio ? `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${raggio + 2.2}" fill="none"
+                <circle r="${raggio}" fill="${coloreCitta(c)}" stroke="rgba(0,0,0,0.55)" stroke-width="0.6"/>
+                ${c.mio ? `<circle r="${raggio + 2.2}" fill="none"
                     stroke="${COLORI.bordoTuo}" stroke-width="0.8"/>` : ''}
             </g>`;
         }).join('');
 
-        const hq = dati.hq ? (() => {
-            const [x, y] = P.proietta(dati.hq.lon, dati.hq.lat);
-            return `<g class="ce-hq"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="none"
-                stroke="${COLORI.bordoTuo}" stroke-width="1.4"/>
-                <text class="ce-hq-icona" x="${x.toFixed(1)}" y="${(y + 2.6).toFixed(1)}">★</text></g>`;
-        })() : '';
+        const hq = dati.hq ? segnoHQ(dati.hq) : '';
 
         return `<svg id="ce-map-svg" xmlns="${NS}" viewBox="0 0 ${W} ${H}"
                 preserveAspectRatio="xMidYMid meet">
@@ -190,6 +191,7 @@
             <g id="ce-g-etichette" pointer-events="none">${etichette}</g>
             <g id="ce-g-citta">${citta}</g>
             <g id="ce-g-hq" pointer-events="none">${hq}</g>
+            <g id="ce-g-rotte" pointer-events="none"></g>
             <g id="ce-g-scie" pointer-events="none"></g>
             <g id="ce-g-veicoli" pointer-events="none"></g>
             <g id="ce-g-eventi" pointer-events="none"></g>
@@ -233,14 +235,20 @@
 
     /* La sede si sposta una volta sola nella vita di una partita, ma quando
        lo fa il nodo potrebbe non esserci ancora (fondazione a mappa aperta). */
+    function segnoHQ(hq) {
+        const [x, y] = proj().proietta(hq.lon, hq.lat);
+        if (!isFinite(x) || !isFinite(y)) return '';
+        return `<g class="ce-hq" data-x="${x.toFixed(1)}" data-y="${y.toFixed(1)}"
+            transform="translate(${x.toFixed(1)},${y.toFixed(1)})">
+            <circle r="5" fill="none" stroke="${COLORI.bordoTuo}" stroke-width="1.4"/>
+            <text class="ce-hq-icona" y="2.6">\u2605</text></g>`;
+    }
+
     function aggiornaHQ(hq) {
         const g = _svg && _svg.querySelector('#ce-g-hq');
         if (!g) return;
-        if (!hq) { g.innerHTML = ''; return; }
-        const [x, y] = proj().proietta(hq.lon, hq.lat);
-        g.innerHTML = `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="5" fill="none"
-            stroke="${COLORI.bordoTuo}" stroke-width="1.4"/>
-            <text class="ce-hq-icona" x="${x.toFixed(1)}" y="${(y + 2.6).toFixed(1)}">★</text>`;
+        g.innerHTML = hq ? segnoHQ(hq) : '';
+        controscala();
     }
 
     /* I nomi delle autostrade contengono trattini e underscore: legali in un
@@ -274,6 +282,7 @@
         t.appendChild(titoloNodo);
         g.appendChild(t);
         _eventi[chiave] = t;
+        controscala();
         if (durataMs) setTimeout(() => smarca(chiave), durataMs);
     }
 
@@ -391,9 +400,9 @@
 .ce-regione:hover { filter:brightness(1.14); }
 .ce-citta { cursor:pointer; }
 .ce-citta:hover circle:first-child { r:4.2; }
-.ce-etichetta { font:700 7px system-ui,sans-serif; fill:rgba(255,255,255,0.94);
+.ce-etichetta { font-weight:700; font-family:system-ui,sans-serif; fill:rgba(255,255,255,0.94);
                 text-anchor:middle; paint-order:stroke; stroke:rgba(0,0,0,0.75);
-                stroke-width:2px; stroke-linejoin:round; }
+                stroke-linejoin:round; }
 .ce-hq-icona { font:700 7px system-ui,sans-serif; fill:${COLORI.bordoTuo}; text-anchor:middle; }
 #ce-map2d-tooltip { position:absolute; pointer-events:none; z-index:5; padding:5px 9px;
     border-radius:7px; background:rgba(5,10,20,0.92); border:1px solid rgba(212,175,55,0.45);
@@ -416,7 +425,8 @@
     background:rgba(5,10,20,0.82); border:1px solid rgba(255,255,255,0.18);
     color:#e5e7eb; font:700 14px system-ui,sans-serif; }
 #ce-map2d-zoom button:hover { border-color:rgba(212,175,55,0.6); color:#d4af37; }
-.ce-evento { font:9px system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
+.ce-rotta { pointer-events:none; }
+.ce-evento { font-family:system-ui,sans-serif; text-anchor:middle; dominant-baseline:middle; }
 .ce-auto { pointer-events:none; }
 .ce-scia { pointer-events:none; }
 @media (prefers-reduced-motion: reduce) { .ce-regione { transition:none; } }
@@ -442,6 +452,28 @@
         if (!_svg || !_vista) return;
         _svg.setAttribute('viewBox',
             `${_vista.x.toFixed(2)} ${_vista.y.toFixed(2)} ${_vista.w.toFixed(2)} ${_vista.h.toFixed(2)}`);
+        controscala();
+    }
+
+    /* I confini si ingrandiscono con lo zoom: e' quello che fa una mappa.
+       Il TESTO no. Senza questa correzione, a 4x le etichette delle regioni
+       diventano larghe quanto le regioni stesse e coprono tutto il resto. */
+    function controscala() {
+        if (!_svg || !_vista) return;
+        const k = _vista.w / baseW();
+        const etichette = _svg.querySelector('#ce-g-etichette');
+        if (etichette) {
+            etichette.setAttribute('font-size', (7 * k).toFixed(2));
+            etichette.setAttribute('stroke-width', (2 * k).toFixed(2));
+        }
+        const eventi = _svg.querySelector('#ce-g-eventi');
+        if (eventi) eventi.setAttribute('font-size', (9 * k).toFixed(2));
+
+        _svg.querySelectorAll('.ce-citta, .ce-hq').forEach(g => {
+            const x = g.getAttribute('data-x'), y = g.getAttribute('data-y');
+            if (x === null || y === null) return;
+            g.setAttribute('transform', `translate(${x},${y}) scale(${k.toFixed(3)})`);
+        });
     }
 
     function mostraTooltip(testo, ev) {
@@ -578,9 +610,6 @@
         host.innerHTML = '';
         host.appendChild(_contenitore);
         host.classList.remove('hidden');
-        // Una mappa alla volta: il contenitore di Mapbox sparisce.
-        const vecchio = document.getElementById('leaflet-map');
-        if (vecchio) vecchio.classList.add('hidden');
 
         _svg      = _contenitore.querySelector('#ce-map-svg');
         _tooltip  = _contenitore.querySelector('#ce-map2d-tooltip');
@@ -702,37 +731,11 @@
             cancelMapClick() { _clickUnaVolta = null; },
         });
 
-        /* Quale mappa disegna il gioco.
-           `?mappa=2d` / `?mappa=mapbox` nell'indirizzo vince su tutto: e' il
-           modo di provare senza toccare un file. Poi l'interruttore
-           MAPPA_2D di config.js. In mancanza di entrambi resta montato
-           quello che c'e', cioe' Mapbox. */
-        const q = (window.location && window.location.search) || '';
-        /* Su schermo stretto vince comunque la 2D: map.js si rifiuta di
-           creare Mapbox sotto i 768 px (troppo pesante per un telefono), e
-           finora questo voleva dire NESSUNA mappa. Meglio quella leggera
-           che nessuna. */
-        const stretto = typeof window.innerWidth === 'number' && window.innerWidth < 768;
-        const scelta = /[?&]mappa=2d\b/.test(q) ? 'svg2d'
-                     : /[?&]mappa=mapbox\b/.test(q) ? 'mapbox'
-                     : (window.MAPPA_2D === true || stretto) ? 'svg2d' : null;
-        if (scelta) window.MapBackend.use(scelta);
+        /* Unica mappa del gioco. Fino al 23/08 qui si sceglieva fra Mapbox
+           e questa, con `?mappa=2d` / `?mappa=mapbox`; poi Mapbox e' stato
+           tolto e la scelta non ha piu' due termini. La giuntura MapBackend
+           resta: e' quella che ha permesso di sostituire una mappa senza
+           toccare il motore, e servira' di nuovo. */
+        window.MapBackend.use('svg2d');
     }
-
-    /**
-     * Alterna i due backend senza ricaricare la pagina.
-     * E' cosi' che il confronto si fa davvero: la stessa scena, due volte di
-     * seguito. `use()` smonta il precedente, quindi non restano mai due mappe
-     * impilate.
-     */
-    window.cambiaMappa = function () {
-        if (!window.MapBackend) return;
-        const attuale = window.MapBackend.attuale();
-        const prossimo = attuale === 'svg2d' ? 'mapbox' : 'svg2d';
-        if (!window.MapBackend.disponibili().includes(prossimo)) return;
-        window.MapBackend.use(prossimo);
-        window.MapBackend.ensure();
-        const b = document.getElementById('btn-cambia-mappa');
-        if (b) b.textContent = prossimo === 'svg2d' ? '🛰 Satellite' : '🗺 Mappa 2D';
-    };
 })();

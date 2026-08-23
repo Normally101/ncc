@@ -22,17 +22,10 @@ window.spawnMoneyParticles = function(x, y, amount) {
     }
 };
 
-// ─── LA MAPPA, GUARDATA DA UN PUNTO SOLO ─────────────────────────
-// map.js dichiara `var map` e `let _mapReady`: in un browser sono visibili
-// anche da qui, ma se map.js non e' caricato il solo NOMINARLI e' un
-// ReferenceError, non un `undefined`. Questa e' l'unica funzione del file che
-// li tocca; tutto il resto passa da qui.
-function _mapPronta() {
-    return (typeof map !== 'undefined' && !!map)
-        && (typeof _mapReady !== 'undefined' && !!_mapReady);
-}
-
 // ─── DAY/NIGHT CYCLE ────────────────────────────────────────────
+// Prima questa funzione muoveva anche il sole del cielo atmosferico di
+// Mapbox. Tolto Mapbox resta il velo notturno sulla pagina, che e' la parte
+// che il giocatore vedeva davvero.
 let _lastNightState = null;
 function _updateDayNight() {
     const h = gameState.hour;
@@ -41,52 +34,14 @@ function _updateDayNight() {
     _lastNightState = isNight;
     const overlay = document.getElementById('night-overlay');
     if (overlay) overlay.style.background = isNight ? 'rgba(0,0,20,0.18)' : 'rgba(0,0,20,0)';
-    // Sky atmosphere sun angle
-    if (_mapPronta() && map.getLayer('sky')) {
-        const sunAngle = isNight ? [0.0, 110.0] : [0.0, 90.0];
-        try { map.setPaintProperty('sky', 'sky-atmosphere-sun', sunAngle); } catch(e) {}
-    }
 }
 window._updateDayNight = _updateDayNight;
 
-// ─── HQ MARKER ──────────────────────────────────────────────────
-// `var` (non `let`) perché deve diventare window._hqMarker: map.js::_destroyMap()
-// lo legge/rimuove come window._hqMarker (stesso pattern del bug storico
-// _activeTab, vedi docs/SYSTEMS.md §8) — con `let` era locale al file e il
-// marker HQ non veniva mai rimosso alla distruzione della mappa.
-var _hqMarker = null;
-const _HQ_MARKER_STYLES = [
-    { icon:'🛖', label:'Garage',   style:'border:2px solid #555;background:rgba(20,20,30,0.9);' },
-    { icon:'🏢', label:'Ufficio',  style:'border:2px solid #00f2ff;background:rgba(0,20,40,0.9);box-shadow:0 0 10px #00f2ff88;' },
-    { icon:'🏛️', label:'Campus',   style:'border:2px solid #22c55e;background:rgba(0,30,10,0.9);animation:hqPulse 2s infinite;' },
-    { icon:'🏙️', label:'Tower',    style:'border:2px solid #d4af37;background:rgba(20,15,0,0.95);animation:hqGlow 2s infinite;' },
-];
-
-window._updateHQMarker = function() {
-    if (!_mapPronta()) return;
-    const hq = gameState.hq;
-    if (!hq || hq.lng === null) return;
-
-    if (_hqMarker) _hqMarker.remove();
-
-    const lvl = Math.min(3, Math.max(0, hq.level || 0));
-    const cfg = _HQ_MARKER_STYLES[lvl];
-    const el = document.createElement('div');
-    el.style.cssText = `${cfg.style}border-radius:50%;width:44px;height:44px;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;`;
-    el.title = `${cfg.label} — ${hq.name || 'HQ'}`;
-    el.textContent = cfg.icon;
-    el.onclick = () => window.flyToHQ();
-
-    _hqMarker = new mapboxgl.Marker({ element: el, anchor: 'center' })
-        .setLngLat([hq.lng, hq.lat])
-        .addTo(map);
-};
-
-window.flyToHQ = function() {
-    const hq = gameState.hq;
-    if (!_mapPronta() || !hq || hq.lng === null) return;
-    map.flyTo({ center: [hq.lng, hq.lat], zoom: 14, pitch: 60, bearing: -20, duration: 2500, essential: true });
-};
+/* Il marcatore della sede e l'inquadratura vivono dentro la mappa che li
+   disegna (map-svg.js), non piu' qui: erano un `mapboxgl.Marker` e un
+   `map.flyTo`, cioe' due pezzi di Mapbox travestiti da funzioni di gioco.
+   Il motore continua a chiamare MapBackend.updateHQMarker() e
+   MapBackend.flyToHQ() come prima. */
 
 // ─── COMPANY FOUNDING OVERLAY ────────────────────────────────────
 let _foundingMode = false;

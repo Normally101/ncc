@@ -107,12 +107,11 @@ describe('map-svg — cosa disegna', () => {
         assert.equal(cal.getAttribute('x'), atteso[0].toFixed(1));
     });
 
-    test('la mappa nuova nasconde quella vecchia: mai due insieme', () => {
-        const vecchio = s.document.createElement('div');
-        vecchio.id = 'leaflet-map';
-        s.document.body.appendChild(vecchio);
+    test('il contenitore torna visibile quando la mappa si monta', () => {
+        const root = s.document.getElementById('map2d-root');
+        root.classList.add('hidden');
         s.window.CE_map.monta();
-        assert.equal(vecchio.classList.contains('hidden'), true);
+        assert.equal(root.classList.contains('hidden'), false);
     });
 });
 

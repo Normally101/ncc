@@ -36,9 +36,6 @@ const CORE_FILES = [
        erano collaudabili; ora sono nel banco, che e' il punto di tutto il
        lavoro del 23/08. */
     'map-router.js', 'ride-progress.js',
-    /* map-visual.js: dal 23/08 non avvia piu' il ciclo al caricamento e non
-       calcola piu' il progresso, quindi entra nel banco come tutti gli altri. */
-    'map-visual.js',
     'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'ui-landing.js', 'auth.js',
     'quests-data.js',
     'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',

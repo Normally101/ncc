@@ -118,21 +118,18 @@
 ## `ui-map-utils.js`
 
 - `spawnMoneyParticles` · `ui-map-utils.js:8` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_mapPronta` · `ui-map-utils.js:30` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateDayNight` · `ui-map-utils.js:37` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateDayNight` · `ui-map-utils.js:50` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_updateHQMarker` · `ui-map-utils.js:65` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `flyToHQ` · `ui-map-utils.js:85` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_checkFoundingOverlay` · `ui-map-utils.js:93` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_foundingRegions` · `ui-map-utils.js:124` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_startFoundingList` · `ui-map-utils.js:149` · data-ce-act: `_startFoundingList` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_foundFromRegion` · `ui-map-utils.js:166` · data-ce-act: `_foundFromRegion` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_agganciaAllaTerraferma` · `ui-map-utils.js:189` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `_startFoundingMode` · `ui-map-utils.js:199` · data-ce-act: `_startFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_cancelFoundingMode` · `ui-map-utils.js:229` · data-ce-act: `_cancelFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `openAcademyModal` · `ui-map-utils.js:240` · data-ce-act: `openAcademyModal` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `_academySelectDriver` · `ui-map-utils.js:328` · data-ce-act: `_academySelectDriver` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
-- `_traitBadgeHTML` · `ui-map-utils.js:335` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_updateDayNight` · `ui-map-utils.js:30` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_updateDayNight` · `ui-map-utils.js:38` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_checkFoundingOverlay` · `ui-map-utils.js:48` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_foundingRegions` · `ui-map-utils.js:79` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_startFoundingList` · `ui-map-utils.js:104` · data-ce-act: `_startFoundingList` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_foundFromRegion` · `ui-map-utils.js:121` · data-ce-act: `_foundFromRegion` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_agganciaAllaTerraferma` · `ui-map-utils.js:144` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_startFoundingMode` · `ui-map-utils.js:154` · data-ce-act: `_startFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_cancelFoundingMode` · `ui-map-utils.js:184` · data-ce-act: `_cancelFoundingMode` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `openAcademyModal` · `ui-map-utils.js:195` · data-ce-act: `openAcademyModal` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `_academySelectDriver` · `ui-map-utils.js:283` · data-ce-act: `_academySelectDriver` (`ui-map-utils.js`) · doppioni: nessuno · denaro: no
+- `_traitBadgeHTML` · `ui-map-utils.js:290` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-market.js`
 
@@ -177,7 +174,7 @@
 
 - `_sidebarToggle` · `ui-sidebar.js:21` · data-ce-act: `_sidebarToggle` (`index.html`) · doppioni: nessuno · denaro: no
 - `_sidebarActivateTab` · `ui-sidebar.js:45` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `switchTab` · `ui-sidebar.js:64` · data-ce-act: `switchTab` (`index.html`, `onboarding.js`, `ui-finance.js`, `ui-home.js`, `vanity.js`, `world-feed.js`) · doppioni: `dispatcher.js:150`, `em-chrome.js:32`, `motion.js:164`, `premium-ui.js:12`, `zero-to-hero.js:182` · denaro: no
+- `switchTab` · `ui-sidebar.js:64` · data-ce-act: `switchTab` (`index.html`, `onboarding.js`, `ui-finance.js`, `ui-home.js`, `vanity.js`, `world-feed.js`) · doppioni: `dispatcher.js:151`, `em-chrome.js:32`, `motion.js:164`, `premium-ui.js:12`, `zero-to-hero.js:182` · denaro: no
 - `updateSidebarStats` · `ui-sidebar.js:71` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `updateUI` · `ui-sidebar.js:85` · data-ce-act: nessuna · doppioni: `engine.js:1986`, `objective-tracker.js:147` · denaro: no
 - `toggleSidebar` · `ui-sidebar.js:92` · data-ce-act: `toggleSidebar` (`index.html`) · doppioni: nessuno · denaro: no
@@ -221,7 +218,7 @@ Il vecchio configuratore auto (circa 185 righe con `openCarConfigurator`, `__cfg
 | `_kpi` | `ui-finance.js:87` | `ui-ranking.js:105` |  |
 | `buyHRAutomation` | `ui-ops.js:218` | `serverState.js:534` |  |
 | `_kpi` | `ui-ranking.js:105` | `ui-finance.js:87` |  |
-| `switchTab` | `ui-sidebar.js:64` | `dispatcher.js:150, em-chrome.js:32, motion.js:164, premium-ui.js:12, zero-to-hero.js:182` | Decoratore / catena di rendering UI deliberata |
+| `switchTab` | `ui-sidebar.js:64` | `dispatcher.js:151, em-chrome.js:32, motion.js:164, premium-ui.js:12, zero-to-hero.js:182` | Decoratore / catena di rendering UI deliberata |
 | `updateUI` | `ui-sidebar.js:85` | `engine.js:1986, objective-tracker.js:147` | Decoratore / catena di rendering UI deliberata |
 
 ---
