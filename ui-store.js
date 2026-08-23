@@ -99,24 +99,28 @@ function renderTabPremiumStore() {
     // ── TAB: PACCHETTI DC ────────────────────────────────────────────────────
     const ecPkgs = [
         {
+            key:'starter',
             dc:50,   price:'€4,99',  label:'Starter Pack',       sub:'Per iniziare con il piede giusto',
             art:'🪙', artBg:'linear-gradient(160deg,#1a1200,#2d1e00)',
             border:'rgba(184,134,11,0.35)', btnBg:'linear-gradient(135deg,#b8860b,#d4af37)', btnColor:'#000',
             badge:null, coins:'🟡',
         },
         {
+            key:'corporate',
             dc:220,  price:'€19,99', label:'Corporate Pack',      sub:'+10% Executive Yield incluso',
             art:'💰', artBg:'linear-gradient(160deg,#0a1525,#102040)',
             border:'rgba(96,165,250,0.35)', btnBg:'linear-gradient(135deg,#1d4ed8,#3b82f6)', btnColor:'#fff',
             badge:{cls:'ec-badge-popular',txt:'POPOLARE'}, coins:'🟡🟡',
         },
         {
+            key:'offshore',
             dc:600,  price:'€49,99', label:'Offshore Pack',       sub:'+20% Rendimento garantito',
             art:'💎', artBg:'linear-gradient(160deg,#0c1a0c,#163016)',
             border:'rgba(34,197,94,0.40)', btnBg:'linear-gradient(135deg,#15803d,#22c55e)', btnColor:'#fff',
             badge:{cls:'ec-badge-value',txt:'BEST VALUE'}, coins:'🟡🟡🟡',
         },
         {
+            key:'fondo_sovrano',
             dc:1300, price:'€99,99', label:'Il Fondo Sovrano',    sub:'+30% Rendimento massimizzato',
             art:'👑', artBg:'linear-gradient(160deg,#16080a,#2d0f15)',
             border:'rgba(212,175,55,0.60)', btnBg:'linear-gradient(135deg,#b8860b,#f0d060,#b8860b)', btnColor:'#000',
@@ -141,7 +145,7 @@ function renderTabPremiumStore() {
       <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${p.sub}</div>
     </div>
     <button class="ec-buy-btn" style="background:${p.btnBg};color:${p.btnColor}"
-      ${ceAct('_dcSimPurchase', [p.dc])}>
+      ${ceAct('_dcSimPurchase', [p.key])}>
       Acquista · ${p.price}
     </button>
   </div>
@@ -258,12 +262,40 @@ function renderTabPremiumStore() {
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
-window._dcSimPurchase = function(amount) {
-    if (!window.CE_money.earnDC(amount, 'sim_purchase')) return;
-    renderTabPremiumStore();
-    updateUI();
-    if (typeof showNotification === 'function') showNotification(`🪙 +${amount} Driver Coins! (Acquisto simulato)`, 'success');
-    saveGame();
+/* Acquisto pacchetti Executive Club: porta unica = RPC dedicata
+   `rpc_purchase_dc_pack` (catalogo prezzi/DC lato server). Qui NON si accreditano
+   mai coin direttamente: senza conferma del pagamento nessun Driver Coin arriva —
+   prima della correzione questo handler coniava DC dal nulla via earnDC. */
+const _EC_PACK_IDS = new Set(['starter', 'corporate', 'offshore', 'fondo_sovrano']);
+
+window._dcSimPurchase = function(packKey) {
+    // Solo gli ID del catalogo server sono accettati: un importo numerico non
+    // e' mai un pacchetto (prima della correzione il bottone passava p.dc).
+    if (!_EC_PACK_IDS.has(packKey)) {
+        if (typeof showNotification === 'function') showNotification('Pacchetto non riconosciuto.', 'error');
+        return;
+    }
+    const SS = window.ServerState;
+    if (!SS || typeof SS.purchaseDriverCoinPack !== 'function') {
+        if (typeof showNotification === 'function') showNotification('Acquisto non disponibile: servizio pagamenti non raggiungibile.', 'error');
+        return;
+    }
+    SS.purchaseDriverCoinPack(packKey)
+        .then((r) => {
+            if (!r || r.ok !== true || r.driver_coins == null) {
+                if (typeof showNotification === 'function') showNotification('Pagamento non confermato: nessun Driver Coin accreditato.', 'error');
+                return;
+            }
+            // Il server ha gia' accreditato: qui solo allineamento al saldo vero.
+            window.CE_money.dcAccreditatiDalServer(r.driver_coins);
+            renderTabPremiumStore();
+            updateUI();
+            saveGame();
+            if (typeof showNotification === 'function') showNotification('🪙 Pacchetto Executive Club accreditato!', 'success');
+        })
+        .catch(() => {
+            if (typeof showNotification === 'function') showNotification('Pagamento non riuscito: nessun Driver Coin accreditato.', 'error');
+        });
 };
 
 window._dcSpend = function(itemId, cost) {

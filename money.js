@@ -189,6 +189,25 @@ var CE_money = (function () {
         return true;
     }
 
+    /**
+     * Allinea il saldo locale a un accredito DC che il SERVER ha gia' fatto.
+     *
+     * Via obbligata per i pacchetti Executive Club: la RPC dedicata
+     * `rpc_purchase_dc_pack` accredita lei i coin e restituisce il saldo vero.
+     * Il client qui si limita a registrare la verita' — non ne decide l'importo,
+     * e non passa da earnDC perche' quello rifarebbe una seconda RPC
+     * (rpc_add_driver_coins) accreditando due volte.
+     *
+     * @returns {boolean} false se il saldo dichiarato non e' utilizzabile.
+     */
+    function dcAccreditatiDalServer(saldoAutoritativo) {
+        var gs = _gs();
+        if (!Number.isFinite(saldoAutoritativo) || saldoAutoritativo < 0) return false;
+        gs.driverCoins = saldoAutoritativo;
+        if (typeof updateUI === 'function') updateUI();
+        return true;
+    }
+
     /* ── REPUTAZIONE ──────────────────────────────────────────────────────
        Il tetto e' `5.0 + prestige`, non `5`: copiato a mano ~22 volte nel
        codice e gia' sbagliato in daily-orders.js:157, dove chi ha fatto
@@ -206,6 +225,7 @@ var CE_money = (function () {
         spend: spend, earn: earn, spendDC: spendDC, earnDC: earnDC,
         addReputation: addReputation, accreditatoDalServer: accreditatoDalServer,
         addebitatoDalServer: addebitatoDalServer,
+        dcAccreditatiDalServer: dcAccreditatiDalServer,
     };
 })();
 

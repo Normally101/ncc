@@ -14,11 +14,12 @@ const { freshEnv, createGameEnv, CORE_FILES } = require('../../test-support/game
 
 describe('funzione negozioDC — Driver Coins & Executive Club', () => {
     let env, sandbox, gs;
-    let rpcSpendCalls, rpcAddCalls;
+    let rpcSpendCalls, rpcAddCalls, rpcPurchaseCalls;
 
     beforeEach(() => {
         rpcSpendCalls = [];
         rpcAddCalls = [];
+        rpcPurchaseCalls = [];
         env = freshEnv({
             serverState: {
                 spendDriverCoins: async (motivo, n) => {
@@ -28,6 +29,15 @@ describe('funzione negozioDC — Driver Coins & Executive Club', () => {
                 addDriverCoins: async (n, motivo) => {
                     rpcAddCalls.push({ motivo, n });
                     return { ok: true, driver_coins: (sandbox.gameState.driverCoins || 0) };
+                },
+                /* rpc_purchase_dc_pack (65_executive_pack_server_purchase.sql):
+                   catalogo lato server, il client passa solo l'ID pacchetto. */
+                purchaseDriverCoinPack: async (packId) => {
+                    rpcPurchaseCalls.push({ packId });
+                    const catalogo = { starter: 50, corporate: 220, offshore: 600, fondo_sovrano: 1300 };
+                    if (!catalogo[packId]) return { ok: false };
+                    sandbox.gameState.driverCoins = (sandbox.gameState.driverCoins || 0) + catalogo[packId];
+                    return { ok: true, driver_coins: sandbox.gameState.driverCoins };
                 },
             },
         });
@@ -111,26 +121,31 @@ describe('funzione negozioDC — Driver Coins & Executive Club', () => {
     });
 
     describe('acquisizione Driver Coins (_dcSimPurchase)', () => {
-        test('accredita la quantità di DC indicata e invoca la RPC addDriverCoins', () => {
+        test('acquisto Starter Pack: accredito solo via RPC dedicata, mai da addDriverCoins', async () => {
             gs.driverCoins = 10;
-            sandbox._dcSimPurchase(50);
+            await sandbox._dcSimPurchase('starter');
+            await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.driverCoins, 60);
-            assert.equal(rpcAddCalls.length, 1);
-            assert.equal(rpcAddCalls[0].n, 50);
-            assert.equal(rpcAddCalls[0].motivo, 'sim_purchase');
-            assert.ok(env.notifications.some(n => n.msg.includes('+50 Driver Coins')));
+            assert.equal(rpcPurchaseCalls.length, 1, 'deve chiamare rpc_purchase_dc_pack');
+            assert.equal(rpcPurchaseCalls[0].packId, 'starter');
+            assert.equal(rpcAddCalls.length, 0, 'niente minting senza pagamento');
+            assert.equal(gs.driverCoins, 60); // 10 locali + 50 accreditati dal server
+            assert.ok(env.notifications.some(n => n.msg.includes('accreditato')), 'conferma acquisto al giocatore');
         });
 
-        test('ignora importi non validi o negativi per prevenire exploit', () => {
+        test('ignora pacchetti o importi non validi per prevenire exploit', async () => {
             gs.driverCoins = 10;
-            sandbox._dcSimPurchase(-20);
+            await sandbox._dcSimPurchase(-20);
+            await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 10);
             assert.equal(rpcAddCalls.length, 0);
+            assert.equal(rpcPurchaseCalls.length, 0);
 
-            sandbox._dcSimPurchase(NaN);
+            await sandbox._dcSimPurchase(NaN);
+            await new Promise(r => setImmediate(r));
             assert.equal(gs.driverCoins, 10);
             assert.equal(rpcAddCalls.length, 0);
+            assert.equal(rpcPurchaseCalls.length, 0);
         });
     });
 

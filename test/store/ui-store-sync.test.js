@@ -13,6 +13,7 @@ const { freshEnv } = require('../../test-support/game-env.js');
 function setupStoreEnv() {
     const rpcSpendCalls = [];
     const rpcAddCalls = [];
+    const rpcPurchaseCalls = [];
     const ceSpendDCCalls = [];
     const ceEarnDCCalls = [];
     const env = freshEnv({
@@ -24,6 +25,16 @@ function setupStoreEnv() {
             addDriverCoins: async (n, motivo) => {
                 rpcAddCalls.push({ motivo, n });
                 return { ok: true, driver_coins: env.sandbox.gameState.driverCoins };
+            },
+            /* rpc_purchase_dc_pack (65_executive_pack_server_purchase.sql):
+               catalogo lato server, il client passa solo l'ID pacchetto. */
+            purchaseDriverCoinPack: async (packId) => {
+                rpcPurchaseCalls.push({ packId });
+                const catalogo = { starter: 50, corporate: 220, offshore: 600, fondo_sovrano: 1300 };
+                if (!catalogo[packId]) return { ok: false };
+                const gs = env.sandbox.gameState;
+                gs.driverCoins = (gs.driverCoins || 0) + catalogo[packId];
+                return { ok: true, driver_coins: gs.driverCoins };
             },
         },
     });
@@ -47,6 +58,7 @@ function setupStoreEnv() {
         gs: env.sandbox.gameState,
         rpcSpendCalls,
         rpcAddCalls,
+        rpcPurchaseCalls,
         ceSpendDCCalls,
         ceEarnDCCalls,
     };
@@ -55,24 +67,25 @@ function setupStoreEnv() {
 describe('ui-store — sincronizzazione Driver Coins col server (CE_money)', () => {
 
     describe('_dcSimPurchase', () => {
-        test('accredita DC tramite CE_money.earnDC e sincronizza con ServerState.addDriverCoins', async () => {
-            const { sandbox, gs, ceEarnDCCalls, rpcAddCalls } = setupStoreEnv();
+        test('acquisto Starter Pack: passa dalla RPC dedicata, mai da earnDC/addDriverCoins', async () => {
+            const { sandbox, gs, ceEarnDCCalls, rpcAddCalls, rpcPurchaseCalls } = setupStoreEnv();
             gs.driverCoins = 10;
-            sandbox._dcSimPurchase(50);
+            sandbox._dcSimPurchase('starter');
             await new Promise(r => setImmediate(r));
-            assert.equal(ceEarnDCCalls.length, 1, 'deve passare da CE_money.earnDC');
-            assert.equal(ceEarnDCCalls[0].quantita, 50);
-            assert.equal(rpcAddCalls.length, 1, 'deve chiamare addDriverCoins sul server');
-            assert.equal(rpcAddCalls[0].n, 50);
-            assert.equal(gs.driverCoins, 60);
+            assert.equal(rpcPurchaseCalls.length, 1, 'deve chiamare la RPC di acquisto dedicata');
+            assert.equal(rpcPurchaseCalls[0].packId, 'starter');
+            assert.equal(ceEarnDCCalls.length, 0, 'niente minting via earnDC: il server accredita');
+            assert.equal(rpcAddCalls.length, 0, 'niente doppio credito via addDriverCoins');
+            assert.equal(gs.driverCoins, 60); // 10 locali + 50 accreditati dal server
         });
 
-        test('quantità non valida: non accredita e non chiama RPC', async () => {
-            const { sandbox, gs, ceEarnDCCalls, rpcAddCalls } = setupStoreEnv();
+        test('pacchetto/quantità non valida: nessuna RPC di acquisto e saldo intatto', async () => {
+            const { sandbox, gs, ceEarnDCCalls, rpcAddCalls, rpcPurchaseCalls } = setupStoreEnv();
             gs.driverCoins = 10;
             sandbox._dcSimPurchase(-5);
             await new Promise(r => setImmediate(r));
-            assert.equal(ceEarnDCCalls.length, 1);
+            assert.equal(rpcPurchaseCalls.length, 0);
+            assert.equal(ceEarnDCCalls.length, 0);
             assert.equal(rpcAddCalls.length, 0);
             assert.equal(gs.driverCoins, 10);
         });
