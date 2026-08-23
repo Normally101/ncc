@@ -210,11 +210,20 @@ function createGameEnv(files, opzioni = {}) {
     // di CLAUDE.md). Intercettiamo qui ogni setInterval creato per poterli fermare tutti dal
     // test, altrimenti continuano a girare in background nel processo Node dopo il test.
     const activeIntervals = new Set();
+    // Anche i setTimeout vanno tracciati: initGame(true) pianta un setTimeout
+    // REALE a 800ms di kickstart (engine.js: corse POI + bandi + updateUI) che
+    // stopAllIntervals non uccideva. Nei test che vivono piu' di 800ms (facile
+    // a suite parallela carica) il callback scattava A META' TEST mutando
+    // pendingRides/nextTenderDay: e' la causa del "a volte rosso, a volte verde"
+    // della suite su stesso codice (regressione: test/guardrail/timer-residui-initgame.test.js).
+    const trackedSetTimeout = (...args) => { const id = setTimeout(...args); activeIntervals.add(id); return id; };
+    const trackedClearTimeout = (id) => { activeIntervals.delete(id); clearTimeout(id); };
     const trackedSetInterval = (...args) => { const id = setInterval(...args); activeIntervals.add(id); return id; };
     const trackedClearInterval = (id) => { activeIntervals.delete(id); clearInterval(id); };
     const sandbox = {
         console,
-        setTimeout, clearTimeout, setInterval: trackedSetInterval, clearInterval: trackedClearInterval,
+        setTimeout: trackedSetTimeout, clearTimeout: trackedClearTimeout,
+        setInterval: trackedSetInterval, clearInterval: trackedClearInterval,
         Date, Math, JSON, Promise, Array, Object, String, Number, Boolean, RegExp, Error, Map, Set,
         confirm: () => true,
         alert: () => {},
@@ -255,7 +264,12 @@ function createGameEnv(files, opzioni = {}) {
     sandbox.showNotification = (msg, type) => notifications.push({ msg, type });
     sandbox.logToMap = (msg) => logs.push(msg);
 
-    const stopAllIntervals = () => { activeIntervals.forEach(id => clearInterval(id)); activeIntervals.clear(); };
+    // In Node clearInterval e clearTimeout sono intercambiabili sugli id: un solo
+    // giro basta per uccidere sia gli intervalli che i timeout tracciati.
+    const stopAllIntervals = () => {
+        activeIntervals.forEach(id => { clearInterval(id); clearTimeout(id); });
+        activeIntervals.clear();
+    };
 
     // Rendering e modali neutralizzati di default.
     //
