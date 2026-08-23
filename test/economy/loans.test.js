@@ -81,6 +81,19 @@ describe('economy/loans — prestiti (takeLoan/repayLoan)', () => {
         assert.equal(sandbox.gameState.cash, cashAfterFirstRepay, 'un secondo rimborso sullo stesso id non deve scalare di nuovo');
     });
 
+    test('il rimborso scala il capitale una volta sola anche con cash abbondante (un doppio addebito non deve passare inosservato)', () => {
+        const { sandbox } = freshEnv();
+        sandbox.gameState.cash = 200000;
+        sandbox.takeLoan(50000); // cash ora 250.000: coprirebbe anche un eventuale secondo addebito
+        const loanId = sandbox.gameState.loans[0].id;
+
+        sandbox.repayLoan(loanId);
+
+        assert.equal(sandbox.gameState.cash, 200000,
+            'il rimborso deve scalare il capitale UNA volta sola, anche quando i fondi coprirebbero un doppio addebito');
+        assert.equal(sandbox.gameState.loans.length, 0);
+    });
+
     test('REGRESSIONE (fix stabilizzazione 10 agosto): un prestito sincronizza il cash col server — senza questo, rpc_buy_vehicle rifiutava un acquisto legittimo subito dopo un prestito (riprodotto dal vivo: "fondi insufficienti" col cash locale abbondante)', async () => {
         const calls = [];
         const { sandbox } = freshEnv({ serverState: { syncCash: async (v) => { calls.push(v); return { success: true, cash: v }; } } });
