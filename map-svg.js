@@ -248,6 +248,98 @@
         return String(s).replace(/["\\]/g, '\\$&');
     }
 
+    /* ═══ Pannello laterale ════════════════════════════════════════════
+       Racconta cio' che la mappa gia' sa. L'unica AZIONE che offre e'
+       sbloccare la regione, e la inoltra a `window.buyRegion` — la stessa
+       che usa la scheda Licenze, che passa da ServerState. Nessuna porta
+       nuova per il denaro: quella resta una sola. */
+
+    let _pannello = null;
+
+    function euro(n) {
+        return '€' + Number(n || 0).toLocaleString('it-IT');
+    }
+
+    function schedaRegione(dati, id) {
+        const r = dati.regioni.find(x => x.id === id);
+        if (!r) return '';
+        const citta = dati.citta.filter(c => c.regione === id);
+        const miei  = citta.filter(c => c.mio).length;
+        const gs = typeof gameState !== 'undefined' ? gameState : {};
+        const rep = gs.reputation || 0;
+        const cassa = gs.cash || 0;
+
+        const stato = r.stato === 'hub'       ? '<span style="color:#d4af37">La tua</span>'
+                    : r.stato === 'sbloccata' ? '<span style="color:#7fbf6a">Operativa</span>'
+                    :                           '<span style="color:#9aa7b4">Bloccata</span>';
+
+        let azione = '';
+        if (r.stato === 'bloccata') {
+            const repOk   = rep >= r.repRichiesta;
+            const soldiOk = cassa >= r.prezzo;
+            azione = `
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.08)">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:4px">
+                    <span>Licenza</span><span style="color:${soldiOk ? '#e5e7eb' : '#ef4444'}">${euro(r.prezzo)}</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-bottom:10px">
+                    <span>Reputazione</span><span style="color:${repOk ? '#e5e7eb' : '#ef4444'}">${r.repRichiesta}★</span></div>
+                <button ${ceAct('_mapSbloccaRegione', [r.id])} ${repOk && soldiOk ? '' : 'disabled'}
+                    style="width:100%;padding:9px;border-radius:9px;cursor:${repOk && soldiOk ? 'pointer' : 'not-allowed'};
+                    opacity:${repOk && soldiOk ? 1 : 0.45};background:rgba(212,175,55,0.14);
+                    border:1px solid rgba(212,175,55,0.5);color:#d4af37;font-size:11px;font-weight:800;
+                    text-transform:uppercase;letter-spacing:1px">Acquista licenza</button>
+            </div>`;
+        }
+
+        return `
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#6b7280">Regione</div>
+        <div style="font-size:16px;font-weight:900;color:#f3f4f6;margin:2px 0 6px">${esc(r.name)}</div>
+        <div style="font-size:11px;margin-bottom:12px">${stato}</div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af">
+            <span>Destinazioni</span><span style="color:#e5e7eb">${citta.length}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:3px">
+            <span>Tuoi hub</span><span style="color:${miei ? '#d4af37' : '#e5e7eb'}">${miei}</span></div>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;gap:4px">
+            ${citta.map(c => `<span style="font-size:9px;padding:2px 7px;border-radius:20px;
+                background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.09);
+                color:${c.mio ? '#d4af37' : '#9ca3af'}">${esc(c.name)}</span>`).join('')}
+        </div>
+        ${azione}`;
+    }
+
+    function schedaCitta(dati, id) {
+        const c = dati.citta.find(x => x.id === id);
+        if (!c) return '';
+        const r = dati.regioni.find(x => x.id === c.regione);
+        const tipo = c.tipo === 'hub' ? 'Hub di traffico' : c.tipo === 'luxury' ? 'Destinazione di lusso' : 'Citta\'';
+        return `
+        <div style="font-size:9px;letter-spacing:2px;text-transform:uppercase;color:#6b7280">${tipo}</div>
+        <div style="font-size:16px;font-weight:900;color:#f3f4f6;margin:2px 0 6px">${esc(c.name)}</div>
+        <div style="font-size:11px;color:${c.sbloccata ? '#7fbf6a' : '#9aa7b4'};margin-bottom:12px">
+            ${r ? esc(r.name) : ''} · ${c.sbloccata ? 'raggiungibile' : 'licenza mancante'}</div>
+        ${c.tariffa ? `<div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af">
+            <span>Tariffa base</span><span style="color:#d4af37;font-family:monospace">${euro(c.tariffa)}</span></div>` : ''}
+        ${c.classeMinima ? `<div style="display:flex;justify-content:space-between;font-size:11px;color:#9ca3af;margin-top:3px">
+            <span>Classe minima</span><span style="color:#e5e7eb">${esc(c.classeMinima)}</span></div>` : ''}
+        ${c.mio ? '<div style="margin-top:12px;font-size:11px;color:#d4af37">★ Hub di tua proprieta\'</div>' : ''}`;
+    }
+
+    function mostraPannello(html) {
+        if (!_pannello) return;
+        if (!html) { _pannello.classList.remove('visibile'); _pannello.innerHTML = ''; return; }
+        _pannello.innerHTML = `<button type="button" data-chiudi-pannello aria-label="Chiudi">✕</button>` + html;
+        _pannello.classList.add('visibile');
+    }
+
+    /* Sbloccare una regione dal pannello: si inoltra alla funzione di
+       sempre. Se domani cambia il modo di pagare, cambia in un posto solo. */
+    window._mapSbloccaRegione = function (idRegione) {
+        if (typeof window.buyRegion !== 'function') return;
+        const esito = window.buyRegion(idRegione);
+        const poi = () => { aggiorna(); if (_selezione) mostraPannello(schedaRegione(window.CE_mapData.istantanea(_selezione), _selezione)); };
+        if (esito && typeof esito.then === 'function') esito.then(poi, poi); else poi();
+    };
+
     /* ═══ Stile ════════════════════════════════════════════════════════ */
 
     function iniettaStile() {
@@ -272,6 +364,16 @@
     color:#f3f4f6; font:600 11px system-ui,sans-serif; white-space:nowrap;
     transform:translate(-50%,-140%); opacity:0; transition:opacity .1s ease; }
 #ce-map2d-tooltip.visibile { opacity:1; }
+#ce-map2d-pannello { position:absolute; top:12px; left:12px; z-index:6; width:250px; max-height:calc(100% - 24px);
+    overflow-y:auto; padding:16px 18px 18px; border-radius:14px; display:none;
+    background:rgba(8,12,22,0.93); border:1px solid rgba(255,255,255,0.10);
+    box-shadow:0 20px 60px rgba(0,0,0,0.6); backdrop-filter:blur(10px);
+    font-family:system-ui,sans-serif; }
+#ce-map2d-pannello.visibile { display:block; }
+#ce-map2d-pannello [data-chiudi-pannello] { position:absolute; top:8px; right:8px; width:24px; height:24px;
+    border-radius:50%; cursor:pointer; background:rgba(255,255,255,0.05);
+    border:1px solid rgba(255,255,255,0.12); color:#6b7280; font-size:12px; line-height:1; }
+#ce-map2d-pannello [data-chiudi-pannello]:hover { color:#ef4444; border-color:rgba(239,68,68,0.45); }
 #ce-map2d-zoom { position:absolute; right:12px; bottom:12px; z-index:5; display:flex;
     flex-direction:column; gap:6px; }
 #ce-map2d-zoom button { width:30px; height:30px; border-radius:8px; cursor:pointer;
@@ -323,6 +425,12 @@
      * casting su ottomila vertici serve solo quando il click cade in mare.
      */
     function suClick(ev) {
+        if (ev.target.closest && ev.target.closest('[data-chiudi-pannello]')) {
+            _selezione = null; aggiorna(); mostraPannello(null);
+            return;
+        }
+        if (ev.target.closest && ev.target.closest('[data-zoom]')) return;
+
         const nodoCitta = ev.target.closest && ev.target.closest('[data-citta]');
         const nodoReg   = ev.target.closest && ev.target.closest('[data-regione]');
 
@@ -336,15 +444,20 @@
 
         if (nodoCitta) {
             const id = nodoCitta.getAttribute('data-citta');
+            mostraPannello(schedaCitta(window.CE_mapData.istantanea(_selezione), id));
             emetti('onCittaClick', id);
             return;
         }
         if (nodoReg) {
             const id = nodoReg.getAttribute('data-regione');
             _selezione = (_selezione === id) ? null : id;
-            aggiorna();
+            const dati = aggiorna();
+            mostraPannello(_selezione ? schedaRegione(dati, _selezione) : null);
             emetti('onRegioneClick', _selezione);
+            return;
         }
+        // click nel mare: si chiude tutto
+        _selezione = null; aggiorna(); mostraPannello(null);
     }
 
     /** Da un evento del puntatore alle coordinate geografiche [lon, lat]. */
@@ -418,6 +531,7 @@
         _contenitore.id = 'ce-map2d';
         _contenitore.innerHTML = costruisci(window.CE_mapData.istantanea(_selezione))
             + '<div id="ce-map2d-tooltip"></div>'
+            + '<div id="ce-map2d-pannello"></div>'
             + '<div id="ce-map2d-zoom">'
             + `<button type="button" data-zoom="+" aria-label="Ingrandisci">+</button>`
             + `<button type="button" data-zoom="-" aria-label="Rimpicciolisci">−</button>`
@@ -429,8 +543,9 @@
         const vecchio = document.getElementById('leaflet-map');
         if (vecchio) vecchio.classList.add('hidden');
 
-        _svg     = _contenitore.querySelector('#ce-map-svg');
-        _tooltip = _contenitore.querySelector('#ce-map2d-tooltip');
+        _svg      = _contenitore.querySelector('#ce-map-svg');
+        _tooltip  = _contenitore.querySelector('#ce-map2d-tooltip');
+        _pannello = _contenitore.querySelector('#ce-map2d-pannello');
         _vista   = vistaIntera();
         applicaVista();
 
@@ -460,6 +575,8 @@
         _contenitore = null;
         _svg = null;
         _tooltip = null;
+        _pannello = null;
+        _selezione = null;
         _vista = null;
         _trascina = null;
         _clickUnaVolta = null;

@@ -312,3 +312,86 @@ describe('map-svg — ciclo di vita', () => {
         assert.equal(s.document.getElementById('ce-map-svg'), null);
     });
 });
+
+describe('map-svg — il pannello laterale', () => {
+
+    let env, s, clicca;
+    beforeEach(() => {
+        ({ env, s, clicca } = ambiente({ sbloccate: ['lazio'], hub: ['roma'] }));
+        s.window.CE_map.monta();
+    });
+    afterEach(() => { s.window.CE_map.smonta(); env.stopAllIntervals(); });
+
+    const pannello = () => s.document.getElementById('ce-map2d-pannello');
+
+    test('a mappa appena montata il pannello e\' chiuso', () => {
+        assert.equal(pannello().classList.contains('visibile'), false);
+    });
+
+    test('cliccare una regione apre la sua scheda', () => {
+        clicca(s.document.querySelector('[data-regione="toscana"]'));
+        const p = pannello();
+        assert.equal(p.classList.contains('visibile'), true);
+        assert.match(p.innerHTML, /Toscana/);
+        assert.match(p.innerHTML, /Bloccata/, 'la Toscana non e\' sbloccata in questa partita');
+    });
+
+    test('la scheda di una regione bloccata mostra prezzo e reputazione richiesta', () => {
+        clicca(s.document.querySelector('[data-regione="lombardia"]'));
+        const html = pannello().innerHTML;
+        assert.match(html, /55\.000/, 'il prezzo della Lombardia (55.000) deve comparire');
+        assert.match(html, /3★/, 'la reputazione richiesta deve comparire');
+        assert.match(html, /_mapSbloccaRegione/, 'deve esserci il pulsante d\'acquisto');
+    });
+
+    test('una regione gia\' tua non offre di comprarla', () => {
+        clicca(s.document.querySelector('[data-regione="lazio"]'));
+        assert.doesNotMatch(pannello().innerHTML, /_mapSbloccaRegione/);
+    });
+
+    test('cliccare una citta\' apre la scheda della citta\', non della regione', () => {
+        clicca(s.document.querySelector('[data-citta="roma"]'));
+        const html = pannello().innerHTML;
+        assert.match(html, /Roma Centro/);
+        assert.match(html, /Tariffa base/);
+        assert.match(html, /proprieta/, 'roma e\' un hub del giocatore in questa partita');
+    });
+
+    test('il pulsante di chiusura chiude e deseleziona', () => {
+        clicca(s.document.querySelector('[data-regione="toscana"]'));
+        clicca(s.document.querySelector('[data-chiudi-pannello]'));
+        assert.equal(pannello().classList.contains('visibile'), false);
+        assert.equal(s.window.CE_map.selezione(), null);
+        assert.equal(s.document.querySelectorAll('.ce-scelta').length, 0);
+    });
+
+    test('cliccare il mare chiude il pannello', () => {
+        clicca(s.document.querySelector('[data-regione="toscana"]'));
+        clicca(s.document.querySelector('.ce-mare'));
+        assert.equal(pannello().classList.contains('visibile'), false);
+    });
+
+    /* L'unica AZIONE del pannello passa da window.buyRegion, che e' la
+       stessa della scheda Licenze e va al server. Nessuna porta nuova per il
+       denaro: e' il guardrail piu' importante del progetto. */
+    test('l\'acquisto inoltra a buyRegion e non tocca il denaro da solo', async () => {
+        const chiamate = [];
+        s.gameState.cash = 999999;
+        s.gameState.reputation = 99;
+        s.window.buyRegion = async (id) => { chiamate.push(id); };
+
+        clicca(s.document.querySelector('[data-regione="lombardia"]'));
+        const bottone = pannello().querySelector('[data-ce-act="_mapSbloccaRegione"]');
+        assert.ok(bottone, 'il pulsante deve esserci con fondi e reputazione sufficienti');
+
+        const cassaPrima = s.gameState.cash;
+        await s.window._mapSbloccaRegione('lombardia');
+        assert.deepEqual(chiamate, ['lombardia']);
+        assert.equal(s.gameState.cash, cassaPrima, 'la mappa non deve muovere denaro da sola');
+    });
+
+    test('senza buyRegion il pulsante non lancia', () => {
+        s.window.buyRegion = undefined;
+        assert.doesNotThrow(() => s.window._mapSbloccaRegione('lombardia'));
+    });
+});

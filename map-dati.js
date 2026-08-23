@@ -84,6 +84,8 @@
                 regione: p.region || null,
                 sbloccata: sbloccate.has(p.region),
                 mio: mieiHub.has(id),
+                tariffa: p.baseFlat || 0,
+                classeMinima: p.minTier || null,
             };
         }).sort((a, b) => a.id.localeCompare(b.id));
 
