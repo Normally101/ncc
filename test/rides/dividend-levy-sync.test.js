@@ -38,8 +38,11 @@ function setupEnv(rpcHandlers = {}) {
             }
             if (fn === 'rpc_pay_fuel_levy') {
                 levyCalls.push(params);
+                // Il client supabase-js risolve SEMPRE con la busta { data, error }
+                // e la RPC SQL ritorna jsonb_build_object('levy', …): senza busta
+                // il mock nasconderebbe il bug della lettura di levyRes.levy.
                 if (rpcHandlers.levy) return rpcHandlers.levy(params);
-                return { levy: 25 };
+                return { data: { levy: 25, depot_owner: 'user_rival' }, error: null };
             }
             return null;
         },
@@ -107,7 +110,7 @@ describe('engine-rides — dividendo OPA e levy carburante scalati dal server (a
         test('senza OPA attiva (RPC = 0) e senza deposito (skipped) nessun taglio oltre all\'incasso', async () => {
             const { sandbox, gs, earnCalls } = setupEnv({
                 dividend: () => 0,
-                levy: () => ({ skipped: 'no_depot' }),
+                levy: () => ({ data: { skipped: 'no_depot' }, error: null }),
             });
             gs.cash = 1000;
             aggiungiAutistaEAuto(gs);

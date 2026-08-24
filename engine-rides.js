@@ -862,7 +862,10 @@ function completeRide(ride, _deferPay = false) {
                     v_province_id: _levyProv,
                     v_fare: earned
                 }).then((levyRes) => {
-                    if (levyRes && levyRes.levy > 0) window.CE_money.addebitatoDalServer(levyRes.levy, 'fuel_levy');
+                    // La RPC risolve con la busta { data: { levy }, error }: il server
+                    // ha GIA' scalato il levy da companies.cash, qui si allinea solo
+                    // la previsione locale via porta unica.
+                    if (levyRes && levyRes.data && levyRes.data.levy > 0) window.CE_money.addebitatoDalServer(levyRes.data.levy, 'fuel_levy');
                 }, () => {});
             }
         }
@@ -1050,7 +1053,8 @@ function checkActiveTrips() {
                         v_province_id: _tripProvince,
                         v_fare: trip.earnings
                     }).then((levyRes) => {
-                        if (levyRes && levyRes.levy > 0) window.CE_money.addebitatoDalServer(levyRes.levy, 'fuel_levy');
+                        // Come in completeRide: il levy sta nella busta { data }.
+                        if (levyRes && levyRes.data && levyRes.data.levy > 0) window.CE_money.addebitatoDalServer(levyRes.data.levy, 'fuel_levy');
                     }, () => {});
                 }
             }
