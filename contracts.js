@@ -189,7 +189,9 @@ window.CE_Contracts = (() => {
             const pb       = tender.playerBid;
             const pScore   = pb ? pb.score : -1;
             tender.status  = 'closed';
-            const won      = pb && pScore >= bestAI;
+            // Booleano vero: con pb=null l'espressione grezza restituiva null,
+            // lasciando result.won non-booleano nello storico salvato.
+            const won      = Boolean(pb && pScore >= bestAI);
             if (won) {
                 // Il pledge e' GIA' stato scalato al momento dell'offerta (CE_placeBid):
                 // alla vittoria viene semplicemente trattenuto, non riscosso una seconda volta.
