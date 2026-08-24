@@ -86,6 +86,28 @@ const _SRM_OPTIONS = [
     { section:'speciali', id:'opt_chauffeur_ai',     name:'Chauffeur AI System',     price:15000, desc:'Routing intelligente, anticollisione proattiva, monitoraggio passeggeri.',mods:{ velocita:1, prestigio:2 } },
 ];
 
+// ── Noleggio breve ──────────────────────────────────────────────────
+/* Durate in GIORNI. Il prezzo e' una quota del prezzo d'acquisto, con quota
+   giornaliera DECRESCENTE: il noleggio lungo costa meno al giorno ma, proiettato
+   su tempi lunghi, supera sempre il prezzo dell'auto (≈5,5 mesi di noleggio
+   costano piu' del veicolo). I fattori sono tarati sul entry-level (~35.000€):
+   la durata minima deve restare sotto i 5.000€ di cassa iniziale e ripagarsi
+   con poche corse (routesDB: transfer brevi ~175€ di sellingPrice). */
+const _SRM_RENT_DURATIONS = [
+    { days: 3,  label: '3 giorni',  factor: 0.030 },
+    { days: 5,  label: '5 giorni',  factor: 0.045 },
+    { days: 7,  label: '7 giorni',  factor: 0.058 },
+    { days: 14, label: '14 giorni', factor: 0.100 },
+    { days: 30, label: '30 giorni', factor: 0.185 },
+];
+
+// Esposta per i test e per riusi futuri: prezzo del noleggio, arrotondato a €50.
+window._srmRentPrice = function(vehicle, days) {
+    const d = _SRM_RENT_DURATIONS.find(x => x.days === days);
+    if (!d || !vehicle || !(vehicle.price > 0)) return null;
+    return Math.round((vehicle.price * d.factor) / 50) * 50;
+};
+
 // ── Module state ────────────────────────────────────────────────────
 const _srmState = {
     view:           'gallery',
@@ -563,7 +585,25 @@ function _srmSectionContent(v, meta) {
         </div>
         <button class="srm-buy-btn" id="srm-buy-btn" ${ceAct('_srmPurchase', [])} ${!canAfford ? 'disabled' : ''}>
             Acquista ${v.name}
-        </button>`;
+        </button>
+        <div style="margin-top:22px;">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px;">Oppure Noleggia</div>
+            <div style="font-size:10px;color:#6b7280;line-height:1.5;margin-bottom:12px;">
+                Pagamento unico anticipato · all'atto della scadenza l'auto torna al concessionario · non vendibile.
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;">
+                ${_SRM_RENT_DURATIONS.map(d => {
+                    const rp   = window._srmRentPrice(v, d.days);
+                    const okRp = (gameState?.cash || 0) >= rp;
+                    return `<div style="border:1px solid #21262d;border-radius:9px;background:#161b22;padding:10px 8px;text-align:center;">
+                        <div style="font-size:11px;font-weight:700;color:#e6edf3;">${d.label}</div>
+                        <div style="font-size:13px;font-weight:800;color:#d4af37;font-family:monospace;margin:4px 0;">€ ${rp.toLocaleString('it-IT')}</div>
+                        <button class="srm-vcard-btn" style="width:100%;padding:6px 0;${okRp ? '' : 'opacity:.45;'}"
+                            ${ceAct('_srmRent', [d.days])}>Noleggia</button>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
     }
 
     // Esterni / Interni / Speciali — option cards
@@ -741,6 +781,51 @@ window._srmPurchase = async function() {
         if (typeof _broadcastNews === 'function')
             _broadcastNews(`${gameState.companyName} ha acquisito una ${v.name} 🚗`, 'milestone');
     }
+    _srmState.view = 'gallery';
+    _srmState.selectedId = null;
+    const overlay = document.getElementById('srm-overlay');
+    if (overlay) _srmRenderGallery(overlay);
+    else renderTabShowroom();
+};
+
+// ── Noleggio ────────────────────────────────────────────────────────
+/* Riaccende il vecchio leasing (gia' previsto da engine-daily/p2p-market/ui-fleet
+   tramite isLease) che nessun flusso creava piu'. Diversamente dall'acquisto non
+   c'e' via server: il costo si paga SUBITO per intero con CE_money.spend, quindi
+   niente rate e niente dailyCost (che in engine-daily aggiungerebbe spese
+   giornaliere). La scadenza e' gestita dal tick giornaliero esistente. */
+window._srmRent = async function(days) {
+    const v = _srmVehicle(_srmState.selectedId);
+    if (!v) return;
+    const price = window._srmRentPrice(v, days);
+    if (!price) { showNotification('Durata di noleggio non valida.', 'error'); return; }
+
+    // spend ritorna false SENZA toccare nulla se i fondi non bastano.
+    if (!window.CE_money.spend(price, 'showroom_rent_vehicle')) return;
+
+    const _SHOWROOM_TIER_MAP = {
+        BUSINESS:'business', PREMIUM:'business', STANDARD:'standard',
+        PRESIDENTIAL:'ultra', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group'
+    };
+    gameState.fleet.push({
+        id: 'c_' + Date.now(),
+        name: v.name,
+        tier: _SHOWROOM_TIER_MAP[(v.tier||'').toUpperCase()] || 'business',
+        condition: 100,
+        isLease: true,
+        leaseDurationDays: days,   // giorni effettivi; engine-daily scada su questo
+        leaseElapsedDays: 0,
+        dailyCost: 0,              // pagato tutto upfront: nessuna rata giornaliera
+        fuel: 100, mileage: 0,
+        tirePressure: 100, engineHealth: 100, outOfService: false,
+        upgrades: [], vehicleClass: v.id,
+    });
+
+    updateUI();
+    if (typeof saveGame === 'function') saveGame();
+    showBigEvent('🔑', `${v.name} a Noleggio!`,
+        `${days} giorni · € ${price.toLocaleString('it-IT')} pagati · alla scadenza torna al concessionario.`);
+
     _srmState.view = 'gallery';
     _srmState.selectedId = null;
     const overlay = document.getElementById('srm-overlay');
