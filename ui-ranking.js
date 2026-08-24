@@ -11,14 +11,14 @@ async function renderTabRanking() {
     // Loading skeleton
     container.innerHTML = `<div class="em em-page"><div class="em-wrap">
     <div style="padding:0 0 16px">
-        <div style="font-size:9px;color:#6b7280;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
+        <div style="font-size:9px;color:#9ca3af;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
         <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-bottom:2px">Classifica Globale</div>
-        <div style="font-size:11px;color:#6b7280">Caricamento dati in tempo reale...</div>
+        <div style="font-size:11px;color:#e5e7eb">Caricamento dati in tempo reale...</div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
         ${['La Tua Posizione','Patrimonio','Reputazione','Aziende Globali'].map(l => `
         <div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${l}</div>
+            <div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${l}</div>
             <div style="font-size:16px;font-weight:700;color:#e6edf3;font-family:monospace">—</div>
         </div>`).join('')}
     </div>
@@ -103,9 +103,9 @@ async function renderTabRanking() {
     const isTop3  = myRank > 0 && myRank <= 3;
 
     function _kpi(label, val, color) {
-        const c = color === 'gold' ? '#c79a2a' : color === 'green' ? '#1aa06a' : color === 'blue' ? '#2f74c0' : '#6b7280';
+        const c = color === 'gold' ? '#c79a2a' : color === 'green' ? '#1aa06a' : color === 'blue' ? '#2f74c0' : '#e5e7eb';
         return `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:10px 12px">
-            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${label}</div>
+            <div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">${label}</div>
             <div style="font-size:16px;font-weight:700;color:${c};font-family:monospace">${val}</div>
         </div>`;
     }
@@ -118,7 +118,7 @@ async function renderTabRanking() {
     // nel multiplayer li aveva senza saperlo. Inoltre elencava "premi assicurativi −15%",
     // che non esistono: l'effetto vero è il rischio incidenti (engine-rides.js:456).
     const repRank = (typeof _getRankPosition === 'function') ? _getRankPosition() : null;
-    const _perk = txt => `<span style="font-size:10px;color:#6b7280">${txt}</span>`;
+    const _perk = txt => `<span style="font-size:10px;color:#9ca3af">${txt}</span>`;
     const perks = [];
     if (repRank !== null) {
         if (repRank <= 5) perks.push(_perk('POI esclusivi: Porto Cervo, Armani Hotel'));
@@ -139,11 +139,11 @@ async function renderTabRanking() {
     let html = `<div class="em em-page"><div class="em-wrap">
     <div style="display:flex;justify-content:space-between;align-items:flex-end;padding:0 0 16px">
         <div>
-            <div style="font-size:9px;color:#6b7280;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
+            <div style="font-size:9px;color:#9ca3af;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">MULTIPLAYER · LIVE</div>
             <div style="font-size:20px;font-weight:700;color:#e6edf3;margin-bottom:2px">Classifica Globale</div>
-            <div style="font-size:11px;color:#6b7280">${total} aziende · classifica per <b style="color:#c79a2a">Potere</b> (province · consorzio · flotta · reputazione) — a prova di cheat</div>
+            <div style="font-size:11px;color:#e5e7eb">${total} aziende · classifica per <b style="color:#c79a2a">Potere</b> (province · consorzio · flotta · reputazione) — a prova di cheat</div>
         </div>
-        <button ${ceAct('renderTabRanking', [])} style="background:#161b22;border:1px solid #21262d;border-radius:4px;padding:5px 12px;color:#6b7280;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
+        <button ${ceAct('renderTabRanking', [])} style="background:#161b22;border:1px solid #21262d;border-radius:4px;padding:5px 12px;color:#9ca3af;font-size:10px;cursor:pointer">⟳ Aggiorna</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px">
         ${_kpi('La Tua Posizione', rankIcon, isTop3 ? 'gold' : '')}
@@ -157,20 +157,20 @@ async function renderTabRanking() {
         html += `<div style="text-align:center;padding:40px;background:#161b22;border:1px solid #21262d;border-radius:6px">
             <div style="font-size:32px;margin-bottom:8px">🏆</div>
             <div style="font-size:12px;font-weight:700;color:#e6edf3;margin-bottom:4px">Classifica vuota</div>
-            <div style="font-size:10px;color:#6b7280">Completa una corsa per comparire nella classifica globale.</div>
+            <div style="font-size:10px;color:#e5e7eb">Completa una corsa per comparire nella classifica globale.</div>
         </div>`;
     } else {
         html += `<table style="width:100%;border-collapse:collapse;margin-bottom:24px">
             <thead>
                 <tr style="border-bottom:1px solid #21262d">
-                    <th style="width:44px;text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">#</th>
-                    <th style="text-align:left;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Azienda</th>
+                    <th style="width:44px;text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">#</th>
+                    <th style="text-align:left;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Azienda</th>
                     <th style="text-align:right;padding:6px 8px;font-size:9px;color:#c79a2a;font-weight:700;text-transform:uppercase;letter-spacing:.08em">Potere</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Prov</th>
-                    <th style="text-align:right;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Patrimonio</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Rep</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Flotta</th>
-                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Status</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Prov</th>
+                    <th style="text-align:right;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Patrimonio</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Rep</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Flotta</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Status</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -181,23 +181,23 @@ async function renderTabRanking() {
             const online = tsMs && (now - tsMs) < ONLINE_MS;
             const medal  = pos === 1 ? '🥇' : pos === 2 ? '🥈' : pos === 3 ? '🥉' : pos;
             const rowBg  = isMe ? 'background:rgba(212,175,55,0.06);' : '';
-            const nameclr = isMe ? '#c79a2a' : '#6b7280';
+            const nameclr = isMe ? '#c79a2a' : '#e5e7eb';
             html += `<tr style="border-bottom:1px solid #21262d;${rowBg}">
-                <td style="text-align:center;padding:8px;font-size:${pos<=3?'16':'11'}px;color:#6b7280">${medal}</td>
+                <td style="text-align:center;padding:8px;font-size:${pos<=3?'16':'11'}px;color:#9ca3af">${medal}</td>
                 <td style="padding:8px">
-                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${CE_Sec.escHtml(r.company_name || 'Chauffeur Empire')}${_nameCount[r.company_name || 'Chauffeur Empire'] > 1 ? ` <span style="color:#6b7280;font-weight:500">#${String(r.user_id||'').slice(0,4)}</span>` : ''}</span>
+                    <span style="font-weight:700;font-size:11px;color:${nameclr}">${CE_Sec.escHtml(r.company_name || 'Chauffeur Empire')}${_nameCount[r.company_name || 'Chauffeur Empire'] > 1 ? ` <span style="color:#9ca3af;font-weight:500">#${String(r.user_id||'').slice(0,4)}</span>` : ''}</span>
                     ${isMe ? `<span style="font-size:9px;color:#c79a2a;margin-left:6px">(Tu)</span>` : ''}
                     ${online ? `<span style="display:inline-block;width:5px;height:5px;background:#1aa06a;border-radius:50%;margin-left:5px;vertical-align:middle"></span>` : ''}
                 </td>
                 <td style="text-align:right;padding:8px;font-family:monospace;font-weight:800;font-size:12px;color:#c79a2a">${(r._power||0).toLocaleString('it-IT')}</td>
                 <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:${(r._prov||0)>0?'#1aa06a':'#98a1ae'}">${r._prov||0}</td>
-                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:700;font-size:11px;color:#6b7280">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
-                <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:#6b7280">${Number(r.reputation||0).toFixed(1)}</td>
-                <td style="text-align:center;padding:8px;font-size:11px;color:#6b7280">${r.fleet_count||0}</td>
+                <td style="text-align:right;padding:8px;font-family:monospace;font-weight:700;font-size:11px;color:#e5e7eb">€${(Math.floor(r.liquid_assets||0)/1000).toFixed(0)}k</td>
+                <td style="text-align:center;padding:8px;font-family:monospace;font-size:11px;color:#e5e7eb">${Number(r.reputation||0).toFixed(1)}</td>
+                <td style="text-align:center;padding:8px;font-size:11px;color:#e5e7eb">${r.fleet_count||0}</td>
                 <td style="text-align:center;padding:8px">
                     ${online
                         ? `<span style="font-size:9px;color:#1aa06a;border:1px solid #bfe6cd;background:#eafbf1;border-radius:3px;padding:2px 6px">ONLINE</span>`
-                        : `<span style="font-size:9px;color:#6b7280">—</span>`}
+                        : `<span style="font-size:9px;color:#9ca3af">—</span>`}
                 </td>
             </tr>`;
         });
@@ -207,14 +207,14 @@ async function renderTabRanking() {
     // Guerra dei Prezzi
     const activePricewars = gameState.pricewars || [];
     const unlockedRegionIds = (gameState.unlockedRegions||[]).filter(id => REGIONS[id]);
-    html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">⚔ Guerra dei Prezzi</div>`;
+    html += `<div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.1em;margin:0 0 10px">⚔ Guerra dei Prezzi</div>`;
     activePricewars.forEach(pw => {
         const rname = REGIONS[pw.regionId]?.name || pw.regionId;
         const isMono = !!pw.monopolyEndsDay;
         html += `<div style="background:#161b22;border:1px solid ${isMono?'#c79a2a':'#f0c4bd'};border-radius:6px;padding:10px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
             <div>
                 <div style="font-size:11px;font-weight:700;color:${isMono?'#c79a2a':'#db5746'}">${isMono?'MONOPOLIO':'Guerra'}: ${rname}</div>
-                <div style="font-size:9px;color:#6b7280">${isMono?`Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)`:`Fine giorno ${pw.endsDay} (−30% prezzi)`}</div>
+                <div style="font-size:9px;color:#9ca3af">${isMono?`Scade giorno ${pw.monopolyEndsDay} (+40% tariffe)`:`Fine giorno ${pw.endsDay} (−30% prezzi)`}</div>
             </div>
             <span style="font-size:9px;font-weight:700;color:${isMono?'#c79a2a':'#db5746'};border:1px solid ${isMono?'#c79a2a':'#f0c4bd'};border-radius:3px;padding:2px 8px">${isMono?'+40%':'−30%'}</span>
         </div>`;
@@ -222,7 +222,7 @@ async function renderTabRanking() {
 
     if (unlockedRegionIds.length > 0) {
         html += `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 14px;margin-bottom:16px">
-            <div style="font-size:10px;color:#6b7280;margin-bottom:10px">Attacca una regione: −30% tariffe ai rivali per 3 giorni. Se crollano → <strong style="color:#c79a2a">Monopolio +40% per 7 giorni</strong></div>
+            <div style="font-size:10px;color:#e5e7eb;margin-bottom:10px">Attacca una regione: −30% tariffe ai rivali per 3 giorni. Se crollano → <strong style="color:#c79a2a">Monopolio +40% per 7 giorni</strong></div>
             <div style="display:flex;gap:8px;align-items:center">
                 <select id="attack-region-select" style="flex:1;font-size:11px;background:#0d1117;border:1px solid #21262d;border-radius:4px;padding:5px 8px;color:#e6edf3;font-family:monospace">
                     ${unlockedRegionIds.map(id => {
@@ -241,14 +241,14 @@ async function renderTabRanking() {
     // Achievements
     if (typeof ACHIEVEMENTS !== 'undefined' && ACHIEVEMENTS.length > 0) {
         const earned = gameState.achievements || [];
-        html += `<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin:24px 0 12px">Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</div>
+        html += `<div style="font-size:9px;color:#9ca3af;text-transform:uppercase;letter-spacing:.1em;margin:24px 0 12px">Obiettivi (${earned.length}/${ACHIEVEMENTS.length})</div>
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:24px">`;
         ACHIEVEMENTS.forEach(ach => {
             const done = earned.includes(ach.id);
             html += `<div style="background:#161b22;border:1px solid ${done?'#c79a2a':'#d6dee8'};border-radius:6px;padding:12px;text-align:center;opacity:${done?1:0.35}">
                 <div style="font-size:22px;margin-bottom:6px">${ach.icon}</div>
-                <div style="font-size:9px;font-weight:700;color:${done?'#c79a2a':'#6a7480'}">${ach.name}</div>
-                <div style="font-size:8px;color:#6b7280;margin-top:3px">${ach.desc}</div>
+                <div style="font-size:9px;font-weight:700;color:${done?'#c79a2a':'#e5e7eb'}">${ach.name}</div>
+                <div style="font-size:8px;color:#9ca3af;margin-top:3px">${ach.desc}</div>
             </div>`;
         });
         html += `</div>`;
@@ -259,7 +259,7 @@ async function renderTabRanking() {
         html += `<div style="background:#161b22;border:1px solid rgba(168,85,247,0.4);border-radius:6px;padding:20px;text-align:center;margin-top:16px">
             <div style="font-size:28px;margin-bottom:10px">♾</div>
             <div style="font-size:12px;font-weight:700;color:#7c5fc9;margin-bottom:6px">NEW GAME+ DISPONIBILE</div>
-            <div style="font-size:10px;color:#6b7280;margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
+            <div style="font-size:10px;color:#e5e7eb;margin-bottom:16px">Ricomincia da capo con reputazione e bonus iniziale. La tua leggenda continua.</div>
             <button ${ceAct('newGamePlus', [])} style="background:#0d1117;border:1px solid #7c5fc9;border-radius:4px;padding:7px 20px;color:#7c5fc9;font-size:10px;cursor:pointer">Inizia New Game+</button>
         </div>`;
     }

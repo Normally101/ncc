@@ -482,7 +482,7 @@ body.ceo-exhausted #main-panel::after {
 }
 
 /* Base font upgrade for data elements */
-body { font-family: 'Montserrat', 'Inter', system-ui, sans-serif; }
+body { font-family: 'Inter', 'Open Sans', Arial, Helvetica, sans-serif; }
 .font-mono { font-family: 'Roboto Mono', monospace !important; }
 
 /* ── Finance Header ──────────────────────────────────────────── */
@@ -4685,7 +4685,7 @@ select:focus {
   --em-line:#21262d; --em-line2:#21262d;
   --em-blue:#2f74c0; --em-blue-d:#245d9c; --em-green:#1aa06a; --em-green-d:#15885a;
   --em-gold:#c79a2a; --em-amber:#e0922e; --em-violet:#7c5fc9; --em-red:#db5746;
-  font-family:'Inter',system-ui,sans-serif; color:var(--em-ink); font-size:12px;
+  font-family:'Inter','Open Sans',Arial,Helvetica,sans-serif; color:var(--em-ink); font-size:12px;
 }
 /* light "sky + skyline" background for the Home content area */
 .em-home{
@@ -4791,7 +4791,7 @@ select:focus {
 .em-shell #sidebar-player{display:none !important;}
 
 /* FASE 3: font Inter di default per tutte le tab nello shell light */
-.em-shell #tab-container{font-family:'Inter',system-ui,sans-serif;}
+.em-shell #tab-container{font-family:'Inter','Open Sans',Arial,Helvetica,sans-serif;}
 /* FASE 3: centra il contenuto di ogni tab nella larghezza della chrome (1130),
    così le tab convertite via remap (senza .em-wrap) restano allineate alla barra.
    Le tab che usano già .em/.em-wrap restano centrate ugualmente. */
