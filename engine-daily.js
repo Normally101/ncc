@@ -338,6 +338,15 @@ function processDailyRoutines() {
 
     for (let i = gameState.fleet.length - 1; i >= 0; i--) {
         let car = gameState.fleet[i];
+        // Noleggio breve termine: alla scadenza l'auto torna al concessionario.
+        // Il costo è stato già pagato per intero al noleggio, quindi qui nessuna spesa.
+        if (car.isRental && gameState.day >= car.rentalExpiresDay) {
+            logToMap(`🔑 Il noleggio di ${car.name} è scaduto: restituita al concessionario.`);
+            let driver = gameState.drivers.find(d => d.assignedCarId === car.id);
+            if (driver) driver.assignedCarId = null;
+            gameState.fleet.splice(i, 1);
+            continue;
+        }
         if (car.isLease) {
             expenses += car.dailyCost;
             car.leaseElapsedDays++;

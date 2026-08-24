@@ -86,6 +86,25 @@ const _SRM_OPTIONS = [
     { section:'speciali', id:'opt_chauffeur_ai',     name:'Chauffeur AI System',     price:15000, desc:'Routing intelligente, anticollisione proattiva, monitoraggio passeggeri.',mods:{ velocita:1, prestigio:2 } },
 ];
 
+// ── Noleggio breve termine ──────────────────────────────────────────
+/* Durate in giorni e prezzo come frazione del prezzo di acquisto.
+ * Calibrazione (Nexus H-Line 35.000€): 3 giorni ≈ 10% ⇒ sotto i 5.000€
+ * del giocatore nuovo; sul lungo periodo noleggiare costa più che comprare
+ * (2 cicli da 30gg = 110% del prezzo di listino). */
+const _SRM_RENT_DURATIONS = [
+    { days: 3,  pct: 0.10 },
+    { days: 5,  pct: 0.15 },
+    { days: 7,  pct: 0.19 },
+    { days: 14, pct: 0.32 },
+    { days: 30, pct: 0.55 },
+];
+function _srmRentPrice(vehicleId, days) {
+    const v = _srmVehicle(vehicleId);
+    const d = _SRM_RENT_DURATIONS.find(x => x.days === days);
+    if (!v || !d) return 0;
+    return Math.round((v.price * d.pct) / 50) * 50;
+}
+
 // ── Module state ────────────────────────────────────────────────────
 const _srmState = {
     view:           'gallery',
@@ -563,7 +582,19 @@ function _srmSectionContent(v, meta) {
         </div>
         <button class="srm-buy-btn" id="srm-buy-btn" ${ceAct('_srmPurchase', [])} ${!canAfford ? 'disabled' : ''}>
             Acquista ${v.name}
-        </button>`;
+        </button>
+        <div style="margin-top:16px;">
+            <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;">Noleggia — breve termine</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                ${_SRM_RENT_DURATIONS.map(d => {
+                    const rp = _srmRentPrice(v.id, d.days);
+                    const ok = (gameState?.cash || 0) >= rp;
+                    return `<button class="srm-vcard-btn" ${ceAct('_srmRent', [v.id, d.days])} ${!ok ? 'disabled style="opacity:.4;cursor:not-allowed"' : ''}>
+                        ${d.days} giorni · € ${rp.toLocaleString('it-IT')}
+                    </button>`;
+                }).join('')}
+            </div>
+        </div>`;
     }
 
     // Esterni / Interni / Speciali — option cards
@@ -741,6 +772,47 @@ window._srmPurchase = async function() {
         if (typeof _broadcastNews === 'function')
             _broadcastNews(`${gameState.companyName} ha acquisito una ${v.name} 🚗`, 'milestone');
     }
+    _srmState.view = 'gallery';
+    _srmState.selectedId = null;
+    const overlay = document.getElementById('srm-overlay');
+    if (overlay) _srmRenderGallery(overlay);
+    else renderTabShowroom();
+};
+
+// ── Noleggio breve termine ───────────────────────────────────────────
+/* Il costo si paga SUBITO per intero via CE_money.spend (che rifiuta da sola
+ * se i fondi non bastano). L'auto fa corse come una di proprietà ma porta
+ * isLease:true così le guardie di vendita esistenti (P2P/market) la bloccano,
+ * e dailyCost:0 perché qui non c'è canone giornaliero. Alla scadenza
+ * processDailyRoutines la restituisce al concessionario. */
+window._srmRent = async function(vehicleId, days) {
+    const v = _srmVehicle(vehicleId);
+    const price = _srmRentPrice(vehicleId, days);
+    if (!v || price <= 0) return;
+
+    if (!window.CE_money.spend(price, 'showroom_rent_vehicle')) return;
+
+    const _SHOWROOM_TIER_MAP = {
+        BUSINESS:'business', PREMIUM:'business', STANDARD:'standard',
+        PRESIDENTIAL:'ultra', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group'
+    };
+    gameState.fleet.push({
+        id: 'c_' + Date.now(),
+        name: v.name, tier: _SHOWROOM_TIER_MAP[(v.tier||'').toUpperCase()] || 'business',
+        vehicleClass: v.id, condition: 100,
+        fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100,
+        outOfService: false, upgrades: [],
+        isRental: true,
+        rentalExpiresDay: gameState.day + days,
+        // leaseDuration in "mesi" (days/30) riallinea il vecchio meccanismo
+        // di scadenza leasing sulla stessa data del noleggio.
+        isLease: true, dailyCost: 0, leaseDuration: days / 30, leaseElapsedDays: 0,
+    });
+
+    updateUI();
+    if (typeof saveGame === 'function') saveGame();
+    showBigEvent('🔑', `${v.name} a Noleggio!`, `Durata ${days} giorni · € ${price.toLocaleString('it-IT')} pagati. Alla scadenza tornerà al concessionario.`);
+
     _srmState.view = 'gallery';
     _srmState.selectedId = null;
     const overlay = document.getElementById('srm-overlay');
