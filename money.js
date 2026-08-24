@@ -208,6 +208,48 @@ var CE_money = (function () {
         return true;
     }
 
+    /* ── ACQUISTO A LISTINO SERVER ─────────────────────────────────────────
+       La forma di Vlad (hub 22/08/2026): il browser dice «voglio comprare X»,
+       il server legge il prezzo dalla tabella purchase_prices, controlla il
+       saldo con la riga in lock, scala LUI e RESTITUISCE il saldo nuovo.
+       Qui non si calcola nessun prezzo e non si controlla nessun saldo
+       locale: entrambe le decisioni sono del server. Il client si limita a
+       scrivere la verita' che gli torna indietro.
+       RPC: rpc_purchase (66_server_priced_purchases.sql).
+       Modello client: spendDC sopra, ma senza l'addebito preventivo. */
+
+    /**
+     * Chiede al server l'acquisto di un articolo a listino e registra il saldo
+     * restituito. NON calcola il costo (arriva dal server) e NON verifica i
+     * fondi in locale (li verifica il server): un rifiuto arriva come `null`.
+     *
+     * @param {string} valuta   'cash' | 'driver_coins'
+     * @param {string} articolo id nel listino `purchase_prices` (es. 'executive_pass')
+     * @param {number} [quantita] quante unita' (default 1); per gli articoli
+     *                          "a quantita'" il costo e' unit_price * quantita'.
+     * @returns {Promise<Object|null>} l'esito {spent, balance,...} se il server ha
+     *          accettato; null se ha rifiutato (fondi insufficienti, articolo
+     *          sconosciuto, offline) — in quel caso NULLA viene toccato.
+     */
+    function acquistoDalListino(valuta, articolo, quantita) {
+        var gs = _gs();
+        var SS = window.ServerState;
+        if (!SS || typeof SS.purchaseItem !== 'function') {
+            return Promise.resolve(null);
+        }
+        return SS.purchaseItem(valuta, articolo, quantita).then(function (r) {
+            // Un esito senza saldo non e' un successo: e' un rifiuto da non applicare.
+            if (!r || typeof r.balance !== 'number') return null;
+            if (valuta === 'cash') gs.cash = r.balance;
+            else gs.driverCoins = r.balance;
+            if (typeof updateUI === 'function') updateUI();
+            return r;
+        }).catch(function () {
+            _avvisa('Operazione non andata a buon fine. Riprova più tardi.');
+            return null;
+        });
+    }
+
     /* ── REPUTAZIONE ──────────────────────────────────────────────────────
        Il tetto e' `5.0 + prestige`, non `5`: copiato a mano ~22 volte nel
        codice e gia' sbagliato in daily-orders.js:157, dove chi ha fatto
@@ -234,6 +276,7 @@ var CE_money = (function () {
         accreditatoDalServer: accreditatoDalServer,
         addebitatoDalServer: addebitatoDalServer,
         dcAccreditatiDalServer: dcAccreditatiDalServer,
+        acquistoDalListino: acquistoDalListino,
     };
 })();
 

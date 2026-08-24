@@ -536,6 +536,12 @@ const ServerState = (() => {
     async function spendDriverCoins(itemId, amount) {
         return _rpc('rpc_ec_spend', { p_item_id: itemId, p_amount: amount });
     }
+    // Acquisto a prezzo deciso dal SERVER (rpc_purchase, 66_server_priced_purchases.sql):
+    // il client manda SOLO valuta + articolo + quantita'. Il prezzo lo legge la RPC
+    // dalla tabella purchase_prices — nessun importo viaggia dal browser.
+    async function purchaseItem(currency, itemId, quantita) {
+        return _rpc('rpc_purchase', { p_currency: currency, p_item_id: itemId, p_quantity: quantita });
+    }
     async function buyHRAutomation(costInCoins, days = 7) {
         return _rpc('rpc_buy_hr_automation', { v_cost_in_coins: costInCoins, v_days: days });
     }
@@ -621,6 +627,7 @@ const ServerState = (() => {
         addDriverCoins,
         purchaseDriverCoinPack,
         spendDriverCoins,
+        purchaseItem,
         buyHRAutomation,
         getState,
         getCompany,
