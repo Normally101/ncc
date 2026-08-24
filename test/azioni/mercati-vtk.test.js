@@ -328,6 +328,111 @@ describe('Azioni mercato VTK — vtk-market.js (banco di prova)', () => {
             assert.equal(gs.driverCoins, 0);
         });
     });
+
+    describe('vtkPlaceSellOrder', () => {
+        let amb;
+        beforeEach(() => { amb = creaAmbiente({ vtkBalance: 200 }); });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('pubblicazione valida: una sola RPC con quantita\' e prezzo giusti, saldo VTK intatto in locale', async () => {
+            const { sb, gs, registro, env } = amb;
+
+            await sb.vtkPlaceSellOrder(50, 10);
+
+            const chiamate = registro.rpc.filter(r => r.nome === 'rpc_place_vtk_sell_order');
+            assert.equal(chiamate.length, 1, 'la RPC di pubblicazione deve partire una volta sola');
+            assert.equal(chiamate[0].args.v_vtk_amount, 50);
+            assert.equal(chiamate[0].args.v_dc_price, 10);
+
+            // La vincola dei VTK la fa il SERVER (echo Realtime su companies): se il
+            // client scalasse vtkBalance in locale l'acquisto dell'ordine diverrebbe
+            // gratis al primo evento Realtime. Il test diventa rosso se qualcuno
+            // reintroduce lo scalamento locale o toglie la chiamata server.
+            assert.equal(gs.vtkBalance, 200, 'il client non deve muovere i VTK in locale');
+            assert.equal(registro.movimentiCash.length, 0, 'nessun movimento cash via CE_money');
+            assert.equal(registro.speseDc.length, 0, 'nessuna spesa Driver Coins');
+            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Ordine di vendita')));
+        });
+
+        test('input invalidi (zero, negativo, non numerico): blocco client-side, zero RPC', async () => {
+            const { sb, registro, env } = amb;
+
+            await sb.vtkPlaceSellOrder(0, 10);
+            await sb.vtkPlaceSellOrder(50, -3);
+            await sb.vtkPlaceSellOrder('abc', 10);
+
+            assert.equal(registro.rpc.filter(r => r.nome === 'rpc_place_vtk_sell_order').length, 0,
+                'nessun ordine parte con input fasulli');
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('validi')));
+        });
+
+        test('VTK insufficienti: blocco client-side, saldo e porte del denaro intoccate', async () => {
+            const { sb, gs, registro, env } = amb;
+            gs.vtkBalance = 20; // vuole venderne 50
+
+            await sb.vtkPlaceSellOrder(50, 10);
+
+            assert.equal(registro.rpc.filter(r => r.nome === 'rpc_place_vtk_sell_order').length, 0,
+                'il guard client deve fermare la richiesta prima del server');
+            assert.equal(gs.vtkBalance, 20);
+            assert.equal(registro.movimentiCash.length, 0);
+            assert.equal(registro.speseDc.length, 0);
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('VTK insufficienti')));
+        });
+
+        test('rifiuto del server: messaggio utente, nessun movimento locale di saldi', async () => {
+            const ambErr = creaAmbiente({
+                vtkBalance: 200,
+                rpcHandlers: {
+                    rpc_place_vtk_sell_order: async () => ({
+                        data: null,
+                        error: { code: 'P0001', message: 'Saldo VTK insufficiente' },
+                    }),
+                },
+            });
+
+            await ambErr.sb.vtkPlaceSellOrder(50, 10);
+
+            assert.ok(ambErr.env.notifications.some(n =>
+                n.type === 'error' && n.msg.includes('Saldo VTK insufficiente')));
+            assert.equal(ambErr.gs.vtkBalance, 200, 'su rifiuto il saldo locale resta com\'era');
+            assert.equal(ambErr.registro.movimentiCash.length, 0);
+            ambErr.env.stopAllIntervals();
+        });
+    });
+
+    describe('vtkRefreshOrders', () => {
+        let amb;
+        beforeEach(() => {
+            amb = creaAmbiente({
+                ordini: [
+                    { id: 'ord_libro', seller_id: 'altro_giocatore', seller_name: 'Marco', vtk_amount: 40, dc_price: 12 },
+                ],
+            });
+        });
+        afterEach(() => amb.env.stopAllIntervals());
+
+        test('forzata: scarica il libro ordini dal server e popola lo stato del modulo', async () => {
+            const { sb, registro } = amb;
+
+            await sb.vtkRefreshOrders(true);
+
+            const chiamate = registro.rpc.filter(r => r.nome === 'rpc_get_vtk_market_orders');
+            assert.equal(chiamate.length, 1, 'un fetch forzato = una lettura del libro');
+            assert.deepEqual(sb._vtkState.orders.map(o => o.id), ['ord_libro']);
+        });
+
+        test('throttle 30s: due chiamate ravvicinate senza force = una sola lettura', async () => {
+            const { sb, registro } = amb;
+
+            await sb.vtkRefreshOrders(true);
+            await sb.vtkRefreshOrders(false); // entro la finestra: ignorata
+            await sb.vtkRefreshOrders(false);
+
+            assert.equal(registro.rpc.filter(r => r.nome === 'rpc_get_vtk_market_orders').length, 1,
+                'il throttle protegge il server dagli spam di refresh');
+        });
+    });
 });
 
 describe('Azioni bandi turismo — tourism.js (banco di prova)', () => {
