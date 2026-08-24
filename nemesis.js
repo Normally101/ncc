@@ -84,11 +84,15 @@ async function _nemesisFundRival(vipId, nem) {
     const amount = Math.floor((20000 + Math.random() * 30000) * (nem.anger / 100));
 
     try {
-        await window.supabaseClient.rpc('rpc_nemesis_fund_rival', {
+        const { error } = await window.supabaseClient.rpc('rpc_nemesis_fund_rival', {
             v_rival_user_id: rival.user_id,
             v_amount:        amount,
             v_vip_name:      nem.name
         });
+        // Supabase NON lancia sugli errori RPC: li mette in `error` della risposta.
+        // Se il server rifiuta (es. rpc revocata) nessun effetto locale deve
+        // partire, nemmeno il reset del cooldown di 48h.
+        if (error) return;
         nem.lastFunded = (gameState.day || 1) * 24 + (gameState.hour || 0);
 
         const msg = `🦹 ${nem.name} ha finanziato ${rival.company_name} con €${amount.toLocaleString('it-IT')} per danneggiarti!`;
