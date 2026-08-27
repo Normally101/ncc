@@ -415,6 +415,29 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
 
             assert.equal(rpcLog.filter(r => r.nome === 'rpc_submit_tourism_bid').length, 0);
         });
+
+        test('tourismSubmitBid senza pledge impostato usa 0 come default', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            // Non imposta _pledgeAmts per tender_open_2
+            await sandbox.tourismSubmitBid('tender_open_2');
+
+            const bidRpc = rpcLog.find(r => r.nome === 'rpc_submit_tourism_bid');
+            assert.ok(bidRpc, 'deve chiamare rpc_submit_tourism_bid');
+            assert.equal(bidRpc.args.v_pledge_cash, 0, 'pledge deve defaultare a 0');
+            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Offerta inviata')));
+        });
+
+        test('tourismSubmitBid per bando non in fase open_bidding chiama RPC ma riceve errore', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            // tender_mine_active ha status 'active', non 'open_bidding'
+            await sandbox.tourismSubmitBid('tender_mine_active');
+
+            const bidRpc = rpcLog.find(r => r.nome === 'rpc_submit_tourism_bid');
+            assert.ok(bidRpc, 'deve chiamare rpc_submit_tourism_bid anche se status non è open_bidding (validazione server-side)');
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Offerta non inviata')));
+        });
     });
 
     describe('3. Ritiro / annullamento offerta (tourismCancelBid)', () => {
@@ -460,6 +483,25 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
 
             assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Annullamento non riuscito')));
             ambErr.env.stopAllIntervals();
+        });
+
+        test('tourismCancelBid per bando senza offerta chiama RPC (validazione server-side)', async () => {
+            const { sandbox, rpcLog } = amb;
+
+            // tender_open_2 non ha offerta (my_bid_status è null)
+            await sandbox.tourismCancelBid('tender_open_2');
+
+            const cancelRpc = rpcLog.find(r => r.nome === 'rpc_cancel_tourism_bid');
+            assert.ok(cancelRpc, 'deve chiamare rpc_cancel_tourism_bid anche senza offerta (validazione server-side)');
+        });
+
+        test('tourismCancelBid per bando inesistente chiama RPC (validazione server-side)', async () => {
+            const { sandbox, rpcLog } = amb;
+
+            await sandbox.tourismCancelBid('bando_fantasma');
+
+            const cancelRpc = rpcLog.find(r => r.nome === 'rpc_cancel_tourism_bid');
+            assert.ok(cancelRpc, 'deve chiamare rpc_cancel_tourism_bid anche per bando inesistente (validazione server-side)');
         });
     });
 
@@ -512,6 +554,38 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
 
             assert.ok(ambErr.env.notifications.some(n => n.type === 'error' && n.msg.includes('Terminazione non riuscita')));
             ambErr.env.stopAllIntervals();
+        });
+
+        test('tourismTerminate per bando inesistente chiama RPC ma riceve errore', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            await sandbox.tourismTerminate('bando_fantasma');
+
+            const termRpc = rpcLog.find(r => r.nome === 'rpc_terminate_tourism_contract');
+            assert.ok(termRpc, 'deve chiamare rpc_terminate_tourism_contract anche per bando inesistente (validazione server-side)');
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Terminazione non riuscita')));
+        });
+
+        test('tourismTerminate per bando non posseduto (is_mine=false) chiama RPC ma riceve errore', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            // tender_other_active ha is_mine: false
+            await sandbox.tourismTerminate('tender_other_active');
+
+            const termRpc = rpcLog.find(r => r.nome === 'rpc_terminate_tourism_contract');
+            assert.ok(termRpc, 'deve chiamare rpc_terminate_tourism_contract anche se non posseduto (validazione server-side)');
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Terminazione non riuscita')));
+        });
+
+        test('tourismTerminate per bando in cooldown chiama RPC ma riceve errore', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            // tender_cooldown ha status 'cooldown'
+            await sandbox.tourismTerminate('tender_cooldown');
+
+            const termRpc = rpcLog.find(r => r.nome === 'rpc_terminate_tourism_contract');
+            assert.ok(termRpc, 'deve chiamare rpc_terminate_tourism_contract anche per bando in cooldown (validazione server-side)');
+            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Terminazione non riuscita')));
         });
     });
 
@@ -603,6 +677,79 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
             assert.ok(valEl.textContent.includes('50.000') || valEl.textContent.includes('50,000'));
             assert.equal(pledgeScoreEl.textContent, '10'); // 50k / 100k * 20 = 10
             assert.ok(Number(totalScoreEl.textContent) > 0);
+        });
+
+        test('_tSetPledge con valori limite (0, 100000, negativi, non numerici)', () => {
+            const { sandbox } = amb;
+
+            // Valore 0
+            sandbox._tSetPledge('tender_open_2', 0);
+            assert.equal(sandbox._tourismState._pledgeAmts['tender_open_2'], 0);
+
+            // Valore massimo 100000
+            sandbox._tSetPledge('tender_open_2', 100000);
+            assert.equal(sandbox._tourismState._pledgeAmts['tender_open_2'], 100000);
+
+            // Valore negativo viene convertito a numero
+            sandbox._tSetPledge('tender_open_2', -5000);
+            assert.equal(sandbox._tourismState._pledgeAmts['tender_open_2'], -5000);
+
+            // Stringa numerica
+            sandbox._tSetPledge('tender_open_2', '75000');
+            assert.equal(sandbox._tourismState._pledgeAmts['tender_open_2'], 75000);
+
+            // Valore non numerico diventa NaN
+            sandbox._tSetPledge('tender_open_2', 'abc');
+            assert.ok(Number.isNaN(sandbox._tourismState._pledgeAmts['tender_open_2']));
+        });
+
+        test('_tUpdateScorePreview chiamato direttamente con tender inesistente non fa nulla', () => {
+            const { sandbox } = amb;
+
+            // Non deve lanciare eccezioni
+            assert.doesNotThrow(() => {
+                sandbox._tUpdateScorePreview('tender_inesistente');
+            });
+
+            // Non deve modificare _pledgeAmts
+            assert.equal(Object.keys(sandbox._tourismState._pledgeAmts).length, 0);
+        });
+
+        test('_tUpdateScorePreview con elementi DOM mancanti non crasha', () => {
+            const { sandbox } = amb;
+
+            // Rimuove il container per simulare DOM mancante
+            sandbox.document.body.innerHTML = '<div id="tab-container"></div>';
+
+            // Non deve lanciare eccezioni
+            assert.doesNotThrow(() => {
+                sandbox._tUpdateScorePreview('tender_open_2');
+            });
+        });
+
+        test('_tUpdateScorePreview ricalcola correttamente il breakdown score', () => {
+            const { sandbox } = amb;
+
+            // Imposta pledge e chiama direttamente _tUpdateScorePreview
+            sandbox._tourismState._pledgeAmts['tender_open_2'] = 40000;
+            sandbox._tUpdateScorePreview('tender_open_2');
+
+            const repEl = sandbox.document.getElementById('t-sc-rep-tender_open_2');
+            const fleetEl = sandbox.document.getElementById('t-sc-fleet-tender_open_2');
+            const pledgeEl = sandbox.document.getElementById('t-sc-pledge-tender_open_2');
+            const totalEl = sandbox.document.getElementById('t-score-tender_open_2');
+
+            assert.ok(repEl && fleetEl && pledgeEl && totalEl, 'elementi score devono esistere');
+
+            // tender_open_2 richiede business x1, rep 2.0
+            // reputation 4.0 -> 4.0/5.0 * 40 = 32
+            // fleet: 5 veicoli qualifying (3 ultra + 1 vip + 1 business) >= 1 -> 40
+            // pledge: 40000/100000 * 20 = 8
+            // total: 32 + 40 + 8 = 80
+            assert.equal(Number(repEl.textContent), 32);
+            assert.equal(Number(fleetEl.textContent), 40);
+            assert.equal(Number(pledgeEl.textContent), 8);
+            assert.equal(Number(totalEl.textContent), 80);
         });
     });
 
