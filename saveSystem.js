@@ -393,8 +393,16 @@ window.resetGame = async function() {
     location.reload();
 };
 
-// ── COMPAT STUBS (kept for any lingering references) ──────────────
+/* ── PONTI DI COMPATIBILITA' ───────────────────────────────────────
+   Non sono residui: `showSlotSelector` e' chiamato davvero, da
+   syncManager.js:177 e da saveSystem.js:272. `startNewGameSlot` resta perche'
+   e' censito fra le azioni non-acquisto in
+   test/guardrail/azioni-sincronizzano.test.js.
+   `loadExistingSlot` invece non aveva nessun chiamante ed e' stato rimosso il
+   28/08. Attenzione: il censimento di test/guardrail/trova-morte.test.js dava
+   per morta anche `showSlotSelector`, ma era un falso positivo del suo stesso
+   difetto (regex con flag `g` riusata con .test() in ciclo — corretto). Prima di
+   cancellare una funzione «morta», controllare a mano che non abbia chiamanti. */
 window.showSlotSelector  = window.showNewGameSetup; // redirect
 window.startNewGameSlot  = () => window.showNewGameSetup();
-window.loadExistingSlot  = () => window._startGameWithSlot(0, false);
 // window.deleteSlot è definita sopra con la firma corretta deleteSlot(index) — stub rimosso

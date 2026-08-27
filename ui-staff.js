@@ -46,7 +46,11 @@ function renderTabStaff() {
         html += `<div class="em-card" style="padding:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;${owned ? 'border-color:#ecd9a0' : ''}">
             <div style="flex:1;min-width:0">
                 <div style="font-weight:700;color:${owned?'var(--em-gold)':'var(--em-ink)'}">${s.name}</div>
-                <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">€${s.salary.toLocaleString()}/mese</div>
+                <!-- Anticipo mostrato PRIMA del click, come gia' per gli autisti
+                     (riga ~223): assumere staff scala salary×2 una tantum tramite
+                     la RPC, ma qui si vedeva solo lo stipendio mensile e il
+                     giocatore scopriva l'addebito a cose fatte. -->
+                <div style="font-size:10.5px;color:var(--em-muted);margin-top:2px">€${s.salary.toLocaleString()}/mese <span style="color:var(--em-dim)">| Anticipo: €${(s.salary * 2).toLocaleString()}</span></div>
                 <div style="font-size:10.5px;color:var(--em-dim);margin-top:4px;line-height:1.4">${s.desc}</div>
             </div>
             <div style="flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;gap:6px">

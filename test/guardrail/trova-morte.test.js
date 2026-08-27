@@ -45,7 +45,16 @@ test('elenca funzioni morte nel codebase', () => {
 
     const dead = [];
     for (const d of defs) {
-        const wordRe = new RegExp(`\\b${d.name}\\b`, 'g');
+        /* DUE regex, non una sola con il flag `g` riusata per entrambi gli usi.
+           Il flag `g` fa avanzare `lastIndex` fra una chiamata e l'altra, e con
+           `.test()` dentro un ciclo su righe diverse questo faceva SALTARE dei
+           riferimenti: il censimento dichiarava morte funzioni che avevano
+           chiamanti veri (il 28/08 dava per morta `showSlotSelector`, che e'
+           chiamata da syncManager.js:177 e saveSystem.js:272). Un censimento che
+           produce falsi positivi e' peggio di nessun censimento: qualcuno
+           cancella codice vivo fidandosi. */
+        const wordRe   = new RegExp(`\\b${d.name}\\b`);        // per .test(), senza `g`
+        const wordReG  = new RegExp(`\\b${d.name}\\b`, 'g');   // per .match(), con `g`
         let prodCalls = 0;
         let testCalls = 0;
         for (const [f, c] of fileContents.entries()) {
@@ -55,7 +64,7 @@ test('elenca funzioni morte nel codebase', () => {
                 if (wordRe.test(l)) prodCalls++;
             });
         }
-        const tMatches = allTestContents.match(wordRe);
+        const tMatches = allTestContents.match(wordReG);
         testCalls = tMatches ? tMatches.length : 0;
 
         if (prodCalls === 0) {
