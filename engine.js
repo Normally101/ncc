@@ -1684,6 +1684,10 @@ window.buyRegion = async function buyRegion(regionId) {
         showNotification(`Reputazione insufficiente (${region.repReq}★ richiesti)`, 'error');
         return;
     }
+    if (gameState.unlockedRegions.includes(regionId)) {
+        showNotification(`${region.name} è già sbloccata`, 'info');
+        return;
+    }
 
     const result = await window.ServerState?.unlockRegion(regionId, region.price);
     if (!result) return;
