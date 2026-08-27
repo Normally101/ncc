@@ -137,21 +137,19 @@ describe('eventi VIP a bivio — le due scelte portano a conseguenze diverse', (
         }
     });
 
-    test('evento inesistente: accept e\' no-op sicuro, decline penalizza comunque (BUG noto)', () => {
+    test('evento inesistente: sia accept sia decline sono no-op sicuri', () => {
         const { sandbox, gs, syncCashCalls, stopAllIntervals } = preparaMondo();
         try {
             gs.reputation = 3;
             assert.doesNotThrow(() => sandbox.vipGrigoriEventAccept(9999));
             assert.equal(gs.cash, 1_000_000, 'accept su bersaglio inesistente: cassa intatta');
 
-            // BUG DOCUMENTATO: vipGrigoriEventDecline non controlla l'esistenza
-            // dell'email (accept fa `if (!e) return`, decline no) quindi scala
-            // −0.1★ anche per un id che non esiste. Finche' non viene corretto
-            // questo e' il comportamento osservabile; se la fix arriva, questo
-            // assert deve diventare `reputazione intatta`.
+            // Corretto: vipGrigoriEventDecline ora controlla l'esistenza dell'email
+            // (come accept), quindi NON scala reputazione per un id inesistente.
+            // Prima penalizzava −0.1★ anche a vuoto — vedi la guardia in vip-clients.js.
             assert.doesNotThrow(() => sandbox.vipGrigoriEventDecline(9999));
-            assert.equal(gs.cash, 1_000_000, 'decline comunque non muove denaro');
-            assert.equal(gs.reputation, 2.9, 'BUG noto: −0.1★ senza nessun bersaglio valido');
+            assert.equal(gs.cash, 1_000_000, 'decline non muove denaro');
+            assert.equal(gs.reputation, 3, 'decline su bersaglio inesistente: reputazione intatta');
             assert.equal(syncCashCalls.length, 0, 'nessuna scrittura server in entrambi i casi');
         } finally {
             stopAllIntervals();
@@ -343,61 +341,69 @@ describe('eventi VIP a bivio — le due scelte portano a conseguenze diverse', (
         }
     });
 
-    /* ── AZIONE RIPETUTA DUE VOLTE ────────────────────────────────────────────
-       Nessuna delle sei azioni controlla `status === 'resolved'`: rilanciarle
-       sullo stesso id ri-esegue l'effetto (doppio addebito/doppio gettone).
-       La UI non lo permette (l'email risolta sparisce dalla lista), ma l'API
-       non e' idempotente: qui si DOCUMENTA il comportamento osservabile di
-       ogni coppia, cosi' una futura guardia rendera' questi assert rossi
-       e verra' aggiornata insieme ai test. */
+    /* ── AZIONE RIPETUTA DUE VOLTE — ora idempotente ──────────────────────────
+       Ogni handler controlla `status === 'resolved'` e la seconda chiamata è un
+       no-op. Prima non era così: rilanciare sullo stesso id ri-eseguiva
+       l'effetto (doppio addebito, doppio gettone, e — negli accept — una seconda
+       corsa VIP = doppio incasso). La UI nascondeva il problema (l'email risolta
+       spariva), ma l'API era sfruttabile con un doppio click. Qui si verifica
+       che la ripetizione NON cambi più lo stato, senza dipendere dai valori
+       assoluti: si fotografa lo stato dopo la prima chiamata e si pretende che
+       la seconda lo lasci identico. */
 
-    test('ripetuta due volte: le sei azioni ri-eseguono l\'effetto sullo stesso id (BUG noto)', () => {
+    test('ripetuta due volte: le sei azioni sono idempotenti (niente doppio effetto)', () => {
         const g = preparaMondo();
         const o = preparaMondo();
         try {
-            // Grigori accept ×2: due spend da 500 = −1000, due syncCash.
+            // Grigori accept: la seconda chiamata non riaddebita né risincronizza.
             pushEventoVip(g.gs, 'vip_grigori_event', 401, { cost: 500 });
             g.sandbox.vipGrigoriEventAccept(401);
+            const cashAccept = g.gs.cash, syncAccept = g.syncCashCalls.length;
             g.sandbox.vipGrigoriEventAccept(401);
-            assert.equal(g.gs.cash, 999_000, 'Grigori accept ×2: BUG noto, addebito duplicato');
-            assert.equal(g.syncCashCalls.length, 2);
+            assert.equal(g.gs.cash, cashAccept, 'Grigori accept: la ripetizione non riaddebita');
+            assert.equal(g.syncCashCalls.length, syncAccept, 'Grigori accept: nessuna seconda sincronizzazione');
 
-            // Grigori decline ×2: reputazione scalata due volte.
+            // Grigori decline: la seconda chiamata non ri-scala la reputazione.
             pushEventoVip(g.gs, 'vip_grigori_event', 402, { cost: 500 });
             g.gs.reputation = 3;
             g.sandbox.vipGrigoriEventDecline(402);
+            const repDecline = g.gs.reputation;
             g.sandbox.vipGrigoriEventDecline(402);
-            assert.equal(g.gs.reputation, 2.8, 'Grigori decline ×2: −0.2★');
+            assert.equal(g.gs.reputation, repDecline, 'Grigori decline: la ripetizione non ri-scala la reputazione');
 
-            // Garante paga ×2: multa riscossa due volte.
+            // Garante paga: la multa non si paga due volte.
             pushEventoVip(g.gs, 'vip_garante_event', 403, { fine: 2000 });
             g.sandbox.vipGaranteEventPaga(403);
+            const cashPaga = g.gs.cash;
             g.sandbox.vipGaranteEventPaga(403);
-            assert.equal(g.gs.cash, 995_000, 'Garante paga ×2: multa duplicata (1.000.000 −500×2 −2.000×2)');
+            assert.equal(g.gs.cash, cashPaga, 'Garante paga: la multa non si paga due volte');
 
-            // Garante intimidisci ×2 coi gettoni: due gettoni consumati.
+            // Garante intimidisci coi gettoni: non ne consuma un secondo.
             g.gs.politicalTokens = 2;
             pushEventoVip(g.gs, 'vip_garante_event', 404, { fine: 2000 });
             conRandom(0.9, () => g.sandbox.vipGaranteEventIntimidisci(404));
+            const tokIntim = g.gs.politicalTokens;
             conRandom(0.9, () => g.sandbox.vipGaranteEventIntimidisci(404));
-            assert.equal(g.gs.politicalTokens, 0, 'Garante intimidisci ×2: due gettoni');
+            assert.equal(g.gs.politicalTokens, tokIntim, 'Garante intimidisci: non consuma un secondo gettone');
 
-            // Onorevole copera ×2 senza gettoni: due multe.
+            // Onorevole copera senza gettoni: non paga due multe.
             o.gs.cash = 10_000;
             pushEventoVip(o.gs, 'vip_onorevole_event', 405, {});
             o.sandbox.vipOnorevoleEventCopera(405);
+            const cashCopera = o.gs.cash, syncCopera = o.syncCashCalls.length;
             o.sandbox.vipOnorevoleEventCopera(405);
-            assert.equal(o.gs.cash, 8_000, 'Copera ×2: due multe da €1.000');
-            assert.equal(o.syncCashCalls.length, 2);
+            assert.equal(o.gs.cash, cashCopera, 'Copera: non paga due multe');
+            assert.equal(o.syncCashCalls.length, syncCopera, 'Copera: nessuna seconda sincronizzazione');
 
-            // Onorevole resisti ×2: gettone guadagnato due volte, rep calata due volte.
+            // Onorevole resisti: non regala un secondo gettone né ri-scala la reputazione.
             o.gs.reputation = 3;
             o.gs.politicalTokens = 0;
             pushEventoVip(o.gs, 'vip_onorevole_event', 406, {});
             o.sandbox.vipOnorevoleEventResisti(406);
+            const tokResisti = o.gs.politicalTokens, repResisti = o.gs.reputation;
             o.sandbox.vipOnorevoleEventResisti(406);
-            assert.equal(o.gs.politicalTokens, 2, 'Resisti ×2: +2 gettoni');
-            assert.ok(Math.abs(o.gs.reputation - 2.9) < 1e-9, 'Resisti ×2: −0.1★ (due volte −0.05)');
+            assert.equal(o.gs.politicalTokens, tokResisti, 'Resisti: non regala un secondo gettone');
+            assert.equal(o.gs.reputation, repResisti, 'Resisti: non ri-scala la reputazione');
         } finally {
             g.stopAllIntervals(); o.stopAllIntervals();
         }

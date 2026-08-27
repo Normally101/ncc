@@ -35,6 +35,7 @@ window._maybeVipGrigori = function() {
 window.acceptVipGrigori = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // già accettato: non creare una seconda corsa
     const car = _vipFleetCar(['majestic_spirit','majestic_e_specter'], 95);
     if (!car) { showNotification('Nessun veicolo presidenziale (condizione ≥95%)!', 'error'); return; }
     const driver = _vipAssignedDriver(car.id, { minLevel: 2 });
@@ -76,6 +77,7 @@ function _vipCompleteGrigori(ride, driver, earned) {
 window.vipGrigoriEventAccept = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // già gestito: non spendere di nuovo
     const cost = (e.vipEventData || {}).cost || 500;
     if (!window.CE_money.spend(cost, 'vip_grigori_rerouting')) return;
     _vipSetCooldown('grigori'); // resets for next offer sooner
@@ -86,6 +88,8 @@ window.vipGrigoriEventAccept = function(emailId) {
 };
 
 window.vipGrigoriEventDecline = function(emailId) {
+    const e = gameState.emails.find(x => x.id === emailId);
+    if (!e || e.status === 'resolved') return; // idempotenza: non ri-scalare la reputazione
     _vipResolveEmail(emailId);
     window.CE_money.addReputation(-0.1);
     showNotification('Grigori non è contento. Reputazione −0.1★', 'error');
@@ -118,6 +122,7 @@ window._maybeVipStrata = function() {
 window.acceptVipStrata = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // già accettato: non creare una seconda corsa
     const car = _vipFleetCar(['stellar_e_exec','stellar_s_imp','stellar_q_exec'], 70);
     if (!car) { showNotification('Nessuna berlina business disponibile (condizione ≥70%)!', 'error'); return; }
     const { fromId, toId, price } = email.vipData;
@@ -178,6 +183,7 @@ window._maybeVipPlatinum = function() {
 window.acceptVipPlatinum = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // idempotenza: già gestito, non ripetere
     const vCars = gameState.fleet.filter(c => c.vehicleClass === 'stellar_v_carr' && (c.condition||0) >= 70 && !c.outOfService && !c.isSeized);
     if (vCars.length < 2) { showNotification('Servono almeno 2 Stellar V-Carrier (condizione ≥70%)!', 'error'); return; }
     const { fromId, toId, price } = email.vipData;
@@ -208,6 +214,7 @@ function _vipCompletePlatinum(ride, driver, earned) {
 window.vipPlatinumEventBlock = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // già gestito: non spendere di nuovo
     const fine = 300;
     if (!window.CE_money.spend(fine, 'vip_platinum_block')) return;
     _vipResolveEmail(emailId);
@@ -219,6 +226,7 @@ window.vipPlatinumEventBlock = function(emailId) {
 window.vipPlatinumEventAllow = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // idempotenza: già gestito, non ripetere
     _vipResolveEmail(emailId);
     window.CE_money.addReputation(0.15);
     logToMap('📸 Paparazzi liberi di scattare. Hype! Reputazione +0.15★');
@@ -254,6 +262,7 @@ window._maybeVipOnorevole = function() {
 window.acceptVipOnorevole = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // idempotenza: già gestito, non ripetere
     const car = _vipFleetCar(['stellar_e_exec','stellar_s_imp'], 80, true);
     if (!car) { showNotification('Nessuna berlina discreta disponibile (no EV, condizione ≥80%)!', 'error'); return; }
     const driver = _vipAssignedDriver(car.id, { minLevel: 2 });
@@ -287,6 +296,7 @@ function _vipCompleteOnorevole(ride, driver, earned) {
 window.vipOnorevoleEventCopera = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // già gestito: non usare un secondo gettone né pagare di nuovo
     _vipResolveEmail(emailId);
     if ((gameState.politicalTokens || 0) > 0) {
         gameState.politicalTokens--;
@@ -303,6 +313,7 @@ window.vipOnorevoleEventCopera = function(emailId) {
 window.vipOnorevoleEventResisti = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // idempotenza: già gestito, non ripetere
     _vipResolveEmail(emailId);
     gameState.politicalTokens = (gameState.politicalTokens || 0) + 1;
     window.CE_money.addReputation(-0.05);
@@ -337,6 +348,7 @@ window._maybeVipEmiro = function() {
 window.acceptVipEmiro = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // già accettato: non creare una seconda corsa
     const validVcSet = ['majestic_spirit','majestic_e_specter','stellar_s_imp','stellar_g_over','volt_s_hyper'];
     const readyCars = gameState.fleet.filter(c => validVcSet.includes(c.vehicleClass) && (c.condition||0) >= 80 && !c.outOfService && !c.isSeized);
     if (readyCars.length < 4) { showNotification('Servono 4 veicoli VIP/Ultra con condizione ≥80%!', 'error'); return; }
@@ -392,6 +404,7 @@ window._maybeVipGolden = function() {
 window.acceptVipGolden = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // idempotenza: gia accettato, non creare una seconda corsa
     const car = _vipFleetCar(['majestic_spirit','volt_s_hyper','majestic_e_specter'], 80);
     if (!car) { showNotification('Serve Majestic Spirit, Volt S-Hyper o Majestic E-Specter (condizione ≥80%)!', 'error'); return; }
     const { fromId, toId, price } = email.vipData;
@@ -465,6 +478,7 @@ window._maybeVipTechBro = function() {
 window.acceptVipTechBro = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // idempotenza: gia accettato, non creare una seconda corsa
     const evCar = _vipFleetCar(['volt_3_urban','volt_y_cross','volt_s_apex','volt_s_hyper','majestic_e_specter'], 90, false, true);
     if (!evCar) { showNotification('Serve un EV con condizione ≥90%!', 'error'); return; }
     const driver = _vipAssignedDriver(evCar.id, { maxStress: 20 });
@@ -512,6 +526,7 @@ window._maybeVipGarante = function() {
 window.acceptVipGarante = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // idempotenza: già gestito, non ripetere
     const car = _vipFleetCar(['stellar_g_over','majestic_spirit'], 85, true);
     if (!car) { showNotification('Serve G-Overlord o Majestic Spirit non-elettrico (condizione ≥85%)!', 'error'); return; }
     const { fromId, toId, price } = email.vipData;
@@ -550,6 +565,7 @@ function _vipCompleteGarante(ride, driver, earned) {
 window.vipGaranteEventPaga = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // già pagata: non pagare la multa due volte
     const fine = (e.vipEventData || {}).fine || 2000;
     const discount = window._getBuffValue('fine_discount') / 100;
     const finalFine = Math.floor(fine * (1 - discount));
@@ -564,6 +580,7 @@ window.vipGaranteEventPaga = function(emailId) {
 window.vipGaranteEventIntimidisci = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // già gestito: non ritentare né pagare di nuovo
     if ((gameState.politicalTokens || 0) > 0) {
         gameState.politicalTokens--;
         _vipResolveEmail(emailId);
@@ -611,6 +628,7 @@ window._maybeVipWedding = function() {
 window.acceptVipWedding = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // idempotenza: già gestito, non ripetere
     const majestic = gameState.fleet.find(c => c.vehicleClass === 'majestic_spirit' && c.condition >= 100 && !c.outOfService && !c.isSeized);
     const vCars = gameState.fleet.filter(c => c.vehicleClass === 'stellar_v_carr' && c.condition >= 100 && !c.outOfService && !c.isSeized);
     if (!majestic) { showNotification('Serve Majestic Spirit al 100% di condizione!', 'error'); return; }
@@ -655,6 +673,11 @@ function _vipCompleteWedding(ride, driver, earned) {
 window.vipWeddingEventGestisci = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    // Idempotenza: un evento già risolto non si gestisce di nuovo. Senza questo, un
+    // doppio click (o una ce-action ripetuta prima del re-render) incassava il
+    // compenso ogni volta — denaro dal nulla. _vipResolveEmail marca 'resolved',
+    // non rimuove, e il find qui sopra non filtra per stato.
+    if (e.status === 'resolved') return;
     const cost = 800;
     if (!window.CE_money.spend(cost, 'vip_wedding_drama_cost')) return;
     _vipResolveEmail(emailId);
@@ -667,6 +690,7 @@ window.vipWeddingEventGestisci = function(emailId) {
 window.vipWeddingEventIgnora = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // già risolto: non applicare due volte la penale
     _vipResolveEmail(emailId);
     window.CE_money.addReputation(-0.2);
     showNotification('💥 White Lace furious! Reputazione −0.2★', 'error');
@@ -676,6 +700,7 @@ window.vipWeddingEventIgnora = function(emailId) {
 window.vipWeddingPaymentCollect = function(emailId) {
     const e = gameState.emails.find(x => x.id === emailId);
     if (!e) return;
+    if (e.status === 'resolved') return; // saldo già incassato: non accreditarlo due volte
     const bonus = (e.vipEventData || {}).bonus || 0;
     window.CE_money.earn(bonus, 'vip_wedding_payment');
     _vipResolveEmail(emailId);
@@ -714,6 +739,7 @@ window._maybeVipErede = function() {
 window.acceptVipErede = function(emailId) {
     const email = gameState.emails.find(e => e.id === emailId);
     if (!email) return;
+    if (email.status === 'resolved') return; // idempotenza: gia accettato, non creare una seconda corsa
     if (!hasInvestment('inv_kasko')) { showNotification('Kasko assicurativa obbligatoria per L\'Erede!', 'error'); return; }
     const car = _vipFleetCar(['volt_s_hyper','majestic_spirit','majestic_e_specter'], 80);
     if (!car) { showNotification('Serve Volt S-Hyper, Majestic Spirit o E-Specter (condizione ≥80%)!', 'error'); return; }
