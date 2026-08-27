@@ -906,13 +906,19 @@ function processDailyRoutines() {
     // ── HOLDING: pagamento dividendi subsidiarie ───────────────────
     const subs = (gameState.holding?.subsidiaries || []);
     if (subs.length > 0) {
-        const subIncome = subs.reduce((sum, sid) => {
-            const tmpl = (typeof HOLDING_SUBSIDIARIES !== 'undefined' ? HOLDING_SUBSIDIARIES : window.HOLDING_SUBSIDIARIES || []).find(s => s.id === sid);
-            return sum + (tmpl ? tmpl.dailyIncome : 0);
-        }, 0);
-        if (subIncome > 0) {
-            window.CE_money.earn(subIncome, 'subsidiary_dividend');
-            logToMap(`🏢 Holding: dividendi subsidiarie +€${subIncome.toLocaleString()}/g`);
+        // Guardia: paga una sola volta per giorno di gioco
+        if (gameState.holding.lastDividendDay === gameState.day) {
+            logToMap(`🏢 Holding: dividendi già pagati oggi (giorno ${gameState.day})`);
+        } else {
+            const subIncome = subs.reduce((sum, sid) => {
+                const tmpl = (typeof HOLDING_SUBSIDIARIES !== 'undefined' ? HOLDING_SUBSIDIARIES : window.HOLDING_SUBSIDIARIES || []).find(s => s.id === sid);
+                return sum + (tmpl ? tmpl.dailyIncome : 0);
+            }, 0);
+            if (subIncome > 0) {
+                window.CE_money.earn(subIncome, 'subsidiary_dividend');
+                logToMap(`🏢 Holding: dividendi subsidiarie +€${subIncome.toLocaleString()}/g`);
+                gameState.holding.lastDividendDay = gameState.day;
+            }
         }
     }
 
