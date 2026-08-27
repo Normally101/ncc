@@ -60,10 +60,19 @@ const QUEST_DB = [
     title:'Puzza di Chiuso',
     subtitle:'Il primo giro di chiave.',
     lore:'Vittorio ti consegna le chiavi della tua prima vettura: il futuro inizia da un sedile freddo.',
-    howTo:'Vai alla scheda Flotta → Showroom e acquista il Nexus H-Line di base (il modello più economico). Una volta acquistato, la missione si completa automaticamente.',
+    howTo:'Hai già le chiavi: la berlina che hai riscattato è la tua prima vettura. Riscuoti la ricompensa e comincia.',
     giver:{ name:'Vittorio', faction:'Mentore' },
     prereqs:[],
-    check: gs => ({ cur: gs.fleet.some(v=>v.vehicleClass==='nexus_h_line')?1:0, tgt:1 }),
+    /* Chiedeva di comprare un Nexus H-Line da 35.000€ a un giocatore che esce
+       dall'onboarding con ~90€ in tasca. Siccome t01 e' la RADICE dell'albero
+       (prereqs vuoti) e sblocca la scheda HR, tutte le 168 missioni restavano
+       chiuse dietro un muro invalicabile alla prima sessione.
+       Ora chiede di possedere un veicolo — cioe' esattamente la berlina che il
+       lore qui sopra descrive («Vittorio ti consegna le chiavi della tua prima
+       vettura»), gia' in flotta a inizio partita. Si completa subito: e' il primo
+       premio, che nel modello Hook deve arrivare PRIMA di chiedere un
+       investimento. La lezione del delegare resta a t02, che chiede l'autista. */
+    check: gs => ({ cur: (gs.fleet||[]).length >= 1 ? 1 : 0, tgt:1 }),
     rewards:{ cash:0, tc:0, vtk:50, rep:0, unlock:'hr_tab', desc:'Sblocca scheda HR' } },
 
   { id:'t02', ch:1, type:'tutorial', tier:'bronze', icon:'👷',

@@ -58,7 +58,7 @@
         `;
 
         if (energy >= 10) {
-            html += `<button id="manual-drive-btn" ${ceAct('executeManualDrive', [])}>[🕹️] GUIDA MANUALMENTE<br><span style="font-size:12px; font-weight:normal;">(-10% Energia, +15€)</span></button>`;
+            html += `<button id="manual-drive-btn" ${ceAct('executeManualDrive', [])}>[🕹️] GUIDA MANUALMENTE<br><span style="font-size:12px; font-weight:normal;">(-10% Energia, mancia variabile)</span></button>`;
         } else {
             html += `<button id="manual-drive-btn" disabled>SEI TROPPO STANCO</button>
                      <button id="sleep-car-btn" ${ceAct('executeSleepInCar', [])}>Dormi in auto (Recupera Energia)</button>`;
@@ -68,24 +68,44 @@
         container.innerHTML = html;
     };
 
-    // GUIDA MANUALMENTE: -10% energia, +15€, +1 corsa. Alla 10ª → evento capitalismo.
+    /* Quanto rende una corsa guidata a mano.
+       Era +15€ FISSI a ogni clic: una cifra prevedibile e' un contatore, non una
+       ricompensa — e nella prima fase e' l'unica cosa che il giocatore fa.
+       Ora ogni corsa e' un'estrazione: quasi sempre 12-18€, e un cliente su dieci
+       lascia una mancia da 45-60€. La media sale a ~19€ (6 corse ≈ 112€ invece di
+       90€), il che aiuta anche la partenza; ma il punto e' l'incertezza, che e'
+       cio' che rende una ricompensa tale. */
+    const MANUALE_MIN = 12, MANUALE_MAX = 18;
+    const GENEROSO_PROB = 0.10, GENEROSO_MIN = 45, GENEROSO_MAX = 60;
+
+    window._z2hGuadagnoCorsa = function () {
+        const generoso = Math.random() < GENEROSO_PROB;
+        const [min, max] = generoso ? [GENEROSO_MIN, GENEROSO_MAX] : [MANUALE_MIN, MANUALE_MAX];
+        return { importo: Math.floor(min + Math.random() * (max - min + 1)), generoso };
+    };
+
+    // GUIDA MANUALMENTE: -10% energia, guadagno variabile, +1 corsa. Alla 6ª → evento capitalismo.
     window.executeManualDrive = function () {
         const gs = window.gameState;
         if (!gs || (gs.energy || 0) < 10) return;
 
+        const { importo, generoso } = window._z2hGuadagnoCorsa();
         gs.energy = (gs.energy || 0) - 10;
-        gs.cash   = (gs.cash   || 0) + 15;
+        gs.cash   = (gs.cash   || 0) + importo;
         gs.questStats = gs.questStats || {};
         gs.questStats.totalRides = (gs.questStats.totalRides || 0) + 1;
 
+        if (generoso && typeof window.showNotification === 'function')
+            window.showNotification(`💸 Cliente generoso: +€${importo}!`, 'success');
+
         try {
             if (typeof window.spawnMoneyParticles === 'function')
-                window.spawnMoneyParticles(window.innerWidth / 2, window.innerHeight * 0.4, 15);
+                window.spawnMoneyParticles(window.innerWidth / 2, window.innerHeight * 0.4, importo);
         } catch (e) {}
 
         if (typeof window.saveGame === 'function') window.saveGame();
         // Server-authoritative mirror: persisti SUBITO il guadagno. Senza questo, al
-        // reload il bridge col server (che parte a 0) azzererebbe i 150€ guadagnati
+        // reload il bridge col server (che parte a 0) azzererebbe quanto guadagnato
         // → soft-lock dell'onboarding (non raggiungi mai il passo "assumi il ragazzo").
         if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
             window.ServerState.syncCash(gs.cash).catch(() => {});

@@ -171,13 +171,15 @@ describe('Funzione Carriera — Avanzamento e Controllo Missioni (quests.js)', (
 
     test('checkQuestProgress rileva missioni completabili e attiva il badge carriera', () => {
         const { sandbox, gs, env } = amb;
+        // t01 non chiede piu' di COMPRARE un'auto da 35.000€ (era un muro per chi
+        // esce dall'onboarding con ~90€) ma solo di possederne una.
         gs.fleet = [{ id: 'veh_0', vehicleClass: 'nexus_h_line', condition: 100 }];
         gs.completedQuests = [];
         gs.claimableQuests = [];
 
         sandbox.checkQuestProgress();
 
-        assert.ok(gs.claimableQuests.includes('t01'), 't01 deve diventare claimable dato che possediamo un nexus_h_line');
+        assert.ok(gs.claimableQuests.includes('t01'), 't01 deve diventare claimable: possediamo un veicolo');
         const dot = sandbox.document.getElementById('career-dot');
         assert.equal(dot.classList.contains('hidden'), false, 'il badge career-dot non deve avere classe hidden');
         assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Ricompensa quest')));
@@ -331,7 +333,9 @@ describe('Funzione Carriera — Ciclo Completo Tutorial Capitolo 1 (t01 → t06)
         gs.unlockedFeatures = [];
         gs.questStats = { missionRuns: {} };
 
-        // 1. T01: Possesso veicolo starter
+        // 1. T01: possedere un veicolo — la berlina che Vittorio ti ha fatto
+        //    riscattare. Prima chiedeva di COMPRARNE uno da 35.000€, impossibile
+        //    per chi esce dall'onboarding con ~90€: bloccava tutta la catena.
         gs.fleet = [{ id: 'veh_0', vehicleClass: 'nexus_h_line', condition: 100 }];
         sandbox.checkQuestProgress();
         assert.ok(gs.claimableQuests.includes('t01'));
