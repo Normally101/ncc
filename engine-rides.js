@@ -9,6 +9,16 @@
    Caricato dopo: engine.js
    ================================================================ */
 
+/* Tetti al prodotto dei moltiplicatori (bilanciamento 28/08/2026).
+   Il prezzo di una corsa nasce da 15 fattori moltiplicati fra loro e l'incasso
+   da altri 19: nessuno dei due prodotto era limitato, e nel caso estremo una
+   singola corsa poteva valere milioni, rendendo irrilevante ogni altra fonte di
+   reddito. I tetti tengono il picco raro memorabile senza romperne la scala.
+   `var` e non `const`: al top-level diventa window.X, la regola del progetto per
+   le globali condivise fra file. */
+var TETTO_MOLT_PREZZO  = 10;   // sulla tariffa generata
+var TETTO_MOLT_INCASSO = 4;    // su mance, tratti, upgrade e buff all'incasso
+
 // ─── EMPTY LEG OPTIMIZER ─────────────────────────────────────────
 function _findEmptyLegRide(completedRide) {
     if (!hasInvestment('inv_empty_leg')) return;
@@ -107,7 +117,19 @@ function generatePOIRide(tierOverride = null) {
         : 1.0;
     // Lifestyle: yacht → +20% su corse Ultra costiere
     const yachtMult = (gameState.lifestyleAssets || []).includes('yacht_lusso') && tier === 'ultra' ? 1.20 : 1.0;
-    const finalPrice  = Math.floor(from.baseFlat * tierMult * distMult * cannesMult * nightMult * weatherMult * surgeMult * seasonMult * livreMult * carbonMult2 * eventMult * surgeCatMult * secEscort * pricewarMult * yachtMult);
+    /* TETTO AL PRODOTTO DEI MOLTIPLICATORI.
+       Il prezzo nasce da 15 fattori moltiplicati fra loro (tier, distanza,
+       notte, meteo, surge, stagione, evento, scorta, livrea, yacht…) senza che
+       nessuno li limitasse: nel caso estremo — POI da 420 di base, tier ultra,
+       interregionale, evento leggendario, tutti i bonus insieme — una singola
+       corsa poteva valere milioni e rendere irrilevante tutto il resto.
+       Con il tetto a ×10 il picco raro resta memorabile (fino a ~€4.200 di
+       tariffa, poi le mance) ma la scala regge: e' la differenza fra una
+       ricompensa e un exploit. */
+    const _moltPrezzo = tierMult * distMult * cannesMult * nightMult * weatherMult * surgeMult
+                      * seasonMult * livreMult * carbonMult2 * eventMult * surgeCatMult
+                      * secEscort * pricewarMult * yachtMult;
+    const finalPrice  = Math.floor(from.baseFlat * Math.min(_moltPrezzo, TETTO_MOLT_PREZZO));
 
     const ride = { id: gameState.nextId++, fromPoi: from, toPoi: to, tier: tier, price: finalPrice, duration: from.region !== to.region ? 40000 : 20000, elapsed: 0 };
     gameState.pendingRides.push(ride);
@@ -422,6 +444,11 @@ function _driverCanTakeRide(driver, ride) {
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable
     if (typeof window.b2bLockedVehicleIds === 'function' && window.b2bLockedVehicleIds().includes(car.id)) return false;
+    /* Idem per i bandi corporate (contracts.js). Dal 28/08 un contratto non e'
+       piu' denaro dal nulla: impegna `tier` veicoli, che smettono di essere
+       disponibili per le corse. E' cio' che rende il passivo il frutto di una
+       flotta costruita, e crea la scelta «contratti o corse?». */
+    if (typeof window.corporateLockedVehicleIds === 'function' && window.corporateLockedVehicleIds().includes(car.id)) return false;
     // Aviation vehicles: elicotteri e jet solo per corse intercity (Espansione 1)
     const _carDef = [...(typeof NEW_CARS !== 'undefined' ? NEW_CARS : [])].find(c => c.vehicleClass === car.vehicleClass);
     if (_carDef?.intercityOnly && ride.fromPoi && ride.toPoi) {
@@ -834,7 +861,16 @@ function completeRide(ride, _deferPay = false) {
     const _hqTip = _hqFx.allEarningsMult || 1.0;
     // Bottega del Consorzio — perk guadagni attivo (boost_income / mega_income)
     const _allyEarn = (typeof window._allyPerkMult === 'function') ? window._allyPerkMult('earnings') : 1.0;
-    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult * specTipMult * eventTipMult * skillCharismaMult * strategyMult * conditionMult * _strikeMult * _crumiriMult * _consorzioMult * _vipEarningsBuff * skillTipMult * _decreeTip * _hqTip * _allyEarn) - _fuelDeduction);
+    /* Stesso ragionamento del tetto in generazione (vedi TETTO_MOLT_PREZZO):
+       qui si moltiplicano 19 fattori di mancia e bonus. Il tetto a ×4 lascia
+       intatto il caso fortunato — mance, tratti, upgrade e buff insieme valgono
+       comunque quattro volte la tariffa — ma impedisce che il prodotto di venti
+       bonus renda irrilevante ogni altra fonte di reddito del gioco. */
+    const _moltIncasso = hrTipMult * traitTipMult * _vipTipBuff * levelTipMult * upgradeMult
+                       * specTipMult * eventTipMult * skillCharismaMult * strategyMult
+                       * conditionMult * _strikeMult * _crumiriMult * _consorzioMult
+                       * _vipEarningsBuff * skillTipMult * _decreeTip * _hqTip * _allyEarn;
+    const earned = Math.max(0, Math.floor((ride.price + delayBonus) * Math.min(_moltIncasso, TETTO_MOLT_INCASSO)) - _fuelDeduction);
 
     const prevCash = gameState.cash;
     if (_deferPay) {

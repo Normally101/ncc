@@ -507,7 +507,12 @@ describe('Funzione Contratti & B2B — Esecuzione e ciclo di vita', () => {
             const ctr = gs.corporateContracts[0];
             assert.equal(ctr.companyId, 'Titan Forge Defense');
             assert.equal(ctr.status, 'active');
-            assert.equal(ctr.dailyPayout, 8600 * 16);
+            /* Scala ribilanciata il 28/08: 2 ore di servizio garantito, non 16.
+               A ×16 un solo contratto tier 5 valeva €137.600 al giorno — 380 corse
+               guidate — senza impegnare nulla. Ora impegna 5 veicoli, che escono
+               dalle corse, e paga in proporzione alla capacita' effettiva. */
+            assert.equal(ctr.dailyPayout, 8600 * 2);
+            assert.equal(ctr.veicoliImpegnati, 5, 'un tier 5 impegna 5 veicoli');
             assert.equal(ctr.startDay, 3);
             assert.equal(ctr.endDay, 33);
             assert.equal(gs.cash, 50000, 'il pledge e stato trattenuto e il primo payout decorre dal tick successivo');

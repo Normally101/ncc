@@ -134,6 +134,12 @@ describe('contracts — sincronizzazione cassa col server (CE_money)', () => {
             const { sandbox, gs, syncedCash } = setupContractsEnv();
             gs.day = 5;
             gs.cash = 20000;
+            /* Dal 28/08 un contratto impegna `tier` veicoli e paga in proporzione
+               alla capacita' operativa: senza flotta non incassa nulla, perche' il
+               reddito passivo non e' piu' denaro dal nulla. Qui la flotta c'e',
+               quindi si riscuote l'intero e il test verifica cio' che gli
+               interessa davvero — la sincronizzazione col server. */
+            gs.fleet = [1, 2, 3].map(i => ({ id: 'v' + i, condition: 100, outOfService: null, isSeized: false }));
             gs.corporateContracts = [{
                 id: 'c1',
                 companyId: 'Test Corp',
@@ -143,6 +149,7 @@ describe('contracts — sincronizzazione cassa col server (CE_money)', () => {
                 dailyPayout: 2500,
                 totalEarned: 0,
                 status: 'active',
+                veicoliImpegnati: 3,
             }];
             gs.corporateTenders = [];
 

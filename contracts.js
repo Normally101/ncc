@@ -196,11 +196,13 @@ window.CE_Contracts = (() => {
                 // Il pledge e' GIA' stato scalato al momento dell'offerta (CE_placeBid):
                 // alla vittoria viene semplicemente trattenuto, non riscosso una seconda volta.
                 // (Il ramo `else` lo rimborsa, il che conferma che era gia' stato incassato.)
-                const daily = Math.round(co.payout_per_hour * 16);
+                const daily = Math.round(co.payout_per_hour * ORE_SERVIZIO);
                 gameState.corporateContracts.push({
                     id: 'ctr_' + tender.id, companyId: co.company_name, company: co,
                     startDay: now, endDay: now + co.contract_duration_days,
                     dailyPayout: daily, totalEarned: 0, status: 'active',
+                    // Quanti veicoli il contratto tiene impegnati (vedi _veicoliImpegnati).
+                    veicoliImpegnati: _veicoliImpegnati(co),
                 });
                 window.DS?.alert?.({ text:`🤝 CONTRATTO VINTO: ${co.company_name} — €${daily.toLocaleString('it-IT')}/gg`, type:'success', tab:'contracts', duration:12000 });
             } else {
@@ -213,10 +215,92 @@ window.CE_Contracts = (() => {
         gameState.corporateTenders = (gameState.corporateTenders || []).filter(t => t.status === 'open');
     }
 
+    /* ─────────────────────────────────────────────────────────────────────────
+       QUANTO VALE UN CONTRATTO, E QUANTO COSTA TENERLO — ribilanciato il 28/08.
+
+       Com'era: `payout_per_hour × 16`, cioe' 16 ore fatturate al giorno da una
+       flotta che non veniva impegnata in nulla. Un contratto tier 5 valeva
+       €137.600 al giorno SENZA consumare auto, autisti, carburante o tempo,
+       mentre una corsa guidata rende in mediana €360: un solo contratto valeva
+       380 corse al giorno. Il gioco premiava l'attesa, non l'azione.
+
+       Com'e' ora, e perche':
+       - il contratto IMPEGNA `tier` veicoli (tier 1 → 1 … tier 5 → 5), che non
+         sono piu' disponibili per le corse. Il reddito passivo resta ricco ma
+         diventa il frutto di una flotta costruita, e nasce la decisione vera:
+         metto la flotta sui contratti o sulle corse?
+       - la scala scende a 2 ore di servizio garantito. Il conto, per veicolo
+         impegnato al giorno:
+             in corse guidate   ~10 corse × €360   = €3.600
+             in contratto tier5  8.600 × 2 ÷ 5     = €3.440
+         Il contratto rende appena meno ma e' garantito e non chiede attenzione:
+         e' il compromesso onesto fra rendimento e gestione, ed e' cio' che rende
+         la scelta interessante invece che ovvia.
+       - se la capacita' non c'e' piu' (auto vendute, in officina, autisti
+         licenziati) si paga IN PROPORZIONE a quella effettiva, con avviso: il
+         contratto non e' piu' denaro dal nulla nemmeno quando la flotta sparisce.
+       ───────────────────────────────────────────────────────────────────────── */
+    const ORE_SERVIZIO = 2;
+
+    function _veicoliImpegnati(co) {
+        return Math.max(1, Math.min(5, co.tier || 1));
+    }
+
+    /* I veicoli che il giocatore puo' davvero mettere in servizio adesso:
+       in flotta, non fuori servizio, non sequestrati, in condizione decente. */
+    function _capacitaOperativa() {
+        return _veicoliDisponibili().length;
+    }
+
+    function _veicoliDisponibili() {
+        return (gameState.fleet || []).filter(v =>
+            !v.outOfService && !v.isSeized && (v.condition || 0) >= 20
+        );
+    }
+
+    /* I veicoli che i contratti attivi tengono occupati, e che quindi NON possono
+       fare corse. Stesso patto gia' in uso per i contratti B2B
+       (b2b.js::b2bLockedVehicleIds, letto da engine-rides.js::_driverCanTakeRide):
+       qui si riusa quel meccanismo invece di inventarne un secondo.
+       La scelta di QUALI veicoli impegnare e' deterministica — i primi della
+       flotta disponibile — cosi' non cambia a ogni tick sotto gli occhi del
+       giocatore. */
+    window.corporateLockedVehicleIds = function () {
+        const attivi = (gameState.corporateContracts || []).filter(c => c.status === 'active');
+        if (attivi.length === 0) return [];
+        const richiesti = attivi.reduce(
+            (n, c) => n + (c.veicoliImpegnati || _veicoliImpegnati(c.company || {})), 0);
+        return _veicoliDisponibili().slice(0, richiesti).map(v => v.id);
+    };
+
     function _collectEarnings() {
-        (gameState.corporateContracts || []).filter(c => c.status === 'active').forEach(c => {
-            window.CE_money.earn(c.dailyPayout, 'corporate_contract');
-            c.totalEarned       = (c.totalEarned || 0) + c.dailyPayout;
+        const attivi = (gameState.corporateContracts || []).filter(c => c.status === 'active');
+        if (attivi.length === 0) return;
+
+        // I contratti si servono in ordine: il primo firmato ha la precedenza
+        // sulla flotta, come in un'azienda vera.
+        let disponibili = _capacitaOperativa();
+
+        attivi.forEach(c => {
+            const richiesti = c.veicoliImpegnati || _veicoliImpegnati(c.company || {});
+            const coperti   = Math.max(0, Math.min(richiesti, disponibili));
+            disponibili    -= coperti;
+
+            const quota   = richiesti > 0 ? coperti / richiesti : 1;
+            const incasso = Math.round(c.dailyPayout * quota);
+
+            if (incasso > 0) {
+                window.CE_money.earn(incasso, 'corporate_contract');
+                c.totalEarned = (c.totalEarned || 0) + incasso;
+            }
+            c.ultimaQuota = quota;
+
+            if (quota < 1) {
+                window.DS?.alert?.({
+                    text: `⚠️ ${c.company?.company_name || 'Contratto'}: coperti ${coperti}/${richiesti} veicoli — pagato il ${Math.round(quota * 100)}%`,
+                    type: 'warning', tab: 'contracts', duration: 9000,
+                });
+            }
         });
     }
 
