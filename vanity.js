@@ -42,6 +42,54 @@
     }
     window._vanityApplyBrand = _applyBrand;   // chiamabile al boot per ripristinare lo stemma
 
+    /* LA BACHECA DEI TROFEI.
+       Ci sono ricompense rare che il gioco assegnava e poi non mostrava a
+       nessuno: l'orologio svizzero di Grigori (5% su una corsa gia' rara)
+       incrementava `watchDropCount` e nessuno leggeva quel numero, e i podi
+       settimanali non avevano un posto dove restare. Una ricompensa invisibile
+       non e' una ricompensa: qui diventano oggetti che si guardano. */
+    function _bachecaTrofei() {
+        const gs = gameState;
+        const trofei = [];
+
+        const orologi = gs.watchDropCount || 0;
+        if (orologi > 0) trofei.push({
+            icona: '⌚', nome: 'Orologio svizzero',
+            nota: orologi === 1 ? 'Dono di Grigori V.' : `${orologi} pezzi — dono di Grigori V.`,
+        });
+
+        const podi = gs.podiumWeeks || 0;
+        if (podi > 0) trofei.push({
+            icona: '🏅', nome: 'Podi settimanali',
+            nota: podi === 1 ? 'Una settimana sul podio' : `${podi} settimane sul podio`,
+        });
+
+        if ((gs.fleet || []).some(c => c.isLimitedEdition)) trofei.push({
+            icona: '🏆', nome: 'Black Card', nota: 'CEO della Settimana',
+        });
+
+        if (trofei.length === 0) {
+            return `<div class="em-card" style="margin-bottom:7px">
+                <div class="em-ch"><span class="t">🏅 Bacheca dei Trofei</span></div>
+                <div style="padding:14px 16px;font-size:11px;color:var(--em-muted)">
+                    Ancora vuota. I premi rari che riceverai — un dono di un cliente, un podio in
+                    classifica — resteranno qui.
+                </div>
+            </div>`;
+        }
+
+        return `<div class="em-card" style="margin-bottom:7px">
+            <div class="em-ch"><span class="t">🏅 Bacheca dei Trofei</span><span class="a" style="color:var(--em-muted)">${trofei.length}</span></div>
+            <div style="padding:12px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+                ${trofei.map(t => `<div style="border:1px solid var(--em-line,#d6dee8);border-radius:8px;padding:10px;text-align:center">
+                    <div style="font-size:26px;line-height:1.2">${t.icona}</div>
+                    <div style="font-size:11px;font-weight:700;margin-top:4px">${t.nome}</div>
+                    <div style="font-size:10px;color:var(--em-muted);margin-top:2px">${t.nota}</div>
+                </div>`).join('')}
+            </div>
+        </div>`;
+    }
+
     window.renderTabPrestigio = function () {
         const c = document.getElementById('tab-container'); if (!c) return;
         _ensure();
@@ -94,6 +142,8 @@
                     <div style="font-size:11px;color:#9fb1c2">${gs.companyTitle}</div>
                 </div>
             </div>
+
+            ${_bachecaTrofei()}
 
             <div class="em-card" style="margin-bottom:7px">
                 <div class="em-ch"><span class="t">🛡️ Stemma Aziendale</span><span class="a" style="color:var(--em-muted)">visibile agli altri</span></div>

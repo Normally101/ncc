@@ -845,6 +845,28 @@ function processDailyRoutines() {
             // CEMP stock boost: buona settimana = spike del prezzo azionario
             gameState.cempPrice = Math.min(9999, (gameState.cempPrice || 10) * 1.15);
         }
+
+        /* PREMIO DEL PODIO — lo status deve pagare qualcosa.
+           La classifica globale non aveva NESSUNA ricompensa agganciata: era una
+           vetrina da guardare, cioe' una ricompensa «Tribe» lasciata a meta'.
+           Sta qui dentro apposta, sullo stesso orologio settimanale: un secondo
+           timer sarebbe stato solo un'altra cosa da tenere allineata a mano.
+           Modesto per scelta (15/10/5 DC contro i 50 del CEO della Settimana):
+           deve dire «sei visto», non decidere la partita. */
+        if (typeof _getRankPosition === 'function') {
+            const _pos = _getRankPosition();
+            const _premioPodio = { 1: 15, 2: 10, 3: 5 }[_pos] || 0;
+            if (_premioPodio > 0) {
+                window.CE_money.earnDC(_premioPodio, 'weekly_podium');
+                gameState.podiumBadge = { pos: _pos, day: gameState.day };
+                gameState.podiumWeeks = (gameState.podiumWeeks || 0) + 1;
+                const _medaglia = { 1: '🥇', 2: '🥈', 3: '🥉' }[_pos];
+                showBigEvent(_medaglia, `${_pos}° posto in classifica`,
+                    `Hai chiuso la settimana sul podio. Premio: +${_premioPodio} Driver Coins. ` +
+                    `Podi totali: ${gameState.podiumWeeks}.`);
+                logToMap(`${_medaglia} Podio settimanale: ${_pos}° posto — +${_premioPodio} DC`);
+            }
+        }
         gameState.weeklyEarnings = 0;
         gameState.weeklyRides    = 0;
         gameState.weekStartDay   = gameState.day;
