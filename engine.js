@@ -1993,6 +1993,16 @@ function updateUI() {
     const elBN = document.querySelector('.emc-bn'); if (elBN && gameState.companyName) elBN.innerText = gameState.companyName;
     const elBM = document.querySelector('.emc-bm'); if (elBM && gameState.companyLogo && gameState.companyLogo !== 'CE') elBM.textContent = gameState.companyLogo;
     const elRep = document.getElementById('tb-rep'); if(elRep) elRep.innerText = `${gameState.reputation.toFixed(1)} ★`;
+    /* Livello dell'azienda: il numero che sale spesso all'inizio. Il grado
+       (ui-home.js) resta il titolo raro agganciato al prestigio; questo e' il
+       segnale di crescita immediato, che prima non esisteva. */
+    const elLv = document.getElementById('tb-level');
+    if (elLv && window.CE_level) {
+        window.CE_level.ensurePlayerLevel(gameState);
+        const _xpMancanti = window.CE_level.totalXpForLevel(gameState.playerLevel + 1) - (gameState.playerXp || 0);
+        elLv.innerText = `Lv ${gameState.playerLevel}`;
+        elLv.parentElement.title = `Livello ${gameState.playerLevel} — ${_xpMancanti} XP al prossimo`;
+    }
     const elEBar = document.getElementById('tb-energy-bar'); if (elEBar) elEBar.style.width = `${Math.max(0, gameState.energy)}%`;
     const elEText = document.getElementById('tb-energy-text'); if(elEText) elEText.innerText = `${Math.round(gameState.energy)}%`;
     const elTime = document.getElementById('tb-time'); if(elTime) elTime.innerText = `${String(gameState.hour).padStart(2, '0')}:${String(gameState.minute).padStart(2, '0')}`;

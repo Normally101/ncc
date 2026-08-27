@@ -53,4 +53,12 @@ function addPlayerXp(state, amount) {
   return guadagnati;
 }
 
-module.exports = { xpToNext, totalXpForLevel, levelFromXp, ensurePlayerLevel, addPlayerXp };
+/* Doppia esposizione, di proposito.
+   Il file era scritto solo per Node (`module.exports`) e non era mai stato
+   incluso in index.html: il sistema di livelli esisteva, era testato, e non
+   girava. Adesso vive anche nel browser come `window.CE_level`, senza toccare
+   la firma usata dai test. */
+const _CE_level = { xpToNext, totalXpForLevel, levelFromXp, ensurePlayerLevel, addPlayerXp };
+
+if (typeof module !== 'undefined' && module.exports) module.exports = _CE_level;
+if (typeof window !== 'undefined') window.CE_level = _CE_level;

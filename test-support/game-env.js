@@ -36,7 +36,11 @@ const CORE_FILES = [
        erano collaudabili; ora sono nel banco, che e' il punto di tutto il
        lavoro del 23/08. */
     'map-router.js', 'ride-progress.js',
-    'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js', 'ui-landing.js', 'auth.js',
+    'data.js', 'lang.js', 'syncManager.js', 'saveSystem.js', 'money.js',
+    /* player-level.js: il livello numerico che sale spesso all'inizio. Era scritto
+       e testato ma non caricato da nessuna parte — codice morto fino al 28/08. */
+    'player-level.js',
+    'ui-landing.js', 'auth.js',
     'quests-data.js',
     'quests.js', 'engine.js', 'engine-daily.js', 'engine-rides.js', 'engine-finance.js',
     'engine-drivers.js', 'engine-fleet.js', 'engine-store.js', 'engine-holding.js',

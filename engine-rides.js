@@ -888,6 +888,20 @@ function completeRide(ride, _deferPay = false) {
         _checkDriverLevel(driver);
     }
 
+    /* XP del GIOCATORE (non dell'autista): ogni corsa conclusa fa crescere il
+       livello dell'azienda. Serve perche' l'unico segnale di progresso visibile
+       era il grado, che dipende dal prestigio e quindi esiste solo sopra 5.0★ —
+       circa 250 corse: nella prima ora il giocatore non vedeva MAI salire nulla.
+       La scala di player-level.js (10, 16, 24, 37 XP…) fa salire 4-5 volte nella
+       prima ora e poi dirada da sola. Vale per ogni corsa, anche quelle guidate
+       dal CEO: e' l'azienda che cresce, non l'autista. */
+    if (window.CE_level) {
+        const xpCorsa = { standard:10, business:14, vip:20, ultra:30, group:12 };
+        const saliti = window.CE_level.addPlayerXp(gameState, xpCorsa[ride.tier] || 10);
+        if (saliti > 0 && typeof showBigEvent === 'function')
+            showBigEvent('⭐', `Livello ${gameState.playerLevel}`, 'La tua azienda cresce. Continua così.');
+    }
+
     // Tecnico: Maestro Meccanico — auto-repair if condition low
     if (driver && typeof window.driverAllEffects === 'function') {
         const _tec = window.driverAllEffects(driver);
