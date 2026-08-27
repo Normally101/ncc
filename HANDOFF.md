@@ -1,7 +1,36 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 27 agosto 2026
+> Aggiornato: 28 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+> **STATO 28/08 — BILANCIAMENTO ECONOMICO fatto (2174 test verdi).**
+> Metodo: skill `economia-di-gioco` (le sei domande) + `hooked-ux`, su numeri
+> MISURATI sul codice, non stimati. Incasso mediano di una corsa: **€360**.
+> - **Il difetto strutturale era che il gioco premiava l'attesa**: un contratto
+>   tier 5 pagava €137.600/giorno senza consumare nulla (380 corse). Ora un
+>   contratto **impegna `tier` veicoli** (che escono dalle corse, riusando il
+>   patto di `b2bLockedVehicleIds`), la scala è **×2 ore** e non ×16, e si paga
+>   **in proporzione alla capacità reale**. Tetti al prodotto dei moltiplicatori:
+>   **×10** sulla tariffa, **×4** sull'incasso (prima nessuno dei due era limitato).
+> - **La prima ora era rotta in 4 punti, tutti riparati**: la promessa «150€» con
+>   90€ in cassa (ora la cifra è dinamica); `t01` — la radice delle 168 missioni —
+>   chiedeva un'auto da 35.000€ a chi ne ha 90 (ora chiede la berlina che ha già);
+>   il livello non saliva mai (`player-level.js` esisteva, era testato e **non era
+>   caricato**: ora è `window.CE_level`, sale alla prima corsa, è in topbar);
+>   l'energia non si rigenerava senza HR/Lounge (ora +1,0/h di base per tutti).
+> - **Onestà**: ritirata dal negozio la voce «Limite Offline +2h» (20 DC), che
+>   vendeva meno di quanto il gioco dà già gratis e non era letta da nessun file.
+> - **Status**: il podio settimanale ora paga 15/10/5 DC, e i drop rari (orologio
+>   di Grigori, podi, Black Card) si vedono nella nuova **Bacheca dei Trofei**.
+> - **Copertura**: `engine-rivals.js` (5 funzioni vive, 0 test) ora ha 19 test.
+>   I tre lavori che Gigi dava per «falliti» erano invece già coperti e verdi.
+> - ⚠️ **`trova-morte.test.js` aveva un falso positivo grave** (regex con flag `g`
+>   riusata con `.test()` in ciclo): dava per morta `showSlotSelector`, che ha due
+>   chiamanti veri. Corretto — ma **prima di cancellare una funzione «morta»,
+>   verificare sempre a mano**.
+> - **RESTA APERTO, il debito più grosso del repo**: le **28 azioni** in
+>   `ROTTE_NOTE` (`test/guardrail/azioni-sincronizzano.test.js:74-84`) che muovono
+>   valuta senza sincronizzare col server. È un lavoro a sé, con il suo piano.
 
 > **STATO 27/08 — collaudi profondi dei 5 sistemi core + bug VIP fixato.**
 > I 5 collaudi end-to-end che Gigi aveva lasciato "falliti" (run mai finite, non
