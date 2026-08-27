@@ -214,9 +214,11 @@ function _autoDalLotto(datiVeicolo) {
  * schermata — il veicolo non entrava in flotta e il denaro del container non
  * arrivava mai, quindi si pagava l'aggiudicazione e non si riceveva niente.
  *
- * Il denaro lo accredita il server dentro `rpc_claim_auction`; qui si allinea
- * solo la previsione locale. Il veicolo invece nasce qui, perche' e' qui che
- * la flotta vive.
+ * Il denaro lo muove il server dentro `rpc_claim_auction` (addebita winning_bid,
+ * accredita eventuale cash dal container); qui si allinea solo la previsione
+ * locale tramite CE_money.addebitatoDalServer / accreditatoDalServer, SENZA
+ * richiamare syncCash (che rispedirebbe il totale al server). Il veicolo nasce
+ * qui, perche' e' qui che la flotta vive.
  */
 window.auctionsClaim = async function(auctionId) {
     const sb = window.supabaseClient;
@@ -226,9 +228,18 @@ window.auctionsClaim = async function(auctionId) {
     if (error) return { error: _aErr('Ritiro fallito', error) };
 
     const nuove = [];
+
+    // 1. Addebito dell'aggiudicazione: il server ha gia' scalato companies.cash.
+    //    Il client si allinea SENZA risincronizzare (addebitatoDalServer non chiama syncCash).
+    const winningBid = Number(data?.winning_bid) || 0;
+    if (winningBid > 0 && window.CE_money) {
+        window.CE_money.addebitatoDalServer(winningBid, 'aggiudicazione asta');
+    }
+
+    // 2. Eventuale accredito contanti dal container: il server ha gia' accreditato.
     const contanti = Number(data?.cash_accreditato) || 0;
     if (contanti > 0 && window.CE_money) {
-        window.CE_money.accreditatoDalServer(contanti, 'asta giudiziaria');
+        window.CE_money.accreditatoDalServer(contanti, 'asta giudiziaria container');
     }
 
     if (data?.lot_type === 'container') {
