@@ -26,6 +26,18 @@ function _tickFatigue() {
         const a = (typeof LIFESTYLE_ASSETS !== 'undefined' ? LIFESTYLE_ASSETS : []).find(x => x.id === id);
         return s + (a ? (a.energyBonus || 0) : 0);
     }, 0);
+    /* RIPOSO DI BASE (+1,0/h) PER TUTTI.
+       Prima la rigenerazione viveva INTERAMENTE dentro questo ramo: chi non
+       aveva HR, VIP Lounge o un asset lifestyle — cioe' ogni giocatore nuovo —
+       consumava 5%/ora e non recuperava mai. Fuori dalla fase survival non
+       esiste piu' nemmeno il «Dormi in auto» gratuito: restavano l'hotel a
+       pagamento o 4 DC. Un giocatore che comincia non deve trovare un muro.
+       HR (+1,0) e Lounge (+2,0) restano BONUS SOPRA la base, quindi conservano
+       il loro valore: il riposo e' un costo in tempo, non un pedaggio. */
+    {
+        const ceoOnRide = gameState.activeRides.some(r => r.driverId === 'ceo');
+        if (!ceoOnRide) gameState.energy = Math.min(100, gameState.energy + 1.0);
+    }
     if (hasHR || hasLounge || lifestyleEnergyBonus > 0) {
         const ceoOnRide = gameState.activeRides.some(r => r.driverId === 'ceo');
         const energyGain = (hasLounge ? 2.0 : 1.0) + lifestyleEnergyBonus;

@@ -199,8 +199,10 @@ describe('funzione lusso — lifestyle assets, status e real estate', () => {
 
             sandbox._tickFatigue();
 
-            // guadagno: 1.0 base + 1.5 bonus = 2.5
-            assert.equal(gs.energy, 52.5);
+            /* guadagno: 1.0 riposo di base (dal 28/08 vale per TUTTI, prima non
+               esisteva e chi non aveva HR/Lounge/lifestyle non recuperava mai)
+               + 1.0 del ramo bonus + 1.5 di villa_como = 3.5 */
+            assert.equal(gs.energy, 53.5);
         });
 
         test('penthouse_dubai sblocca le rotte internazionali', () => {
