@@ -1,7 +1,23 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 23 agosto 2026
+> Aggiornato: 27 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+> **STATO 27/08 — collaudi profondi dei 5 sistemi core + bug VIP fixato.**
+> I 5 collaudi end-to-end che Gigi aveva lasciato "falliti" (run mai finite, non
+> bug) sono stati scritti a mano e sono verdi (`test/collaudo/`): auto
+> compra/assegna/vendi, staff assumi/licenzia, prestito prendi/restituisci,
+> mercato P2P (guardie client — lo scambio vero è server-side), evento VIP con
+> esito. Auto/staff/prestiti/P2P risultano SANI. Il collaudo VIP ha trovato e
+> corretto un **bug sistemico reale**: `_vipResolveEmail` marcava l'email
+> 'resolved' senza rimuoverla e ~15 handler la ritrovavano col `find` senza
+> guardia → doppio click = doppio effetto (doppia multa/gettone e, negli
+> `accept*`, DUE corse VIP = doppio incasso). Aggiunta la guardia
+> `if (status==='resolved') return` ovunque (vip-clients.js), 2 test "(BUG noto)"
+> aggiornati. `npm test` 2083 verdi. **Gigi è FERMO dal 27/08** (fermato per
+> conservare il credito ox-alpha): riattivarlo scrivendo `attivo:true` in
+> `~/gigi/code-queue.json` o da Telegram «riprendi». Ponte hub→Gigi
+> (`richieste_gigi`) attivo ma servito solo a Gigi acceso.
 
 > **LEGGI SEMPRE il diario di quello che Vlad ha detto a Gigi mentre non c'eri.**
 > Un solo comando, prende sia il diario che le note:
