@@ -294,6 +294,60 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
             assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Firenze Storica')));
         });
 
+        test('acquisto valido chiama CE_money.addebitatoDalServer (porta unica denaro)', async () => {
+            const { sandbox, gs, env } = amb;
+            gs.cash = 500000;
+
+            // Spia su CE_money.addebitatoDalServer
+            const originale = sandbox.CE_money.addebitatoDalServer;
+            let chiamato = false;
+            let importoChiamato = null;
+            let motivoChiamato = null;
+            sandbox.CE_money.addebitatoDalServer = function(importo, motivo) {
+                chiamato = true;
+                importoChiamato = importo;
+                motivoChiamato = motivo;
+                return originale.call(this, importo, motivo);
+            };
+
+            await sandbox._infraBuyDepot('prov_firenze', 'Firenze Storica');
+
+            assert.ok(chiamato, 'deve chiamare CE_money.addebitatoDalServer');
+            assert.equal(importoChiamato, 300000, 'importo deve essere 300.000€');
+            assert.equal(motivoChiamato, 'buy_fuel_depot', 'motivo deve essere buy_fuel_depot');
+        });
+
+        test('acquisto valido chiama saveGame e updateUI', async () => {
+            const { sandbox, gs, env } = amb;
+            gs.cash = 500000;
+
+            let saveGameChiamato = false;
+            let updateUIChiamato = false;
+            sandbox.saveGame = () => { saveGameChiamato = true; };
+            sandbox.updateUI = () => { updateUIChiamato = true; };
+
+            await sandbox._infraBuyDepot('prov_firenze', 'Firenze Storica');
+
+            assert.ok(saveGameChiamato, 'deve chiamare saveGame dopo acquisto');
+            assert.ok(updateUIChiamato, 'deve chiamare updateUI dopo acquisto');
+        });
+
+        test('acquisto valido ri-renderizza la tab infrastrutture', async () => {
+            const { sandbox, gs, env } = amb;
+            gs.cash = 500000;
+
+            let renderChiamato = false;
+            const originaleRender = sandbox.renderTabInfrastructure;
+            sandbox.renderTabInfrastructure = async () => {
+                renderChiamato = true;
+                return originaleRender.call(this);
+            };
+
+            await sandbox._infraBuyDepot('prov_firenze', 'Firenze Storica');
+
+            assert.ok(renderChiamato, 'deve richiamare renderTabInfrastructure dopo acquisto');
+        });
+
         test('acquisto annullato tramite confirm dialog non fa nulla', async () => {
             const { sandbox, gs, rpcLog } = amb;
             sandbox.confirm = () => false;
@@ -353,6 +407,52 @@ describe('Funzione Infrastrutture — Esecuzione e ciclo di vita', () => {
             assert.equal(setRpc.args.v_markup_pct, 35);
 
             assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('35%')));
+        });
+
+        test('_infraSetMarkup ri-renderizza la tab infrastrutture dopo modifica', async () => {
+            const { sandbox, rpcLog } = amb;
+
+            const slider = sandbox.document.getElementById('markup-slider-prov_roma');
+            slider.value = '40';
+
+            let renderChiamato = false;
+            const originaleRender = sandbox.renderTabInfrastructure;
+            sandbox.renderTabInfrastructure = async () => {
+                renderChiamato = true;
+                return originaleRender.call(this);
+            };
+
+            await sandbox._infraSetMarkup('prov_roma');
+
+            assert.ok(renderChiamato, 'deve richiamare renderTabInfrastructure dopo modifica markup');
+        });
+
+        test('_infraSetMarkup accetta markup al limite minimo (0%)', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            const slider = sandbox.document.getElementById('markup-slider-prov_roma');
+            slider.value = '0';
+
+            await sandbox._infraSetMarkup('prov_roma');
+
+            const setRpc = rpcLog.find(r => r.nome === 'rpc_set_fuel_markup');
+            assert.ok(setRpc, 'deve accettare markup 0%');
+            assert.equal(setRpc.args.v_markup_pct, 0);
+            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('0%')));
+        });
+
+        test('_infraSetMarkup accetta markup al limite massimo (50%)', async () => {
+            const { sandbox, rpcLog, env } = amb;
+
+            const slider = sandbox.document.getElementById('markup-slider-prov_roma');
+            slider.value = '50';
+
+            await sandbox._infraSetMarkup('prov_roma');
+
+            const setRpc = rpcLog.find(r => r.nome === 'rpc_set_fuel_markup');
+            assert.ok(setRpc, 'deve accettare markup 50%');
+            assert.equal(setRpc.args.v_markup_pct, 50);
+            assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('50%')));
         });
 
         test('_infraSetMarkup se lo slider non esiste esce silenziosamente', async () => {
