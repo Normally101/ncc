@@ -114,17 +114,22 @@
     };
 
     // ─────────────────────────────────────────────────────────────────────────
-    // EVENTO CAPITALISMO — alla 10ª corsa: rivelazione idle → diventa manager
+    // EVENTO CAPITALISMO — alla 6ª corsa: rivelazione idle → diventa manager
     // ─────────────────────────────────────────────────────────────────────────
     window.triggerCapitalismEvent = function () {
         if (document.getElementById('z2h-capitalism')) return;
+        /* La cifra si legge dalla cassa, non si scrive a mano: il testo diceva
+           «150€» perche' era tarato su 10 corse, ma la soglia e' 6 (vedi sopra) e
+           il giocatore ne aveva 90. Una promessa che non torna e' la prima cosa
+           che gli fa perdere fiducia nel gioco. Cosi' non puo' piu' divergere. */
+        const _cassa = Math.round((window.gameState && window.gameState.cash) || 0);
         const ov = document.createElement('div');
         ov.id = 'z2h-capitalism';
         ov.style.cssText = 'position:fixed;inset:0;z-index:var(--z-takeover);background:rgba(2,3,8,0.96);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
         ov.innerHTML = `
         <div style="max-width:560px;background:#0b0d14;border:1px solid #d4af37;border-radius:14px;padding:34px 30px;text-align:center;box-shadow:0 0 60px rgba(212,175,55,0.25)">
             <h1 style="color:#d4af37;font-size:26px;letter-spacing:4px;margin:0 0 18px;font-weight:900">SVEGLIATI, SCHIAVO.</h1>
-            <p style="color:#cbd2dc;font-size:15px;line-height:1.7;margin:0 0 26px">Non diventerai mai ricco se usi il tuo tempo. I ricchi usano il tempo degli altri. Hai 150€ in tasca ora. Nel tab STAFF c'è un ragazzino di quartiere che cerca lavoro. Assumilo, metti lui al volante, tu vai a dormire e guarda i soldi arrivare da soli.</p>
+            <p style="color:#cbd2dc;font-size:15px;line-height:1.7;margin:0 0 26px">Non diventerai mai ricco se usi il tuo tempo. I ricchi usano il tempo degli altri. Hai ${_cassa}€ in tasca ora. Nel tab STAFF c'è un ragazzino di quartiere che cerca lavoro. Assumilo, metti lui al volante, tu vai a dormire e guarda i soldi arrivare da soli.</p>
             <button ${ceAct('_ceCapitalismAck', [])} style="background:linear-gradient(135deg,#d4af37 0%,#b8860b 100%);color:#000;font-weight:900;font-size:16px;padding:16px 26px;border-radius:10px;border:2px solid #fff;cursor:pointer">Ho capito. Fammi diventare un manager.</button>
         </div>`;
         document.body.appendChild(ov);

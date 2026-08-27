@@ -114,7 +114,10 @@ describe('funzione negozioDC — Driver Coins & Executive Club', () => {
             assert.ok(html.includes('Flotta piena'), 'deve indicare flotta piena');
             assert.ok(html.includes('Energia al 100%'), 'deve indicare energia al 100%');
             assert.ok(html.includes('Nessuno a riposo'), 'deve indicare nessun autista a riposo');
-            assert.ok(html.includes('Massimo raggiunto'), 'deve indicare limite offline raggiunto');
+            // «Limite Offline» non e' piu' in vendita: vendeva 2→12 ore mentre il
+            // rientro applica gia' gratis fino a 7 giorni, e `offlineLimit` non
+            // e' letto da nessun file di gioco. Vedi test/economia/onesta-verso-il-giocatore.
+            assert.ok(!html.includes('Limite Offline'), 'la voce ritirata non deve ricomparire');
             assert.ok(html.includes('Già attivo'), 'deve indicare autorest già attivo');
             assert.ok(html.includes('Posseduta'), 'deve indicare targa presidenziale posseduta');
         });
