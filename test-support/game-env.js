@@ -154,6 +154,7 @@ function makeServerState(sandboxRef, overrides = {}) {
             return { success: true };
         },
         unlockRegion: async (_regionId, price) => {
+            if ((gs().cash || 0) < price) return null;
             gs().cash = (gs().cash || 0) - price;
             return { success: true };
         },
