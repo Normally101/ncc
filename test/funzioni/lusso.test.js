@@ -371,6 +371,33 @@ describe('funzione lusso — lifestyle assets, status e real estate', () => {
             assert.equal(sandbox._decreesState.activeDecrees[0].id, 'dec_2');
         });
 
+        test('decreesRefresh usa cache di 60 secondi se non forzato', async () => {
+            let callCount = 0;
+            sandbox.supabaseClient = {
+                rpc: async (fn) => {
+                    callCount++;
+                    if (fn === 'rpc_get_server_decrees') {
+                        return { data: [{ id: 'dec_1', title: 'Test' }] };
+                    }
+                    if (fn === 'rpc_get_active_decrees') {
+                        return { data: [] };
+                    }
+                    return { data: null };
+                }
+            };
+
+            await sandbox.decreesRefresh(true);  // force=true
+            assert.equal(callCount, 2); // due RPC calls
+
+            await sandbox.decreesRefresh(false); // no force, cache fresh
+            assert.equal(callCount, 2); // non deve rifare le chiamate
+
+            // Manipola timestamp per simulare cache scaduta
+            sandbox._decreesState._lastFetch = Date.now() - 70000;
+            await sandbox.decreesRefresh(false);
+            assert.equal(callCount, 4); // ora deve rifare le chiamate
+        });
+
         test('getDecreeEffects calcola i moltiplicatori cumulativi degli activeDecrees', () => {
             sandbox._decreesState.activeDecrees = [
                 { id: 'd1', effects: { fuel_cost: 0.9, rep_bonus: 1.1 } },
@@ -382,6 +409,18 @@ describe('funzione lusso — lifestyle assets, status e real estate', () => {
             assert.equal(fx.rep_bonus, 1.1);
         });
 
+        test('getDecreeEffects gestisce valori non numerici (stringhe, oggetti) copiandoli tali e quali', () => {
+            sandbox._decreesState.activeDecrees = [
+                { id: 'd1', effects: { fuel_cost: 0.9, note: 'sconto estivo', config: { a: 1 } } },
+                { id: 'd2', effects: { fuel_cost: 0.8, note: 'emergenza' } },
+            ];
+
+            const fx = sandbox.getDecreeEffects();
+            assert.ok(Math.abs(fx.fuel_cost - 0.72) < 0.0001);
+            assert.equal(fx.note, 'emergenza'); // l'ultimo vince per valori non numerici
+            assert.deepEqual(fx.config, { a: 1 }); // l'oggetto viene copiato
+        });
+
         test('voteServerDecree rifiuta punti non validi o insufficienti', async () => {
             gs.lobbyingPoints = 5;
 
@@ -391,6 +430,32 @@ describe('funzione lusso — lifestyle assets, status e real estate', () => {
             await sandbox.voteServerDecree('dec_1', 10);
             assert.ok(env.notifications.some(n => n.msg.includes('Punti lobbying insufficienti')));
             assert.equal(gs.lobbyingPoints, 5);
+        });
+
+        test('voteServerDecree gestisce errore RPC da Supabase', async () => {
+            gs.lobbyingPoints = 15;
+            let rpcCalled = false;
+
+            sandbox.supabaseClient = {
+                rpc: async (fn, args) => {
+                    if (fn === 'rpc_vote_server_decree') {
+                        rpcCalled = true;
+                        return { data: null, error: { message: 'DB error' } };
+                    }
+                    if (fn === 'rpc_get_server_decrees') return { data: [] };
+                    if (fn === 'rpc_get_active_decrees') return { data: [] };
+                    return { data: null };
+                }
+            };
+
+            // CE_Sec.userError potrebbe non esistere nel sandbox, gestiamo il caso
+            sandbox.CE_Sec = { userError: (ctx, err) => `${ctx}: ${err.message}` };
+
+            await sandbox.voteServerDecree('dec_1', 6);
+
+            assert.ok(rpcCalled, 'RPC deve essere chiamata');
+            assert.ok(env.notifications.some(n => n.msg.includes('Voto non riuscito')), 'deve notificare errore');
+            assert.equal(gs.lobbyingPoints, 15, 'punti lobbying non devono essere scalati se errore');
         });
 
         test('voteServerDecree invia il voto all RPC Supabase e scala lobbyingPoints', async () => {
@@ -414,6 +479,25 @@ describe('funzione lusso — lifestyle assets, status e real estate', () => {
             assert.equal(rpcCallArgs.v_decree_id, 'dec_1');
             assert.equal(rpcCallArgs.v_points_spent, 6);
             assert.equal(gs.lobbyingPoints, 9);
+        });
+
+        test('voteServerDecree notifica approvazione se decreto passa', async () => {
+            gs.lobbyingPoints = 15;
+
+            sandbox.supabaseClient = {
+                rpc: async (fn, args) => {
+                    if (fn === 'rpc_vote_server_decree') {
+                        return { data: { passed: true, title: 'Nuova legge', votes_current: 10 } };
+                    }
+                    if (fn === 'rpc_get_server_decrees') return { data: [{ id: 'dec_1', votes_required: 10 }] };
+                    if (fn === 'rpc_get_active_decrees') return { data: [] };
+                    return { data: null };
+                }
+            };
+
+            await sandbox.voteServerDecree('dec_1', 6);
+
+            assert.ok(env.notifications.some(n => n.msg.includes('Decreto approvato') && n.msg.includes('Nuova legge')));
         });
     });
 

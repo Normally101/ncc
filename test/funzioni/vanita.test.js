@@ -321,4 +321,77 @@ describe('funzione vanita — vetrina prestigio, stemmi, colori e titoli', () =>
             assert.equal(tabCambiata, 'store');
         });
     });
+
+    describe('_vanityApplyBrand chiama window._applyBrandColor callback quando presente', () => {
+        test('se _applyBrandColor è una funzione, viene invocata con companyColor', () => {
+            let callbackColor = null;
+            sandbox.window._applyBrandColor = (color) => { callbackColor = color; };
+
+            gs.companyLogo = '🦅';
+            gs.companyColor = '#c0392b';
+
+            const bm = sandbox.document.createElement('div');
+            bm.className = 'emc-bm';
+            sandbox.document.body.appendChild(bm);
+
+            sandbox._vanityApplyBrand();
+
+            assert.equal(bm.textContent, '🦅');
+            assert.equal(callbackColor, '#c0392b', 'callback deve ricevere il colore aziendale');
+        });
+
+        test('se _applyBrandColor non è una funzione, non lancia errore', () => {
+            sandbox.window._applyBrandColor = 'non una funzione';
+            gs.companyLogo = '👁️';
+            gs.companyColor = '#c79a2a';
+
+            const bm = sandbox.document.createElement('div');
+            bm.className = 'emc-bm';
+            sandbox.document.body.appendChild(bm);
+
+            assert.doesNotThrow(() => {
+                sandbox._vanityApplyBrand();
+            });
+            assert.equal(bm.textContent, '👁️');
+        });
+    });
+
+    describe('_save chiama updateUI, saveGame e renderTabPrestigio quando disponibili', () => {
+        let updateUICalled, saveGameCalled, renderCalled;
+
+        beforeEach(() => {
+            updateUICalled = false;
+            saveGameCalled = false;
+            renderCalled = false;
+            sandbox.updateUI = () => { updateUICalled = true; };
+            sandbox.saveGame = () => { saveGameCalled = true; };
+            sandbox.renderTabPrestigio = () => { renderCalled = true; };
+        });
+
+        afterEach(() => {
+            delete sandbox.updateUI;
+            delete sandbox.saveGame;
+            delete sandbox.renderTabPrestigio;
+        });
+
+        test('dopo _vanityEmblem chiama tutti e tre i callback', () => {
+            gs.driverCoins = 20;
+            sandbox._vanityEmblem('⚜️'); // 5 DC
+
+            assert.ok(updateUICalled, 'updateUI deve essere chiamato');
+            assert.ok(saveGameCalled, 'saveGame deve essere chiamato');
+            assert.ok(renderCalled, 'renderTabPrestigio deve essere chiamato');
+        });
+
+        test('se i callback non sono funzioni, non lancia errore', () => {
+            sandbox.updateUI = 'non funzione';
+            sandbox.saveGame = null;
+            sandbox.renderTabPrestigio = undefined;
+
+            gs.driverCoins = 20;
+            assert.doesNotThrow(() => {
+                sandbox._vanityEmblem('⚜️');
+            });
+        });
+    });
 });
