@@ -451,7 +451,7 @@ function processDailyRoutines() {
     if (gameState.cash < 0) {
         gameState.consecutiveRedDays = (gameState.consecutiveRedDays || 0) + 1;
         showNotification(`⚠️ Cassa negativa! Giorno ${gameState.consecutiveRedDays}/3 prima del pignoramento.`, 'error');
-        logToMap(`🔴 Cassa negativa: €${Math.floor(gameState.cash).toLocaleString()} (${gameState.consecutiveRedDays}/3 giorni)`);
+        logToMap(`🔴 Cassa negativa: €${(window._soldiLeggibili || (v => Math.floor(v || 0).toLocaleString('it-IT')))(gameState.cash)} (${gameState.consecutiveRedDays}/3 giorni)`);
         if (gameState.consecutiveRedDays >= 3) _triggerBankruptcy();
     } else {
         gameState.consecutiveRedDays = 0;

@@ -1994,8 +1994,21 @@ window.acceptDiamondContract = function(emailId) {
     if (typeof renderTabEmails === 'function') renderTabEmails();
 };
 
+/* Un saldo non ancora arrivato non deve MAI diventare «NaN» sullo schermo.
+   Playtest di Pietro, 28/08/2026: «Soldi sono in #NaN» nei primi secondi, poi
+   sparito da solo. La causa: `Math.floor(undefined)` e' NaN, e
+   `NaN.toLocaleString()` scrive letteralmente «NaN». Succede nella finestra fra
+   il primo disegno dell'interfaccia e l'arrivo del saldo dal server.
+   Un numero che non c'e' ancora si mostra come zero: e' una previsione che il
+   server correggera' fra un istante, non un errore da dare in faccia a chi gioca. */
+function _soldiLeggibili(valore) {
+    const n = Math.floor(Number(valore));
+    return Number.isFinite(n) ? n.toLocaleString('it-IT') : '0';
+}
+if (typeof window !== 'undefined') window._soldiLeggibili = _soldiLeggibili;
+
 function updateUI() {
-    const elCash = document.getElementById('tb-cash'); if(elCash) elCash.innerText = `€${Math.floor(gameState.cash).toLocaleString()}`;
+    const elCash = document.getElementById('tb-cash'); if(elCash) elCash.innerText = `€${_soldiLeggibili(gameState.cash)}`;
     // brand reale in topbar (nome azienda + stemma vanity) — non più hardcoded
     const elBN = document.querySelector('.emc-bn'); if (elBN && gameState.companyName) elBN.innerText = gameState.companyName;
     const elBM = document.querySelector('.emc-bm'); if (elBM && gameState.companyLogo && gameState.companyLogo !== 'CE') elBM.textContent = gameState.companyLogo;

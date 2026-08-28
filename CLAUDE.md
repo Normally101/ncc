@@ -18,7 +18,7 @@ Browser MMO gestionale "poor to rich" (NCC di lusso). Vanilla HTML/CSS/JS, no fr
 - **Funzioni cross-file** via `window.fn` + guard `typeof window.fn === 'function'`.
 - **Cash / operazioni server-authoritative** (province, immobili, premi): via RPC Supabase, MAI `gameState.cash` diretto. (`gameState` è `let` in engine.js ma esposto come `window.gameState` via getter → forme equivalenti.)
 - **Cache-bust:** bump `?v=N` in index.html per ogni JS modificato (se la CDN serve vecchio, bumpa tutti).
-- **Stile UI:** kit `.em` light (Fase 3 completata), inline style nei tab, niente `DS.*`. Palette/pattern in `docs/ARCHITECTURE.md`. Le overlay-flair volute restano scure (cmd-palette, showBigEvent, tutorial, survival Zero-to-Hero).
+- **Stile UI:** kit `.em` **SCURO** (Bloomberg-terminal, commit `06e5763`; la nota «light — Fase 3» era vecchia di due conversioni e mandava fuori strada). Inline style nei tab, niente `DS.*`. I colori si prendono dai token `--em-*` in `style.css`, **mai a mano**: sono tarati per il fondo scuro e verificati a contrasto ≥4.5. Palette/pattern in `docs/ARCHITECTURE.md`.
 - **CSP:** il service worker richiede `worker-src 'self'` (per le notifiche push). Non toglierlo.
 
 ## Deploy (IMPORTANTE)

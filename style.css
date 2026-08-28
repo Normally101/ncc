@@ -2496,13 +2496,13 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .inbox-tab-btn:hover {
     color: #e6edf3;
-    background: #eef2f7;
+    background: #21262d;
 }
 .inbox-tab-btn.active {
     color: #e6edf3;
-    background: #fff;
+    background: #161b22;
     border-color: #21262d;
-    border-bottom-color: #fff;
+    border-bottom-color: #161b22;
 }
 .inbox-tab-badge {
     display: inline-flex;
@@ -2522,15 +2522,30 @@ details[open] .finance-section-title { color: #00f2ff; }
 .inbox-tab-badge.badge-purple { background: #7c3aed; }
 .inbox-tab-badge.badge-blue { background: #2563eb; }
 
+/* ── INBOX: conversione al tema scuro COMPLETATA (28/08/2026) ───────────────
+   Playtest di Pietro: «In Le Mie Sedi>Inbox, l'UI e' cosi' luminosa che
+   preferirei guardare il sole. Non si legge niente.»
+
+   Aveva ragione, e la causa e' un cambio di tema lasciato a meta'. La storia:
+   il commit 2211194 aveva convertito tutto a CHIARO («Fase 3»), poi 06e5763 ha
+   riconvertito a SCURO («Bloomberg-terminal theme») — ma questo blocco e'
+   rimasto ibrido: fondo BIANCO della fase chiara con testi e bordi SCURI della
+   fase Bloomberg. Misurato nel browser: `#e6edf3` su `#ffffff` = contrasto
+   1.18. Il nome del mittente e l'oggetto erano bianchi su bianco.
+
+   Qui si finisce la conversione: i FONDI diventano scuri come i testi che gia'
+   c'erano. Le pill colorate (`rgba(colore,0.15)` + testo saturo) tornano a
+   funzionare da sole: quel disegno e' nato per un fondo scuro, su bianco si
+   sbiadiva (il badge «CEO EVENT» aveva contrasto 1.00). */
 .email-card {
-    background: #ffffff;
+    background: #161b22;
     border: 1px solid #21262d;
     border-radius: 8px;
     padding: 12px 14px;
     margin-bottom: 10px;
     transition: border-color 0.15s ease;
 }
-.email-card:hover { border-color: #c2ccd8; }
+.email-card:hover { border-color: #30363d; }
 .email-card.email-urgent   { border-left: 3px solid #f97316; }
 .email-card.email-red      { border-left: 3px solid #ef4444; }
 .email-card.email-vip      { border-left: 3px solid #a855f7; }
@@ -2570,7 +2585,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .email-sender-role {
     font-size: 8px;
-    color: #6b7280;
+    color: #8b949e;   /* schiarito: #6b7280 su #161b22 non si leggeva */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -2595,7 +2610,7 @@ details[open] .finance-section-title { color: #00f2ff; }
 
 .email-timestamp {
     font-size: 8px;
-    color: #4b5563;
+    color: #8b949e;   /* schiarito: #4b5563 su #161b22 non si leggeva */
     margin-bottom: 4px;
 }
 .email-subject {
@@ -2607,18 +2622,18 @@ details[open] .finance-section-title { color: #00f2ff; }
 }
 .email-body {
     font-size: 9px;
-    color: #4d6480;
+    color: #adbac7;   /* schiarito: il pannello sotto e' ora #0d1117 */
     line-height: 1.6;
     white-space: pre-line;
     margin-bottom: 8px;
     padding: 8px 10px;
-    background: #f3f6f9;
+    background: #0d1117;
     border-radius: 4px;
     border-left: 2px solid #21262d;
 }
 .email-signature {
     font-size: 8px;
-    color: #6b7280;
+    color: #8b949e;
     font-style: italic;
     margin-bottom: 10px;
     white-space: pre-line;
@@ -2629,7 +2644,7 @@ details[open] .finance-section-title { color: #00f2ff; }
     flex-wrap: wrap;
     margin-top: 8px;
     padding-top: 8px;
-    border-top: 1px solid #eef1f5;
+    border-top: 1px solid #21262d;
 }
 .email-expiry {
     font-size: 8px;
@@ -4681,10 +4696,25 @@ select:focus {
    non vengono convertite. Vedi DESIGN.md sezione "EM".
    ════════════════════════════════════════════════════════════════════ */
 .em{
-  --em-card:#161b22; --em-ink:#e6edf3; --em-muted:#6b7280; --em-dim:#6b7280;
+  /* `--em-muted` e `--em-dim` erano #6b7280: un grigio medio nato per il tema
+     CHIARO della Fase 3 e mai ritoccato quando il kit e' tornato scuro (commit
+     06e5763). Su `--em-card` (#161b22) dava contrasto 3.58, sotto il minimo
+     leggibile di 4.5 — ed e' il colore di etichette, sottotitoli e descrizioni,
+     cioe' quasi tutto il testo secondario del gioco. Misurato nel browser il
+     28/08/2026 su nove schede: la causa singola piu' diffusa di testo poco
+     leggibile, ~150 punti. #8b949e porta il contrasto a 5.62 restando un grigio
+     discreto, che non compete con `--em-ink` per l'attenzione. */
+  --em-card:#161b22; --em-ink:#e6edf3; --em-muted:#8b949e; --em-dim:#8b949e;
   --em-line:#21262d; --em-line2:#21262d;
-  --em-blue:#2f74c0; --em-blue-d:#245d9c; --em-green:#1aa06a; --em-green-d:#15885a;
-  --em-gold:#c79a2a; --em-amber:#e0922e; --em-violet:#7c5fc9; --em-red:#db5746;
+  /* Accenti schiariti per il fondo scuro (28/08/2026). Anche questi erano
+     tarati sul tema CHIARO e su `--em-card` non arrivavano al minimo leggibile:
+     blu 3.61, viola 3.57, verde scuro 3.87. Sono i colori di link, etichette di
+     stato e descrizioni, quindi il difetto si vedeva in ogni scheda.
+     I nuovi valori stanno fra 6.2 e 6.9 e restano riconoscibili come lo stesso
+     colore, solo leggibili. Le varianti `-d` (scure) servono da fondo per le
+     pill chiare e NON vanno schiarite: li' fanno da sfondo, non da testo. */
+  --em-blue:#58a6ff; --em-blue-d:#245d9c; --em-green:#3fb950; --em-green-d:#1aa06a;
+  --em-gold:#c79a2a; --em-amber:#e0922e; --em-violet:#a78bfa; --em-red:#f0776a;
   font-family:'Inter',system-ui,sans-serif; color:var(--em-ink); font-size:12px;
 }
 /* light "sky + skyline" background for the Home content area */
@@ -4777,15 +4807,38 @@ select:focus {
    Attivato da class="em-shell" su #app-body.
    ════════════════════════════════════════════════════════════════════ */
 
-/* sfondo garage — dark Bloomberg aesthetic */
+/* sfondo garage — dark Bloomberg aesthetic
+   Il velo sopra la foto era 0.55→0.45: troppo poco. Le schede hanno un fondo
+   proprio, ma tutto cio' che sta FRA una scheda e l'altra — le etichette di
+   sezione, i titoli, i separatori — finiva direttamente sulla fotografia del
+   garage, con i suoi neon rossi e i riflessi chiari. Playtest di Pietro,
+   28/08/2026: «un po' di UI e' transparente, se c'e' un effetto liquid glass
+   sarebbe bello», cioe' l'ha letto come un effetto lasciato a meta'.
+   Portato a 0.82→0.76: la foto resta come atmosfera e profondita', ma arretra
+   dietro l'interfaccia invece di competerci. Togliere l'immagine sarebbe stato
+   piu' semplice e avrebbe spento il gioco. */
 #app-body.em-shell{
   background:
-    linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 100%),
     url('assets/bg_garage.png') center center / cover fixed no-repeat !important;
   background-color:#0a0c12 !important;
   font-family:'Inter',system-ui,sans-serif;
 }
-#app-body.em-shell::before{display:none !important;}
+/* Il velo sta su uno strato FISSO a se', non fra i livelli di sfondo del body.
+   Motivo: `#app-body` ha altezza 0 (tutto il gioco e' in elementi `fixed`), e un
+   gradiente nello sfondo del body si dipinge sull'area di posizionamento — che
+   e' alta zero. L'immagine si vedeva lo stesso solo perche' e' `fixed`, il velo
+   no. Il risultato era una foto quasi senza schermatura, con i neon del garage
+   che passavano attraverso etichette e titoli.
+   Qui il velo copre il viewport per davvero, e sta SOTTO tutto il contenuto. */
+#app-body.em-shell::before{
+  content:'' !important;
+  display:block !important;
+  position:fixed !important;
+  inset:0 !important;
+  background:linear-gradient(180deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0.76) 100%) !important;
+  pointer-events:none !important;
+  z-index:0 !important;
+}
 
 /* nascondi la vecchia sidebar dark (DOM conservato per cmd-palette/active) */
 .em-shell #sidebar-player{display:none !important;}
@@ -4990,3 +5043,29 @@ body.theme-survival #main-panel {
   100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
 }
 
+
+/* ── Notifiche: sopra il tracker degli obiettivi, non addosso ────────────────
+   Fino al 28/08/2026 il contenitore era `fixed bottom-8 left-1/2` — cioe' la
+   STESSA posizione di `#obj-tracker` (fisso in basso al centro, bottom:14px).
+   I due si coprivano a vicenda. Playtest di Pietro: «Notifiche di acquisto
+   vanno override sul tutorial/primi passi in basso».
+
+   Ora le notifiche partono sopra l'ingombro del tracker (14px di distacco +
+   ~40px di altezza + respiro) e hanno uno z-index superiore al suo, cosi' un
+   avviso non finisce mai nascosto sotto la barra degli obiettivi. */
+#notifications {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 76px;
+    z-index: 1600;                      /* sopra --z-sticky (1500) del tracker */
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+    max-width: min(680px, calc(100vw - 24px));
+}
+@media (max-width: 640px) {
+    /* Su mobile il tracker scende a bottom:10px: le notifiche lo seguono. */
+    #notifications { bottom: 68px; }
+}

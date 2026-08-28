@@ -41,7 +41,7 @@
   <link rel="stylesheet" href="tailwind.min.css">
   <!-- Font self-hosted (no IP leak verso Google) — vedi fonts.css + assets/fonts/ -->
   <link rel="stylesheet" href="fonts.css?v=2">
-  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="style.css?v=13">
   <link rel="stylesheet" href="premium-ui.css">
   <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.108.2" integrity="sha384-JWEyvHh+lRf0sN/WWY+QTQwX+CyWqmNg4tkc8GQzAMEtR2wGNrCJlvnu1lHD1kDm" crossorigin="anonymous"></script>
   <style>
@@ -590,7 +590,11 @@
   </div>
 
   <div id="save-indicator" class="fixed bottom-20 right-6 z-[60] pointer-events-none text-[10px] text-green-400/80 font-mono bg-black/60 border border-green-500/20 px-3 py-1.5 rounded-lg backdrop-blur-sm transition-opacity duration-700" style="opacity:0">💾 Salvataggio completato</div>
-  <div id="notifications" class="fixed bottom-8 left-1/2 -translate-x-1/2 z-[60] flex flex-col gap-2 pointer-events-none"></div>
+  <!-- Le notifiche NON stanno piu' a `bottom-8`: si sovrapponevano al tracker
+       degli obiettivi (#obj-tracker, anch'esso fisso in basso al centro a 14px).
+       Playtest di Pietro, 28/08/2026: «Notifiche di acquisto vanno override sul
+       tutorial/primi passi in basso». Posizione e z-index ora in style.css. -->
+  <div id="notifications" class="flex flex-col gap-2 pointer-events-none"></div>
 
   <div id="news-ticker-wrap">
     <div id="news-ticker-track"></div>
@@ -623,8 +627,8 @@
   <script defer src="quests.js?v=14"></script>
   <!-- Livello del giocatore: sale spesso all'inizio, e' il segnale di crescita piu' immediato -->
   <script defer src="player-level.js?v=1"></script>
-  <script defer src="engine.js?v=40"></script>
-  <script defer src="engine-daily.js?v=21"></script>
+  <script defer src="engine.js?v=41"></script>
+  <script defer src="engine-daily.js?v=22"></script>
   <script defer src="engine-rides.js?v=25"></script>
   <script defer src="engine-finance.js?v=11"></script>
   <script defer src="engine-drivers.js?v=8"></script>
@@ -643,7 +647,7 @@
   <script defer src="map-garage.js?v=12"></script>
   <script defer src="ride-progress.js?v=2"></script>
   <script defer src="map-animazione.js?v=2"></script>
-  <script defer src="ui-emails.js?v=14"></script>
+  <script defer src="ui-emails.js?v=15"></script>
   <script defer src="ui-marketing.js?v=15"></script>
   <script defer src="ui-finance.js?v=12"></script>
   <script defer src="ui-dispatch.js?v=16"></script>

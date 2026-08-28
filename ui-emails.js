@@ -201,7 +201,7 @@ function renderTabEmails() {
         html += `<div class="email-actions">`;
 
         if (e.type === 'ceo_event') {
-            html += `</div><div style="font-size:10px;color:#4d6480;margin-bottom:12px">${CE_Sec.escHtml(e.eventData.desc)}</div><div style="display:flex;flex-direction:column;gap:8px">`;
+            html += `</div><div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">${CE_Sec.escHtml(e.eventData.desc)}</div><div style="display:flex;flex-direction:column;gap:8px">`;
             e.eventData.choices.forEach((c, idx) => {
                 html += `<button ${ceAct('negotiateEmail', [e.id, 0, idx])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;text-align:left;transition:opacity .15s">${CE_Sec.escHtml(c.text)}</button>`;
             });
@@ -274,12 +274,12 @@ function renderTabEmails() {
 
         } else if (e.type === 'driver_msg') {
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px;line-height:1.5">${CE_Sec.escHtml(e.body || e.subject)}</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px;line-height:1.5">${CE_Sec.escHtml(e.body || e.subject)}</div>
             <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;width:100%">Ho capito</button>`;
 
         } else if (e.type === 'info') {
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">${CE_Sec.escHtml(e.subject)}</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">${CE_Sec.escHtml(e.subject)}</div>
             <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;width:100%">OK, Capito</button>`;
 
         // ── VIP CLIENTS ──────────────────────────────────────────────────────
@@ -287,7 +287,7 @@ function renderTabEmails() {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">🕵️ Richiede: <b>Majestic Spirit o E-Specter ≥95%</b> e autista Lv2+.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b> + mancia €15.000</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">🕵️ Richiede: <b>Majestic Spirit o E-Specter ≥95%</b> e autista Lv2+.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b> + mancia €15.000</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipGrigori', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🕵️ Accetta (VVIP)</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -296,7 +296,7 @@ function renderTabEmails() {
         } else if (e.type === 'vip_grigori_event') {
             const cost = (e.vipEventData||{}).cost||500;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">Durante il trasporto Grigori ha richiesto un rerouting di emergenza per motivi di sicurezza. Come gestite la situazione?</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">Durante il trasporto Grigori ha richiesto un rerouting di emergenza per motivi di sicurezza. Come gestite la situazione?</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('vipGrigoriEventAccept', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">✅ Soddisfa (−€${cost})</button>
                 <button ${ceAct('vipGrigoriEventDecline', [e.id])} style="background:#0d1117;border:1px solid #cfe0f1;color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">❌ Ignora (−0.1★)</button>
@@ -306,7 +306,7 @@ function renderTabEmails() {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">💼 Richiede: <b>Berlina Business (Stellar E/S/Q)</b> ≥70%.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">⚠ 20% rischio chargeback · 5-streak = buff +10% guadagni</span></div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">💼 Richiede: <b>Berlina Business (Stellar E/S/Q)</b> ≥70%.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">⚠ 20% rischio chargeback · 5-streak = buff +10% guadagni</span></div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipStrata', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">💼 Accetta B2B</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -317,7 +317,7 @@ function renderTabEmails() {
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             const vCount = (gameState.fleet||[]).filter(c=>c.vehicleClass==='stellar_v_carr'&&(c.condition||0)>=70&&!c.outOfService&&!c.isSeized).length;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">⭐ Richiede: <b>2× Stellar V-Carrier ≥70%</b> (disponibili: ${vCount}/2).<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">40% paparazzi event · Hype buff +20% mance</span></div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">⭐ Richiede: <b>2× Stellar V-Carrier ≥70%</b> (disponibili: ${vCount}/2).<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">40% paparazzi event · Hype buff +20% mance</span></div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipPlatinum', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">⭐ Accetta (Diva)</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -325,7 +325,7 @@ function renderTabEmails() {
 
         } else if (e.type === 'vip_platinum_event') {
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">📸 Paparazzi intercettati sul percorso. Come vuoi gestire la situazione?</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">📸 Paparazzi intercettati sul percorso. Come vuoi gestire la situazione?</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('vipPlatinumEventBlock', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🚫 Blocca (−€300 + buff)</button>
                 <button ${ceAct('vipPlatinumEventAllow', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">📸 Lascia scattare (+0.15★)</button>
@@ -335,7 +335,7 @@ function renderTabEmails() {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">🏛️ Richiede: <b>Berlina Discreta (no EV) Lv2+ autista</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Compenso: +1 Gettone Politico · 10% GdF check</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">🏛️ Richiede: <b>Berlina Discreta (no EV) Lv2+ autista</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Compenso: +1 Gettone Politico · 10% GdF check</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipOnorevole', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🏛️ Accetta</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -343,7 +343,7 @@ function renderTabEmails() {
 
         } else if (e.type === 'vip_onorevole_event') {
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">🚔 La Guardia di Finanza ha fermato il veicolo durante il trasporto istituzionale. Come procedi?</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">🚔 La Guardia di Finanza ha fermato il veicolo durante il trasporto istituzionale. Come procedi?</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('vipOnorevoleEventCopera', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">🤝 Coopera (−Token o −€1k)</button>
                 <button ${ceAct('vipOnorevoleEventResisti', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">⚖️ Resisti (+1 Token, −0.05★)</button>
@@ -355,7 +355,7 @@ function renderTabEmails() {
             const validVcSet = ['majestic_spirit','majestic_e_specter','stellar_s_imp','stellar_g_over','volt_s_hyper'];
             const readyCount = (gameState.fleet||[]).filter(c=>validVcSet.includes(c.vehicleClass)&&(c.condition||0)>=80&&!c.outOfService&&!c.isSeized).length;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">👑 Richiede: <b>4 veicoli VIP/Ultra ≥80%</b> (disponibili: ${readyCount}/4).<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Bonus: blocco prezzo carburante 48h · 30% shopping +€5k</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">👑 Richiede: <b>4 veicoli VIP/Ultra ≥80%</b> (disponibili: ${readyCount}/4).<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Bonus: blocco prezzo carburante 48h · 30% shopping +€5k</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipEmiro', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">👑 Accetta Convoglio</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -365,7 +365,7 @@ function renderTabEmails() {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">⚽ Richiede: <b>Majestic Spirit / Volt S-Hyper / E-Specter ≥80%</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">60% danno auto · Tutti autisti −20 stress dopo la corsa</span></div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">⚽ Richiede: <b>Majestic Spirit / Volt S-Hyper / E-Specter ≥80%</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">60% danno auto · Tutti autisti −20 stress dopo la corsa</span></div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipGolden', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">⚽ Accetta</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -375,7 +375,7 @@ function renderTabEmails() {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">⚡ Richiede: <b>EV ≥90% condizione · autista stress ≤20%</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Bonus: routing buff +5% velocità per 24h</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">⚡ Richiede: <b>EV ≥90% condizione · autista stress ≤20%</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Bonus: routing buff +5% velocità per 24h</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipTechBro', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">⚡ Accetta</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -385,7 +385,7 @@ function renderTabEmails() {
             const d = e.vipData||{};
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">⚠️ Richiede: <b>G-Overlord o Majestic Spirit ≥85% (no EV)</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#db5746">25% posto di blocco · Autista +50 stress · Multa −50% per 24h</span></div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">⚠️ Richiede: <b>G-Overlord o Majestic Spirit ≥85% (no EV)</b>.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#db5746">25% posto di blocco · Autista +50 stress · Multa −50% per 24h</span></div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipGarante', [e.id])} style="background:#fff5f3;border:1px solid #e7a79c;color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">⚠️ Accetta (Rischio)</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -396,7 +396,7 @@ function renderTabEmails() {
             const disc = typeof window._getBuffValue === 'function' ? window._getBuffValue('fine_discount') : 0;
             const finalFine = Math.floor(fine * (1 - disc/100));
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">🚔 Posto di blocco durante il trasporto. Multa stimata: €${finalFine.toLocaleString()}${disc>0?` (−${disc}% buff Il Garante)`:''}</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">🚔 Posto di blocco durante il trasporto. Multa stimata: €${finalFine.toLocaleString()}${disc>0?` (−${disc}% buff Il Garante)`:''}</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('vipGaranteEventPaga', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">💸 Paga (€${finalFine.toLocaleString()})</button>
                 <button ${ceAct('vipGaranteEventIntimidisci', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">😤 Intimidisci (Token/Rischio)</button>
@@ -408,7 +408,7 @@ function renderTabEmails() {
             const majesticOk = (gameState.fleet||[]).some(c=>c.vehicleClass==='majestic_spirit'&&c.condition>=100&&!c.outOfService&&!c.isSeized);
             const vCount = (gameState.fleet||[]).filter(c=>c.vehicleClass==='stellar_v_carr'&&c.condition>=100&&!c.outOfService&&!c.isSeized).length;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">💍 Richiede: <b>Majestic Spirit 100%</b> ${majesticOk?'✅':'❌'} <b>+ 2× V-Carrier 100%</b> (${vCount}/2).<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Saldo posticipato · 30% drama · VIP queue +25% 24h</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">💍 Richiede: <b>Majestic Spirit 100%</b> ${majesticOk?'✅':'❌'} <b>+ 2× V-Carrier 100%</b> (${vCount}/2).<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br>Saldo posticipato · 30% drama · VIP queue +25% 24h</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipWedding', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">💍 Accetta Corteo</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -416,7 +416,7 @@ function renderTabEmails() {
 
         } else if (e.type === 'vip_wedding_event') {
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">💥 Drama nuziale: uno sposo ha abbandonato la cerimonia. White Lace chiede il tuo intervento immediato.</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">💥 Drama nuziale: uno sposo ha abbandonato la cerimonia. White Lace chiede il tuo intervento immediato.</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('vipWeddingEventGestisci', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s">💍 Gestisci (−€800 +€2k)</button>
                 <button ${ceAct('vipWeddingEventIgnora', [e.id])} style="background:#0d1117;border:1px solid #cfe0f1;color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">❌ Ignora (−0.2★)</button>
@@ -425,7 +425,7 @@ function renderTabEmails() {
         } else if (e.type === 'vip_wedding_payment') {
             const bonus = (e.vipEventData||{}).bonus||0;
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">💍 Saldo posticipato White Lace Weddings: <b style="color:#1aa06a">+€${bonus.toLocaleString()}</b></div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">💍 Saldo posticipato White Lace Weddings: <b style="color:#1aa06a">+€${bonus.toLocaleString()}</b></div>
             <button ${ceAct('vipWeddingPaymentCollect', [e.id])} style="width:100%;padding:7px;font-size:9px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s">💰 Incassa Saldo</button>`;
 
         } else if (e.type === 'vip_erede') {
@@ -433,7 +433,7 @@ function renderTabEmails() {
             const from = POIS[d.fromId]?.name||d.fromId, to = POIS[d.toId]?.name||d.toId;
             const hasKasko = typeof hasInvestment === 'function' && hasInvestment('inv_kasko');
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:8px">💸 Richiede: <b>Volt S-Hyper / Majestic ≥80%</b> + Kasko ${hasKasko?'✅':'❌ MANCANTE'}.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">30% incidente (Kasko protegge) · 30% viral +100% tip</span></div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:8px">💸 Richiede: <b>Volt S-Hyper / Majestic ≥80%</b> + Kasko ${hasKasko?'✅':'❌ MANCANTE'}.<br>Rotta: ${from} → ${to} — <b style="color:#c79a2a">€${(d.price||0).toLocaleString()}</b><br><span style="color:#e0922e">30% incidente (Kasko protegge) · 30% viral +100% tip</span></div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('acceptVipErede', [e.id])} style="background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1;transition:opacity .15s" ${!hasKasko?'disabled style="opacity:0.4"':''}>💸 Accetta</button>
                 <button ${ceAct('resolveEmail', [e.id])} style="background:#0d1117;border:1px solid #21262d;color:#58a6ff;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;flex:1">Declina</button>
@@ -441,7 +441,7 @@ function renderTabEmails() {
 
         } else {
             html += `</div>
-            <div style="font-size:10px;color:#4d6480;margin-bottom:12px">Appalto potenziale da €${(e.offer||0).toLocaleString()}.</div>
+            <div style="font-size:10px;color:#9aa7b4;margin-bottom:12px">Appalto potenziale da €${(e.offer||0).toLocaleString()}.</div>
             <div style="display:flex;gap:8px">
                 <button ${ceAct('negotiateEmail', [e.id, e.offer||0])} style="flex:1;padding:7px;font-size:10px;font-weight:700;cursor:pointer;background:#1a1608;border:1px solid #b8962b;color:#d4af37;border-radius:4px;transition:opacity .15s">Accetta</button>
                 <button ${ceAct('negotiateEmail', [e.id, Math.floor((e.offer||0)*1.3)])} style="flex:1;padding:7px;font-size:10px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #21262d;color:#6b7280;border-radius:4px;transition:opacity .15s">Rilancia</button>
