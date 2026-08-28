@@ -28,6 +28,14 @@ describe('hostile_takeover — il server ha già mosso i soldi (addebitatoDalSer
 
     test('_opaRequestBuyback scala il prezzo del buyback localmente via addebitatoDalServer ma NON chiama syncCash', async () => {
         const { sandbox, gs, syncedCash } = setupOPAEnv();
+        /* Il client di rete serve DAVVERO: dal 28/08/2026 senza di esso il
+           riacquisto non parte affatto (non si finge un successo che il server
+           non ha eseguito). Prima il banco non lo aveva e il test passava
+           lo stesso, verificando per sbaglio il ramo offline invece di quello
+           che dichiara di verificare. */
+        sandbox.window.supabaseClient = sandbox.supabaseClient = {
+            rpc: async () => ({ data: { success: true }, error: null }),
+        };
         gs.cash = 500000;
         await sandbox._opaRequestBuyback('opa_123', 200000);
         await new Promise(r => setImmediate(r));

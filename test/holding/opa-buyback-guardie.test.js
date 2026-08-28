@@ -4,10 +4,10 @@
 
    Rami di window._opaRequestBuyback (hostile_takeover.js) mai esercitati:
      - prezzo non valido (NaN / <= 0): nessuna RPC, nessun movimento,
-     - fallback OFFLINE (niente client Supabase): l'azione resta giocabile e
-       scala il prezzo in locale attraverso la porta unica CE_money
-       .addebitatoDalServer, SENZA rispedire syncCash (il denaro non può
-       arrivare al server, ma il saldo locale non deve mentire sull'addebito).
+     - OFFLINE (niente client Supabase): l'azione NON parte e NON scala nulla.
+       Il riacquisto avviene dentro rpc_opa_buyback, lato server: senza rete
+       non succede niente, e fingere il successo sarebbe la bugia peggiore
+       (vedi il commento esteso sul test, più sotto).
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
@@ -68,19 +68,37 @@ describe('_opaRequestBuyback — guardie mai testate (hostile_takeover.js)', () 
         assert.equal(movimentiCE.length, 0);
     });
 
-    test('fallback senza client Supabase: addebita il prezzo UNA volta via addebitatoDalServer, senza syncCash', async () => {
+    /* ────────────────────────────────────────────────────────────────────────
+       CAMBIATO IL 28/08/2026. Questo test asseriva il contrario: che offline
+       l'azione «resta giocabile», scala il prezzo in locale e annuncia
+       «Buyback completato». La motivazione scritta allora era «il saldo locale
+       non deve mentire sull'addebito».
+
+       Ma il riacquisto lo fa `rpc_opa_buyback` LATO SERVER: senza client di
+       rete quella chiamata non parte e non succede niente. Scalare il saldo e
+       dichiarare vittoria significava mentire nell'ALTRO verso — dire al
+       giocatore di aver ricomprato la sua azienda quando non l'aveva
+       ricomprata. Al ricaricamento il saldo del server sovrascrive quello
+       locale: i soldi tornano indietro e l'OPA e' ancora aperta. Il giocatore
+       aveva pagato per niente ed era stato avvisato del contrario.
+
+       Un'azione che non puo' riuscire deve dirlo, non simulare il successo.
+       ──────────────────────────────────────────────────────────────────────── */
+    test('senza client Supabase il riacquisto NON parte e NON scala nulla', async () => {
         const { env, sandbox, gs, rpcCalls, movimentiCE, syncedCash } = setupEnv();
         sandbox.window.supabaseClient = undefined; // giocatore offline / client non pronto
         gs.cash = 200000;
 
         await sandbox._opaRequestBuyback('opa_001', 150000);
 
-        assert.equal(rpcCalls.length, 0);
-        assert.equal(gs.cash, 50000, 'il saldo locale riflette l\'addebito anche offline');
-        assert.deepEqual(movimentiCE, [
-            { fn: 'addebitatoDalServer', importo: 150000, motivo: 'opa_buyback' },
-        ], 'l\'unico movimento deve passare dalla porta unica CE_money');
-        assert.deepEqual(syncedCash, [], 'addebitatoDalServer non risincronizza: il server non è stato toccato');
-        assert.ok(env.notifications.some(n => n.type === 'success' && n.msg.includes('Buyback completato')));
+        assert.equal(rpcCalls.length, 0, 'nessuna RPC: non c\'e\' con chi parlare');
+        assert.equal(gs.cash, 200000,
+            'il saldo NON si tocca: il riacquisto non e\' avvenuto, quindi non si paga');
+        assert.deepEqual(movimentiCE, [], 'nessun movimento di denaro');
+        assert.deepEqual(syncedCash, [], 'niente da sincronizzare');
+        assert.ok(!env.notifications.some(n => n.type === 'success'),
+            'NON deve annunciare un successo che non c\'e\' stato');
+        assert.ok(env.notifications.some(n => n.type === 'error' && /server/i.test(n.msg)),
+            'il giocatore va avvisato che l\'operazione non e\' partita');
     });
 });

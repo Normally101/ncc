@@ -139,11 +139,31 @@ window._opaRequestBuyback = async function(opaId, price) {
         return;
     }
 
-    try {
-        if (window.supabaseClient?.rpc) {
-            const { data, error } = await window.supabaseClient.rpc('rpc_opa_buyback', { v_opa_id: opaId });
-            if (error) throw error;
+    /* Il riacquisto lo fa `rpc_opa_buyback` LATO SERVER: e' li' che la
+       maggioranza torna al giocatore e che `companies.cash` viene scalata.
+       Senza il client di rete quella chiamata non parte, quindi non succede
+       NIENTE — e allora non si puo' fingere che sia successo.
+
+       Fino al 28/08/2026 il codice proseguiva lo stesso: scalava il saldo in
+       locale con `addebitatoDalServer` e annunciava «Buyback completato».
+       Era la bugia peggiore possibile verso chi gioca — al ricaricamento il
+       saldo del server sovrascrive quello locale, quindi i soldi TORNANO e
+       l'azienda e' ancora in mano al raider. Il giocatore aveva pagato per
+       niente e gli era stato detto che aveva vinto.
+       (Il vecchio comportamento era anche protetto da due test che lo
+       descrivevano come voluto: «il saldo locale non deve mentire
+       sull'addebito». Ma il saldo locale mentiva nell'altro verso, dicendo di
+       aver comprato qualcosa che non era stato comprato.) */
+    if (!window.supabaseClient?.rpc) {
+        if (typeof showNotification === 'function') {
+            showNotification('Connessione al server assente: il riacquisto non è partito. Riprova.', 'error');
         }
+        return;
+    }
+
+    try {
+        const { error } = await window.supabaseClient.rpc('rpc_opa_buyback', { v_opa_id: opaId });
+        if (error) throw error;
         window.CE_money.addebitatoDalServer(numPrice, 'opa_buyback');
         if (typeof updateUI === 'function') updateUI();
         if (typeof saveGame === 'function') saveGame();

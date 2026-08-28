@@ -72,6 +72,45 @@ test('elenca funzioni morte nel codebase', () => {
         }
     }
 
+    /* ── TRIAGE DEL 28/08/2026 — leggere PRIMA di cancellare qualcosa ─────────
+       Le 30 voci trovate sono state guardate una per una. Non sono la stessa
+       cosa e non vanno trattate allo stesso modo.
+
+       GRUPPO A — nove funzionalita' COMPLETE E TESTATE che nessun pulsante
+       raggiunge. Non sono codice morto: sono contenuto scollegato. Cancellarle
+       butterebbe via roba che funziona.
+         skipAcademyTraining  (engine-drivers.js:116)  salta l'addestramento, 5 DC
+         assignSpecialty      (engine-drivers.js:185)  assegna una specialita'
+         returnToHub          (engine-fleet.js:201)    richiama un veicolo all'hub
+         applyVehicleSkin     (engine-fleet.js:269)    livrea del veicolo
+         terminateLease       (engine-fleet.js:283)    chiude un leasing
+         skipConstruction     (engine-store.js:22)     salta un cantiere, DC
+         wakeDriverDC         (engine-store.js:49)     sveglia un autista, DC
+         instaHealDC          (engine-store.js:76)     cura un autista, DC
+         _listCompanyIPO_NPC  (engine-holding.js:93)   IPO con contropartita NPC
+       Quattro spendono Driver Coins: e' monetizzazione gia' costruita e mai
+       collegata. Serve una decisione di prodotto (le vogliamo?), non una pulizia.
+
+       GRUPPO B — quindici davvero senza riferimenti, verificate anche con una
+       ricerca indipendente da questo censimento. NON sono state cancellate, e
+       il motivo e' che il guadagno e' minimo e il rischio no:
+         - `pushLeaderboardNow` e `forceCloudSave` (saveSystem.js) stanno sotto
+           un commento «PUBLIC API»: sono esposte apposta, forse per l'uso da
+           console. Toglierle e' una decisione, non una pulizia.
+         - `getRealWeatherForProvince` e `_realWeatherGetTrafficMult` sono
+           aiutanti interni di weather_real.js, che e' un sistema VIVO
+           (realWeatherRefresh/Init/renderPanel hanno chiamanti).
+         - `getRoutesByRegion`, `getRouteById`, `isVeniceIslandHotel` sono
+           accessori in coda a routesDB.js, 527 KB di sole tabelle.
+         - le altre sono singole funzioni da poche righe.
+       In tutto sono ~80 righe su 2,6 MB di JavaScript. Cancellarle non rende
+       il codice piu' leggibile in modo percepibile, e ogni cancellazione e'
+       un'occasione di rompere qualcosa che il censimento non vede (e' gia'
+       successo con `showSlotSelector`, vedi sopra).
+
+       Se un giorno si decide di ripulire: rifare la verifica indipendente,
+       non fidarsi di questa lista, che invecchia. ─────────────────────────── */
+
     console.log('--- FUNZIONI MORTE TROVATE ---');
     for (const d of dead) {
         console.log(`${d.file}:${d.line} -> ${d.name} (chiamate prod: ${d.prodCalls}, chiamate test: ${d.testCalls})`);

@@ -8,6 +8,15 @@
    di fretta lo si mette dietro un interruttore e lo si riaccende quando sara'
    convertito a CE_money.
 
+   ⚠️ 28/08/2026 — LA CONVERSIONE E' FATTA. `hqUpgradeRoom` usa
+   `CE_money.spend(costo, 'hq_upgrade')` (hq.js:169) e la spesa arriva al
+   server: provato eseguendolo, un miglioramento da €100.000 scala €100.000 e
+   sincronizza. La condizione scritta qui sotto («finche' non e' convertito»)
+   e' quindi GIA' SODDISFATTA: se questo test resta verde e' perche'
+   l'interruttore e' spento per SCELTA, non per il difetto originale.
+   Prima di riaccendere resta da verificare la tenuta dell'interfaccia, ferma
+   da fine agosto. Questi test difendono lo stacco, non lo giustificano piu'.
+
    Questi test difendono le due proprieta' che rendono lo stacco sicuro:
    nessuna spesa possibile, e nessun effetto residuo sul resto del gioco.
    ============================================================================ */

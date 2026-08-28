@@ -4,12 +4,21 @@
    ================================================================ */
 
 /* ── Interruttori di funzionalità ────────────────────────────────────────────
-   HQ_ENABLED: l'HQ Base Builder è staccato dal gioco in attesa di essere
-   sistemato (decisione di Vlad, 19/08/2026). Non è server-authoritative —
-   `hqUpgradeRoom` scalava il denaro solo nel browser, quindi la spesa tornava
-   indietro al ricaricamento e la stanza restava costruita. Finché resta false:
-   tab nascosta, effetti neutri, nessuna spesa possibile.
-   Per riaccenderlo basta rimettere true, ma prima va convertito a CE_money. */
+   HQ_ENABLED: l'HQ Base Builder è staccato dal gioco dal 19/08/2026. Il motivo
+   era che `hqUpgradeRoom` scalava il denaro solo nel browser: la spesa tornava
+   indietro al ricaricamento e la stanza restava costruita, cioè costruzioni
+   gratis. Finché resta false: tab nascosta, effetti neutri, nessuna spesa.
+
+   ⚠️ 28/08/2026 — QUEL MOTIVO NON ESISTE PIÙ. `hqUpgradeRoom` passa da
+   `CE_money.spend(costo, 'hq_upgrade')` (hq.js:169), quindi scala E sincronizza
+   come ogni altra spesa del gioco. Verificato eseguendolo: un miglioramento da
+   €100.000 scala €100.000 e arriva al server con la sua causale.
+   (Attenzione se lo riprovi: `garage_main` livello 1 costa 0 per progetto —
+   provarlo con quello fa sembrare rotto ciò che funziona.)
+
+   Quindi l'interruttore ora è una SCELTA DI PRODOTTO, non un blocco tecnico:
+   vuoi che la tab HQ esista nel gioco? Se sì, basta `true`. Resta da guardare
+   la tenuta dell'interfaccia, ferma da fine agosto e mai più esercitata. */
 window.HQ_ENABLED = false;
 
 /* ── Cosa è acceso ──────────────────────────────────────────────────────────
