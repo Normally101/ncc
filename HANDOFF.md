@@ -3,6 +3,44 @@
 > Aggiornato: 28 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
+> **STATO 28/08 (sera) — IL GUARDRAIL DEL DENARO ERA CIECO AL 90%. Ora no.**
+> `test/guardrail/azioni-sincronizzano.test.js` verificava davvero **14 azioni su
+> ~152** che toccano denaro; le altre finivano in un secchio silenzioso («non
+> attivabili») dove non venivano né promosse né bocciate. **Ora ne verifica 53**,
+> ognuna con il suo sottotest. Cinque cause, tutte nel banco, nessuna nel gioco:
+> 1. **Lo stato veniva preparato una volta sola.** Alcune azioni rifondano la
+>    partita (`_confirmNewGame`, `resetGame`, `sellCompanyNGP`) e SOSTITUISCONO
+>    l'oggetto `gameState`: da lì in poi il banco preparava il mondo vecchio
+>    mentre le azioni leggevano il nuovo. Ordine alfabetico → cieco quasi subito.
+> 2. Mancavano gli **id veri dei cataloghi** (`STOCK_TICKERS`, `LOBBY_LAWS`… che
+>    sono `const` nel VM, non su `window`) e gli **importi numerici**.
+> 3. Mancava `window.confirm` → ogni azione che chiede conferma usciva subito.
+> 4. **Le azioni `async`** venivano guardate prima dell'`await`: il denaro si
+>    muove dopo, quindi risultavano immobili.
+> 5. Il banco strumentava solo `ServerState`, ma **16 punti in 8 file chiamano
+>    `supabaseClient.rpc` diretto** → sembravano non sincronizzare.
+>
+> **`ROTTE_NOTE` è stata SVUOTATA dopo verifica una per una.** Le 30 voci non
+> erano rotte: 29 passavano già da `CE_money` con la loro causale, la trentesima
+> (`CE_terminateContract`) non tocca denaro. Erano state riparate quando è nato
+> `money.js` e la lista non era mai stata ripulita — nessuno se n'era accorto
+> perché il banco non riusciva a interrogarle. **Da oggi una voce di `ROTTE_NOTE`
+> che il banco non riesce a provare fa FALLIRE il test**: il limbo non è più
+> un'opzione. Garanzia sulle altre: `una-sola-porta.test.js` ha `ECCEZIONI`
+> vuoto, quindi nessun file fuori da `money.js` muta le valute.
+>
+> **DECISIONE APERTA sollevata dal banco riparato (NON toccata):**
+> `_opaRequestBuyback` (`hostile_takeover.js:126`) chiama `addebitatoDalServer`
+> anche quando la RPC **non parte** (client di rete assente): scala il saldo e
+> annuncia «Buyback completato» per un riacquisto mai avvenuto. Al ricaricamento
+> il server sovrascrive la cassa → i soldi tornano e l'OPA è ancora lì.
+> **Non l'ho cambiato**: è un fallback **deliberato**, protetto da due test che
+> lo dicono esplicitamente (`test/holding/opa-buyback-guardie.test.js:71` —
+> «il saldo locale riflette l'addebito anche offline» — e
+> `test/economy/takeover-sync.test.js:29`). Cambiarlo significa cambiare una
+> scelta di progetto e riscrivere quei test: **serve una decisione di Vlad**,
+> non un fix di passaggio.
+
 > **STATO 28/08 — BILANCIAMENTO ECONOMICO fatto (2174 test verdi).**
 > Metodo: skill `economia-di-gioco` (le sei domande) + `hooked-ux`, su numeri
 > MISURATI sul codice, non stimati. Incasso mediano di una corsa: **€360**.
@@ -28,9 +66,9 @@
 >   riusata con `.test()` in ciclo): dava per morta `showSlotSelector`, che ha due
 >   chiamanti veri. Corretto — ma **prima di cancellare una funzione «morta»,
 >   verificare sempre a mano**.
-> - **RESTA APERTO, il debito più grosso del repo**: le **28 azioni** in
->   `ROTTE_NOTE` (`test/guardrail/azioni-sincronizzano.test.js:74-84`) che muovono
->   valuta senza sincronizzare col server. È un lavoro a sé, con il suo piano.
+> - ~~**RESTA APERTO, il debito più grosso del repo**: le **28 azioni** in
+>   `ROTTE_NOTE` che muovono valuta senza sincronizzare col server.~~
+>   **SBAGLIATO — corretto il 28/08. Quelle azioni non erano rotte.** Vedi sotto.
 
 > **STATO 27/08 — collaudi profondi dei 5 sistemi core + bug VIP fixato.**
 > I 5 collaudi end-to-end che Gigi aveva lasciato "falliti" (run mai finite, non

@@ -29,6 +29,7 @@ const { test, describe, before } = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const vm = require('node:vm');
 const { freshEnv } = require('../../test-support/game-env.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
@@ -57,6 +58,20 @@ const LETTURE = new Set([
     'getTerritorySnapshot', 'bridgeToGameState',
 ]);
 
+/* Legge un catalogo dichiarato `const` dentro il VM (data.js e simili): quei nomi
+   NON finiscono su `window`, quindi `sandbox.window.STOCK_TICKERS` e' undefined e
+   l'unico modo di vederli e' valutare il nome nel contesto. Serve per passare alle
+   azioni degli id VERI invece di stringhe inventate: senza id veri quasi ogni
+   azione esce alla prima riga (`if (!ticker) return;`) e il guardrail la classifica
+   «non attivabile» — che e' esattamente come 30 azioni sane sono rimaste per mesi
+   nella lista dei sospetti. */
+function catalogo(sandbox, nome) {
+    try {
+        const v = vm.runInContext(`typeof ${nome} !== 'undefined' ? ${nome} : null`, sandbox);
+        return v || null;
+    } catch { return null; }
+}
+
 function preparaMondo() {
     const scritture = [];
     const { sandbox, stopAllIntervals } = freshEnv();
@@ -70,6 +85,19 @@ function preparaMondo() {
         };
     }
 
+    /* ServerState non e' l'unica porta verso il server: 16 punti in 8 file chiamano
+       `window.supabaseClient.rpc(...)` DIRETTAMENTE (hostile_takeover.js, nemesi,
+       infrastrutture, holding, quest…). Strumentare solo ServerState faceva sembrare
+       «non sincronizzate» azioni che parlano col server per un'altra strada — un falso
+       allarme che avrebbe portato a "riparare" codice sano. Qui il client finto
+       registra le chiamate e risponde come farebbe Supabase (`{ data, error }`). */
+    sandbox.window.supabaseClient = {
+        rpc: function (nome) {
+            scritture.push('supabase.rpc:' + nome);
+            return Promise.resolve({ data: null, error: null });
+        },
+    };
+
     // Il rendering non c'entra con il denaro e costa quasi tutto il tempo di
     // esecuzione (ogni azione ricostruisce l'HTML di una tab intera). Neutralizzato:
     // senza questo il test impiega minuti invece di secondi.
@@ -82,51 +110,186 @@ function preparaMondo() {
         }
     }
 
-    const gs = sandbox.gameState;
-    gs.fleet = gs.fleet || [];
-    gs.fleet.push({ id: 'c1', _serverId: 's1', name: 'Auto', tier: 'business', condition: 45,
-                    fuel: 25, tirePressure: 30, engineHealth: 60, isLease: false,
-                    status: 'idle', mileage: 1000, upgrades: [] });
-    gs.drivers = gs.drivers || [];
-    gs.drivers.push({ id: 'd1', _serverId: 'sd1', name: 'Autista', status: 'resting',
-                      stress: 90, stress_level: 80, energy: 20, salary: 1500, skill: 50,
-                      onStrike: true, health: 30, fatigue: 60, restHoursLeft: 5 });
-    gs.staff = gs.staff || [];
-    gs.investments = gs.investments || [];
-    gs.investments.push('inv_fuel_depot', 'inv_tire_depot');
-    gs.fuelTank = 0; gs.fuelTankCapacity = 10000; gs.fuelTankLevel = 1; gs.fuelPrice = 1.85;
-    gs.constructions = [{ id: 'k1', invId: 'inv_fuel_depot', daysLeft: 5 }];
-    gs.driverAcademy = [{ driverId: 'd1', courseId: 'c_eco', daysLeft: 3 }];
-    gs.corporateTenders = [{ id: 'tn1', status: 'open', company: { name: 'ACME', tier: 'gold', vehType: 'business' }, playerBid: null }];
-    gs.hqs = { roma: { rooms: {}, grid: new Array(12).fill(null) } };
-    gs.energy = 40;
-    return { sandbox, gs, scritture, stopAllIntervals };
+    /* ── Lo stato che serve a far ARRIVARE le azioni fino al denaro. ──────────
+       Ogni riga corrisponde a un cancello letto nel sorgente dell'azione che sblocca.
+       Senza questo blocco 113 azioni che toccano denaro non venivano mai eseguite e
+       il guardrail passava in silenzio su tutte.
+
+       E' una FUNZIONE, non un blocco eseguito una volta, e rilegge `gameState` da
+       `window` a ogni chiamata: fra le azioni ce ne sono alcune che rifondano la
+       partita (`_confirmNewGame`, `resetGame`, `sellCompanyNGP`) e SOSTITUISCONO
+       l'oggetto `gameState`. Con lo stato preparato una volta sola su un riferimento
+       catturato all'inizio, dalla prima di quelle in poi il banco preparava il mondo
+       VECCHIO mentre le azioni leggevano quello NUOVO — e siccome l'ordine e'
+       alfabetico e `_confirmNewGame` sta quasi in cima, il guardrail era cieco per
+       quasi tutta la sua corsa. Le azioni si consumavano anche lo scenario a vicenda
+       (chi gira prima risolve le email, aggiudica l'asta, svuota il mercato usato):
+       riapplicare tutto prima di ogni prova toglie di mezzo anche quello. */
+    const poiIds = Object.keys(catalogo(sandbox, 'POIS') || {});
+    const ids = {
+        stock:    (catalogo(sandbox, 'STOCK_TICKERS')        || [])[0],
+        rischio:  (catalogo(sandbox, 'BROKER_RISK_PROFILES') || [])[0],
+        lusso:    (catalogo(sandbox, 'LIFESTYLE_ASSETS')     || [])[0],
+        legge:    (catalogo(sandbox, 'LOBBY_LAWS')           || [])[0],
+        venture:  (catalogo(sandbox, 'VENTURE_AGENCIES')     || [])[0],
+        proto:    (catalogo(sandbox, 'PROTOTYPE_CARS')       || [])[0],
+        poi:      poiIds[0],
+    };
+
+    function preparaStato() {
+        const gs = sandbox.window.gameState;
+        if (!gs) return null;
+
+        gs.fleet = [
+            { id: 'c1', _serverId: 's1', name: 'Auto', tier: 'business', condition: 45,
+              fuel: 25, tirePressure: 30, engineHealth: 60, isLease: false,
+              status: 'idle', mileage: 1000, upgrades: [] },
+            // Un'auto ferma per carburante: unico caso in cui emergencyRefuel spende.
+            { id: 'c2', _serverId: 's2', name: 'Auto ferma', tier: 'standard',
+              condition: 50, fuel: 0, outOfService: 'fuel', status: 'idle',
+              tirePressure: 50, engineHealth: 50, mileage: 500, upgrades: [] },
+        ];
+        gs.drivers = [{ id: 'd1', _serverId: 'sd1', name: 'Autista', status: 'resting',
+                        stress: 90, stress_level: 80, energy: 20, salary: 1500, skill: 50,
+                        onStrike: true, health: 30, fatigue: 60, restHoursLeft: 5 }];
+        // `ewm` = Elite Wealth Manager: _hasWealthManager() (engine-finance.js:13) e' il
+        // cancello di TUTTE le azioni di borsa. `evt_mgr` sblocca autoNegotiateEmails.
+        gs.staff = [{ id: 'ewm', name: 'Wealth Manager', salary: 5000 },
+                    { id: 'evt_mgr', name: 'Event Manager', salary: 3000 }];
+        gs.investments = ['inv_fuel_depot', 'inv_tire_depot'];
+        gs.fuelTank = 0; gs.fuelTankCapacity = 10000; gs.fuelTankLevel = 1; gs.fuelPrice = 1.85;
+        gs.constructions = [{ id: 'k1', invId: 'inv_fuel_depot', daysLeft: 5,
+                              completesDay: (gs.day || 1) + 5 }];   // speedUpConstruction legge completesDay
+        gs.driverAcademy = [{ driverId: 'd1', courseId: 'c_eco', daysLeft: 3 }];
+        gs.hqs = { roma: { rooms: {}, grid: new Array(12).fill(null) } };
+        gs.energy = 40;
+
+        gs.reputation     = 5.0;      // cancello di buyHub (2.5★), buyPrototypeCar, acquireVentureStake
+        gs.lobbyingPoints = 100000;   // cancello di passLobbyLaw (law.pointsCost)
+        gs.questStats     = Object.assign({ totalRides: 500 }, gs.questStats || {});
+        gs.vipCooldowns   = gs.vipCooldowns || {};
+
+        gs.stockHoldings = {}; gs.shortPositions = {}; gs.brokerInvestments = [];
+        gs.lifestyleAssets = []; gs.activeLobbyLaws = []; gs.ventureCapital = []; gs.ownedHubs = [];
+        // Le azioni di VENDITA hanno bisogno che il giocatore POSSIEDA gia' qualcosa.
+        if (ids.stock)   gs.stockHoldings[ids.stock.id]  = { shares: 100, avgPrice: ids.stock.basePrice };
+        if (ids.stock)   gs.shortPositions[ids.stock.id] = { shares: 50, entryPrice: ids.stock.basePrice };
+        if (ids.venture) gs.ventureCapital.push({ agencyId: ids.venture.id, stakePercent: 10 });
+        if (ids.poi)     gs.ownedHubs.push(ids.poi);
+
+        gs.activeAuction = { id: 'auc1', name: 'Berlina da asta', currentBid: 1000, playerBid: 0 };
+        gs.npcMarket     = [{ id: 'npc1', name: 'Usata NPC', tier: 'standard',
+                              vehicleClass: 'mercedes_e', price: 20000, condition: 70 }];
+        gs.corporateTenders   = [{ id: 'tn1', status: 'open', playerBid: null,
+                                   company: { name: 'ACME', tier: 'gold', vehType: 'business' } }];
+        gs.corporateContracts = [{ id: 'ct1', status: 'active', company: { name: 'ACME' }, tier: 3 }];
+
+        // acceptGreyMarket pretende il tipo giusto e due POI validi; negotiateEmail e
+        // autoNegotiateEmails lavorano sulle b2b non lette.
+        gs.emails = [
+            { id: 'em_b2b', type: 'b2b', status: 'unread', offer: 5000, from: 'ACME',
+              subject: 'Proposta', clientName: 'ACME' },
+            { id: 'em_grey', type: 'grey_market', status: 'unread', price: 8000,
+              greyRideData: { fromId: poiIds[0], toId: poiIds[1] || poiIds[0],
+                              price: 8000, isLong: false } },
+            { id: 'em_diamond', type: 'diamond', status: 'unread', offer: 50000,
+              clientName: 'Sceicco', diamondData: { price: 50000 } },
+        ];
+        /* Gli eventi VIP a bivio: ~20 azioni che muovono denaro e che questo guardrail
+           non ha mai eseguito. Sono le stesse dove il 27/08 e' stato trovato il doppio
+           pagamento (doppio clic su accept* = due corse VIP), quindi proprio il gruppo
+           che merita sorveglianza. Forma copiata da `_vipPushEmail` (vip-clients.js). */
+        for (const [type, id, vipEventData] of [
+            ['vip_grigori_event',   901, { cost: 500 }],
+            ['vip_garante_event',   902, { fine: 2000 }],
+            ['vip_onorevole_event', 903, { fine: 2000 }],
+            ['vip_platinum_event',  904, { fine: 2000 }],
+            ['vip_wedding_event',   905, { bonus: 3000 }],
+        ]) {
+            gs.emails.push({ id, sender: 'VIP', subject: 'evento bivio', type,
+                             status: 'unread', vipEventData,
+                             expiresAt: ((gs.day || 1) * 24 + (gs.hour || 0)) + 4 });
+        }
+        return gs;
+    }
+
+    // `window.confirm` non esiste nel banco: le azioni che chiedono conferma uscivano
+    // sulla riga della conferma (CE_terminateContract, i disinvestimenti, le vendite).
+    sandbox.window.confirm = () => true;
+
+    preparaStato();
+    return { sandbox, scritture, stopAllIntervals, ids, preparaStato };
 }
 
 /* ── 3. Esegue un'azione e guarda se il denaro si e' mosso di nascosto ───── */
 
 /**
  * Le forme di argomento con cui si prova ogni azione.
+ *
+ * Perche' dipendono dal mondo: le azioni che muovono denaro vogliono quasi sempre
+ * un ID VERO preso dal catalogo (`buyStocks('CEMP', 10)`) oppure un IMPORTO
+ * plausibile (`buyFuelForDepot(5000)`). Con le sole forme fisse di prima — `['c1']`,
+ * `[0]`, `['roma']` — l'azione usciva alla prima riga e finiva fra le «non
+ * attivabili»: `buyFuelForDepot(0)` compra zero litri, `buyStocks('c1')` non trova
+ * il titolo. Il banco non le bocciava: semplicemente non le provava.
  */
-const ARGOMENTI = [
-    [],
-    ['c1'],                    // un veicolo in flotta
-    ['d1'],                    // un autista
-    ['tn1'],                   // una gara d'appalto aperta
-    ['k1'],                    // un cantiere in corso
-    ['inv_fuel_depot'],        // un investimento posseduto
-    [0],                       // molte azioni indicizzano una lista
-    ['roma'],                  // una citta'
-    ['c1', 0],
-    ['d1', 0],
-];
+function formeArgomento(mondo) {
+    const { ids } = mondo;
+    const forme = [
+        [],
+        ['c1'],                    // un veicolo in flotta
+        ['c2'],                    // il veicolo fermo per carburante
+        ['d1'],                    // un autista
+        ['tn1'],                   // una gara d'appalto aperta
+        ['ct1'],                   // un contratto aziendale attivo
+        ['k1'],                    // un cantiere in corso
+        ['inv_fuel_depot'],        // un investimento posseduto
+        [0],                       // molte azioni indicizzano una lista
+        ['roma'],                  // una citta'
+        ['c1', 0],
+        ['d1', 0],
+        // ── Importi: senza un numero sensato le azioni "compra N" non comprano nulla.
+        [5000],
+        [1],
+        ['tn1', 5000],             // CE_placeBid(tenderId, pledgedCash)
+        ['npc1'],                  // un annuncio del mercato usato
+        // ── Le email, per tipo.
+        ['em_b2b'], ['em_grey'], ['em_diamond'], ['em_b2b', 5000],
+        // ── Gli eventi VIP a bivio: id numerico, uno per tipo.
+        [901], [902], [903], [904], [905],
+    ];
+    // ── Id veri dai cataloghi del gioco.
+    if (ids.stock)   forme.push([ids.stock.id, 10], [ids.stock.id]);
+    if (ids.rischio) forme.push([ids.rischio.id, 10000, 7], [ids.rischio.id, 10000]);
+    if (ids.lusso)   forme.push([ids.lusso.id]);
+    if (ids.legge)   forme.push([ids.legge.id]);
+    if (ids.venture) forme.push([ids.venture.id, 10], [ids.venture.id]);
+    if (ids.proto)   forme.push([ids.proto.id]);
+    if (ids.poi)     forme.push([ids.poi]);
+    return forme;
+}
 
-function provaAzione(mondo, nome) {
-    const { sandbox, gs, scritture } = mondo;
+/* Lascia girare le microtask in sospeso.
+   Serve perche' molte azioni sono `async`: il denaro si muove DOPO il primo
+   `await` (tipicamente dopo la risposta della RPC), quindi un controllo fatto
+   subito dopo la chiamata vede il saldo ancora intatto e archivia l'azione come
+   «non attivabile». E' cosi' che le azioni asincrone che toccano denaro non sono
+   mai state controllate da questo guardrail: non venivano bocciate, venivano
+   guardate troppo presto. */
+function scaricaMicrotask() {
+    return new Promise(resolve => setImmediate(resolve));
+}
+
+async function provaAzione(mondo, nome) {
+    const { sandbox, scritture } = mondo;
     const fn = sandbox.window[nome];
     if (typeof fn !== 'function') return { stato: 'assente' };
 
-    for (const args of ARGOMENTI) {
+    for (const args of formeArgomento(mondo)) {
+        // Rifa' il mondo da capo e RILEGGE gameState: se l'azione precedente ha
+        // rifondato la partita, `gs` qui e' il nuovo oggetto, non quello morto.
+        const gs = mondo.preparaStato();
+        if (!gs) return { stato: 'non verificata' };
         gs.cash = 1_000_000;
         gs.driverCoins = 100_000;
         gs.vtkBalance = 10_000;
@@ -134,16 +297,21 @@ function provaAzione(mondo, nome) {
 
         try {
             const r = fn.apply(sandbox.window, args);
-            if (r && typeof r.then === 'function') r.catch(() => {});
+            if (r && typeof r.then === 'function') {
+                r.catch(() => {});
+                await scaricaMicrotask();
+            }
         } catch (e) { /* argomenti sbagliati: si prova la forma successiva */ }
 
-        const mossoCash = gs.cash !== 1_000_000;
-        const mossoDC   = gs.driverCoins !== 100_000;
-        const mossoVTK  = gs.vtkBalance !== 10_000;
+        // Riletto di nuovo: l'azione stessa puo' aver sostituito l'oggetto.
+        const dopo = sandbox.window.gameState || gs;
+        const mossoCash = dopo.cash !== 1_000_000;
+        const mossoDC   = dopo.driverCoins !== 100_000;
+        const mossoVTK  = dopo.vtkBalance !== 10_000;
         if (mossoCash || mossoDC || mossoVTK) {
             return {
                 stato: scritture.length > 0 ? 'ok' : 'ROTTA',
-                dettaglio: `cash ${gs.cash - 1_000_000}, DC ${gs.driverCoins - 100_000}, VTK ${gs.vtkBalance - 10_000}`,
+                dettaglio: `cash ${dopo.cash - 1_000_000}, DC ${dopo.driverCoins - 100_000}, VTK ${dopo.vtkBalance - 10_000}`,
                 scritture: [...scritture],
             };
         }
@@ -178,29 +346,50 @@ function azioniCheToccanoDenaro(nomi) {
 // Azioni che azzerano o rifondano lo stato: muovono il saldo per definizione e non sono acquisti.
 const NON_SONO_ACQUISTI = new Set(['_confirmNewGame', 'confirmNewGame', 'resetGame', 'startNewGameSlot']);
 
-// Azioni gia' note come rotte, in attesa del loro task di conversione.
-// Disciplina: PUO' SOLO ACCORCIARSI.
-const ROTTE_NOTE = new Set([
-    'instantRepairDC',
-    '_dcSpend',
-    'buyFuelForDepot', 'upgradeFuelDepot', 'buyTiresForDepot', 'emergencyRefuel',
-    'buyHub', 'sellHub', 'buyPrototypeCar', 'buyNpcCar',
-    'bidOnAuction', 'donateToLobby', 'buyStocks', 'sellStocks', 'shortSell',
-    'coverShort', 'placeBrokerInvestment', 'buyLifestyleAsset', 'passLobbyLaw',
-    'acquireVentureStake', 'divestVentureStake', 'CE_placeBid', 'CE_cancelBid',
-    'CE_terminateContract', 'claimDailyOrder', 'speedUpConstruction',
-    'acceptDiamondContract', 'acceptGreyMarket', 'negotiateEmail', 'autoNegotiateEmails',
-]);
+/* Azioni gia' note come rotte, in attesa del loro task di conversione.
+   Disciplina: PUO' SOLO ACCORCIARSI.
+
+   ────────────────────────────────────────────────────────────────────────────
+   SVUOTATA il 28/08/2026, dopo verifica una per una delle 30 voci che conteneva.
+   Non erano rotte: 29 su 30 passavano gia' da `window.CE_money` con la loro
+   causale (`buyFuelForDepot` -> 'buy_fuel_for_depot', `bidOnAuction` ->
+   'auction_bid', …) e la trentesima, `CE_terminateContract`, non tocca denaro
+   affatto («Nessun indennizzo», contracts.js:375). Erano state riparate quando
+   e' nato money.js, e la lista non e' mai stata ripulita.
+
+   PERCHE' nessuno se n'era accorto, ed e' la parte che conta: il banco non
+   riusciva ad ATTIVARLE (mancavano gli id veri dei cataloghi, gli importi
+   numerici, `window.confirm`, e il client Supabase per le 16 azioni che parlano
+   al server senza passare da ServerState). Finivano nel secchio «non attivabili»,
+   e il controllo qui sotto toglieva una voce solo quando risultava `ok` — mai
+   quando risultava NON PROVATA. Una lista di sospetti che nessuno riesce piu' a
+   interrogare non e' una lista di sospetti: e' rumore che sembra lavoro.
+   Da oggi il limbo e' un fallimento (vedi il test piu' sotto).
+
+   Cosa garantisce che le 22 non riprovate qui siano davvero sane: le DUE reti
+   insieme. `test/guardrail/una-sola-porta.test.js` ha ECCEZIONI vuoto, quindi
+   NESSUN file fuori da money.js muta cash/driverCoins/vtkBalance — e money.js
+   sincronizza sempre. Questa rete dinamica copre l'unico caso che quella statica
+   non vede: chi usa `accreditatoDalServer`/`addebitatoDalServer` (le porte «il
+   server l'ha gia' fatto») senza poi parlare davvero col server.
+   ──────────────────────────────────────────────────────────────────────────── */
+const ROTTE_NOTE = new Set([]);
 
 describe('guardrail — ogni azione del giocatore sincronizza col server', () => {
     let esiti;
     let azioni;
     let mondo;
 
-    before(() => {
+    before(async () => {
         azioni = nomiAzioni();
         mondo = preparaMondo();
-        esiti = azioni.map(nome => Object.assign({ nome }, provaAzione(mondo, nome)));
+        esiti = [];
+        // In sequenza, non in parallelo: le azioni condividono un solo `gameState`
+        // e il controllo confronta il saldo con la sua baseline: eseguirle insieme
+        // le farebbe leggere gli spostamenti l'una dell'altra.
+        for (const nome of azioni) {
+            esiti.push(Object.assign({ nome }, await provaAzione(mondo, nome)));
+        }
         mondo.stopAllIntervals();
     });
 
@@ -238,6 +427,25 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
             'Queste azioni non sono piu\' rotte — rimuovile da ROTTE_NOTE:\n' + daTogliere.join('\n'));
     });
 
+    /* Il difetto che ha tenuto in vita per mesi una lista di 30 sospetti innocenti:
+       un'azione che il banco non riesce piu' ad attivare non risultava ne' promossa
+       ne' bocciata, e restava nella lista senza che nessuno la verificasse. Un
+       sospetto che non si puo' interrogare va tolto o va reso interrogabile — non
+       lasciato nel limbo, dove sembra lavoro arretrato e invece e' rumore. */
+    test('nessuna voce di ROTTE_NOTE puo\' restare non provata', () => {
+        const perNome = new Map(esiti.map(e => [e.nome, e]));
+        const nelLimbo = [];
+        for (const nome of ROTTE_NOTE) {
+            const e = perNome.get(nome);
+            if (e && e.stato === 'non verificata') nelLimbo.push(nome);
+        }
+        assert.deepEqual(nelLimbo, [],
+            'Il banco non riesce piu\' ad attivare queste azioni, quindi non le sta\n' +
+            'verificando: restano in ROTTE_NOTE senza che nessuno le controlli.\n' +
+            'O si arricchisce preparaMondo()/formeArgomento() finche\' si attivano,\n' +
+            'o si tolgono dalla lista — ma non si lasciano a meta\':\n' + nelLimbo.join('\n'));
+    });
+
     test('le azioni che azzerano/resettano il gioco sono gestite in NON_SONO_ACQUISTI', () => {
         for (const nome of NON_SONO_ACQUISTI) {
             assert.ok(typeof nome === 'string' && nome.length > 0);
@@ -245,9 +453,12 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
         assert.ok(NON_SONO_ACQUISTI.has('_confirmNewGame'));
     });
 
-    // Subtest dedicati per ciascuna azione verificata attiva nel banco:
-    // garantisce che se una di queste azioni perde la sincronizzazione,
-    // il test specifico fallisce indicando esattamente quale azione si e' rotta.
+    /* Ogni nome qui sotto ha il suo sottotest: se una di queste azioni perde la
+       sincronizzazione col server, il test fallisce dicendo ESATTAMENTE quale.
+       Da 14 a 53 il 28/08/2026, quando il banco ha smesso di essere cieco (id veri
+       dai cataloghi, importi numerici, `confirm`, client Supabase, microtask delle
+       azioni async, e soprattutto lo stato riapplicato prima di ogni prova).
+       L'elenco si aggiorna dalla riga «Azioni verificate [ok]» che il test stampa. */
     const verificate = [
         '_ecCaffeSospeso',
         '_ecManutenzioneExpress',
@@ -255,14 +466,53 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
         '_ecRadarVip',
         '_ecTangenteSindacato',
         '_ecTargaPresidenziale',
+        '_infraBuyDepot',
+        '_opaRequestBuyback',
+        'acquireVentureStake',
         'activateExecutivePass',
+        'bidOnAuction',
         'buyCempShares',
+        'buyFuelForDepot',
         'buyHRAutomation',
         'buyMaintenanceContract',
+        'buyNpcCar',
+        'buyTiresForDepot',
+        'divestVentureStake',
+        'emergencyRefuel',
         'energyBoostDC',
         'executeManualDrive',
         'fuelBoostDC',
         'fullBundleDC',
+        'healAllDriversDC',
+        'hireDriver',
+        'incorporateHolding',
+        'instantRepairDC',
+        'negotiateEmail',
+        'newGamePlus',
+        'opsBundleDC',
+        'passLobbyLaw',
+        'payStressClear',
+        'payToRepairCar',
+        'repairEngine',
+        'rest',
+        'sellCar',
+        'sellCompanyNGP',
+        'sellHub',
+        'sellInvestment',
+        'shadowUpgradeDefense',
+        'skipAllAcademyDC',
+        'skipAllConstructionsDC',
+        'speedUpConstruction',
+        'takeLoan',
+        'upgradeFuelDepot',
+        'vipGaranteEventIntimidisci',
+        'vipGaranteEventPaga',
+        'vipGrigoriEventAccept',
+        'vipOnorevoleEventCopera',
+        'vipPlatinumEventBlock',
+        'vipWeddingEventGestisci',
+        'vipWeddingPaymentCollect',
+        'wakeAllDriversDC',
     ];
 
     for (const nome of verificate) {
@@ -294,6 +544,10 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
             `\n   azioni che toccano denaro: ${conSoldi.size} (le altre ${azioni.length - conSoldi.size} sono navigazione/UI)` +
             `\n   non attivabili dal banco: ${nonVerificate.length}` +
             `\n   nome non risolto a una funzione: ${assenti.length}` +
+            // I nomi delle verificate, non solo il conteggio: e' da qui che si
+            // aggiorna l'elenco `verificate` sopra quando il banco ne sblocca altre.
+            `\n\n   --- Azioni verificate [ok] (${conta('ok')}) ---\n   ` +
+            esiti.filter(e => e.stato === 'ok').map(e => e.nome).join(' ') +
             `\n\n   --- Azioni NON riuscite a eseguire (${nonVerificate.length + assenti.length}) ---` +
             `\n   Non attivabili che toccano denaro (${nonVerificate.length}):\n` +
             nonAttivabiliConMotivo.join('\n') +
