@@ -3,7 +3,39 @@
 > Aggiornato: 28 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
-> **STATO 28/08 (sera) — IL GUARDRAIL DEL DENARO ERA CIECO AL 90%. Ora no.**
+> **STATO 28/08 (sera) — IL REGISTRO DELL'ECONOMIA È VIVO IN PRODUZIONE
+> (modalità osservazione). 2220 test verdi.**
+> `cash_ledger` + `rpc_earn`/`rpc_spend` + `_econ_cap` applicati via
+> `66_registro_economia_osservazione.sql`. **NON blocca nulla e non cambia
+> nessun guadagno**: annota e basta. Era fermo da mesi per UN motivo scritto
+> nella sua spec — «la magnitudine dei tetti dipende dalla scala economica,
+> ancora indecisa» — e quella scala l'ha fissata il bilanciamento di stamattina.
+> - **La causale ora arriva al server.** `CE_money.spend/earn` la ricevevano da
+>   **99 chiamate su 100** (96 causali distinte già scritte nel gioco) e la
+>   **buttavano via**: `money.js` → `serverState.js::syncCash(cash, motivo)` →
+>   `rpc_sync_cash(v_cash, p_reason)`. Il catalogo non è stato inventato,
+>   esisteva già. Sorvegliato da `test/economia/registro-causali.test.js`.
+> - **La colonna `oltre_tetto`** è il punto della modalità osservazione: registra
+>   quali movimenti *sarebbero* stati rifiutati, senza rifiutarli. Così i tetti
+>   si calibrano sui dati invece che a occhio. Query pronte in fondo al file SQL.
+> - **`rpc_sync_cash` conserva integralmente l'indurimento di 49_/50_** (tetto
+>   +€60M sui soli incrementi, rate-limit 30/min, `FOR UPDATE`) — verificato con
+>   `pg_get_functiondef` dopo la riscrittura. Una sola versione della funzione:
+>   i client vecchi che mandano solo `{v_cash}` continuano a funzionare.
+> - ⚠️ **Le intestazioni di `42_`/`45_`/`51_` dicevano il falso**: si dichiaravano
+>   «NON applicato a produzione» mentre erano applicati da tempo. Corrette dopo
+>   verifica sul DB vero. Non fidarsi delle intestazioni: interrogare `pg_proc`.
+>
+> **Trovato provando il gioco vero nel browser, non dai test:** la corsa guidata
+> dell'onboarding — **il primissimo guadagno che ogni giocatore incassa** —
+> muoveva la cassa a mano, fuori da `CE_money`, e sincronizzava senza causale.
+> `una-sola-porta.test.js` non lo vedeva perché cercava solo `gameState.cash`
+> mentre il codice usa l'alias `gs` (24 volte nel repo): **bastava rinominare la
+> variabile per rendersi invisibili al guardrail**. Ora il censimento vede anche
+> gli alias; le 10 righe emerse oltre a quella sono ripieghi guardati, rollback,
+> o VTK (che ha una sua RPC autoritativa), tutte documentate una per una.
+
+> **STATO 28/08 (pomeriggio) — IL GUARDRAIL DEL DENARO ERA CIECO AL 90%. Ora no.**
 > `test/guardrail/azioni-sincronizzano.test.js` verificava davvero **14 azioni su
 > ~152** che toccano denaro; le altre finivano in un secchio silenzioso («non
 > attivabili») dove non venivano né promosse né bocciate. **Ora ne verifica 53**,

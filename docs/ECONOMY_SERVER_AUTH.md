@@ -1,7 +1,10 @@
 # Economia server-authoritative — Spec & piano di migrazione
 
-> Stato: **SPEC + SCAFFOLDING**. NON applicato a prod. NON cambia i guadagni live.
-> File SQL associato: `42_economy_ledger_scaffold.sql` (idempotente, da rivedere PRIMA di girarlo).
+> Stato: **FASI 1-2 APPLICATE A PRODUZIONE il 28/08/2026** (modalità osservazione).
+> Il registro esiste ed è vivo; **non blocca nulla** e non cambia i guadagni.
+> Fasi 3-6 aperte. File SQL applicato: `66_registro_economia_osservazione.sql`
+> (porta in prod le sezioni 1-3 di `42_economy_ledger_scaffold.sql`, con i tetti
+> calibrati sui numeri misurati e una colonna in più: `oltre_tetto`).
 > Contesto: chiude il **DEBITO DI SICUREZZA #1** tracciato in `HANDOFF.md` (economia client-authoritative → soldi infiniti).
 
 ## Il problema (oggi)
@@ -20,12 +23,29 @@ I trigger anti-cheat (`38_security_hardening.sql`) **loggano ma non bloccano** (
 - `liquid_assets` e derivati → calcolati lato server, mai accettati dal client.
 - Trigger `BEFORE UPDATE` su `companies.cash` che `RAISE EXCEPTION` se la cassa cambia **fuori** dalle RPC autorizzate (enforcement duro). ⚠️ Attivabile SOLO dopo aver migrato TUTTE le scritture cassa esistenti alle RPC — vedi fasi.
 
-## Perché solo scaffolding ora
-La **magnitudine dei tetti** dipende dalla scala economica legittima, ancora **indecisa**. Mettere tetti sbagliati bloccherebbe i guadagni veri (decisione già presa, `HANDOFF.md`). Quindi: predisponiamo l'infrastruttura (tabella + RPC + trigger template) **senza attivarla**, pronta da calibrare quando la scala è fissata.
+## ~~Perché solo scaffolding ora~~ — l'ostacolo è caduto il 28/08/2026
+Lo scaffold è rimasto fermo per **un solo motivo**: la magnitudine dei tetti dipendeva dalla scala economica, **indecisa**. Il bilanciamento del 28/08 l'ha fissata su numeri **misurati** (corsa mediana €360; contratto tier 5 da €137.600 a €17.200/giorno; tetto ×4 sul moltiplicatore d'incasso → picco ~€16.800). Da lì i tetti di `_econ_cap` sono calcolati, non indovinati.
+
+## Modalità osservazione — perché non si è passati subito all'enforcement
+I tetti sono la parte che **non si può indovinare**: sceglierli a occhio e scoprire sul vivo di aver bloccato un incasso legittimo è il modo peggiore di calibrarli. Quindi ogni riga del registro annota **anche** se il movimento *sarebbe* stato rifiutato (colonna `oltre_tetto`), senza rifiutarlo. La calibrazione si **legge dai dati**:
+
+```sql
+-- I tetti da alzare PRIMA di accendere qualsiasi blocco:
+SELECT reason, count(*) AS volte, max(abs(delta)) AS massimo
+  FROM public.cash_ledger WHERE oltre_tetto GROUP BY reason ORDER BY volte DESC;
+
+-- Quanto è coperto il catalogo delle causali:
+SELECT reason = 'unknown' AS senza_causale, count(*) FROM public.cash_ledger GROUP BY 1;
+```
+
+Se la prima query resta vuota per giorni di gioco vero, i tetti reggono e la fase 3 può partire.
+
+## Il lato client (fatto il 28/08)
+`CE_money.spend/earn` ricevevano già il `motivo` da **99 chiamate su 100** (96 causali distinte: `ride_earnings`, `corporate_contract`, `auction_bid`, `annual_tax`…) e lo **buttavano via**. Ora viaggia fino al server: `money.js` → `serverState.js::syncCash(cash, motivo)` → `rpc_sync_cash(v_cash, p_reason)`. Il catalogo delle causali non è stato inventato: **esisteva già nel codice**. Sorvegliato da `test/economia/registro-causali.test.js`.
 
 ## Fasi di migrazione (quando si decide la scala)
-1. **Girare** `42_economy_ledger_scaffold.sql` su prod (crea tabella + RPC, inerti finché non chiamate).
-2. **Calibrare** il catalogo tetti per-reason in `_econ_cap(reason)` con la scala economica reale.
+1. ~~**Girare** lo scaffold su prod (crea tabella + RPC, inerti finché non chiamate).~~ ✅ **FATTO 28/08** via `66_`.
+2. ~~**Calibrare** il catalogo tetti per-reason in `_econ_cap(reason)`.~~ ✅ **FATTO 28/08** sui numeri misurati. Da riverificare con i dati del registro prima della fase 5.
 3. **Migrare le scritture**: ogni `UPDATE companies SET cash = cash ± X` sparso negli SQL (province/immobili/P2P/aste/contratti…) e ogni mirror client (`rpc_sync_cash`) → passare per `rpc_earn`/`rpc_spend`. Censimento: `grep -rn "companies SET cash" *.sql`.
 4. **Deprecare** `rpc_sync_cash` (set assoluto) e bloccare l'upsert di `cash` dal blob `game_saves` (separare lo stato di gioco dal saldo monetario; il saldo vive solo in `companies` + ledger).
 5. **Attivare** il trigger `BEFORE UPDATE` di enforcement (de-commentare in `42_*`). Solo ora il minting client è impossibile.

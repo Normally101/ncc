@@ -493,7 +493,7 @@ const ServerState = (() => {
     }
 
     // ── Sync authoritative cash to server after local daily tick ───────────────
-    async function syncCash(cash) {
+    async function syncCash(cash, motivo) {
         // Aggiorna subito la baseline del delta Realtime (BUG 4) col valore che stiamo
         // per scrivere. Senza questo, quando l'echo Realtime della NOSTRA STESSA
         // scrittura torna indietro, _onCompanyChange lo confronta con un
@@ -506,7 +506,12 @@ const ServerState = (() => {
         // frattempo.
         const v = Math.round(cash);
         _lastServerCash = v;
-        return _rpc('rpc_sync_cash', { v_cash: v });
+        /* `motivo` e' la CAUSALE del movimento (es. 'ride_earnings',
+           'buy_fuel_for_depot'). Il server la scrive in `cash_ledger` insieme al
+           delta calcolato lato suo (migrazione 66_). Non e' obbligatoria: se manca,
+           la riga viene annotata come 'unknown' e il movimento avviene lo stesso —
+           un guadagno legittimo non deve mai dipendere da un'etichetta. */
+        return _rpc('rpc_sync_cash', { v_cash: v, p_reason: motivo || null });
     }
 
     // ── Idle / Premium ────────────────────────────────────────────────────────

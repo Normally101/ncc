@@ -38,9 +38,56 @@ const RIGHE_CONSENTITE = new Map([
     ['engine.js:gameState.cash += amount;', 'Ripiego _addCash prima del caricamento di money.js'],
     // 3. il ripristino dell'ultimo saldo valido quando il saldo diventa NaN: e' una riparazione.
     ['engine.js:gameState.cash = (typeof window._lastValidCash === \'number\') ? window._lastValidCash : 0;', 'Ripristino ultimo saldo valido quando non-finito'],
+
+    /* ── Emerse il 28/08/2026, quando questo guardrail ha smesso di cercare solo
+       `gameState.cash` e ha cominciato a vedere anche gli alias locali (`gs.cash`).
+       Nessuna di queste e' un bypass: sono ripieghi, rollback, o valute con una
+       porta propria. Ognuna ha il suo motivo scritto accanto — chi ne aggiunge una
+       senza motivo sta reintroducendo il bug. ──────────────────────────────────── */
+
+    // quests.js e quests-data.js: RIPIEGHI. Provano prima `window.CE_money`, e usano
+    // la via diretta solo se la porta non e' caricata. Stesso schema di `_addCash`.
+    ['quests.js:gs.cash = (gs.cash || 0) + r.cash;', 'Ripiego: usato solo se CE_money.earn non esiste (riga sopra)'],
+    ['quests.js:gs.driverCoins = (gs.driverCoins || 0) + r.tc;', 'Ripiego: usato solo se CE_money.earnDC non esiste (riga sopra)'],
+    ['quests.js:?.then(_r => { if (_r?.ok && _r.driver_coins != null) { gs.driverCoins = _r.driver_coins; if (typeof updateUI === \'function\') updateUI(); } })',
+        'Riallineamento sul saldo AUTORITATIVO che il server ha appena dichiarato'],
+
+    // VTK: non passa da CE_money perche' CE_money non ha una porta VTK. L'autorita'
+    // e' `rpc_award_mission_vtk`, che applica il tetto giornaliero (500) lato server;
+    // qui si accredita in via ottimistica e poi si corregge su quanto il server dice.
+    ['quests.js:gs.vtkBalance = (gs.vtkBalance || 0) + r.vtk;   // optimistic',
+        'Accredito ottimistico VTK: l\'autorita\' e\' rpc_award_mission_vtk, che applica il cap'],
+    ['quests.js:gs.vtkBalance = Math.max(0, (gs.vtkBalance || 0) - (r.vtk - awarded));',
+        'Correzione dell\'ottimismo VTK sul valore realmente accreditato dal server'],
+
+    // daily-orders.js: ROLLBACK, non un movimento. Disfa un credito ottimistico
+    // quando la RPC fallisce, altrimenti il premio resterebbe accreditato a vuoto.
+    ['daily-orders.js:gs.driverCoins = Math.max(0, (gs.driverCoins || 0) - rw.dc);',
+        'Rollback del credito ottimistico quando la RPC fallisce'],
+
+    // zero-to-hero.js: RIPIEGO, nell'`else` del tentativo con CE_money.earn appena
+    // sopra. La sincronizzazione col server avviene comunque poco piu' in basso,
+    // sotto la stessa condizione: senza, al ricaricamento il ponte col server
+    // azzera il primo guadagno e l'onboarding si blocca.
+    ['zero-to-hero.js:gs.cash = (gs.cash || 0) + importo;',
+        'Ripiego: usato solo se CE_money.earn non esiste (riga sopra)'],
 ]);
 
-const MUTAZIONE = /gameState\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
+/* Le quattro scelte a bivio di quests-data.js hanno la stessa forma: tutta la
+   logica su UNA riga, con `window.CE_money?.earn` provato per primo e la via
+   diretta come ripiego. Elencarle a mano significherebbe incollare quattro righe
+   lunghissime che si romperebbero al primo ritocco di testo: si riconoscono dal
+   fatto che il ripiego e' nello stesso `else` del tentativo con la porta unica. */
+const RIPIEGO_SULLA_STESSA_RIGA = /window\.CE_money\?\.(earn|spend|earnDC|spendDC)\b[\s\S]*\belse\b/;
+
+/* Cerca la mutazione sia sul nome pieno sia sugli ALIAS locali.
+   Il 28/08/2026 una prova dal vivo nel browser ha mostrato che la corsa guidata
+   dell'onboarding muoveva la cassa senza passare da CE_money — e questo guardrail
+   non se n'era mai accorto: cercava solo `gameState.cash`, mentre il codice usa
+   quasi ovunque un alias locale (`const gs = window.gameState`, 24 volte nel
+   repo). Bastava rinominare la variabile per rendersi invisibili al controllo.
+   Un guardrail aggirabile con un alias non e' un guardrail. */
+const MUTAZIONE = /\b(?:gameState|gs|_gs\(\))\.(cash|driverCoins|vtkBalance)\s*(?:[-+*/]?=)(?!=)/g;
 
 function fileDiGioco() {
     return fs.readdirSync(ROOT)
@@ -59,6 +106,7 @@ function mutazioniIn(file) {
         if (MUTAZIONE.test(senzaCommento)) {
             const trimmed = riga.trim();
             if (RIGHE_CONSENTITE.has(`${file}:${trimmed}`)) return;
+            if (RIPIEGO_SULLA_STESSA_RIGA.test(trimmed)) return;
             trovate.push(`${file}:${i + 1}  ${trimmed}`);
         }
     });

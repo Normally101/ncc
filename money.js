@@ -30,10 +30,19 @@ var CE_money = (function () {
        locale e' una previsione, `rpc_sync_cash` la rende vera. Senza la
        sincronizzazione la previsione viene semplicemente scartata. */
 
-    function _sincronizzaCassa() {
+    /* Il `motivo` che spend/earn ricevono viaggia FINO AL SERVER.
+       Fino al 28/08/2026 veniva accettato e buttato via: ogni chiamante lo
+       passava (99 su 100, per 96 causali distinte gia' scritte nel gioco) e qui
+       si fermava. Il registro dell'economia (`cash_ledger`, migrazione 66_) senza
+       causale annota «sono usciti €4.000» invece di «€4.000 di anticipo
+       assunzione»: inutile per calibrare i tetti, per accorgersi di un imbroglio,
+       e per rispondere a «dove sono finiti i miei soldi».
+       Il server tratta l'assenza di causale come 'unknown' e NON rifiuta il
+       movimento: un guadagno legittimo non deve mai dipendere da un'etichetta. */
+    function _sincronizzaCassa(motivo) {
         var SS = window.ServerState;
         if (!SS || typeof SS.syncCash !== 'function') return;
-        try { SS.syncCash(_gs().cash).catch(function () {}); } catch (e) {}
+        try { SS.syncCash(_gs().cash, motivo).catch(function () {}); } catch (e) {}
     }
 
     /**
@@ -48,7 +57,7 @@ var CE_money = (function () {
             return false;
         }
         gs.cash -= importo;
-        _sincronizzaCassa();
+        _sincronizzaCassa(motivo);
         return true;
     }
 
@@ -57,7 +66,7 @@ var CE_money = (function () {
         var gs = _gs();
         if (!Number.isFinite(importo)) return false;
         gs.cash = (gs.cash || 0) + importo;
-        _sincronizzaCassa();
+        _sincronizzaCassa(motivo);
         return true;
     }
 

@@ -91,7 +91,20 @@
 
         const { importo, generoso } = window._z2hGuadagnoCorsa();
         gs.energy = (gs.energy || 0) - 10;
-        gs.cash   = (gs.cash   || 0) + importo;
+        /* Passa dalla porta unica: accredita E sincronizza, con la causale.
+           Prima muoveva `gs.cash` a mano e chiamava `syncCash` piu' sotto senza
+           causale — il guardrail non lo vedeva perche' cercava `gameState.cash`
+           e qui c'e' l'alias `gs`. Trovato il 28/08/2026 provando il gioco vero
+           nel browser: il primissimo guadagno della partita, quello che ogni
+           giocatore incassa per primo, finiva nel registro senza dire da dove
+           veniva. `CE_money.earn` fa esattamente le due cose che servivano qui,
+           sincronizzazione immediata compresa (serve: senza, al ricaricamento il
+           ponte col server azzera il guadagno e l'onboarding si blocca). */
+        if (window.CE_money && typeof window.CE_money.earn === 'function') {
+            window.CE_money.earn(importo, 'z2h_corsa_manuale');
+        } else {
+            gs.cash = (gs.cash || 0) + importo;
+        }
         gs.questStats = gs.questStats || {};
         gs.questStats.totalRides = (gs.questStats.totalRides || 0) + 1;
 
@@ -104,11 +117,15 @@
         } catch (e) {}
 
         if (typeof window.saveGame === 'function') window.saveGame();
-        // Server-authoritative mirror: persisti SUBITO il guadagno. Senza questo, al
-        // reload il bridge col server (che parte a 0) azzererebbe quanto guadagnato
-        // → soft-lock dell'onboarding (non raggiungi mai il passo "assumi il ragazzo").
-        if (typeof window.ServerState !== 'undefined' && typeof window.ServerState.syncCash === 'function')
-            window.ServerState.syncCash(gs.cash).catch(() => {});
+        // La sincronizzazione col server la fa gia' CE_money.earn qui sopra (con la
+        // causale). Resta solo il ripiego per il caso — teorico — in cui money.js
+        // non sia ancora caricato: senza sincronizzazione, al ricaricamento il ponte
+        // col server azzera il guadagno e l'onboarding si blocca prima del passo
+        // «assumi il ragazzo».
+        if (!(window.CE_money && typeof window.CE_money.earn === 'function')
+            && typeof window.ServerState !== 'undefined'
+            && typeof window.ServerState.syncCash === 'function')
+            window.ServerState.syncCash(gs.cash, 'z2h_corsa_manuale').catch(() => {});
 
         // Deve restare = soglia survival di onboarding-core.js (phase(), oggi 6).
         if (gs.questStats.totalRides === 6) {

@@ -3,6 +3,13 @@
 -- Chauffeur Empire — SCAFFOLDING economia server-authoritative (ledger + RPC a-delta)
 -- IDEMPOTENT: safe to re-run.
 -- =============================================================================
+-- ⚠️  STATO 28/08/2026: le sezioni 1-3 di questo file SONO STATE APPLICATE a
+--     produzione, ma tramite `66_registro_economia_osservazione.sql` (che le
+--     riporta con i tetti CALIBRATI sui numeri misurati e una colonna in piu',
+--     `oltre_tetto`). Questo file resta come storico della progettazione: NON
+--     va girato cosi' com'e', avrebbe i tetti placeholder. La sezione 4
+--     (trigger di enforcement) e' l'unica ancora da fare, e va accesa solo
+--     dopo la fase 3. (storico dell'avviso originale:)
 -- ⚠️  NON ANCORA APPLICATO A PROD — DA RIVEDERE PRIMA DI GIRARLO.
 --     Chiude il DEBITO DI SICUREZZA #1 (economia client-authoritative).
 --     Spec + fasi di migrazione: docs/ECONOMY_SERVER_AUTH.md

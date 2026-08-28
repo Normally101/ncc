@@ -1,7 +1,13 @@
 -- ================================================================
 -- 51_lockdown_driver_coins_negative_cost_scaffold.sql
 -- Chauffeur Empire · Hardening: costo negativo su 6 RPC Driver Coins
--- SCAFFOLD — NON applicato al DB di produzione da questa sessione.
+-- ⚠️  STATO REALE VERIFICATO SUL DB DI PRODUZIONE IL 28/08/2026
+--     (interrogando pg_proc/pg_get_functiondef, non fidandosi di questa
+--     intestazione): **QUESTO FILE È STATO APPLICATO.** L'avviso qui sotto
+--     era rimasto dalla stesura e diceva il falso — leggerlo faceva credere
+--     aperta una falla già chiusa, o spingeva a riapplicare inutilmente.
+--     Verificato: tutte e 6 le RPC Driver Coins validano il segno del costo.
+-- (storico) SCAFFOLD — NON applicato al DB di produzione da questa sessione.
 -- Verificato leggendo il codice reale prima di scrivere questo file:
 -- 05_mmo_driver_coins.sql (5 RPC) + 12_hr_automation.sql (1 RPC).
 -- ================================================================
