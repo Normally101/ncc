@@ -141,6 +141,8 @@ function generatePOIRide(tierOverride = null) {
 // ─── CONTRACT RIDE GENERATOR (italianRoutesDB) ───────────────────────────────
 const _VEHICLE_CLASS_MAP = {
     'Stellar E-Executive':            'stellar_e_exec',
+    'Stellar Q-Executive':            'stellar_q_exec',   // 39 rotte: mancava, e
+                                                          // ripiegavano su E-Executive
     'Stellar V-Carrier':              'stellar_v_carr',
     'Stellar S-Imperial':             'stellar_s_imp',
     'Stellar G-Overlord':             'stellar_g_over',
@@ -170,6 +172,80 @@ const _CONTRACT_TIER = {
     mercedes_e:       'business',
 };
 
+/* ─── QUALE AUTO PUO' SERVIRE QUALE TRATTA ──────────────────────────────────
+   IL BUG CHE QUESTO RISOLVE (playtest di Pietro, 28/08/2026):
+   una partita nuova era IMPOSSIBILE. Misurato: su 1889 tratte del database,
+   l'auto con cui si comincia (Volt 3-Urban) ne poteva servire ZERO. Il 100%
+   delle corse generate veniva rifiutato, sempre con lo stesso messaggio
+   («richiede: Stellar E-Executive»). Il giocatore non poteva fare una singola
+   corsa finche' non comprava un'auto da 120.000€ — con 0€ in cassa.
+
+   LA CAUSA: due controlli che non erano d'accordo fra loro.
+   Il GENERATORE scartava le tratte per FAMIGLIA (le liste `_ultraVcs` e
+   `_vanVcs` qui sotto), ma non aveva nessuna famiglia per le berline — quindi
+   le tratte da berlina passavano sempre il filtro. Poi `_driverCanTakeRide`
+   le rifiutava confrontando la CLASSE ESATTA. Generate e subito buttate.
+
+   LA REGOLA, una sola, usata da entrambi: una tratta si serve con un'auto
+   della stessa FAMIGLIA. Una berlina d'ingresso e una berlina executive fanno
+   lo stesso lavoro; un minivan no, e il taxi d'acqua nemmeno.
+
+   La progressione NON si perde, perche' non e' mai vissuta dentro una
+   famiglia: vive FRA le famiglie, ed e' scritta nei prezzi del database.
+   Mediane misurate: berline 677€, minivan 818€, presidenziali 1.555€. Si
+   compra il minivan per accedere al 45% di tratte che pagano di piu', non per
+   sbloccare quelle che si stanno gia' facendo. */
+const _FAMIGLIE_VEICOLO = {
+    berlina: ['volt_ciudad', 'volt_3_urban', 'stellar_q_exec', 'stellar_e_exec',
+              'nexus_h_line', 'mercedes_e'],
+    minivan: ['volt_y_cross', 'stellar_v_carr', 'stellar_q_carr', 'stellar_m_cruiser',
+              'mercedes_v', 'mercedes_sprinter'],
+    presidenziale: ['stellar_q_imp', 'stellar_s_imp', 'volt_s_apex', 'volt_e_estate',
+                    'volt_s_hyper', 'stellar_g_over', 'majestic_citadel',
+                    'majestic_spirit', 'majestic_e_specter', 'mercedes_s'],
+    acqua: ['water_taxi'],
+};
+
+function _famigliaDi(classe) {
+    if (!classe) return null;
+    for (const nome in _FAMIGLIE_VEICOLO) {
+        if (_FAMIGLIE_VEICOLO[nome].includes(classe)) return nome;
+    }
+    return null;   // classe sconosciuta: si ricade sul confronto esatto
+}
+
+/** L'auto `classeAuto` puo' servire una tratta che chiede `classeRichiesta`? */
+function _classeCompatibile(classeAuto, classeRichiesta) {
+    if (!classeRichiesta) return true;
+    if (classeAuto === classeRichiesta) return true;
+    const fam = _famigliaDi(classeRichiesta);
+    return !!fam && fam === _famigliaDi(classeAuto);
+}
+
+/** Il giocatore ha in flotta almeno un'auto utilizzabile per questa corsa?
+ *
+ *  Controlla ENTRAMBI i cancelli che `_driverCanTakeRide` applica: la famiglia
+ *  del veicolo E il livello di servizio (`TIER_COMPATIBILITY`). Erano due
+ *  controlli separati e in disaccordo: il generatore guardava solo la famiglia,
+ *  l'accettazione anche il livello — quindi nascevano corse subito rifiutate.
+ *  Nel playtest del 28/08 il giocatore nuovo vedeva 23 corse da contratto e non
+ *  ne poteva accettare NESSUNA. Tenere le due domande in una funzione sola e'
+ *  cio' che impedisce che tornino a divergere. */
+function _flottaPuoServire(classeRichiesta, tierCorsa) {
+    const tierOk = c => !tierCorsa
+        || (TIER_COMPATIBILITY[tierCorsa] || []).includes(c.tier);
+    return (gameState.fleet || []).some(c =>
+        !c.outOfService
+        && _classeCompatibile(c.vehicleClass, classeRichiesta)
+        && tierOk(c));
+}
+
+if (typeof window !== 'undefined') {
+    window._classeCompatibile = _classeCompatibile;
+    window._famigliaDi        = _famigliaDi;
+    window._flottaPuoServire  = _flottaPuoServire;
+}
+
 function generateContractRide() {
     if (typeof italianRoutesDB === 'undefined' || typeof REGION_TO_DB === 'undefined') return null;
     if (gameState.pendingRides.length > 22) return null;
@@ -185,12 +261,12 @@ function generateContractRide() {
     const candidates = italianRoutesDB.filter(r => {
         if (!availDBRegions.has(r.region)) return false;
         const vc = _VEHICLE_CLASS_MAP[r.vehicle] || 'stellar_e_exec';
-        // Skip routes requiring vehicles the player doesn't own
-        const _ultraVcs = ['stellar_s_imp','stellar_g_over','majestic_spirit','mercedes_s'];
-        const _vanVcs   = ['stellar_v_carr','stellar_q_carr','mercedes_sprinter','mercedes_v'];
-        if (_ultraVcs.includes(vc) && !gameState.fleet.some(c => (_ultraVcs.includes(c.vehicleClass)) && !c.outOfService)) return false;
-        if (_vanVcs.includes(vc)   && !gameState.fleet.some(c => (_vanVcs.includes(c.vehicleClass))   && !c.outOfService)) return false;
-        if (r.requiresWaterTaxi    && !gameState.fleet.some(c => c.vehicleClass === 'water_taxi'       && !c.outOfService)) return false;
+        /* Non generare tratte che la flotta non puo' servire. Stessa regola che
+           usa `_driverCanTakeRide` per accettarle: prima erano due controlli
+           diversi, e le tratte da berlina passavano di qui per essere rifiutate
+           subito dopo (vedi il commento esteso sopra `_FAMIGLIE_VEICOLO`). */
+        if (!_flottaPuoServire(vc, _CONTRACT_TIER[vc])) return false;
+        if (r.requiresWaterTaxi && !_flottaPuoServire('water_taxi', 'ultra')) return false;
         return true;
     });
     if (candidates.length === 0) return null;
@@ -271,7 +347,36 @@ function _getRideDurationMs(ride) {
     const fromRegion = ride.fromPoi?.region || '';
     const toRegion   = ride.toPoi?.region   || '';
     if (fromRegion && toRegion && fromRegion !== toRegion) minutes *= 1.5;
-    return Math.round(minutes) * 60 * 1000;
+    /* ── IL RITMO ────────────────────────────────────────────────────────────
+       L'orologio del gioco E' l'orologio vero: `gameState.hour` viene copiato
+       dall'ora italiana (engine.js, gameLoop). Non c'e' nessuna accelerazione,
+       quindi un minuto di corsa e' un minuto di vita.
+
+       Playtest di Pietro, 28/08/2026: «Il gioco va al tempo della vita reale,
+       quindi dovrei aspettare 4 ore per dare una corsa al mio driver. Il
+       progresso diventa TROPPO lento.» Misurato: durata media 128 minuti REALI,
+       fino a 286 per le tratte piu' ricche. Una sessione di un'ora non basta a
+       vedere finire una corsa sola.
+
+       Accelerare l'orologio (la sua proposta, 3:1) NON si puo' fare senza
+       rompere tutto il resto: ciclo giornaliero, ore notturne, meteo, contratti,
+       recupero offline sono tutti agganciati al tempo vero. La durata delle
+       corse invece e' un conto alla rovescia indipendente: qui si puo' agire da
+       soli, ed e' esattamente la leva che serviva.
+
+       Con RITMO = 3 (l'accelerazione che aveva chiesto):
+         tratta economica  50€   →  da 37 a 12 minuti
+         tratta tipica    740€   →  da 113 a 38 minuti
+         tratta ricca    5263€   →  da 286 a 95 minuti
+       Una sessione di un'ora fa girare la flotta piu' volte, e le tratte piu'
+       ricche restano un impegno serio: e' quello che tiene in piedi la scelta
+       «una corsa grossa o tre piccole?».
+
+       Il PAVIMENTO di 10 minuti resta in minuti REALI e NON viene diviso:
+       serve a impedire che una corsa sia istantanea, e accelerare il ritmo non
+       deve renderla banale. */
+    const RITMO = 3;
+    return Math.max(10, Math.round(minutes / RITMO)) * 60 * 1000;
 }
 
 function _formatDuration(ms) {
@@ -401,7 +506,8 @@ function assignRideToDriver(rideId, driverId) {
         // Contract rides: hard vehicle class check
         if (ride.vehicleRequired) {
             const assignedCar = gameState.fleet.find(c => c.id === driver.assignedCarId);
-            if (!assignedCar || assignedCar.vehicleClass !== ride.vehicleRequired) {
+            // Stessa regola del generatore: conta la FAMIGLIA, non la classe esatta.
+            if (!assignedCar || !_classeCompatibile(assignedCar.vehicleClass, ride.vehicleRequired)) {
                 const vcNames = {
                     stellar_e_exec:'Stellar E-Executive', stellar_v_carr:'Stellar V-Carrier',
                     stellar_s_imp:'Stellar S-Imperial',   stellar_q_exec:'Stellar Q-Executive',
@@ -439,7 +545,8 @@ function _driverCanTakeRide(driver, ride) {
     if (car.outOfService) return false;
     if (car.condition <= 10) return false;
     if (!TIER_COMPATIBILITY[ride.tier]?.includes(car.tier)) return false;
-    if (ride.vehicleRequired && car.vehicleClass !== ride.vehicleRequired) return false;
+    // Stessa regola del generatore: conta la FAMIGLIA, non la classe esatta.
+    if (ride.vehicleRequired && !_classeCompatibile(car.vehicleClass, ride.vehicleRequired)) return false;
     if (_getDriverQueueInfo(driver).isFull) return false; // tetto in ore, non a numero corse
     if (driver.status === 'resting') return false;
     // B2B contract locks: vehicles committed to a corporate contract are unavailable

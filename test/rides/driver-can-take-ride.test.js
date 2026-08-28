@@ -3,6 +3,19 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { freshEnv } = require('../../test-support/game-env.js');
 
+/* Il prezzo piu' piccolo la cui corsa dura almeno `minuti` minuti, chiesto al
+   gioco invece che scritto a mano. Fino al 28/08/2026 qui c'erano costanti
+   («price 1000 → 2h10m»): quando il ritmo delle corse e' stato accelerato dopo
+   il playtest di Pietro, quelle costanti sono diventate false e i test sono
+   diventati rossi pur avendo ancora ragione nell'intento. */
+function prezzoPerDurata(sandbox, minuti, base) {
+    const dur = p => sandbox._getRideDurationMs(Object.assign({ price: p }, base || {})) / 60000;
+    let basso = 1, alto = 5000000;
+    if (dur(alto) < minuti) throw new Error('curva durate cambiata: ' + minuti + ' min irraggiungibili');
+    while (alto - basso > 1) { const m = Math.floor((basso + alto) / 2); if (dur(m) >= minuti) alto = m; else basso = m; }
+    return alto;
+}
+
 describe('rides/driver-can-take-ride — idoneità autista per assegnazione corsa (_driverCanTakeRide)', () => {
     test('caso positivo: autista idoneo con auto compatibile e in buone condizioni può accettare la corsa', () => {
         const { sandbox } = freshEnv();
@@ -145,9 +158,12 @@ describe('rides/driver-can-take-ride — idoneità autista per assegnazione cors
         const { sandbox } = freshEnv();
         const car = { id: 'car1', tier: 'standard', condition: 90, outOfService: false };
         const driverResting = { id: 'd1', name: 'Mario', status: 'resting', assignedCarId: 'car1', queue: [] };
-        // 10 corse dummy senza prezzo → durata default ~57min l'una: ~9h30m totali,
-        // oltre il tetto di 4h per autista (la coda si misura in ore dal 22/08/2026).
-        const driverFullQueue = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: new Array(10).fill({ id: 'dummy' }) };
+        /* Coda oltre il tetto: quante corse servano dipende dal ritmo, quindi il
+           numero si CALCOLA invece di scriverlo (prima erano «10 corse dummy da
+           ~57min»: con il ritmo accelerato del 28/08 non bastavano piu'). */
+        const dummyMs = sandbox._getRideDurationMs({ id: 'dummy' });
+        const servono = Math.ceil((4 * 3600000) / dummyMs) + 1;
+        const driverFullQueue = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: new Array(servono).fill({ id: 'dummy' }) };
 
         sandbox.gameState.fleet = [car];
         sandbox.gameState.drivers = [driverResting, driverFullQueue];
@@ -158,20 +174,23 @@ describe('rides/driver-can-take-ride — idoneità autista per assegnazione cors
         assert.equal(sandbox._driverCanTakeRide(driverFullQueue, ride), false, 'autista con il monte ore esaurito deve rifiutare nuove corse');
     });
 
-    test('limite coda in ORE: sotto tetto (3h45m) passa, oltre tetto (4h20m) no — qualunque sia il numero di corse', () => {
+    test('limite coda in ORE: sotto tetto passa, oltre tetto no — qualunque sia il numero di corse', () => {
         const { sandbox } = freshEnv();
         const car = { id: 'car1', tier: 'standard', condition: 90, outOfService: false };
-        // price 15 → ~25min l'una: 9 × 25min = 3h45m < tetto 4h
-        const sottoTetto = { id: 'd1', name: 'Mario', status: 'idle', assignedCarId: 'car1', queue: Array.from({ length: 9 }, () => ({ price: 15 })) };
-        // price 1000 → ~2h10m l'una: 2 × 130min = 4h20m > tetto 4h, con sole DUE corse
-        const oltreTetto = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: [{ price: 1000 }, { price: 1000 }] };
+        // Tante corse cortissime: restano sotto il tetto di 4h qualunque sia il ritmo.
+        const cortaMs = sandbox._getRideDurationMs({ price: 1 });
+        const quante  = Math.max(1, Math.floor((4 * 3600000) / cortaMs) - 1);
+        const sottoTetto = { id: 'd1', name: 'Mario', status: 'idle', assignedCarId: 'car1', queue: Array.from({ length: quante }, () => ({ price: 1 })) };
+        // Due sole corse da poco piu' di 2h: sforano il tetto anche essendo due.
+        const lunga = prezzoPerDurata(sandbox, 125);
+        const oltreTetto = { id: 'd2', name: 'Luigi', status: 'idle', assignedCarId: 'car1', queue: [{ price: lunga }, { price: lunga }] };
 
         sandbox.gameState.fleet = [car];
         sandbox.gameState.drivers = [sottoTetto, oltreTetto];
 
         const ride = { id: 'r1', tier: 'standard' };
 
-        assert.equal(sandbox._driverCanTakeRide(sottoTetto, ride), true, '3h45m stanno nel tetto di 4h: può prendere la corsa');
-        assert.equal(sandbox._driverCanTakeRide(oltreTetto, ride), false, '4h20m superano il tetto di 4h anche con 2 sole corse');
+        assert.equal(sandbox._driverCanTakeRide(sottoTetto, ride), true, 'sotto il tetto in ore: può prendere la corsa');
+        assert.equal(sandbox._driverCanTakeRide(oltreTetto, ride), false, 'oltre il tetto in ore anche con 2 sole corse');
     });
 });

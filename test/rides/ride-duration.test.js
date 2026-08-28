@@ -54,14 +54,22 @@ describe('rides/ride-duration — calcolo durata corsa (_getRideDurationMs)', ()
         );
     });
 
-    test('una corsa importante resta un impegno di ore, non di minuti', () => {
+    test('una corsa importante resta un impegno serio, non un minuto', () => {
         const { sandbox } = freshEnv();
-        /* Il contrario del test precedente, e serve entrambi: comprimere la
+        /* Il contrario del test precedente, e servono entrambi: comprimere la
            scala non deve rendere tutte le corse brevi, altrimenti accodarne
-           dieci tornerebbe gratis. */
+           dieci tornerebbe gratis.
+
+           SOGLIE RITARATE IL 28/08/2026. Prima chiedevano «almeno un'ora e
+           mezza» per una corsa da 1.000€. Era una soglia scritta quando il
+           gioco andava a tempo reale senza accelerazione, e nel playtest di
+           Pietro si e' rivelata insostenibile: 128 minuti REALI di attesa per
+           una corsa sola, «il progresso diventa TROPPO lento». Col ritmo 3:1
+           una corsa da 1.000€ vale ~43 minuti: ancora un impegno che si sente,
+           ma dentro una sessione di gioco. */
         const d1000 = minuti(sandbox._getRideDurationMs({ price: 1000 }));
-        assert.ok(d1000 >= 90, `una corsa da 1.000€ deve valere almeno un'ora e mezza, non ${d1000} min`);
-        assert.ok(d1000 <= 240, `ma non deve bloccare un autista per piu' di quattro ore (${d1000} min)`);
+        assert.ok(d1000 >= 30, `una corsa da 1.000€ deve valere almeno mezz'ora, non ${d1000} min`);
+        assert.ok(d1000 <= 90, `ma non deve bloccare un autista per piu' di un'ora e mezza (${d1000} min)`);
     });
 
     test('pavimento di 10 minuti: nessuna corsa e\' istantanea', () => {
@@ -98,15 +106,22 @@ describe('rides/ride-duration — calcolo durata corsa (_getRideDurationMs)', ()
         const { sandbox } = freshEnv();
         const base = minuti(sandbox._getRideDurationMs({ price: 400 }));
 
+        /* Confronto a meno di un minuto: l'arrotondamento avviene DOPO la
+           divisione per il ritmo, quindi base×1.3 e la durata vera possono
+           differire di un minuto senza che il moltiplicatore sia sbagliato.
+           Pretendere l'uguaglianza esatta rendeva il test ostaggio
+           dell'arrotondamento invece che del moltiplicatore. */
+        const vicino = (a, b, msg) => assert.ok(Math.abs(a - b) <= 1, `${msg} (atteso ~${b}, ottenuto ${a})`);
+
         for (const tipo of ['Airport', 'Rail', 'Transfer']) {
-            assert.equal(
+            vicino(
                 minuti(sandbox._getRideDurationMs({ price: 400, routeType: tipo })),
                 Math.round(base * 0.7),
                 `routeType ${tipo} deve applicare il moltiplicatore 0.7`
             );
         }
         for (const tipo of ['Boat', 'Port']) {
-            assert.equal(
+            vicino(
                 minuti(sandbox._getRideDurationMs({ price: 400, routeType: tipo })),
                 Math.round(base * 1.3),
                 `routeType ${tipo} deve applicare il moltiplicatore 1.3`
@@ -123,13 +138,13 @@ describe('rides/ride-duration — calcolo durata corsa (_getRideDurationMs)', ()
         const { sandbox } = freshEnv();
         const base = minuti(sandbox._getRideDurationMs({ price: 400 }));
 
-        assert.equal(
-            minuti(sandbox._getRideDurationMs({
+        // Tolleranza di un minuto: vedi la nota sull'arrotondamento nel test sopra.
+        assert.ok(
+            Math.abs(minuti(sandbox._getRideDurationMs({
                 price: 400,
                 fromPoi: { region: 'lazio' },
                 toPoi: { region: 'toscana' },
-            })),
-            Math.round(base * 1.5),
+            })) - Math.round(base * 1.5)) <= 1,
             'viaggi fra regioni diverse devono applicare il moltiplicatore 1.5x'
         );
 

@@ -848,7 +848,14 @@ function initGame(fresh = true) {
         // (guidi a mano); il Ragazzo di Quartiere ne eredita le chiavi quando lo assumi
         // (hireNeighborhoodKid) → l'idle parte senza dover comprare un'auto a €0 in cassa.
         gameState.fleet.push({
-            id: 'c_starter', _serverId: null, name: 'Berlina (riscattata)', tier: 'standard',
+            /* tier 'business', non 'standard': questa auto E' una volt_3_urban, che
+               nel listino (NEW_CARS) e' BUSINESS. Marcarla 'standard' la rendeva
+               incapace di servire QUALSIASI corsa da contratto — TIER_COMPATIBILITY
+               ['business'] non include 'standard', e nessuna corsa da contratto e'
+               mai 'standard'. Nel playtest del 28/08 il giocatore nuovo vedeva 23
+               corse e non ne poteva accettare nessuna. Che sia un catorcio lo dicono
+               gia' la condizione 62 e il nome, non il livello di servizio. */
+            id: 'c_starter', _serverId: null, name: 'Berlina (riscattata)', tier: 'business',
             vehicleClass: 'volt_3_urban', isStarter: true, condition: 62, isLease: false,
             fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100,
             outOfService: null, upgrades: [], protoId: null

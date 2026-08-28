@@ -1020,15 +1020,22 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             const { sandbox, gs } = amb;
             const driver = gs.drivers.find(d => d.id === 'drv_1');
             driver.status = 'busy';
-            driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 910 + i, tier: 'business' }));
+            /* Quante corse servano per riempire il monte ore dipende dal RITMO,
+               quindi il numero si calcola invece di scriverlo. Prima era fisso a
+               10: col ritmo accelerato del 28/08 (playtest di Pietro) dieci corse
+               non bastano piu' a superare le 4 ore, e il test falliva pur avendo
+               ragione nell'intento — il tetto e' in ORE, non a numero di corse. */
+            const _dummyMs = sandbox._getRideDurationMs({ tier: 'business' });
+            const _servono = Math.ceil((4 * 3600000) / _dummyMs) + 1;
+            driver.queue = Array.from({ length: _servono }, (_, i) => ({ id: 910 + i, tier: 'business' }));
 
             const newRide = { id: 950, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
             gs.pendingRides = [newRide];
 
             sandbox.assignRideToDriver(950, 'drv_1');
 
-            assert.equal(gs.pendingRides.length, 1, 'la corsa deve rimanere in pending se la coda è piena (10)');
-            assert.equal(driver.queue.length, 10);
+            assert.equal(gs.pendingRides.length, 1, 'la corsa deve rimanere in pending se il monte ore è pieno');
+            assert.equal(driver.queue.length, _servono, 'la coda non deve crescere oltre il tetto in ore');
         });
 
         /* Il Pass Executive NON allunga più la coda (decisione Vlad 22/08/2026):
@@ -1043,14 +1050,21 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
             const driver = gs.drivers.find(d => d.id === 'drv_1');
             driver.status = 'busy';
-            driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 920 + i, tier: 'business' }));
+            /* Quante corse servano per riempire il monte ore dipende dal RITMO,
+               quindi il numero si calcola invece di scriverlo. Prima era fisso a
+               10: col ritmo accelerato del 28/08 (playtest di Pietro) dieci corse
+               non bastano piu' a superare le 4 ore, e il test falliva pur avendo
+               ragione nell'intento — il tetto e' in ORE, non a numero di corse. */
+            const _dummyMs = sandbox._getRideDurationMs({ tier: 'business' });
+            const _servono = Math.ceil((4 * 3600000) / _dummyMs) + 1;
+            driver.queue = Array.from({ length: _servono }, (_, i) => ({ id: 920 + i, tier: 'business' }));
 
             const newRide = { id: 960, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
             gs.pendingRides = [newRide];
 
             sandbox.assignRideToDriver(960, 'drv_1');
 
-            assert.equal(driver.queue.length, 10, 'con Executive Pass attivo lo slot 11 deve essere rifiutato come senza');
+            assert.equal(driver.queue.length, _servono, 'con Executive Pass attivo la coda non si allunga, come senza');
             assert.equal(gs.pendingRides.length, 1, 'la corsa deve rimanere in pending se la coda è piena');
         });
 
@@ -1071,7 +1085,7 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             assert.equal(infoConPass.capHours, 4, 'il tetto di base è 4 ore');
         });
 
-        test('_driverCanTakeRide rifiuta alla decima corsa in coda anche con Executive Pass attivo', () => {
+        test('_driverCanTakeRide rifiuta a monte ore pieno anche con Executive Pass attivo', () => {
             const { sandbox, gs } = amb;
             gs.executivePassActive = true;
             gs.day = 1;
@@ -1079,12 +1093,15 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
             const driver = gs.drivers.find(d => d.id === 'drv_1');
             driver.status = 'busy';
-            driver.queue = Array.from({ length: 10 }, (_, i) => ({ id: 930 + i, tier: 'business' }));
+            // Numero calcolato, non scritto: dipende dal ritmo delle corse.
+            const _dummyMs = sandbox._getRideDurationMs({ tier: 'business' });
+            const _servono = Math.ceil((4 * 3600000) / _dummyMs) + 1;
+            driver.queue = Array.from({ length: _servono }, (_, i) => ({ id: 930 + i, tier: 'business' }));
 
             const ride = { id: 961, tier: 'business', fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } };
 
             assert.equal(sandbox._driverCanTakeRide(driver, ride), false,
-                'con la coda a 10 il Pass non deve aprire l\'undicesimo slot');
+                'a monte ore pieno il Pass non deve aprire uno slot in piu\'');
         });
     });
 
