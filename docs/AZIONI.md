@@ -27,10 +27,18 @@ Origine: analisi unificata completa dei 93 file del codebase (nucleo, moduli, in
 
 Ordinate per gravità. Ognuna è un task.
 
-### Denaro non sincronizzato — 19 azioni confermate
-`engine-store.js` (12 funzioni DC), `engine-holding.js`, `engine-fleet.js`, `engine-drivers.js`,
-`engine-finance.js`, `contracts.js`, `daily-orders.js`. Vedi la lista `ECCEZIONI` in
-`test/guardrail/una-sola-porta.test.js`: è la lista di lavoro, e **può solo accorciarsi**.
+### ~~Denaro non sincronizzato — 19 azioni confermate~~ ✅ CHIUSA (28/08/2026)
+La lista `ECCEZIONI` di `test/guardrail/una-sola-porta.test.js` è **vuota**: nessun file fuori da
+`money.js` muove più cash/DC/VTK. Anche `ROTTE_NOTE` in `azioni-sincronizzano.test.js` è vuota,
+dopo aver verificato una per una le 30 voci che conteneva (29 passavano già da `CE_money`, la
+trentesima non tocca denaro).
+
+⚠️ **Attenzione a come si legge questa riga chiusa.** «Sincronizzato» qui significa *il client dice
+al server quanto ha in cassa*, non *il server decide*. La cassa resta **client-authoritative**:
+`rpc_sync_cash` accetta un saldo assoluto scelto dal browser. La chiusura vera sono le fasi 3-5 di
+`docs/ECONOMY_SERVER_AUTH.md` (~62 punti di scrittura cassa negli `.sql` da migrare alle RPC a
+delta, poi spegnere `rpc_sync_cash`, poi accendere il trigger). Dal 28/08 il registro
+`cash_ledger` è vivo in osservazione e fornisce i numeri per farlo in sicurezza.
 
 ### Doppioni con prezzi divergenti
 
