@@ -3,6 +3,51 @@
 > Aggiornato: 28 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
+> **STATO 28/08 (notte) — PRIMO PLAYTEST ESTERNO (Pietro). Tutto risolto.**
+> Il primo occhio non nostro sul gioco, e ha trovato cose che 2225 test non
+> vedevano. Tutti i difetti riprodotti sul codice PRIMA di toccare qualcosa.
+>
+> **Una partita nuova era impossibile.** Misurato: su 1889 tratte del database
+> l'auto di partenza ne poteva servire **zero**. Due controlli in disaccordo —
+> il generatore scartava per FAMIGLIA di veicolo (e non aveva una famiglia per
+> le berline), l'accettazione confrontava la CLASSE ESATTA e il LIVELLO. In più
+> la berlina era marcata `tier:'standard'` pur essendo una `volt_3_urban`, che
+> nel listino è BUSINESS, e nessuna corsa da contratto è mai 'standard'.
+> Ora la regola è **una sola** (`_flottaPuoServire`) per generare e accettare:
+> non nasce più una corsa che non si può fare. La progressione regge — vive FRA
+> le famiglie, non dentro: berlina €1014 medi, +minivan €1398 (+38%).
+>
+> **Il ritmo.** L'orologio del gioco È l'ora italiana vera, senza accelerazione,
+> e una corsa durava 128 minuti REALI. Accelerare l'orologio romperebbe tutto
+> (giorno, notte, meteo, contratti, offline). La durata delle corse è invece un
+> conto alla rovescia indipendente: `RITMO = 3` lì. Tratta tipica da 113 a 38
+> minuti. Il tetto della coda resta 4h: stesso tempo impegnato, triplo lavoro.
+>
+> **Il conio dei Driver Coins.** Pietro aveva visto il sintomo e sbagliato la
+> causa: non è in locale, è sul server. `rpc_add_driver_coins` accettava un
+> importo scelto dal client fino a 1.000.000×20/min = **20 milioni al minuto**.
+> Non si può revocare (ci passano i premi), quindi tetto stretto alla scala vera
+> (premio più alto del gioco: 120 DC → tetto 500). Migrazione `67_`, applicata.
+> **Resta uno stopgap**: la chiusura vera è far decidere l'importo al server dato
+> il MOTIVO, come già fa `rpc_purchase_dc_pack`.
+>
+> **L'interfaccia: da ~180 punti illeggibili a zero** su nove schede. Causa: il
+> tema è stato convertito a chiaro (`2211194`) e poi di nuovo a scuro
+> (`06e5763`), lasciando ibridi. L'Inbox aveva fondo `#ffffff` con testo
+> `#e6edf3`: contrasto **1.18**, bianco su bianco. Ma la causa più diffusa era
+> **un solo token**, `--em-muted` = `#6b7280`, il colore di quasi tutto il testo
+> secondario: 3.58 ovunque. Anche gli accenti (blu 3.61, viola 3.57).
+> ⚠️ **CLAUDE.md diceva «kit .em light»**: era vecchio di due conversioni.
+> Corretto — si ricarica a ogni messaggio, quindi mandava fuori strada sempre.
+>
+> **Notifiche e tracker** erano nella stessa identica posizione (in basso al
+> centro) e si coprivano. **Il `#NaN` nei soldi** era `Math.floor(undefined)`
+> nella finestra prima che il saldo arrivi dal server.
+>
+> **NON fatto, di proposito:** il «Knowledge Book» che Pietro chiede. È una
+> funzionalità nuova, non un difetto, e ha bisogno di essere progettata. Il
+> bisogno però è reale: c'è molto da spiegare e non si spiega.
+
 > **STATO 28/08 (sera) — IL REGISTRO DELL'ECONOMIA È VIVO IN PRODUZIONE
 > (modalità osservazione). 2220 test verdi.**
 > `cash_ledger` + `rpc_earn`/`rpc_spend` + `_econ_cap` applicati via
