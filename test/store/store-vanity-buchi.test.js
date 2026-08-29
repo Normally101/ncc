@@ -50,28 +50,26 @@ function setupEnv(serverOverrides = {}) {
 
 describe('BUCI negozio/vanita — percorsi mai esercitati', () => {
 
-    describe('_dcSimPurchase — RPC di pagamento che rigetta (ui-store.js)', () => {
-        test('eccezione dalla RPC: nessun accredito, nessun minting, giocatore avvisato', async () => {
-            const chiamateRPC = [];
-            const env = freshEnv({
-                serverState: {
-                    purchaseDriverCoinPack: async (packId) => {
-                        chiamateRPC.push({ packId });
-                        throw new Error('rete giù');
-                    },
-                },
-            });
+    describe('_dcAcquistaPacchetto — la cassa che non risponde (ui-store.js)', () => {
+        test('cassa irraggiungibile: nessun accredito, nessun minting, giocatore avvisato', async () => {
+            /* Prima era la RPC di pagamento a rigettare; dal 29/08/2026 e' la
+               cassa Stripe a non rispondere. Il comportamento richiesto non e'
+               cambiato di una virgola: chi non paga non riceve coin, e chi ci
+               prova deve sapere che non gli e' stato addebitato niente. */
+            const env = freshEnv();
             const sandbox = env.sandbox;
             const gs = sandbox.gameState;
             gs.driverCoins = 10;
+            sandbox.window.supabaseClient = {
+                auth: { getSession: async () => ({ data: { session: { access_token: 'jwt' } } }) },
+            };
+            sandbox.window.fetch = async () => { throw new Error('rete giù'); };
 
-            sandbox._dcSimPurchase('starter');
-            await new Promise(r => setImmediate(r));
+            await sandbox._dcAcquistaPacchetto('starter');
 
-            assert.equal(chiamateRPC.length, 1, 'la RPC dedicata deve essere stata tentata');
             assert.equal(gs.driverCoins, 10, 'saldo intatto: nessun coin senza pagamento confermato');
-            assert.ok(env.notifications.some(n => n.msg.includes('Pagamento non riuscito')),
-                'il giocatore deve ricevere il messaggio di fallimento pagamento');
+            assert.ok(env.notifications.some(n => n.msg.includes('Nessun addebito')),
+                'il giocatore deve sapere che non gli e\' stato addebitato niente');
         });
     });
 

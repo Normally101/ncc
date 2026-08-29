@@ -244,12 +244,19 @@ Nel sistema attuale coesistono tre paradigmi di movimento economico:
 
 ### Sezione 5: Valuta Premium (Driver Coins) & Token VTK
 
-#### 5.1. Acquisto Driver Coins con Denaro Reale (IAP / Stripe)
-- **Come si muove oggi**: dal fix del bypass dell'Executive Club (`65_executive_pack_server_purchase.sql`) i pacchetti dello store passano SOLO da `_dcSimPurchase(packId)` → `rpc_purchase_dc_pack(v_pack_id)`: catalogo prezzi/DC in tabella (`ec_dc_packs`), accredito solo se esiste una riga di pagamento confermato non ancora riscossa in `ec_pack_payments`, consumo della riga nella stessa transazione e registrazione in `coin_transactions`. Il client non passa mai un importo; senza conferma di pagamento nessun coin arriva. Il client allinea il saldo con `CE_money.dcAccreditatiDalServer(saldoAutoritativo)` (nessuna seconda RPC).
+#### 5.1. Acquisto Driver Coins con Denaro Reale (Stripe)
+- **Come si muove oggi** (dal 29/08/2026, `68_pagamenti_driver_coins.sql`): il browser NON accredita e NON puo' accreditare. Il percorso e' in quattro passi, e solo il terzo tocca il saldo:
+  1. `_dcAcquistaPacchetto(packKey)` (`ui-store.js`) manda a `POST /api/dc-checkout` **solo la chiave del pacchetto**, con il JWT Supabase del giocatore;
+  2. `api/dc-checkout.mjs` verifica il token presso Supabase, legge prezzo e quantita' di coin dalla tabella `dc_packs` — mai dal browser — e apre una Stripe Checkout Session con `metadata.user_id` e `metadata.pack_key`;
+  3. a pagamento avvenuto Stripe chiama `api/dc-webhook.mjs`, che **verifica la firma HMAC** e solo allora invoca `rpc_credit_dc_purchase(...)` con la chiave `service_role`;
+  4. il giocatore torna su `/?dc=ok`, e `_dcRitornoDallaCassa()` richiede il saldo al server (`ServerState.getDriverCoins`) e lo allinea con `CE_money.dcAccreditatiDalServer`.
+- **Perche' e' scritto cosi'**: `?dc=ok` non e' una prova di pagamento — chiunque puo' digitarlo nella barra degli indirizzi. Serve solo a sapere che vale la pena richiedere il saldo, e il saldo lo decide la riga `companies` sul server.
 - **Cosa controlla lato server**:
-  - Pacchetto esistente nel catalogo server (`ec_dc_packs`).
-  - Pagamento confermato e non riscosso (`ec_pack_payments.redeed = FALSE`).
-  - Utente autenticato, row lock su `companies`, saldo restituito come verità.
+  - `rpc_credit_dc_purchase` e' **revocata ad `anon` e `authenticated`**: eseguibile solo da `service_role`, che il browser non possiede. E' questa revoca, non un controllo nel codice, a rendere impossibile l'accredito dal client.
+  - Idempotenza su `dc_purchases.stripe_event_id UNIQUE`: Stripe riconsegna lo stesso evento se la risposta tarda, e due consegne possono arrivare in parallelo su istanze diverse — dove un controllo applicativo non le vedrebbe entrambe.
+  - L'importo pagato deve coincidere con `dc_packs.price_cents`, altrimenti nessun accredito e un WARNING nei log.
+  - Il catalogo `dc_packs` ha RLS in sola lettura: i prezzi si cambiano solo da una migrazione.
+- **Storia**: `65_executive_pack_server_purchase.sql` prevedeva `ec_dc_packs`/`ec_pack_payments` e `rpc_purchase_dc_pack`. **Non e' mai stato applicato**: verificato sul database il 29/08/2026, quelle tabelle non esistono. Il client chiamava una RPC inesistente e l'acquisto falliva sempre. Nessun coin regalato, ma nemmeno nessun acquisto possibile.
 - **Cosa NON controlla**:
   - L'integrazione col vero PSP (firma HMAC webhook Stripe) non c'è ancora: finché manca, nessuna riga di pagamento può esistere e lo store rifiuta ogni acquisto invece di regalare DC.
   - `rpc_add_driver_coins` resta usata dai premi di gioco (quest/daily): è invocabibile da `authenticated` con il cap di `41_cap_driver_coins.sql` e il rate limit di `43_ratelimit_driver_coins.sql`.

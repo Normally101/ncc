@@ -66,25 +66,41 @@ function setupStoreEnv() {
 
 describe('ui-store — sincronizzazione Driver Coins col server (CE_money)', () => {
 
-    describe('_dcSimPurchase', () => {
-        test('acquisto Starter Pack: passa dalla RPC dedicata, mai da earnDC/addDriverCoins', async () => {
+    describe('_dcAcquistaPacchetto', () => {
+        /* Il percorso d'acquisto e' cambiato il 29/08/2026: non piu' una RPC che
+           accredita, ma una cassa Stripe. Quello che questi test difendono e'
+           rimasto identico, ed e' l'unica cosa che conta — il browser non conia
+           Driver Coins. La copertura completa del nuovo percorso sta in
+           test/store/pagamenti-dc.test.js; qui resta il controllo che nessuna
+           delle vecchie porte di conio si riapra. */
+        test('l\'acquisto non passa mai da earnDC o addDriverCoins', async () => {
             const { sandbox, gs, ceEarnDCCalls, rpcAddCalls, rpcPurchaseCalls } = setupStoreEnv();
             gs.driverCoins = 10;
-            sandbox._dcSimPurchase('starter');
-            await new Promise(r => setImmediate(r));
-            assert.equal(rpcPurchaseCalls.length, 1, 'deve chiamare la RPC di acquisto dedicata');
-            assert.equal(rpcPurchaseCalls[0].packId, 'starter');
-            assert.equal(ceEarnDCCalls.length, 0, 'niente minting via earnDC: il server accredita');
-            assert.equal(rpcAddCalls.length, 0, 'niente doppio credito via addDriverCoins');
-            assert.equal(gs.driverCoins, 60); // 10 locali + 50 accreditati dal server
+            sandbox.window.supabaseClient = {
+                auth: { getSession: async () => ({ data: { session: { access_token: 'jwt' } } }) },
+            };
+            sandbox.window.fetch = async () => ({ ok: true, json: async () => ({ ok: true, url: 'https://checkout.stripe.com/x' }) });
+
+            await sandbox._dcAcquistaPacchetto('starter');
+
+            assert.equal(ceEarnDCCalls.length, 0, 'niente minting via earnDC');
+            assert.equal(rpcAddCalls.length, 0, 'niente credito via addDriverCoins');
+            assert.equal(rpcPurchaseCalls.length, 0, 'la vecchia RPC non esiste piu\' sul server');
+            assert.equal(gs.driverCoins, 10, 'il saldo lo muove il webhook, non il browser');
         });
 
-        test('pacchetto/quantità non valida: nessuna RPC di acquisto e saldo intatto', async () => {
-            const { sandbox, gs, ceEarnDCCalls, rpcAddCalls, rpcPurchaseCalls } = setupStoreEnv();
+        test('pacchetto non valido: nessuna cassa aperta e saldo intatto', async () => {
+            const { sandbox, gs, ceEarnDCCalls, rpcAddCalls } = setupStoreEnv();
             gs.driverCoins = 10;
-            sandbox._dcSimPurchase(-5);
-            await new Promise(r => setImmediate(r));
-            assert.equal(rpcPurchaseCalls.length, 0);
+            let chiamate = 0;
+            sandbox.window.supabaseClient = {
+                auth: { getSession: async () => ({ data: { session: { access_token: 'jwt' } } }) },
+            };
+            sandbox.window.fetch = async () => { chiamate++; return { ok: true, json: async () => ({}) }; };
+
+            await sandbox._dcAcquistaPacchetto(-5);
+
+            assert.equal(chiamate, 0);
             assert.equal(ceEarnDCCalls.length, 0);
             assert.equal(rpcAddCalls.length, 0);
             assert.equal(gs.driverCoins, 10);

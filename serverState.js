@@ -535,6 +535,21 @@ const ServerState = (() => {
     }
     // Acquisto pacchetti Executive Club: il client passa solo l'ID del pacchetto,
     // e' la RPC a decidere quanto accreditare (catalogo lato server).
+    /* Il saldo Driver Coins riletto dal server, senza aspettare uno snapshot
+       nuovo. Serve al ritorno dalla cassa Stripe: l'accredito lo ha appena
+       scritto il webhook, mentre il `_company` che teniamo in memoria puo'
+       essere vecchio di minuti e direbbe il saldo di prima del pagamento. */
+    async function getDriverCoins() {
+        if (!_supabase) return null;
+        try {
+            const { data, error } = await _supabase
+                .from('companies').select('driver_coins').maybeSingle();
+            if (error || !data) return null;
+            if (_company) _company.driver_coins = data.driver_coins;
+            return { driver_coins: data.driver_coins };
+        } catch (e) { return null; }
+    }
+
     async function purchaseDriverCoinPack(packId) {
         return _rpc('rpc_purchase_dc_pack', { v_pack_id: packId });
     }
@@ -625,6 +640,7 @@ const ServerState = (() => {
         buyVipContact,
         addDriverCoins,
         purchaseDriverCoinPack,
+        getDriverCoins,
         spendDriverCoins,
         buyHRAutomation,
         getState,

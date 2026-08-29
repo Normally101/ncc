@@ -1,6 +1,18 @@
 -- ══════════════════════════════════════════════════════════════════════════════
 -- 65_executive_pack_server_purchase.sql
 --
+-- ⚠ STATO REALE, VERIFICATO SUL DATABASE IL 29/08/2026: QUESTO FILE NON E' MAI
+-- STATO APPLICATO. Ne' `ec_dc_packs` ne' `ec_pack_payments` ne'
+-- `rpc_purchase_dc_pack` esistevano in produzione. Il client chiamava una RPC
+-- inesistente, quindi l'acquisto falliva sempre — nessun coin regalato, ma
+-- nemmeno nessun acquisto possibile, e sotto ai pacchetti restava scritto
+-- «acquisti simulati (demo)».
+--
+-- SOSTITUITO DA `68_pagamenti_driver_coins.sql`, che e' applicato e che chiude
+-- la stessa falla per la strada che mancava: un pagamento vero. Il PSP di cui
+-- qui sotto si dice «finche' non c'e'» ora c'e', ed e' Stripe.
+-- Questo file resta come storia della decisione, non come istruzioni da eseguire.
+--
 -- Bypass totale della cassa nell'Executive Club (report Vlad 23/08): il bottone
 -- "Acquista" dei pacchetti DC accreditava i Driver Coins client-side via
 -- CE_money.earnDC senza NESSUN pagamento — minting dal nulla ripetibile.

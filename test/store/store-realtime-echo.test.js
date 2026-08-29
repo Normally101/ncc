@@ -462,21 +462,30 @@ describe('Store & Executive Club — Banco Completo con Realtime Server Echo', (
             assert.equal(gs.driverCoins, 165);
         });
 
-        test('13. _dcSimPurchase — pacchetto Corporate via RPC di acquisto: accredito persiste dopo echo', async () => {
+        test('13. acquisto pacchetto Corporate: il saldo lo porta l\'eco del server, non il click', async () => {
+            /* Dal 29/08/2026 il click apre soltanto la cassa Stripe. I coin
+               arrivano dal webhook, e al browser tornano per la stessa strada di
+               ogni altro movimento: l'eco Realtime della riga `companies`. Il
+               test verifica proprio quello — che il saldo dopo l'acquisto sia
+               quello che dice il server, e che il click da solo non lo muova. */
             gs.driverCoins = 0;
             serverCompanyRow.driver_coins = 0;
 
-            sandbox._dcSimPurchase('corporate');
-            await new Promise(r => setImmediate(r));
+            sandbox.window.supabaseClient = {
+                auth: { getSession: async () => ({ data: { session: { access_token: 'jwt' } } }) },
+            };
+            sandbox.window.fetch = async () => ({ ok: true, json: async () => ({ ok: true, url: 'https://checkout.stripe.com/c/test' }) });
 
-            // Il credito NON passa piu' da earnDC/rpc_add_driver_coins (minting
-            // senza pagamento): solo dalla RPC dedicata rpc_purchase_dc_pack.
-            assert.equal(rpcAddCalls.length, 0);
-            assert.equal(gs.driverCoins, 220);
+            await sandbox._dcAcquistaPacchetto('corporate');
 
+            assert.equal(rpcAddCalls.length, 0, 'nessun conio dal client');
+            assert.equal(gs.driverCoins, 0, 'il click non accredita: porta alla cassa');
+
+            // Il pagamento va a buon fine e il webhook scrive sul server.
+            serverCompanyRow.driver_coins = 220;
             simulateServerRealtimeEcho();
 
-            assert.equal(gs.driverCoins, 220);
+            assert.equal(gs.driverCoins, 220, 'i coin arrivano dall\'unica fonte autorevole');
         });
 
         test('14. _dcSpend offline_limit (20 DC) — limite offline persiste dopo echo', async () => {

@@ -27,9 +27,9 @@
 ## `ui-dispatch.js`
 
 - `renderTabCorse` · `ui-dispatch.js:4` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `setupDragAndDrop` · `ui-dispatch.js:229` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `renderTabCorse` · `ui-dispatch.js:302` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `setupDragAndDrop` · `ui-dispatch.js:303` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `setupDragAndDrop` · `ui-dispatch.js:244` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `renderTabCorse` · `ui-dispatch.js:317` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `setupDragAndDrop` · `ui-dispatch.js:318` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-emails.js`
 
@@ -145,7 +145,7 @@
 
 - `renderTabRegions` · `ui-ops.js:4` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `renderTabProvinces` · `ui-ops.js:88` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `buyHRAutomation` · `ui-ops.js:218` · data-ce-act: `buyHRAutomation` (`ui-staff.js`) · doppioni: `serverState.js:534` · denaro: CE_money (`spendDC`)
+- `buyHRAutomation` · `ui-ops.js:218` · data-ce-act: `buyHRAutomation` (`ui-staff.js`) · doppioni: `serverState.js:559` · denaro: CE_money (`spendDC`)
 - `doAcquireProvince` · `ui-ops.js:249` · data-ce-act: `doAcquireProvince` (`ui-ops.js`) · doppioni: nessuno · denaro: no
 - `renderTabRegions` · `ui-ops.js:263` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 - `renderTabProvinces` · `ui-ops.js:264` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
@@ -174,33 +174,36 @@
 
 - `_sidebarToggle` · `ui-sidebar.js:21` · data-ce-act: `_sidebarToggle` (`index.html`) · doppioni: nessuno · denaro: no
 - `_sidebarActivateTab` · `ui-sidebar.js:45` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `switchTab` · `ui-sidebar.js:64` · data-ce-act: `switchTab` (`index.html`, `onboarding.js`, `ui-finance.js`, `ui-home.js`, `vanity.js`, `world-feed.js`) · doppioni: `dispatcher.js:151`, `em-chrome.js:32`, `motion.js:164`, `premium-ui.js:12`, `zero-to-hero.js:182` · denaro: no
+- `switchTab` · `ui-sidebar.js:64` · data-ce-act: `switchTab` (`index.html`, `onboarding.js`, `ui-finance.js`, `ui-home.js`, `vanity.js`) · doppioni: `dispatcher.js:151`, `em-chrome.js:32`, `motion.js:164`, `premium-ui.js:12`, `zero-to-hero.js:224` · denaro: no
 - `updateSidebarStats` · `ui-sidebar.js:71` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `updateUI` · `ui-sidebar.js:85` · data-ce-act: nessuna · doppioni: `engine.js:1986`, `objective-tracker.js:147` · denaro: no
+- `updateUI` · `ui-sidebar.js:85` · data-ce-act: nessuna · doppioni: `engine.js:2027`, `objective-tracker.js:150` · denaro: no
 - `toggleSidebar` · `ui-sidebar.js:92` · data-ce-act: `toggleSidebar` (`index.html`) · doppioni: nessuno · denaro: no
 
 ## `ui-staff.js`
 
 - `renderTabStaff` · `ui-staff.js:12` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `openCarModal` · `ui-staff.js:275` · data-ce-act: `openCarModal` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
-- `closeModals` · `ui-staff.js:365` · data-ce-act: `closeModals` (`index.html`) · doppioni: nessuno · denaro: no
-- `fireStaff` · `ui-staff.js:371` · data-ce-act: `fireStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `hireOfficeStaff` · `ui-staff.js:381` · data-ce-act: `hireOfficeStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
-- `renderTabStaff` · `ui-staff.js:404` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `openCarModal` · `ui-staff.js:279` · data-ce-act: `openCarModal` (`ui-fleet.js`) · doppioni: nessuno · denaro: no
+- `closeModals` · `ui-staff.js:369` · data-ce-act: `closeModals` (`index.html`) · doppioni: nessuno · denaro: no
+- `fireStaff` · `ui-staff.js:375` · data-ce-act: `fireStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `hireOfficeStaff` · `ui-staff.js:385` · data-ce-act: `hireOfficeStaff` (`ui-staff.js`) · doppioni: nessuno · denaro: no
+- `renderTabStaff` · `ui-staff.js:408` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
 
 ## `ui-store.js`
 
 - `_ecSwitchTab` · `ui-store.js:7` · data-ce-act: `_ecSwitchTab` (`ui-store.js`) · doppioni: nessuno · denaro: no
 - `renderTabPremiumStore` · `ui-store.js:10` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
-- `renderTabPremiumStore` · `ui-store.js:259` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`dcAccreditatiDalServer`)
-- `_dcSimPurchase` · `ui-store.js:261` · data-ce-act: `_dcSimPurchase` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`dcAccreditatiDalServer`)
-- `_dcSpend` · `ui-store.js:269` · data-ce-act: `_dcSpend` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
-- `_ecCaffeSospeso` · `ui-store.js:318` · data-ce-act: `_ecCaffeSospeso` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
-- `_ecManutenzioneExpress` · `ui-store.js:331` · data-ce-act: `_ecManutenzioneExpress` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
-- `_ecTangenteSindacato` · `ui-store.js:344` · data-ce-act: `_ecTangenteSindacato` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
-- `_ecPolizzaKasko` · `ui-store.js:354` · data-ce-act: `_ecPolizzaKasko` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
-- `_ecRadarVip` · `ui-store.js:371` · data-ce-act: `_ecRadarVip` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
-- `_ecTargaPresidenziale` · `ui-store.js:382` · data-ce-act: `_ecTargaPresidenziale` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
+- `renderTabPremiumStore` · `ui-store.js:283` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_dcCaricaCatalogo` · `ui-store.js:301` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_dcCatalogoServer` · `ui-store.js:310` · data-ce-act: nessuna · doppioni: nessuno · denaro: no
+- `_dcAcquistaPacchetto` · `ui-store.js:316` · data-ce-act: `_dcAcquistaPacchetto` (`ui-store.js`) · doppioni: nessuno · denaro: no
+- `_dcRitornoDallaCassa` · `ui-store.js:368` · data-ce-act: nessuna · doppioni: nessuno · denaro: CE_money (`dcAccreditatiDalServer`)
+- `_dcSpend` · `ui-store.js:424` · data-ce-act: `_dcSpend` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
+- `_ecCaffeSospeso` · `ui-store.js:473` · data-ce-act: `_ecCaffeSospeso` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
+- `_ecManutenzioneExpress` · `ui-store.js:486` · data-ce-act: `_ecManutenzioneExpress` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
+- `_ecTangenteSindacato` · `ui-store.js:499` · data-ce-act: `_ecTangenteSindacato` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
+- `_ecPolizzaKasko` · `ui-store.js:509` · data-ce-act: `_ecPolizzaKasko` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
+- `_ecRadarVip` · `ui-store.js:526` · data-ce-act: `_ecRadarVip` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
+- `_ecTargaPresidenziale` · `ui-store.js:537` · data-ce-act: `_ecTargaPresidenziale` (`ui-store.js`) · doppioni: nessuno · denaro: CE_money (`spendDC`)
 
 ---
 
@@ -216,10 +219,10 @@ Il vecchio configuratore auto (circa 185 righe con `openCarConfigurator`, `__cfg
 | Nome | Definizione 1 | Definizione 2 / altre | Note |
 |---|---|---|---|
 | `_kpi` | `ui-finance.js:87` | `ui-ranking.js:105` |  |
-| `buyHRAutomation` | `ui-ops.js:218` | `serverState.js:534` |  |
+| `buyHRAutomation` | `ui-ops.js:218` | `serverState.js:559` |  |
 | `_kpi` | `ui-ranking.js:105` | `ui-finance.js:87` |  |
-| `switchTab` | `ui-sidebar.js:64` | `dispatcher.js:151, em-chrome.js:32, motion.js:164, premium-ui.js:12, zero-to-hero.js:182` | Decoratore / catena di rendering UI deliberata |
-| `updateUI` | `ui-sidebar.js:85` | `engine.js:1986, objective-tracker.js:147` | Decoratore / catena di rendering UI deliberata |
+| `switchTab` | `ui-sidebar.js:64` | `dispatcher.js:151, em-chrome.js:32, motion.js:164, premium-ui.js:12, zero-to-hero.js:224` | Decoratore / catena di rendering UI deliberata |
+| `updateUI` | `ui-sidebar.js:85` | `engine.js:2027, objective-tracker.js:150` | Decoratore / catena di rendering UI deliberata |
 
 ---
 

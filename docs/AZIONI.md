@@ -178,7 +178,7 @@ delta, poi spegnere `rpc_sync_cash`, poi accendere il trigger). Dal 28/08 il reg
 | `_cryptoUpdatePreview` | `crypto.js:192` | nessuna | nessuno | no |
 | `_currentUserId` | `push-notifications.js:42` | nessuna | nessuno | no |
 | `_dayCompleted` | `ui-career.js:351` | nessuna | nessuno | no |
-| `_dcSimPurchase` | `ui-store.js:261` | `_dcSimPurchase` (`ui-store.js`) | nessuno | CE_money (`dcAccreditatiDalServer`) |
+| `_dcAcquistaPacchetto` | `ui-store.js:316` | `_dcAcquistaPacchetto` (`ui-store.js`) | nessuno | no (apre la cassa Stripe; accredita `api/dc-webhook.mjs`) |
 | `_dcSpend` | `ui-store.js:269` | `_dcSpend` (`ui-store.js`) | nessuno | CE_money (`spendDC`) |
 | `_deserializeRide` | `engine.js:446` | nessuna | nessuno | no |
 | `_destroyMap` | `map.js:279` | nessuna | nessuno | no |

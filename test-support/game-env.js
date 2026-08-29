@@ -234,7 +234,13 @@ function createGameEnv(files, opzioni = {}) {
         alert: () => {},
         localStorage: makeLocalStorage(),
         navigator: { userAgent: 'node-test', onLine: true, vibrate: () => {} },
-        location: { href: 'http://localhost/', reload(){} },
+        location: { href: 'http://localhost/', pathname: '/', search: '', reload(){} },
+        /* Due globali del browser che il gioco usa davvero: il ritorno dalla
+           cassa Driver Coins legge i parametri dell'indirizzo e poi li toglie.
+           Senza di loro quel codice finisce nel proprio catch e il test passa
+           senza aver provato niente. */
+        URLSearchParams,
+        history: { replaceState(){} },
         document: makeDocument(),
         innerWidth: 1280, innerHeight: 800,
         showNotification: (msg, type) => notifications.push({ msg, type }),

@@ -2,80 +2,117 @@
 /* ============================================================================
    test/store/executive-pack-payment.test.js
 
-   Regressione per il bypass totale della cassa nell'Executive Club (report
-   Vlad 23/08): il bottone "Acquista" dei pacchetti DC chiamava _dcSimPurchase,
-   che accreditava i Driver Coins con CE_money.earnDC SENZA alcun pagamento:
-   nessuna richiesta di conferma, nessuna RPC, solo minting dal nulla.
+   LA STORIA DI UNA CASSA CHE NON C'ERA, in tre atti.
 
-   Dopo la correzione i pacchetti passano SOLO dalla RPC dedicata
-   server-authoritative (ServerState.purchaseDriverCoinPack -> rpc_purchase_dc_pack):
-   - senza conferma del pagamento nessun coin viene accreditato;
-   - il credito arriva una volta sola, allineato al saldo che dichiara il server.
+   23/08/2026 — Vlad segnala che il bottone «Acquista» dei pacchetti DC
+   accreditava i Driver Coins con `CE_money.earnDC` senza alcun pagamento:
+   nessuna conferma, nessuna chiamata al server, coin dal nulla.
+
+   Correzione di allora: l'acquisto passa da `ServerState.purchaseDriverCoinPack`
+   → `rpc_purchase_dc_pack`. Il client smette di coniare. Ma quella RPC sul
+   database di produzione NON E' MAI ESISTITA: l'acquisto falliva sempre, e
+   sotto ai pacchetti restava scritto «acquisti simulati (demo)».
+
+   29/08/2026 — Vlad: «non deve piu' succedere che, se clicco per acquistare dei
+   driver coins, me li dia subito, ma dobbiamo collegarlo a Stripe». Ora la
+   cassa c'e': il browser apre una sessione di pagamento e i coin li scrive
+   `api/dc-webhook.mjs` dopo aver verificato la firma di Stripe.
+
+   Le tre versioni del codice sono diverse; la domanda a cui questo file
+   risponde e' sempre la stessa: PUO' IL BROWSER DARSI DEI DRIVER COINS?
    ============================================================================ */
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { freshEnv } = require('../../test-support/game-env.js');
 
-/* Finto ServerState fedele: quando la RPC di acquisto ha successo il SERVER ha
-   gia' accreditato (companies.driver_coins aggiornato), quindi il mock muove
-   gs().driverCoins lui stesso e restituisce il saldo vero — come farebbe il
-   bridge Realtime dopo una RPC reale. */
-function setupEnv(esitoRPC) {
-    const chiamateRPC = [];
-    const env = freshEnv({
-        serverState: {
-            purchaseDriverCoinPack: async (packId) => {
-                chiamateRPC.push({ packId });
-                if (!esitoRPC) return null; // server irraggiungibile / pagamento rifiutato
-                const esito = esitoRPC(packId);
-                if (esito && esito.ok && esito.driver_coins != null) {
-                    env.sandbox.gameState.driverCoins = esito.driver_coins;
-                }
-                return esito;
-            },
-        },
-    });
-    return { sandbox: env.sandbox, gs: env.sandbox.gameState, chiamateRPC };
+/** Ambiente col negozio pronto e una cassa che risponde come diciamo noi. */
+function setupEnv(rispostaCassa) {
+    const chiamate = [];
+    const env = freshEnv();
+    const s = env.sandbox;
+    s.window.supabaseClient = {
+        auth: { getSession: async () => ({ data: { session: { access_token: 'jwt-finto' } } }) },
+    };
+    s.window.fetch = async (url, opzioni) => {
+        chiamate.push({ url, opzioni });
+        if (rispostaCassa === 'irraggiungibile') throw new Error('rete giù');
+        return { ok: true, json: async () => (rispostaCassa || { ok: true, url: 'https://checkout.stripe.com/c/test' }) };
+    };
+    return { env, sandbox: s, gs: s.gameState, chiamate };
 }
 
-describe('Executive Club — i pacchetti DC passano solo dal pagamento confermato', () => {
+describe('Executive Club — i pacchetti DC passano solo da un pagamento vero', () => {
 
-    test('click sul pacchetto Starter (€4,99): ZERO DC se il pagamento non e\' confermato', async () => {
-        // La firma numerica e' quella che il bottone usava PRIMA della correzione
-        // (ceAct('_dcSimPurchase', [p.dc])): deve aver smesso di coniare valuta.
-        const { sandbox, gs, chiamateRPC } = setupEnv(null);
-        gs.driverCoins = 0;
-        sandbox._dcSimPurchase(50);
-        await new Promise(r => setImmediate(r));
-        assert.equal(gs.driverCoins, 0, 'nessun DC senza conferma pagamento');
-        assert.equal(chiamateRPC.length, 0, 'un importo grezzo non raggiunge la RPC di acquisto');
+    test('click sul pacchetto Starter (€4,99): ZERO DC finche\' non si paga', async () => {
+        const { env, sandbox, gs, chiamate } = setupEnv();
+        try {
+            gs.driverCoins = 0;
+
+            await sandbox._dcAcquistaPacchetto('starter');
+
+            assert.equal(gs.driverCoins, 0,
+                'IL DIFETTO DEL 23/08: qui il saldo passava da 0 a 50 senza che ' +
+                'un centesimo avesse lasciato la carta di nessuno.');
+            assert.equal(chiamate.length, 1, 'si apre la cassa, e basta');
+            assert.equal(chiamate[0].url, '/api/dc-checkout');
+            assert.equal(sandbox.window.location.href, 'https://checkout.stripe.com/c/test',
+                'il giocatore viene portato a pagare');
+        } finally { env.stopAllIntervals(); }
     });
 
-    test('acquisto legittimo del Corporate Pack: i DC arrivono solo dopo la RPC confermata', async () => {
-        const { sandbox, gs, chiamateRPC } = setupEnv((packId) => {
-            assert.equal(packId, 'corporate');
-            return { ok: true, driver_coins: 220 }; // il server ha gia' accreditato
+    test('il browser non decide quanto costa ne\' quanti coin riceve', async () => {
+        const { env, sandbox, chiamate } = setupEnv();
+        try {
+            await sandbox._dcAcquistaPacchetto('fondo_sovrano');
+            const inviato = JSON.parse(chiamate[0].opzioni.body);
+            assert.deepEqual(Object.keys(inviato), ['pack'],
+                'alla cassa va solo QUALE pacchetto: prezzo e coin li legge il ' +
+                'server dalla tabella dc_packs. Se partissero da qui, un browser ' +
+                'modificato comprerebbe 1300 coin per un centesimo.');
+        } finally { env.stopAllIntervals(); }
+    });
+
+    test('la cassa rifiuta: nessun accredito, nessuna eccezione, messaggio chiaro', async () => {
+        const { env, sandbox, gs } = setupEnv({ ok: false, reason: 'pacchetto_sconosciuto' });
+        try {
+            gs.driverCoins = 25;
+            await sandbox._dcAcquistaPacchetto('corporate');
+            assert.equal(gs.driverCoins, 25);
+            assert.ok(env.notifications.some(n => n.msg.includes('Nessun addebito')),
+                'chi non ha pagato deve sapere che non gli e\' stato addebitato niente');
+        } finally { env.stopAllIntervals(); }
+    });
+
+    test('server irraggiungibile: nessun accredito', async () => {
+        const { env, sandbox, gs } = setupEnv('irraggiungibile');
+        try {
+            gs.driverCoins = 25;
+            await sandbox._dcAcquistaPacchetto('corporate');
+            assert.equal(gs.driverCoins, 25,
+                'una rete che cade non e\' un motivo per regalare valuta premium');
+        } finally { env.stopAllIntervals(); }
+    });
+
+    test('nessuna delle vecchie porte di conio e\' rimasta aperta', async () => {
+        const chiamateAdd = [];
+        const env = freshEnv({
+            serverState: {
+                addDriverCoins: async (n, motivo) => { chiamateAdd.push({ n, motivo }); return null; },
+            },
         });
-        gs.driverCoins = 0;
-        sandbox._dcSimPurchase('corporate');
-        await new Promise(r => setImmediate(r));
-        assert.equal(chiamateRPC.length, 1, 'esattamente una chiamata alla RPC dedicata');
-        assert.equal(gs.driverCoins, 220, 'credito allineato al saldo dichiarato dal server');
-    });
+        const s = env.sandbox;
+        try {
+            s.window.supabaseClient = {
+                auth: { getSession: async () => ({ data: { session: { access_token: 'jwt' } } }) },
+            };
+            s.window.fetch = async () => ({ ok: true, json: async () => ({ ok: true, url: 'https://checkout.stripe.com/c/test' }) });
+            s.gameState.driverCoins = 0;
 
-    test('la RPC rifiuta il pagamento: nessun accredito, nessuna eccezione', async () => {
-        const { sandbox, gs } = setupEnv(() => ({ ok: false }));
-        gs.driverCoins = 10;
-        sandbox._dcSimPurchase('offshore');
-        await new Promise(r => setImmediate(r));
-        assert.equal(gs.driverCoins, 10, 'saldo intatto se il server rifiuta');
-    });
+            await s.window._dcAcquistaPacchetto('offshore');
 
-    test('server irraggiungibile (RPC assente): nessun accredito', async () => {
-        const env = freshEnv({});
-        env.sandbox.gameState.driverCoins = 7;
-        env.sandbox._dcSimPurchase('sovrano');
-        await new Promise(r => setImmediate(r));
-        assert.equal(env.sandbox.gameState.driverCoins, 7, 'saldo intatto senza porta di pagamento');
+            assert.equal(chiamateAdd.length, 0,
+                'ne\' earnDC ne\' addDriverCoins devono comparire nel percorso d\'acquisto');
+            assert.equal(s.gameState.driverCoins, 0);
+        } finally { env.stopAllIntervals(); }
     });
 });

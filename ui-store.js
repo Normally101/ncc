@@ -96,7 +96,15 @@ function renderTabPremiumStore() {
     const lowFuel        = (gameState.fleet||[]).filter(c => (c.fuel||0)<100).length;
     const ceoNeedEnergy  = (gameState.energy||0) < 100;
 
-    // ── TAB: PACCHETTI DC ────────────────────────────────────────────────────
+    /* ── TAB: PACCHETTI DC ───────────────────────────────────────────────────
+       Le voci qui sotto sono la GRAFICA del pacchetto (colori, icona, badge).
+       Prezzo e quantita' di coin, invece, sono quelli del server: se il
+       catalogo `dc_packs` e' stato caricato, i suoi valori sovrascrivono questi.
+       Il motivo non e' l'ordine: e' che il prezzo mostrato e quello addebitato
+       devono essere lo stesso numero. Se un giorno il listino cambia sul server
+       e non qui, il giocatore vedrebbe 4,99 e pagherebbe altro — e non e' un
+       fastidio, e' un addebito che non aveva accettato. */
+    const _catalogoSrv = window._dcCatalogoServer || null;
     const ecPkgs = [
         {
             key:'starter',
@@ -128,7 +136,15 @@ function renderTabPremiumStore() {
         },
     ];
 
-    const _packCard = (p) => `
+    /** Allinea un pacchetto al listino del server, quando lo conosciamo. */
+    const _conListino = (p) => {
+        const s = _catalogoSrv && _catalogoSrv[p.key];
+        if (!s) return p;
+        return { ...p, dc: s.dc,
+                 price: '€' + (s.price_cents / 100).toFixed(2).replace('.', ',') };
+    };
+
+    const _packCard = (p0) => { const p = _conListino(p0); return `
 <div class="ec-pack-card${p.featured?' featured':''}" style="border:1px solid ${p.border};background:#161b22">
   ${p.badge ? `<div class="ec-badge ${p.badge.cls}">${p.badge.txt}</div>` : ''}
   <div class="ec-pack-art" style="background:${p.artBg}">
@@ -145,15 +161,15 @@ function renderTabPremiumStore() {
       <div style="font-size:10px;color:var(--text-muted);margin-top:2px">${p.sub}</div>
     </div>
     <button class="ec-buy-btn" style="background:${p.btnBg};color:${p.btnColor}"
-      ${ceAct('_dcSimPurchase', [p.key])}>
+      ${ceAct('_dcAcquistaPacchetto', [p.key])}>
       Acquista · ${p.price}
     </button>
   </div>
-</div>`;
+</div>`; };
 
     const _acqHtml = `
 <div style="font-size:10px;color:rgba(212,175,55,0.45);text-align:center;margin-bottom:16px">
-  Acquisti simulati (demo) — i Driver Coins si accumulano anche completando missioni Presidential e trasferimenti VIP
+  Pagamento sicuro con carta, PayPal, Apple Pay o Google Pay — i Driver Coins si accumulano anche completando missioni Presidential e trasferimenti VIP
 </div>
 <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
   ${ecPkgs.map(_packCard).join('')}
@@ -266,40 +282,143 @@ function renderTabPremiumStore() {
 }
 window.renderTabPremiumStore = renderTabPremiumStore;
 
-/* Acquisto pacchetti Executive Club: porta unica = RPC dedicata
-   `rpc_purchase_dc_pack` (catalogo prezzi/DC lato server). Qui NON si accreditano
-   mai coin direttamente: senza conferma del pagamento nessun Driver Coin arriva —
-   prima della correzione questo handler coniava DC dal nulla via earnDC. */
+/* ─── ACQUISTO PACCHETTI DRIVER COINS ────────────────────────────────────────
+   Fino al 29/08/2026 questo pulsante chiamava `rpc_purchase_dc_pack`, che non
+   esisteva sul server: falliva sempre, e la scritta sotto ai pacchetti diceva
+   «acquisti simulati (demo)». Ora porta a una cassa vera.
+
+   Qui NON si accredita niente, e non e' una precauzione: e' l'architettura.
+   Il browser apre la cassa, il giocatore paga su Stripe, e i Driver Coins li
+   scrive `api/dc-webhook.mjs` — l'unico pezzo che parla col database con la
+   chiave capace di accreditare, e che accredita solo dopo aver verificato la
+   firma di Stripe. Anche riscrivendo questo file dalla console del browser non
+   si ottiene un coin. */
 const _EC_PACK_IDS = new Set(['starter', 'corporate', 'offshore', 'fondo_sovrano']);
 
-window._dcSimPurchase = function(packKey) {
-    // Solo gli ID del catalogo server sono accettati: un importo numerico non
-    // e' mai un pacchetto (prima della correzione il bottone passava p.dc).
+/** Legge il listino dal server e ridisegna: i prezzi mostrati devono essere
+ *  quelli che verranno addebitati. Fallisce in silenzio — se il catalogo non
+ *  arriva restano i prezzi locali, che oggi coincidono. */
+window._dcCaricaCatalogo = async function() {
+    const sb = window.supabaseClient;
+    if (!sb || window._dcCatalogoServer) return;
+    try {
+        const { data, error } = await sb.from('dc_packs')
+            .select('pack_key, dc, price_cents, currency, label').eq('attivo', true);
+        if (error || !Array.isArray(data) || !data.length) return;
+        const mappa = {};
+        for (const r of data) mappa[r.pack_key] = r;
+        window._dcCatalogoServer = mappa;
+        if (typeof window.renderTabPremiumStore === 'function'
+            && typeof _tabIs === 'function' && _tabIs('store')) window.renderTabPremiumStore();
+    } catch (e) { /* listino locale: nessun danno */ }
+};
+
+window._dcAcquistaPacchetto = async function(packKey) {
+    // Solo gli ID del catalogo sono accettati: un importo numerico non e' mai un
+    // pacchetto (prima di una vecchia correzione il bottone passava p.dc).
     if (!_EC_PACK_IDS.has(packKey)) {
         if (typeof showNotification === 'function') showNotification('Pacchetto non riconosciuto.', 'error');
         return;
     }
-    const SS = window.ServerState;
-    if (!SS || typeof SS.purchaseDriverCoinPack !== 'function') {
-        if (typeof showNotification === 'function') showNotification('Acquisto non disponibile: servizio pagamenti non raggiungibile.', 'error');
+    const sb = window.supabaseClient;
+    let token = null;
+    try {
+        const { data } = await sb.auth.getSession();
+        token = data?.session?.access_token || null;
+    } catch (e) { /* gestito sotto */ }
+    if (!token) {
+        if (typeof showNotification === 'function')
+            showNotification('Devi essere connesso per acquistare.', 'error');
         return;
     }
-    SS.purchaseDriverCoinPack(packKey)
-        .then((r) => {
-            if (!r || r.ok !== true || r.driver_coins == null) {
-                if (typeof showNotification === 'function') showNotification('Pagamento non confermato: nessun Driver Coin accreditato.', 'error');
+
+    if (typeof showNotification === 'function') showNotification('Apertura pagamento sicuro…', 'info');
+
+    let esito;
+    try {
+        const r = await fetch('/api/dc-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
+            body: JSON.stringify({ pack: packKey }),
+        });
+        esito = await r.json();
+    } catch (e) {
+        if (typeof showNotification === 'function')
+            showNotification('Cassa non raggiungibile. Nessun addebito effettuato.', 'error');
+        return;
+    }
+
+    if (!esito?.ok || !esito.url) {
+        /* Il messaggio distingue «non ancora attivo» da «non ha funzionato»:
+           sono due cose diverse per chi legge, e la seconda fa riprovare. */
+        const msg = esito?.reason === 'pagamenti_non_configurati'
+            ? 'Il negozio non è ancora attivo. Nessun addebito è stato fatto.'
+            : 'Pagamento non avviato. Nessun addebito è stato fatto.';
+        if (typeof showNotification === 'function') showNotification(msg, 'error');
+        return;
+    }
+
+    window.location.href = esito.url;
+};
+
+/* Il ritorno dalla cassa. Stripe rimanda qui con ?dc=ok, ma quel parametro non
+   e' una prova di pagamento — chiunque puo' digitarlo nella barra degli
+   indirizzi. Serve solo a sapere che vale la pena richiedere il saldo al
+   server, che e' l'unico a sapere se i coin sono arrivati davvero. */
+window._dcRitornoDallaCassa = function() {
+    let p;
+    try { p = new URLSearchParams(window.location.search); } catch (e) { return; }
+    const esito = p.get('dc');
+    if (!esito) return;
+
+    // Via il parametro dall'indirizzo: ricaricare la pagina non deve rimostrare
+    // lo stesso messaggio.
+    try {
+        p.delete('dc'); p.delete('session_id');
+        const q = p.toString();
+        window.history.replaceState({}, '', window.location.pathname + (q ? '?' + q : ''));
+    } catch (e) { /* non essenziale */ }
+
+    if (esito === 'annullato') {
+        if (typeof showNotification === 'function')
+            showNotification('Acquisto annullato. Nessun addebito.', 'info');
+        return;
+    }
+    if (esito !== 'ok') return;
+
+    if (typeof showNotification === 'function')
+        showNotification('Pagamento ricevuto — accredito in corso…', 'info');
+
+    /* L'accredito e' asincrono: Stripe chiama il nostro webhook mentre il
+       giocatore torna qui, e le due cose non hanno un ordine garantito. Si
+       richiede il saldo qualche volta prima di arrendersi, invece di mostrare
+       subito uno zero che sembrerebbe un pagamento perso. */
+    let tentativi = 0;
+    const attesa = window._DC_ATTESA_MS || 1500;   // i test la accorciano
+    const chiedi = async () => {
+        tentativi++;
+        try {
+            const SS = window.ServerState;
+            const r = SS && typeof SS.getDriverCoins === 'function'
+                ? await SS.getDriverCoins()
+                : null;
+            const saldo = r && (r.driver_coins != null ? r.driver_coins : null);
+            if (saldo != null && saldo !== (gameState.driverCoins || 0)) {
+                window.CE_money.dcAccreditatiDalServer(saldo);
+                if (typeof updateUI === 'function') updateUI();
+                if (typeof saveGame === 'function') saveGame();
+                if (typeof window.renderTabPremiumStore === 'function'
+                    && typeof _tabIs === 'function' && _tabIs('store')) window.renderTabPremiumStore();
+                if (typeof showNotification === 'function')
+                    showNotification('🪙 Driver Coins accreditati!', 'success');
                 return;
             }
-            // Il server ha gia' accreditato: qui solo allineamento al saldo vero.
-            window.CE_money.dcAccreditatiDalServer(r.driver_coins);
-            renderTabPremiumStore();
-            updateUI();
-            saveGame();
-            if (typeof showNotification === 'function') showNotification('🪙 Pacchetto Executive Club accreditato!', 'success');
-        })
-        .catch(() => {
-            if (typeof showNotification === 'function') showNotification('Pagamento non riuscito: nessun Driver Coin accreditato.', 'error');
-        });
+        } catch (e) { /* si riprova */ }
+        if (tentativi < 6) setTimeout(chiedi, attesa + 1000);
+        else if (typeof showNotification === 'function')
+            showNotification('Pagamento ricevuto. Se i coin non compaiono entro qualche minuto, scrivi al supporto.', 'info');
+    };
+    setTimeout(chiedi, attesa);
 };
 
 window._dcSpend = function(itemId, cost) {

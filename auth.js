@@ -202,6 +202,15 @@ async function _mmoBootSequence(userId) {
         }
     }
 
+    /* ── Phase 7: ritorno dalla cassa Driver Coins ─────────────────
+       Va dopo la Phase 5, non prima: il saldo autoritativo dal server deve gia'
+       essere stato applicato, altrimenti l'accredito appena arrivato verrebbe
+       sovrascritto dal valore vecchio del salvataggio. Il listino si carica
+       nello stesso punto perche' e' l'unica cosa che rende i prezzi mostrati
+       uguali a quelli addebitati. */
+    if (typeof window._dcRitornoDallaCassa === 'function') window._dcRitornoDallaCassa();
+    if (typeof window._dcCaricaCatalogo === 'function') window._dcCaricaCatalogo();
+
     // ── Heartbeat: aggiorna last_active_at ogni 60 secondi ────────
     _startHeartbeat();
 

@@ -65,7 +65,7 @@ describe('funzione negozioDC — Driver Coins & Executive Club', () => {
             const html = container.innerHTML;
             assert.ok(html.includes('Executive Club'), 'manca titolo Executive Club');
             assert.ok(html.includes('75'), 'manca visualizzazione saldo DC');
-            assert.ok(html.includes('data-ce-act="_dcSimPurchase"'), 'mancano bottoni acquisto DC');
+            assert.ok(html.includes('data-ce-act="_dcAcquistaPacchetto"'), 'mancano bottoni acquisto DC');
             assert.ok(html.includes('Starter Pack'), 'manca pacchetto starter');
             assert.ok(html.includes('Corporate Pack'), 'manca pacchetto corporate');
             assert.ok(html.includes('Offshore Pack'), 'manca pacchetto offshore');
@@ -123,32 +123,39 @@ describe('funzione negozioDC — Driver Coins & Executive Club', () => {
         });
     });
 
-    describe('acquisizione Driver Coins (_dcSimPurchase)', () => {
-        test('acquisto Starter Pack: accredito solo via RPC dedicata, mai da addDriverCoins', async () => {
+    describe('acquisizione Driver Coins (_dcAcquistaPacchetto)', () => {
+        /* Dal 29/08/2026 l'acquisto porta a una cassa Stripe e non accredita
+           nulla: i coin arrivano dal webhook, dopo il pagamento. Il percorso
+           completo e' coperto in test/store/pagamenti-dc.test.js. Qui resta la
+           domanda di sempre: puo' il browser darsi dei Driver Coins? No. */
+        test('nessun accredito dal client, ne\' via RPC ne\' via addDriverCoins', async () => {
             gs.driverCoins = 10;
-            await sandbox._dcSimPurchase('starter');
-            await new Promise(r => setImmediate(r));
+            sandbox.window.supabaseClient = {
+                auth: { getSession: async () => ({ data: { session: { access_token: 'jwt' } } }) },
+            };
+            sandbox.window.fetch = async () => ({ ok: true, json: async () => ({ ok: true, url: 'https://checkout.stripe.com/x' }) });
 
-            assert.equal(rpcPurchaseCalls.length, 1, 'deve chiamare rpc_purchase_dc_pack');
-            assert.equal(rpcPurchaseCalls[0].packId, 'starter');
+            await sandbox._dcAcquistaPacchetto('starter');
+
             assert.equal(rpcAddCalls.length, 0, 'niente minting senza pagamento');
-            assert.equal(gs.driverCoins, 60); // 10 locali + 50 accreditati dal server
-            assert.ok(env.notifications.some(n => n.msg.includes('accreditato')), 'conferma acquisto al giocatore');
+            assert.equal(rpcPurchaseCalls.length, 0, 'la vecchia RPC non viene piu\' chiamata');
+            assert.equal(gs.driverCoins, 10, 'il saldo non si muove dal browser');
         });
 
         test('ignora pacchetti o importi non validi per prevenire exploit', async () => {
             gs.driverCoins = 10;
-            await sandbox._dcSimPurchase(-20);
-            await new Promise(r => setImmediate(r));
-            assert.equal(gs.driverCoins, 10);
-            assert.equal(rpcAddCalls.length, 0);
-            assert.equal(rpcPurchaseCalls.length, 0);
+            let casse = 0;
+            sandbox.window.supabaseClient = {
+                auth: { getSession: async () => ({ data: { session: { access_token: 'jwt' } } }) },
+            };
+            sandbox.window.fetch = async () => { casse++; return { ok: true, json: async () => ({}) }; };
 
-            await sandbox._dcSimPurchase(NaN);
-            await new Promise(r => setImmediate(r));
+            await sandbox._dcAcquistaPacchetto(-20);
+            await sandbox._dcAcquistaPacchetto(NaN);
+
+            assert.equal(casse, 0, 'un importo non e\' mai un pacchetto');
             assert.equal(gs.driverCoins, 10);
             assert.equal(rpcAddCalls.length, 0);
-            assert.equal(rpcPurchaseCalls.length, 0);
         });
     });
 
