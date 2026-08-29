@@ -76,6 +76,43 @@
 > farlo. Quando si farà, la strada è quella già usata per gli altri file —
 > togliere i colori a mano e prendere i token `--em-*` da `style.css`.
 >
+> **STATO 29/08 (sera) — VEICOLI, AIUTO CONTESTUALE, MOCK-UP DEL TUTORIAL.**
+>
+> **1. I veicoli funzionano tutti** (`dac8831`). Verificati uno per uno: 18
+> veicoli stradali, tutti con immagine, scheda tecnica, famiglia e tratte
+> servibili. Ma il negozio dava a **10 auto su 19** una fascia diversa da quella
+> con cui poi lavorano: lo showroom traduceva le proprie etichette commerciali
+> (PRESIDENTIAL, COMMERCIAL, ARMORED…) con una mappa sua, duplicata in due punti
+> del file. Con la normalizzazione al caricamento, l'auto **cambiava fascia
+> ricaricando la pagina**. Ora è una funzione sola che legge il listino, e il
+> negozio lo dice: «SERVE CORSE STANDARD/PREMIUM/LUXURY» su ogni auto.
+> **Rimosso lo Stellar V-Imperial** che avevo aggiunto: Vlad ha chiesto niente
+> veicoli nuovi. Conseguenza accettata: i minivan arrivano al massimo a PREMIUM.
+> Nuovo guardrail `test/guardrail/veicoli-funzionano.test.js`.
+>
+> **Non raggiungibili** (censiti nel guardrail, decisione di prodotto in sospeso):
+> elicottero e jet (prezzo, soglia e potenziamento HQ, ma nessun pulsante li
+> vende) · il leasing (`openLeasingModal` esiste, nessuno la chiama) ·
+> `USED_CARS` non è un concessionario, sono i lotti delle aste.
+>
+> **2. Aiuto contestuale** (`dac8831`). Pulsante «?» sempre presente che apre il
+> capitolo del manuale per la scheda aperta, in un pannello sopra il gioco.
+> Trenta schede mappate, con un test che legge le schede vere da dispatcher.js.
+>
+> **3. Cinque mock-up del tutorial** in `_mockups/tutorial-cinque-direzioni.html`:
+> nota interna · messaggio da Vittorio · barra operativa · carta intestata ·
+> spotlight ancorato. Stesso testo vero, cinque trattamenti. **In attesa che
+> Vlad scelga.**
+>
+> **4. Annotato**: la configurazione motore (diesel/benzina, cavalli) che Vlad
+> vuole nel configuratore — **puramente estetica, nessun beneficio**. Nota nel
+> vault `03 Sistemi Core/Configurazione Motore (da fare).md`.
+>
+> **I pagamenti restano in standby** per decisione di Vlad: prima il gioco deve
+> funzionare. Il codice è pronto e online, mancano solo le chiavi.
+>
+> Suite: **2261 test, 0 rossi.**
+
 > Suite: **2252 test, 0 rossi.**
 
 > **STATO 28/08 (notte) — PRIMO PLAYTEST ESTERNO (Pietro). Tutto risolto.**
