@@ -50,7 +50,12 @@ const CORE_FILES = [
     'onboarding-core.js', 'zero-to-hero.js', 'vittorio.js', 'showroom.js', 'vtk-market.js', 'p2p-market.js',
     'p2p-render.js', 'b2b.js', 'auctions.js', 'driver_skills.js', 'black_ops.js', 'crypto.js',
     'hq-data.js', 'hq.js', 'hostile_takeover.js', 'nemesis.js', 'infrastructure.js',
-    'contracts.js', 'tourism.js'
+    'contracts.js', 'tourism.js',
+    /* knowledge-book.js: il manuale. Va caricato QUI e non solo in index.html
+       perche' le sue tabelle si generano dai dati veri del gioco — se un giorno
+       una costante cambia nome, il manuale comincia a mentire e solo un test che
+       lo disegna davvero se ne accorge. */
+    'knowledge-book.js'
 ];
 
 // document reale via jsdom — necessario perché il codice del gioco usa

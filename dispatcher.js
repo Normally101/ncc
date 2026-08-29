@@ -236,6 +236,7 @@ window.switchTab = function(tab) {
         case 'store':    title.innerText = "💎 Executive Club"; _safeRender(renderTabPremiumStore); break;
         case 'market':   title.innerText = "🚗 Mercato Auto"; _safeRender(renderTabMarket); break;
         case 'help':     title.innerText = "🆘 Aiuto & Supporto"; _safeRender(renderTabHelp); break;
+        case 'manuale':  title.innerText = "📖 Knowledge Book";   _safeRender(window.renderTabManuale); break;
         case 'provinces':
             title.innerText = "🗺️ War Room";
             _safeRender(window.renderTabWarRoom || renderTabProvinces);
