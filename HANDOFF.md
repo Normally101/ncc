@@ -3,6 +3,79 @@
 > Aggiornato: 29 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
+> # ✅ 30/08 — LE QUATTRO SEGNALAZIONI DI VLAD: CHIUSE. Suite 2286 verdi.
+>
+> Metodo tenuto come chiesto: un difetto per volta, un test che lo difende
+> prima di passare al successivo, `npm test` intero dopo ognuno, verifica dal
+> vivo nel browser. Partenza 2261 verdi, arrivo **2286**, zero rossi.
+>
+> **1. VITTORIO — chiuso** (`4aaf1b6`). La diagnosi del 29/08 era esatta. Due
+> rimedi invece di uno: il bottone ora passa l'importo (`data-ce-args`), e
+> `repayVittorio` accetta come importo **solo un numero finito** — qualunque
+> altra cosa significa «paga quanto consente la cassa».
+> **Il censimento del pattern è stato fatto e non ha trovato altri Vittorio**:
+> 452 invocazioni di azioni (`data-ce-act` letterale + helper `ceAct`), 90 senza
+> argomenti, 4 con parametri dichiarati. Tre erano sane — due dichiarano `ev`
+> (`ceForgotPassword`, `ceAlChatEnter`), la terza (`buyHRAutomation`) risolveva
+> a un'omonima interna a `serverState.js`, mentre la globale vera in
+> `ui-ops.js:218` non ha parametri. Il guardrail permanente è
+> `test/guardrail/azioni-senza-argomenti.test.js`: rifà quel censimento a ogni
+> run e fallisce se nasce un caso nuovo.
+> Corretto per strada `test/funzioni/aste.test.js`: `_countdown` a +72h esatti
+> legge «2g 23h» se passa un millisecondo, e la suite diventava rossa a caso.
+>
+> **2. DRIVER COINS — nessun codice da cambiare, verificato dal vivo.** Il testo
+> «Pagamento non confermato: nessun Driver Coin accreditato» **non esiste più nel
+> repo**: viveva in `ui-store.js` fino a `2e49890` (23/08) ed è stato sostituito
+> da `5da4036`. Verificato che la produzione serve il file nuovo
+> (`curl .../ui-store.js` → contiene `api/dc-checkout`, non contiene la vecchia
+> frase) e che l'endpoint risponde **503 `pagamenti_non_configurati`** in 0,67s,
+> che il client traduce in «Il negozio non è ancora attivo. Nessun addebito è
+> stato fatto.» Quello che Vlad ha visto era la sua cache del browser.
+> **Resta una domanda per Vlad, non un bug:** accendere Stripe? Servono le
+> quattro chiavi di `docs/PAGAMENTI.md`.
+>
+> **3. NON ESCONO PIÙ SERVIZI — diagnosticato e chiuso** (`427520f`). Le corse
+> venivano generate regolarmente: **sparivano**. `autoDispatchRides()` gira a
+> ogni tick del gameLoop (`engine.js:1091`, ogni 600ms) e assegnava tutto senza
+> chiedere se in azienda ci fosse un dispatcher. Misurato sul motore vero:
+> `pending prima=1, dopo=0`, a ogni singolo giro. Quindi «Richieste Pendenti»
+> restava 0 per sempre e intanto la coda dell'autista saliva a 5.
+> Il catalogo dello staff lo diceva già: `dispatcher_jr` — «Auto-smista corse
+> Standard ogni tick. **Senza di lui tutto è manuale.**» Il gate non c'era.
+> Il difetto esisteva da sempre ma è diventato **totale il 28/08**: con `RITMO=3`
+> le corse durano un terzo, nelle 4h di coda ce ne stanno tre volte tante e la
+> coda non si riempie quasi mai — prima si saturava e qualche richiesta restava
+> in lista. Ora: nessun dispatcher = tutto manuale; Junior = corse standard;
+> Senior = anche VIP e Ultra.
+> ⚠️ **Conseguenza voluta da tenere d'occhio:** chi non assume un dispatcher non
+> ha più smistamento automatico a schermo chiuso oltre alla coda già piantata.
+> Corretto anche **«coda 5/undefined»**: `ui-dispatch.js` leggeva
+> `qInfo.maxQueue`, campo che `_getDriverQueueInfo` non restituisce più da
+> quando il tetto si misura in ore. Ora «coda 9 corse» + «coda tot: 2h 39min / 4h».
+>
+> **4. EMAIL EVENTI CEO — chiuso** (`b2ebaaa`). Tutti e quattro i difetti dello
+> screenshot: la città mancante (`REGION_CAPOLUOGHI` + `_cittaPerEmail()`, che
+> ripara anche le email di caccia agli autisti), il «302» al posto della data
+> (`_dataPerEmail()`, più otto frasi dei template che volevano l'articolo),
+> l'oggetto che era quello del template a caso invece che dell'evento, e i
+> prezzi fissi (**±30%**, etichetta ricostruita dal numero vero così bottone e
+> addebito non possono divergere; il beneficio in reputazione **non** si muove,
+> è ciò che rende la variazione una decisione).
+> ⚠️ **RESTA APERTO, deliberatamente non toccato:** il *corpo* della lettera
+> parla ancora di un evento inventato dal template («Summit annuale del Forum
+> Economico») mentre i bottoni sotto vendono l'evento del mese. Gli 11 template
+> `ceo_event` sono inviti generici e i `CEO_EVENTS` sono sei eventi precisi:
+> riconciliarli è una scelta di scrittura, non un fix di passaggio. **Serve una
+> decisione di Vlad**: o i template nominano l'evento (`{{eventName}}`), o gli
+> eventi si portano dietro il proprio testo d'invito.
+> Trovato per strada e non toccato: `data.js:1613` dice «sanzioni da €{{amount}}
+> a €{{amount}}» — minimo e massimo escono uguali per costruzione.
+>
+> **5. DESIGN TUTORIAL (Spotlight ancorato) — vedi sotto, è l'unico rimasto.**
+>
+> ---
+
 > **STATO 29/08 — LE TRE FASCE, I PAGAMENTI VERI, IL MANUALE.**
 > Quattro richieste di Vlad dopo il playtest di Pietro. Tre fatte, una annotata.
 >
