@@ -743,7 +743,9 @@ describe('Funzione Aste Giudiziarie — Esecuzione e ciclo di vita', () => {
 
             // Più di 48h (es. 72h -> 3g 0h)
             const res48h = vm.runInContext('_countdown(new Date(Date.now() + 72 * 3600 * 1000).toISOString())', sandbox);
-            assert.match(res48h, /3g \d+h/);
+            // 2g 23h se fra il Date.now() del test e quello di _countdown passa un ms:
+            // stessa tolleranza gia' usata per i due casi qui sotto.
+            assert.match(res48h, /2g \d+h|3g \d+h/);
 
             // Tra 1h e 48h (es. 5h -> 5h 0m)
             const res5h = vm.runInContext('_countdown(new Date(Date.now() + 5 * 3600 * 1000).toISOString())', sandbox);

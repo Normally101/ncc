@@ -73,8 +73,12 @@
         var g = gs(); var d = g && g.vittorioDebt;
         if (!d || d.status !== 'active') return;
         var cash = g.cash || 0;
-        var pay = Math.max(0, Math.min(amount != null ? amount : cash, d.outstanding, cash));
-        if (pay <= 0) {
+        // amount arriva anche dal bottone del modal, che non ha data-ce-args: in quel
+        // caso events.js passa l'Event come primo argomento. Solo un numero finito è
+        // un importo; qualunque altra cosa significa «ripaga quanto consente la cassa».
+        var requested = Number.isFinite(amount) ? amount : cash;
+        var pay = Math.max(0, Math.min(requested, d.outstanding, cash));
+        if (!Number.isFinite(pay) || pay <= 0) {
             if (typeof window.showNotification === 'function')
                 window.showNotification('Non hai contanti per pagare Vittorio.', 'error');
             return;
@@ -135,7 +139,7 @@
           +   '<div style="font-size:30px;font-weight:900;color:#ef4444;margin:12px 0 2px">€' + fmt(d.outstanding) + '</div>'
           +   '<div style="font-size:11px;color:#6b7280;margin-bottom:18px">Interesse +' + (DAILY_INTEREST * 100) + '%/giorno · Cassa: €' + fmt(g.cash || 0) + '</div>'
           +   '<div style="display:flex;flex-direction:column;gap:8px">'
-          +     '<button data-ce-act="repayVittorio" ' + (canPay > 0 ? '' : 'disabled') + ' style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:' + (canPay > 0 ? 'pointer' : 'not-allowed') + ';opacity:' + (canPay > 0 ? 1 : 0.5) + '">💸 Ripaga ' + (canPay >= d.outstanding ? 'tutto (€' + fmt(d.outstanding) + ')' : '€' + fmt(canPay)) + '</button>'
+          +     '<button data-ce-act="repayVittorio" data-ce-args=\'[' + canPay + ']\' ' + (canPay > 0 ? '' : 'disabled') + ' style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:' + (canPay > 0 ? 'pointer' : 'not-allowed') + ';opacity:' + (canPay > 0 ? 1 : 0.5) + '">💸 Ripaga ' + (canPay >= d.outstanding ? 'tutto (€' + fmt(d.outstanding) + ')' : '€' + fmt(canPay)) + '</button>'
           +     flipBtn
           +     '<button data-ce-act="_closeVittorioModal" style="background:transparent;border:1px solid #30363d;color:#9ca3af;padding:10px;border-radius:8px;cursor:pointer">Più tardi (gli interessi salgono)</button>'
           +   '</div>'
