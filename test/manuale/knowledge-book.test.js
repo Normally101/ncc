@@ -218,3 +218,73 @@ describe('Knowledge Book — la ricerca', () => {
         } finally { env.stopAllIntervals(); }
     });
 });
+
+describe('Knowledge Book — l\'aiuto contestuale', () => {
+
+    test('ogni scheda del gioco ha un capitolo che la spiega', () => {
+        /* Vlad: «così i giocatori possono sempre capire subito cos'è che stanno
+           guardando». «Sempre» vuol dire da OGNI scheda: se una non è mappata,
+           il pulsante «?» apre Le basi — che è una risposta onesta ma non la
+           risposta. Questo test legge le schede vere da dispatcher.js, così
+           aggiungerne una nuova senza spiegarla diventa visibile subito. */
+        const fs = require('node:fs');
+        const path = require('node:path');
+        const ROOT = path.resolve(__dirname, '..', '..');
+        const disp = fs.readFileSync(path.join(ROOT, 'dispatcher.js'), 'utf8');
+        const schede = [...disp.matchAll(/case\s+'([a-z_]+)':\s*title\.innerText/g)].map(m => m[1]);
+
+        const { env, s } = manuale();
+        try {
+            assert.ok(schede.length > 20, `attese molte schede, trovate ${schede.length}`);
+            const mappa = s.window.KB_AIUTO_PER_SCHEDA;
+            const scoperte = schede.filter(t => t !== 'manuale' && !mappa[t]);
+            assert.deepEqual(Array.from(scoperte), [],
+                'queste schede non hanno un capitolo che le spieghi: il pulsante ' +
+                '«?» ci aprirebbe Le basi, che non è quello che il giocatore cerca');
+
+            // E ogni capitolo puntato deve esistere davvero.
+            const ids = new Set(s.window.KB_CAPITOLI.map(c => c.id));
+            const rotti = Object.entries(mappa).filter(([, cap]) => !ids.has(cap));
+            assert.deepEqual(Array.from(rotti), [], 'la mappa punta a capitoli inesistenti');
+        } finally { env.stopAllIntervals(); }
+    });
+
+    test('il pannello si apre sul capitolo giusto e si chiude', () => {
+        const { env, s } = manuale();
+        try {
+            s.window._activeTab = 'corse';
+            vm.runInContext("var _activeTab = 'corse';", s);
+            s.window.kbAiuto();
+
+            const velo = s.document.getElementById('kb-aiuto-velo');
+            assert.ok(velo, 'il pannello deve comparire');
+            assert.ok(velo.innerHTML.includes('Le corse'),
+                'dal Dispatch, «?» deve spiegare le corse');
+            assert.ok(velo.innerHTML.includes('STANDARD'), 'col contenuto vero del capitolo');
+
+            s.document.getElementById('kb-aiuto-chiudi').click();
+            assert.equal(s.document.getElementById('kb-aiuto-velo'), null, 'e deve chiudersi');
+        } finally { env.stopAllIntervals(); }
+    });
+
+    test('il pulsante si monta una volta sola e non si moltiplica', () => {
+        const { env, s } = manuale();
+        try {
+            for (let i = 0; i < 5; i++) s.window.kbMontaPulsanteAiuto();
+            const bottoni = s.document.querySelectorAll('#kb-aiuto-btn');
+            assert.equal(bottoni.length, 1,
+                'si monta a ogni cambio scheda: se ne aggiungesse uno ogni volta, ' +
+                'dopo mezz\'ora di gioco sarebbero decine sovrapposti');
+        } finally { env.stopAllIntervals(); }
+    });
+
+    test('un capitolo esplicito vince sulla scheda aperta', () => {
+        const { env, s } = manuale();
+        try {
+            vm.runInContext("var _activeTab = 'corse';", s);
+            s.window.kbAiuto('driver-coins');
+            const velo = s.document.getElementById('kb-aiuto-velo');
+            assert.ok(velo.innerHTML.includes('Driver Coins'));
+        } finally { env.stopAllIntervals(); }
+    });
+});

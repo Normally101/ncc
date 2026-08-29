@@ -296,7 +296,6 @@ const STELLAR_VOLT_CATALOG = [
     // ── Stellar gasoline ──────────────────────────────────────────────────────
     { id:'stellar_e_exec',    name:'Stellar E-Executive',   img:'assets/fleet/stellar-e-executive.jpg',  tier:'BUSINESS',     fuel:'gasoline', price:120000,  rideGate:0,    co2PerKm:0.18, vehicleClass:'stellar_e_exec'    },
     { id:'stellar_v_carr',    name:'Stellar V-Carrier',     img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PREMIUM',      fuel:'gasoline', price:95000,   rideGate:0,    co2PerKm:0.22, vehicleClass:'stellar_v_carr'    },
-    { id:'stellar_v_imp',     name:'Stellar V-Imperial',    img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PRESIDENTIAL', fuel:'gasoline', price:280000,  rideGate:250,  co2PerKm:0.24, vehicleClass:'stellar_v_imp'     },
     { id:'stellar_s_imp',     name:'Stellar S-Imperial',    img:'assets/fleet/stellar-s-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'gasoline', price:480000,  rideGate:250,  co2PerKm:0.20, vehicleClass:'stellar_s_imp'     },
     { id:'stellar_g_over',    name:'Stellar G-Overlord',    img:'assets/fleet/stellar-g-overlord.jpg',   tier:'ARMORED',      fuel:'gasoline', price:950000,  rideGate:1000, co2PerKm:0.28, vehicleClass:'stellar_g_over'    },
     // ── Stellar Q electric ────────────────────────────────────────────────────

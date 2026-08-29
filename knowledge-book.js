@@ -275,27 +275,38 @@ aumenta la <strong>fatica</strong> dell'autista.</p>`,
             },
         },
         {
-            id: 'usato-leasing', titolo: 'Usato, leasing, aste',
+            id: 'usato-leasing', titolo: 'Gli altri modi di avere un veicolo',
             corpo: () => {
                 const usate = _kbDato('USED_CARS', []);
                 return `
-<p>Comprare nuovo non è l'unico modo, e all'inizio non è nemmeno il migliore.</p>
+<p>Comprare nuovo dallo Showroom non è l'unico modo, e all'inizio non è nemmeno
+il migliore.</p>
 
-<h4>L'usato</h4>
-<p>Costa molto meno ma parte con la condizione già consumata: lavorerà, e insieme
-ti chiederà l'officina prima del previsto.</p>
-${_kbTabella(['Modello', 'Condizione', 'Prezzo'],
-    usate.map(c => [c.name, c.condition + '%', _kbEuro(c.price)]), { dx: [1, 2] })}
-
-<h4>Il leasing</h4>
-<p>Nessun esborso iniziale, un canone giornaliero. Conviene quando ti serve capacità
-adesso e i soldi ti servono altrove — ma il canone si paga anche nei giorni in cui
-l'auto è ferma, ed è lì che il leasing diventa caro.</p>
+<h4>Il noleggio breve</h4>
+<p>Si prende dallo Showroom stesso: paghi tutto subito per un numero di giorni, e
+alla scadenza il veicolo torna al concessionario. Lavora come un'auto tua, ma non
+la puoi rivendere. Serve per coprire un picco di lavoro senza immobilizzare
+capitale.</p>
 
 <h4>Le aste giudiziarie</h4>
-<p>Veicoli sequestrati, a prezzi che non si trovano altrove, ma si compra al buio e
-contro altri offerenti. Non è un canale su cui contare: è un colpo di fortuna
-quando capita.</p>`;
+<p>Veicoli sequestrati, a prezzi che non si trovano altrove — e sono l'unico posto
+dove compaiono le auto <strong>usate</strong>, che costano molto meno ma partono
+con la condizione già consumata: lavorano, e insieme ti chiedono l'officina prima
+del previsto.</p>
+${_kbTabella(['Modello', 'Condizione', 'Valore'],
+    usate.map(c => [c.name, c.condition + '%', _kbEuro(c.price)]), { dx: [1, 2] })}
+<p>Si compra al buio e contro altri offerenti: non è un canale su cui contare, è
+un colpo di fortuna quando capita.</p>
+
+<h4>Il mercato fra giocatori</h4>
+<p>Nella scheda <strong>Mercato Auto</strong> si comprano e si vendono veicoli
+usati fra giocatori veri. È anche il posto dove liberarsi di un'auto che non serve
+più: rivenderla a un altro rende più che rottamarla.</p>
+
+${_kbNota(`Un veicolo in <strong>leasing</strong> può capitarti (per esempio come
+auto di cortesia), e allora paghi un canone giornaliero finché non scade. Ma non
+c'è un concessionario dove stipularne uno: se stavi cercando dove fare un leasing,
+non lo trovi perché non c'è.`)}`;
             },
         },
         {
@@ -925,8 +936,196 @@ function renderTabManuale() {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   AIUTO CONTESTUALE — «cos'è che sto guardando?»
+
+   Vlad, 29/08/2026: «così i giocatori possono sempre capire subito cos'è che
+   stanno guardando». Un manuale che esiste ma va cercato viene letto una volta
+   e poi dimenticato; la domanda «cos'è questo?» nasce davanti alla schermata,
+   non nell'indice, e va risposta lì.
+
+   Un pulsante sempre presente apre il capitolo giusto per la scheda aperta, in
+   un pannello sopra il gioco — non cambiando scheda: chi sta smistando corse e
+   ha un dubbio non deve perdere il posto per toglierselo.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Ogni scheda del gioco al capitolo che la spiega. Le schede che non compaiono
+   qui ricadono su «Le basi», che risponde comunque a «che gioco è». */
+var KB_AIUTO_PER_SCHEDA = {
+    home:       'basi',
+    corse:      'corse',
+    fleet:      'flotta',
+    showroom:   'flotta',
+    market:     'flotta',
+    auctions:   'flotta',
+    staff:      'persone',
+    finance:    'patrimonio',
+    invest:     'patrimonio',
+    realestate: 'patrimonio',
+    crypto:     'patrimonio',
+    regions:    'territorio',
+    provinces:  'territorio',
+    b2b:        'contratti',
+    contracts:  'contratti',
+    tourism:    'contratti',
+    infrastructure: 'contratti',
+    marketing:  'reputazione',
+    ranking:    'reputazione',
+    prestigio:  'reputazione',
+    consorzi:   'reputazione',
+    legal:      'rischi',
+    politics:   'rischi',
+    shadow:     'rischi',
+    nemesis:    'rischi',
+    opa:        'rischi',
+    store:      'driver-coins',
+    career:     'basi',
+    emails:     'basi',
+    lifestyle:  'patrimonio',
+    hq:         'flotta',
+    help:       'glossario',
+};
+
+/** Il capitolo che spiega la scheda aperta adesso. */
+function _kbCapitoloPerScheda(scheda) {
+    const id = KB_AIUTO_PER_SCHEDA[scheda] || 'basi';
+    return KB_CAPITOLI.find(c => c.id === id) || KB_CAPITOLI[0];
+}
+
+function _kbStilePannello() {
+    if (document.getElementById('kb-aiuto-style')) return;
+    const st = document.createElement('style');
+    st.id = 'kb-aiuto-style';
+    st.textContent = `
+        #kb-aiuto-btn {
+            position:fixed; right:18px; bottom:92px; z-index:1500;
+            width:38px; height:38px; border-radius:50%; border:1px solid var(--em-line);
+            background:var(--em-card,#161b22); color:var(--em-gold,#c79a2a);
+            font-size:17px; font-weight:800; cursor:pointer; line-height:1;
+            box-shadow:0 4px 14px rgba(0,0,0,.45);
+            transition:transform .14s ease, border-color .14s ease, color .14s ease;
+        }
+        #kb-aiuto-btn:hover { transform:translateY(-2px); border-color:var(--em-gold,#c79a2a); }
+        #kb-aiuto-btn:focus-visible { outline:2px solid var(--em-gold,#c79a2a); outline-offset:2px; }
+
+        #kb-aiuto-velo {
+            position:fixed; inset:0; z-index:2400; background:rgba(0,0,0,.72);
+            display:flex; align-items:center; justify-content:center; padding:24px;
+        }
+        #kb-aiuto-pannello {
+            width:min(720px,100%); max-height:82vh; display:flex; flex-direction:column;
+            background:var(--em-card,#161b22); border:1px solid var(--em-line);
+            border-radius:14px; box-shadow:0 24px 64px rgba(0,0,0,.6); overflow:hidden;
+        }
+        #kb-aiuto-testa {
+            display:flex; align-items:center; gap:10px; padding:14px 18px;
+            border-bottom:1px solid var(--em-line); flex-shrink:0;
+        }
+        #kb-aiuto-testa .t { font-size:15px; font-weight:800; color:var(--em-ink); flex:1; }
+        #kb-aiuto-testa .x {
+            background:none; border:none; color:var(--em-muted); font-size:22px;
+            cursor:pointer; line-height:1; padding:0 4px;
+        }
+        #kb-aiuto-testa .x:hover { color:var(--em-ink); }
+        #kb-aiuto-corpo { overflow-y:auto; padding:4px 18px 18px; }
+        #kb-aiuto-pie {
+            padding:12px 18px; border-top:1px solid var(--em-line); flex-shrink:0;
+            display:flex; justify-content:space-between; align-items:center; gap:12px;
+        }
+        #kb-aiuto-pie .n { font-size:10.5px; color:var(--em-dim); }
+        @media (max-width:720px) { #kb-aiuto-btn { bottom:120px; right:12px; } }
+    `;
+    document.head.appendChild(st);
+}
+
+/** Apre il pannello d'aiuto sul capitolo indicato (o su quello della scheda). */
+window.kbAiuto = function(capitoloId) {
+    _kbStile();          // gli stili delle tabelle: il pannello mostra le stesse
+    _kbStilePannello();
+    const esistente = document.getElementById('kb-aiuto-velo');
+    if (esistente) esistente.remove();
+
+    const scheda = (typeof _activeTab !== 'undefined' && _activeTab) ? _activeTab : 'home';
+    const cap = capitoloId
+        ? (KB_CAPITOLI.find(c => c.id === capitoloId) || _kbCapitoloPerScheda(scheda))
+        : _kbCapitoloPerScheda(scheda);
+
+    const sezioni = cap.sezioni.map(s => {
+        let corpo;
+        try { corpo = s.corpo(); }
+        catch (e) { corpo = '<p><em>Questa sezione non è disponibile in questo momento.</em></p>'; }
+        return `<div class="kb-sez"><div class="kb-sez-tit">${s.titolo}</div>${corpo}</div>`;
+    }).join('');
+
+    const velo = document.createElement('div');
+    velo.id = 'kb-aiuto-velo';
+    velo.innerHTML = `
+      <div id="kb-aiuto-pannello" class="em" role="dialog" aria-modal="true" aria-label="Aiuto: ${cap.titolo}">
+        <div id="kb-aiuto-testa">
+            <span style="font-size:18px">${cap.icona}</span>
+            <span class="t">${cap.titolo}</span>
+            <button class="x" id="kb-aiuto-chiudi" aria-label="Chiudi">×</button>
+        </div>
+        <div id="kb-aiuto-corpo" class="kb-corpo">${sezioni}</div>
+        <div id="kb-aiuto-pie">
+            <span class="n">Capitolo del manuale · premi Esc per chiudere</span>
+            <button class="em-goldbtn" id="kb-aiuto-tutto" style="padding:7px 14px;font-size:11px">
+                Apri il manuale completo
+            </button>
+        </div>
+      </div>`;
+    document.body.appendChild(velo);
+
+    const chiudi = () => {
+        velo.remove();
+        document.removeEventListener('keydown', suEsc);
+    };
+    /* Esc chiude, e il listener si toglie da solo: un pannello d'aiuto che
+       lascia in giro un listener per ogni apertura diventa, dopo mezz'ora di
+       gioco, mezz'ora di listener. */
+    const suEsc = (e) => { if (e.key === 'Escape') chiudi(); };
+    document.addEventListener('keydown', suEsc);
+    velo.addEventListener('click', (e) => { if (e.target === velo) chiudi(); });
+    velo.querySelector('#kb-aiuto-chiudi').addEventListener('click', chiudi);
+    velo.querySelector('#kb-aiuto-tutto').addEventListener('click', () => {
+        _kbCapitoloAperto = cap.id;
+        chiudi();
+        if (typeof window.switchTab === 'function') window.switchTab('manuale');
+    });
+    velo.querySelector('#kb-aiuto-chiudi').focus();
+};
+
+/** Il pulsante fisso. Si crea una volta e resta: cambia solo cosa spiega. */
+window.kbMontaPulsanteAiuto = function() {
+    if (typeof document === 'undefined' || !document.body) return;
+    _kbStilePannello();
+    if (document.getElementById('kb-aiuto-btn')) return;
+    const b = document.createElement('button');
+    b.id = 'kb-aiuto-btn';
+    b.type = 'button';
+    b.textContent = '?';
+    b.addEventListener('click', () => window.kbAiuto());
+    document.body.appendChild(b);
+    window.kbAggiornaPulsanteAiuto();
+};
+
+/** Il titolo del pulsante dice cosa spiegherà: si scopre passandoci sopra,
+ *  senza doverlo premere per capire se serve. */
+window.kbAggiornaPulsanteAiuto = function() {
+    const b = document.getElementById('kb-aiuto-btn');
+    if (!b) return;
+    const scheda = (typeof _activeTab !== 'undefined' && _activeTab) ? _activeTab : 'home';
+    const cap = _kbCapitoloPerScheda(scheda);
+    b.title = `Aiuto — ${cap.titolo}`;
+    b.setAttribute('aria-label', `Aiuto: ${cap.titolo}`);
+    // Nel manuale stesso il pulsante non serve.
+    b.style.display = (scheda === 'manuale') ? 'none' : '';
+};
+
 if (typeof window !== 'undefined') {
-    window.KB_CAPITOLI      = KB_CAPITOLI;
-    window.renderTabManuale = renderTabManuale;
-    window._kbFiltra        = _kbFiltra;
+    window.KB_CAPITOLI          = KB_CAPITOLI;
+    window.KB_AIUTO_PER_SCHEDA  = KB_AIUTO_PER_SCHEDA;
+    window.renderTabManuale     = renderTabManuale;
+    window._kbFiltra            = _kbFiltra;
+    window._kbCapitoloPerScheda = _kbCapitoloPerScheda;
 }

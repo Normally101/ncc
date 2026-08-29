@@ -9,7 +9,6 @@ const _SRM_META = {
     stellar_e_exec:     { body:'berlina',     bodyLabel:'Berlina Executive',  desc:'La berlina executive di riferimento. Equilibrio perfetto tra rappresentanza e affidabilità operativa.',       stats:{ prestigio:6,  comfort:7,  durabilita:8,  velocita:6  } },
     stellar_q_exec:     { body:'berlina',     bodyLabel:'Berlina EV',         desc:'Controparte full-electric. Silenzio assoluto in cabina, zero emissioni, ricarica rapida DC.',                stats:{ prestigio:7,  comfort:7,  durabilita:8,  velocita:7  } },
     stellar_v_carr:     { body:'van',         bodyLabel:'Van Luxury',         desc:'Monovolume di alta classe per trasporti di gruppo in comfort superiore. 7 posti configurabili.',               stats:{ prestigio:6,  comfort:8,  durabilita:8,  velocita:5  } },
-    stellar_v_imp:      { body:'van',         bodyLabel:'Van Presidenziale',  desc:'Il van allestito per le delegazioni: quattro poltrone reclinabili, divisorio e silenzio da ammiraglia. Porta un gruppo con il riguardo di un\'auto sola.', stats:{ prestigio:9,  comfort:10, durabilita:8,  velocita:5  } },
     stellar_q_carr:     { body:'van',         bodyLabel:'Van EV Luxury',      desc:'Minivan elettrico sette posti. Zero emissioni per clienti corporate con le esigenze più alte.',               stats:{ prestigio:7,  comfort:8,  durabilita:8,  velocita:6  } },
     stellar_s_imp:      { body:'ammiraglia',  bodyLabel:'Ammiraglia',         desc:'Limousine presidenziale. Salone posteriore da 2,1 m, isolamento acustico totale, privacy vetri.',            stats:{ prestigio:9,  comfort:9,  durabilita:8,  velocita:7  } },
     stellar_q_imp:      { body:'ammiraglia',  bodyLabel:'Ammiraglia EV',      desc:'Limousine elettrica ultra-silenziosa. L\'assenza di rumore motore eleva il comfort a livelli inediti.',       stats:{ prestigio:9,  comfort:9,  durabilita:8,  velocita:8  } },
@@ -73,6 +72,47 @@ const _SRM_SECTIONS = [
     { id:'speciali',  label:'Speciali',   icon:'⚙' },
     { id:'riepilogo', label:'Riepilogo',  icon:'✅' },
 ];
+
+/* ─── LA FASCIA DI UN VEICOLO LA DECIDE IL LISTINO ──────────────────────────
+   Le etichette della vetrina (PRESIDENTIAL, ARMORED, COMMERCIAL, PREMIUM…) sono
+   categorie commerciali: servono a raggruppare lo showroom e NON coincidono con
+   le fasce di servizio del gioco. Tradurle a mano dava a 10 auto su 19 una
+   fascia diversa da quella con cui poi lavorano: una S-Imperial venduta come
+   PRESIDENTIAL entrava in flotta come 'ultra' mentre in listino e' 'vip', una
+   Volt 3-Urban venduta come BUSINESS entrava come 'business' mentre lavora come
+   'standard'. Non era un dettaglio contabile: dal 29/08/2026 il caricamento
+   riallinea le auto al listino, quindi l'auto CAMBIAVA FASCIA ricaricando la
+   pagina.
+   La traduzione qui sotto e' solo il ripiego per un veicolo che non fosse in
+   listino. La stessa funzione la usano acquisto E noleggio: prima erano due
+   copie della stessa mappa, in due punti del file, e correggerne una sola
+   avrebbe lasciato il difetto vivo nell'altro. */
+const _SRM_ETICHETTA_TO_FASCIA = {
+    BUSINESS:'business', PREMIUM:'business', STANDARD:'standard', COMMERCIAL:'standard',
+    PRESIDENTIAL:'vip', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group',
+};
+
+function _srmFascia(v) {
+    const vc  = v && (v.vehicleClass || v.id);
+    const def = (typeof NEW_CARS !== 'undefined' ? NEW_CARS : []).find(c => c.vehicleClass === vc);
+    if (def && def.tier) return def.tier;
+    return _SRM_ETICHETTA_TO_FASCIA[((v && v.tier) || '').toUpperCase()] || 'business';
+}
+
+/** Come si chiama quella fascia per il giocatore: le stesse tre parole del
+ *  Dispatch, perche' due nomi per la stessa cosa e' cio' che ha creato il
+ *  disallineamento in primo luogo. */
+const _SRM_NOMI_FASCIA = { standard:'STANDARD', business:'PREMIUM', group:'PREMIUM',
+                           vip:'LUXURY', ultra:'LUXURY' };
+function _srmNomeFascia(v) { return _SRM_NOMI_FASCIA[_srmFascia(v)] || 'STANDARD'; }
+
+/* Gli stessi colori delle pill del Dispatch: standard grigio, premium blu,
+   luxury oro. Se un giorno cambiano li', vanno cambiati anche qui — sono la
+   stessa informazione mostrata in due schermate. */
+const _SRM_COLORI_FASCIA = { standard:'var(--em-muted,#8b949e)', business:'var(--em-blue,#58a6ff)',
+                             group:'var(--em-blue,#58a6ff)', vip:'var(--em-gold,#c79a2a)',
+                             ultra:'var(--em-gold,#c79a2a)' };
+function _srmColoreFascia(v) { return _SRM_COLORI_FASCIA[_srmFascia(v)] || 'var(--em-muted,#8b949e)'; }
 
 const _SRM_OPTIONS = [
     { section:'esterni',  id:'opt_vernice_pearl',   name:'Vernice Madreperla',      price:4000,  desc:'Finitura a lustro profondo, 12 strati applicati a mano.',              mods:{ prestigio:1 } },
@@ -412,6 +452,15 @@ function _srmRenderGallery(overlay) {
             <div class="srm-vcard-body">
                 <div class="srm-vcard-tier" style="color:${tierColor}">${v.tier}</div>
                 <div class="srm-vcard-name">${v.name}</div>
+                <!-- La fascia con cui l'auto LAVORA, con le stesse parole del
+                     Dispatch. La riga sopra e' la categoria commerciale e non
+                     dice che corse potra' fare: un giocatore che leggeva
+                     «BUSINESS» sulla Volt 3-Urban comprava aspettandosi corse
+                     Premium e ne riceveva Standard. -->
+                <div class="srm-vcard-fascia" style="font-size:9px;font-weight:800;letter-spacing:.08em;
+                     color:${_srmColoreFascia(v)};margin:2px 0 4px">
+                    SERVE CORSE ${_srmNomeFascia(v)}
+                </div>
                 <div class="srm-vcard-sub">
                     <span>${meta.bodyLabel || ''}</span>
                     <span class="${isEV ? 'srm-fuel-ev' : 'srm-fuel-gas'}">${isEV ? '⚡ EV' : '⛽ Benzina'}</span>
@@ -494,6 +543,9 @@ function _srmRenderConfig(overlay) {
                 <div id="srm-cfg-vname">${v.name}</div>
                 <div id="srm-cfg-vsub">
                     <span style="color:${tierColor};font-weight:800">${v.tier}</span>
+                    <!-- Quello che il giocatore deve sapere PRIMA di spendere:
+                         che corse potra' fare con questa auto. -->
+                    · <span style="color:${_srmColoreFascia(v)};font-weight:800">serve corse ${_srmNomeFascia(v)}</span>
                     · ${meta.bodyLabel || ''}
                     · <span class="${isEV ? 'srm-fuel-ev' : 'srm-fuel-gas'}">${isEV ? '⚡ EV' : '⛽ Benzina'}</span>
                     ${selCount > 0 ? `<span style="color:#c79a2a;margin-left:6px;">+${selCount} optional</span>` : ''}
@@ -753,13 +805,10 @@ window._srmPurchase = async function() {
     }
 
     // Mappa i tier del catalogo Showroom ai tier compatibili con TIER_COMPATIBILITY
-    const _SHOWROOM_TIER_MAP = {
-        BUSINESS:'business', PREMIUM:'business', STANDARD:'standard',
-        PRESIDENTIAL:'ultra', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group'
-    };
     gameState.fleet.push({
         id: 'c_' + Date.now(), _serverId: serverId,
-        name: v.name, tier: _SHOWROOM_TIER_MAP[(v.tier||'').toUpperCase()] || 'business',
+        name: v.name,
+        tier: _srmFascia(v),
         condition: 100, isLease: false, fuel: 100, mileage: 0,
         tirePressure: 100, engineHealth: 100, outOfService: false,
         upgrades: opts, vehicleClass: v.id,
@@ -793,13 +842,9 @@ window._srmRent = async function(vehicleId, days) {
 
     if (!window.CE_money.spend(price, 'showroom_rent_vehicle')) return;
 
-    const _SHOWROOM_TIER_MAP = {
-        BUSINESS:'business', PREMIUM:'business', STANDARD:'standard',
-        PRESIDENTIAL:'ultra', ARMORED:'ultra', ULTRA:'ultra', VIP:'vip', GROUP:'group'
-    };
     gameState.fleet.push({
         id: 'c_' + Date.now(),
-        name: v.name, tier: _SHOWROOM_TIER_MAP[(v.tier||'').toUpperCase()] || 'business',
+        name: v.name, tier: _srmFascia(v),
         vehicleClass: v.id, condition: 100,
         fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100,
         outOfService: false, upgrades: [],

@@ -100,8 +100,15 @@ describe('partita nuova — chi comincia deve poter lavorare', () => {
 
             assert.equal(s.window._fasciaCorsa(3000, 'stellar_e_exec'), 'vip',
                 'una tratta ricca da berlina e\' una richiesta di lusso');
-            assert.equal(s.window._fasciaCorsa(3000, 'stellar_v_carr'), 'vip',
-                'e anche una tratta ricca da van: per questo esiste il V-Imperial');
+
+            /* IL CANCELLO DI SICUREZZA, e qui si vede a cosa serve. In catalogo
+               non esiste un van di fascia luxury, quindi una tratta da van da
+               3.000€ resta PREMIUM: se nascesse luxury sarebbe una corsa che
+               nessun giocatore, con nessun patrimonio, potrebbe mai accettare.
+               Se un giorno si aggiunge un van vip, questo test diventa rosso —
+               ed e' giusto: vorra' dire che la cima per i van esiste. */
+            assert.equal(s.window._fasciaCorsa(3000, 'stellar_v_carr'), 'business',
+                'senza un van di lusso in catalogo, la tratta ricca da van resta premium');
         } finally { env.stopAllIntervals(); }
     });
 

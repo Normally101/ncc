@@ -431,32 +431,50 @@ describe('funzione salone — vetrina auto e configuratore (showroom.js)', () =>
             assert.ok(newsInviata.msg.includes('Stellar S-Imperial'));
 
             const auto = gs.fleet[gs.fleet.length - 1];
-            // Tier presidenziale mappato a ultra per compatibilità con il gioco
-            assert.equal(auto.tier, 'ultra');
+            /* La fascia viene dal LISTINO, non dall'etichetta della vetrina.
+               Questo test asseriva 'ultra' perche' la S-Imperial e' venduta
+               come PRESIDENTIAL — ma in listino e' 'vip', e stava difendendo il
+               difetto: l'auto entrava in flotta con una fascia e ne aveva
+               un'altra. Dal 29/08/2026 il caricamento riallinea al listino,
+               quindi quell'auto cambiava fascia ricaricando la pagina. */
+            const vm = require('node:vm');
+            const listino = vm.runInContext('NEW_CARS', sandbox);
+            const def = listino.find(c => c.vehicleClass === 'stellar_s_imp');
+            assert.equal(auto.tier, def.tier,
+                'la fascia dell\'auto comprata deve essere quella del listino');
+            assert.equal(auto.tier, 'vip');
         });
 
-        test('i tier dei diversi modelli sono tutti normalizzati minuscoli e validi', async () => {
-            gs.cash = 10000000;
+        test('OGNI auto in vendita entra in flotta con la fascia del listino', async () => {
+            /* Non un campione di quattro modelli: tutti. Il difetto trovato il
+               29/08/2026 riguardava 10 auto su 19, e un test su quattro campioni
+               ne avrebbe viste due. La vetrina traduceva le proprie etichette
+               commerciali (PRESIDENTIAL, COMMERCIAL, ARMORED…) in fasce con una
+               mappa sua, e il risultato non coincideva col listino: si comprava
+               una Volt 3-Urban etichettata BUSINESS e si riceveva un'auto che
+               lavora come 'standard'. */
+            const vm = require('node:vm');
+            const listino = vm.runInContext('NEW_CARS', sandbox);
+            const vetrina = vm.runInContext('STELLAR_VOLT_CATALOG', sandbox);
+            const sbagliate = [];
 
-            // Test Nexus (STANDARD -> standard)
-            sandbox._srmOpenConfig('nexus_h_line');
-            await sandbox._srmPurchase();
-            assert.equal(gs.fleet[gs.fleet.length - 1].tier, 'standard');
-
-            // Test Stellar Carrier (PREMIUM -> business)
-            sandbox._srmOpenConfig('stellar_v_carr');
-            await sandbox._srmPurchase();
-            assert.equal(gs.fleet[gs.fleet.length - 1].tier, 'business');
-
-            // Test Stellar Overlord (ARMORED -> ultra)
-            sandbox._srmOpenConfig('stellar_g_over');
-            await sandbox._srmPurchase();
-            assert.equal(gs.fleet[gs.fleet.length - 1].tier, 'ultra');
-
-            // Test Majestic Spirit (PRESIDENTIAL -> ultra)
-            sandbox._srmOpenConfig('majestic_spirit');
-            await sandbox._srmPurchase();
-            assert.equal(gs.fleet[gs.fleet.length - 1].tier, 'ultra');
+            for (const v of vetrina) {
+                gs.cash = 50000000;
+                gs.questStats = { ...(gs.questStats || {}), totalRides: 99999 };
+                gs.hasEVHub = true;
+                sandbox._srmOpenConfig(v.id);
+                await sandbox._srmPurchase();
+                const comprata = gs.fleet[gs.fleet.length - 1];
+                const def = listino.find(c => c.vehicleClass === (v.vehicleClass || v.id));
+                if (!def) continue;
+                if (comprata.tier !== def.tier) {
+                    sbagliate.push(`${v.name}: comprata '${comprata.tier}', in listino '${def.tier}'`);
+                }
+            }
+            assert.deepEqual(sbagliate, [],
+                'un\'auto deve lavorare con la fascia che il listino le assegna: ' +
+                'se diverge, il giocatore compra una cosa e ne riceve un\'altra, ' +
+                'e al ricaricamento della pagina l\'auto cambia fascia da sola');
         });
 
         test('fallimento ServerState.buyVehicle non addebita cassa e non aggiunge auto alla flotta', async () => {

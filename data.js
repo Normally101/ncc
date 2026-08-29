@@ -108,13 +108,6 @@ const NEW_CARS = [
     // ── Stellar Q electric ────────────────────────────────────────
     { id:'stellar_q_exec',     name:'Stellar Q-Executive',  tier:'business', price:95000,   condition:100, vehicleClass:'stellar_q_exec',     fuel:'electric', rideGate:0    },
     { id:'stellar_q_carr',     name:'Stellar Q-Carrier',    tier:'business', price:110000,  condition:100, vehicleClass:'stellar_q_carr',     fuel:'electric', rideGate:0    },
-    /* Il van di lusso, aggiunto il 29/08/2026. Non era un buco del catalogo ma
-       del DESIGN: senza un minivan vip la fascia luxury non era raggiungibile
-       per quella famiglia, e le 149 tratte da van sopra i 1.500€ sarebbero
-       nate come corse che nessuno poteva accettare. Nel mestiere vero esiste
-       (il van allestito VIP e' quello che porta le delegazioni), qui esiste
-       perche' la progressione dei van deve avere una cima. */
-    { id:'stellar_v_imp',      name:'Stellar V-Imperial',   tier:'vip',      price:280000,  condition:100, vehicleClass:'stellar_v_imp',      fuel:'gasoline', rideGate:250  },
     { id:'stellar_q_imp',      name:'Stellar Q-Imperial',   tier:'vip',      price:320000,  condition:100, vehicleClass:'stellar_q_imp',      fuel:'electric', rideGate:250  },
     // ── Volt electric ─────────────────────────────────────────────
     { id:'volt_3_urban',       name:'Volt 3-Urban',         tier:'standard', price:55000,   condition:100, vehicleClass:'volt_3_urban',       fuel:'electric', rideGate:0    },
@@ -151,7 +144,6 @@ const LEASING_TEMPLATES = {
     'stellar_q_exec':     { name:'Stellar Q-Executive',  baseRate:1300, kmRate:0.05, tier:'business', vehicleClass:'stellar_q_exec'     },
     'stellar_v_carr':     { name:'Stellar V-Carrier',    baseRate:1600, kmRate:0.07, tier:'business', vehicleClass:'stellar_v_carr'     },
     'stellar_q_carr':     { name:'Stellar Q-Carrier',    baseRate:1700, kmRate:0.07, tier:'business', vehicleClass:'stellar_q_carr'     },
-    'stellar_v_imp':      { name:'Stellar V-Imperial',   baseRate:2600, kmRate:0.11, tier:'vip',      vehicleClass:'stellar_v_imp'      },
     'volt_3_urban':       { name:'Volt 3-Urban',         baseRate:900,  kmRate:0.04, tier:'standard', vehicleClass:'volt_3_urban'       },
     'volt_y_cross':       { name:'Volt Y-Cross',         baseRate:1100, kmRate:0.05, tier:'standard', vehicleClass:'volt_y_cross'       },
     'stellar_s_imp':      { name:'Stellar S-Imperial',   baseRate:2500, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_s_imp'      },

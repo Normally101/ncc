@@ -211,8 +211,14 @@ const _FAMIGLIE_VEICOLO = {
               'stellar_q_imp', 'stellar_s_imp', 'volt_s_apex', 'volt_e_estate',
               'volt_s_hyper', 'stellar_g_over', 'majestic_citadel',
               'majestic_spirit', 'majestic_e_specter', 'mercedes_s'],
+    /* NOTA: la famiglia minivan arriva al massimo alla fascia PREMIUM, perche'
+       in catalogo non esiste un van di fascia luxury (il Majestic Citadel e' un
+       SUV, non un van). Non e' un difetto lasciato aperto: e' una conseguenza
+       accettata: `_fasciaCorsa` abbassa a premium le tratte da van sopra i
+       1.500€, cosi' non nasce mai una corsa che nessuno puo' fare. Chi investe
+       sui van, pero', non ha una cima da raggiungere. */
     minivan: ['volt_y_cross', 'stellar_v_carr', 'stellar_q_carr', 'stellar_m_cruiser',
-              'stellar_v_imp', 'mercedes_v', 'mercedes_sprinter'],
+              'mercedes_v', 'mercedes_sprinter'],
     acqua: ['water_taxi'],
 };
 

@@ -254,6 +254,14 @@ window.switchTab = function(tab) {
         case 'contracts':      title.innerText = "🤝 Corporate Contracts";       _safeRender(window.renderTabContracts);      break;
         case 'tourism':        title.innerText = "🌍 Bandi Turismo";             _safeRender(window.renderTabTourism);        break;
     }
+
+    /* Il pulsante d'aiuto contestuale segue la scheda: da qualunque punto del
+       gioco «?» apre il capitolo del manuale che spiega quello che si sta
+       guardando. Sta qui, dopo lo switch, e non dentro le singole schede,
+       perche' le schede sono una trentina — e una trentina di punti da
+       ricordare e' un punto che prima o poi qualcuno dimentichera'. */
+    if (typeof window.kbMontaPulsanteAiuto === 'function') window.kbMontaPulsanteAiuto();
+    if (typeof window.kbAggiornaPulsanteAiuto === 'function') window.kbAggiornaPulsanteAiuto();
 }
 
 
