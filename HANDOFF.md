@@ -76,6 +76,94 @@
 > farlo. Quando si farà, la strada è quella già usata per gli altri file —
 > togliere i colori a mano e prendere i token `--em-*` da `style.css`.
 >
+> # ⚠️ DA FARE SUBITO — 29/08 (notte), segnalazioni di Vlad
+>
+> **VINCOLO ESPLICITO DI VLAD, vale su tutto quello che segue:**
+> «la mia paura è che, andando a sistemare questi problemi, andiamo di nuovo a
+> creare altri bug. È essenziale lavorare in modo che non roviniamo niente e non
+> creiamo altri bug, perché se no è tutto inutile.»
+> → Un difetto per volta. Test che lo difende PRIMA di passare al successivo.
+> `npm test` intero dopo ognuno (partenza: **2261 verdi**). Zero refactor
+> collaterali. Verifica dal vivo nel browser, non solo test.
+>
+> ## 1. VITTORIO — DIAGNOSI GIÀ FATTA E CONFERMATA, manca solo il fix
+> Sintomi visti da Vlad, tutti e tre insieme:
+> «Pagati €0 a Vittorio. Residuo: €0» · `null value in column "cash" of relation
+> "companies" violates not-null constraint` · «Saldo non valido corretto
+> automaticamente».
+>
+> **Sono lo stesso bug.** Catena confermata leggendo il codice:
+> 1. `vittorio.js:138` genera il bottone con `data-ce-act="repayVittorio"` **e
+>    senza `data-ce-args`**;
+> 2. `events.js:41` invoca `fn.apply(el, parseArgs(el).concat([ev]))` — con args
+>    vuoti passa **l'oggetto evento come primo argomento**;
+> 3. quindi in `repayVittorio(amount)` (`vittorio.js:72`) `amount` è un Event:
+>    `amount != null` è **true**, e `Math.min(Event, …)` = **NaN**;
+> 4. `Math.max(0, NaN)` = NaN, e la guardia `if (pay <= 0)` **non scatta**
+>    perché `NaN <= 0` è false;
+> 5. `g.cash = cash - NaN` → **cash NaN** → `syncCash(NaN)` serializza `null` →
+>    il server rifiuta con il not-null constraint;
+> 6. al giro dopo la guardia in `engine.js:1019` ripristina e mostra il terzo
+>    messaggio.
+>
+> **Fix minimo**: in `repayVittorio`, accettare `amount` solo se
+> `Number.isFinite(amount)` (altrimenti trattarlo come «paga tutto»), e
+> rifiutare `pay` non finito. Test: cliccare il bottone col debito già a zero
+> non deve toccare il saldo.
+>
+> **⚠️ È UN PATTERN, NON UN CASO SINGOLO.** Ogni funzione invocata via
+> `data-ce-act` SENZA `data-ce-args` riceve l'evento come primo parametro. Se
+> quel parametro è opzionale e viene usato in un calcolo, si comporta come
+> Vittorio. **Da censire prima di dichiarare chiuso il punto 1**: cercare i
+> `data-ce-act` senza args le cui funzioni hanno parametri, e verificarli.
+> Vale un guardrail permanente.
+>
+> ## 2. DRIVER COINS — non accreditati, ma vanno comprati con soldi veri
+> Vlad vede «Pagamento non confermato: nessun Driver Coin accreditato».
+> È il comportamento atteso oggi (nessuna chiave Stripe configurata), ma il
+> messaggio è sbagliato: sembra un pagamento fallito, non un negozio spento.
+> **Nota**: quel testo viene dal percorso VECCHIO — `_dcAcquistaPacchetto` dice
+> «Il negozio non è ancora attivo». Verificare se il bottone in produzione
+> chiama ancora `_dcSimPurchase` (cache del browser di Vlad?) o se resta un
+> punto non migrato. Vlad ha detto che i pagamenti restano in standby MA i
+> giocatori devono poterli comprare: chiarire con lui se ora vuole accendere
+> Stripe (servono le 4 chiavi, vedi `docs/PAGAMENTI.md`).
+>
+> ## 3. NON ESCONO PIÙ SERVIZI — il più grave, blocca il gioco
+> Screenshot: «Richieste Pendenti 0» · «In attesa di chiamate…» con 1 autista
+> attivo e 1 veicolo operativo. **Non ancora diagnosticato.**
+> Indizio visibile nello stesso screenshot: nella riga dell'autista c'è
+> **`coda 5/undefined`** — il tetto della coda è `undefined`. Da lì partire:
+> `_getDriverQueueInfo` in engine-rides.js e come la disegna `ui-dispatch.js`.
+> Verificare anche: `gameState.unlockedRegions`, se l'auto è `outOfService`,
+> e se il cash NaN del punto 1 blocca i generatori.
+>
+> ## 4. PREZZI SEMPRE FISSI + TEMPLATE EMAIL ROTTI
+> Vlad: «I prezzi sono sempre fissi, messi così non mi spingono a pagare. Non è
+> molto divertente.» Riferito alle email CEO event: sempre «Partner Ufficiale
+> (€20.000)» e «Presenza Ridotta (€6.000)», identici in ogni email.
+> **Nello stesso screenshot si vedono altri due difetti veri**:
+> - «Camera di Commercio **di**» → il nome della regione manca (segnaposto non
+>   sostituito);
+> - «organizza **302**» e «Si terrà **302** il Gala» → al posto della data
+>   compare il NUMERO DEL GIORNO di gioco;
+> - la riga «Stars internazionali cercano discrezione e lusso assoluto» è
+>   identica in email diverse (testo di un altro template).
+> File da guardare: `EMAIL_TEMPLATES` in `data.js:708`.
+>
+> ## 5. DESIGN TUTORIAL — VLAD HA SCELTO
+> **Numero 5, lo Spotlight ancorato** («più moderno e in linea con il gioco»).
+> Il mock-up è in `_mockups/tutorial-cinque-direzioni.html` (quinta scheda) e
+> online su https://claude.ai/code/artifact/0f2ec93a-9a25-4329-bb14-c5df17894d71
+> Da costruire per davvero: serve un sistema di **ancoraggio a un elemento**
+> (evidenzia il bersaglio + fumetto accanto), non solo la grafica. Attenzione,
+> è il più costoso dei cinque: se l'interfaccia cambia, il tutorial punta al
+> vuoto — va progettato per reggerlo.
+> Riguarda `zero-to-hero.js`, `vittorio.js` e soprattutto `ui-career.js`
+> (153 colori scritti a mano, zero token `--em-*`, `font-family:monospace`).
+>
+> ---
+
 > **STATO 29/08 (sera) — VEICOLI, AIUTO CONTESTUALE, MOCK-UP DEL TUTORIAL.**
 >
 > **1. I veicoli funzionano tutti** (`dac8831`). Verificati uno per uno: 18
