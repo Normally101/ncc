@@ -3,6 +3,41 @@
 > Aggiornato: 29 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
+# ✅ 30/08 — LE CINQUE SEGNALAZIONI DI VLAD: TUTTE CHIUSE. Suite **2305 verdi**.
+
+> **Cosa resta aperto** (tre decisioni di Vlad, nessun lavoro pendente):
+> 1. **Accendere Stripe?** Il codice è pronto e online, mancano le quattro
+>    chiavi di `docs/PAGAMENTI.md`. Verificato dal vivo che oggi l'endpoint
+>    risponde onestamente «Il negozio non è ancora attivo».
+> 2. **Le email degli eventi CEO**: il corpo della lettera parla ancora di un
+>    evento inventato dal template mentre i bottoni vendono l'evento del mese.
+>    O i template nominano l'evento (`{{eventName}}`, il segnaposto esiste già),
+>    o gli eventi si portano dietro il proprio testo d'invito.
+> 3. **Lo smistamento automatico ora si assume** (Junior Dispatcher, €1.400/mese):
+>    fuori dall'onboarding, chi non lo assume smista a mano. È quello che il
+>    catalogo dello staff prometteva da sempre, ma è un cambio di ritmo vero.
+>
+> ## 5. TUTORIAL E MISSIONI — fatto (`e6d6433`)
+> Costruito lo **Spotlight ancorato** che Vlad aveva scelto. Il buio non è più
+> un canvas dipinto una volta sola: è l'ombra esterna dell'anello, quindi il
+> foro segue il bersaglio quando la pagina scorre. Bolla con freccia, «Passo N
+> di M», Escape per uscire; il lato lo sceglie lo spazio disponibile.
+> **La fragilità è stata progettata**: bersaglio assente o a misura zero → bolla
+> centrata e nessun anello (mai puntare al vuoto), e
+> `test/guardrail/tutorial-bersagli.test.js` verifica che ogni selettore esista
+> in `index.html` — l'interfaccia che cambia diventa un rosso nella suite.
+> Riscritte col kit `.em` le due schermate che Vlad diceva «di un altro gioco»
+> («IL FONDO DEL BARILE», «SVEGLIATI, SCHIAVO») e il modal di Vittorio.
+> `ui-career.js`: **153 esadecimali a mano → 0**, **23 `monospace` → 0**.
+>
+> ⚠️ **DA SAPERE, cambio strutturale al CSS:** i token `--em-*` erano dichiarati
+> dentro `.em`, quindi `var(--em-gold)` valeva **solo per il contenuto del kit**.
+> Modali, tutorial e schermate attaccate a `<body>` non li vedevano: il colore
+> cadeva sull'ereditato e il pannello usciva scolorito. **Ora stanno su `:root`**
+> — stessi valori, una sola dichiarazione. Aggiunti i token che mancavano per le
+> pill scure (`--em-gold-soft`, `--em-green-soft`…), il fondo pagina (`--em-bg`)
+> e le medaglie (`--em-tier-*`): erano già in uso, scritti a mano, in più copie.
+
 > # ✅ 30/08 — LE QUATTRO SEGNALAZIONI DI VLAD: CHIUSE. Suite 2286 verdi.
 >
 > Metodo tenuto come chiesto: un difetto per volta, un test che lo difende

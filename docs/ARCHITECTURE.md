@@ -103,62 +103,82 @@ Qui il riferimento rapido per le situazioni più comuni di questo progetto:
 
 Tutto il frontend di gioco usa questo stile. Non deviare mai.
 
-### Palette
+### Palette — **si usano i TOKEN, mai i valori**
 
-```
-Background pagina:  #0d1117
-Card background:    #161b22
-Card border:        1px solid #21262d
-Testo primario:     #e6edf3
-Testo muted:        #8b949e
-Testo dim:          #6b7280
-Gold (testo):       #d4af37
-Gold (border):      #b8962b
-Gold (background):  #1a1608
-Green:              #3fb950
-Blue:               #58a6ff
-Red:                #f85149
-Font mono:          font-family: monospace
-```
+> ⚠️ Questa sezione elencava i valori esadecimali da copiare, e per questo era
+> diventata una trappola: prescriveva `#d4af37` per l'oro (il gioco usa
+> `#c79a2a`), `#6b7280` per il testo dim (corretto in `#8b949e` il 28/08 perché
+> dava contrasto 3.58, sotto il minimo leggibile) e `font-family: monospace`
+> (tolto il 30/08 da tutta la scheda Missioni). Un valore copiato a mano non
+> segue il token quando il token viene corretto: è esattamente com'erano nati i
+> 153 colori a mano di `ui-career.js`.
+>
+> **La regola è una sola: `var(--em-*)`.** I valori veri stanno in un posto
+> solo, `:root` in `style.css`, e lì si leggono.
+
+| Ruolo | Token |
+|---|---|
+| Fondo pagina | `--em-bg` |
+| Fondo card | `--em-card` |
+| Bordo card / separatori | `--em-line`, `--em-line2`, `--em-line3` (più chiaro) |
+| Testo primario | `--em-ink` |
+| Testo secondario | `--em-muted` / `--em-dim` |
+| Accenti | `--em-gold`, `--em-green`, `--em-blue`, `--em-amber`, `--em-violet`, `--em-red` |
+| Varianti scure (fondo delle pill chiare) | `--em-green-d`, `--em-blue-d` |
+| Fondi tenui delle pill scure | `--em-gold-soft`, `--em-green-soft`, `--em-blue-soft`, `--em-red-soft` |
+| Bordi delle pill scure | `--em-green-edge`, `--em-blue-edge`, `--em-red-edge` |
+| Hover dei bottoni pieni | `--em-gold-hover`, `--em-green-hover` |
+| Riga selezionata | `--em-row-on` |
+| Medaglie (materiali) | `--em-tier-bronze`, `--em-tier-silver`, `--em-tier-diamond`, `--em-tier-legend` |
+| Livelli di sovrapposizione | `--z-map`, `--z-modal`, `--z-spotlight`, `--z-takeover`, `--z-toast` |
+
+**I token stanno su `:root`, non su `.em`** (spostati il 30/08/2026). Erano
+dichiarati dentro `.em`, quindi `var(--em-gold)` valeva solo per il contenuto
+del kit: modali, tutorial e schermate attaccate a `<body>` non li vedevano e il
+colore cadeva sull'ereditato — il pannello usciva scolorito. Ora funzionano
+ovunque, e restano una sola dichiarazione.
+
+**Niente `font-family: monospace`.** Il gioco scrive in Inter. Per allineare le
+cifre si usa `font-variant-numeric: tabular-nums`, non un font diverso.
 
 ### Regole
 
 - **Zero** neon, glow, box-shadow decorativo, glassmorphism
 - **Tutto inline style** nei file JS — no Tailwind classes, no DS.* helpers
 - Border-radius: max `6px` su card, `4px` su button/input
-- Bottone gold: `background:#1a1608;border:1px solid #b8962b;color:#d4af37;padding:5px 12px`
-- Bottone ghost: `background:#161b22;border:1px solid #21262d;color:#8b949e;padding:5px 12px`
-- Bottone destructive: `background:#2d0d0d;border:1px solid #5a1a1a;color:#f85149`
-- Header sezione: `font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em`
+- Bottone gold: `background:var(--em-gold-soft);border:1px solid var(--em-gold);color:var(--em-gold);padding:5px 12px`
+- Bottone ghost: `background:var(--em-card);border:1px solid var(--em-line);color:var(--em-muted);padding:5px 12px`
+- Bottone destructive: `background:var(--em-red-soft);border:1px solid var(--em-red-edge);color:var(--em-red)`
+- Header sezione: `font-size:9px;color:var(--em-muted);text-transform:uppercase;letter-spacing:.1em`
 - KPI strip: `display:grid;grid-template-columns:repeat(4,1fr);gap:8px`
-- Tabelle: `border-collapse:collapse`, TH `font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;padding:7px 14px;border-bottom:1px solid #21262d`
-- TD: `padding:8px 14px;border-bottom:1px solid #161b22;font-size:11px;color:#e6edf3`
+- Tabelle: `border-collapse:collapse`, TH `font-size:9px;color:var(--em-muted);text-transform:uppercase;letter-spacing:.08em;padding:7px 14px;border-bottom:1px solid var(--em-line)`
+- TD: `padding:8px 14px;border-bottom:1px solid var(--em-card);font-size:11px;color:var(--em-ink)`
 - Micro-interaction press-feedback: ora GLOBALE via CSS in `style.css` (`button:active:not(:disabled){transform:scale(0.97)}`). Copre tutti i `<button>` automaticamente — non serve più aggiungerla inline su ogni bottone. Vedi DESIGN.md sezione "Micro-interaction rule".
 
 ### Componenti pattern (copy-paste)
 
 **Card:**
 ```html
-<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:16px">
+<div style="background:var(--em-card);border:1px solid var(--em-line);border-radius:6px;padding:16px">
 ```
 
 **KPI item:**
 ```html
-<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;padding:12px 16px">
-  <div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">LABEL</div>
-  <div style="font-size:20px;font-weight:700;color:#e6edf3;font-family:monospace">VALUE</div>
+<div style="background:var(--em-card);border:1px solid var(--em-line);border-radius:6px;padding:12px 16px">
+  <div style="font-size:9px;color:var(--em-muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px">LABEL</div>
+  <div style="font-size:20px;font-weight:700;color:var(--em-ink)">VALUE</div>
 </div>
 ```
 
 **Sezione header:**
 ```html
-<div style="font-size:9px;color:#6b7280;text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #21262d">TITOLO SEZIONE</div>
+<div style="font-size:9px;color:var(--em-muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--em-line)">TITOLO SEZIONE</div>
 ```
 
 **Tabella TH helper (in JS):**
 ```js
-const _TH  = t => `<th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:left;border-bottom:1px solid #21262d;white-space:nowrap">${t}</th>`;
-const _THR = t => `<th style="padding:7px 14px;font-size:9px;font-family:monospace;text-transform:uppercase;letter-spacing:.08em;color:#6b7280;font-weight:600;text-align:right;border-bottom:1px solid #21262d;white-space:nowrap">${t}</th>`;
+const _TH  = t => `<th style="padding:7px 14px;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--em-muted);font-weight:600;text-align:left;border-bottom:1px solid var(--em-line);white-space:nowrap">${t}</th>`;
+const _THR = t => `<th style="padding:7px 14px;font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--em-muted);font-weight:600;text-align:right;border-bottom:1px solid var(--em-line);white-space:nowrap">${t}</th>`;
 ```
 
 ### Tab completati (stile eRepublik)
@@ -294,7 +314,7 @@ let gameState = {
     diamondContractsCompleted: 0,
     inflationRate: 0.020, interestRateBase: 0.045,
     lobbyingPoints: 0, activeLobbyLaws: [],
-    companyName: 'Chauffeur Empire', companyLogo: '👁️', companyColor: '#d4af37',
+    companyName: 'Chauffeur Empire', companyLogo: '👁️', companyColor: 'var(--em-gold)',
     loginStreak: 0, lastDailyClaim: null,
     lastOnlineTimestamp: 0,  // Unix ms — per offline catchup
     yesterdayEarnings: 0,    // salvato da engine-daily.js prima del reset di todayEarnings

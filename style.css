@@ -4733,6 +4733,7 @@ select:focus {
      scrivendoli a mano — qui prendono un nome, cosi' smettono di essere
      copiati e si possono cambiare da un punto solo. */
   --em-gold-soft:#1a1608;  --em-gold-hover:#352c15;
+  --em-red-soft:#2d0d0d;   --em-red-edge:#5a1a1a;
   --em-green-soft:#1a2e1a; --em-green-edge:#3d5a3e; --em-green-hover:#223c22;
   --em-blue-soft:#151c2e;  --em-blue-edge:#4b5a8b;
   --em-row-on:#1a1d23;
