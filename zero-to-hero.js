@@ -46,25 +46,52 @@
         const _vd    = (typeof window._vittorioDebt === 'function') ? window._vittorioDebt() : null;
         const debt   = _vd ? _vd.outstanding : 500; // debito REALE (vittorio.js)
 
+        /* Riscritta col kit .em il 30/08: era rosso acceso, oro #d4af37 e un
+           bottone da 24px che pulsa — «non c'entra niente col design del
+           gioco» (Vlad). Il tono duro resta, i colori vengono dai token. */
+        const corse   = (gs.questStats && gs.questStats.totalRides) || 0;
+        const stanco  = energy < 10;
+        const coloreE = energy < 25 ? 'var(--em-red)' : energy < 50 ? 'var(--em-amber)' : 'var(--em-green)';
+
         let html = `
         <div id="manual-drive-container">
-            <h1 style="color:red; font-size: 20px; letter-spacing: 3px;">IL FONDO DEL BARILE</h1>
-            <div style="background: #111; border-left: 4px solid #d4af37; padding: 15px; margin: 20px; max-width: 500px; text-align: left; font-style: italic; color: #ccc;">
-                "Ti ho prestato i soldi per riscattare l'auto dal pignoramento. Ora hai un debito con me. Muoviti, accendi il motore e lavora. Non mi importa se sei stanco." <br><b style="color:#d4af37">- Vittorio</b>
+          <div class="z2h-scheda">
+            <div class="z2h-testa">
+                <span class="tit">Il fondo del barile</span>
+                <span class="stato">Corsa ${corse + 1}</span>
             </div>
-            <div style="color: #666; margin-bottom: 20px;">Debito con Vittorio: <b style="color:red">€${(debt||0).toLocaleString('it-IT')}</b> <span style="font-size:10px;color:#555">(guadagna e ripagalo)</span></div>
+            <div class="z2h-corpo">
+                <div class="z2h-voce">
+                    "Ti ho prestato i soldi per riscattare l'auto dal pignoramento. Ora hai un
+                    debito con me. Muoviti, accendi il motore e lavora. Non mi importa se sei stanco."
+                    <span class="firma">— Vittorio</span>
+                </div>
+                <div class="z2h-dati">
+                    <div class="d">
+                        <div class="l">Debito con Vittorio</div>
+                        <div class="v" style="color:var(--em-red)">€${(debt || 0).toLocaleString('it-IT')}</div>
+                    </div>
+                    <div class="d">
+                        <div class="l">In cassa</div>
+                        <div class="v" style="color:var(--em-green)">€${Math.round(gs.cash || 0).toLocaleString('it-IT')}</div>
+                    </div>
+                    <div class="d">
+                        <div class="l">Energia</div>
+                        <div class="v" style="color:${coloreE}">${Math.round(energy)}%</div>
+                        <div class="barra"><span class="em-prog"><i style="width:${Math.max(0, Math.min(100, Math.round(energy)))}%;background:${coloreE}"></i></span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="z2h-pie">`;
 
-            <div style="margin-bottom: 10px; font-weight: bold; color: ${energy < 10 ? 'red' : '#22c55e'};">Energia: ${Math.round(energy)}%</div>
-        `;
-
-        if (energy >= 10) {
-            html += `<button id="manual-drive-btn" ${ceAct('executeManualDrive', [])}>[🕹️] GUIDA MANUALMENTE<br><span style="font-size:12px; font-weight:normal;">(-10% Energia, mancia variabile)</span></button>`;
+        if (!stanco) {
+            html += `<button id="manual-drive-btn" class="z2h-guida" ${ceAct('executeManualDrive', [])}>Guida tu, questa corsa<span class="sub">−10% energia · la mancia la decide il cliente</span></button>`;
         } else {
-            html += `<button id="manual-drive-btn" disabled>SEI TROPPO STANCO</button>
-                     <button id="sleep-car-btn" ${ceAct('executeSleepInCar', [])}>Dormi in auto (Recupera Energia)</button>`;
+            html += `<button id="manual-drive-btn" class="z2h-guida" disabled>Sei troppo stanco per guidare</button>
+                     <button id="sleep-car-btn" class="z2h-dormi" ${ceAct('executeSleepInCar', [])}>Dormi in auto — recupera l'energia</button>`;
         }
 
-        html += `</div>`;
+        html += `</div></div></div>`;
         container.innerHTML = html;
     };
 
@@ -162,12 +189,18 @@
         const _cassa = Math.round((window.gameState && window.gameState.cash) || 0);
         const ov = document.createElement('div');
         ov.id = 'z2h-capitalism';
-        ov.style.cssText = 'position:fixed;inset:0;z-index:var(--z-takeover);background:rgba(2,3,8,0.96);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+        ov.className = 'z2h-rivelazione';
         ov.innerHTML = `
-        <div style="max-width:560px;background:#0b0d14;border:1px solid #d4af37;border-radius:14px;padding:34px 30px;text-align:center;box-shadow:0 0 60px rgba(212,175,55,0.25)">
-            <h1 style="color:#d4af37;font-size:26px;letter-spacing:4px;margin:0 0 18px;font-weight:900">SVEGLIATI, SCHIAVO.</h1>
-            <p style="color:#cbd2dc;font-size:15px;line-height:1.7;margin:0 0 26px">Non diventerai mai ricco se usi il tuo tempo. I ricchi usano il tempo degli altri. Hai ${_cassa}€ in tasca ora. Nel tab STAFF c'è un ragazzino di quartiere che cerca lavoro. Assumilo, metti lui al volante, tu vai a dormire e guarda i soldi arrivare da soli.</p>
-            <button ${ceAct('_ceCapitalismAck', [])} style="background:linear-gradient(135deg,#d4af37 0%,#b8860b 100%);color:#000;font-weight:900;font-size:16px;padding:16px 26px;border-radius:10px;border:2px solid #fff;cursor:pointer">Ho capito. Fammi diventare un manager.</button>
+        <div class="scheda">
+            <div class="eti">Sei corse dopo</div>
+            <h1>Svegliati, schiavo.</h1>
+            <p>Non diventerai mai ricco se usi il tuo tempo: i ricchi usano il tempo degli altri.
+               Hai <span class="cifra">€${_cassa.toLocaleString('it-IT')}</span> in tasca. Nella scheda
+               <strong>Staff</strong> c'è un ragazzo di quartiere che cerca lavoro. Assumilo, mettilo
+               al volante, e vai a dormire: da domani i soldi arrivano anche mentre non ci sei.</p>
+            <div class="azioni">
+                <button class="ok" ${ceAct('_ceCapitalismAck', [])}>Ho capito. Fammi diventare un manager.</button>
+            </div>
         </div>`;
         document.body.appendChild(ov);
     };

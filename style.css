@@ -4695,7 +4695,17 @@ select:focus {
    Tutto scopato sotto .em così NON tocca le tab dark esistenti finché
    non vengono convertite. Vedi DESIGN.md sezione "EM".
    ════════════════════════════════════════════════════════════════════ */
-.em{
+/* I TOKEN STANNO SU :root, NON SU .em.
+   Erano dichiarati dentro `.em`, quindi `var(--em-gold)` funzionava solo per
+   ciò che sta DENTRO il kit. Tutto quello che vive attaccato a <body> — i
+   modali, il tutorial, le schermate a schermo intero — non li vedeva: il
+   colore cadeva sull'ereditato e il pannello usciva senza colore. Misurato nel
+   browser il 30/08 mentre si convertivano lo spotlight e le due schermate di
+   zero-to-hero.js.
+   Sono gli STESSI valori di prima, spostati di un livello: dentro `.em` non
+   cambia niente (i figli continuano a ereditarli), e fuori adesso esistono.
+   Restano una sola dichiarazione, così non possono divergere. */
+:root{
   /* `--em-muted` e `--em-dim` erano #6b7280: un grigio medio nato per il tema
      CHIARO della Fase 3 e mai ritoccato quando il kit e' tornato scuro (commit
      06e5763). Su `--em-card` (#161b22) dava contrasto 3.58, sotto il minimo
@@ -4715,6 +4725,28 @@ select:focus {
      pill chiare e NON vanno schiarite: li' fanno da sfondo, non da testo. */
   --em-blue:#58a6ff; --em-blue-d:#245d9c; --em-green:#3fb950; --em-green-d:#1aa06a;
   --em-gold:#c79a2a; --em-amber:#e0922e; --em-violet:#a78bfa; --em-red:#f0776a;
+  /* Fondo pagina e la linea piu' chiara dei bordi secondari. */
+  --em-bg:#0d1117; --em-line3:#30363d;
+  /* Fondi tenui e bordi delle pill SCURE. Il kit aveva solo le pill chiare
+     (.em-pill--green e compagne, fondo #e7f6ee): un residuo del tema chiaro
+     della Fase 3. Questi sono i valori che le schede scure gia' usavano
+     scrivendoli a mano — qui prendono un nome, cosi' smettono di essere
+     copiati e si possono cambiare da un punto solo. */
+  --em-gold-soft:#1a1608;  --em-gold-hover:#352c15;
+  --em-green-soft:#1a2e1a; --em-green-edge:#3d5a3e; --em-green-hover:#223c22;
+  --em-blue-soft:#151c2e;  --em-blue-edge:#4b5a8b;
+  --em-row-on:#1a1d23;
+  /* Le medaglie sono MATERIALI, non colori d'interfaccia: bronzo e argento non
+     hanno un ruolo semantico nel kit, ma stanno qui lo stesso perche' un
+     colore scritto a mano dentro un file di rendering e' un colore che
+     diverge. L'oro e' lo stesso --em-gold del kit, non un secondo oro. */
+  --em-tier-bronze:#cd7f32; --em-tier-silver:#b0b8c4;
+  --em-tier-diamond:#7ec8e3; --em-tier-legend:#ff6b35;
+}
+.em{
+  /* I token (--em-card, --em-ink, --em-gold…) stanno su :root qui sopra: una
+     sola dichiarazione, visibile anche ai pannelli fuori dal kit. Qui restano
+     solo le proprieta' che il kit impone al proprio contenuto. */
   font-family:'Inter',system-ui,sans-serif; color:var(--em-ink); font-size:12px;
 }
 /* light "sky + skyline" background for the Home content area */
@@ -4799,6 +4831,76 @@ select:focus {
 .em-prog{height:5px;border-radius:3px;background:#21262d;overflow:hidden}
 .em-prog i{display:block;height:100%;border-radius:3px}
 .em-card button.em-ghbtn:active,.em-goldbtn:active,.em-redbtn:active,.em-tab:active{transform:scale(0.97)}
+
+/* ════════════════════════════════════════════════════════════════════
+   SPOTLIGHT ANCORATO — il tutorial (tutorial.js). Direzione scelta da
+   Vlad il 29/08/2026 fra i cinque mock-up: si illumina la cosa di cui
+   si parla e la spiegazione le sta accanto, invece di un pop-up che
+   dice «il tab Staff» lasciando al giocatore il compito di tradurlo in
+   «quale bottone».
+
+   Il buio NON e' un pannello sopra la pagina: e' l'ombra esterna
+   dell'anello (`box-shadow` con spread enorme). Cosi' il foro segue il
+   bersaglio da solo quando la pagina scorre o cambia misura, senza
+   ridisegnare niente — era il difetto della versione a canvas, che
+   dipingeva il buco una volta e poi restava indietro.
+
+   I colori vengono dai token --em-*: la versione precedente aveva un
+   oro suo (#d4af37) diverso da quello del gioco (--em-gold).
+   ════════════════════════════════════════════════════════════════════ */
+.ce-spot-scrim{
+    position:fixed;inset:0;z-index:var(--z-spotlight);
+    background:transparent;   /* il buio lo fa l'anello; questo intercetta i clic */
+}
+.ce-spot-scrim.senza-bersaglio{background:rgba(2,3,8,.82);backdrop-filter:blur(2px)}
+.ce-spot-ring{
+    position:fixed;z-index:calc(var(--z-spotlight) + 20);pointer-events:none;
+    border:2px solid var(--em-gold);border-radius:9px;
+    box-shadow:0 0 0 5px rgba(199,154,42,.16),
+               0 0 44px rgba(199,154,42,.28),
+               0 0 0 9999px rgba(2,3,8,.82);
+    transition:top .18s ease,left .18s ease,width .18s ease,height .18s ease;
+}
+.ce-spot-bolla{
+    position:fixed;z-index:calc(var(--z-spotlight) + 30);
+    width:min(346px,calc(100vw - 28px));
+    background:var(--em-card);border:1px solid rgba(199,154,42,.42);
+    border-radius:11px;padding:15px 17px;
+    box-shadow:0 18px 48px rgba(0,0,0,.6);
+}
+.ce-spot-bolla .freccia{
+    position:absolute;width:14px;height:14px;background:var(--em-card);
+    border:1px solid rgba(199,154,42,.42);transform:rotate(45deg);
+}
+/* La freccia mostra due lati soli: quelli rivolti verso il bersaglio. */
+.ce-spot-bolla .freccia.da-sinistra{left:-8px;border-top:none;border-right:none}
+.ce-spot-bolla .freccia.da-destra  {right:-8px;border-bottom:none;border-left:none}
+.ce-spot-bolla .freccia.da-sopra   {top:-8px;border-bottom:none;border-right:none}
+.ce-spot-bolla .freccia.da-sotto   {bottom:-8px;border-top:none;border-left:none}
+.ce-spot-bolla .eti{
+    font-size:9px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--em-gold);margin-bottom:6px;font-weight:800;
+}
+.ce-spot-bolla h4{margin:0 0 7px;font-size:14.5px;font-weight:800;color:var(--em-ink);line-height:1.3}
+.ce-spot-bolla p{margin:0 0 14px;font-size:12.5px;line-height:1.6;color:var(--em-muted)}
+.ce-spot-bolla p strong,.ce-spot-bolla p b{color:var(--em-ink);font-weight:700}
+.ce-spot-bolla p em{color:var(--em-gold);font-style:normal;font-weight:700}
+.ce-spot-bolla .gate{font-size:11px;color:var(--em-gold);margin:-8px 0 13px}
+.ce-spot-bolla .azioni{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ce-spot-bolla .ok{
+    background:var(--em-gold);color:#0d1117;border:none;border-radius:6px;
+    padding:8px 16px;font-size:11.5px;font-weight:800;cursor:pointer;
+}
+.ce-spot-bolla .ok:active{transform:scale(.97)}
+.ce-spot-bolla .salta{background:none;border:none;color:var(--em-muted);font-size:11px;cursor:pointer;padding:6px 2px}
+.ce-spot-bolla .salta:hover{color:var(--em-ink)}
+.ce-spot-bolla .conta{margin-left:auto;font-size:10px;color:var(--em-dim);font-variant-numeric:tabular-nums}
+/* Su schermo stretto la bolla si appoggia in basso: accanto non ci sta. */
+@media (max-width:560px){
+    .ce-spot-bolla{left:14px !important;right:14px !important;width:auto;
+                   top:auto !important;bottom:14px}
+    .ce-spot-bolla .freccia{display:none}
+}
 
 /* ════════════════════════════════════════════════════════════════════
    EM CHROME — telaio globale eRepublik-Modern (FASE 2, 2026-06-01)
@@ -4992,55 +5094,97 @@ body.theme-survival #main-panel {
   top: 0 !important;
 }
 
-/* CONTENITORE GUIDA MANUALE */
+/* ── LE DUE SCHERMATE DELLA SOPRAVVIVENZA ──────────────────────────────────
+   «IL FONDO DEL BARILE» e «SVEGLIATI, SCHIAVO» sono le prime due cose che un
+   giocatore nuovo vede, ed erano rimaste al design iniziale: rosso acceso,
+   oro #d4af37 (diverso da --em-gold), bordi bianchi da 2px, un bottone da
+   24px che pulsa. Vlad, 29/08: «non c'entra niente col design del gioco».
+   Riscritte col kit .em e i token: restano dure e teatrali — e' il tono
+   giusto per un debito con uno strozzino — ma sono lo stesso gioco. */
 #manual-drive-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 80vh;
-  text-align: center;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  min-height: 78vh; padding: 24px 16px; text-align: center;
 }
-#manual-drive-btn {
-  background: linear-gradient(135deg, #d4af37 0%, #b8860b 100%);
-  color: #000;
-  font-weight: 900;
-  font-size: 24px;
-  padding: 30px 40px;
-  border-radius: 12px;
-  box-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
-  cursor: pointer;
-  border: 2px solid #fff;
-  transition: transform 0.1s, box-shadow 0.2s;
-  animation: pulse-gold 2s infinite;
+.z2h-scheda {
+  width: min(520px, 100%); background: var(--em-card);
+  border: 1px solid var(--em-line); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, .6); text-align: left;
 }
-#manual-drive-btn:active {
-  transform: scale(0.95);
+.z2h-testa {
+  display: flex; align-items: center; gap: 10px; padding: 11px 16px;
+  border-bottom: 1px solid var(--em-line); background: rgba(255, 255, 255, .02);
 }
-#manual-drive-btn:disabled {
-  background: #333;
-  color: #666;
-  box-shadow: none;
-  border-color: #444;
-  cursor: not-allowed;
-  animation: none;
+.z2h-testa .tit {
+  font-size: 10px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--em-red);
 }
-#sleep-car-btn {
-  margin-top: 20px;
-  background: #1a2c45;
-  color: #fff;
-  padding: 15px 30px;
-  border-radius: 8px;
-  font-weight: bold;
-  border: 1px solid #2f74c0;
-  cursor: pointer;
+.z2h-testa .stato {
+  margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--em-amber);
+  border: 1px solid rgba(224, 146, 46, .4); border-radius: 4px; padding: 3px 8px;
 }
+.z2h-corpo { padding: 18px 20px 6px; }
+.z2h-voce {
+  border-left: 2px solid var(--em-gold); padding: 2px 0 2px 14px; margin-bottom: 16px;
+  font-size: 13px; line-height: 1.65; color: var(--em-ink);
+}
+.z2h-voce .firma { display: block; margin-top: 8px; font-size: 11px; font-weight: 800; color: var(--em-gold); }
+.z2h-dati {
+  display: flex; border-top: 1px solid var(--em-line); border-bottom: 1px solid var(--em-line);
+  margin-bottom: 18px;
+}
+.z2h-dati .d { flex: 1; padding: 11px 0; border-right: 1px solid var(--em-line); }
+.z2h-dati .d:last-child { border-right: none; }
+.z2h-dati .l {
+  font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--em-dim);
+}
+.z2h-dati .v { font-size: 17px; font-weight: 800; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.z2h-dati .barra { padding: 0 12px; margin-top: 8px; }
+.z2h-pie { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 9px; }
+.z2h-guida {
+  background: var(--em-gold); color: #0d1117; border: none; border-radius: 8px;
+  padding: 14px 20px; font-size: 14px; font-weight: 800; cursor: pointer; width: 100%;
+}
+.z2h-guida .sub { display: block; margin-top: 3px; font-size: 10.5px; font-weight: 600; opacity: .75; }
+.z2h-guida:active { transform: scale(.98); }
+.z2h-guida:disabled { background: var(--em-line); color: var(--em-dim); cursor: not-allowed; }
+.z2h-dormi {
+  background: transparent; border: 1px solid var(--em-line); color: var(--em-muted);
+  border-radius: 8px; padding: 10px 18px; font-size: 12px; font-weight: 700; cursor: pointer; width: 100%;
+}
+.z2h-dormi:hover { color: var(--em-ink); border-color: var(--em-blue-d); }
 
-/* ANIMAZIONE PULSE */
-@keyframes pulse-gold {
-  0% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0.7); }
-  70% { box-shadow: 0 0 0 20px rgba(212, 175, 55, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(212, 175, 55, 0); }
+/* «SVEGLIATI, SCHIAVO» — la rivelazione alla sesta corsa. */
+.z2h-rivelazione {
+  position: fixed; inset: 0; z-index: var(--z-takeover);
+  background: rgba(2, 3, 8, .96); backdrop-filter: blur(3px);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+}
+.z2h-rivelazione .scheda {
+  max-width: 540px; width: 100%; background: var(--em-card);
+  border: 1px solid rgba(199, 154, 42, .42); border-radius: 12px; overflow: hidden;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, .7);
+}
+.z2h-rivelazione .eti {
+  font-size: 9px; letter-spacing: .16em; text-transform: uppercase; color: var(--em-gold);
+  padding: 11px 24px 0; font-weight: 800;
+}
+.z2h-rivelazione h1 {
+  margin: 8px 0 14px; padding: 0 24px; font-size: 24px; font-weight: 900;
+  letter-spacing: .06em; color: var(--em-ink);
+}
+.z2h-rivelazione p {
+  margin: 0 0 18px; padding: 0 24px; font-size: 13.5px; line-height: 1.7; color: var(--em-muted);
+}
+.z2h-rivelazione p strong { color: var(--em-ink); font-weight: 700; }
+.z2h-rivelazione .cifra { color: var(--em-green); font-weight: 800; }
+.z2h-rivelazione .azioni { padding: 0 24px 22px; }
+.z2h-rivelazione .ok {
+  background: var(--em-gold); color: #0d1117; border: none; border-radius: 8px;
+  padding: 13px 22px; font-size: 13.5px; font-weight: 800; cursor: pointer; width: 100%;
+}
+.z2h-rivelazione .ok:active { transform: scale(.98); }
+
 }
 
 

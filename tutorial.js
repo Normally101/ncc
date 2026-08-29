@@ -18,13 +18,11 @@ const _TUT_KEY = 'chauffeurEmpireTutorialDone_v3';
 //   'auto-nav'  — naviga al tab automaticamente, spotlight su #tab-container, bottone "Avanti"
 //   'outro'     — schermata centrata finale, bottone "Cominciamo"
 
-const _TUT_SPEAKER = { name: 'Vittorio', faction: 'Mentore', initial: 'V', color: '#d4af37' };
-
 const _TUT_STEPS = [
     {
         type: 'intro',
         title: 'Benvenuto, CEO.',
-        body: 'Mi chiamo <strong style="color:#d4af37">Vittorio</strong>. Conosco questo settore da trent\'anni — e ho visto aziende come la tua nascere e morire in un anno. Ti mostro le regole base. Poi sei da solo.',
+        body: 'Mi chiamo <em>Vittorio</em>. Conosco questo settore da trent\'anni — e ho visto aziende come la tua nascere e morire in un anno. Ti mostro le regole base. Poi sei da solo.',
     },
     {
         type: 'spotlight',
@@ -96,7 +94,7 @@ const _TUT_STEPS = [
     {
         type: 'outro',
         title: 'Ora sei da solo.',
-        body: 'Ho finito. Il mercato non aspetta spiegazioni — aspetta risultati. La tua <strong style="color:#d4af37">prima missione</strong> è già attiva nella tab Missioni. Completala. Poi ne parleremo.',
+        body: 'Ho finito. Il mercato non aspetta spiegazioni — aspetta risultati. La tua <em>prima missione</em> è già attiva nella tab Missioni. Completala. Poi ne parleremo.',
     },
 ];
 
@@ -198,138 +196,215 @@ function _watchActionGate(step) {
 }
 
 /* ──────────────────────────────────────────────────────────────
-   DOM BUILDERS
+   SPOTLIGHT ANCORATO — costruzione e posizionamento
+   Direzione scelta da Vlad il 29/08/2026 (mock-up 5): si illumina il
+   bersaglio e la spiegazione gli sta accanto.
+
+   Tre regole che questo strato deve rispettare, in ordine di importanza:
+
+   1. NON PUNTARE MAI AL VUOTO. Se il selettore non trova niente — perche'
+      l'interfaccia e' cambiata, o perche' quel pezzo non e' ancora
+      disegnato — la bolla si centra e l'anello non compare. Un tutorial
+      che indica un punto vuoto e' peggio di nessun tutorial. Il guardrail
+      test/guardrail/tutorial-bersagli.test.js verifica che ogni selettore
+      dichiarato esista davvero, cosi' il cambiamento si vede in rosso
+      nella suite invece che in faccia al giocatore.
+   2. SEGUIRE IL BERSAGLIO. Anello e bolla si riposizionano a ogni scroll
+      e resize. La versione precedente dipingeva il buco su un canvas una
+      volta sola: bastava scorrere e il buio copriva la cosa illuminata.
+   3. SOLO TOKEN. Nessun colore scritto a mano: sta tutto in .ce-spot-*
+      dentro style.css, che legge --em-*.
 ────────────────────────────────────────────────────────────── */
+
+const _SPOT_MARGINE = 8;    // aria fra bersaglio e anello
+const _SPOT_STACCO  = 18;   // aria fra anello e bolla
+const _SPOT_BORDO   = 12;   // aria minima dai bordi dello schermo
+
+/** Il bersaglio e' utilizzabile? Un elemento c'e' ma puo' avere misura zero
+ *  (tab non aperto, display:none): in quel caso vale come assente. */
+function _spotVisibile(el) {
+    if (!el || typeof el.getBoundingClientRect !== 'function') return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+}
+
 function _buildBackdrop(target, isCenter) {
-    const overlay = document.createElement('div');
-    overlay.id = 'tut-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;z-index:9500;pointer-events:all;background:rgba(0,0,0,0.78)';
-    document.body.appendChild(overlay);
-    _tutOverlay = overlay;
+    const scrim = document.createElement('div');
+    scrim.id = 'tut-overlay';
+    scrim.className = 'ce-spot-scrim';
+    document.body.appendChild(scrim);
+    _tutOverlay = scrim;
 
-    if (!target || isCenter) return;
-
-    const cv = document.createElement('canvas');
-    cv.id = 'tut-canvas';
-    cv.style.cssText = 'position:fixed;inset:0;z-index:9501;pointer-events:none;';
-    cv.width  = window.innerWidth;
-    cv.height = window.innerHeight;
-    const ctx = cv.getContext('2d');
-    const pad = 10;
-    const r   = target.getBoundingClientRect();
-
-    // Se il target è nascosto (width/height = 0) disegna solo l'overlay senza hole
-    if (r.width > 0 && r.height > 0) {
-        overlay.style.background = 'transparent';
-        ctx.fillStyle = 'rgba(0,0,0,0.78)';
-        ctx.fillRect(0, 0, cv.width, cv.height);
-        ctx.clearRect(r.left - pad, r.top - pad, r.width + pad * 2, r.height + pad * 2);
-        // Elevate target above overlay
-        _tutTarget = target;
-        target.dataset.tutOrigZ   = target.style.zIndex || '';
-        target.dataset.tutOrigPos = target.style.position || '';
-        target.style.position = 'relative';
-        target.style.zIndex   = '9510';
+    const usabile = !isCenter && _spotVisibile(target);
+    if (!usabile) {
+        // Nessun bersaglio: il buio lo fa lo scrim e non si illumina niente.
+        scrim.classList.add('senza-bersaglio');
+        return;
     }
 
-    document.body.appendChild(cv);
-    _tutCanvas = cv;
+    const ring = document.createElement('div');
+    ring.id = 'tut-ring';
+    ring.className = 'ce-spot-ring';
+    document.body.appendChild(ring);
+    _tutCanvas = ring;   // stesso slot di pulizia della vecchia canvas
+
+    /* Il bersaglio va sollevato sopra lo scrim, altrimenti resta illuminato
+       ma non cliccabile — e diversi passi aspettano proprio che il giocatore
+       lo clicchi (actionGate). */
+    _tutTarget = target;
+    target.dataset.tutOrigZ   = target.style.zIndex   || '';
+    target.dataset.tutOrigPos = target.style.position || '';
+    const posizione = (typeof window.getComputedStyle === 'function')
+        ? window.getComputedStyle(target).position
+        : (target.style.position || 'static');
+    if (posizione === 'static') target.style.position = 'relative';
+    target.style.zIndex = '9510';   // = --z-spotlight + 10
 }
 
 function _buildBox(step, target) {
     const isCenter = step.type === 'intro' || step.type === 'outro';
     const isLast   = step.type === 'outro';
     const isFirst  = step.type === 'intro';
+    const passo    = _tutStep + 1;
+    const totale   = _TUT_STEPS.length;
 
-    const sp = _TUT_SPEAKER;
-    const progress = _tutStep + 1;
-    const total    = _TUT_STEPS.length;
+    const bolla = document.createElement('div');
+    bolla.id = 'tut-box';
+    bolla.className = 'ce-spot-bolla';
+    bolla.innerHTML = `
+        <div class="freccia" style="display:none"></div>
+        <div class="eti">Passo ${passo} di ${totale}</div>
+        <h4>${step.title}</h4>
+        <p>${step.body}</p>
+        ${step.actionGate ? '<div class="gate">✓ Avanza da solo appena lo fai davvero</div>' : ''}
+        <div class="azioni">
+            <button class="ok" ${ceAct('tutorialNext', [])}>${isLast ? 'Cominciamo' : isFirst ? 'Inizia' : 'Ho capito'}</button>
+            <button class="salta" ${ceAct('tutorialSkip', [])}>Salta il tutorial</button>
+            <span class="conta">${passo} / ${totale}</span>
+        </div>`;
+    document.body.appendChild(bolla);
+    _tutBox = bolla;
 
-    const btnHtml = `<div style="display:flex;gap:8px;align-items:center">
-        <button ${ceAct('tutorialSkip', [])} style="font-size:11px;padding:4px 12px;background:transparent;border:1px solid rgba(255,255,255,0.12);color:#6b7280;border-radius:4px;cursor:pointer">Salta</button>
-        <button ${ceAct('tutorialNext', [])} style="font-size:12px;padding:5px 16px;background:rgba(212,175,55,0.18);border:1px solid rgba(212,175,55,0.5);color:#d4af37;border-radius:4px;cursor:pointer;font-weight:700">${isLast ? '🚀 Cominciamo!' : isFirst ? 'Inizia →' : 'Avanti →'}</button>
-    </div>`;
-
-    const dots = Array.from({ length: total }, (_, i) => {
-        const active = i === _tutStep;
-        const done   = i < _tutStep;
-        return `<span style="width:${active ? 16 : 5}px;height:5px;border-radius:3px;background:${active ? '#d4af37' : done ? 'rgba(212,175,55,0.4)' : 'rgba(255,255,255,0.12)'};transition:all 0.3s;display:inline-block"></span>`;
-    }).join('');
-
-    const box = document.createElement('div');
-    box.id = 'tut-box';
-    box.style.cssText = [
-        'position:fixed', 'z-index:9520',
-        'background:#0d1117',
-        'border:1px solid rgba(212,175,55,0.45)',
-        'border-radius:12px',
-        'padding:16px 18px 14px',
-        'max-width:300px', 'width:90%',
-        'box-shadow:0 8px 48px rgba(0,0,0,0.9),0 0 0 1px rgba(212,175,55,0.15)',
-        'pointer-events:all',
-    ].join(';');
-
-    box.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
-            <div style="width:32px;height:32px;border-radius:50%;background:rgba(212,175,55,0.15);border:1px solid rgba(212,175,55,0.45);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#d4af37;flex-shrink:0">${sp.initial}</div>
-            <div>
-                <div style="font-size:12px;font-weight:700;color:#d4af37;line-height:1">${sp.name}</div>
-                <div style="font-size:10px;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em">${sp.faction}</div>
-            </div>
-        </div>
-        <div style="font-size:16px;font-weight:800;color:white;margin-bottom:8px;line-height:1.3">${step.title}</div>
-        <div style="font-size:13px;color:#9ca3af;line-height:1.6;margin-bottom:16px">${step.body}</div>
-        ${step.actionGate ? '<div style="font-size:11px;color:#d4af37;margin:-10px 0 16px;opacity:0.85">✓ Avanza da solo appena lo fai davvero</div>' : ''}
-        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
-            <div style="display:flex;gap:4px;align-items:center">${dots}</div>
-            ${btnHtml}
-        </div>
-    `;
-
-    if (isCenter || !target) {
-        box.style.top       = '50%';
-        box.style.left      = '50%';
-        box.style.transform = 'translate(-50%,-50%)';
-    } else {
-        _positionBox(box, target, step.arrow || 'bottom');
-    }
-
-    document.body.appendChild(box);
-    _tutBox = box;
+    const ancorata = !isCenter && _spotVisibile(target);
+    _spotAggiorna(step, ancorata ? target : null);
+    if (ancorata) _spotSegui(step, target);
 }
 
-function _positionBox(box, target, arrow) {
-    const r  = target.getBoundingClientRect();
-    const bW = 300;
-    const bH = 200;
-    const g  = 18;
-    const vW = window.innerWidth;
-    const vH = window.innerHeight;
-    let left, top;
+/* Ricalcola anello e bolla dalle misure VERE del bersaglio in questo istante. */
+function _spotAggiorna(step, target) {
+    const bolla = _tutBox;
+    if (!bolla) return;
+    const freccia = bolla.querySelector('.freccia');
+    const vW = window.innerWidth, vH = window.innerHeight;
 
-    if (r.width === 0 || r.height === 0) {
-        // target nascosto — centra la box
-        left = vW / 2 - bW / 2;
-        top  = vH / 2 - bH / 2;
-    } else if (arrow === 'bottom') {
-        left = Math.min(r.left, vW - bW - 8);
-        top  = r.bottom + g;
-        if (top + bH > vH - 8) top = r.top - bH - g;
-    } else if (arrow === 'right') {
-        left = r.right + g;
-        top  = Math.max(8, r.top);
-        if (left + bW > vW - 8) left = r.left - bW - g;
-    } else if (arrow === 'left') {
-        left = r.left - bW - g;
-        top  = Math.max(8, r.top);
-        if (left < 8) left = r.right + g;
-    } else {
-        left = Math.max(8, Math.min(r.left + r.width / 2 - bW / 2, vW - bW - 8));
-        top  = Math.max(8, Math.min(r.top + 60, vH - bH - 8));
+    if (!_spotVisibile(target)) {
+        if (freccia) freccia.style.display = 'none';
+        bolla.style.left = '50%';
+        bolla.style.top  = '50%';
+        bolla.style.transform = 'translate(-50%,-50%)';
+        return;
+    }
+    bolla.style.transform = '';
+
+    const r = target.getBoundingClientRect();
+    if (_tutCanvas) {
+        _tutCanvas.style.left   = (r.left   - _SPOT_MARGINE) + 'px';
+        _tutCanvas.style.top    = (r.top    - _SPOT_MARGINE) + 'px';
+        _tutCanvas.style.width  = (r.width  + _SPOT_MARGINE * 2) + 'px';
+        _tutCanvas.style.height = (r.height + _SPOT_MARGINE * 2) + 'px';
     }
 
-    box.style.left = `${Math.max(8, Math.min(left, vW - bW - 8))}px`;
-    box.style.top  = `${Math.max(8, Math.min(top,  vH - bH - 8))}px`;
+    const bW = bolla.offsetWidth  || 346;
+    const bH = bolla.offsetHeight || 200;
+    const spazio = {
+        destra:  vW - r.right,
+        sinistra: r.left,
+        sotto:   vH - r.bottom,
+        sopra:   r.top,
+    };
+    /* Il lato lo sceglie lo spazio disponibile, non la dichiarazione dello
+       step: `arrow` resta il suggerimento, ma se da quella parte la bolla
+       uscirebbe dallo schermo si prende il lato piu' largo. Senza questo,
+       un bersaglio vicino al bordo spinge la bolla fuori vista. */
+    const preferito = step.arrow === 'left' ? 'sinistra'
+                    : step.arrow === 'right' ? 'destra'
+                    : step.arrow === 'top' ? 'sopra'
+                    : step.arrow === 'center' ? null
+                    : 'sotto';
+    const serve = { destra: bW, sinistra: bW, sotto: bH, sopra: bH };
+    let lato = (preferito && spazio[preferito] >= serve[preferito] + _SPOT_STACCO) ? preferito : null;
+    if (!lato) {
+        lato = ['destra', 'sotto', 'sinistra', 'sopra']
+            .find(l => spazio[l] >= serve[l] + _SPOT_STACCO) || null;
+    }
+
+    let left, top, latoFreccia;
+    if (!lato) {
+        // Non c'e' spazio da nessuna parte: la bolla si centra e non punta.
+        left = vW / 2 - bW / 2;
+        top  = vH / 2 - bH / 2;
+        latoFreccia = null;
+    } else if (lato === 'destra' || lato === 'sinistra') {
+        left = lato === 'destra' ? r.right + _SPOT_STACCO : r.left - bW - _SPOT_STACCO;
+        top  = r.top + r.height / 2 - bH / 2;
+        latoFreccia = lato === 'destra' ? 'da-sinistra' : 'da-destra';
+    } else {
+        left = r.left + r.width / 2 - bW / 2;
+        top  = lato === 'sotto' ? r.bottom + _SPOT_STACCO : r.top - bH - _SPOT_STACCO;
+        latoFreccia = lato === 'sotto' ? 'da-sopra' : 'da-sotto';
+    }
+
+    left = Math.max(_SPOT_BORDO, Math.min(left, vW - bW - _SPOT_BORDO));
+    top  = Math.max(_SPOT_BORDO, Math.min(top,  vH - bH - _SPOT_BORDO));
+    bolla.style.left = left + 'px';
+    bolla.style.top  = top  + 'px';
+
+    if (freccia) {
+        if (!latoFreccia) { freccia.style.display = 'none'; }
+        else {
+            freccia.className = 'freccia ' + latoFreccia;
+            freccia.style.display = '';
+            // La punta insegue il centro del bersaglio, non il centro della bolla.
+            if (latoFreccia === 'da-sinistra' || latoFreccia === 'da-destra') {
+                const y = r.top + r.height / 2 - top - 7;
+                freccia.style.top = Math.max(12, Math.min(y, bH - 26)) + 'px';
+            } else {
+                const x = r.left + r.width / 2 - left - 7;
+                freccia.style.left = Math.max(12, Math.min(x, bW - 26)) + 'px';
+            }
+        }
+    }
+}
+
+/* Scroll e resize: si riposiziona, non si ridisegna. Un rAF per giro, cosi'
+   lo scorrimento non paga un ricalcolo per evento. */
+function _spotSegui(step, target) {
+    /* Riposizionare e' un'operazione pubblica: la chiamano gli eventi, e la
+       puo' chiamare chiunque muova l'interfaccia sotto al tutorial (un tab che
+       finisce di disegnarsi, un pannello che si apre). */
+    window._tutRiposiziona = () => _spotAggiorna(step, target);
+
+    let inCoda = false;
+    const rAF = (typeof requestAnimationFrame === 'function')
+        ? requestAnimationFrame : (fn) => setTimeout(fn, 16);
+    const suEvento = () => {
+        if (inCoda) return;
+        inCoda = true;
+        rAF(() => { inCoda = false; _spotAggiorna(step, target); });
+    };
+    const suTasto = (ev) => { if (ev.key === 'Escape') window.tutorialSkip(); };
+    /* scroll e keydown vanno su `document`: lo scroll di un pannello interno
+       non arriva a window se non in cattura, e su document si intercetta
+       comunque. resize esiste solo su window. */
+    document.addEventListener('scroll', suEvento, true);
+    document.addEventListener('keydown', suTasto);
+    window.addEventListener('resize', suEvento);
+    _tutCleanup = () => {
+        document.removeEventListener('scroll', suEvento, true);
+        document.removeEventListener('keydown', suTasto);
+        window.removeEventListener('resize', suEvento);
+        window._tutRiposiziona = null;
+    };
 }
 
 /* ──────────────────────────────────────────────────────────────
@@ -338,7 +413,7 @@ function _positionBox(box, target, arrow) {
 function _clearDOM() {
     document.getElementById('tut-box')?.remove();
     document.getElementById('tut-overlay')?.remove();
-    document.getElementById('tut-canvas')?.remove();
+    document.getElementById('tut-ring')?.remove();
     _tutBox = _tutOverlay = _tutCanvas = null;
     if (_tutTarget) {
         _tutTarget.style.zIndex   = _tutTarget.dataset.tutOrigZ   || '';
@@ -348,6 +423,7 @@ function _clearDOM() {
         _tutTarget = null;
     }
 }
+
 
 function _end() {
     _clearDOM();

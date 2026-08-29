@@ -15,8 +15,8 @@ const _CH_NAMES = {
 };
 
 const _TIER_COLOR = {
-    bronze: '#cd7f32', silver: '#b0b8c4', gold: '#c79a2a',
-    diamond: '#7ec8e3', legendary: '#ff6b35',
+    bronze: 'var(--em-tier-bronze)', silver: 'var(--em-tier-silver)', gold: 'var(--em-gold)',
+    diamond: 'var(--em-tier-diamond)', legendary: 'var(--em-tier-legend)',
 };
 
 const _TYPE_LABEL = { tutorial: 'Tutorial', story: 'Storia', raid: 'Raid Boss', milestone: 'Traguardo' };
@@ -34,132 +34,132 @@ const _TYPE_LABEL = { tutorial: 'Tutorial', story: 'Storia', raid: 'Raid Boss', 
 #career-modal-wrap { position:relative;width:100%;max-width:820px;max-height:90vh;display:flex;flex-direction:column; }
 #career-modal-close {
     position:absolute;top:-8px;right:-8px;z-index:1;
-    width:24px;height:24px;background:#21262d;border:1px solid #30363d;
-    color:#6b7280;font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;
+    width:24px;height:24px;background:var(--em-line);border:1px solid var(--em-line3);
+    color:var(--em-muted);font-size:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;
 }
-#career-modal-close:hover { background:#21262d;color:#e6edf3; }
+#career-modal-close:hover { background:var(--em-line);color:var(--em-ink); }
 #career-modal {
-    background:#161b22;border:1px solid #21262d;border-top:2px solid #c79a2a;
+    background:var(--em-card);border:1px solid var(--em-line);border-top:2px solid var(--em-gold);
     display:grid;grid-template-columns:1fr 240px;max-height:90vh;overflow:hidden;
 }
 .cm-main { display:flex;flex-direction:column;overflow:hidden;min-width:0; }
 .cm-head {
-    padding:14px 16px 12px;border-bottom:1px solid #21262d;background:#0d1117;flex-shrink:0;
+    padding:14px 16px 12px;border-bottom:1px solid var(--em-line);background:var(--em-bg);flex-shrink:0;
 }
-.cm-breadcrumb { font-size:8px;font-family:monospace;color:#6b7280;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px; }
-.cm-breadcrumb .gold { color:#c79a2a; }
-.cm-title { font-size:15px;font-weight:700;color:#e6edf3;margin-bottom:5px; }
-.cm-giver { display:flex;align-items:center;gap:8px;font-size:10px;color:#6b7280; }
-.cm-giver-badge { font-size:9px;font-family:monospace;background:#1a1608;border:1px solid #c79a2a;color:#c79a2a;padding:1px 8px; }
+.cm-breadcrumb { font-size:8px;color:var(--em-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:5px; }
+.cm-breadcrumb .gold { color:var(--em-gold); }
+.cm-title { font-size:15px;font-weight:700;color:var(--em-ink);margin-bottom:5px; }
+.cm-giver { display:flex;align-items:center;gap:8px;font-size:10px;color:var(--em-muted); }
+.cm-giver-badge { font-size:9px;background:var(--em-gold-soft);border:1px solid var(--em-gold);color:var(--em-gold);padding:1px 8px; }
 .cm-timeline {
-    display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid #21262d;
-    background:#0d1117;gap:0;overflow-x:auto;flex-shrink:0;
+    display:flex;align-items:center;padding:10px 16px;border-bottom:1px solid var(--em-line);
+    background:var(--em-bg);gap:0;overflow-x:auto;flex-shrink:0;
 }
 .cm-tl-node {
     width:22px;height:22px;border:1px solid;display:flex;align-items:center;justify-content:center;
-    font-size:8px;font-family:monospace;font-weight:700;flex-shrink:0;position:relative;cursor:default;
+    font-size:8px;font-weight:700;flex-shrink:0;position:relative;cursor:default;
 }
-.cm-tl-node.done   { border-color:#3d5a3e;background:#1a2e1a;color:#1aa06a; }
-.cm-tl-node.active { border-color:#c79a2a;background:#1a1608;color:#c79a2a; }
-.cm-tl-node.locked { border-color:#21262d;background:#0d1117;color:#21262d; }
+.cm-tl-node.done   { border-color:var(--em-green-edge);background:var(--em-green-soft);color:var(--em-green-d); }
+.cm-tl-node.active { border-color:var(--em-gold);background:var(--em-gold-soft);color:var(--em-gold); }
+.cm-tl-node.locked { border-color:var(--em-line);background:var(--em-bg);color:var(--em-line); }
 .cm-tl-label {
-    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:#161b22;
-    border:1px solid #30363d;padding:2px 6px;font-size:8px;white-space:nowrap;color:#6b7280;
-    pointer-events:none;display:none;z-index:10;font-family:monospace;
+    position:absolute;bottom:26px;left:50%;transform:translateX(-50%);background:var(--em-card);
+    border:1px solid var(--em-line3);padding:2px 6px;font-size:8px;white-space:nowrap;color:var(--em-muted);
+    pointer-events:none;display:none;z-index:10;
 }
 .cm-tl-node:hover .cm-tl-label { display:block; }
-.cm-tl-line { flex:1;height:1px;background:#21262d;min-width:10px; }
-.cm-tl-line.done { background:#3d5a3e; }
-.cm-tl-next { font-size:8px;font-family:monospace;color:#21262d;margin-left:10px;white-space:nowrap;flex-shrink:0; }
+.cm-tl-line { flex:1;height:1px;background:var(--em-line);min-width:10px; }
+.cm-tl-line.done { background:var(--em-green-edge); }
+.cm-tl-next { font-size:8px;color:var(--em-line);margin-left:10px;white-space:nowrap;flex-shrink:0; }
 .cm-status {
-    display:flex;align-items:center;gap:12px;padding:7px 16px;border-bottom:1px solid #21262d;
-    background:#0d1117;flex-shrink:0;
+    display:flex;align-items:center;gap:12px;padding:7px 16px;border-bottom:1px solid var(--em-line);
+    background:var(--em-bg);flex-shrink:0;
 }
 .cm-status-badge {
-    font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;
-    padding:2px 8px;border:1px solid #c79a2a;color:#c79a2a;background:#1a1608;
+    font-size:8px;text-transform:uppercase;letter-spacing:1px;
+    padding:2px 8px;border:1px solid var(--em-gold);color:var(--em-gold);background:var(--em-gold-soft);
 }
-.cm-status-badge.claim { border-color:#3d5a3e;color:#1aa06a;background:#1a2e1a; }
-.cm-status-sub { font-size:9px;color:#6b7280;font-family:monospace; }
+.cm-status-badge.claim { border-color:var(--em-green-edge);color:var(--em-green-d);background:var(--em-green-soft); }
+.cm-status-sub { font-size:9px;color:var(--em-muted); }
 .cm-lore {
-    padding:12px 16px;border-bottom:1px solid #21262d;border-left:3px solid #c79a2a;
-    font-size:11px;color:#6b7280;line-height:1.6;font-style:italic;background:#0d1117;flex-shrink:0;
+    padding:12px 16px;border-bottom:1px solid var(--em-line);border-left:3px solid var(--em-gold);
+    font-size:11px;color:var(--em-muted);line-height:1.6;font-style:italic;background:var(--em-bg);flex-shrink:0;
 }
 .cm-objectives { flex:1;overflow-y:auto; }
 .cm-obj-table { width:100%;border-collapse:collapse; }
-.cm-obj-table thead tr { background:#0d1117; }
+.cm-obj-table thead tr { background:var(--em-bg); }
 .cm-obj-table thead th {
-    padding:7px 16px;font-size:8px;font-family:monospace;text-transform:uppercase;
-    letter-spacing:1px;color:#6b7280;text-align:left;font-weight:600;border-bottom:1px solid #21262d;
+    padding:7px 16px;font-size:8px;text-transform:uppercase;
+    letter-spacing:1px;color:var(--em-muted);text-align:left;font-weight:600;border-bottom:1px solid var(--em-line);
 }
 .cm-obj-table thead th:last-child { text-align:right; }
-.cm-obj-table tbody tr { border-bottom:1px solid #21262d; }
-.cm-obj-table tbody tr:hover { background:#21262d; }
-.cm-obj-table tbody td { padding:9px 16px;font-size:10px;color:#6b7280;vertical-align:middle; }
-.cm-obj-status { font-size:8px;font-family:monospace;font-weight:700;white-space:nowrap; }
-.cm-obj-status.done  { color:#1aa06a; }
-.cm-obj-status.prog  { color:#c79a2a; }
-.cm-obj-status.open  { color:#21262d; }
+.cm-obj-table tbody tr { border-bottom:1px solid var(--em-line); }
+.cm-obj-table tbody tr:hover { background:var(--em-line); }
+.cm-obj-table tbody td { padding:9px 16px;font-size:10px;color:var(--em-muted);vertical-align:middle; }
+.cm-obj-status { font-size:8px;font-weight:700;white-space:nowrap; }
+.cm-obj-status.done  { color:var(--em-green-d); }
+.cm-obj-status.prog  { color:var(--em-gold); }
+.cm-obj-status.open  { color:var(--em-line); }
 .cm-mbar-wrap { display:flex;align-items:center;gap:8px; }
-.cm-mbar-bg { width:70px;height:3px;background:#21262d;overflow:hidden;flex-shrink:0; }
+.cm-mbar-bg { width:70px;height:3px;background:var(--em-line);overflow:hidden;flex-shrink:0; }
 .cm-mbar-fill { height:100%; }
-.cm-mbar-val { font-size:9px;font-family:monospace;color:#6b7280;white-space:nowrap; }
-.cm-howto { font-size:9px;color:#6b7280;line-height:1.5;margin-top:4px; }
+.cm-mbar-val { font-size:9px;color:var(--em-muted);white-space:nowrap; }
+.cm-howto { font-size:9px;color:var(--em-muted);line-height:1.5;margin-top:4px; }
 .cm-reward {
-    padding:10px 16px;border-top:1px solid #21262d;background:#0d1117;
+    padding:10px 16px;border-top:1px solid var(--em-line);background:var(--em-bg);
     display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0;
 }
-.cm-rlabel { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-right:4px; }
-.cm-chip { font-size:9px;font-family:monospace;padding:3px 10px;border:1px solid #30363d;color:#6b7280;background:#161b22; }
-.cm-chip.gold  { border-color:#c79a2a;color:#c79a2a;background:#1a1608; }
-.cm-chip.green { border-color:#3d5a3e;color:#1aa06a;background:#1a2e1a; }
-.cm-chip.vtk   { border-color:#4b5a8b;color:#7b9fe0;background:#151c2e; }
+.cm-rlabel { font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--em-muted);margin-right:4px; }
+.cm-chip { font-size:9px;padding:3px 10px;border:1px solid var(--em-line3);color:var(--em-muted);background:var(--em-card); }
+.cm-chip.gold  { border-color:var(--em-gold);color:var(--em-gold);background:var(--em-gold-soft); }
+.cm-chip.green { border-color:var(--em-green-edge);color:var(--em-green-d);background:var(--em-green-soft); }
+.cm-chip.vtk   { border-color:var(--em-blue-edge);color:var(--em-blue);background:var(--em-blue-soft); }
 .cm-btn {
-    margin-left:auto;padding:6px 18px;background:#1a1608;border:1px solid #c79a2a;
-    color:#c79a2a;font-size:9px;font-family:monospace;font-weight:700;text-transform:uppercase;
+    margin-left:auto;padding:6px 18px;background:var(--em-gold-soft);border:1px solid var(--em-gold);
+    color:var(--em-gold);font-size:9px;font-weight:700;text-transform:uppercase;
     letter-spacing:1px;cursor:pointer;
 }
-.cm-btn:hover { background:#352c15; }
-.cm-btn.claim { background:#1a2e1a;border-color:#3d5a3e;color:#1aa06a; }
-.cm-btn.claim:hover { background:#223c22; }
-.cm-sidebar { border-left:1px solid #21262d;display:flex;flex-direction:column;background:#0d1117;overflow-y:auto; }
+.cm-btn:hover { background:var(--em-gold-hover); }
+.cm-btn.claim { background:var(--em-green-soft);border-color:var(--em-green-edge);color:var(--em-green-d); }
+.cm-btn.claim:hover { background:var(--em-green-hover); }
+.cm-sidebar { border-left:1px solid var(--em-line);display:flex;flex-direction:column;background:var(--em-bg);overflow-y:auto; }
 .cm-side-head {
-    padding:8px 12px;border-bottom:1px solid #21262d;display:flex;justify-content:space-between;
-    align-items:center;font-size:8px;font-family:monospace;text-transform:uppercase;
-    letter-spacing:1px;color:#6b7280;flex-shrink:0;background:#0d1117;
+    padding:8px 12px;border-bottom:1px solid var(--em-line);display:flex;justify-content:space-between;
+    align-items:center;font-size:8px;text-transform:uppercase;
+    letter-spacing:1px;color:var(--em-muted);flex-shrink:0;background:var(--em-bg);
 }
-.cm-side-head .gold { color:#c79a2a; }
-.cm-node-row { display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #21262d;cursor:default; }
-.cm-node-row.active-row { background:#1a1d23;border-left:2px solid #c79a2a;padding-left:10px; }
+.cm-side-head .gold { color:var(--em-gold); }
+.cm-node-row { display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--em-line);cursor:default; }
+.cm-node-row.active-row { background:var(--em-row-on);border-left:2px solid var(--em-gold);padding-left:10px; }
 .cm-node-num {
     width:18px;height:18px;border:1px solid;display:flex;align-items:center;justify-content:center;
-    font-size:8px;font-family:monospace;font-weight:700;flex-shrink:0;
+    font-size:8px;font-weight:700;flex-shrink:0;
 }
-.cm-node-num.done   { border-color:#3d5a3e;color:#1aa06a;background:#1a2e1a; }
-.cm-node-num.active { border-color:#c79a2a;color:#c79a2a;background:#1a1608; }
-.cm-node-num.locked { border-color:#21262d;color:#21262d;background:#0d1117; }
+.cm-node-num.done   { border-color:var(--em-green-edge);color:var(--em-green-d);background:var(--em-green-soft); }
+.cm-node-num.active { border-color:var(--em-gold);color:var(--em-gold);background:var(--em-gold-soft); }
+.cm-node-num.locked { border-color:var(--em-line);color:var(--em-line);background:var(--em-bg); }
 .cm-node-name { font-size:10px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.cm-node-name.done   { color:#6b7280; }
-.cm-node-name.active { color:#e6edf3;font-weight:600; }
-.cm-node-name.locked { color:#21262d; }
-.cm-node-tag { font-size:8px;font-family:monospace;flex-shrink:0; }
-.cm-node-tag.ic { border:1px solid #c79a2a;color:#c79a2a;padding:1px 5px; }
-.cm-node-tag.lock { color:#30363d; }
-.cm-node-tag.date { color:#6b7280; }
-.cm-dots { padding:8px 12px;font-size:10px;color:#30363d;letter-spacing:4px; }
-.cm-arch-section { border-top:1px solid #21262d;flex-shrink:0; }
-.cm-arch-row { display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid #21262d; }
-.cm-arch-name { font-size:9px;color:#6b7280; }
-.cm-arch-date { font-size:8px;font-family:monospace;color:#21262d; }
-.cm-miles-section { padding:12px 16px;border-top:1px solid #21262d;flex-shrink:0; }
-.cm-miles-label { font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:8px; }
-.cm-mile-row { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid #21262d; }
+.cm-node-name.done   { color:var(--em-muted); }
+.cm-node-name.active { color:var(--em-ink);font-weight:600; }
+.cm-node-name.locked { color:var(--em-line); }
+.cm-node-tag { font-size:8px;flex-shrink:0; }
+.cm-node-tag.ic { border:1px solid var(--em-gold);color:var(--em-gold);padding:1px 5px; }
+.cm-node-tag.lock { color:var(--em-line3); }
+.cm-node-tag.date { color:var(--em-muted); }
+.cm-dots { padding:8px 12px;font-size:10px;color:var(--em-line3);letter-spacing:4px; }
+.cm-arch-section { border-top:1px solid var(--em-line);flex-shrink:0; }
+.cm-arch-row { display:flex;justify-content:space-between;align-items:center;padding:6px 12px;border-bottom:1px solid var(--em-line); }
+.cm-arch-name { font-size:9px;color:var(--em-muted); }
+.cm-arch-date { font-size:8px;color:var(--em-line); }
+.cm-miles-section { padding:12px 16px;border-top:1px solid var(--em-line);flex-shrink:0; }
+.cm-miles-label { font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--em-muted);margin-bottom:8px; }
+.cm-mile-row { display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--em-line); }
 .cm-mile-icon { font-size:14px;flex-shrink:0; }
-.cm-mile-name { font-size:10px;color:#6b7280;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
-.cm-mile-bar-bg { width:50px;height:3px;background:#21262d;overflow:hidden;flex-shrink:0; }
+.cm-mile-name { font-size:10px;color:var(--em-muted);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.cm-mile-bar-bg { width:50px;height:3px;background:var(--em-line);overflow:hidden;flex-shrink:0; }
 .cm-mile-bar-fill { height:100%; }
-.cm-mile-val { font-size:8px;font-family:monospace;color:#6b7280;white-space:nowrap;flex-shrink:0; }
-.cm-empty { text-align:center;padding:48px 20px;color:#6b7280;font-size:11px; }
+.cm-mile-val { font-size:8px;color:var(--em-muted);white-space:nowrap;flex-shrink:0; }
+.cm-empty { text-align:center;padding:48px 20px;color:var(--em-muted);font-size:11px; }
     `;
     document.head.appendChild(s);
 })();
@@ -262,7 +262,7 @@ function _buildCareerModal() {
         }
         /* milestone claim banners */
         if (claimMiles.length > 0) {
-            mainHtml += `<div style="border-top:1px solid #21262d">`;
+            mainHtml += `<div style="border-top:1px solid var(--em-line)">`;
             for (const q of claimMiles) mainHtml += _buildClaimMile(q);
             mainHtml += `</div>`;
         }
@@ -274,7 +274,7 @@ function _buildCareerModal() {
         <div class="cm-miles-section">
             <div class="cm-miles-label">Traguardi in Corso</div>
             ${activeMiles.slice(0, 4).map(q => _buildMileRow(q, gs)).join('')}
-            ${activeMiles.length > 4 ? `<div style="font-size:9px;color:#6b7280;padding:6px 0">+${activeMiles.length - 4} altri…</div>` : ''}
+            ${activeMiles.length > 4 ? `<div style="font-size:9px;color:var(--em-muted);padding:6px 0">+${activeMiles.length - 4} altri…</div>` : ''}
         </div>`;
     }
 
@@ -364,7 +364,7 @@ const _QUEST_CTA = {
 /* ── Sub-builders ───────────────────────────────────────────── */
 function _buildActiveStory(q, gs, claimable) {
     const isClaim = claimable.includes(q.id);
-    const tc      = _TIER_COLOR[q.tier] || '#c79a2a';
+    const tc      = _TIER_COLOR[q.tier] || 'var(--em-gold)';
     let prog = { cur: 0, tgt: 1 };
     try { prog = q.check(gs); } catch(e) {}
     const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
@@ -404,9 +404,9 @@ function _buildActiveStory(q, gs, claimable) {
             </thead>
             <tbody>
                 <tr>
-                    <td><span style="font-size:9px;color:${isClaim ? '#1aa06a' : pct > 0 ? '#c79a2a' : '#c2ccd8'};font-family:monospace">${isClaim ? '✓' : pct > 0 ? '◐' : '○'}</span></td>
+                    <td><span style="font-size:9px;color:${isClaim ? 'var(--em-green-d)' : pct > 0 ? 'var(--em-gold)' : 'var(--em-muted)'}">${isClaim ? '✓' : pct > 0 ? '◐' : '○'}</span></td>
                     <td>
-                        <div style="${isClaim ? 'text-decoration:line-through;color:#6b7280' : ''}">${q.howTo || q.subtitle || q.title}</div>
+                        <div style="${isClaim ? 'text-decoration:line-through;color:var(--em-muted)' : ''}">${q.howTo || q.subtitle || q.title}</div>
                     </td>
                     <td>
                         <div class="cm-mbar-wrap">
@@ -436,8 +436,8 @@ function _buildClaimStory(q) {
             <thead><tr><th style="width:22px"></th><th>Obiettivo</th><th></th><th style="text-align:right">Stato</th></tr></thead>
             <tbody>
                 <tr>
-                    <td><span style="font-size:9px;color:#1aa06a;font-family:monospace">✓</span></td>
-                    <td style="text-decoration:line-through;color:#6b7280">${q.howTo || q.title}</td>
+                    <td><span style="font-size:9px;color:var(--em-green-d)">✓</span></td>
+                    <td style="text-decoration:line-through;color:var(--em-muted)">${q.howTo || q.title}</td>
                     <td></td>
                     <td style="text-align:right"><span class="cm-obj-status done">FATTO</span></td>
                 </tr>
@@ -453,19 +453,19 @@ function _buildClaimStory(q) {
 function _buildClaimMile(q) {
     const rewardChips = _buildRewardChips(q.rewards);
     return `
-        <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid #21262d">
+        <div style="display:flex;align-items:center;gap:12px;padding:10px 16px;border-bottom:1px solid var(--em-line)">
             <span style="font-size:18px;flex-shrink:0">${q.icon}</span>
             <div style="flex:1;min-width:0">
-                <div style="font-size:8px;font-family:monospace;color:#1aa06a;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Traguardo completato</div>
-                <div style="font-size:11px;font-weight:600;color:#e6edf3">${q.title}</div>
-                <div style="font-size:9px;color:#6b7280;margin-top:2px">${rewardChips}</div>
+                <div style="font-size:8px;color:var(--em-green-d);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">Traguardo completato</div>
+                <div style="font-size:11px;font-weight:600;color:var(--em-ink)">${q.title}</div>
+                <div style="font-size:9px;color:var(--em-muted);margin-top:2px">${rewardChips}</div>
             </div>
             <button class="cm-btn claim" style="flex-shrink:0" ${ceAct('claimQuestReward', [q.id])}>Riscuoti →</button>
         </div>`;
 }
 
 function _buildMileRow(q, gs) {
-    const tc = _TIER_COLOR[q.tier] || '#c79a2a';
+    const tc = _TIER_COLOR[q.tier] || 'var(--em-gold)';
     let prog = { cur: 0, tgt: 1 };
     try { prog = q.check(gs); } catch(e) {}
     const pct = Math.min(100, Math.round((prog.cur / Math.max(1, prog.tgt)) * 100));
@@ -484,10 +484,10 @@ function _buildRewardChips(r) {
     if (r.vtk)        chips.push(`<span class="cm-chip vtk">+${r.vtk} VTK</span>`);
     if (r.tc)         chips.push(`<span class="cm-chip gold">+${r.tc} DC</span>`);
     if (r.rep)        chips.push(`<span class="cm-chip gold">+${r.rep}★</span>`);
-    if (r.shadowCoin) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">+${r.shadowCoin.toLocaleString('it')} SC</span>`);
-    if (r.unlock)     chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">${r.unlock}</span>`);
-    if (r.title)      chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">"${r.title}"</span>`);
-    if (chips.length === 0 && r.desc) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:#2f74c0;border-radius:4px;padding:2px 6px">${r.desc}</span>`);
+    if (r.shadowCoin) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:var(--em-blue);border-radius:4px;padding:2px 6px">+${r.shadowCoin.toLocaleString('it')} SC</span>`);
+    if (r.unlock)     chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:var(--em-blue);border-radius:4px;padding:2px 6px">${r.unlock}</span>`);
+    if (r.title)      chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:var(--em-blue);border-radius:4px;padding:2px 6px">"${r.title}"</span>`);
+    if (chips.length === 0 && r.desc) chips.push(`<span style="font-size:9px;background:rgba(88,166,255,0.12);border:1px solid rgba(88,166,255,0.3);color:var(--em-blue);border-radius:4px;padding:2px 6px">${r.desc}</span>`);
     return chips.join('');
 }
 
@@ -547,26 +547,26 @@ window._showBivioModal = function(q) {
     document.getElementById('bivio-modal')?.remove();
     const optHtml = q.bivio.options.map(opt => `
         <button ${ceAct('_applyBivioChoice', [q.id,opt.id])}
-                style="display:block;width:100%;text-align:left;padding:10px 12px;background:#161b22;border:1px solid #21262d;color:#e6edf3;margin-top:8px;cursor:pointer;font-size:10px">
+                style="display:block;width:100%;text-align:left;padding:10px 12px;background:var(--em-card);border:1px solid var(--em-line);color:var(--em-ink);margin-top:8px;cursor:pointer;font-size:10px">
             <div style="font-weight:700;margin-bottom:2px">${opt.label}</div>
-            <div style="font-size:9px;color:#6b7280">${opt.desc}</div>
+            <div style="font-size:9px;color:var(--em-muted)">${opt.desc}</div>
         </button>`).join('');
 
     const giverLine = q.giver
-        ? `<div style="font-size:9px;color:#6b7280;margin-bottom:10px">${q.giver.name} · ${q.giver.faction}</div>`
+        ? `<div style="font-size:9px;color:var(--em-muted);margin-bottom:10px">${q.giver.name} · ${q.giver.faction}</div>`
         : '';
 
     const modal = document.createElement('div');
     modal.id = 'bivio-modal';
     modal.style.cssText = 'position:fixed;inset:0;z-index:var(--z-modal);display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.7);padding:20px';
     modal.innerHTML = `
-        <div style="background:#161b22;border:1px solid #21262d;border-top:2px solid #c79a2a;padding:20px;max-width:360px;width:100%">
-            <div style="font-size:8px;font-family:monospace;text-transform:uppercase;letter-spacing:1px;color:#c79a2a;margin-bottom:6px">${q.icon} ${q.title}</div>
+        <div style="background:var(--em-card);border:1px solid var(--em-line);border-top:2px solid var(--em-gold);padding:20px;max-width:360px;width:100%">
+            <div style="font-size:8px;text-transform:uppercase;letter-spacing:1px;color:var(--em-gold);margin-bottom:6px">${q.icon} ${q.title}</div>
             ${giverLine}
-            <div style="font-size:11px;color:#e6edf3;font-weight:600;margin-bottom:4px">${q.bivio.prompt}</div>
+            <div style="font-size:11px;color:var(--em-ink);font-weight:600;margin-bottom:4px">${q.bivio.prompt}</div>
             ${optHtml}
             <button ${ceAct('ceRemove', ['bivio-modal'])}
-                    style="margin-top:14px;font-size:9px;color:#6b7280;background:none;border:none;cursor:pointer;width:100%;text-align:center">Annulla</button>
+                    style="margin-top:14px;font-size:9px;color:var(--em-muted);background:none;border:none;cursor:pointer;width:100%;text-align:center">Annulla</button>
         </div>`;
     document.body.appendChild(modal);
     window._bivioQuestRef = q;

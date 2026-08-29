@@ -17,11 +17,17 @@ describe('economia/onesta — il gioco non promette cio\' che non da\'', () => {
     test('l\'evento capitalismo mostra la cassa VERA, non una cifra scritta a mano', () => {
         const src = leggi('zero-to-hero.js');
 
-        // La cifra deve venire da gameState, non essere un numero nel testo.
-        assert.ok(/Hai \$\{_cassa\}€ in tasca/.test(src),
-            'il testo deve interpolare la cassa reale del giocatore');
-        assert.ok(!/Hai 150€ in tasca/.test(src),
-            'la cifra fissa «150€» non deve piu\' esistere: la soglia e\' 6 corse da €15 = €90');
+        /* La cifra deve venire da gameState, non essere un numero nel testo.
+           Si controlla il LEGAME, non la frase: la schermata e' stata riscritta
+           il 30/08 col kit .em e la formulazione e' cambiata (ora la cifra e'
+           anche formattata all'italiana), ma la promessa da difendere e'
+           sempre la stessa. */
+        assert.ok(/_cassa\s*=\s*Math\.round\(\(window\.gameState && window\.gameState\.cash\)/.test(src),
+            'la cifra annunciata deve essere letta dalla cassa reale del giocatore');
+        assert.ok(/\$\{_cassa[^}]*\}/.test(src),
+            'e quella variabile deve finire nel testo mostrato');
+        assert.ok(!/Hai\s*1?\d{2,}\s*€ in tasca/.test(src),
+            'nessuna cifra fissa nel testo: la soglia e\' 6 corse, non le 10 su cui era tarato il vecchio «150€»');
     });
 
     test('a 6 corse manuali la cifra promessa coincide con la cassa', () => {

@@ -127,21 +127,43 @@
         var canPay = Math.min(d.outstanding, g.cash || 0);
         var ov = document.createElement('div');
         ov.id = 'vittorio-modal';
+        /* Colori dai token --em-*: il pannello aveva un rosso, un oro e un verde
+           tutti suoi, diversi da quelli del gioco (stessa correzione fatta il
+           30/08 alle due schermate di zero-to-hero.js). */
         ov.style.cssText = 'position:fixed;inset:0;z-index:var(--z-modal,9000);background:rgba(2,3,8,0.9);display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
         var flipBtn = (g.prestige || 0) >= 1
-            ? '<button data-ce-act="flipVittorio" style="background:linear-gradient(135deg,#d4af37,#b8860b);color:#000;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:pointer">🤝 Ribalta Vittorio (diventa tuo socio)</button>'
+            ? '<button data-ce-act="flipVittorio" style="background:var(--em-gold);color:#0d1117;font-weight:800;font-size:12.5px;padding:12px;border-radius:8px;border:none;cursor:pointer">🤝 Ribalta Vittorio — diventa tuo socio</button>'
             : '';
         ov.innerHTML =
-            '<div style="max-width:480px;background:#0b0d14;border:1px solid #b91c1c;border-radius:14px;padding:30px;text-align:center;box-shadow:0 0 50px rgba(185,28,28,0.25)">'
-          +   '<div style="font-size:40px;line-height:1">📵</div>'
-          +   '<h1 style="color:#ef4444;font-size:20px;letter-spacing:2px;margin:8px 0 4px;font-weight:900">DEBITO CON VITTORIO</h1>'
-          +   '<p style="color:#cbd2dc;font-size:13px;line-height:1.6;margin:0 0 6px">"Ti ho prestato i soldi per riscattare l\'auto dal pignoramento. Quel debito è mio. Salda."</p>'
-          +   '<div style="font-size:30px;font-weight:900;color:#ef4444;margin:12px 0 2px">€' + fmt(d.outstanding) + '</div>'
-          +   '<div style="font-size:11px;color:#6b7280;margin-bottom:18px">Interesse +' + (DAILY_INTEREST * 100) + '%/giorno · Cassa: €' + fmt(g.cash || 0) + '</div>'
-          +   '<div style="display:flex;flex-direction:column;gap:8px">'
-          +     '<button data-ce-act="repayVittorio" data-ce-args=\'[' + canPay + ']\' ' + (canPay > 0 ? '' : 'disabled') + ' style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;font-weight:800;padding:12px;border-radius:8px;border:none;cursor:' + (canPay > 0 ? 'pointer' : 'not-allowed') + ';opacity:' + (canPay > 0 ? 1 : 0.5) + '">💸 Ripaga ' + (canPay >= d.outstanding ? 'tutto (€' + fmt(d.outstanding) + ')' : '€' + fmt(canPay)) + '</button>'
+            '<div style="max-width:460px;width:100%;background:var(--em-card);border:1px solid var(--em-red);border-radius:12px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.7)">'
+          +   '<div style="display:flex;align-items:center;gap:10px;padding:11px 20px;border-bottom:1px solid var(--em-line);background:rgba(255,255,255,.02)">'
+          +     '<span style="font-size:16px;line-height:1">📵</span>'
+          +     '<span style="font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em-red)">Debito con Vittorio</span>'
+          +   '</div>'
+          +   '<div style="padding:18px 20px 6px">'
+          +     '<div style="border-left:2px solid var(--em-gold);padding:2px 0 2px 14px;margin-bottom:16px;font-size:13px;line-height:1.65;color:var(--em-ink)">'
+          +       '"Ti ho prestato i soldi per riscattare l\'auto dal pignoramento. Quel debito è mio. Salda."'
+          +       '<span style="display:block;margin-top:8px;font-size:11px;font-weight:800;color:var(--em-gold)">— Vittorio</span>'
+          +     '</div>'
+          +     '<div style="display:flex;border-top:1px solid var(--em-line);border-bottom:1px solid var(--em-line);margin-bottom:18px">'
+          +       '<div style="flex:1;padding:11px 0;border-right:1px solid var(--em-line)">'
+          +         '<div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--em-dim)">Residuo</div>'
+          +         '<div style="font-size:22px;font-weight:800;margin-top:4px;color:var(--em-red);font-variant-numeric:tabular-nums">€' + fmt(d.outstanding) + '</div>'
+          +       '</div>'
+          +       '<div style="flex:1;padding:11px 0;border-right:1px solid var(--em-line)">'
+          +         '<div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--em-dim)">In cassa</div>'
+          +         '<div style="font-size:22px;font-weight:800;margin-top:4px;color:var(--em-green);font-variant-numeric:tabular-nums">€' + fmt(g.cash || 0) + '</div>'
+          +       '</div>'
+          +       '<div style="flex:1;padding:11px 0">'
+          +         '<div style="font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--em-dim)">Interesse</div>'
+          +         '<div style="font-size:22px;font-weight:800;margin-top:4px;color:var(--em-amber);font-variant-numeric:tabular-nums">+' + (DAILY_INTEREST * 100) + '%<span style="font-size:10px;font-weight:600;color:var(--em-dim)">/g</span></div>'
+          +       '</div>'
+          +     '</div>'
+          +   '</div>'
+          +   '<div style="padding:0 20px 20px;display:flex;flex-direction:column;gap:8px">'
+          +     '<button data-ce-act="repayVittorio" data-ce-args=\'[' + canPay + ']\' ' + (canPay > 0 ? '' : 'disabled') + ' style="background:' + (canPay > 0 ? 'var(--em-green-d)' : 'var(--em-line)') + ';color:' + (canPay > 0 ? '#fff' : 'var(--em-dim)') + ';font-weight:800;font-size:13px;padding:13px;border-radius:8px;border:none;cursor:' + (canPay > 0 ? 'pointer' : 'not-allowed') + '">' + (canPay > 0 ? 'Ripaga ' + (canPay >= d.outstanding ? 'tutto — €' + fmt(d.outstanding) : '€' + fmt(canPay)) : 'Non hai contanti per pagare') + '</button>'
           +     flipBtn
-          +     '<button data-ce-act="_closeVittorioModal" style="background:transparent;border:1px solid #30363d;color:#9ca3af;padding:10px;border-radius:8px;cursor:pointer">Più tardi (gli interessi salgono)</button>'
+          +     '<button data-ce-act="_closeVittorioModal" style="background:transparent;border:1px solid var(--em-line);color:var(--em-muted);font-size:12px;padding:10px;border-radius:8px;cursor:pointer">Più tardi — gli interessi salgono</button>'
           +   '</div>'
           + '</div>';
         ov.addEventListener('click', function (e) { if (e.target === ov) closeModal(); });
