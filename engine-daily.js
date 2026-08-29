@@ -1031,16 +1031,63 @@ function processDailyRoutines() {
 
 
 // ─── EVENTI E EMAIL ───
+
+/* I PREZZI DEGLI EVENTI CEO NON SONO PIU' FISSI.
+   Vlad, 29/08: «I prezzi sono sempre fissi, messi cosi' non mi spingono a
+   pagare. Non e' molto divertente.» Aveva ragione: la quota stava scritta a
+   mano dentro l'etichetta del bottone (`Partner Ufficiale (€20.000)`) e ogni
+   invito dello stesso mese arrivava identico al precedente.
+
+   Ora la quota oscilla del ±30% attorno al listino e l'etichetta si ricostruisce
+   dal numero vero, cosi' bottone e addebito non possono divergere. Il beneficio
+   in reputazione NON si muove: e' quello che rende la variazione una decisione
+   invece che un ritocco: lo stesso Festival di Venezia a €14.000 e' un affare da
+   prendere al volo, a €26.000 si puo' lasciar perdere.
+
+   Le scelte a costo zero o negative (`Rifiuta`, `Servizio Pagato (+€5.000)`)
+   mantengono la loro etichetta: sono scelte di natura diversa, non una quota. */
+var VARIAZIONE_QUOTA_EVENTO = 0.30;
+
+function _quotaVariata(costo) {
+    const fattore = 1 + (Math.random() * 2 - 1) * VARIAZIONE_QUOTA_EVENTO;
+    return Math.max(500, Math.round(costo * fattore / 500) * 500);
+}
+
+function _eventoConPrezzoDelGiorno(evento) {
+    if (!evento || !Array.isArray(evento.choices)) return evento;
+    const choices = evento.choices.map(scelta => {
+        if (!(scelta.cost > 0)) return { ...scelta };
+        const costo = _quotaVariata(scelta.cost);
+        // L'etichetta perde solo la parentesi finale con la cifra vecchia.
+        const titolo = String(scelta.text).replace(/\s*\([^()]*\)\s*$/, '');
+        return { ...scelta, cost: costo, text: `${titolo} (€${costo.toLocaleString('it-IT')})` };
+    });
+    return { ...evento, choices };
+}
+
 function generateEmailEvent() {
     const currentEvent = CEO_EVENTS.find(e => e.month === gameState.month);
     const gameHour = gameState.day * 24 + gameState.hour;
     const expiresAt = gameHour + 12; // expires in 12 game hours
 
     if (currentEvent && Math.random() > 0.5) {
-        const _eventEmail = { id: gameState.nextId++, sender: "Networking Board", subject: `[INVITO] ${currentEvent.name}`, type: 'ceo_event', status: 'unread', eventData: currentEvent, expiresAt };
-        _applyEmailTemplate(_eventEmail, 'ceo_event', { day: gameState.day });
+        const eventoDiOggi = _eventoConPrezzoDelGiorno(currentEvent);
+        const _eventEmail = { id: gameState.nextId++, sender: "Networking Board", subject: `[INVITO] ${currentEvent.name}`, type: 'ceo_event', status: 'unread', eventData: eventoDiOggi, expiresAt };
+        /* Il modello prende la citta' e la data da qui: prima riceveva solo
+           `day: gameState.day`, cioe' il contatore dei giorni, e nel testo
+           finiva «Si terra' 302 il Gala». `amount` e' la quota piu' bassa
+           dell'evento, che e' quella di cui parlano i template. */
+        const quote = eventoDiOggi.choices.map(c => c.cost).filter(c => c > 0);
+        _applyEmailTemplate(_eventEmail, 'ceo_event', {
+            eventName: currentEvent.name,
+            amount: quote.length ? Math.min.apply(null, quote) : null,
+        });
         // Restore eventData in case template overwrote it (it won't, but belt-and-suspenders)
-        _eventEmail.eventData = currentEvent;
+        _eventEmail.eventData = eventoDiOggi;
+        /* L'oggetto torna quello dell'EVENTO: il template ne aveva uno suo
+           («Cena di Gala Rotary»), e il giocatore non riusciva a capire a cosa
+           lo stessero invitando mentre i bottoni sotto parlavano d'altro. */
+        _eventEmail.subject = `[INVITO] ${currentEvent.name}`;
         gameState.emails.push(_eventEmail);
     } else {
         gameState.emails.push({ id: gameState.nextId++, sender: "Concierge Lusso", subject: "Appalto B2B: Delega 3 Giorni", offer: Math.floor(Math.random() * 8000) + 3500, type: 'b2b', status: 'unread', expiresAt });

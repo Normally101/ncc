@@ -31,6 +31,19 @@ const REGIONS = {
     valle_aosta: { id:'valle_aosta', name:"Valle d'Aosta",        price:20000, repReq:1.8, unlocked:false },
 };
 
+/* Il capoluogo di ogni regione. Serve ai testi che parlano al giocatore: le
+   email dicono «Camera di Commercio di {{city}}», «Rotary Club {{city}}»,
+   «il mercato NCC in {{city}}» — e una regione non e' una citta'. Finche' non
+   c'era questa tabella nessun chiamante passava `city`, la sostituzione
+   ripiegava su stringa vuota e il giocatore leggeva «Camera di Commercio di»
+   con il nome mancante (segnalato da Vlad il 29/08). */
+const REGION_CAPOLUOGHI = {
+    lazio:'Roma', umbria:'Perugia', marche:'Ancona', abruzzo:"L'Aquila", molise:'Campobasso',
+    toscana:'Firenze', campania:'Napoli', puglia:'Bari', basilicata:'Potenza', calabria:'Catanzaro',
+    sicilia:'Palermo', sardegna:'Cagliari', emilia:'Bologna', liguria:'Genova', piemonte:'Torino',
+    lombardia:'Milano', veneto:'Venezia', friuli:'Trieste', trentino:'Trento', valle_aosta:'Aosta',
+};
+
 // baseFlat = tariffa reale 2025 (Sedan/Standard) da listini NCC
 const POIS = {
     // ─── LAZIO ───────────────────────────────────────────────────
@@ -808,8 +821,8 @@ const EMAIL_TEMPLATES = {
             subject: 'Invito esclusivo — Gala della Mobilità di Lusso {{city}}',
             signature: 'Con i migliori auspici,\nSegreteria Organizzativa\nGala della Mobilità di Lusso',
             bodies: [
-                'Egregio CEO,\n\nÈ con grande piacere che La invitiamo al Gala della Mobilità di Lusso di {{city}}, in programma {{day}}. L\'evento riunirà i principali operatori NCC d\'Italia in un\'atmosfera di eleganza e networking esclusivo.\n\nLa sua presenza sarebbe per noi un onore. Dress code: smoking.',
-                'Gentile Direttore,\n\nSi terrà {{day}} il Gala Annuale della Mobilità Premium. La invitiamo a partecipare come ospite d\'onore. La serata prevede cena di gala, premiazioni di settore e networking con i CEO più influenti del comparto.\n\nConfermi la sua presenza entro 48 ore.',
+                'Egregio CEO,\n\nÈ con grande piacere che La invitiamo al Gala della Mobilità di Lusso di {{city}}, in programma il {{day}}. L\'evento riunirà i principali operatori NCC d\'Italia in un\'atmosfera di eleganza e networking esclusivo.\n\nLa sua presenza sarebbe per noi un onore. Dress code: smoking.',
+                'Gentile Direttore,\n\nSi terrà il {{day}} il Gala Annuale della Mobilità Premium. La invitiamo a partecipare come ospite d\'onore. La serata prevede cena di gala, premiazioni di settore e networking con i CEO più influenti del comparto.\n\nConfermi la sua presenza entro 48 ore.',
             ]
         },
         {
@@ -820,7 +833,7 @@ const EMAIL_TEMPLATES = {
             subject: 'Summit CEO — Mobilità e Lusso 2026',
             signature: 'Distinti saluti,\nSegreteria Generale\nForum Economico del Nord Italia',
             bodies: [
-                'Egregio Presidente,\n\nSiamo lieti di annunciarLe il Summit CEO dedicato al settore Mobilità & Lusso, previsto per {{day}} a {{city}}. Relatori di fama internazionale e tavole rotonde esclusive attendono i partecipanti selezionati.\n\nLa sua azienda è stata nominata tra le realtà più innovative del settore.',
+                'Egregio Presidente,\n\nSiamo lieti di annunciarLe il Summit CEO dedicato al settore Mobilità & Lusso, previsto per il {{day}} a {{city}}. Relatori di fama internazionale e tavole rotonde esclusive attendono i partecipanti selezionati.\n\nLa sua azienda è stata nominata tra le realtà più innovative del settore.',
                 'Gentile CEO,\n\nIl Forum Economico del Nord Italia La invita al Summit annuale dedicato alla mobilità di lusso. {{day}}, {{city}}, ore 10:00. Partecipazione su invito personale. Quote di adesione incluse nel pacchetto premium.\n\nAttendiamo conferma.',
             ]
         },
@@ -844,7 +857,7 @@ const EMAIL_TEMPLATES = {
             subject: 'Cerimonia di Premiazione — Eccellenze NCC 2026',
             signature: 'Con stima,\nUfficio Relazioni Istituzionali\nConfindustria Trasporti Premium',
             bodies: [
-                'Egregio CEO,\n\nÈ con orgoglio che annunciamo la Cerimonia di Premiazione "Eccellenze NCC 2026", in programma {{day}} a {{city}}. La sua azienda è stata candidata nella categoria "Innovazione di Servizio".\n\nLa sua presenza è fondamentale per la credibilità dell\'evento.',
+                'Egregio CEO,\n\nÈ con orgoglio che annunciamo la Cerimonia di Premiazione "Eccellenze NCC 2026", in programma il {{day}} a {{city}}. La sua azienda è stata candidata nella categoria "Innovazione di Servizio".\n\nLa sua presenza è fondamentale per la credibilità dell\'evento.',
                 'Gentile Direttore,\n\nConfindustria Trasporti Premium La invita alla cerimonia annuale di premiazione del settore. {{day}}, {{city}}, Teatro della Scala. Dress code rigoroso. Posti limitati a 50 aziende selezionate.\n\nIn allegato il programma dettagliato della serata.',
             ]
         },
@@ -856,7 +869,7 @@ const EMAIL_TEMPLATES = {
             subject: 'Assemblea Annuale CEO — {{day}}',
             signature: 'Con stima collegiale,\nPresidenza\nAssociazione CEO d\'Italia',
             bodies: [
-                'Egregio Collega,\n\nL\'Assemblea Annuale dell\'Associazione CEO d\'Italia si terrà {{day}} a {{city}}. Quest\'anno il tema centrale è "Mobilità Sostenibile e Lusso: il Futuro del Settore NCC". La sua esperienza arricchirebbe il dibattito.\n\nIscriversi entro {{day}} dà diritto al posto in prima fila.',
+                'Egregio Collega,\n\nL\'Assemblea Annuale dell\'Associazione CEO d\'Italia si terrà il {{day}} a {{city}}. Quest\'anno il tema centrale è "Mobilità Sostenibile e Lusso: il Futuro del Settore NCC". La sua esperienza arricchirebbe il dibattito.\n\nIscriversi entro il {{day}} dà diritto al posto in prima fila.',
                 'Gentile CEO,\n\nSiamo orgogliosi di presentarle il programma dell\'Assemblea Annuale. Keynote, panel di esperti, e la tradizionale cena di chiusura al Grand Hotel di {{city}}. {{day}}, ore 09:30.\n\nLa aspettiamo.',
             ]
         },
@@ -880,7 +893,7 @@ const EMAIL_TEMPLATES = {
             subject: 'Tavola Rotonda — Trasporti e Lusso, {{day}}',
             signature: 'Cordiali saluti,\nUfficio Grandi Imprese\nCamera di Commercio di {{city}}',
             bodies: [
-                'Spettabile Azienda,\n\nLa Camera di Commercio di {{city}} organizza {{day}} una Tavola Rotonda sul tema "Trasporti di Lusso: Regolamentazione e Opportunità". Parteciperanno rappresentanti istituzionali e i principali operatori NCC della regione.\n\nLa sua partecipazione rafforzerebbe la rappresentatività del tavolo.',
+                'Spettabile Azienda,\n\nLa Camera di Commercio di {{city}} organizza il {{day}} una Tavola Rotonda sul tema "Trasporti di Lusso: Regolamentazione e Opportunità". Parteciperanno rappresentanti istituzionali e i principali operatori NCC della regione.\n\nLa sua partecipazione rafforzerebbe la rappresentatività del tavolo.',
                 'Gentile CEO,\n\nSiamo lieti di invitarLa alla Tavola Rotonda annuale dedicata al settore dei trasporti premium. {{day}}, Palazzo della Camera di Commercio, {{city}}. Interventi istituzionali e confronto tra operatori privati.\n\nLa preghiamo di confermare la presenza.',
             ]
         },
@@ -893,7 +906,7 @@ const EMAIL_TEMPLATES = {
             signature: 'Con affetto istituzionale,\nDirezione Culturale\nFondazione Italia Mobilità',
             bodies: [
                 'Egregio Presidente,\n\nLa Fondazione Italia Mobilità La invita alla serata di Gala di raccolta fondi per i programmi di formazione degli autisti di lusso. {{day}}, {{city}}. Cena a sei portate, asta di beneficienza e live music.\n\nIl contributo minimo per la partecipazione è di €{{amount}}.',
-                'Gentile CEO,\n\nUn\'altra stagione, un altro Gala. La Fondazione Italia Mobilità {{day}} a {{city}} festeggia dieci anni di eccellenza nel settore. La sua presenza darebbe lustro alla serata.\n\nBiglietti disponibili su richiesta diretta.',
+                'Gentile CEO,\n\nUn\'altra stagione, un altro Gala. La Fondazione Italia Mobilità, il {{day}} a {{city}}, festeggia dieci anni di eccellenza nel settore. La sua presenza darebbe lustro alla serata.\n\nBiglietti disponibili su richiesta diretta.',
             ]
         },
         {
@@ -929,7 +942,7 @@ const EMAIL_TEMPLATES = {
             signature: 'Rotary in service,\nPresidente di Chapter\nRotary Club {{city}}',
             bodies: [
                 'Gentile CEO,\n\nIl Rotary Club di {{city}} La invita alla Cena di Gala annuale del {{day}}. Un appuntamento irrinunciabile per i leader del tessuto imprenditoriale locale. Serata di beneficienza, musica dal vivo e networking di alto profilo.\n\nLa quota di partecipazione è di €{{amount}} a persona.',
-                'Egregio Direttore,\n\nÈ un onore estenderLe l\'invito alla nostra Cena di Gala. Il Rotary di {{city}} riunisce ogni anno {{day}} i CEO e i professionisti più in vista della regione.\n\nPosti esauriti rapidamente — confermi al più presto.',
+                'Egregio Direttore,\n\nÈ un onore estenderLe l\'invito alla nostra Cena di Gala. Il Rotary di {{city}} riunisce ogni anno, il {{day}}, i CEO e i professionisti più in vista della regione.\n\nPosti esauriti rapidamente — confermi al più presto.',
             ]
         },
         {

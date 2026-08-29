@@ -91,18 +91,48 @@ function showNotification(msg, type) {
 // Enriches an email object with senderName, senderRole, senderIcon,
 // subject, body, signature from EMAIL_TEMPLATES[type].
 // Gracefully no-ops if EMAIL_TEMPLATES is not yet loaded.
+/* Una citta' vera per i testi delle email. Si pesca fra le regioni sbloccate,
+   cosi' l'invito arriva da un posto dove il giocatore lavora davvero. */
+function _cittaPerEmail() {
+    const capoluoghi = (typeof REGION_CAPOLUOGHI !== 'undefined') ? REGION_CAPOLUOGHI : {};
+    const sbloccate = ((gameState && gameState.unlockedRegions) || []).filter(r => capoluoghi[r]);
+    if (sbloccate.length === 0) return capoluoghi.lazio || 'Roma';
+    return capoluoghi[sbloccate[Math.floor(Math.random() * sbloccate.length)]];
+}
+
+/* Una data leggibile per gli inviti. `gameState.day` e' un CONTATORE di giorni
+   dall'inizio del gioco (302 al 29/08/2026): infilato nei testi produceva
+   «organizza 302 una Tavola Rotonda» e «Si terra' 302 il Gala». Un invito
+   parla di una data vicina, quindi si costruisce dal calendario vero. */
+function _dataPerEmail(giorniAvanti) {
+    const quando = new Date(Date.now() + (giorniAvanti != null ? giorniAvanti : 7) * 86400000);
+    try {
+        return new Intl.DateTimeFormat('it-IT', {
+            timeZone: 'Europe/Rome', day: 'numeric', month: 'long'
+        }).format(quando);
+    } catch (e) {
+        return quando.getDate() + '/' + (quando.getMonth() + 1);
+    }
+}
+
 function _applyEmailTemplate(emailObj, type, vars) {
     if (typeof EMAIL_TEMPLATES === 'undefined') return;
     const pool = EMAIL_TEMPLATES[type];
     if (!pool || !pool.length) return;
     const tpl = pool[Math.floor(Math.random() * pool.length)];
     const body = tpl.bodies[Math.floor(Math.random() * tpl.bodies.length)];
+    /* I ripieghi non sono mai la stringa vuota ne' un numero grezzo: un
+       segnaposto non sostituito si vede subito nel testo («di», «€», «302») e
+       nessun chiamante passava city o day. */
+    const citta = vars.city || _cittaPerEmail();
+    const data  = vars.day != null ? vars.day : _dataPerEmail(4 + Math.floor(Math.random() * 10));
     const sub = (str) => str
         .replace(/\{\{driverName\}\}/g, vars.driverName || '')
         .replace(/\{\{rivalName\}\}/g, vars.rivalName || '')
+        .replace(/\{\{eventName\}\}/g, vars.eventName || '')
         .replace(/\{\{amount\}\}/g, vars.amount != null ? Math.round(vars.amount).toLocaleString('it-IT') : '')
-        .replace(/\{\{city\}\}/g, vars.city || '')
-        .replace(/\{\{day\}\}/g, vars.day != null ? vars.day : (gameState.day || 1))
+        .replace(/\{\{city\}\}/g, citta)
+        .replace(/\{\{day\}\}/g, data)
         .replace(/\{\{companyName\}\}/g, vars.companyName || gameState.companyName || 'Italy Executive')
         .replace(/\{\{ceoName\}\}/g, vars.ceoName || gameState.ceoName || 'CEO');
     emailObj.senderName  = sub(tpl.senderName);
