@@ -395,7 +395,11 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
 
         test('autoDispatchRides filtra le corse VIP/Ultra se manca il Dispatcher Senior nello staff', () => {
             const { sandbox, gs } = amb;
-            gs.staff = []; // nessun 'sr_disp'
+            /* Dal 29/08 lo smistamento automatico richiede un dispatcher in organico
+               (vedi test/rides/dispatch-automatico-si-assume.test.js): con lo staff
+               vuoto non si smista piu' NIENTE, quindi qui serve il Junior — che e'
+               poi il caso che questo test vuole descrivere, «manca il Senior». */
+            gs.staff = [{ id: 'jr_disp', name: 'Junior Dispatcher' }]; // nessun 'sr_disp'
             gs.pendingRides = [
                 { id: 304, tier: 'standard', price: 100, duration: 20000, fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } },
                 { id: 305, tier: 'vip', price: 500, duration: 20000, fromPoi: { region: 'lazio' }, toPoi: { region: 'lazio' } },

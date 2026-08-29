@@ -174,7 +174,12 @@ function renderTabCorse() {
         const freeTimeTxt = qInfo ? qInfo.freeAtTimeStr : null;
         const nextSlotTxt = (qInfo && qInfo.isBusy) ? fmtDurationFn(qInfo.nextSlotFreeMs) : 'subito';
         const queueLen    = driver.queue ? driver.queue.length : 0;
-        const maxQ        = qInfo ? qInfo.maxQueue : 10;
+        /* Il tetto della coda si misura in ORE, non in numero di corse: qui si
+           leggeva `qInfo.maxQueue`, un campo che _getDriverQueueInfo non
+           restituisce piu' da quando il tetto e' passato alle ore — la riga
+           dell'autista diceva «coda 5/undefined». Il rapporto vero (ore usate
+           su ore disponibili) sta nella riga di dettaglio qui sotto. */
+        const capTxt      = qInfo ? `${qInfo.capHours}h` : null;
 
         let queueDetailsHtml = '';
         if (qInfo) {
@@ -183,7 +188,7 @@ function renderTabCorse() {
                 parts.push(`<span style="color:var(--em-blue)">in corso: <strong>${curRemTxt}</strong></span>`);
             }
             if (qInfo.totalQueueMs > 0 && totQueueTxt) {
-                parts.push(`<span style="color:var(--em-muted)">coda tot: <strong>${totQueueTxt}</strong> (libero ore ${freeTimeTxt} stima)</span>`);
+                parts.push(`<span style="color:var(--em-muted)">coda tot: <strong>${totQueueTxt}</strong>${capTxt ? ` / ${capTxt}` : ''} (libero ore ${freeTimeTxt} stima)</span>`);
             }
             if (qInfo.isBusy) {
                 parts.push(`<span style="color:${qInfo.isFull ? 'var(--em-amber)' : 'var(--em-dim)'}">1° slot: <strong>${qInfo.isFull ? 'tra ' + nextSlotTxt : 'subito'}</strong></span>`);
@@ -199,7 +204,7 @@ function renderTabCorse() {
                 <div class="em-lt" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${driver.name}${restBtn}</div>
                 <div class="em-lm">
                     <span>${car ? car.name : '— nessun veicolo —'}</span>
-                    ${queueLen > 0 ? `<span>· coda ${queueLen}/${maxQ}</span>` : ''}
+                    ${queueLen > 0 ? `<span>· coda ${queueLen}${queueLen === 1 ? ' corsa' : ' corse'}</span>` : ''}
                 </div>
                 ${queueDetailsHtml}
                 <div class="driver-queue-preview" id="preview-${driver.id}" style="font-size:10px;color:var(--em-gold);margin-top:3px;display:none;font-weight:700"></div>

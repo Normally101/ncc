@@ -722,7 +722,23 @@ function assignAllRides() {
 
 function autoDispatchRides() {
     if (gameState.pendingRides.length === 0) return;
-    const canHandleVIP = gameState.staff.some(s => s.id === 'sr_disp');
+    /* IL DISPATCHER AUTOMATICO E' UN DIPENDENTE, NON UN REGALO.
+       Il catalogo dello staff lo dice da sempre — dispatcher_jr: «Auto-smista
+       corse Standard ogni tick. SENZA DI LUI TUTTO E' MANUALE» — ma il gate
+       non c'era: la funzione girava a ogni tick del gameLoop (engine.js:1091)
+       anche con lo staff vuoto. Conseguenza misurata il 29/08: ogni corsa
+       generata spariva dalla lista entro 600ms, quindi «Richieste Pendenti»
+       restava 0 per sempre e la scheda Dispatch diceva «In attesa di
+       chiamate...» mentre l'autista aveva 5 corse in coda. Il gioco si giocava
+       da solo, il bottone «Smista tutte» non serviva a niente e il Junior
+       Dispatcher da €1.400/mese vendeva una cosa gia' gratis.
+       Il problema esisteva da sempre ma e' diventato totale il 28/08: con
+       RITMO=3 le corse durano un terzo, quindi nelle 4h di coda ce ne stanno
+       tre volte tante e la coda non si riempie quasi mai. */
+    const staff = gameState.staff || [];
+    const haDispatcher = staff.some(s => s.id === 'jr_disp' || s.id === 'sr_disp');
+    if (!haDispatcher) return;
+    const canHandleVIP = staff.some(s => s.id === 'sr_disp');
     for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
         const ride = gameState.pendingRides[i];
         if (!canHandleVIP && (ride.tier === 'vip' || ride.tier === 'ultra')) continue;
