@@ -319,7 +319,10 @@ describe('Funzione Corse & Dispatch — Esecuzione e ciclo di vita', () => {
             sandbox.assignRideToDriver(103, 'drv_1');
 
             assert.equal(gs.pendingRides.length, 1, 'il contratto con veicolo errato non deve essere assegnato');
-            assert.ok(env.notifications.some(n => n.type === 'error' && n.msg.includes('Veicolo errato')));
+            assert.ok(env.notifications.some(n => n.type === 'error'
+                && (n.msg.includes('Veicolo errato') || n.msg.includes('Fascia insufficiente'))),
+                'il rifiuto puo\' venire dalla forma del veicolo o dalla sua fascia: '
+                + 'sono due cancelli diversi e a mano vanno spiegati entrambi');
         });
 
         test('assignRideToDriver con parametri inesistenti non solleva eccezioni', () => {

@@ -26,9 +26,20 @@ function renderTabCorse() {
     const strikingDrivers = gs.drivers.filter(d => d.id !== 'ceo' && d.isOnStrike).length;
     const burnoutDrivers  = gs.drivers.filter(d => d.id !== 'ceo' && d.burnout_until && (gs.day * 24 + gs.hour) < d.burnout_until).length;
 
-    // tier accent colors (light theme)
-    const tierColors = { standard:'#6a7480', business:'#2f74c0', first:'#c79a2a', ultra:'#b86b3a', presidential:'#7c5fc9' };
-    const tierBg     = { standard:'#eef1f5', business:'#e7f0fb', first:'#fff3cf', ultra:'#f7e6db', presidential:'#ece4f7' };
+    /* Le tre fasce, come le vede il giocatore. Il vocabolario interno ne ha
+       cinque per ragioni storiche (standard/business/group/vip/ultra): qui si
+       collassano nei tre nomi che Vlad ha deciso il 29/08/2026, perche' tre
+       fasce si imparano e cinque no. Le corse vip e ultra sono entrambe
+       «Luxury»: cambiano il prezzo, non il mestiere.
+       I colori vengono dai token --em-*, non scritti a mano: questa mappa era
+       rimasta al tema chiaro (fondi #eef1f5 su una pagina #0d1117) ed era uno
+       dei punti illeggibili che ha segnalato Pietro. */
+    const fasciaLabel = { standard:'STANDARD', business:'PREMIUM', group:'PREMIUM', vip:'LUXURY', ultra:'LUXURY' };
+    const tierColors  = { standard:'var(--em-muted)', business:'var(--em-blue)',  group:'var(--em-blue)',
+                          vip:'var(--em-gold)',       ultra:'var(--em-gold)' };
+    const tierBg      = { standard:'rgba(139,148,158,.14)', business:'rgba(88,166,255,.14)',
+                          group:'rgba(88,166,255,.14)',     vip:'rgba(199,154,42,.16)',
+                          ultra:'rgba(199,154,42,.16)' };
     const typeLabel  = { Airport:'AIR', 'City-to-City':'CITY', Rail:'RAIL', Port:'PORT', Boat:'BOAT', Transfer:'TRF' };
 
     const getDurationFn = (typeof window !== 'undefined' && typeof window._getRideDurationMs === 'function')
@@ -99,22 +110,26 @@ function renderTabCorse() {
         html += `<div class="em-empty">In attesa di chiamate…</div>`;
     } else {
         html += `<table class="em-tbl">
-            <thead><tr><th>Tipo</th><th>Percorso</th><th>Durata</th><th class="r">Prezzo</th></tr></thead>
+            <thead><tr><th>Fascia</th><th>Percorso</th><th>Durata</th><th class="r">Prezzo</th></tr></thead>
             <tbody>`;
         gs.pendingRides.forEach(ride => {
             const isContract = ride.isContract;
             const fromName   = ride.originName      || ride.fromPoi?.name || '?';
             const toName     = ride.destinationName || ride.toPoi?.name   || '?';
             const tier       = ride.tier || 'standard';
-            const tColor     = tierColors[tier] || '#6a7480';
-            const tBg        = tierBg[tier] || '#eef1f5';
+            const tColor     = tierColors[tier] || 'var(--em-muted)';
+            const tBg        = tierBg[tier] || 'rgba(139,148,158,.14)';
+            const fLabel     = fasciaLabel[tier] || 'STANDARD';
             const tLabel     = typeLabel[ride.routeType] || (ride.routeType || 'STD').substring(0, 3).toUpperCase();
             const margin     = (ride.price || 0) - (ride.netCost || 0);
             const durMs      = getDurationFn ? getDurationFn(ride) : 0;
             const durTxt     = fmtDurationFn(durMs);
 
             html += `<tr class="ops-ride-card" draggable="true" data-id="${ride.id}" style="cursor:grab">
-                <td style="white-space:nowrap"><span class="em-pill" style="background:${tBg};color:${tColor}">${isContract ? 'B2B' : tLabel}</span></td>
+                <td style="white-space:nowrap">
+                    <span class="em-pill" style="background:${tBg};color:${tColor}">${fLabel}</span>
+                    <div style="font-size:9px;color:var(--em-dim);margin-top:3px;letter-spacing:.4px">${isContract ? 'B2B · ' + tLabel : 'DIRETTA'}</div>
+                </td>
                 <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
                     ${fromName} <span style="color:var(--em-dim)">→</span> ${toName}
                     ${isContract ? `<div style="font-size:9.5px;color:var(--em-muted);margin-top:2px">margine: <span style="color:${margin >= 0 ? 'var(--em-green-d)' : 'var(--em-red)'};font-weight:700">€${margin.toLocaleString('it-IT')}</span></div>` : ''}

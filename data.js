@@ -81,7 +81,24 @@ const POIS = {
     aosta:        { id:'aosta',        region:'valle_aosta',lat:45.7376, lng:7.3210,  name:'Aosta',              type:'city',   baseFlat:90,  minTier:'business' },
 };
 
-// ─── MERCATO AUTO — FULL CATALOG ────────────────────────────────
+/* ─── MERCATO AUTO — FULL CATALOG ──────────────────────────────────────────
+   IL `tier` E' LA FASCIA DI SERVIZIO, non la marca. Tre fasce, decise da Vlad
+   il 29/08/2026 dopo il playtest di Pietro:
+     standard  — l'auto d'ingresso. Lavora, ma sulle corse che pagano meno.
+     business  — «premium»: la berlina executive, il grosso del lavoro.
+     vip/ultra — «luxury»: le richieste particolari, quelle che pagano davvero.
+
+   Prima di oggi NESSUNA auto era `standard`: anche la Nexus H-Line da 35.000€
+   era marcata `business`. La fascia piu' bassa esisteva solo nelle tabelle
+   (`TIER_COMPATIBILITY`, `RIDE_PRICING`) e non era mai raggiungibile — quindi
+   «corsa standard» era un'etichetta senza nessuna auto dietro, e chi cominciava
+   non aveva un mestiere proprio: aveva solo l'attesa di potersi permettere il
+   mestiere di qualcun altro.
+
+   Chi sta in `standard` sono le entry-level, sotto i 100.000€ di listino. Nota
+   che una fascia alta puo' sempre servire le corse delle fasce basse (vedi
+   `TIER_COMPATIBILITY` in engine-rides.js): comprare meglio apre lavoro nuovo,
+   non chiude quello vecchio. ─────────────────────────────────────────────── */
 const NEW_CARS = [
     // ── Stellar gasoline ──────────────────────────────────────────
     { id:'stellar_e_exec',     name:'Stellar E-Executive',  tier:'business', price:120000,  condition:100, vehicleClass:'stellar_e_exec',     fuel:'gasoline', rideGate:0    },
@@ -91,24 +108,31 @@ const NEW_CARS = [
     // ── Stellar Q electric ────────────────────────────────────────
     { id:'stellar_q_exec',     name:'Stellar Q-Executive',  tier:'business', price:95000,   condition:100, vehicleClass:'stellar_q_exec',     fuel:'electric', rideGate:0    },
     { id:'stellar_q_carr',     name:'Stellar Q-Carrier',    tier:'business', price:110000,  condition:100, vehicleClass:'stellar_q_carr',     fuel:'electric', rideGate:0    },
+    /* Il van di lusso, aggiunto il 29/08/2026. Non era un buco del catalogo ma
+       del DESIGN: senza un minivan vip la fascia luxury non era raggiungibile
+       per quella famiglia, e le 149 tratte da van sopra i 1.500€ sarebbero
+       nate come corse che nessuno poteva accettare. Nel mestiere vero esiste
+       (il van allestito VIP e' quello che porta le delegazioni), qui esiste
+       perche' la progressione dei van deve avere una cima. */
+    { id:'stellar_v_imp',      name:'Stellar V-Imperial',   tier:'vip',      price:280000,  condition:100, vehicleClass:'stellar_v_imp',      fuel:'gasoline', rideGate:250  },
     { id:'stellar_q_imp',      name:'Stellar Q-Imperial',   tier:'vip',      price:320000,  condition:100, vehicleClass:'stellar_q_imp',      fuel:'electric', rideGate:250  },
     // ── Volt electric ─────────────────────────────────────────────
-    { id:'volt_3_urban',       name:'Volt 3-Urban',         tier:'business', price:55000,   condition:100, vehicleClass:'volt_3_urban',       fuel:'electric', rideGate:0    },
-    { id:'volt_y_cross',       name:'Volt Y-Cross',         tier:'business', price:70000,   condition:100, vehicleClass:'volt_y_cross',       fuel:'electric', rideGate:0    },
+    { id:'volt_3_urban',       name:'Volt 3-Urban',         tier:'standard', price:55000,   condition:100, vehicleClass:'volt_3_urban',       fuel:'electric', rideGate:0    },
+    { id:'volt_y_cross',       name:'Volt Y-Cross',         tier:'standard', price:70000,   condition:100, vehicleClass:'volt_y_cross',       fuel:'electric', rideGate:0    },
     { id:'volt_s_apex',        name:'Volt S-Apex',          tier:'vip',      price:560000,  condition:100, vehicleClass:'volt_s_apex',        fuel:'electric', rideGate:250  },
     { id:'volt_s_hyper',       name:'Volt S-Hyper',         tier:'ultra',    price:1400000, condition:100, vehicleClass:'volt_s_hyper',       fuel:'electric', rideGate:1000 },
     // ── Majestic luxury ───────────────────────────────────────────
     { id:'majestic_spirit',    name:'Majestic Spirit',      tier:'ultra',    price:2000000, condition:100, vehicleClass:'majestic_spirit',    fuel:'gasoline', rideGate:1000 },
     { id:'majestic_e_specter', name:'Majestic E-Specter',   tier:'ultra',    price:3200000, condition:100, vehicleClass:'majestic_e_specter', fuel:'electric', rideGate:1000 },
     // ── Nexus entry-level ─────────────────────────────────────────
-    { id:'nexus_h_line',       name:'Nexus H-Line',          tier:'business', price:35000,   condition:100, vehicleClass:'nexus_h_line',       fuel:'gasoline', rideGate:0    },
+    { id:'nexus_h_line',       name:'Nexus H-Line',          tier:'standard', price:35000,   condition:100, vehicleClass:'nexus_h_line',       fuel:'gasoline', rideGate:0    },
     // ── Volt expanded ─────────────────────────────────────────────
-    { id:'volt_ciudad',        name:'Volt Ciudad',           tier:'business', price:48000,   condition:100, vehicleClass:'volt_ciudad',        fuel:'electric', rideGate:0    },
+    { id:'volt_ciudad',        name:'Volt Ciudad',           tier:'standard', price:48000,   condition:100, vehicleClass:'volt_ciudad',        fuel:'electric', rideGate:0    },
     { id:'volt_e_estate',      name:'Volt E-Estate',         tier:'vip',      price:92000,   condition:100, vehicleClass:'volt_e_estate',      fuel:'electric', rideGate:250  },
     // ── Majestic SUV ──────────────────────────────────────────────
     { id:'majestic_citadel',   name:'Majestic Citadel',      tier:'vip',      price:135000,  condition:100, vehicleClass:'majestic_citadel',   fuel:'gasoline', rideGate:250  },
     // ── Stellar commercial ────────────────────────────────────────
-    { id:'stellar_m_cruiser',  name:'Stellar M-Cruiser',     tier:'business', price:80000,   condition:100, vehicleClass:'stellar_m_cruiser',  fuel:'gasoline', rideGate:0    },
+    { id:'stellar_m_cruiser',  name:'Stellar M-Cruiser',     tier:'standard', price:80000,   condition:100, vehicleClass:'stellar_m_cruiser',  fuel:'gasoline', rideGate:0    },
     // ── Aviazione Privata (Espansione 1) ──────────────────────────
     { id:'helicopter_as350',   name:'Airbus AS350 Écureuil', tier:'ultra',   price:4500000, condition:100, vehicleClass:'helicopter',         fuel:'avgas',    rideGate:2000, isAviation:true, intercityOnly:true, maxFleetCount:2 },
     { id:'private_jet_phenom', name:'Embraer Phenom 300',    tier:'ultra',   price:18000000,condition:100, vehicleClass:'private_jet',        fuel:'jet',      rideGate:5000, isAviation:true, intercityOnly:true, maxFleetCount:1 },
@@ -118,7 +142,7 @@ const USED_CARS = [
     { id:'uc_e_exec_22',  name:'Stellar E-Executive (2022)', tier:'business', price:72000,  condition:62, vehicleClass:'stellar_e_exec', fuel:'gasoline', rideGate:0   },
     { id:'uc_v_carr_21',  name:'Stellar V-Carrier (2021)',   tier:'business', price:55000,  condition:51, vehicleClass:'stellar_v_carr', fuel:'gasoline', rideGate:0   },
     { id:'uc_q_exec_22',  name:'Stellar Q-Executive (2022)', tier:'business', price:58000,  condition:57, vehicleClass:'stellar_q_exec', fuel:'electric', rideGate:0   },
-    { id:'uc_volt3_21',   name:'Volt 3-Urban (2021)',        tier:'business', price:34000,  condition:65, vehicleClass:'volt_3_urban',   fuel:'electric', rideGate:0   },
+    { id:'uc_volt3_21',   name:'Volt 3-Urban (2021)',        tier:'standard', price:34000,  condition:65, vehicleClass:'volt_3_urban',   fuel:'electric', rideGate:0   },
     { id:'uc_s_imp_20',   name:'Stellar S-Imperial (2020)',  tier:'vip',      price:270000, condition:44, vehicleClass:'stellar_s_imp',  fuel:'gasoline', rideGate:250 },
 ];
 
@@ -127,19 +151,20 @@ const LEASING_TEMPLATES = {
     'stellar_q_exec':     { name:'Stellar Q-Executive',  baseRate:1300, kmRate:0.05, tier:'business', vehicleClass:'stellar_q_exec'     },
     'stellar_v_carr':     { name:'Stellar V-Carrier',    baseRate:1600, kmRate:0.07, tier:'business', vehicleClass:'stellar_v_carr'     },
     'stellar_q_carr':     { name:'Stellar Q-Carrier',    baseRate:1700, kmRate:0.07, tier:'business', vehicleClass:'stellar_q_carr'     },
-    'volt_3_urban':       { name:'Volt 3-Urban',         baseRate:900,  kmRate:0.04, tier:'business', vehicleClass:'volt_3_urban'       },
-    'volt_y_cross':       { name:'Volt Y-Cross',         baseRate:1100, kmRate:0.05, tier:'business', vehicleClass:'volt_y_cross'       },
+    'stellar_v_imp':      { name:'Stellar V-Imperial',   baseRate:2600, kmRate:0.11, tier:'vip',      vehicleClass:'stellar_v_imp'      },
+    'volt_3_urban':       { name:'Volt 3-Urban',         baseRate:900,  kmRate:0.04, tier:'standard', vehicleClass:'volt_3_urban'       },
+    'volt_y_cross':       { name:'Volt Y-Cross',         baseRate:1100, kmRate:0.05, tier:'standard', vehicleClass:'volt_y_cross'       },
     'stellar_s_imp':      { name:'Stellar S-Imperial',   baseRate:2500, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_s_imp'      },
     'stellar_q_imp':      { name:'Stellar Q-Imperial',   baseRate:2800, kmRate:0.10, tier:'vip',      vehicleClass:'stellar_q_imp'      },
     'volt_s_apex':        { name:'Volt S-Apex',          baseRate:3200, kmRate:0.12, tier:'vip',      vehicleClass:'volt_s_apex'        },
     'majestic_spirit':    { name:'Majestic Spirit',      baseRate:5500, kmRate:0.22, tier:'ultra',    vehicleClass:'majestic_spirit'    },
     'stellar_g_over':     { name:'Stellar G-Overlord',   baseRate:5000, kmRate:0.22, tier:'ultra',    vehicleClass:'stellar_g_over'     },
     // ── Nuovi modelli ────────────────────────────────────────────
-    'nexus_h_line':      { name:'Nexus H-Line',       baseRate:700,  kmRate:0.03, tier:'business', vehicleClass:'nexus_h_line'      },
-    'volt_ciudad':       { name:'Volt Ciudad',         baseRate:800,  kmRate:0.03, tier:'business', vehicleClass:'volt_ciudad'       },
+    'nexus_h_line':      { name:'Nexus H-Line',       baseRate:700,  kmRate:0.03, tier:'standard', vehicleClass:'nexus_h_line'      },
+    'volt_ciudad':       { name:'Volt Ciudad',         baseRate:800,  kmRate:0.03, tier:'standard', vehicleClass:'volt_ciudad'       },
     'volt_e_estate':     { name:'Volt E-Estate',       baseRate:1800, kmRate:0.08, tier:'vip',      vehicleClass:'volt_e_estate'     },
     'majestic_citadel':  { name:'Majestic Citadel',    baseRate:2200, kmRate:0.09, tier:'vip',      vehicleClass:'majestic_citadel'  },
-    'stellar_m_cruiser': { name:'Stellar M-Cruiser',   baseRate:1400, kmRate:0.06, tier:'business', vehicleClass:'stellar_m_cruiser' },
+    'stellar_m_cruiser': { name:'Stellar M-Cruiser',   baseRate:1400, kmRate:0.06, tier:'standard', vehicleClass:'stellar_m_cruiser' },
     // ── Aviazione Privata ────────────────────────────────────────
     'helicopter':  { name:'Airbus AS350',    baseRate:12000, kmRate:0.80, tier:'ultra', vehicleClass:'helicopter'  },
     'private_jet': { name:'Embraer Phenom',  baseRate:45000, kmRate:2.50, tier:'ultra', vehicleClass:'private_jet' },

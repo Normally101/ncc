@@ -296,6 +296,7 @@ const STELLAR_VOLT_CATALOG = [
     // ── Stellar gasoline ──────────────────────────────────────────────────────
     { id:'stellar_e_exec',    name:'Stellar E-Executive',   img:'assets/fleet/stellar-e-executive.jpg',  tier:'BUSINESS',     fuel:'gasoline', price:120000,  rideGate:0,    co2PerKm:0.18, vehicleClass:'stellar_e_exec'    },
     { id:'stellar_v_carr',    name:'Stellar V-Carrier',     img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PREMIUM',      fuel:'gasoline', price:95000,   rideGate:0,    co2PerKm:0.22, vehicleClass:'stellar_v_carr'    },
+    { id:'stellar_v_imp',     name:'Stellar V-Imperial',    img:'assets/fleet/stellar-v-carrier.jpg',    tier:'PRESIDENTIAL', fuel:'gasoline', price:280000,  rideGate:250,  co2PerKm:0.24, vehicleClass:'stellar_v_imp'     },
     { id:'stellar_s_imp',     name:'Stellar S-Imperial',    img:'assets/fleet/stellar-s-imperial.jpg',   tier:'PRESIDENTIAL', fuel:'gasoline', price:480000,  rideGate:250,  co2PerKm:0.20, vehicleClass:'stellar_s_imp'     },
     { id:'stellar_g_over',    name:'Stellar G-Overlord',    img:'assets/fleet/stellar-g-overlord.jpg',   tier:'ARMORED',      fuel:'gasoline', price:950000,  rideGate:1000, co2PerKm:0.28, vehicleClass:'stellar_g_over'    },
     // ── Stellar Q electric ────────────────────────────────────────────────────
@@ -473,6 +474,20 @@ function loadGame() {
         prevActive.forEach(r => { r.elapsed = 0; delete r.driverId; });
         save.pendingRides = [...save.pendingRides, ...prevActive];
         save.activeRides  = [];
+
+        /* La fascia dell'auto la decide il catalogo, sempre. Il `tier` viene
+           salvato dentro ogni veicolo in flotta, quindi una partita cominciata
+           prima del 29/08/2026 porta in giro la fascia vecchia: la Volt 3-Urban
+           salvata come 'business' continuerebbe a prendere corse premium che le
+           auto nuove uguali a lei non possono prendere. Fascia dell'auto e
+           fascia della corsa sono la stessa scala: quando due copie della stessa
+           scala divergono, nascono corse impossibili — e' successo il 28/08. */
+        (save.fleet || []).forEach(c => {
+            const def = [...(typeof NEW_CARS  !== 'undefined' ? NEW_CARS  : []),
+                         ...(typeof USED_CARS !== 'undefined' ? USED_CARS : [])]
+                        .find(d => d.vehicleClass === c.vehicleClass);
+            if (def && c.tier !== def.tier) c.tier = def.tier;
+        });
 
         (save.drivers || []).forEach(d => {
             d.queue = (d.queue || []).map(_deserializeRide).filter(Boolean);
@@ -848,14 +863,16 @@ function initGame(fresh = true) {
         // (guidi a mano); il Ragazzo di Quartiere ne eredita le chiavi quando lo assumi
         // (hireNeighborhoodKid) → l'idle parte senza dover comprare un'auto a €0 in cassa.
         gameState.fleet.push({
-            /* tier 'business', non 'standard': questa auto E' una volt_3_urban, che
-               nel listino (NEW_CARS) e' BUSINESS. Marcarla 'standard' la rendeva
-               incapace di servire QUALSIASI corsa da contratto — TIER_COMPATIBILITY
-               ['business'] non include 'standard', e nessuna corsa da contratto e'
-               mai 'standard'. Nel playtest del 28/08 il giocatore nuovo vedeva 23
-               corse e non ne poteva accettare nessuna. Che sia un catorcio lo dicono
-               gia' la condizione 62 e il nome, non il livello di servizio. */
-            id: 'c_starter', _serverId: null, name: 'Berlina (riscattata)', tier: 'business',
+            /* tier 'standard': questa auto E' una volt_3_urban, e dal 29/08/2026 la
+               volt_3_urban e' STANDARD in listino — la fascia d'ingresso, che prima
+               non esisteva per nessuna auto. Il tier deve sempre coincidere con
+               quello del catalogo (`NEW_CARS`), perche' fascia dell'auto e fascia
+               della corsa sono la stessa scala: quando divergono nascono corse che
+               non si possono accettare. Il 28/08 questa riga diceva 'standard'
+               mentre il catalogo diceva 'business', e il giocatore nuovo vedeva 23
+               corse senza poterne fare una. Oggi dicono entrambi 'standard', e le
+               corse sotto 500€ sono il suo mestiere. */
+            id: 'c_starter', _serverId: null, name: 'Berlina (riscattata)', tier: 'standard',
             vehicleClass: 'volt_3_urban', isStarter: true, condition: 62, isLease: false,
             fuel: 100, mileage: 0, tirePressure: 100, engineHealth: 100,
             outOfService: null, upgrades: [], protoId: null

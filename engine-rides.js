@@ -92,6 +92,13 @@ function generatePOIRide(tierOverride = null) {
         const threshold = (hasInvestment('inv_terminal_fco') && from.region === 'lazio') ? 0.45 : 0.7;
         tier = roll > threshold ? from.minTier : 'standard';
     }
+    /* Stessa disciplina delle corse da contratto: non proporre un livello di
+       servizio che la flotta non puo' servire. Il POI di lusso chiede 'vip', e
+       chi ha solo l'auto d'ingresso vedeva quella corsa in lista per non poterla
+       accettare mai — la sensazione di muro a pagamento nasce da qui, non dai
+       prezzi. Si declassa la corsa invece di saltarla: il lavoro c'e' sempre,
+       cambia quanto paga. */
+    if (!tierOverride && !_flottaPuoServire(null, tier)) tier = 'standard';
     // Prezzi reali NCC: baseFlat × moltiplicatori multipli
     const isLongDistance = from.region !== to.region;
     const distMult    = isLongDistance ? 2.8 : 1.0;
@@ -154,23 +161,15 @@ const _VEHICLE_CLASS_MAP = {
     'Mercedes S-Class Presidential':  'stellar_s_imp',
     'Mercedes Sprinter':              'stellar_v_carr',
 };
-const _CONTRACT_TIER = {
-    stellar_s_imp:    'ultra',
-    stellar_g_over:   'ultra',
-    majestic_spirit:  'ultra',
-    water_taxi:       'ultra',
-    stellar_v_carr:   'vip',
-    stellar_q_carr:   'vip',
-    stellar_e_exec:   'business',
-    stellar_q_exec:   'business',
-    volt_3_urban:     'business',
-    volt_y_cross:     'business',
-    // Legacy
-    mercedes_s:       'ultra',
-    mercedes_v:       'vip',
-    mercedes_sprinter:'business',
-    mercedes_e:       'business',
-};
+/* NON PIU' USATA dal 29/08/2026: la fascia di una corsa da contratto la decide
+   il prezzo della tratta (`_fasciaCorsa`), non la classe di veicolo richiesta.
+   Questa tabella diceva che ogni tratta da berlina e' 'business' — che pagasse
+   102€ o 3.108€ — ed e' il motivo per cui la fascia standard non aveva mai
+   corse. Tenuta qui, e sola, perche' e' la documentazione di com'era: chi
+   volesse rimetterla in mezzo deve prima leggere il commento sopra
+   `SOGLIA_FASCIA_PREMIUM`.
+const _CONTRACT_TIER = { ... };
+*/
 
 /* ─── QUALE AUTO PUO' SERVIRE QUALE TRATTA ──────────────────────────────────
    IL BUG CHE QUESTO RISOLVE (playtest di Pietro, 28/08/2026):
@@ -195,14 +194,25 @@ const _CONTRACT_TIER = {
    Mediane misurate: berline 677€, minivan 818€, presidenziali 1.555€. Si
    compra il minivan per accedere al 45% di tratte che pagano di piu', non per
    sbloccare quelle che si stanno gia' facendo. */
+/* LA FAMIGLIA E' LA FORMA DEL VEICOLO, NON IL SUO LUSSO.
+   Fino al 29/08/2026 esisteva una quarta famiglia, `presidenziale`, che teneva
+   insieme TUTTE le auto di lusso — berline e SUV, senza distinzione di forma.
+   Era un errore di categoria con una conseguenza misurabile: nessuna famiglia
+   conteneva sia auto d'ingresso sia auto di lusso, quindi la fascia luxury non
+   era raggiungibile da nessuna parte tranne le 154 tratte presidenziali. Le
+   altre 1.735 restavano premium per sempre, e comprare la Majestic da 2 milioni
+   non apriva un lavoro nuovo: apriva lo stesso lavoro con l'auto piu' bella.
+   Una S-Imperial E' una berlina, e sta con le berline. La differenza fra lei e
+   la Volt 3-Urban e' la FASCIA, che ora e' un asse a parte. */
 const _FAMIGLIE_VEICOLO = {
     berlina: ['volt_ciudad', 'volt_3_urban', 'stellar_q_exec', 'stellar_e_exec',
-              'nexus_h_line', 'mercedes_e'],
+              'nexus_h_line', 'mercedes_e',
+              // le berline di lusso: stessa forma, fascia piu' alta
+              'stellar_q_imp', 'stellar_s_imp', 'volt_s_apex', 'volt_e_estate',
+              'volt_s_hyper', 'stellar_g_over', 'majestic_citadel',
+              'majestic_spirit', 'majestic_e_specter', 'mercedes_s'],
     minivan: ['volt_y_cross', 'stellar_v_carr', 'stellar_q_carr', 'stellar_m_cruiser',
-              'mercedes_v', 'mercedes_sprinter'],
-    presidenziale: ['stellar_q_imp', 'stellar_s_imp', 'volt_s_apex', 'volt_e_estate',
-                    'volt_s_hyper', 'stellar_g_over', 'majestic_citadel',
-                    'majestic_spirit', 'majestic_e_specter', 'mercedes_s'],
+              'stellar_v_imp', 'mercedes_v', 'mercedes_sprinter'],
     acqua: ['water_taxi'],
 };
 
@@ -240,10 +250,94 @@ function _flottaPuoServire(classeRichiesta, tierCorsa) {
         && tierOk(c));
 }
 
+/* ─── LE TRE FASCE DI SERVIZIO ───────────────────────────────────────────────
+   Deciso da Vlad il 29/08/2026. La famiglia dice COSA puo' fare un'auto (una
+   berlina non fa il lavoro di un minivan); la fascia dice QUANTO vale il
+   servizio. Sono due domande diverse e prima ne esisteva una sola.
+
+   Le corse da contratto nascevano tutte con la fascia dedotta dalla CLASSE
+   richiesta (`_CONTRACT_TIER`): ogni tratta da berlina era 'business', sempre,
+   che pagasse 102€ o 3.108€. Cosi' la fascia piu' bassa non aveva mai corse, e
+   chi cominciava non aveva un mestiere: aspettava soltanto di potersi
+   permettere quello degli altri. E' il «pay to play» che ha sentito Pietro.
+
+   LA REGOLA: la fascia la decide il PREZZO della tratta, non l'etichetta.
+     sotto  500€  standard  — la corsa ordinaria, la fa anche l'auto d'ingresso
+     500-1.500€  premium   — il grosso del lavoro, serve una executive
+     oltre 1.500€ luxury   — la richiesta particolare, serve un'auto di lusso
+   Un transfer da 150€ non e' una «richiesta particolare» solo perche' il
+   database lo ha etichettato E-Executive: e' una corsa ordinaria, e la Volt
+   3-Urban la deve poter fare — pagata come una corsa ordinaria. Le tratte
+   ricche restano riservate, che e' il punto di Vlad: le richieste particolari
+   si servono con la macchina che chiedono.
+
+   Misurato sulle 1889 tratte del database, con queste soglie:
+     berline   356 standard · 406 premium · 96 luxury
+     minivan   236 standard · 461 premium · 149 luxury
+   Chi comincia ha 356 tratte da lavorare, le meno pagate. Prima ne aveva zero.
+
+   IL CANCELLO DI SICUREZZA (`_fasciaCorsa`): la fascia non sale mai sopra la
+   fascia piu' alta che esiste in commercio per quella famiglia. Senza questo,
+   una tratta da minivan da 2.000€ nascerebbe 'luxury' — e in catalogo non
+   esiste NESSUN minivan di lusso, quindi sarebbe una corsa che nessuno potra'
+   mai fare, per nessun prezzo. E' esattamente il difetto del 28/08 in versione
+   piu' piccola, ed e' il tipo di bug che nasce quando due tabelle rispondono
+   alla stessa domanda senza consultarsi. ─────────────────────────────────── */
+var SOGLIA_FASCIA_PREMIUM = 500;    // sotto: la corsa e' ordinaria
+var SOGLIA_FASCIA_LUXURY  = 1500;   // sopra: e' una richiesta particolare
+
+/** Ordine delle fasce, dal basso. `group` sta con business: e' la stessa fascia
+ *  di servizio con piu' passeggeri, non un gradino di lusso. */
+const _ORDINE_FASCE = ['standard', 'business', 'group', 'vip', 'ultra'];
+function _rangoFascia(t) {
+    const i = _ORDINE_FASCE.indexOf(t);
+    return i < 0 ? 0 : (t === 'group' ? 1 : i);   // group == business
+}
+
+function _fasciaDaPrezzo(prezzo) {
+    const p = Number(prezzo) || 0;
+    if (p < SOGLIA_FASCIA_PREMIUM) return 'standard';
+    if (p < SOGLIA_FASCIA_LUXURY)  return 'business';
+    return 'vip';
+}
+
+/* La fascia piu' alta acquistabile per ogni famiglia, letta dal catalogo una
+   volta sola: il generatore la interroga per ognuna delle 1889 tratte a ogni
+   corsa, e ricalcolarla ogni volta significherebbe rileggere il catalogo
+   decine di migliaia di volte al minuto. */
+let _tettoFasciaPerFamiglia = null;
+function _tettoFascia(classeRichiesta) {
+    if (!_tettoFasciaPerFamiglia) {
+        _tettoFasciaPerFamiglia = {};
+        const catalogo = (typeof NEW_CARS !== 'undefined' ? NEW_CARS : []);
+        for (const auto of catalogo) {
+            const fam = _famigliaDi(auto.vehicleClass);
+            if (!fam) continue;
+            const attuale = _tettoFasciaPerFamiglia[fam];
+            if (!attuale || _rangoFascia(auto.tier) > _rangoFascia(attuale)) {
+                _tettoFasciaPerFamiglia[fam] = auto.tier;
+            }
+        }
+    }
+    const fam = _famigliaDi(classeRichiesta);
+    return (fam && _tettoFasciaPerFamiglia[fam]) || 'ultra';
+}
+
+/** La fascia di una corsa da contratto: dal prezzo, mai sopra ciò che si può
+ *  comprare per quella famiglia. */
+function _fasciaCorsa(prezzo, classeRichiesta) {
+    const dalPrezzo = _fasciaDaPrezzo(prezzo);
+    const tetto     = _tettoFascia(classeRichiesta);
+    return _rangoFascia(dalPrezzo) > _rangoFascia(tetto) ? tetto : dalPrezzo;
+}
+
 if (typeof window !== 'undefined') {
     window._classeCompatibile = _classeCompatibile;
     window._famigliaDi        = _famigliaDi;
     window._flottaPuoServire  = _flottaPuoServire;
+    window._fasciaDaPrezzo    = _fasciaDaPrezzo;
+    window._fasciaCorsa       = _fasciaCorsa;
+    window._tettoFascia       = _tettoFascia;
 }
 
 function generateContractRide() {
@@ -264,8 +358,10 @@ function generateContractRide() {
         /* Non generare tratte che la flotta non puo' servire. Stessa regola che
            usa `_driverCanTakeRide` per accettarle: prima erano due controlli
            diversi, e le tratte da berlina passavano di qui per essere rifiutate
-           subito dopo (vedi il commento esteso sopra `_FAMIGLIE_VEICOLO`). */
-        if (!_flottaPuoServire(vc, _CONTRACT_TIER[vc])) return false;
+           subito dopo (vedi il commento esteso sopra `_FAMIGLIE_VEICOLO`).
+           La fascia si chiede al prezzo della tratta, non alla classe: e' cio'
+           che rende esistenti le corse standard. */
+        if (!_flottaPuoServire(vc, _fasciaCorsa(r.sellingPrice, vc))) return false;
         if (r.requiresWaterTaxi && !_flottaPuoServire('water_taxi', 'ultra')) return false;
         return true;
     });
@@ -273,7 +369,7 @@ function generateContractRide() {
 
     const route = candidates[Math.floor(Math.random() * candidates.length)];
     const vehicleRequired = _VEHICLE_CLASS_MAP[route.vehicle] || 'stellar_e_exec';
-    const tier = _CONTRACT_TIER[vehicleRequired] || 'business';
+    const tier = _fasciaCorsa(route.sellingPrice, vehicleRequired);
 
     // Hub POI for map display and serialization
     const poiKey = (typeof DB_REGION_TO_POI_KEY !== 'undefined' ? DB_REGION_TO_POI_KEY : {})[route.region] || 'roma';
@@ -502,6 +598,26 @@ function assignRideToDriver(rideId, driverId) {
         if (driver.status === 'resting') { if(typeof showNotification==='function') showNotification(`${driver.name} è in riposo!`, 'error'); return; }
 
         const ride = gameState.pendingRides[rideIdx];
+
+        /* LA FASCIA, prima della forma. Questo e' lo smistamento a mano (il
+           drag&drop): controllava solo la FAMIGLIA del veicolo e non la fascia,
+           quindi trascinare una corsa luxury sull'auto d'ingresso funzionava —
+           mentre «Smista tutte», che passa da `_driverCanTakeRide`, la
+           rifiutava. Due strade per la stessa domanda, con risposte diverse: la
+           stessa forma di bug che il 28/08 ha reso ingiocabile la partita nuova.
+           Il controllo sta qui e non dentro `_driverCanTakeRide` perche' a mano
+           serve dire al giocatore PERCHE' non si puo'. */
+        {
+            const _auto = gameState.fleet.find(c => c.id === driver.assignedCarId);
+            if (_auto && !(TIER_COMPATIBILITY[ride.tier] || []).includes(_auto.tier)) {
+                const _nomiFascia = { standard:'Standard', business:'Premium', group:'Premium',
+                                      vip:'Luxury', ultra:'Luxury' };
+                if (typeof showNotification === 'function')
+                    showNotification(`❌ Fascia insufficiente: questa corsa è ${_nomiFascia[ride.tier] || ride.tier}, ` +
+                                     `${_auto.name} è ${_nomiFascia[_auto.tier] || _auto.tier}.`, 'error');
+                return;
+            }
+        }
 
         // Contract rides: hard vehicle class check
         if (ride.vehicleRequired) {

@@ -953,7 +953,16 @@ describe('Funzione Turismo B2B — Esecuzione e ciclo di vita', () => {
             assert.ok(Array.isArray(newCars), 'NEW_CARS deve essere un array');
             assert.ok(newCars.length > 0, 'NEW_CARS non deve essere vuoto');
 
-            const validTiers = new Set(['business', 'vip', 'ultra']);
+            /* 'standard' era escluso da questo set mentre il messaggio d'errore lo
+               elencava: il codice e la sua spiegazione dicevano cose diverse, e
+               nessuno se ne accorgeva perche' nessuna auto era standard. Dal
+               29/08/2026 le entry-level lo sono (Nexus, Ciudad, 3-Urban, Y-Cross,
+               M-Cruiser): la fascia piu' bassa ha finalmente delle auto, ed e' il
+               motivo per cui esistono le corse standard. Conseguenza voluta sul
+               turismo: un bando che chiede `business` non le conta piu' fra i
+               veicoli qualificanti — un pulmino d'ingresso non e' una flotta da
+               contratto turistico. */
+            const validTiers = new Set(['standard', 'business', 'vip', 'ultra']);
             for (const car of newCars) {
                 assert.ok(validTiers.has(car.tier), `Il tier dell'auto ${car.name} (${car.tier}) deve essere standard/business/vip/ultra minuscolo`);
             }
