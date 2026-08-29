@@ -358,7 +358,7 @@ window.openCarModal = function(carId) {
         html += `<button ${ceAct('sellCar', [car.id])} style="width:100%;background:rgba(127,29,29,0.2);border:1px solid rgba(127,29,29,0.4);color:#db5746;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">💰 Vendi (usato)</button>`;
         const alreadyListed = (gameState.marketplace||[]).some(l => l.carId === car.id);
         if (!alreadyListed) {
-            const suggestPrice = Math.round(20000 * ((condPctModal/100)) * (car.tier === 'ultra' ? 5 : car.tier === 'vip' ? 3 : car.tier === 'business' ? 1.8 : 1));
+            const suggestPrice = window._valoreStimatoAuto(car);
             html += `<button ${ceAct('ceListCar', [car.id, suggestPrice])} style="width:100%;background:rgba(88,28,135,0.2);border:1px solid rgba(88,28,135,0.4);color:#7c5fc9;padding:5px 12px;border-radius:4px;font-size:9px;cursor:pointer;margin-top:4px">🏪 Metti in Mercato (~€${(suggestPrice/1000).toFixed(0)}k)</button>`;
         }
     }

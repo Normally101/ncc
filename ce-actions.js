@@ -48,6 +48,14 @@ function ceVtkSell() { vtkPlaceSellOrder(document.getElementById('vtk-sell-amoun
 
 /* ── staff / showroom ────────────────────────────────────────── */
 function ceListCar(carId, price) { listCarForSale(carId, price); if (typeof closeModals === 'function') closeModals(); }
+/* Pubblica l'annuncio sul mercato FRA GIOCATORI leggendo il prezzo dal campo
+   accanto al bottone (stesso schema di cePlaceBid). La validazione della
+   forbice vive dentro p2pListCarForSale, non qui: cosi' vale anche per chi
+   chiama la funzione da console. */
+function ceListCarP2P(carId) {
+    const el = document.getElementById('p2p-price-' + carId);
+    if (typeof window.p2pListCarForSale === 'function') window.p2pListCarForSale(carId, el ? el.value : 0);
+}
 function ceSetAvatar(id) { setDriverAvatar(id, this); }
 
 /* ── HQ: chiudi modale + upgrade stanza ──────────────────────── */

@@ -8,10 +8,7 @@ function renderTabMarket() {
     const myListings = (gameState.marketplace||[]).map(l => ({...l, car:gameState.fleet.find(c=>c.id===l.carId)})).filter(l=>l.car);
     const auc        = gameState.activeAuction;
     const curH       = gameState.day * 24 + gameState.hour;
-    const fleetVal   = gameState.fleet.reduce((s,c) => {
-        const cond = c.condition||100;
-        return s + Math.round(20000*(cond/100)*(c.tier==='ultra'?5:c.tier==='vip'?3:c.tier==='business'?1.8:1));
-    }, 0);
+    const fleetVal   = gameState.fleet.reduce((s,c) => s + window._valoreStimatoAuto(c), 0);
 
     const _pill = (t, c) => `<span style="display:inline-flex;padding:2px 7px;border-radius:3px;font-size:8px;font-weight:700;font-family:monospace;background:${c}18;border:1px solid ${c}44;color:${c}">${t}</span>`;
     const _btn  = (t, fn, c, dis) => {
@@ -145,14 +142,33 @@ function renderTabMarket() {
         html += `<div style="background:#161b22;border:1px solid #21262d;border-radius:6px;overflow:hidden">`;
         sellable.forEach(car => {
             const condPct = Math.floor(car.condition || 0);
-            const suggest = Math.round(20000*(condPct/100)*(car.tier==='ultra'?5:car.tier==='vip'?3:car.tier==='business'?1.8:1));
+            const forbice = window._forbicePrezzoP2P(car);
+            const suggest = forbice.stima;
+            /* DUE MERCATI, DUE BOTTONI DIVERSI — e finora ne esisteva uno solo.
+               «Al concessionario» e' il vecchio listCarForSale: l'auto la compra
+               il GIOCO, a prezzo fisso, in 1-2 giorni. «Ai giocatori» pubblica
+               l'annuncio su Supabase (p2pListCarForSale) e il prezzo lo scegli
+               tu dentro la forbice. Quella seconda strada era scritta, testata
+               e collegata al server dal 22/08, ma nessun bottone la chiamava:
+               il «Mercato P2P Reale» qui sotto poteva solo restare vuoto per
+               sempre, perche' nessuno aveva modo di metterci dentro un'auto. */
             html += `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 14px;border-bottom:1px solid #21262d;gap:12px">
-                <div style="flex:1;min-width:0">
-                    <div style="font-size:12px;font-weight:700;color:#e6edf3">${car.name}</div>
-                    <div style="font-size:10px;color:#6b7280;margin-top:2px;font-family:monospace">${car.tier.toUpperCase()} · ${condPct}% · Stima <span style="color:#1aa06a">~€${suggest.toLocaleString()}</span></div>
+            <div style="padding:11px 14px;border-bottom:1px solid var(--em-line)">
+                <div style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:12px;font-weight:700;color:var(--em-ink)">${CE_Sec.escHtml(car.name)}</div>
+                        <div style="font-size:10px;color:var(--em-muted);margin-top:2px">${car.tier.toUpperCase()} · ${condPct}% · Stima <span style="color:var(--em-green-d)">~€${suggest.toLocaleString('it-IT')}</span></div>
+                    </div>
+                    ${_btn(`Al concessionario · €${(suggest/1000).toFixed(0)}k`, ceAct('listCarForSale', [car.id, suggest]), '', false)}
                 </div>
-                ${_btn(`Vendi ~€${(suggest/1000).toFixed(0)}k`, ceAct('listCarForSale', [car.id, suggest]), 'gold', false)}
+                <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
+                    <span style="font-size:10px;color:var(--em-dim);white-space:nowrap">Ai giocatori €</span>
+                    <input id="p2p-price-${CE_Sec.escHtml(String(car.id))}" type="number"
+                           value="${suggest}" min="${forbice.min}" max="${forbice.max}" step="100"
+                           style="width:110px;background:var(--em-bg);border:1px solid var(--em-line);color:var(--em-ink);border-radius:6px;padding:5px 8px;font-size:11px">
+                    <span style="font-size:9px;color:var(--em-dim);white-space:nowrap">da €${forbice.min.toLocaleString('it-IT')} a €${forbice.max.toLocaleString('it-IT')}</span>
+                    ${_btn('Pubblica annuncio', ceAct('ceListCarP2P', [car.id]), 'gold', false)}
+                </div>
             </div>`;
         });
         html += `</div>`;

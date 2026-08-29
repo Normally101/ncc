@@ -63,11 +63,16 @@ describe('Separazione mercato NPC vs mercato P2P', () => {
         assert.ok(car, 'deve esserci un auto in flotta');
 
         assert.equal(typeof sandbox.p2pListCarForSale, 'function', 'p2pListCarForSale deve essere definita');
-        await sandbox.p2pListCarForSale(car.id, 30000);
+        /* Prezzo derivato dalla forbice (30/08): dal momento in cui il
+           venditore sceglie il prezzo, p2pListCarForSale rifiuta quello
+           fuori mercato. Si legge la stima invece di scrivere una cifra,
+           cosi' il test non si rompe se la banda cambia. */
+        const stima = sandbox.window._valoreStimatoAuto(car);
+        await sandbox.p2pListCarForSale(car.id, stima);
 
         assert.equal(rpcCalls.length, 1, 'p2pListCarForSale deve chiamare la RPC');
         assert.equal(rpcCalls[0].name, 'rpc_list_car_for_sale');
-        assert.equal(rpcCalls[0].params.v_ask_price, 30000);
+        assert.equal(rpcCalls[0].params.v_ask_price, stima);
         assert.equal(gs.marketplace.length, 0, 'p2pListCarForSale non deve scrivere in gameState.marketplace');
     });
 });

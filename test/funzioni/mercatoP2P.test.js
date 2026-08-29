@@ -402,12 +402,17 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             const carId = car.id;
             gs.drivers.push({ id: 'drv_2', name: 'Luigi', assignedCarId: carId, status: 'idle' });
 
-            await sandbox.p2pListCarForSale(carId, 28500.6);
+            /* Prezzo derivato dalla forbice (30/08): dal momento in cui il
+               venditore sceglie il prezzo, p2pListCarForSale rifiuta quello
+               fuori mercato. Si legge la stima invece di scrivere una cifra,
+               cosi' il test non si rompe se la banda cambia. */
+            const stima = sandbox.window._valoreStimatoAuto(car);
+            await sandbox.p2pListCarForSale(carId, stima + 0.6);
 
             // Verifica chiamata RPC
             assert.equal(supabaseRpcCalls.length, 1);
             assert.equal(supabaseRpcCalls[0].name, 'rpc_list_car_for_sale');
-            assert.equal(supabaseRpcCalls[0].params.v_ask_price, 28501);
+            assert.equal(supabaseRpcCalls[0].params.v_ask_price, stima + 1, 'il prezzo va arrotondato');
             assert.equal(supabaseRpcCalls[0].params.v_car_snapshot.id, carId);
 
             // Verifica stato locale
@@ -429,7 +434,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
             const carId = car.id;
             gs.drivers.push({ id: 'drv_3', name: 'Paolo', assignedCarId: carId, status: 'idle' });
 
-            await sandbox.p2pListCarForSale(carId, 30000);
+            await sandbox.p2pListCarForSale(carId, sandbox.window._valoreStimatoAuto(car));
 
             // Auto e autista devono essere stati ripristinati
             assert.ok(gs.fleet.some(c => c.id === carId), 'auto deve tornare in flotta');

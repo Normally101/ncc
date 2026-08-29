@@ -67,6 +67,24 @@ window.p2pListCarForSale = async function(carId, askPrice) {
     const driver = gameState.drivers.find(d => d.assignedCarId === carId && d.id !== 'ceo');
     if (driver?.status === 'busy') { showNotification('Autista in servizio — attendi.', 'error'); return; }
 
+    /* Il prezzo lo decide il venditore, ma dentro la forbice attorno al valore
+       stimato (_forbicePrezzoP2P in engine-fleet.js). Il controllo sta QUI e non
+       solo nel markup perche' l'annuncio si puo' pubblicare anche da console:
+       senza, il mercato si riempie di auto a un euro o a un miliardo. */
+    const prezzo = Math.round(Number(askPrice));
+    if (typeof window._forbicePrezzoP2P === 'function') {
+        const f = window._forbicePrezzoP2P(car);
+        if (!Number.isFinite(prezzo) || prezzo < f.min || prezzo > f.max) {
+            showNotification(
+                `Prezzo fuori mercato: per ${car.name} puoi chiedere fra €${f.min.toLocaleString('it-IT')} e €${f.max.toLocaleString('it-IT')}.`,
+                'error');
+            return;
+        }
+    } else if (!Number.isFinite(prezzo) || prezzo <= 0) {
+        showNotification('Prezzo non valido.', 'error');
+        return;
+    }
+
     // Rimuovi l'auto dalla flotta locale PRIMA di chiamare Supabase
     if (driver) driver.assignedCarId = null;
     gameState.fleet = gameState.fleet.filter(c => c.id !== carId);
@@ -75,7 +93,7 @@ window.p2pListCarForSale = async function(carId, askPrice) {
     // Pubblica su Supabase
     const { data, error } = await _sb().rpc('rpc_list_car_for_sale', {
         v_car_snapshot: car,
-        v_ask_price:    Math.round(askPrice),
+        v_ask_price:    prezzo,
     });
 
     if (error) {
@@ -89,7 +107,7 @@ window.p2pListCarForSale = async function(carId, askPrice) {
         return;
     }
 
-    logToMap(`🏪 ${car.name} pubblicata sul mercato reale a €${Math.round(askPrice).toLocaleString()}`);
+    logToMap(`🏪 ${car.name} pubblicata sul mercato reale a €${prezzo.toLocaleString('it-IT')}`);
     showNotification(`${car.name} in vendita! (mercato P2P)`, 'success');
     await p2pFetchMarket();
     if (typeof renderTabMarket === 'function') renderTabMarket();

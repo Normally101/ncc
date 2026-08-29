@@ -356,6 +356,34 @@ window.sellHub = function(hubId) {
     if (typeof renderTabFleet === 'function') renderTabFleet();
 };
 
+/* ─── QUANTO VALE UN'AUTO USATA ───────────────────────────────────────────────
+   La stessa formula stava scritta a mano in TRE punti (ui-market.js due volte,
+   ui-staff.js una): la stima mostrata al giocatore e il prezzo suggerito
+   potevano divergere al primo ritocco. Adesso e' una funzione sola, ed e' anche
+   la base su cui si calcola la forbice di prezzo del mercato fra giocatori. */
+window._valoreStimatoAuto = function (car) {
+    if (!car) return 0;
+    const cond = Math.max(0, Math.min(100, Number(car.condition) || 0));
+    const molt = car.tier === 'ultra' ? 5 : car.tier === 'vip' ? 3 : car.tier === 'business' ? 1.8 : 1;
+    return Math.round(20000 * (cond / 100) * molt);
+};
+
+/* LA FORBICE DEL MERCATO FRA GIOCATORI (richiesta di Vlad: «imposto io il
+   prezzo, sempre mantenendo un limite»). Il prezzo lo sceglie il venditore,
+   ma dentro una banda attorno al valore stimato: sotto il 50% e' svendita
+   sospetta (regalare valore a un altro account), sopra il 200% e' un annuncio
+   che nessuno comprera' mai e sporca solo la lista. */
+window.P2P_PREZZO_MIN_PCT = 0.5;
+window.P2P_PREZZO_MAX_PCT = 2.0;
+window._forbicePrezzoP2P = function (car) {
+    const stima = window._valoreStimatoAuto(car);
+    return {
+        stima,
+        min: Math.max(100, Math.round(stima * window.P2P_PREZZO_MIN_PCT)),
+        max: Math.round(stima * window.P2P_PREZZO_MAX_PCT),
+    };
+};
+
 // ── MERCATO AUTO NPC ──────────────────────────────────────────────
 window.listCarForSale = function(carId, askPrice) {
     const car = gameState.fleet.find(c => c.id === carId);
