@@ -43,6 +43,13 @@
 > sono nominati nel nostro codice. Zero dipendenze npm (`fetch` + `node:crypto`).
 > Il browser non può accreditare, e non è un controllo nel codice:
 > `rpc_credit_dc_purchase` è **REVOCATA** ad anon e authenticated.
+> **Trovato dal vivo dopo il deploy** (`bcf62c1`): le due funzioni erano scritte
+> con l'API Web (`Request => Response`) e Vercel le invoca con gli oggetti Node.
+> Restavano **appese**, timeout su ogni chiamata — non 404, non 500: silenzio,
+> perché una funzione che lancia prima di rispondere non chiude la connessione.
+> Riscritte con `(req, res)`. Ora `/api/dc-checkout` risponde in 0,34s.
+> **I test non vedono questa differenza**: va provata con una chiamata vera.
+>
 > ⚠️ **MANCANO SOLO LE CHIAVI** — vedi `docs/PAGAMENTI.md`: quattro variabili su
 > Vercel (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_URL`,
 > `SUPABASE_SERVICE_ROLE_KEY`) e il webhook da creare su Stripe. Finché non ci
