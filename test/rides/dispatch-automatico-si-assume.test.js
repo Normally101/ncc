@@ -29,6 +29,12 @@ describe('rides/dispatch-automatico-si-assume', () => {
         s = env.sandbox; gs = s.gameState;
         // un autista con l'auto starter, come nella segnalazione
         if (typeof s.hireNeighborhoodKid === 'function') s.hireNeighborhoodKid();
+        /* Fuori dall'onboarding: il tutorial e' esente dal cancello (la
+           rivelazione «SVEGLIATI, SCHIAVO» promette il guadagno automatico e
+           zero-to-hero.js conta sullo smistamento per mantenerla). La
+           segnalazione di Vlad viene da una partita avviata. */
+        gs.questStats = gs.questStats || {};
+        gs.questStats.totalRides = 40;
     });
     afterEach(() => env.stopAllIntervals());
 
@@ -76,6 +82,21 @@ describe('rides/dispatch-automatico-si-assume', () => {
 
         assert.equal(gs.pendingRides.length, 1, 'la VIP deve restare in attesa');
         assert.equal(gs.pendingRides[0].id, 405, 'la corsa rimasta deve essere la VIP');
+    });
+
+    test('durante il tutorial lo smistamento resta automatico: la promessa «vai a dormire» regge', () => {
+        /* zero-to-hero.js dice al giocatore che assumendo il Ragazzo di
+           Quartiere «i soldi arrivano da soli», e conta su autoDispatchRides
+           per mantenerlo. Il cancello del dispatcher non deve rompere quella
+           frase: entra in vigore quando l'onboarding e' finito (fase 'free'). */
+        gs.questStats.totalRides = 3;          // fase survival
+        gs.staff = [];
+        gs.pendingRides = [corsa(407, 'standard')];
+
+        s.autoDispatchRides();
+
+        assert.equal(gs.pendingRides.length, 0,
+            'chi sta ancora imparando non deve restare fermo davanti a una corsa non smistata');
     });
 
     test('lo smistamento a mano funziona sempre, dispatcher o no', () => {

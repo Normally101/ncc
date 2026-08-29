@@ -735,9 +735,16 @@ function autoDispatchRides() {
        Il problema esisteva da sempre ma e' diventato totale il 28/08: con
        RITMO=3 le corse durano un terzo, quindi nelle 4h di coda ce ne stanno
        tre volte tante e la coda non si riempie quasi mai. */
+    /* IL TUTORIAL E' ESENTE. La rivelazione «SVEGLIATI, SCHIAVO» promette che
+       assumendo il Ragazzo di Quartiere «vai a dormire e i soldi arrivano da
+       soli», e zero-to-hero.js conta su questo smistamento per mantenerla. Il
+       cancello vale da quando il giocatore e' fuori dall'onboarding (fase
+       'free'), che e' anche il momento in cui puo' permettersi un dipendente. */
+    const inTutorial = typeof window !== 'undefined' && window.ceOnb
+        && typeof window.ceOnb.phase === 'function' && window.ceOnb.phase() !== 'free';
     const staff = gameState.staff || [];
     const haDispatcher = staff.some(s => s.id === 'jr_disp' || s.id === 'sr_disp');
-    if (!haDispatcher) return;
+    if (!haDispatcher && !inTutorial) return;
     const canHandleVIP = staff.some(s => s.id === 'sr_disp');
     for (let i = gameState.pendingRides.length - 1; i >= 0; i--) {
         const ride = gameState.pendingRides[i];
