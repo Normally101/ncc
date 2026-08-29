@@ -1,9 +1,23 @@
 # Pagamenti Driver Coins — come si accende
 
-Il codice è tutto in piedi e i test lo coprono. Mancano solo le **chiavi**, che
-per definizione non stanno nel repo. Finché non le metti, il negozio dice
-«Il negozio non è ancora attivo. Nessun addebito è stato fatto.» — non dà errori
-e soprattutto **non regala Driver Coins**.
+> ✅ **ACCESO IN LIVE dal 30/08/2026.** Account Stripe attivato
+> (`charges_enabled`/`payouts_enabled` = true), webhook live creato via API,
+> le quattro variabili impostate su Vercel (progetto `ncc`). Verificato che
+> `/api/dc-checkout` risponde correttamente senza fare nessun addebito di
+> prova — **manca ancora un acquisto vero end-to-end nel browser**, unico modo
+> di provarlo senza poterlo fare al posto del giocatore.
+>
+> ⚠️ **Da fare quando c'è un minuto, non urgente**: `STRIPE_SECRET_KEY` oggi è
+> la secret key piena. L'unica chiamata che serve a runtime è
+> `POST /v1/checkout/sessions` — basta una Restricted API Key con permesso
+> *Checkout Sessions: Write* e nient'altro (Dashboard → Developers → API keys
+> → Create restricted key), poi sostituire il valore su Vercel e revocare la
+> chiave piena. Il webhook non usa mai `STRIPE_SECRET_KEY`: verifica solo con
+> `STRIPE_WEBHOOK_SECRET` (HMAC), quindi non serve nessun permesso lì.
+
+Il codice è tutto in piedi e i test lo coprono. Il resto di questa pagina
+descrive come è stato acceso (le variabili, il webhook) — utile se un giorno
+si deve ruotare una chiave o si accende un secondo ambiente (staging/preview).
 
 ## Cosa c'è già
 

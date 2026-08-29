@@ -34,3 +34,4 @@ preview-*.html
 
 # Copia di lavoro del GeoJSON ISTAT (2,75 MB) — la rigenera scripts/semplifica-geo.mjs
 scripts/.cache/
+.vercel

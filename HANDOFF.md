@@ -5,15 +5,38 @@
 
 # ✅ 30/08 — LE CINQUE SEGNALAZIONI DI VLAD: TUTTE CHIUSE. Suite **2305 verdi**.
 
-> **Cosa resta aperto** (tre decisioni di Vlad, nessun lavoro pendente):
-> 1. **Accendere Stripe?** Il codice è pronto e online, mancano le quattro
->    chiavi di `docs/PAGAMENTI.md`. Verificato dal vivo che oggi l'endpoint
->    risponde onestamente «Il negozio non è ancora attivo».
-> 2. **Le email degli eventi CEO**: il corpo della lettera parla ancora di un
+> # 🟢 30/08 (sera) — STRIPE È IN LIVE. Soldi veri, da adesso.
+> Vlad ha aperto l'account, verificato (`charges_enabled`/`payouts_enabled`
+> entrambi `true`, zero campi mancanti). Fatto in autonomia via API, senza
+> passare dalla dashboard: webhook live creato con `POST /v1/webhook_endpoints`
+> (endpoint e signing secret **separati** da quello di test), le quattro
+> variabili aggiornate su Vercel (progetto `ncc`, ora collegato con `vercel
+> link`), redeploy, verificato dal vivo che `/api/dc-checkout` risponde `401
+> sessione_non_valida` invece del vecchio `503 pagamenti_non_configurati` —
+> **senza fare nessun addebito vero**, quel controllo l'ha già negato prima di
+> arrivare a Stripe.
+> ⚠️ **Non ancora provato un acquisto vero end-to-end** — va fatto nel browser
+> con una carta reale (anche il pacchetto più economico), perché è l'unico
+> modo di vedere l'incasso senza che io possa farlo al posto di Vlad.
+> ⚠️ **Chiave da irrobustire, non urgente**: `STRIPE_SECRET_KEY` oggi è la
+> secret key piena (`sk_live_...`), incollata in chat. L'unica chiamata che fa
+> a Stripe è `POST /v1/checkout/sessions` (`api/dc-checkout.mjs`) — il webhook
+> non la usa affatto, verifica solo con `STRIPE_WEBHOOK_SECRET`. Quindi basta
+> una **Restricted API Key** con permesso *Checkout Sessions: Write* e niente
+> altro: Dashboard → Developers → API keys → Create restricted key, poi
+> sostituire il valore su Vercel. Dopo il cambio, revocare la secret key
+> piena da Stripe (Developers → API keys → Roll/Delete): è la chiusura del
+> cerchio per una chiave che è stata scritta in una chat.
+> **Webhook di test lasciato attivo apposta**: Stripe separa gli eventi
+> test/live per costruzione, non interferisce e serve ancora per provare
+> senza soldi veri prima di cambiare qualcosa nel codice dei pagamenti.
+>
+> **Cosa resta aperto** (due decisioni di Vlad, nessun lavoro pendente):
+> 1. **Le email degli eventi CEO**: il corpo della lettera parla ancora di un
 >    evento inventato dal template mentre i bottoni vendono l'evento del mese.
 >    O i template nominano l'evento (`{{eventName}}`, il segnaposto esiste già),
 >    o gli eventi si portano dietro il proprio testo d'invito.
-> 3. **Lo smistamento automatico ora si assume** (Junior Dispatcher, €1.400/mese):
+> 2. **Lo smistamento automatico ora si assume** (Junior Dispatcher, €1.400/mese):
 >    fuori dall'onboarding, chi non lo assume smista a mano. È quello che il
 >    catalogo dello staff prometteva da sempre, ma è un cambio di ritmo vero.
 >
