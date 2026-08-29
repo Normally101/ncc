@@ -1,7 +1,75 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 28 agosto 2026
+> Aggiornato: 29 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+> **STATO 29/08 — LE TRE FASCE, I PAGAMENTI VERI, IL MANUALE.**
+> Quattro richieste di Vlad dopo il playtest di Pietro. Tre fatte, una annotata.
+>
+> **1. Le tre fasce di corsa** (`45b730b`). Vlad: «se uno ha la macchina scarsa
+> può e deve avere delle corse anche standard, pagate meno; le richieste
+> particolari si fanno con la macchina che chiedono». Prima la fascia si
+> deduceva dalla CLASSE richiesta, quindi ogni tratta da berlina era 'business'
+> — che pagasse 102€ o 3.108€ — e la fascia standard non aveva mai corse. In
+> catalogo, per lo stesso motivo, **nessuna auto era standard**: anche la Nexus
+> da 35.000€ era business.
+> Ora la fascia la decide il **prezzo**: <500€ standard · 500-1.500 premium ·
+> >1.500 luxury (`SOGLIA_FASCIA_*` in engine-rides.js). Misurato: 356 tratte da
+> lavorare per chi comincia (prima zero), e la media sale da **276€** (auto
+> d'ingresso) a **721€** (Executive) a **1.513€** (S-Imperial).
+> Tolta la famiglia `presidenziale`: era una separazione per LUSSO dentro un
+> asse che descrive la FORMA del veicolo, e teneva la fascia luxury
+> irraggiungibile per 1.735 tratte su 1.889. Una S-Imperial è una berlina.
+> Aggiunto lo **Stellar V-Imperial** (van vip, €280.000) perché i van non
+> avevano nessuna auto di lusso: senza, le tratte da van sopra 1.500€ sarebbero
+> nate impossibili. *(Usa l'immagine del V-Carrier: servirebbe la sua.)*
+> Trovati strada facendo: lo smistamento a mano non controllava la fascia (il
+> drag&drop accettava quello che «Smista tutte» rifiutava); le corse POI di
+> lusso venivano proposte a chi non poteva servirle; il tier salvato nei
+> veicoli poteva divergere dal listino (ora si riallinea al caricamento).
+> **Il guardrail nuovo** passa su tutte le 1.889 tratte e verifica che ognuna
+> sia servibile da almeno un'auto acquistabile: è l'unico test che avrebbe
+> visto il bug del 28/08. Ha già trovato un falso allarme suo (il Water Taxi
+> non sta in `NEW_CARS` ma in `FLEET_VEHICLE_CLASSES`).
+>
+> **2. I Driver Coins si comprano con denaro vero** (`5da4036`). Vlad: «non deve
+> più succedere che, se clicco per acquistare, me li dia subito». Verificato:
+> `rpc_purchase_dc_pack` **non è mai esistita in produzione** — il file `65_`
+> non è mai stato applicato, e con lui `ec_dc_packs`/`ec_pack_payments`. Quindi
+> l'acquisto falliva sempre, e sotto ai pacchetti c'era «acquisti simulati».
+> Ora: `api/dc-checkout.mjs` (apre la cassa Stripe) + `api/dc-webhook.mjs`
+> (verifica la firma e accredita) + `68_pagamenti_driver_coins.sql` **applicato**.
+> Carta, PayPal, Apple Pay e Google Pay si accendono dal dashboard Stripe: non
+> sono nominati nel nostro codice. Zero dipendenze npm (`fetch` + `node:crypto`).
+> Il browser non può accreditare, e non è un controllo nel codice:
+> `rpc_credit_dc_purchase` è **REVOCATA** ad anon e authenticated.
+> ⚠️ **MANCANO SOLO LE CHIAVI** — vedi `docs/PAGAMENTI.md`: quattro variabili su
+> Vercel (`STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_URL`,
+> `SUPABASE_SERVICE_ROLE_KEY`) e il webhook da creare su Stripe. Finché non ci
+> sono, il negozio dice «non ancora attivo» e non regala niente.
+>
+> **3. Il Knowledge Book** (`93e3141`). `knowledge-book.js`, scheda 📖 Manuale.
+> Dodici capitoli con ricerca. **Le tabelle si generano dai dati veri** (listino,
+> stipendi, licenze, soglie): un manuale coi numeri copiati dentro è sbagliato
+> al primo ribilanciamento, e un manuale che mente è peggio di nessun manuale.
+> I test verificano quel legame — se una costante cambia, diventano rossi.
+>
+> **4. DA FARE — il design del tutorial e delle missioni.** Vlad: «va rifatto,
+> così com'è non c'entra niente col design del gioco; è rimasto quello vecchio
+> iniziale». Verificato, e ha ragione, con i numeri:
+> | file | colori scritti a mano | token `--em-*` |
+> |---|---|---|
+> | `ui-career.js` (Missioni) | **153** | **0** |
+> | `zero-to-hero.js` (tutorial) | 15 | 0 |
+> | `vittorio.js` (narrativa) | 14 | 0 |
+> | `ui-dispatch.js` (convertito) | — | 64 |
+> `ui-career.js` usa anche `font-family:monospace`. Visto dal vivo: le schermate
+> «IL FONDO DEL BARILE» e «SVEGLIATI, SCHIAVO» hanno font, colori e proporzioni
+> di un altro gioco. **Non toccato**: Vlad ha chiesto di annotarlo, non di
+> farlo. Quando si farà, la strada è quella già usata per gli altri file —
+> togliere i colori a mano e prendere i token `--em-*` da `style.css`.
+>
+> Suite: **2252 test, 0 rossi.**
 
 > **STATO 28/08 (notte) — PRIMO PLAYTEST ESTERNO (Pietro). Tutto risolto.**
 > Il primo occhio non nostro sul gioco, e ha trovato cose che 2225 test non
