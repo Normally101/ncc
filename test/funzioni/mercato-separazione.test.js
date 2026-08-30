@@ -32,6 +32,11 @@ describe('Separazione mercato NPC vs mercato P2P', () => {
                             limit: async () => ({ data: [], error: null }),
                         }),
                     }),
+                    or: () => ({
+                        order: () => ({
+                            limit: async () => ({ data: [], error: null }),
+                        }),
+                    }),
                 }),
             }),
         };

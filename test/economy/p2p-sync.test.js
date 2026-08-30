@@ -36,6 +36,7 @@ function setupP2PEnv(rpcResponses = {}) {
         from: () => ({
             select: () => ({
                 gt: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }),
+                or: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }),
                 order: () => ({ limit: async () => ({ data: [], error: null }) }),
                 eq: async () => ({ data: [], error: null }),
             }),

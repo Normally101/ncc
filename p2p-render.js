@@ -16,8 +16,12 @@ window.renderP2PMarketSection = function() {
 
     if (!uid) return `<div style="font-size:9px;color:#6b7280;font-style:italic;margin-bottom:12px">Accedi per vedere il mercato P2P reale.</div>`;
 
+    const scaduto = l => l.expires_at && new Date(l.expires_at).getTime() <= Date.now();
     const myListings    = listings.filter(l => l.seller_user_id === uid);
-    const otherListings = listings.filter(l => l.seller_user_id !== uid);
+    // I miei annunci scaduti li recupero io (vedi p2pFetchMarket); quelli degli
+    // altri non arrivano nemmeno, ma il filtro resta perche' la lista che compra
+    // non deve mai contenere un annuncio morto.
+    const otherListings = listings.filter(l => l.seller_user_id !== uid && !scaduto(l));
 
     let html = `<div style="font-size:8px;color:#c79a2a;text-transform:uppercase;letter-spacing:.1em;border-bottom:1px solid #21262d;padding-bottom:4px;margin-bottom:8px;margin-top:16px">🌐 Mercato P2P Reale (${otherListings.length} annunci)</div>`;
 
@@ -60,9 +64,9 @@ window.renderP2PMarketSection = function() {
                 <div style="display:flex;justify-content:space-between;align-items:center">
                     <div>
                         <div style="font-size:10px;font-weight:700;color:#e6edf3">${CE_Sec.escHtml(car.name || '?')}</div>
-                        <div style="font-size:8px;color:#e0922e;font-family:monospace">€${l.ask_price.toLocaleString()} · In vendita</div>
+                        <div style="font-size:8px;color:${scaduto(l) ? '#db5746' : '#e0922e'};font-family:monospace">€${l.ask_price.toLocaleString()} · ${scaduto(l) ? 'Scaduto — nessuno l\'ha comprata' : 'In vendita'}</div>
                     </div>
-                    <button ${ceAct('cancelP2PListing', [l.id])} style="padding:3px 8px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">Ritira</button>
+                    <button ${ceAct('cancelP2PListing', [l.id])} style="padding:3px 8px;font-size:8px;font-weight:700;cursor:pointer;background:#161b22;border:1px solid #f0c4bd;color:#db5746;border-radius:4px">${scaduto(l) ? 'Riprendi l\'auto' : 'Ritira'}</button>
                 </div>
             </div>`;
         });

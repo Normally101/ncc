@@ -13,7 +13,8 @@
     "stato": "node scripts/stato-progetto.mjs",
     "preflight": "node scripts/preflight.mjs",
     "preflight:prod": "node scripts/preflight.mjs --produzione",
-    "registro": "node scripts/registro-chiusura.mjs"
+    "registro": "node scripts/registro-chiusura.mjs",
+    "salute": "node scripts/salute-server.mjs"
   },
   "repository": {
     "type": "git",

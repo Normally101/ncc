@@ -180,7 +180,7 @@ Aggiornato: 30/08/2026, 21:20:43
 | `doAcquireProvince` | ops | ui-ops.js | stato | ⬜ |  |
 | `buyCompanyShares` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `buyP2PCar` | p2p-market | p2p-market.js | stato | ⬜ |  |
-| `cancelP2PListing` | p2p-market | p2p-market.js | stato | ⬜ |  |
+| `cancelP2PListing` | p2p-market | p2p-market.js | stato | ✅ | 30/08: l'annuncio scaduto spariva e con lui l'auto. Ora resta ritirabile. |
 | `joinHolding` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `leaveHolding` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `listCompanyIPO` | p2p-market | p2p-market.js | stato | ⬜ |  |

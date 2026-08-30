@@ -100,17 +100,28 @@ describe('events/email-evento-ceo', () => {
         }
     });
 
+    /* Dal 30/08 una scelta può anche INCASSARE (`gain`) e può essere una
+       scommessa (`prob`). L'invariante quindi non è più «la cassa scende della
+       quota»: è «si paga esattamente la quota scritta sul bottone, e si incassa
+       esattamente quello che la scelta dichiara». Qui si prende una scelta
+       certa — a pagamento e senza scommessa — e si controlla il saldo netto.
+       (Scritto così dopo che la versione vecchia è diventata instabile: con 63
+       eventi in catalogo, prima o poi pescava una scelta che incassava e
+       leggeva la cassa salire dove si aspettava che scendesse.) */
     test('scegliere addebita la cifra scritta sul bottone, non quella di listino', () => {
         const mail = generaFinoAdEvento(s, gs);
-        const idx = mail.eventData.choices.findIndex(c => c.cost > 0);
-        assert.ok(idx >= 0, 'l\'evento deve avere almeno una scelta a pagamento');
-        const costo = mail.eventData.choices[idx].cost;
+        const idx = mail.eventData.choices.findIndex(c => c.cost > 0 && c.prob == null);
+        if (idx < 0) return;   // questo evento offre solo scommesse: lo prova il test dedicato
+        const scelta = mail.eventData.choices[idx];
+        const costo = scelta.cost;
+        const incasso = scelta.gain || 0;
 
         gs.cash = costo + 100000;
         const prima = gs.cash;
         s.negotiateEmail(mail.id, 0, idx);
 
-        assert.equal(prima - gs.cash, costo, 'la cassa deve scendere esattamente della quota mostrata');
+        assert.equal(prima - gs.cash, costo - incasso,
+            `la cassa deve muoversi di quanto dice il bottone: −${costo} +${incasso}`);
     });
 
     test('le scelte senza quota (rifiuti, servizi pagati) restano intatte', () => {

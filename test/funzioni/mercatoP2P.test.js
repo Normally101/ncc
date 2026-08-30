@@ -59,6 +59,7 @@ describe('funzione mercatoP2P — Mercato Giocatori, Sindacati, Consorzi e Borsa
                     select: (_cols) => chain,
                     order: (_col, _opts) => chain,
                     gt: (_col, _val) => chain,
+                    or: (_filtro) => chain,
                     eq: (_col, _val) => chain,
                     limit: (_lim) => chain,
                     upsert: async () => ({ error: null }),

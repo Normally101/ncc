@@ -52,6 +52,11 @@ function creaAmbiente(opzioni = {}) {
                         limit: async () => ({ data: [], error: null }),
                     }),
                 }),
+                or: () => ({
+                    order: () => ({
+                        limit: async () => ({ data: [], error: null }),
+                    }),
+                }),
                 order: () => ({ limit: async () => ({ data: [], error: null }) }),
                 eq: () => ({ data: [], error: null }),
             }),

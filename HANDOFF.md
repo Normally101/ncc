@@ -18,6 +18,36 @@ Punto di partenza (30/08): 254 azioni, **0 chiuse**, 2360 test verdi, 0 bottoni 
 115 RPC tutte esistenti sul server, 0 firme disallineate, RLS su tutte le tabelle.
 Il lavoro non è rifare: è **provare**.
 
+## Fase 1 iniziata la sera del 30/08 — due difetti grossi in un'ora
+
+**1. Il meteo reale era fermo al 15 agosto.** Il lavoro schedulato
+`fetch-weather-cron` era attivo, girava ogni 30 minuti e **falliva da 5127
+esecuzioni di fila**: `unrecognized configuration parameter "app.supabase_url"`,
+due impostazioni del database mai messe. La Edge Function `fetch-weather` era
+sana e non veniva mai invocata. Corretto riscrivendo il comando del cron con URL
+e chiave letterali (`ALTER DATABASE … SET` è negato dal ruolo della Management
+API); verificato che il giro successivo sia andato a buon fine da solo e che la
+tabella ora si aggiorni. Nato da qui `npm run salute`: controlla i cron vivi,
+l'esito dell'ultima esecuzione, la freschezza dei dati che producono, l'RLS e le
+RPC che scrivono aperte a chi non ha un account.
+
+**2. Un'auto invenduta era un'auto persa per sempre.** Gli annunci del mercato
+fra giocatori durano 7 giorni. `p2pFetchMarket` filtrava `expires_at > adesso`
+per chiunque, quindi allo scadere l'annuncio spariva anche dai «Miei Annunci» —
+e con lui il bottone «Ritira», l'unico modo di riavere l'auto, che era già uscita
+dalla flotta al momento della pubblicazione. Nessun lavoro schedulato la
+restituiva. Ora la query fa un'eccezione per il venditore: l'annuncio scaduto
+resta visibile solo a lui, marcato «Scaduto», col bottone «Riprendi l'auto».
+⚠️ Difetto **nato lo stesso giorno** in cui il mercato è diventato usabile: prima
+del 30/08 nessuno poteva pubblicare, quindi nessuno poteva perdere un'auto.
+
+**Da guardare, non ancora risolto:** 4 RPC di manutenzione del mondo non le chiama
+nessuno — né il client né un cron: `rpc_credit_real_estate_rents` (gli affitti
+degli immobili **non vengono mai accreditati**, mentre la scheda promette
+«+€X/giorno» e il manuale dice «una rendita che non si ferma mai»),
+`rpc_update_fuel_price`, `rpc_cleanup_expired_listings`,
+`rpc_sync_global_event_status`. È la prima cosa della prossima sessione.
+
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 
 Vlad ha cambiato priorità e l'ha detto chiaro: «adesso non mi interessa più di

@@ -341,12 +341,22 @@ window.sellCompanyShares = async function(listingId, qty) {
 // SEZIONE 4: FETCH DATI DAL SERVER
 // ─────────────────────────────────────────────────────────────────────────────
 
+/* GLI ANNUNCI SCADUTI SONO INVISIBILI A TUTTI TRANNE CHE AL VENDITORE.
+   Prima il filtro era solo `expires_at > adesso`, per chiunque. Un annuncio dura
+   7 giorni; passati quelli spariva anche dai "Miei Annunci", e con lui il
+   bottone «Ritira» — l'unico modo di riavere l'auto, che era gia' uscita dalla
+   flotta al momento della pubblicazione. Nessun lavoro schedulato la
+   restituiva (`rpc_cleanup_expired_listings` esiste ma non la chiama nessuno,
+   e comunque cancella soltanto). Risultato: un'auto invenduta per una
+   settimana era un'auto persa per sempre.
+   Non si vedeva perche' fino al 30/08 nessun bottone pubblicava annunci. */
 async function p2pFetchMarket() {
     if (!_sb()) return;
-    const { data, error } = await _sb()
-        .from('market_listings')
-        .select('*')
-        .gt('expires_at', new Date().toISOString())
+    const adesso = new Date().toISOString();
+    const io = _uid();
+    let q = _sb().from('market_listings').select('*');
+    q = io ? q.or(`expires_at.gt.${adesso},seller_user_id.eq.${io}`) : q.gt('expires_at', adesso);
+    const { data, error } = await q
         .order('listed_at', { ascending: false })
         .limit(50);
 

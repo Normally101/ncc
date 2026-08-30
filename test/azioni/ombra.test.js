@@ -37,6 +37,7 @@ function setupOmbraEnv(rpcOverrides = {}) {
         order: () => queryBuilder,
         eq: () => queryBuilder,
         gt: () => queryBuilder,
+        or: () => queryBuilder,
         limit: () => queryBuilder,
         maybeSingle: async () => ({ data: null, error: null }),
         upsert: async () => ({ error: null }),

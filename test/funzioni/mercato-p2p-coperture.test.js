@@ -39,6 +39,7 @@ describe('mercatoP2P — percorsi non coperti (fetch sindacato, guardie login, p
                     select: () => chain,
                     order: () => chain,
                     gt: () => chain,
+                    or: () => chain,
                     eq: () => chain,
                     limit: () => chain,
                     upsert: async () => ({ error: null }),
