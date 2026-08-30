@@ -182,9 +182,23 @@ scritto un'email» ma «l'azione vera del giocatore arriva fino a creare la cors
    settimane uno stato che non serviva. Ora sono due categorie separate, nel
    banco, in `npm run stato` e nel registro.
 
-**I numeri, prima → dopo:** azioni verificate 53 → **59**, «al buio» 76 → **41**,
-e delle 76 di prima **29** erano azioni che il banco eseguiva già senza saperlo.
-Il bersaglio della fase (sotto 20) è a 21 azioni di distanza.
+**I numeri, prima → dopo:** azioni verificate 53 → **75**, «al buio» 76 → **17**.
+Il bersaglio della fase («sotto 20») è raggiunto. Delle 76 di partenza, **37**
+erano azioni che il banco eseguiva già senza saperlo, e le altre si sono sbloccate
+in tre modi, tutti e tre più banali di uno stato di gioco mancante:
+
+- **il banco era povero.** Un hub o un asset di lusso costano milioni (fino a
+  8.000.000 in data.js) e il banco aveva un milione: `buyHub`,
+  `buyLifestyleAsset` e sorelle uscivano su «fondi insufficienti». Ora ne ha
+  cinquanta, il patrimonio di un giocatore a fine partita.
+- **il banco bussava a indirizzi inventati.** `payFine('c1')`, `repayLoan(0)`:
+  l'azione non trovava la multa o il prestito e sembrava bloccata. Ora
+  `R.identikit(env)` restituisce gli id VERI di quello che il regista ha messo
+  nel mondo, e il banco li usa.
+- **un campo con due nomi.** Lo scenario scritto a mano metteva `onStrike: true`
+  su un autista, e `resolveStrike` legge `isOnStrike`: uno sciopero che il gioco
+  non vedeva. Difetti così si trovano solo provando a costruire lo stato con
+  intenzione.
 
 ⚠️ **Il banco ora prova due mondi, non uno**, e la ragione è che preparare uno
 stato ne rompe un altro: se il regista mette in mano al giocatore la polizza
@@ -194,10 +208,13 @@ Non è un difetto del gioco: sono situazioni che nella partita vera non capitano
 insieme. Chi aggiunge stati al regista deve ricordarsi di azzerarli nel mondo
 «nudo», o rimetterà in piedi il problema al contrario.
 
-**Prossima sessione:** continuare la Fase 2 sulle 41 azioni ancora al buio. I
-gruppi grossi sono il mercato P2P/consorzi (le RPC finte rispondono `null` e le
-azioni si fermano lì: serve far rispondere il regista con dati veri), il VTK, il
-turismo e le vanity/showroom, che leggono quasi tutto da campi del modulo.
+**Prossima sessione:** la Fase 2 ha raggiunto il suo bersaglio; restano 17 azioni
+al buio, e sono il fondo difficile — holding/OPA (`acquireSubsidiary`,
+`sellCempShares`), turismo, agenzia ombra, e le due di HQ, che sono ferme
+**giustamente** perché `HQ_ENABLED = false` (andranno segnate ⏭️ nel registro,
+non inseguite). Si può passare alla **Fase 3**, le 254 azioni sistema per sistema,
+cominciando da consorzi/alleanze come dice il piano: il regista adesso costruisce
+lo stato che serve.
 
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 

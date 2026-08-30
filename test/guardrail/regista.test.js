@@ -184,6 +184,64 @@ describe('guardrail/regista', () => {
             assert.ok(env.sandbox.window.gameState.activeAuction, 'manca l\'asta del motore locale');
         });
 
+        test('conAutistaInSciopero usa il campo che il gioco legge davvero', () => {
+            const autista = R.conAutistaInSciopero(env);
+            assert.equal(autista.isOnStrike, true,
+                'resolveStrike legge `isOnStrike`: scrivere `onStrike` costruisce uno sciopero che il gioco non vede');
+            // La prova vera: l'azione del giocatore deve arrivare a spendere.
+            R.conSoldi(env, 200000);
+            const prima = env.sandbox.window.gameState.cash;
+            w.resolveStrike(autista.id);
+            assert.ok(env.sandbox.window.gameState.cash < prima, 'resolveStrike non ha pagato niente');
+        });
+
+        test('conMultaDaPagare lascia una multa che payFine sa pagare', () => {
+            R.conSoldi(env, 200000);
+            const multa = R.conMultaDaPagare(env, { importo: 2000 });
+            const prima = env.sandbox.window.gameState.cash;
+            w.payFine(multa.id);
+            assert.equal(env.sandbox.window.gameState.cash, prima - 2000);
+        });
+
+        test('conVeicoloElettricoScarico lascia una batteria da ricaricare', () => {
+            const auto = R.conVeicoloElettricoScarico(env, { carica: 20 });
+            assert.equal(auto.chargeLevel, 20);
+            R.conSoldi(env, 200000);
+            const prima = env.sandbox.window.gameState.cash;
+            w.chargeVehicle(auto.id);
+            assert.ok(env.sandbox.window.gameState.cash < prima,
+                'chargeVehicle non ha ricaricato: il veicolo non risulta elettrico o è già carico');
+        });
+
+        test('conMissioneDaRiscuotere lascia una ricompensa da incassare', () => {
+            const id = R.conMissioneDaRiscuotere(env);
+            assert.ok(env.sandbox.window.gameState.claimableQuests.includes(id));
+        });
+
+        test('conObiettivoDelGiornoCompletato lascia un obiettivo raggiunto', () => {
+            const id = R.conObiettivoDelGiornoCompletato(env);
+            const ordini = env.sandbox.window.gameState.dailyOrders;
+            assert.ok(ordini.picks.some(p => p.id === id));
+            assert.deepEqual(ordini.claimed, [], 'l\'obiettivo risulta già riscosso: non c\'è più niente da consegnare');
+        });
+
+        test('conAnnunciInVendita lascia un\'auto altrui da comprare e una propria da ritirare', () => {
+            const { annuncioLocale, altrui } = R.conAnnunciInVendita(env);
+            assert.ok(env.sandbox.window.gameState.marketplace.some(l => l.id === annuncioLocale.id));
+            assert.notEqual(altrui.seller_user_id, w.currentUser && w.currentUser.id,
+                'un\'auto propria non si può comprare: il venditore dev\'essere un altro');
+        });
+
+        test('conOffertaSuBando lascia un\'offerta da poter ritirare', () => {
+            const bando = R.conOffertaSuBando(env);
+            assert.ok(bando.playerBid, 'senza offerta depositata CE_cancelBid non ha niente da annullare');
+        });
+
+        test('conSaloneAperto lascia un veicolo selezionato nel salone', () => {
+            const v = R.conSaloneAperto(env);
+            assert.ok(v && v.id, 'nessun veicolo nel listino del salone');
+        });
+
         test('conContrattoB2B lascia sia un bando aperto sia un contratto attivo', () => {
             const { bando, contratto } = R.conContrattoB2B(env);
             assert.equal(bando.status, 'open');

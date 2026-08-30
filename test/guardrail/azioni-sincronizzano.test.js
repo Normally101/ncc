@@ -146,6 +146,20 @@ function preparaMondo() {
         venture:  (catalogo(sandbox, 'VENTURE_AGENCIES')     || [])[0],
         proto:    (catalogo(sandbox, 'PROTOTYPE_CARS')       || [])[0],
         poi:      poiIds[0],
+        /* Un SECONDO punto d'interesse: il primo il banco lo mette gia' fra gli hub
+           posseduti, quindi `buyHub(poi)` rispondeva «Hub gia' controllato» e
+           risultava non attivabile. Comprare qualcosa richiede qualcosa che non hai. */
+        poiDaComprare: poiIds[1] || poiIds[0],
+        upgrade:  (catalogo(sandbox, 'CAR_UPGRADES')         || [])[0],
+        campagna: (catalogo(sandbox, 'MARKETING_CAMPAIGNS')  || [])[0],
+        vtkItem:  (catalogo(sandbox, 'VTK_SHOP_ITEMS')       || [])[0],
+        /* Un investimento che il banco NON possiede gia': `buyInvestment` esce
+           subito su quelli che hai (`investments.includes(invId)`), e il banco ne
+           possiede due piu' la Kasko dello scenario VIP. */
+        investimento: ((catalogo(sandbox, 'INVESTMENTS') || [])
+            .find(i => !['inv_fuel_depot', 'inv_tire_depot', 'inv_kasko'].includes(i.id)) || {}).id,
+        regione:  Object.keys(catalogo(sandbox, 'REGIONS') || {})
+            .find(r => r !== 'lazio') || null,
     };
 
     /* `sistemi` sceglie fra due mondi, e la scelta non e' un vezzo: preparare uno
@@ -185,6 +199,7 @@ function preparaMondo() {
         gs.energy = 40;
 
         gs.reputation     = 5.0;      // cancello di buyHub (2.5★), buyPrototypeCar, acquireVentureStake
+        gs.pricingStrategy = 'standard';
         gs.lobbyingPoints = 100000;   // cancello di passLobbyLaw (law.pointsCost)
         gs.questStats     = Object.assign({ totalRides: 500 }, gs.questStats || {});
         gs.vipCooldowns   = gs.vipCooldowns || {};
@@ -246,6 +261,9 @@ function preparaMondo() {
            rifiutava per sempre. Un banco che si porta dietro lo stato di prima non
            prova due mondi: ne prova uno e mezzo, e il mezzo cambia a ogni giro. */
         gs.loans = [];
+        gs.activeFines = [];
+        gs.marketplace = [];
+        gs.claimableQuests = [];
         gs.realEstate = [];
         gs.provinces = [];
         gs.vipNemeses = {};
@@ -271,6 +289,16 @@ function preparaMondo() {
         R.conProvincia({ sandbox });
         R.conNemesi({ sandbox });
         R.conHolding({ sandbox });
+        R.conMultaDaPagare({ sandbox });
+        R.conAutistaInSciopero({ sandbox });
+        R.conVeicoloElettricoScarico({ sandbox });
+        try { R.conDebitoVittorio({ sandbox }); } catch (e) { /* veterano: nessun debito, e va bene */ }
+        R.conSaloneAperto({ sandbox });
+        R.conAnnunciInVendita({ sandbox });
+        R.conOffertaSuBando({ sandbox });
+        R.conMissioneOmbra({ sandbox });
+        try { R.conMissioneDaRiscuotere({ sandbox }); } catch (e) { /* catalogo missioni non raggiungibile */ }
+        try { R.conObiettivoDelGiornoCompletato({ sandbox }); } catch (e) { /* daily-orders non caricato */ }
 
         /* I campi del modulo: un'intera famiglia di azioni non legge i propri
            argomenti dalla chiamata, li legge dallo schermo. `_alCreate` prende nome e
@@ -303,8 +331,16 @@ function preparaMondo() {
     SCENA_VIP = R.istantanea({ sandbox });
     const idEmailVip = SCENA_VIP.emails.map(e => e.id).filter(id => id != null);
 
+    /* Gli id VERI di quello che il regista mette nel mondo. Senza, il banco bussa
+       a indirizzi inventati — `payFine('c1')`, `repayLoan(0)` — e archivia come
+       «non attivabile» un'azione sana che semplicemente non ha trovato la multa o
+       il prestito. E' il pezzo che trasforma il regista da costruttore di stati a
+       costruttore di stati USABILI. */
+    preparaStato({ sistemi: true });
+    const kit = R.identikit({ sandbox });
+
     preparaStato();
-    return { sandbox, scritture, stopAllIntervals, ids, preparaStato, idEmailVip };
+    return { sandbox, scritture, stopAllIntervals, ids, preparaStato, idEmailVip, kit };
 }
 
 /* ── 3. Esegue un'azione e guarda se il denaro si e' mosso di nascosto ───── */
@@ -350,6 +386,26 @@ function formeArgomento(mondo) {
        eseguite, non perche' fossero difficili ma perche' il banco bussava a un
        indirizzo inventato. */
     for (const id of (mondo.idEmailVip || [])) forme.push([id]);
+
+    /* Gli id veri del mondo costruito dal regista. Solo uno per famiglia: bastano
+       a superare il `find(...)` iniziale, e moltiplicarli farebbe esplodere il
+       numero di tentativi senza provare niente di nuovo. */
+    const kit = mondo.kit || {};
+    const primo = (elenco) => (elenco && elenco.length ? elenco[elenco.length - 1] : null);
+    for (const [famiglia, extra] of [
+        ['autisti', [5000]],      // payDriverBonus(autista, importo)
+        ['auto', null], ['prestiti', null], ['multe', null],
+        ['bandi', [5000]], ['contratti', null], ['province', null], ['immobili', null],
+        ['missioni', null], ['obiettivi', null], ['annunci', null],
+    ]) {
+        const id = primo(kit[famiglia]);
+        if (!id) continue;
+        forme.push([id]);
+        if (extra) forme.push([id, ...extra]);
+    }
+    // Le tre strategie di prezzo sono un elenco chiuso dentro l'azione: senza una
+    // delle tre parole giuste `setPricingStrategy` esce sulla prima riga.
+    forme.push(['premium'], ['discount'], ['standard']);
     // ── Id veri dai cataloghi del gioco.
     if (ids.stock)   forme.push([ids.stock.id, 10], [ids.stock.id]);
     if (ids.rischio) forme.push([ids.rischio.id, 10000, 7], [ids.rischio.id, 10000]);
@@ -358,6 +414,20 @@ function formeArgomento(mondo) {
     if (ids.venture) forme.push([ids.venture.id, 10], [ids.venture.id]);
     if (ids.proto)   forme.push([ids.proto.id]);
     if (ids.poi)     forme.push([ids.poi]);
+    if (ids.poiDaComprare) forme.push([ids.poiDaComprare]);
+    if (ids.upgrade)  forme.push(['c1', ids.upgrade.id], [ids.upgrade.id]);
+    if (ids.campagna) forme.push([ids.campagna.id]);
+    if (ids.vtkItem)  forme.push([ids.vtkItem.id]);
+    if (ids.investimento) forme.push([ids.investimento]);
+    if (ids.regione)  forme.push([ids.regione]);
+    // Le vendite locali vogliono il prezzo insieme all'auto.
+    forme.push(['c1', 50000]);
+    /* Titolo, emblema e colore delle vanity: sono elenchi `const` DENTRO l'IIFE di
+       vanity.js, quindi invisibili da fuori (a differenza dei cataloghi `var` di
+       data.js). Qui restano tre valori letterali, e se un giorno spariscono dal
+       catalogo le tre azioni tornano «non attivabili»: e' il modo in cui il banco
+       se ne accorge. */
+    forme.push(['Magnate'], ['⚜️'], ['#8aa0b5']);
     return forme;
 }
 
@@ -393,7 +463,13 @@ async function provaAzione(mondo, nome) {
         // rifondato la partita, `gs` qui e' il nuovo oggetto, non quello morto.
         const gs = mondo.preparaStato({ sistemi });
         if (!gs) return { stato: 'non verificata' };
-        gs.cash = 1_000_000;
+        /* Il banco era povero, e la poverta' si travestiva da difetto: un hub o un
+           asset di lusso costano milioni (fino a 8.000.000 in data.js), quindi
+           `buyHub` e `buyLifestyleAsset` uscivano su «fondi insufficienti» e
+           finivano fra le «non attivabili». Cinquanta milioni sono il patrimonio
+           di un giocatore a fine partita: il banco deve poter comprare tutto il
+           catalogo, o non lo prova mai. */
+        gs.cash = 50_000_000;
         gs.driverCoins = 100_000;
         gs.vtkBalance = 10_000;
         scritture.length = 0;
@@ -409,13 +485,13 @@ async function provaAzione(mondo, nome) {
 
         // Riletto di nuovo: l'azione stessa puo' aver sostituito l'oggetto.
         const dopo = sandbox.window.gameState || gs;
-        const mossoCash = dopo.cash !== 1_000_000;
+        const mossoCash = dopo.cash !== 50_000_000;
         const mossoDC   = dopo.driverCoins !== 100_000;
         const mossoVTK  = dopo.vtkBalance !== 10_000;
         if (mossoCash || mossoDC || mossoVTK) {
             return {
                 stato: scritture.length > 0 ? 'ok' : 'ROTTA',
-                dettaglio: `cash ${dopo.cash - 1_000_000}, DC ${dopo.driverCoins - 100_000}, VTK ${dopo.vtkBalance - 10_000}`,
+                dettaglio: `cash ${dopo.cash - 50_000_000}, DC ${dopo.driverCoins - 100_000}, VTK ${dopo.vtkBalance - 10_000}`,
                 scritture: [...scritture],
             };
         }
@@ -444,13 +520,23 @@ async function provaAzione(mondo, nome) {
    effetto che conti: una corsa creata, una email risolta, un veicolo o un
    autista in piu' o in meno, una chiamata al server. */
 function improntaDelMondo(gs, scritture) {
-    return [
-        (gs.pendingRides || []).length,
-        (gs.emails || []).filter(e => e.status === 'unread').length,
-        (gs.fleet || []).length,
-        (gs.drivers || []).length,
-        scritture.length,
-    ].join('|');
+    /* Tutti i campi semplici in cima a gameState (numeri, stringhe, booleani) piu'
+       la lunghezza di ogni elenco, piu' lo stato di autisti e veicoli. Il primo
+       tentativo guardava cinque numeri e diceva «non e' successo niente» a
+       `setPricingStrategy` (che scrive una stringa) e a `sendDriverToRest` (che
+       cambia lo stato di un autista): il banco le archiviava come bloccate mentre
+       funzionavano benissimo. Un'impronta troppo grossa e' cieca esattamente come
+       nessuna impronta. */
+    let f = 'w:' + scritture.length + ';';
+    for (const k of Object.keys(gs)) {
+        const v = gs[k];
+        if (v === null || v === undefined) { f += k + '=_;'; continue; }
+        if (Array.isArray(v)) { f += k + '#' + v.length + ';'; continue; }
+        if (typeof v !== 'object') f += k + '=' + v + ';';
+    }
+    f += 'd:' + (gs.drivers || []).map(d => `${d.status}/${d.isOnStrike ? 1 : 0}`).join(',');
+    f += 'v:' + (gs.fleet || []).map(c => `${c.status}/${c.condition}/${c.chargeLevel}`).join(',');
+    return f;
 }
 
 /* ── 3-bis. Quali azioni riguardano davvero il denaro ───────────────────── */

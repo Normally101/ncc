@@ -415,6 +415,206 @@ function conClienteVIP(env, chi) {
 }
 
 /**
+ * GARANTISCE: c'è una multa da pagare, con lo stato che `payFine` pretende.
+ * Forma copiata da engine-events.js (dove le multe nascono davvero).
+ */
+function conMultaDaPagare(env, { importo = 2000 } = {}) {
+    const stato = gs(env);
+    stato.activeFines = stato.activeFines || [];
+    const multa = { id: `multa_regista_${stato.activeFines.length + 1}`,
+                    amount: importo, severity: 'minor', status: 'pending',
+                    reason: 'Sosta vietata', day: stato.day || 1 };
+    stato.activeFines.push(multa);
+    return multa;
+}
+
+/**
+ * GARANTISCE: un autista è in sciopero, cioè `resolveStrike` ha qualcosa da
+ * risolvere.
+ *
+ * ⚠️ Il campo giusto è `isOnStrike`, non `onStrike`. Sono due nomi diversi per la
+ * stessa idea e nel banco convivevano da mesi: lo scenario scritto a mano metteva
+ * `onStrike: true` mentre `resolveStrike` legge `d.isOnStrike`, quindi l'azione
+ * usciva sempre alla prima riga e risultava «non attivabile». Un difetto invisibile
+ * finché non si prova a costruire lo stato con intenzione.
+ */
+function conAutistaInSciopero(env) {
+    const stato = gs(env);
+    const autista = (stato.drivers && stato.drivers[0]) || conAutisti(env, 1)[0];
+    autista.isOnStrike = true;
+    autista.onStrike   = true;
+    autista.status     = 'striking';
+    return autista;
+}
+
+/**
+ * GARANTISCE: c'è in flotta un veicolo elettrico con la batteria scarica, cioè
+ * `chargeVehicle` ha qualcosa da ricaricare. Il modello è preso dal catalogo
+ * (`volt_s_hyper` è l'unico elettrico fra le ultra, campo `fuel` in data.js).
+ */
+function conVeicoloElettricoScarico(env, { carica = 20 } = {}) {
+    const auto = conFlotta(env, 1, { classe: 'volt_s_hyper', condizione: 100, tier: 'ultra' })[0];
+    auto.chargeLevel = carica;
+    return auto;
+}
+
+/**
+ * GARANTISCE: il debito con Vittorio è aperto — è il prestito d'usura
+ * dell'inizio partita, e `repayVittorio` lo pretende `active`.
+ * Lo costruisce il gioco (`_vittorioDebt()`), non questo file.
+ */
+function conDebitoVittorio(env) {
+    const w = win(env);
+    pretende(typeof w._vittorioDebt === 'function', 'vittorio.js non è caricato nel banco');
+    const debito = w._vittorioDebt();
+    pretende(debito, 'nessun debito: il giocatore risulta veterano (ceOnb.veteran)');
+    debito.status = 'active';
+    return debito;
+}
+
+/**
+ * GARANTISCE: c'è una missione della carriera già completata e in attesa di
+ * essere riscossa (`claimQuestReward` pretende che l'id sia in `claimableQuests`).
+ * L'id è preso dal catalogo vero delle missioni, non inventato.
+ */
+function conMissioneDaRiscuotere(env) {
+    const stato = gs(env);
+    const missioni = catalogo(env, 'QUESTS') || catalogo(env, 'QUEST_DB') || [];
+    pretende(missioni.length, 'il catalogo delle missioni non è raggiungibile dal banco');
+    const q = missioni[0];
+    stato.claimableQuests = stato.claimableQuests || [];
+    if (!stato.claimableQuests.includes(q.id)) stato.claimableQuests.push(q.id);
+    stato.completedQuests = (stato.completedQuests || []).filter(id => id !== q.id);
+    return q.id;
+}
+
+/**
+ * GARANTISCE: uno degli obiettivi del giorno risulta raggiunto e non ancora
+ * riscosso, cioè `claimDailyOrder` ha qualcosa da consegnare.
+ *
+ * La lista degli obiettivi la costruisce il gioco (`ensure()` dentro
+ * daily-orders.js, che è privata): il regista la fa costruire chiamando l'azione
+ * vera una volta a vuoto, e poi sposta indietro il segnalibro `base` — che è il
+ * valore del contatore quando l'obiettivo è stato assegnato. Spostarlo indietro
+ * vuol dire «da allora ne hai fatti tanti», che è esattamente ciò che accade
+ * quando un giocatore completa l'obiettivo.
+ */
+function conObiettivoDelGiornoCompletato(env) {
+    const w = win(env);
+    pretende(typeof w.claimDailyOrder === 'function', 'daily-orders.js non è caricato nel banco');
+    w.claimDailyOrder('inesistente');           // forza la creazione della lista
+    const ordini = gs(env).dailyOrders;
+    pretende(ordini && ordini.picks && ordini.picks.length, 'nessun obiettivo del giorno costruito');
+    ordini.picks[0].base = -1e9;
+    ordini.claimed = [];
+    return ordini.picks[0].id;
+}
+
+/**
+ * GARANTISCE: nel salone c'è un veicolo selezionato, cioè `_srmPurchase` e
+ * `_srmRent` hanno qualcosa da comprare o noleggiare.
+ * `_srmState` è un `const` in cima a showroom.js: si legge dal contesto, non da
+ * `window`, come i cataloghi di data.js.
+ */
+function conSaloneAperto(env) {
+    const stato = catalogo(env, '_srmState');
+    const listino = catalogo(env, 'STELLAR_VOLT_CATALOG') || [];
+    pretende(stato && listino.length, 'showroom.js non è caricato nel banco');
+    stato.selectedId = listino[0].id;
+    stato.view = 'detail';
+    return listino[0];
+}
+
+/**
+ * GARANTISCE: c'è un'auto di un altro giocatore in vendita sul mercato P2P, e una
+ * propria nel mercato locale — cioè `buyP2PCar` e `cancelListing` hanno un
+ * bersaglio. Forma copiata da `market_listings` (08_mmo_p2p_marketplace.sql) e
+ * da `gameState.marketplace` (engine-fleet.js).
+ */
+function conAnnunciInVendita(env) {
+    const w = win(env);
+    const stato = gs(env);
+    const mio = (stato.fleet && stato.fleet[0]) || conFlotta(env, 1)[0];
+
+    stato.marketplace = stato.marketplace || [];
+    const annuncioLocale = { id: 'annuncio-locale', carId: mio.id, price: 50000,
+                             name: mio.name, listedDay: stato.day || 1 };
+    stato.marketplace.push(annuncioLocale);
+
+    const altrui = {
+        id: 'annuncio-altrui', seller_user_id: 'un-altro-giocatore',
+        seller_name: 'Rivale', vehicle_class: 'stellar_e_exec', vehicle_name: 'Stellar E-Executive',
+        ask_price: 60000, condition: 90, mileage: 12000,
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+    };
+    w._p2pMarket = Object.assign(w._p2pMarket || {}, {
+        listings: [altrui], myListings: [], market: [altrui],
+    });
+    return { annuncioLocale, altrui };
+}
+
+/**
+ * GARANTISCE: c'è un'offerta già depositata su un bando, cioè `CE_cancelBid` ha
+ * un'offerta da ritirare. Senza, il bando c'è ma l'azione esce su `!tender.playerBid`.
+ */
+function conOffertaSuBando(env) {
+    const stato = gs(env);
+    const bando = (stato.corporateTenders || []).find(t => t.status === 'open')
+        || conContrattoB2B(env).bando;
+    bando.playerBid = { amount: 5000, pledgedCash: 5000, day: stato.day || 1 };
+    return bando;
+}
+
+/**
+ * GARANTISCE: nella posta c'è una proposta dell'agenzia ombra con due luoghi
+ * validi, cioè `acceptShadowMission` arriva a creare la corsa.
+ */
+function conMissioneOmbra(env) {
+    const stato = gs(env);
+    const poi = Object.keys(catalogo(env, 'POIS') || {});
+    pretende(poi.length >= 2, 'servono almeno due punti d\'interesse');
+    stato.emails = stato.emails || [];
+    const email = {
+        id: 'email-ombra', type: 'shadow', status: 'unread',
+        sender: 'Numero sconosciuto', subject: 'Un lavoro discreto',
+        shadowData: { fromId: poi[0], toId: poi[1], price: 25000 },
+        fromId: poi[0], toId: poi[1], price: 25000,
+        expiresAt: ((stato.day || 1) * 24 + (stato.hour || 0)) + 8,
+    };
+    stato.emails.push(email);
+    return email;
+}
+
+/**
+ * GARANTISCE: restituisce gli id VERI di tutto quello che c'è adesso nel mondo —
+ * auto, autisti, prestiti, multe, email, bandi, contratti, province.
+ *
+ * Serve a chi prova le azioni in massa: senza, il banco bussa a indirizzi
+ * inventati (`payFine('c1')`) e archivia come «non attivabile» un'azione sana che
+ * semplicemente non ha trovato la multa. È il pezzo che trasforma il regista da
+ * costruttore di stati a costruttore di stati USABILI.
+ */
+function identikit(env) {
+    const stato = gs(env) || {};
+    const ids = (elenco, campo = 'id') => (elenco || []).map(x => x && x[campo]).filter(Boolean);
+    return {
+        auto:       ids(stato.fleet),
+        autisti:    ids(stato.drivers),
+        prestiti:   ids(stato.loans),
+        multe:      ids(stato.activeFines),
+        email:      ids(stato.emails),
+        bandi:      ids(stato.corporateTenders),
+        contratti:  ids(stato.corporateContracts),
+        province:   ids(stato.provinces),
+        immobili:   ids(stato.realEstate),
+        investimenti: (stato.investments || []).slice(),
+        missioni:   (stato.claimableQuests || []).slice(),
+        obiettivi:  ((stato.dailyOrders || {}).picks || []).map(p => p.id),
+        annunci:    ids(stato.marketplace),
+    };
+}
+
+/**
  * GARANTISCE: ogni cliente VIP che il gioco sa generare ha scritto la sua
  * richiesta, e la flotta soddisfa tutti insieme. Restituisce l'elenco delle
  * email nell'ordine dei clienti.
@@ -670,6 +870,10 @@ module.exports = {
     conConsorzio, conAstaAperta, conContrattoB2B,
     conDepositoCarburante, conAutistaInAccademia, conPrestito,
     conCriptoInPortafoglio, conImmobile, conProvincia, conNemesi, conHolding,
+    conMultaDaPagare, conAutistaInSciopero, conVeicoloElettricoScarico,
+    conDebitoVittorio, conMissioneDaRiscuotere, conObiettivoDelGiornoCompletato,
+    conSaloneAperto, conAnnunciInVendita, conOffertaSuBando, conMissioneOmbra,
+    identikit,
     // utilità per chi costruisce stati nuovi
     catalogo, conDadoTruccato,
 };

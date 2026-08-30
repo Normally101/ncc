@@ -4,7 +4,7 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 30/08/2026, 22:40:31
+Aggiornato: 30/08/2026, 22:47:40
 
 | | |
 |---|---|
@@ -12,9 +12,9 @@ Aggiornato: 30/08/2026, 22:40:31
 | Chiuse (provate davvero, con un test che le difende) | **1** |
 | Aperte | **253** |
 | Difetti trovati e ancora da correggere | **0** |
-| Eseguite dal banco automatico (`ok`) | 59 |
-| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 29 |
-| Il banco non riesce ad attivarle | 41 |
+| Eseguite dal banco automatico (`ok`) | 75 |
+| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 37 |
+| Il banco non riesce ad attivarle | 17 |
 | Fuori dal banco (file non caricato lì) | 30 |
 
 **Legenda CHIUSA** — ⬜ da fare · ✅ chiusa · 🐛 difetto trovato, correzione aperta · ⏭️ non applicabile (con motivo nelle note)
@@ -81,7 +81,7 @@ Aggiornato: 30/08/2026, 22:40:31
 | `ceVtkSell` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `openAcademyModal` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `openCmdPalette` | cmd-palette | cmd-palette.js | assente | ⬜ |  |
-| `CE_cancelBid` | contracts | contracts.js | stato | ⬜ |  |
+| `CE_cancelBid` | contracts | contracts.js | ok | ⬜ |  |
 | `CE_terminateContract` | contracts | contracts.js | — | ⬜ |  |
 | `cryptoOpenTradeModal` | crypto | crypto.js | — | ⬜ |  |
 | `negotiateEmail` | daily | engine-daily.js | ok | ⬜ |  |
@@ -92,26 +92,26 @@ Aggiornato: 30/08/2026, 22:40:31
 | `renderDriverSkillModal` | driver_skills | driver_skills.js | — | ⬜ |  |
 | `fireDriver` | drivers | engine-drivers.js | — | ⬜ |  |
 | `hireDriver` | drivers | engine-drivers.js | ok | ⬜ |  |
-| `payDriverBonus` | drivers | engine-drivers.js | stato | ⬜ |  |
+| `payDriverBonus` | drivers | engine-drivers.js | ok | ⬜ |  |
 | `payStressClear` | drivers | engine-drivers.js | ok | ⬜ |  |
-| `putDriverOnBreak` | drivers | engine-drivers.js | stato | ⬜ |  |
-| `resolveStrike` | drivers | engine-drivers.js | stato | ⬜ |  |
-| `sendDriverToRest` | drivers | engine-drivers.js | stato | ⬜ |  |
+| `putDriverOnBreak` | drivers | engine-drivers.js | eseguita | ⬜ |  |
+| `resolveStrike` | drivers | engine-drivers.js | ok | ⬜ |  |
+| `sendDriverToRest` | drivers | engine-drivers.js | eseguita | ⬜ |  |
 | `collectBrokerEmail` | emails | ui-emails.js | assente | ⬜ |  |
 | `resolveEmail` | emails | ui-emails.js | assente | ⬜ |  |
 | `setInboxTab` | emails | ui-emails.js | assente | ⬜ |  |
-| `_applyMarketingCampaign` | engine | engine.js | stato | ⬜ |  |
+| `_applyMarketingCampaign` | engine | engine.js | eseguita | ⬜ |  |
 | `_stopMarketingCampaign` | engine | engine.js | — | ⬜ |  |
 | `acceptDiamondContract` | engine | engine.js | ok | ⬜ |  |
 | `acceptShadowMission` | engine | engine.js | stato | ⬜ |  |
 | `assignCarToDriver` | engine | engine.js | — | ⬜ |  |
 | `buyInvestment` | engine | engine.js | ok | ⬜ |  |
-| `buyRegion` | engine | engine.js | stato | ⬜ |  |
+| `buyRegion` | engine | engine.js | ok | ⬜ |  |
 | `confirmLease` | engine | engine.js | — | ⬜ |  |
 | `contestFine` | engine | engine.js | — | ⬜ |  |
 | `newGamePlus` | engine | engine.js | ok | ⬜ |  |
 | `openHotelModal` | engine | engine.js | — | ⬜ |  |
-| `payFine` | engine | engine.js | stato | ⬜ |  |
+| `payFine` | engine | engine.js | ok | ⬜ |  |
 | `payToRepairCar` | engine | engine.js | ok | ⬜ |  |
 | `respondPoaching` | engine | engine.js | — | ⬜ |  |
 | `rest` | engine | engine.js | ok | ⬜ |  |
@@ -126,29 +126,29 @@ Aggiornato: 30/08/2026, 22:40:31
 | `ceSetRender` | events | events.js | — | ⬜ |  |
 | `ceThen` | events | events.js | — | ⬜ |  |
 | `acquireVentureStake` | finance | engine-finance.js | ok | ⬜ |  |
-| `buyLifestyleAsset` | finance | engine-finance.js | stato | ⬜ |  |
+| `buyLifestyleAsset` | finance | engine-finance.js | ok | ⬜ |  |
 | `divestVentureStake` | finance | engine-finance.js | ok | ⬜ |  |
 | `passLobbyLaw` | finance | engine-finance.js | ok | ⬜ |  |
-| `repayLoan` | finance | engine-finance.js | stato | ⬜ |  |
+| `repayLoan` | finance | engine-finance.js | ok | ⬜ |  |
 | `takeLoan` | finance | engine-finance.js | ok | ⬜ |  |
 | `acceptGreyMarket` | fleet | engine-fleet.js | eseguita | ⬜ |  |
 | `bidOnAuction` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `bulkRepairFleet` | fleet | ui-fleet.js | — | ⬜ |  |
-| `buyCARUpgrade` | fleet | engine-fleet.js | stato | ⬜ |  |
+| `buyCARUpgrade` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `buyFuelForDepot` | fleet | engine-fleet.js | ok | ⬜ |  |
-| `buyHub` | fleet | engine-fleet.js | stato | ⬜ |  |
+| `buyHub` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `buyMaintenanceContract` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `buyNpcCar` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `buyPrototypeCar` | fleet | engine-fleet.js | stato | ⬜ |  |
 | `buyTiresForDepot` | fleet | engine-fleet.js | ok | ⬜ |  |
-| `cancelListing` | fleet | engine-fleet.js | stato | ⬜ |  |
-| `chargeVehicle` | fleet | engine-fleet.js | stato | ⬜ |  |
+| `cancelListing` | fleet | engine-fleet.js | eseguita | ⬜ |  |
+| `chargeVehicle` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `emergencyRefuel` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `instantRepairDC` | fleet | engine-fleet.js | ok | ⬜ |  |
-| `listCarForSale` | fleet | engine-fleet.js | stato | ⬜ |  |
+| `listCarForSale` | fleet | engine-fleet.js | eseguita | ⬜ |  |
 | `repairEngine` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `sellHub` | fleet | engine-fleet.js | ok | ⬜ |  |
-| `setPricingStrategy` | fleet | engine-fleet.js | stato | ⬜ |  |
+| `setPricingStrategy` | fleet | engine-fleet.js | eseguita | ⬜ |  |
 | `upgradeFuelDepot` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `acquireSubsidiary` | holding | engine-holding.js | stato | ⬜ |  |
 | `buyCempShares` | holding | engine-holding.js | ok | ⬜ |  |
@@ -157,7 +157,7 @@ Aggiornato: 30/08/2026, 22:40:31
 | `sellCempShares` | holding | engine-holding.js | stato | ⬜ |  |
 | `_opaRequestBuyback` | hostile_takeover | hostile_takeover.js | ok | ⬜ |  |
 | `_hqBuildFromList` | hq | hq.js | — | ⬜ |  |
-| `hqSwitchCity` | hq | hq.js | stato | ⬜ |  |
+| `hqSwitchCity` | hq | hq.js | eseguita | ⬜ |  |
 | `hqUpgradeRoom` | hq | hq.js | stato | ⬜ |  |
 | `hqOpenBuildModalSlot` | hq-visual | hq-visual.js | assente | ⬜ |  |
 | `hqShowInfoPanel` | hq-visual | hq-visual.js | assente | ⬜ |  |
@@ -178,7 +178,7 @@ Aggiornato: 30/08/2026, 22:40:31
 | `_startFoundingList` | map-utils | ui-map-utils.js | assente | ⬜ |  |
 | `_startFoundingMode` | map-utils | ui-map-utils.js | assente | ⬜ |  |
 | `_nemesisBribeVip` | nemesis | nemesis.js | stato | ⬜ |  |
-| `doAcquireProvince` | ops | ui-ops.js | stato | ⬜ |  |
+| `doAcquireProvince` | ops | ui-ops.js | eseguita | ⬜ |  |
 | `buyCompanyShares` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `buyP2PCar` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `cancelP2PListing` | p2p-market | p2p-market.js | eseguita | ✅ | 30/08: l'annuncio scaduto spariva e con lui l'auto. Ora resta ritirabile. |
@@ -190,7 +190,7 @@ Aggiornato: 30/08/2026, 22:40:31
 | `joinConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
 | `leaveConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
 | `payDonCarmine` | p2p-render | p2p-render.js | ok | ⬜ |  |
-| `claimQuestReward` | quests | quests.js | stato | ⬜ |  |
+| `claimQuestReward` | quests | quests.js | ok | ⬜ |  |
 | `renderTabRanking` | ranking | ui-ranking.js | assente | ⬜ |  |
 | `doBuyRealEstate` | realestate | ui-realestate.js | eseguita | ⬜ |  |
 | `assignAllRides` | rides | engine-rides.js | — | ⬜ |  |
@@ -201,7 +201,7 @@ Aggiornato: 30/08/2026, 22:40:31
 | `_srmFilterBrand` | showroom | showroom.js | — | ⬜ |  |
 | `_srmFilterFuel` | showroom | showroom.js | — | ⬜ |  |
 | `_srmOpenConfig` | showroom | showroom.js | — | ⬜ |  |
-| `_srmPurchase` | showroom | showroom.js | stato | ⬜ |  |
+| `_srmPurchase` | showroom | showroom.js | ok | ⬜ |  |
 | `_srmRent` | showroom | showroom.js | stato | ⬜ |  |
 | `_srmSetSection` | showroom | showroom.js | — | ⬜ |  |
 | `_srmToggle` | showroom | showroom.js | — | ⬜ |  |
@@ -234,13 +234,13 @@ Aggiornato: 30/08/2026, 22:40:31
 | `skipAllConstructionsDC` | store | engine-store.js | ok | ⬜ |  |
 | `wakeAllDriversDC` | store | engine-store.js | ok | ⬜ |  |
 | `tourismCancelBid` | tourism | tourism.js | eseguita | ⬜ |  |
-| `tourismSubmitBid` | tourism | tourism.js | ok | ⬜ |  |
+| `tourismSubmitBid` | tourism | tourism.js | stato | ⬜ |  |
 | `tourismTerminate` | tourism | tourism.js | eseguita | ⬜ |  |
 | `tutorialNext` | tutorial | tutorial.js | assente | ⬜ |  |
 | `tutorialSkip` | tutorial | tutorial.js | assente | ⬜ |  |
-| `_vanityColor` | vanity | vanity.js | stato | ⬜ |  |
-| `_vanityEmblem` | vanity | vanity.js | stato | ⬜ |  |
-| `_vanityTitle` | vanity | vanity.js | stato | ⬜ |  |
+| `_vanityColor` | vanity | vanity.js | ok | ⬜ |  |
+| `_vanityEmblem` | vanity | vanity.js | ok | ⬜ |  |
+| `_vanityTitle` | vanity | vanity.js | ok | ⬜ |  |
 | `acceptVipEmiro` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `acceptVipErede` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `acceptVipGarante` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
@@ -257,23 +257,23 @@ Aggiornato: 30/08/2026, 22:40:31
 | `vipGrigoriEventDecline` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `vipOnorevoleEventCopera` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipOnorevoleEventResisti` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `vipPlatinumEventAllow` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
+| `vipPlatinumEventAllow` | vip-clients | vip-clients.js | stato | ⬜ |  |
 | `vipPlatinumEventBlock` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipWeddingEventGestisci` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipWeddingEventIgnora` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `vipWeddingPaymentCollect` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `_closeVittorioModal` | vittorio | vittorio.js | — | ⬜ |  |
 | `flipVittorio` | vittorio | vittorio.js | — | ⬜ |  |
-| `repayVittorio` | vittorio | vittorio.js | stato | ⬜ |  |
+| `repayVittorio` | vittorio | vittorio.js | ok | ⬜ |  |
 | `openVTKModal` | vtk-market | vtk-market.js | stato | ⬜ |  |
-| `vtkBuyShopItem` | vtk-market | vtk-market.js | stato | ⬜ |  |
+| `vtkBuyShopItem` | vtk-market | vtk-market.js | ok | ⬜ |  |
 | `vtkCancelOrder` | vtk-market | vtk-market.js | eseguita | ⬜ |  |
 | `vtkFillOrder` | vtk-market | vtk-market.js | eseguita | ⬜ |  |
 | `_wrAcquire` | war_room | war_room.js | assente | ⬜ |  |
 | `_wrClose` | war_room | war_room.js | assente | ⬜ |  |
 | `_ceCapitalismAck` | zero-to-hero | zero-to-hero.js | — | ⬜ |  |
 | `executeManualDrive` | zero-to-hero | zero-to-hero.js | ok | ⬜ |  |
-| `executeSleepInCar` | zero-to-hero | zero-to-hero.js | stato | ⬜ |  |
+| `executeSleepInCar` | zero-to-hero | zero-to-hero.js | eseguita | ⬜ |  |
 | `hireNeighborhoodKid` | zero-to-hero | zero-to-hero.js | — | ⬜ |  |
 
 ## Come si chiude una riga
