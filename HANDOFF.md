@@ -208,6 +208,39 @@ Non è un difetto del gioco: sono situazioni che nella partita vera non capitano
 insieme. Chi aggiunge stati al regista deve ricordarsi di azzerarli nel mondo
 «nudo», o rimetterà in piedi il problema al contrario.
 
+## Fase 3 cominciata (31/08) — sistema 1: consorzi e alleanze
+
+`test/sistemi/consorzi.test.js`, **19 prove** sulle tredici azioni del sistema.
+Per ognuna i tre effetti della fase: lo stato locale, il denaro che passa da
+`CE_money`, e **la scrittura giusta al server** — con i nomi degli argomenti
+controllati contro `docs/SCHEMA-RPC.json`, cioè contro il database vivo. Tutte e
+tredici le RPC esistono davvero e con quei nomi.
+
+Provato al contrario, come vuole la regola: spostando lo scalo della donazione
+*prima* della conferma del server, e facendo chiamare a `joinConsorzio` la RPC
+dell'altro sistema, diventano rossi esattamente i due test giusti.
+
+⚠️ **«Consorzio» sono due sistemi diversi**, e vanno provati entrambi: le
+**alleanze** di `alliances.js` (tabella `alliances`, RPC `rpc_*_alliance`) e i
+**consorzi** del mercato P2P (`p2p-render.js`, RPC `rpc_*_consorzio`). Hanno
+perfino due bottoni «entra» distinti. Chi ne prova uno solo lascia scoperta metà
+della funzione — ed è il motivo per cui `conConsorzio` nel regista li prepara
+tutti e due.
+
+🚧 **La passata nel browser non è stata fatta, e il registro lo dice riga per
+riga.** Il motivo non è il tempo: `chrome-devtools` non riesce ad attaccarsi
+perché un Chrome avviato alle 10:15 del mattino tiene occupato il profilo
+`~/.cache/chrome-devtools-mcp/chrome-profile` e non risponde sulla porta di
+debug. È quasi certamente un residuo di una sessione andata storta, ma è un
+processo che non ho avviato io, su una macchina di Vlad che è via: chiuderlo di
+mia iniziativa non vale il rischio di portargli via qualcosa che aveva aperto.
+**Chi riprende:** o chiude quel Chrome (pid da `ps aux | grep chrome-profile`) e
+rifà la passata, oppure lo chiede a Vlad. Finché non è fatta, le tredici righe
+dei consorzi restano ⬜ con la nota.
+
+L'account di prova `test+ce-1@…` creato per la passata è stato **cancellato**
+(0 utenti `test+ce-%` rimasti sul server).
+
 **Prossima sessione:** la Fase 2 ha raggiunto il suo bersaglio; restano 17 azioni
 al buio, e sono il fondo difficile — holding/OPA (`acquireSubsidiary`,
 `sellCempShares`), turismo, agenzia ombra, e le due di HQ, che sono ferme

@@ -21,15 +21,15 @@ Aggiornato: 30/08/2026, 22:47:40
 
 | Azione | Sistema | File | Banco | Chiusa | Note |
 |---|---|---|---|---|---|
-| `_alChat` | alliances | alliances.js | — | ⬜ |  |
-| `_alCreate` | alliances | alliances.js | ok | ⬜ |  |
-| `_alDisband` | alliances | alliances.js | eseguita | ⬜ |  |
-| `_alDonate` | alliances | alliances.js | ok | ⬜ |  |
-| `_alJoin` | alliances | alliances.js | eseguita | ⬜ |  |
-| `_alKick` | alliances | alliances.js | — | ⬜ |  |
-| `_alLeave` | alliances | alliances.js | eseguita | ⬜ |  |
-| `_alPerk` | alliances | alliances.js | — | ⬜ |  |
-| `_alSetRole` | alliances | alliances.js | — | ⬜ |  |
+| `_alChat` | alliances | alliances.js | — | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alCreate` | alliances | alliances.js | ok | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alDisband` | alliances | alliances.js | eseguita | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alDonate` | alliances | alliances.js | ok | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alJoin` | alliances | alliances.js | eseguita | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alKick` | alliances | alliances.js | — | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alLeave` | alliances | alliances.js | eseguita | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alPerk` | alliances | alliances.js | — | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `_alSetRole` | alliances | alliances.js | — | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
 | `auctionsConfirmBid` | auctions | auctions.js | — | ⬜ |  |
 | `auctionsOpenBidModal` | auctions | auctions.js | — | ⬜ |  |
 | `auctionsRevealWon` | auctions | auctions.js | — | ⬜ |  |
@@ -53,8 +53,8 @@ Aggiornato: 30/08/2026, 22:47:40
 | `ceCareerCta` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `ceCercaGiocatoriEnter` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `ceCloseSelf` | ce-actions | ce-actions.js | — | ⬜ |  |
-| `ceConsorzioContribute` | ce-actions | ce-actions.js | — | ⬜ |  |
-| `ceCreateConsorzio` | ce-actions | ce-actions.js | — | ⬜ |  |
+| `ceConsorzioContribute` | ce-actions | ce-actions.js | — | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `ceCreateConsorzio` | ce-actions | ce-actions.js | — | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
 | `ceCreateHolding` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `ceCryptoDeposit` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `ceCryptoPreview` | ce-actions | ce-actions.js | — | ⬜ |  |
@@ -187,8 +187,8 @@ Aggiornato: 30/08/2026, 22:47:40
 | `listCompanyIPO` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
 | `sellCompanyShares` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
 | `hireCrumiri` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
-| `joinConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
-| `leaveConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
+| `joinConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
+| `leaveConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
 | `payDonCarmine` | p2p-render | p2p-render.js | ok | ⬜ |  |
 | `claimQuestReward` | quests | quests.js | ok | ⬜ |  |
 | `renderTabRanking` | ranking | ui-ranking.js | assente | ⬜ |  |
