@@ -227,6 +227,44 @@ perfino due bottoni «entra» distinti. Chi ne prova uno solo lascia scoperta me
 della funzione — ed è il motivo per cui `conConsorzio` nel regista li prepara
 tutti e due.
 
+### Sistema 2 — i clienti VIP (`test/sistemi/vip-accettazioni.test.js`, 32 prove)
+
+Le dieci azioni «accetto» che **nessun test aveva mai eseguito**, e non per
+pigrizia: ognuna pretende una flotta precisa — «Serve G-Overlord o Majestic
+Spirit non elettrica, condizione ≥85%», «Servono quattro veicoli VIP/Ultra
+≥80%», «Servono due Stellar V-Carrier a 100» — e costruire quella flotta a mano
+per dieci clienti costava mezz'ora a testa. Col regista costa una riga.
+
+Per ognuno: la corsa nasce col compenso promesso, l'invito si chiude, **due clic
+non creano due corse** (è il doppio pagamento trovato il 27/08), e col la flotta
+sbagliata l'azione rifiuta senza consumare l'invito — se lo consumasse, il
+giocatore perderebbe l'occasione senza aver fatto niente. C'è anche una prova che
+l'elenco dei dieci sia completo: un undicesimo cliente aggiunto al gioco e non al
+regista fa diventare rosso il test.
+
+Qui il denaro **non** si muove, ed è giusto: il VIP paga a corsa finita. Chi
+cercasse un movimento di cassa dentro l'accettazione cercherebbe un difetto nel
+posto sbagliato.
+
+### Sistema 3 — holding e OPA (`test/sistemi/holding.test.js`, 16 prove)
+
+Il sistema dove il denaro si muove di più per singolo clic (una sussidiaria costa
+fino a €300.000) e dove convivono due economie: quella **locale** (fondare,
+acquisire, cedere, azioni proprie $CEMP — tutta da `CE_money`) e quella
+**condivisa** (quotarsi, comprare le quote di un altro giocatore, entrare in una
+holding altrui — tutta da RPC, col denaro che si muove solo dopo il sì del
+server). Ogni azione della seconda famiglia ha il suo test «se il server dice no,
+il giocatore non paga».
+
+Costruendo lo stato è venuto fuori un errore mio nel regista, e vale come
+avvertimento: `holding.subsidiaries` è un elenco di **ID**, non di oggetti,
+perché il codice fa `.includes(subId)`. Con gli oggetti il controllo «già
+acquisita» non scatta mai — cioè lo stato costruito faceva comportare l'azione al
+contrario di come si comporta nel gioco. Uno stato falso è peggio di nessuno
+stato.
+
+Con il regista sistemato, le azioni «al buio» sono scese ancora: **da 17 a 14**.
+
 🚧 **La passata nel browser non è stata fatta, e il registro lo dice riga per
 riga.** Il motivo non è il tempo: `chrome-devtools` non riesce ad attaccarsi
 perché un Chrome avviato alle 10:15 del mattino tiene occupato il profilo
@@ -241,13 +279,14 @@ dei consorzi restano ⬜ con la nota.
 L'account di prova `test+ce-1@…` creato per la passata è stato **cancellato**
 (0 utenti `test+ce-%` rimasti sul server).
 
-**Prossima sessione:** la Fase 2 ha raggiunto il suo bersaglio; restano 17 azioni
-al buio, e sono il fondo difficile — holding/OPA (`acquireSubsidiary`,
-`sellCempShares`), turismo, agenzia ombra, e le due di HQ, che sono ferme
-**giustamente** perché `HQ_ENABLED = false` (andranno segnate ⏭️ nel registro,
-non inseguite). Si può passare alla **Fase 3**, le 254 azioni sistema per sistema,
-cominciando da consorzi/alleanze come dice il piano: il regista adesso costruisce
-lo stato che serve.
+**Prossima sessione:** Fase 3, sistema 4 — **showroom**, poi infrastrutture,
+lifestyle, agenzia ombra, nemesi, turismo, come nell'ordine del piano. Restano 14
+azioni al buio; fra queste le due di HQ sono ferme **giustamente**
+(`HQ_ENABLED = false`) e vanno segnate ⏭️ nel registro, non inseguite.
+
+Prima di tutto, però: **rifare la passata nel browser** dei tre sistemi già
+provati (consorzi, VIP, holding). È l'unico pezzo del protocollo di Fase 3 che
+manca, e le 33 righe annotate nel registro restano aperte finché non è fatto.
 
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 

@@ -4,7 +4,7 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 30/08/2026, 22:47:40
+Aggiornato: 30/08/2026, 22:58:40
 
 | | |
 |---|---|
@@ -12,9 +12,9 @@ Aggiornato: 30/08/2026, 22:47:40
 | Chiuse (provate davvero, con un test che le difende) | **1** |
 | Aperte | **253** |
 | Difetti trovati e ancora da correggere | **0** |
-| Eseguite dal banco automatico (`ok`) | 75 |
-| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 37 |
-| Il banco non riesce ad attivarle | 17 |
+| Eseguite dal banco automatico (`ok`) | 77 |
+| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 38 |
+| Il banco non riesce ad attivarle | 14 |
 | Fuori dal banco (file non caricato lì) | 30 |
 
 **Legenda CHIUSA** — ⬜ da fare · ✅ chiusa · 🐛 difetto trovato, correzione aperta · ⏭️ non applicabile (con motivo nelle note)
@@ -150,11 +150,11 @@ Aggiornato: 30/08/2026, 22:47:40
 | `sellHub` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `setPricingStrategy` | fleet | engine-fleet.js | eseguita | ⬜ |  |
 | `upgradeFuelDepot` | fleet | engine-fleet.js | ok | ⬜ |  |
-| `acquireSubsidiary` | holding | engine-holding.js | stato | ⬜ |  |
-| `buyCempShares` | holding | engine-holding.js | ok | ⬜ |  |
-| `divestSubsidiary` | holding | engine-holding.js | stato | ⬜ |  |
-| `incorporateHolding` | holding | engine-holding.js | ok | ⬜ |  |
-| `sellCempShares` | holding | engine-holding.js | stato | ⬜ |  |
+| `acquireSubsidiary` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `buyCempShares` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `divestSubsidiary` | holding | engine-holding.js | stato | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `incorporateHolding` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `sellCempShares` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
 | `_opaRequestBuyback` | hostile_takeover | hostile_takeover.js | ok | ⬜ |  |
 | `_hqBuildFromList` | hq | hq.js | — | ⬜ |  |
 | `hqSwitchCity` | hq | hq.js | eseguita | ⬜ |  |
@@ -179,13 +179,13 @@ Aggiornato: 30/08/2026, 22:47:40
 | `_startFoundingMode` | map-utils | ui-map-utils.js | assente | ⬜ |  |
 | `_nemesisBribeVip` | nemesis | nemesis.js | stato | ⬜ |  |
 | `doAcquireProvince` | ops | ui-ops.js | eseguita | ⬜ |  |
-| `buyCompanyShares` | p2p-market | p2p-market.js | stato | ⬜ |  |
+| `buyCompanyShares` | p2p-market | p2p-market.js | eseguita | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
 | `buyP2PCar` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `cancelP2PListing` | p2p-market | p2p-market.js | eseguita | ✅ | 30/08: l'annuncio scaduto spariva e con lui l'auto. Ora resta ritirabile. |
-| `joinHolding` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
-| `leaveHolding` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
-| `listCompanyIPO` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
-| `sellCompanyShares` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
+| `joinHolding` | p2p-market | p2p-market.js | eseguita | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `leaveHolding` | p2p-market | p2p-market.js | eseguita | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `listCompanyIPO` | p2p-market | p2p-market.js | eseguita | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `sellCompanyShares` | p2p-market | p2p-market.js | eseguita | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
 | `hireCrumiri` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
 | `joinConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
 | `leaveConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ | 31/08: 19 prove in test/sistemi/consorzi.test.js (stato, denaro via CE_money, RPC e argomenti verificati contro SCHEMA-RPC.json). Manca la passata nel browser. |
@@ -235,22 +235,22 @@ Aggiornato: 30/08/2026, 22:47:40
 | `wakeAllDriversDC` | store | engine-store.js | ok | ⬜ |  |
 | `tourismCancelBid` | tourism | tourism.js | eseguita | ⬜ |  |
 | `tourismSubmitBid` | tourism | tourism.js | stato | ⬜ |  |
-| `tourismTerminate` | tourism | tourism.js | eseguita | ⬜ |  |
+| `tourismTerminate` | tourism | tourism.js | ok | ⬜ |  |
 | `tutorialNext` | tutorial | tutorial.js | assente | ⬜ |  |
 | `tutorialSkip` | tutorial | tutorial.js | assente | ⬜ |  |
 | `_vanityColor` | vanity | vanity.js | ok | ⬜ |  |
 | `_vanityEmblem` | vanity | vanity.js | ok | ⬜ |  |
 | `_vanityTitle` | vanity | vanity.js | ok | ⬜ |  |
-| `acceptVipEmiro` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `acceptVipErede` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `acceptVipGarante` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `acceptVipGolden` | vip-clients | vip-clients.js | — | ⬜ |  |
-| `acceptVipGrigori` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `acceptVipOnorevole` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `acceptVipPlatinum` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `acceptVipStrata` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
-| `acceptVipTechBro` | vip-clients | vip-clients.js | — | ⬜ |  |
-| `acceptVipWedding` | vip-clients | vip-clients.js | — | ⬜ |  |
+| `acceptVipEmiro` | vip-clients | vip-clients.js | eseguita | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipErede` | vip-clients | vip-clients.js | eseguita | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipGarante` | vip-clients | vip-clients.js | eseguita | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipGolden` | vip-clients | vip-clients.js | — | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipGrigori` | vip-clients | vip-clients.js | eseguita | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipOnorevole` | vip-clients | vip-clients.js | eseguita | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipPlatinum` | vip-clients | vip-clients.js | eseguita | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipStrata` | vip-clients | vip-clients.js | eseguita | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipTechBro` | vip-clients | vip-clients.js | — | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
+| `acceptVipWedding` | vip-clients | vip-clients.js | — | ⬜ | 31/08: 32 prove in test/sistemi/vip-accettazioni.test.js (corsa in coda, invito chiuso, doppio clic, rifiuto pulito). Manca la passata nel browser. |
 | `vipGaranteEventIntimidisci` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipGaranteEventPaga` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipGrigoriEventAccept` | vip-clients | vip-clients.js | ok | ⬜ |  |
@@ -266,7 +266,7 @@ Aggiornato: 30/08/2026, 22:47:40
 | `flipVittorio` | vittorio | vittorio.js | — | ⬜ |  |
 | `repayVittorio` | vittorio | vittorio.js | ok | ⬜ |  |
 | `openVTKModal` | vtk-market | vtk-market.js | stato | ⬜ |  |
-| `vtkBuyShopItem` | vtk-market | vtk-market.js | ok | ⬜ |  |
+| `vtkBuyShopItem` | vtk-market | vtk-market.js | eseguita | ⬜ |  |
 | `vtkCancelOrder` | vtk-market | vtk-market.js | eseguita | ⬜ |  |
 | `vtkFillOrder` | vtk-market | vtk-market.js | eseguita | ⬜ |  |
 | `_wrAcquire` | war_room | war_room.js | assente | ⬜ |  |

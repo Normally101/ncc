@@ -428,6 +428,14 @@ function formeArgomento(mondo) {
        catalogo le tre azioni tornano «non attivabili»: e' il modo in cui il banco
        se ne accorge. */
     forme.push(['Magnate'], ['⚜️'], ['#8aa0b5']);
+
+    /* Holding: una sussidiaria che NON e' gia' stata acquisita (la prima e' quella
+       che il regista mette in mano al giocatore), la quota di un'altra azienda sul
+       mercato, e una quantita' di azioni. Le azioni di borsa vogliono due
+       argomenti: senza il secondo comprano zero e sembrano non partire. */
+    const sussidiarie = catalogo(mondo.sandbox, 'HOLDING_SUBSIDIARIES') || [];
+    if (sussidiarie[1]) forme.push([sussidiarie[1].id]);
+    forme.push(['quota-di-prova', 10], [10]);
     return forme;
 }
 

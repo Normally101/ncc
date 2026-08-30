@@ -846,17 +846,37 @@ function conNemesi(env, { rabbia = 80, id = 'grigori' } = {}) {
  * GARANTISCE: il giocatore ha una holding col ruolo chiesto, azioni proprie in
  * circolazione e una sussidiaria da poter cedere.
  */
-function conHolding(env, { ruolo = 'emittente' } = {}) {
+function conHolding(env, { ruolo = 'emittente', conSussidiaria = true } = {}) {
     const w = win(env);
     const stato = gs(env);
-    stato.holding = { name: 'Holding di Prova', founded: stato.day || 1,
-                      subsidiaries: [{ id: 'sub1', name: 'NCC Milano', value: 500000 }] };
-    stato.companyIPO = { listed: true, sharePrice: 100, sharesTotal: 1000, npcSharesOwned: 300 };
-    stato.cempShares = ruolo === 'emittente' ? 0 : 50;
-    w._holdingState = Object.assign(w._holdingState || {}, {
-        myListing: { id: 'listing-di-prova', issuer_user_id: w.currentUser?.id || 'io',
-                     shares_total: 1000, current_price: 100 },
-        holdings: [{ listing_id: 'listing-di-prova', shares_owned: 50 }],
+
+    /* `incorporated: true` non è un dettaglio: `acquireSubsidiary` comincia con
+       «Devi prima fondare una Holding» e guarda proprio quel campo. E
+       `subsidiaries` è un elenco di ID, non di oggetti — il codice fa
+       `.includes(subId)`. Un elenco di oggetti supera il controllo «già
+       acquisita» sempre, cioè costruisce uno stato in cui l'azione si comporta
+       al contrario di come farebbe nel gioco. */
+    stato.holding = { incorporated: true, incorporationDay: stato.day || 1, subsidiaries: [] };
+    const catalogoSussidiarie = catalogo(env, 'HOLDING_SUBSIDIARIES') || [];
+    if (conSussidiaria && catalogoSussidiarie.length) {
+        stato.holding.subsidiaries.push(catalogoSussidiarie[0].id);
+    }
+
+    // Azioni proprie in borsa: servono a `sellCempShares`, che rifiuta se non ne hai.
+    stato.cempPrice = stato.cempPrice || 12;
+    stato.cempOwnedShares = 500;
+    stato.companyIPO = ruolo === 'emittente'
+        ? { listed: true, sharePrice: 100, sharesTotal: 1000, npcSharesOwned: 300 }
+        : null;
+
+    /* Le azioni di un'ALTRA azienda, comprabili dal mercato. `buyCompanyShares`
+       le cerca in `_p2pMarket.shares` (non in `listings`): sbagliare elenco è il
+       modo silenzioso di lasciare l'azione non attivabile per sempre. */
+    w._p2pMarket = Object.assign(w._p2pMarket || {}, {
+        shares: [{ id: 'quota-di-prova', issuer_user_id: 'un-altro-giocatore',
+                   issuer_name: 'Rivale SpA', shares_total: 1000, shares_available: 400,
+                   current_price: 120 }],
+        myHoldings: [{ listing_id: 'quota-di-prova', shares_owned: 50 }],
     });
     return stato.holding;
 }
