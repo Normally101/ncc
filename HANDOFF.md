@@ -120,9 +120,38 @@ premio giornaliero (lo calcola il browser, e le due tabelle dei premi non
 coincidono), il prezzo del gasolio (uno per giocatore o uno per tutti), la nemesi
 che finanzia i rivali (è una stampante di denaro, resta spenta).
 
-**Prossima sessione:** restano di Fase 1 le 40 RPC che muovono denaro — per
-ognuna: verifica dei fondi lato server, proprietario, limite di frequenza. Poi
-Fase 2, il regista degli stati.
+**Le funzioni che muovono denaro (punto 3 della Fase 1): nessun buco.** Sono 34
+quelle che spostano cassa e si possono chiamare dal browser, e **tutte e 34
+ricavano chi sei da `auth.uid()` o `_my_company_id()`**: nessuna si fida di un id
+che arriva dal browser. Il controllo dei fondi c'è ovunque serva (manca solo dove
+la funzione *accredita*, che è giusto). Il limite di frequenza è raro, e va bene
+così: su una funzione che scala denaro il limite vero è il saldo. La tabella con
+le tre colonne è in `docs/AUDIT-SERVER.md` e si rigenera da sola.
+
+Il registro economia (`cash_ledger`, dal 28/08) dice la stessa cosa dai fatti:
+36 movimenti, 3 giocatori di prova, **0 righe oltre il tetto**, incremento
+massimo €3.000 (una ricompensa di missione).
+
+⚠️ Resta vero il compromesso di fondo, che non è un difetto da correggere in una
+sessione: **il motore del gioco sta nel browser**, e `rpc_sync_cash` accetta il
+saldo che il client dichiara, con un tetto di +60.000.000 per chiamata e 30
+chiamate al minuto. Il tetto è una rete contro l'assurdo, non una difesa contro
+qualcuno che voglia barare. Renderlo davvero server-authoritative è una
+riscrittura, non una correzione: per questo esiste il registro, che osserva.
+
+**Le tre sveglie nuove, verificate una per una:** `affitti-immobili` e
+`stato-eventi-globali` hanno già girato col loro primo slot, esito `succeeded`.
+`dividendi-giornalieri-holding` ha il primo slot alle 21:15 UTC: al momento del
+commit non era ancora arrivato, quindi ho eseguito **a mano il comando esatto
+della sveglia** (`SELECT public.rpc_daily_dividends()`), che risponde
+`{"status":"ok","total_paid":0,…}` — la forma che il client si aspetta.
+La prima cosa da fare alla prossima sessione è `npm run salute`: se quella riga
+dice ancora «non è MAI girata», la sveglia è ferma davvero.
+
+**Prossima sessione:** Fase 1 è chiusa (audit, revoche, sveglie, guardrail).
+Si comincia la **Fase 2 — il regista degli stati** (`test-support/regista.js`):
+è il collo di bottiglia di tutto il piano, 76 azioni su 254 non si attivano
+perché il banco non sa costruire la situazione che chiedono.
 
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 

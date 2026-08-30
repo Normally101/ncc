@@ -4,12 +4,12 @@
 > repo. Rigenerarlo dopo ogni migrazione. Il piano che lo governa è
 > `PIANO-CHIUSURA.md` (Fase 1).
 
-Aggiornato: 30/08/26, 22:19
+Aggiornato: 30/08/26, 22:25
 
 | | |
 |---|---|
 | Funzioni in `public` | **166** |
-| Chiamate dal browser | 141 |
+| Chiamate dal browser | 115 |
 | Su una sveglia | 9 |
 | Con qualcosa da guardare | **20** |
 | Chiamate dal client che sul server non esistono | **0** |
@@ -59,6 +59,51 @@ perché questo documento si rigenera e si porterebbe via ciò che scrivi a mano.
   · **HQ è spento (`HQ_ENABLED = false`). Coerente.**
 - `rpc_update_weather` — non la chiama nessuno: né browser né sveglia né un'altra funzione
   · **Il meteo vero arriva dalla Edge Function `fetch-weather` in `real_world_status`. Avanzo.**
+
+## Le 34 funzioni che muovono denaro e si possono chiamare dal browser
+
+Le tre domande della Fase 1: **Fondi** = controlla il saldo prima di scalare ·
+**Proprietario** = ricava chi sei da `auth.uid()` / `_my_company_id()` invece di
+fidarsi di un id che arriva dal browser · **Frequenza** = ha un
+`_ce_rate_limit`. Una casella vuota è un posto dove andare a guardare, non una
+condanna: su una funzione che *scala* denaro il limite vero è il saldo.
+
+| Funzione | Chi | Fondi | Proprietario | Frequenza |
+|---|---|---|---|---|
+| `rpc_acquire_province` | chiunque | ✓ | ✓ | — |
+| `rpc_add_driver_coins` | chiunque | — | ✓ | ✓ |
+| `rpc_add_driver_coins` | chiunque | — | ✓ | ✓ |
+| `rpc_award_mission_vtk` | con account | — | ✓ | ✓ |
+| `rpc_buy_company_shares` | chiunque | ✓ | ✓ | — |
+| `rpc_buy_crypto` | chiunque | ✓ | ✓ | — |
+| `rpc_buy_fuel_depot` | chiunque | ✓ | ✓ | — |
+| `rpc_buy_investment` | chiunque | ✓ | ✓ | — |
+| `rpc_buy_market_car` | chiunque | ✓ | ✓ | — |
+| `rpc_buy_real_estate` | chiunque | ✓ | ✓ | — |
+| `rpc_buy_vehicle` | chiunque | ✓ | ✓ | — |
+| `rpc_claim_daily_reward` | chiunque | — | ✓ | — |
+| `rpc_claim_trip_reward` | chiunque | — | ✓ | ✓ |
+| `rpc_collect_daily_costs` | chiunque | — | ✓ | — |
+| `rpc_deposit_offshore` | chiunque | ✓ | ✓ | — |
+| `rpc_earn` | chiunque | — | ✓ | — |
+| `rpc_ec_spend` | chiunque | ✓ | ✓ | — |
+| `rpc_execute_shadow_op` | chiunque | ✓ | ✓ | — |
+| `rpc_get_tourism_tenders` | chiunque | — | ✓ | — |
+| `rpc_hire_driver` | chiunque | ✓ | ✓ | — |
+| `rpc_init_company` | chiunque | — | ✓ | — |
+| `rpc_opa_buyback` | chiunque | ✓ | ✓ | — |
+| `rpc_place_auction_bid` | chiunque | ✓ | ✓ | — |
+| `rpc_place_vtk_sell_order` | chiunque | ✓ | ✓ | — |
+| `rpc_repay_loan` | chiunque | ✓ | ✓ | — |
+| `rpc_sell_crypto` | chiunque | ✓ | ✓ | — |
+| `rpc_sell_vehicle` | chiunque | — | ✓ | — |
+| `rpc_spend` | chiunque | ✓ | ✓ | — |
+| `rpc_start_trip` | chiunque | ✓ | ✓ | ✓ |
+| `rpc_sync_cash` | chiunque | — | ✓ | ✓ |
+| `rpc_take_loan` | chiunque | — | ✓ | — |
+| `rpc_unlock_region` | chiunque | ✓ | ✓ | — |
+| `rpc_upgrade_shadow_defense` | chiunque | ✓ | ✓ | — |
+| `rpc_withdraw_offshore` | chiunque | ✓ | ✓ | — |
 
 ## Tutte le funzioni
 

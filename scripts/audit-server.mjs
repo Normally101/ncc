@@ -291,7 +291,7 @@ Aggiornato: ${oggi}
 | | |
 |---|---|
 | Funzioni in \`public\` | **${righe.length}** |
-| Chiamate dal browser | ${righe.filter(r => r.chiamanti !== '—' && !r.chiamanti.startsWith('cron:')).length} |
+| Chiamate dal browser | ${[...client.keys()].filter(n => client.get(n).some(c => !c.file.startsWith('edge:'))).length} |
 | Su una sveglia | ${[...cron.keys()].length} |
 | Con qualcosa da guardare | **${conProblemi.length}** |
 | Chiamate dal client che sul server non esistono | **${fantasmi.length}** |
@@ -319,6 +319,40 @@ else {
 }
 
 const senzaVerdetto = conProblemi.filter(r => !VERDETTI[r.nome]).length;
+
+/* ── Le funzioni che muovono denaro ────────────────────────────────────────
+   Fase 1, punto 3 del piano: «ognuna verifica i fondi lato server, controlla che
+   chi chiama sia il proprietario, e ha un limite di frequenza?». Le tre colonne
+   qui sotto rispondono a quelle tre domande, e la risposta è un sospetto, non una
+   sentenza: si legge il corpo della funzione cercando le forme che quelle
+   verifiche prendono in questo progetto. Una casella vuota vuol dire «vai a
+   guardare», non «è rotta».
+
+   Il limite di frequenza è il più raro dei tre, e non è una svista da correggere
+   a tappeto: su una funzione che SCALA denaro il vero limite è il saldo, mentre
+   serve dove una chiamata ripetuta produce qualcosa dal nulla o disturba altri
+   giocatori. */
+const soldiDalBrowser = righe.filter(r => r.scrive === '€' && r.chi !== 'solo server' && r.chi !== 'trigger');
+const fondi  = (c) => /insufficient|fondi insuff|saldo insuff|not enough|cash\s*<|balance\s*<|IF\s+v_cash\s*<|>\s*v_cash/i.test(c);
+const limite = (c) => /_ce_rate_limit/.test(c);
+const corpoDi = new Map(funzioni.map(f => [f.nome, f.corpo]));
+
+md += `## Le ${soldiDalBrowser.length} funzioni che muovono denaro e si possono chiamare dal browser
+
+Le tre domande della Fase 1: **Fondi** = controlla il saldo prima di scalare ·
+**Proprietario** = ricava chi sei da \`auth.uid()\` / \`_my_company_id()\` invece di
+fidarsi di un id che arriva dal browser · **Frequenza** = ha un
+\`_ce_rate_limit\`. Una casella vuota è un posto dove andare a guardare, non una
+condanna: su una funzione che *scala* denaro il limite vero è il saldo.
+
+| Funzione | Chi | Fondi | Proprietario | Frequenza |
+|---|---|---|---|---|
+`;
+for (const r of soldiDalBrowser) {
+    const c = corpoDi.get(r.nome) || '';
+    md += `| \`${r.nome}\` | ${r.chi} | ${fondi(c) ? '✓' : '—'} | ${guardia(c) ? '✓' : '**—**'} | ${limite(c) ? '✓' : '—'} |\n`;
+}
+md += '\n';
 
 md += `## Tutte le funzioni
 
