@@ -10,7 +10,9 @@
     "build:css": "tailwindcss -i tailwind.input.css -o tailwind.min.css --minify",
     "watch:css": "tailwindcss -i tailwind.input.css -o tailwind.min.css --watch",
     "test": "node --test",
-    "stato": "node scripts/stato-progetto.mjs"
+    "stato": "node scripts/stato-progetto.mjs",
+    "preflight": "node scripts/preflight.mjs",
+    "preflight:prod": "node scripts/preflight.mjs --produzione"
   },
   "repository": {
     "type": "git",

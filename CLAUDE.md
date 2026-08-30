@@ -22,6 +22,7 @@ Browser MMO gestionale "poor to rich" (NCC di lusso). Vanilla HTML/CSS/JS, no fr
 - **CSP:** il service worker richiede `worker-src 'self'` (per le notifiche push). Non toglierlo.
 
 ## Deploy (IMPORTANTE)
+- **Prima di pubblicare:** `npm run preflight` (albero pulito, sintassi, riferimenti di index.html, **cache-bust**, chiavi segrete, suite). Dopo il deploy: `npm run preflight:prod` (versioni servite + leak check). Procedura e regole per i grossi update: `docs/RILASCIO.md`.
 - Sito su **VERCEL** (auto-deploy da `main`). **NON** GitHub Pages. **MAI** `git push main:gh-pages` (pubblicava l'intero repo → leak).
 - `.vercelignore` esclude dal pubblico `*.sql *.md *.py *.sh supabase/ docs/ …` → restano nel repo privato. **Non rimuoverlo.**
 - Verifica leak: `curl -I https://www.chauffeurempire.com/38_security_hardening.sql` → deve dare **404**.
