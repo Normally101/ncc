@@ -197,6 +197,13 @@ if (errori) {
                 (avvisi ? ` (${avvisi} avvis${avvisi === 1 ? 'o' : 'i'})` : ''));
     process.exit(1);
 }
-console.log(`\x1b[32m\x1b[1m✓ Pronto per la pubblicazione.\x1b[0m` + (avvisi ? ` ${avvisi} avviso/i da leggere sopra.` : ''));
-console.log('  Restano le due prove che una macchina non puo\' fare: aprire il gioco nel browser');
-console.log('  con la console aperta, e provare il flusso che hai toccato.\n');
+const coda = avvisi ? ` ${avvisi} avviso/i da leggere sopra.` : '';
+if (ha('--produzione')) {
+    console.log(`\x1b[32m\x1b[1m✓ Il sito pubblicato e' quello che credi.\x1b[0m${coda}`);
+    console.log('  Se un file risulta "vecchio", quasi sempre e\' il deploy che sta ancora salendo:');
+    console.log('  aspetta un minuto e rilancia.\n');
+} else {
+    console.log(`\x1b[32m\x1b[1m✓ Pronto per la pubblicazione.\x1b[0m${coda}`);
+    console.log('  Restano le due prove che una macchina non puo\' fare: aprire il gioco nel browser');
+    console.log('  con la console aperta, e provare il flusso che hai toccato.\n');
+}
