@@ -396,7 +396,7 @@ function formeArgomento(mondo) {
         ['autisti', [5000]],      // payDriverBonus(autista, importo)
         ['auto', null], ['prestiti', null], ['multe', null],
         ['bandi', [5000]], ['contratti', null], ['province', null], ['immobili', null],
-        ['missioni', null], ['obiettivi', null], ['annunci', null],
+        ['missioni', null], ['obiettivi', null], ['annunci', null], ['sussidiarie', null],
     ]) {
         const id = primo(kit[famiglia]);
         if (!id) continue;
@@ -436,6 +436,10 @@ function formeArgomento(mondo) {
     const sussidiarie = catalogo(mondo.sandbox, 'HOLDING_SUBSIDIARIES') || [];
     if (sussidiarie[1]) forme.push([sussidiarie[1].id]);
     forme.push(['quota-di-prova', 10], [10]);
+    /* Il noleggio del salone vuole veicolo E giorni: con un argomento solo il
+       prezzo viene zero e l'azione esce su `price <= 0`. */
+    const listinoSalone = catalogo(mondo.sandbox, 'STELLAR_VOLT_CATALOG') || [];
+    if (listinoSalone[0]) forme.push([listinoSalone[0].id, 3], [listinoSalone[0].id]);
     return forme;
 }
 

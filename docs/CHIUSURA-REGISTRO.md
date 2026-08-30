@@ -4,7 +4,7 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 30/08/2026, 22:58:40
+Aggiornato: 30/08/2026, 23:07:02
 
 | | |
 |---|---|
@@ -12,9 +12,9 @@ Aggiornato: 30/08/2026, 22:58:40
 | Chiuse (provate davvero, con un test che le difende) | **1** |
 | Aperte | **253** |
 | Difetti trovati e ancora da correggere | **0** |
-| Eseguite dal banco automatico (`ok`) | 77 |
+| Eseguite dal banco automatico (`ok`) | 79 |
 | Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 38 |
-| Il banco non riesce ad attivarle | 14 |
+| Il banco non riesce ad attivarle | 12 |
 | Fuori dal banco (file non caricato lì) | 30 |
 
 **Legenda CHIUSA** — ⬜ da fare · ✅ chiusa · 🐛 difetto trovato, correzione aperta · ⏭️ non applicabile (con motivo nelle note)
@@ -152,7 +152,7 @@ Aggiornato: 30/08/2026, 22:58:40
 | `upgradeFuelDepot` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `acquireSubsidiary` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
 | `buyCempShares` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
-| `divestSubsidiary` | holding | engine-holding.js | stato | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
+| `divestSubsidiary` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
 | `incorporateHolding` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
 | `sellCempShares` | holding | engine-holding.js | ok | ⬜ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). Manca la passata nel browser. |
 | `_opaRequestBuyback` | hostile_takeover | hostile_takeover.js | ok | ⬜ |  |
@@ -202,7 +202,7 @@ Aggiornato: 30/08/2026, 22:58:40
 | `_srmFilterFuel` | showroom | showroom.js | — | ⬜ |  |
 | `_srmOpenConfig` | showroom | showroom.js | — | ⬜ |  |
 | `_srmPurchase` | showroom | showroom.js | ok | ⬜ |  |
-| `_srmRent` | showroom | showroom.js | stato | ⬜ |  |
+| `_srmRent` | showroom | showroom.js | ok | ⬜ |  |
 | `_srmSetSection` | showroom | showroom.js | — | ⬜ |  |
 | `_srmToggle` | showroom | showroom.js | — | ⬜ |  |
 | `_sidebarToggle` | sidebar | ui-sidebar.js | assente | ⬜ |  |
@@ -233,9 +233,9 @@ Aggiornato: 30/08/2026, 22:58:40
 | `skipAllAcademyDC` | store | engine-store.js | ok | ⬜ |  |
 | `skipAllConstructionsDC` | store | engine-store.js | ok | ⬜ |  |
 | `wakeAllDriversDC` | store | engine-store.js | ok | ⬜ |  |
-| `tourismCancelBid` | tourism | tourism.js | eseguita | ⬜ |  |
+| `tourismCancelBid` | tourism | tourism.js | ok | ⬜ |  |
 | `tourismSubmitBid` | tourism | tourism.js | stato | ⬜ |  |
-| `tourismTerminate` | tourism | tourism.js | ok | ⬜ |  |
+| `tourismTerminate` | tourism | tourism.js | eseguita | ⬜ |  |
 | `tutorialNext` | tutorial | tutorial.js | assente | ⬜ |  |
 | `tutorialSkip` | tutorial | tutorial.js | assente | ⬜ |  |
 | `_vanityColor` | vanity | vanity.js | ok | ⬜ |  |

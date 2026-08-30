@@ -611,6 +611,10 @@ function identikit(env) {
         missioni:   (stato.claimableQuests || []).slice(),
         obiettivi:  ((stato.dailyOrders || {}).picks || []).map(p => p.id),
         annunci:    ids(stato.marketplace),
+        /* Le sussidiarie POSSEDUTE, non quelle del listino: `divestSubsidiary`
+           vende solo quello che hai, e senza questo il banco le proponeva sempre
+           un'azienda che il giocatore non aveva. */
+        sussidiarie: ((stato.holding || {}).subsidiaries || []).slice(),
     };
 }
 
