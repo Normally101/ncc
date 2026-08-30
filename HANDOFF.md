@@ -139,14 +139,12 @@ chiamate al minuto. Il tetto è una rete contro l'assurdo, non una difesa contro
 qualcuno che voglia barare. Renderlo davvero server-authoritative è una
 riscrittura, non una correzione: per questo esiste il registro, che osserva.
 
-**Le tre sveglie nuove, verificate una per una:** `affitti-immobili` e
-`stato-eventi-globali` hanno già girato col loro primo slot, esito `succeeded`.
-`dividendi-giornalieri-holding` ha il primo slot alle 21:15 UTC: al momento del
-commit non era ancora arrivato, quindi ho eseguito **a mano il comando esatto
-della sveglia** (`SELECT public.rpc_daily_dividends()`), che risponde
-`{"status":"ok","total_paid":0,…}` — la forma che il client si aspetta.
-La prima cosa da fare alla prossima sessione è `npm run salute`: se quella riga
-dice ancora «non è MAI girata», la sveglia è ferma davvero.
+**Le tre sveglie nuove hanno girato tutte e tre da sole, esito `succeeded`**:
+`affitti-immobili` (20 UTC), `stato-eventi-globali` (25 UTC) e
+`dividendi-giornalieri-holding` (21:15 UTC, aspettata e verificata).
+`npm run salute` ora è verde su tutti e nove i lavori schedulati; restano due
+avvisi noti e spiegati (i fallimenti storici del meteo, ormai rientrati, e la
+tabella `global_events` vuota per decisione, non per guasto).
 
 ## Fase 2 cominciata (31/08) — il regista, e un termometro che mentiva
 
