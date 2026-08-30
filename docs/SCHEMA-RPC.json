@@ -1,0 +1,834 @@
+{
+ "aggiornato": "2026-08-30T20:19:36.745Z",
+ "funzioni": {
+  "_add_player_cash": [
+   [
+    "v_user_id",
+    "v_delta"
+   ]
+  ],
+  "_alliance_count": [
+   []
+  ],
+  "_apply_province_transit_tax": [
+   [
+    "v_user_id",
+    "v_province_id",
+    "v_fare"
+   ]
+  ],
+  "_apply_territory_taxes": [
+   [
+    "v_user_id",
+    "v_province_id",
+    "v_fare"
+   ]
+  ],
+  "_audit_leaderboard_anomaly": [
+   []
+  ],
+  "_audit_save_anomaly": [
+   []
+  ],
+  "_ce_rate_limit": [
+   [
+    "p_action",
+    "p_max",
+    "p_window"
+   ]
+  ],
+  "_check_opa_threshold": [
+   [
+    "p_listing_id",
+    "p_buyer_user_id"
+   ]
+  ],
+  "_detect_leaderboard_anomaly": [
+   []
+  ],
+  "_econ_cap": [
+   [
+    "p_reason"
+   ]
+  ],
+  "_flag_cheat": [
+   [
+    "p_uid",
+    "p_type",
+    "p_details"
+   ]
+  ],
+  "_get_player_cash": [
+   [
+    "v_user_id"
+   ]
+  ],
+  "_my_company_id": [
+   []
+  ],
+  "_process_judicial_auctions": [
+   []
+  ],
+  "_process_tourism_tenders": [
+   []
+  ],
+  "_refresh_region_governor": [
+   [
+    "v_region_id"
+   ]
+  ],
+  "_set_updated_at": [
+   []
+  ],
+  "_sync_leaderboard_from_company": [
+   []
+  ],
+  "_trg_check_opa": [
+   []
+  ],
+  "_trg_province_governor_refresh": [
+   []
+  ],
+  "_trim_global_news": [
+   []
+  ],
+  "rls_auto_enable": [
+   []
+  ],
+  "rpc_accept_b2b_contract": [
+   [
+    "v_contract_id",
+    "v_vehicle_ids",
+    "v_driver_ids"
+   ]
+  ],
+  "rpc_acquire_province": [
+   [
+    "v_province_id",
+    "v_offer"
+   ]
+  ],
+  "rpc_activate_alliance_perk": [
+   [
+    "p_perk",
+    "p_cost",
+    "p_hours"
+   ],
+   [
+    "p_perk"
+   ]
+  ],
+  "rpc_add_driver_coins": [
+   [
+    "p_amount",
+    "p_item_id"
+   ],
+   [
+    "p_amount"
+   ]
+  ],
+  "rpc_add_province_influence": [
+   [
+    "v_province_id",
+    "v_amount"
+   ]
+  ],
+  "rpc_advance_time": [
+   [
+    "p_new_time_of_day",
+    "p_new_day"
+   ]
+  ],
+  "rpc_award_mission_vtk": [
+   [
+    "v_vtk_amount",
+    "v_mission_id"
+   ]
+  ],
+  "rpc_b2b_daily_tick": [
+   []
+  ],
+  "rpc_b2b_sla_event": [
+   [
+    "v_vehicle_id",
+    "v_event"
+   ]
+  ],
+  "rpc_broadcast_news": [
+   [
+    "p_company_name",
+    "p_message",
+    "p_type"
+   ]
+  ],
+  "rpc_buy_auto_rest": [
+   [
+    "p_cost_in_coins"
+   ]
+  ],
+  "rpc_buy_company_shares": [
+   [
+    "v_listing_id",
+    "v_qty"
+   ]
+  ],
+  "rpc_buy_crypto": [
+   [
+    "v_coin_id",
+    "v_eur_in"
+   ]
+  ],
+  "rpc_buy_energy_refill": [
+   [
+    "p_cost_in_coins"
+   ]
+  ],
+  "rpc_buy_fleet_repair": [
+   [
+    "p_cost_in_coins"
+   ]
+  ],
+  "rpc_buy_fuel_depot": [
+   [
+    "v_province_id"
+   ]
+  ],
+  "rpc_buy_hr_automation": [
+   [
+    "v_cost_in_coins",
+    "v_days"
+   ]
+  ],
+  "rpc_buy_investment": [
+   [
+    "v_inv_id",
+    "v_price"
+   ]
+  ],
+  "rpc_buy_market_car": [
+   [
+    "v_listing_id"
+   ]
+  ],
+  "rpc_buy_real_estate": [
+   [
+    "v_listing_id"
+   ]
+  ],
+  "rpc_buy_vehicle": [
+   [
+    "v_model_id",
+    "v_price",
+    "v_hq_city"
+   ]
+  ],
+  "rpc_buy_vehicle_upgrade": [
+   [
+    "v_vehicle_id",
+    "v_upgrade_id",
+    "v_price"
+   ]
+  ],
+  "rpc_buy_vip_contact": [
+   [
+    "p_cost_in_coins"
+   ]
+  ],
+  "rpc_cancel_listing": [
+   [
+    "v_listing_id"
+   ]
+  ],
+  "rpc_cancel_tourism_bid": [
+   [
+    "v_tender_id"
+   ]
+  ],
+  "rpc_cancel_vtk_order": [
+   [
+    "v_order_id"
+   ]
+  ],
+  "rpc_claim_auction": [
+   [
+    "v_auction_id"
+   ]
+  ],
+  "rpc_claim_daily_reward": [
+   [
+    "p_user_id",
+    "p_company_name"
+   ]
+  ],
+  "rpc_claim_trip_reward": [
+   [
+    "v_trip_id"
+   ]
+  ],
+  "rpc_cleanup_expired_listings": [
+   []
+  ],
+  "rpc_collect_daily_costs": [
+   []
+  ],
+  "rpc_contribute_consorzio": [
+   [
+    "v_consorzio_id",
+    "v_amount"
+   ]
+  ],
+  "rpc_contribute_holding_treasury": [
+   [
+    "v_holding_id",
+    "v_amount"
+   ]
+  ],
+  "rpc_create_alliance": [
+   [
+    "p_name",
+    "p_tag",
+    "p_company_name",
+    "p_description",
+    "p_color",
+    "p_emblem"
+   ]
+  ],
+  "rpc_create_consorzio": [
+   [
+    "v_name",
+    "v_description"
+   ]
+  ],
+  "rpc_create_holding": [
+   [
+    "v_name",
+    "v_description"
+   ]
+  ],
+  "rpc_credit_dc_purchase": [
+   [
+    "p_user_id",
+    "p_pack_key",
+    "p_session_id",
+    "p_event_id",
+    "p_amount_cents",
+    "p_currency"
+   ]
+  ],
+  "rpc_credit_real_estate_rents": [
+   []
+  ],
+  "rpc_daily_dividends": [
+   []
+  ],
+  "rpc_dampen_tension": [
+   [
+    "v_amount"
+   ]
+  ],
+  "rpc_deposit_offshore": [
+   [
+    "v_eur_amount",
+    "v_jurisdiction"
+   ]
+  ],
+  "rpc_disband_alliance": [
+   []
+  ],
+  "rpc_dismiss_dispatch": [
+   [
+    "p_dispatch_id"
+   ]
+  ],
+  "rpc_donate_to_alliance": [
+   [
+    "p_amount"
+   ]
+  ],
+  "rpc_due_push_subscriptions": [
+   [
+    "p_idle_hours",
+    "p_cooldown_hours",
+    "p_max_idle_days"
+   ]
+  ],
+  "rpc_earn": [
+   [
+    "p_delta",
+    "p_reason",
+    "p_source",
+    "p_idem"
+   ]
+  ],
+  "rpc_ec_spend": [
+   [
+    "p_item_id",
+    "p_amount"
+   ]
+  ],
+  "rpc_execute_shadow_op": [
+   [
+    "v_target_id",
+    "v_op_type",
+    "v_op_cost"
+   ]
+  ],
+  "rpc_expire_tourism_contracts": [
+   []
+  ],
+  "rpc_fill_vtk_order": [
+   [
+    "v_order_id"
+   ]
+  ],
+  "rpc_fire_driver": [
+   [
+    "v_driver_id"
+   ]
+  ],
+  "rpc_gdf_inspection_check": [
+   []
+  ],
+  "rpc_generate_dispatch": [
+   [
+    "p_start_city",
+    "p_end_city",
+    "p_reward",
+    "p_req_tier",
+    "p_ttl_hours"
+   ]
+  ],
+  "rpc_get_active_decrees": [
+   []
+  ],
+  "rpc_get_active_global_events": [
+   []
+  ],
+  "rpc_get_b2b_contracts": [
+   []
+  ],
+  "rpc_get_crypto_portfolio": [
+   []
+  ],
+  "rpc_get_fuel_depots": [
+   []
+  ],
+  "rpc_get_gdf_risk": [
+   []
+  ],
+  "rpc_get_hostile_takeovers": [
+   []
+  ],
+  "rpc_get_hq_leaderboard": [
+   []
+  ],
+  "rpc_get_judicial_auctions": [
+   []
+  ],
+  "rpc_get_my_bids": [
+   []
+  ],
+  "rpc_get_my_influence": [
+   []
+  ],
+  "rpc_get_real_weather": [
+   [
+    "v_province_id"
+   ]
+  ],
+  "rpc_get_server_decrees": [
+   []
+  ],
+  "rpc_get_shadow_ops_log": [
+   []
+  ],
+  "rpc_get_shadow_targets": [
+   []
+  ],
+  "rpc_get_territory_snapshot": [
+   []
+  ],
+  "rpc_get_tourism_tenders": [
+   []
+  ],
+  "rpc_get_vtk_market_orders": [
+   []
+  ],
+  "rpc_get_won_auctions": [
+   []
+  ],
+  "rpc_hire_crumiri": [
+   []
+  ],
+  "rpc_hire_driver": [
+   [
+    "v_name",
+    "v_salary",
+    "v_tier"
+   ]
+  ],
+  "rpc_init_company": [
+   [
+    "v_company_name"
+   ]
+  ],
+  "rpc_invite_to_alliance": [
+   [
+    "p_user_id"
+   ]
+  ],
+  "rpc_join_alliance": [
+   [
+    "p_alliance_id",
+    "p_company_name"
+   ]
+  ],
+  "rpc_join_consorzio": [
+   [
+    "v_consorzio_id"
+   ]
+  ],
+  "rpc_join_holding": [
+   [
+    "v_holding_id"
+   ]
+  ],
+  "rpc_kick_member": [
+   [
+    "p_user_id"
+   ]
+  ],
+  "rpc_leave_alliance": [
+   []
+  ],
+  "rpc_leave_consorzio": [
+   [
+    "v_consorzio_id"
+   ]
+  ],
+  "rpc_leave_holding": [
+   [
+    "v_holding_id"
+   ]
+  ],
+  "rpc_list_car_for_sale": [
+   [
+    "v_car_snapshot",
+    "v_ask_price"
+   ]
+  ],
+  "rpc_list_company_ipo": [
+   [
+    "v_ipo_price",
+    "v_shares_total"
+   ]
+  ],
+  "rpc_mark_dm_read": [
+   [
+    "p_other"
+   ]
+  ],
+  "rpc_nemesis_bribe_vip": [
+   [
+    "v_bribe_amount"
+   ]
+  ],
+  "rpc_nemesis_fund_rival": [
+   [
+    "v_rival_user_id",
+    "v_amount",
+    "v_vip_name"
+   ]
+  ],
+  "rpc_opa_buyback": [
+   [
+    "v_opa_id"
+   ]
+  ],
+  "rpc_pay_don_carmine": [
+   []
+  ],
+  "rpc_pay_fuel_levy": [
+   [
+    "v_province_id",
+    "v_fare"
+   ]
+  ],
+  "rpc_pay_majority_dividend": [
+   [
+    "v_target_user_id",
+    "v_ride_earnings"
+   ]
+  ],
+  "rpc_ping": [
+   []
+  ],
+  "rpc_place_auction_bid": [
+   [
+    "v_auction_id",
+    "v_amount"
+   ]
+  ],
+  "rpc_place_vtk_sell_order": [
+   [
+    "v_vtk_amount",
+    "v_dc_price"
+   ]
+  ],
+  "rpc_post_alliance_chat": [
+   [
+    "p_company_name",
+    "p_message"
+   ]
+  ],
+  "rpc_post_global_chat": [
+   [
+    "p_message"
+   ]
+  ],
+  "rpc_process_offline_gains": [
+   []
+  ],
+  "rpc_purchase_dc_pack": [
+   [
+    "v_pack_id"
+   ]
+  ],
+  "rpc_read_message": [
+   [
+    "p_message_id"
+   ]
+  ],
+  "rpc_refuel_vehicle": [
+   [
+    "v_vehicle_id",
+    "v_fuel_amount",
+    "v_cost"
+   ]
+  ],
+  "rpc_remove_friend": [
+   [
+    "p_user_id"
+   ]
+  ],
+  "rpc_repair_vehicle": [
+   [
+    "v_vehicle_id",
+    "v_cost"
+   ]
+  ],
+  "rpc_repay_loan": [
+   [
+    "v_loan_id",
+    "v_amount"
+   ]
+  ],
+  "rpc_reset_daily_vtk": [
+   []
+  ],
+  "rpc_resolve_auction": [
+   [
+    "v_auction_id"
+   ]
+  ],
+  "rpc_respond_friend_request": [
+   [
+    "p_request_id",
+    "p_accept"
+   ]
+  ],
+  "rpc_respond_invite": [
+   [
+    "p_invite_id",
+    "p_accept",
+    "p_company_name"
+   ]
+  ],
+  "rpc_rest_ceo": [
+   [
+    "v_hotel_stars",
+    "v_cost"
+   ]
+  ],
+  "rpc_save_game_state": [
+   [
+    "p_slot_index",
+    "p_game_state"
+   ]
+  ],
+  "rpc_sell_company_shares": [
+   [
+    "v_listing_id",
+    "v_qty"
+   ]
+  ],
+  "rpc_sell_crypto": [
+   [
+    "v_coin_id",
+    "v_coins_in"
+   ]
+  ],
+  "rpc_sell_vehicle": [
+   [
+    "v_vehicle_id",
+    "v_price"
+   ]
+  ],
+  "rpc_send_direct_message": [
+   [
+    "p_recipient",
+    "p_message"
+   ]
+  ],
+  "rpc_send_friend_request": [
+   [
+    "p_user_id"
+   ]
+  ],
+  "rpc_set_fuel_markup": [
+   [
+    "v_province_id",
+    "v_markup_pct"
+   ]
+  ],
+  "rpc_set_member_role": [
+   [
+    "p_user_id",
+    "p_role"
+   ]
+  ],
+  "rpc_spawn_judicial_auction": [
+   [
+    "v_lot_type",
+    "v_tier",
+    "v_min_bid",
+    "v_duration_days"
+   ]
+  ],
+  "rpc_spend": [
+   [
+    "p_delta",
+    "p_reason",
+    "p_idem"
+   ]
+  ],
+  "rpc_spend_vtk_shop_item": [
+   [
+    "v_item_id"
+   ]
+  ],
+  "rpc_start_marketing_campaign": [
+   [
+    "v_campaign_id",
+    "v_daily_cost"
+   ]
+  ],
+  "rpc_start_trip": [
+   [
+    "v_vehicle_id",
+    "v_driver_id",
+    "v_end_city",
+    "v_reward",
+    "v_duration_ms",
+    "v_is_empty_return"
+   ]
+  ],
+  "rpc_stop_marketing_campaign": [
+   []
+  ],
+  "rpc_submit_tourism_bid": [
+   [
+    "v_tender_id",
+    "v_qualifying_vehicles",
+    "v_pledge_cash"
+   ]
+  ],
+  "rpc_sync_cash": [
+   [
+    "v_cash",
+    "p_reason"
+   ]
+  ],
+  "rpc_sync_global_event_status": [
+   []
+  ],
+  "rpc_take_loan": [
+   [
+    "v_principal",
+    "v_interest_rate",
+    "v_daily_payment"
+   ]
+  ],
+  "rpc_terminate_b2b_contract": [
+   [
+    "v_active_id"
+   ]
+  ],
+  "rpc_terminate_tourism_contract": [
+   [
+    "v_tender_id"
+   ]
+  ],
+  "rpc_tick_tension": [
+   []
+  ],
+  "rpc_toggle_telepass": [
+   [
+    "v_vehicle_id",
+    "v_cost"
+   ]
+  ],
+  "rpc_tourism_daily_tick": [
+   []
+  ],
+  "rpc_unlock_region": [
+   [
+    "v_region_id",
+    "v_price"
+   ]
+  ],
+  "rpc_update_fuel_price": [
+   []
+  ],
+  "rpc_update_hq_status": [
+   [
+    "v_rooms_built",
+    "v_hq_score",
+    "v_hq_name"
+   ]
+  ],
+  "rpc_update_weather": [
+   [
+    "p_weather"
+   ]
+  ],
+  "rpc_upgrade_offline_limit": [
+   [
+    "p_cost_in_coins"
+   ]
+  ],
+  "rpc_upgrade_shadow_defense": [
+   [
+    "v_cost"
+   ]
+  ],
+  "rpc_vote_server_decree": [
+   [
+    "v_decree_id",
+    "v_points_spent"
+   ]
+  ],
+  "rpc_withdraw_offshore": [
+   [
+    "v_eur_amount",
+    "v_jurisdiction"
+   ]
+  ],
+  "validate_game_save": [
+   []
+  ],
+  "validate_leaderboard": [
+   []
+  ]
+ }
+}

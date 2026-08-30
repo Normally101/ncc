@@ -50,6 +50,9 @@ const FRESCHEZZA = {
     'tensione-sindacato':     { minuti: 150,  nota: 'tensione sindacale' },
     'azzera-vtk-giornaliero': { minuti: 150,  nota: 'reset VTK' },
     'ce-send-push':           { minuti: 150,  nota: 'notifiche push' },
+    'affitti-immobili':       { minuti: 150,  nota: 'rendite immobiliari' },
+    'stato-eventi-globali':   { minuti: 150,  nota: 'apertura/chiusura eventi globali' },
+    'dividendi-giornalieri-holding': { minuti: 150, nota: 'dividendi delle holding' },
 };
 
 async function lavoriSchedulati() {
@@ -71,8 +74,12 @@ async function lavoriSchedulati() {
         const dove = `${r.jobname} (${r.schedule})`;
 
         if (!r.active) { errore(`${dove}: SPENTO`); continue; }
+        if (!r.esito) {
+            errore(`${dove}: non è MAI girata. Se la sveglia è appena stata creata, aspetta il primo giro dell'orario qui sopra e ricontrolla; se è lì da ieri, è ferma`);
+            continue;
+        }
         if (r.esito !== 'succeeded') {
-            errore(`${dove}: ultima esecuzione ${r.esito || 'mai'} — ${(r.messaggio || '').trim().replace(/\s+/g, ' ')}`);
+            errore(`${dove}: ultima esecuzione ${r.esito} — ${(r.messaggio || '').trim().replace(/\s+/g, ' ')}`);
             continue;
         }
         if (soglia && min > soglia.minuti) {
@@ -92,6 +99,25 @@ async function datiFreschi() {
     if (!Number(righe[0].righe)) errore('real_world_status è vuota: il gioco non ha nessun meteo da mostrare');
     else if (min > 90) errore(`meteo fermo a ${eta(min)}: il gioco mostra il tempo di allora`);
     else ok(`meteo aggiornato ${eta(min)} su ${righe[0].righe} province`);
+}
+
+/* Un lavoro schedulato può girare benissimo su un mondo vuoto e dire «tutto ok».
+   `rpc_sync_global_event_status` apre e chiude eventi: se in tabella non c'è
+   nessun evento, gira, riesce, e non succede mai niente. Il 31/08 era esattamente
+   così — il seed di 21_global_events.sql non è mai stato applicato, e i giocatori
+   non hanno mai visto un solo evento globale. È lo stesso difetto delle 18
+   province mancanti: una tabella vuota non fa rumore. */
+async function mondoPieno() {
+    titolo('Il mondo ha di che vivere');
+    const r = await sql(`
+        SELECT count(*)                                                        AS tutti,
+               count(*) FILTER (WHERE status IN ('active','upcoming'))         AS in_arrivo,
+               count(*) FILTER (WHERE status = 'active' AND ends_at > now())   AS attivi
+          FROM public.global_events`);
+    const { tutti, in_arrivo, attivi } = r[0];
+    if (!Number(tutti))          avviso('global_events è vuota: nessun evento globale accadrà mai. Seed non applicato di proposito — vedi docs/AUDIT-SERVER.md e DOMANDE-PER-VLAD.md');
+    else if (!Number(in_arrivo)) errore(`global_events ha ${tutti} righe ma tutte finite: da qui in poi non succede più niente`);
+    else ok(`eventi globali: ${attivi} in corso, ${in_arrivo} fra attivi e in arrivo`);
 }
 
 async function permessi() {
@@ -128,6 +154,7 @@ console.log('\x1b[1m── Salute del server — Chauffeur Empire ──\x1b[0m'
 try {
     await lavoriSchedulati();
     await datiFreschi();
+    await mondoPieno();
     await permessi();
 } catch (e) {
     errore(`controllo interrotto: ${e.message}`);

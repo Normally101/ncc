@@ -21,6 +21,15 @@ ALTER TABLE public.companies
     ADD COLUMN IF NOT EXISTS last_dividend_at DATE DEFAULT NULL;
 
 -- ── 2. RPC rpc_daily_dividends con guardia giornaliera ─────────────────────
+-- Il DROP non è pignoleria: la versione vecchia restituisce `int`, questa `jsonb`,
+-- e Postgres rifiuta un CREATE OR REPLACE che cambia il tipo di ritorno.
+-- Aggiunto il 31/08/2026, quando si è scoperto che questo file non era MAI stato
+-- applicato: sul database viveva ancora la funzione vecchia — senza guardia
+-- giornaliera — e il client leggeva `data.status === 'already_paid'` da una
+-- risposta che era un numero. Nessuno se n'era accorto perché la funzione era
+-- anche revocata ad `authenticated`, quindi la chiamata falliva prima.
+DROP FUNCTION IF EXISTS public.rpc_daily_dividends();
+
 CREATE OR REPLACE FUNCTION public.rpc_daily_dividends()
 RETURNS jsonb
 LANGUAGE plpgsql

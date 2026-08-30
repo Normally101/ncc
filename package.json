@@ -14,7 +14,8 @@
     "preflight": "node scripts/preflight.mjs",
     "preflight:prod": "node scripts/preflight.mjs --produzione",
     "registro": "node scripts/registro-chiusura.mjs",
-    "salute": "node scripts/salute-server.mjs"
+    "salute": "node scripts/salute-server.mjs",
+    "audit": "node scripts/audit-server.mjs"
   },
   "repository": {
     "type": "git",

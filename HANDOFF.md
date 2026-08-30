@@ -48,6 +48,82 @@ degli immobili **non vengono mai accreditati**, mentre la scheda promette
 `rpc_update_fuel_price`, `rpc_cleanup_expired_listings`,
 `rpc_sync_global_event_status`. È la prima cosa della prossima sessione.
 
+## Fase 1, secondo giro (31/08) — i permessi, le sveglie mancanti, `npm run audit`
+
+Tirando il filo lasciato aperto sopra. **Migrazioni 71, 72, 73 applicate al DB
+vivo; 64 applicata per la prima volta** (esisteva da giorni e nessuno l'aveva
+mai eseguita). Suite verde, nessun file di gioco toccato: questo giro sta tutto
+fra server, script e documenti.
+
+**Il permesso che nessuno aveva mai dato davvero.** Sei funzioni che cambiano il
+mondo condiviso erano eseguibili **senza account**, e due di loro portavano
+scritto in chiaro il contrario: `09_provinces_realestate_fuel.sql` dice «Solo
+service_role può chiamare questa RPC — non il browser» e sotto ha una sola GRANT.
+In Postgres una funzione nasce già eseguibile da PUBLIC: aggiungere una GRANT non
+toglie niente a nessuno, e `REVOKE … FROM anon` non basta perché il permesso non
+è di `anon`, è di PUBLIC. Ora sono chiuse (71) e verificate con una chiamata HTTP
+anonima vera: sei 401 su sei.
+
+La peggiore era `rpc_cleanup_expired_listings`: cancella gli annunci scaduti, e
+dal 30/08 un annuncio scaduto è l'**unico** modo che ha il venditore di riavere
+l'auto. Bastava una richiesta anonima per distruggere le auto invendute di tutti.
+
+**L'involucro che nascondeva la funzione.** `rpc_expire_tourism_contracts` è tutta
+qui: `SELECT public._process_tourism_tenders();`. Nel suo corpo non c'è una
+scrittura, quindi il primo controllo l'aveva data per innocua — mentre chiude i
+bandi di tutti e sposta denaro, aperta a chiunque. Da lì la regola nuova dentro
+`audit-server.mjs`: **chi chiama una funzione che scrive, scrive**, propagata
+finché l'insieme smette di crescere. Con quella regola sono usciti anche sette
+aiutanti interni (`_process_tourism_tenders`, `_flag_cheat`, `_econ_cap`…),
+chiusi in 72.
+
+⚠️ **`_my_company_id()` non va toccata, mai.** Era nell'elenco dei candidati:
+dieci policy RLS la chiamano, e una policy si valuta coi permessi di CHI
+INTERROGA. Revocarla ad `authenticated` renderebbe illeggibili flotta, autisti e
+corse a tutti. È la ragione per cui prima di revocare si guarda chi **usa** la
+funzione, non solo chi la chiama.
+
+**Gli affitti che non arrivavano.** `rpc_credit_real_estate_rents` era corretta
+dal primo giorno e non la invocava nessuno. Ora è sulla sveglia `affitti-immobili`
+(ogni ora; la funzione paga solo dove `last_rent_at < NOW() - 24h`, quindi 23
+giri a vuoto e uno vero). Provata sul database dentro una transazione annullata:
+€650 accreditati una volta sola, la seconda chiamata non paga. Nessun doppio
+pagamento col client, che gli affitti li mostra soltanto.
+
+**I dividendi: un file mai applicato che nessuno poteva accorgersi mancasse.**
+`64_dividendi_giornalieri_idempotenti.sql` esiste dal 21/08 e sul server viveva
+ancora la funzione vecchia, quella che ritorna un numero, senza guardia
+giornaliera — mentre `engine-holding.js` leggeva `data.status === 'already_paid'`
+da quel numero. Il difetto non si era mai visto perché la funzione era **anche
+revocata** ad `authenticated`: la chiamata moriva sul permesso, prima di poter
+mostrare che le due parti non si capivano. Applicata (serviva un DROP: cambia il
+tipo di ritorno) e schedulata in 73.
+
+**`npm run audit` — il censimento che si rigenera.** Legge le 166 funzioni dal
+database vivo, le incrocia con le chiamate del browser, delle Edge Function, dei
+cron, dei trigger e delle altre funzioni, e scrive `docs/AUDIT-SERVER.md` (una
+riga per funzione) e `docs/SCHEMA-RPC.json` (le firme). I verdetti su «chi deve
+poterla chiamare» stanno nella mappa `VERDETTI` **dentro lo script**, non nel .md
+che si rigenera: una RPC nuova senza verdetto fa comparire «⚠️ manca il verdetto».
+Oggi: 0 buchi di permesso, 20 funzioni senza chiamanti, tutte con un verdetto.
+
+**Il guardrail nuovo** `test/guardrail/contratto-client-server.test.js` rifà il
+confronto **offline** contro `SCHEMA-RPC.json`, dentro `npm test`, senza rete né
+segreti. Provato al contrario due volte. Ha trovato subito una cosa vera: esistono
+**RPC con lo stesso nome e firme diverse** (`rpc_add_driver_coins`,
+`rpc_activate_alliance_perk`), e tenerne una sola faceva dare per sbagliata una
+chiamata giusta — cambiando idea a ogni rigenerazione.
+
+**Quattro decisioni che non prendo io** sono in `DOMANDE-PER-VLAD.md` §4-§7:
+gli eventi globali (tabella vuota, il seed scriverebbe Natale a settembre), il
+premio giornaliero (lo calcola il browser, e le due tabelle dei premi non
+coincidono), il prezzo del gasolio (uno per giocatore o uno per tutti), la nemesi
+che finanzia i rivali (è una stampante di denaro, resta spenta).
+
+**Prossima sessione:** restano di Fase 1 le 40 RPC che muovono denaro — per
+ognuna: verifica dei fondi lato server, proprietario, limite di frequenza. Poi
+Fase 2, il regista degli stati.
+
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 
 Vlad ha cambiato priorità e l'ha detto chiaro: «adesso non mi interessa più di
