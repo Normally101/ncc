@@ -74,6 +74,16 @@ window.p2pListCarForSale = async function(carId, askPrice) {
     const prezzo = Math.round(Number(askPrice));
     if (typeof window._forbicePrezzoP2P === 'function') {
         const f = window._forbicePrezzoP2P(car);
+        // Un rottame che nemmeno al 200% arriva al minimo del server (€1.000)
+        // non ha una forbice: non e' un prezzo sbagliato, e' un'auto che il
+        // mercato fra giocatori non accetta. Dirlo e' meglio che mostrare una
+        // banda impossibile.
+        if (!f.vendibile) {
+            showNotification(
+                `${car.name} vale troppo poco per il mercato fra giocatori: vendila al concessionario.`,
+                'error');
+            return;
+        }
         if (!Number.isFinite(prezzo) || prezzo < f.min || prezzo > f.max) {
             showNotification(
                 `Prezzo fuori mercato: per ${car.name} puoi chiedere fra €${f.min.toLocaleString('it-IT')} e €${f.max.toLocaleString('it-IT')}.`,

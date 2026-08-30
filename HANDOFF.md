@@ -68,11 +68,29 @@ il testo del modello (era `{{segnaposti}}` dentro ogni salvataggio).
 - **Dispatcher junior/senior**: non è un problema, è staff che si assume.
 - **Elicottero/jet non vendibili**: fa parte di un update futuro.
 
+## La migrazione 69 è stata TOLTA, non applicata
+Vlad ha dato il via libera («finché non abbiamo giocatori reali puoi toccare
+tutto»), ma prima di sovrascrivere ho letto la funzione **vera** in produzione.
+Non era come il file la descriveva: `rpc_list_car_for_sale` aveva **già**
+minimo €1.000, massimo €50.000.000, segnalazione anti-cheat sopra i €10M e un
+tetto di **5 annunci attivi** per giocatore. La migrazione, scritta credendo che
+ci fosse solo `<= 0`, avrebbe rimpiazzato la funzione **perdendo il tetto dei 5
+annunci e le segnalazioni**: un passo indietro travestito da rafforzamento.
+File eliminato — un `.sql` fermo nel repo con scritto «da applicare» è una
+trappola per la prossima sessione. Guardrail in
+`test/funzioni/forbice-prezzo-p2p-server.test.js`.
+
+**Il disallineamento vero era nel client** ed è corretto: il minimo della
+forbice era €100 contro i €1.000 del server, quindi su un'auto molto malmessa il
+campo diceva «da €400», il giocatore scriveva €400 e prendeva un errore che
+sembra un guasto. Ora `_forbicePrezzoP2P` rispecchia i paletti del server e
+restituisce anche `vendibile`: un rottame che nemmeno al 200% arriva a €1.000
+non si vende ai giocatori, e la scheda lo dice invece di mostrare un campo
+impossibile.
+
 ## Resta aperto
-- `69_forbice_prezzo_mercato_p2p.sql` — **non applicato**, serve l'ok di Vlad
-  (paletti assoluti €100–€30M lato server; la forbice relativa è già nel client).
-- **Nove commit locali non spinti.** `main` fa auto-deploy su Vercel: il push è
-  la pubblicazione.
+- **Push**: fatto. `main` fa auto-deploy su Vercel, il sito è aggiornato e
+  verificato (`npm run preflight:prod`).
 - Acquisto Driver Coins vero end-to-end (solo Vlad può farlo) e la Restricted
   API Key al posto di `STRIPE_SECRET_KEY` — vedi la sezione Stripe qui sotto.
 

@@ -161,14 +161,18 @@ function renderTabMarket() {
                     </div>
                     ${_btn(`Al concessionario · €${(suggest/1000).toFixed(0)}k`, ceAct('listCarForSale', [car.id, suggest]), '', false)}
                 </div>
+                ${forbice.vendibile ? `
                 <div style="display:flex;align-items:center;gap:8px;margin-top:8px">
                     <span style="font-size:10px;color:var(--em-dim);white-space:nowrap">Ai giocatori €</span>
                     <input id="p2p-price-${CE_Sec.escHtml(String(car.id))}" type="number"
-                           value="${suggest}" min="${forbice.min}" max="${forbice.max}" step="100"
+                           value="${Math.max(forbice.min, Math.min(forbice.max, suggest))}" min="${forbice.min}" max="${forbice.max}" step="100"
                            style="width:110px;background:var(--em-bg);border:1px solid var(--em-line);color:var(--em-ink);border-radius:6px;padding:5px 8px;font-size:11px">
                     <span style="font-size:9px;color:var(--em-dim);white-space:nowrap">da €${forbice.min.toLocaleString('it-IT')} a €${forbice.max.toLocaleString('it-IT')}</span>
                     ${_btn('Pubblica annuncio', ceAct('ceListCarP2P', [car.id]), 'gold', false)}
-                </div>
+                </div>` : `
+                <div style="margin-top:8px;font-size:10px;color:var(--em-dim)">
+                    Troppo malmessa per il mercato fra giocatori (minimo €${window.P2P_PREZZO_MIN_SERVER.toLocaleString('it-IT')}): resta il concessionario.
+                </div>`}
             </div>`;
         });
         html += `</div>`;

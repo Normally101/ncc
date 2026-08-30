@@ -372,16 +372,26 @@ window._valoreStimatoAuto = function (car) {
    prezzo, sempre mantenendo un limite»). Il prezzo lo sceglie il venditore,
    ma dentro una banda attorno al valore stimato: sotto il 50% e' svendita
    sospetta (regalare valore a un altro account), sopra il 200% e' un annuncio
-   che nessuno comprera' mai e sporca solo la lista. */
+   che nessuno comprera' mai e sporca solo la lista.
+
+   I DUE PALETTI ASSOLUTI NON SONO UNA SCELTA NOSTRA: sono quelli che
+   `rpc_list_car_for_sale` applica gia' sul server (letta in produzione il
+   30/08/2026 — minimo €1.000, massimo €50.000.000, con segnalazione anti-cheat
+   sopra i €10.000.000 e un tetto di 5 annunci attivi per giocatore). Il client
+   li rispecchia perche' proporre al giocatore un prezzo che il server
+   rifiutera' e' peggio che non proporlo: il campo dice €400, lui scrive €400,
+   e si prende un errore che sembra un guasto.
+   Se un rottame vale cosi' poco che nemmeno il 200% arriva al minimo del
+   server, l'auto NON e' vendibile ai giocatori: resta il concessionario. */
 window.P2P_PREZZO_MIN_PCT = 0.5;
 window.P2P_PREZZO_MAX_PCT = 2.0;
+window.P2P_PREZZO_MIN_SERVER = 1000;
+window.P2P_PREZZO_MAX_SERVER = 50000000;
 window._forbicePrezzoP2P = function (car) {
     const stima = window._valoreStimatoAuto(car);
-    return {
-        stima,
-        min: Math.max(100, Math.round(stima * window.P2P_PREZZO_MIN_PCT)),
-        max: Math.round(stima * window.P2P_PREZZO_MAX_PCT),
-    };
+    const min = Math.max(window.P2P_PREZZO_MIN_SERVER, Math.round(stima * window.P2P_PREZZO_MIN_PCT));
+    const max = Math.min(window.P2P_PREZZO_MAX_SERVER, Math.round(stima * window.P2P_PREZZO_MAX_PCT));
+    return { stima, min, max, vendibile: max >= min };
 };
 
 // ── MERCATO AUTO NPC ──────────────────────────────────────────────
