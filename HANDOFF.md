@@ -148,10 +148,56 @@ della sveglia** (`SELECT public.rpc_daily_dividends()`), che risponde
 La prima cosa da fare alla prossima sessione è `npm run salute`: se quella riga
 dice ancora «non è MAI girata», la sveglia è ferma davvero.
 
-**Prossima sessione:** Fase 1 è chiusa (audit, revoche, sveglie, guardrail).
-Si comincia la **Fase 2 — il regista degli stati** (`test-support/regista.js`):
-è il collo di bottiglia di tutto il piano, 76 azioni su 254 non si attivano
-perché il banco non sa costruire la situazione che chiedono.
+## Fase 2 cominciata (31/08) — il regista, e un termometro che mentiva
+
+**`test-support/regista.js`**: venti funzioni che portano il gioco in uno stato
+**nominato** — `conConsorzio`, `conClienteVIP('garante')`, `conAstaAperta`,
+`conPrestito`, `conSoldi(env, 500000)`, `conGiornoAvanzato(env, 30)`. Ognuna
+documentata con la frase «GARANTISCE:», e se non ce la fa **lancia** invece di
+restituire in silenzio: un regista che fallisce di nascosto costruisce uno stato
+che assomiglia al gioco senza esserlo, e i test che ci girano sopra passano senza
+aver provato niente.
+
+La regola che tiene insieme il file: **usa il codice vero del gioco** dove esiste.
+`conClienteVIP` non si inventa la forma dell'email — prepara la flotta che quel
+cliente pretende e chiama `_maybeVipGrigori()`, cioè il generatore che gira nella
+partita vera. Tutti e dieci i clienti VIP sono coperti, e il collaudo non è «ha
+scritto un'email» ma «l'azione vera del giocatore arriva fino a creare la corsa».
+
+**Due difetti del banco trovati costruendolo:**
+
+1. **Nessuno aveva mai fatto il login.** Decine di azioni cominciano con
+   `if (!_uid()) return;` — mercato fra giocatori, consorzi, sindacato, VTK,
+   turismo, holding — e `window.currentUser` nel banco non è mai stato impostato.
+   Uscivano alla PRIMA RIGA e finivano fra le «non attivabili»: sembravano
+   bloccate da uno stato di gioco mancante, ed erano bloccate dal non essere
+   entrate in partita.
+
+2. **Il termometro contava male, e da settimane.** «Non attivabile» metteva
+   insieme due cose opposte: l'azione che esce alla prima riga, e l'azione che
+   **parte davvero** ma in quell'istante non muove denaro — `acceptVipGrigori`
+   mette una corsa in coda, il denaro arriva quando la corsa finisce. Le due
+   chiedono lavori opposti (la prima ha bisogno di uno stato che manca, la seconda
+   va provata dove l'effetto arriva), e confonderle vuol dire cercare per
+   settimane uno stato che non serviva. Ora sono due categorie separate, nel
+   banco, in `npm run stato` e nel registro.
+
+**I numeri, prima → dopo:** azioni verificate 53 → **59**, «al buio» 76 → **41**,
+e delle 76 di prima **29** erano azioni che il banco eseguiva già senza saperlo.
+Il bersaglio della fase (sotto 20) è a 21 azioni di distanza.
+
+⚠️ **Il banco ora prova due mondi, non uno**, e la ragione è che preparare uno
+stato ne rompe un altro: se il regista mette in mano al giocatore la polizza
+Kasko (serve all'Erede) allora `_ecPolizzaKasko` non ha più niente da comprare;
+se gli mette un prestito attivo (serve a `repayLoan`) allora `takeLoan` rifiuta.
+Non è un difetto del gioco: sono situazioni che nella partita vera non capitano
+insieme. Chi aggiunge stati al regista deve ricordarsi di azzerarli nel mondo
+«nudo», o rimetterà in piedi il problema al contrario.
+
+**Prossima sessione:** continuare la Fase 2 sulle 41 azioni ancora al buio. I
+gruppi grossi sono il mercato P2P/consorzi (le RPC finte rispondono `null` e le
+azioni si fermano lì: serve far rispondere il regista con dati veri), il VTK, il
+turismo e le vanity/showroom, che leggono quasi tutto da campi del modulo.
 
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 

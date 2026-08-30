@@ -31,6 +31,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
 const { freshEnv } = require('../../test-support/game-env.js');
+const R = require('../../test-support/regista.js');
 
 const ROOT = path.resolve(__dirname, '..', '..');
 
@@ -91,11 +92,22 @@ function preparaMondo() {
        «non sincronizzate» azioni che parlano col server per un'altra strada — un falso
        allarme che avrebbe portato a "riparare" codice sano. Qui il client finto
        registra le chiamate e risponde come farebbe Supabase (`{ data, error }`). */
-    sandbox.window.supabaseClient = {
-        rpc: function (nome) {
-            scritture.push('supabase.rpc:' + nome);
-            return Promise.resolve({ data: null, error: null });
-        },
+    /* Il client finto e l'utente collegato li mette il regista (test-support/regista.js),
+       non piu' questo file. La differenza non e' di stile: decine di azioni
+       cominciano con `if (!_uid()) return;` — mercato fra giocatori, consorzi,
+       sindacato, VTK, turismo, holding — e `window.currentUser` qui non e' MAI
+       stato impostato. Quelle azioni uscivano alla PRIMA RIGA e finivano fra le
+       «non attivabili»: sembravano bloccate da uno stato di gioco che mancava,
+       ed erano bloccate dal non aver fatto il login.
+       Il client del regista sa anche rispondere a `.from()`, `.channel()` e
+       `auth`, che il finto di prima non aveva: senza quelli le stesse azioni
+       esplodevano poco dopo. */
+    R.conGiocatoreCollegato({ sandbox }, { id: 'giocatore-del-banco' });
+    const client = sandbox.window.supabaseClient;
+    const rpcDelRegista = client.rpc;
+    client.rpc = function (nome, args) {
+        scritture.push('supabase.rpc:' + nome);
+        return rpcDelRegista(nome, args);
     };
 
     // Il rendering non c'entra con il denaro e costa quasi tutto il tempo di
@@ -136,7 +148,15 @@ function preparaMondo() {
         poi:      poiIds[0],
     };
 
-    function preparaStato() {
+    /* `sistemi` sceglie fra due mondi, e la scelta non e' un vezzo: preparare uno
+       stato ne rompe un altro. Se il regista mette in mano al giocatore la polizza
+       Kasko (serve all'Erede), allora `_ecPolizzaKasko` non ha piu' niente da
+       comprare; se gli mette un prestito attivo (serve a `repayLoan`), `takeLoan`
+       rifiuta. Non e' un difetto del gioco: sono due situazioni che nella partita
+       vera non capitano insieme, e pretendere che il banco ne costruisca una sola
+       significa scegliere quale meta' delle azioni non provare mai.
+       Quindi il banco prova ENTRAMBI i mondi. */
+    function preparaStato({ sistemi = false } = {}) {
         const gs = sandbox.window.gameState;
         if (!gs) return null;
 
@@ -210,6 +230,61 @@ function preparaMondo() {
                              status: 'unread', vipEventData,
                              expiresAt: ((gs.day || 1) * 24 + (gs.hour || 0)) + 4 });
         }
+
+        /* ── Da qui in giu' lo stato lo costruisce il REGISTA (test-support/regista.js).
+           Quello che c'e' sopra e' scritto a mano e riguarda il nucleo del gioco;
+           quello che segue riguarda i SISTEMI, dove le forme sono troppe e cambiano
+           troppo spesso perche' abbia senso ricopiarle qui. Le dieci richieste dei
+           clienti VIP, per dire, non sono inventate: le scrive il generatore vero
+           del gioco (`_maybeVipGrigori` e fratelli) dopo che il regista ha messo in
+           flotta le auto che ognuno pretende. Se un giorno cambia il modello
+           richiesto da un cliente, cambia il regista, non questo file. */
+        /* Prima di scegliere il mondo, si CANCELLA quello che i sistemi aggiungono.
+           Senza questo, il mondo «nudo» resta sporco di quello che il regista ha
+           messo durante il tentativo precedente — `gs.loans` non veniva ripulito da
+           nessuno, quindi dopo la prima azione col prestito attivo `takeLoan`
+           rifiutava per sempre. Un banco che si porta dietro lo stato di prima non
+           prova due mondi: ne prova uno e mezzo, e il mezzo cambia a ogni giro. */
+        gs.loans = [];
+        gs.realEstate = [];
+        gs.provinces = [];
+        gs.vipNemeses = {};
+        gs.cryptoWallet = {};
+        gs.holding = null;
+        gs.companyIPO = null;
+        gs.driverAcademy = [{ driverId: 'd1', courseId: 'c_eco', daysLeft: 3,
+                              completesDay: (gs.day || 1) + 5 }];
+        sandbox.window._p2pMarket   = Object.assign(sandbox.window._p2pMarket   || {}, { myConsorzio: null });
+        sandbox.window._allianceState = Object.assign(sandbox.window._allianceState || {}, { myAlliance: null, myRole: null });
+
+        if (!sistemi) return gs;
+
+        if (SCENA_VIP) R.rimettiInScena({ sandbox }, SCENA_VIP);
+        R.conConsorzio({ sandbox }, { ruolo: 'leader' });
+        R.conAstaAperta({ sandbox });
+        R.conContrattoB2B({ sandbox });
+        R.conDepositoCarburante({ sandbox });
+        R.conAutistaInAccademia({ sandbox });
+        R.conPrestito({ sandbox });
+        R.conCriptoInPortafoglio({ sandbox });
+        R.conImmobile({ sandbox });
+        R.conProvincia({ sandbox });
+        R.conNemesi({ sandbox });
+        R.conHolding({ sandbox });
+
+        /* I campi del modulo: un'intera famiglia di azioni non legge i propri
+           argomenti dalla chiamata, li legge dallo schermo. `_alCreate` prende nome e
+           TAG da `#al-name` e `#al-tag`, `_alDonate` l'importo da `#al-donate`. Senza
+           questi campi uscivano su «Nome troppo corto» e «Importo non valido»:
+           sembravano bloccate da uno stato di gioco, ed era un campo vuoto. */
+        R.conModulo({ sandbox }, {
+            'al-name': 'Consorzio del Banco', 'al-tag': 'BNC', 'al-desc': 'prova',
+            'al-emblem': '🛡️', 'al-open': true, 'al-donate': '5000',
+            'al-chat-input': 'ciao',
+            'vanity-title': 'Barone', 'vanity-color': '#c8a24a', 'vanity-emblem': '👑',
+            'vtk-amount': '10', 'vtk-price': '5',
+            'tourism-bid': '10000', 'p2p-price': '50000',
+        });
         return gs;
     }
 
@@ -217,8 +292,19 @@ function preparaMondo() {
     // sulla riga della conferma (CE_terminateContract, i disinvestimenti, le vendite).
     sandbox.window.confirm = () => true;
 
+    /* La scena dei clienti VIP si costruisce UNA volta e poi si rimette in scena a
+       ogni tentativo. Rigenerarla ogni volta sarebbe piu' pulito e insostenibile:
+       `preparaStato` gira prima di OGNI forma di argomento di OGNI azione, cioe'
+       migliaia di volte, e dieci generatori VIP a giro trasformerebbero un test da
+       secondi in minuti. Un test lento e' un test che si smette di lanciare. */
+    let SCENA_VIP = null;
     preparaStato();
-    return { sandbox, scritture, stopAllIntervals, ids, preparaStato };
+    R.conTuttiIClientiVIP({ sandbox });
+    SCENA_VIP = R.istantanea({ sandbox });
+    const idEmailVip = SCENA_VIP.emails.map(e => e.id).filter(id => id != null);
+
+    preparaStato();
+    return { sandbox, scritture, stopAllIntervals, ids, preparaStato, idEmailVip };
 }
 
 /* ── 3. Esegue un'azione e guarda se il denaro si e' mosso di nascosto ───── */
@@ -258,6 +344,12 @@ function formeArgomento(mondo) {
         // ── Gli eventi VIP a bivio: id numerico, uno per tipo.
         [901], [902], [903], [904], [905],
     ];
+    /* Le richieste dei dieci clienti VIP, con gli id VERI scritti dal generatore
+       del gioco. Senza questi, `acceptVipGrigori(901)` non trovava nessuna email e
+       usciva alla prima riga: dieci azioni che muovono denaro non sono mai state
+       eseguite, non perche' fossero difficili ma perche' il banco bussava a un
+       indirizzo inventato. */
+    for (const id of (mondo.idEmailVip || [])) forme.push([id]);
     // ── Id veri dai cataloghi del gioco.
     if (ids.stock)   forme.push([ids.stock.id, 10], [ids.stock.id]);
     if (ids.rischio) forme.push([ids.rischio.id, 10000, 7], [ids.rischio.id, 10000]);
@@ -276,6 +368,16 @@ function formeArgomento(mondo) {
    «non attivabile». E' cosi' che le azioni asincrone che toccano denaro non sono
    mai state controllate da questo guardrail: non venivano bocciate, venivano
    guardate troppo presto. */
+/* Ogni forma di argomento va provata in entrambi i mondi: quello nudo e quello
+   con i sistemi accesi dal regista. L'ordine conta poco, il numero si': sono
+   forme x 2 tentativi per azione, e per questo le forme restano poche e mirate. */
+function tentativi(mondo) {
+    const forme = formeArgomento(mondo);
+    const lista = [];
+    for (const sistemi of [false, true]) for (const args of forme) lista.push({ args, sistemi });
+    return lista;
+}
+
 function scaricaMicrotask() {
     return new Promise(resolve => setImmediate(resolve));
 }
@@ -284,16 +386,18 @@ async function provaAzione(mondo, nome) {
     const { sandbox, scritture } = mondo;
     const fn = sandbox.window[nome];
     if (typeof fn !== 'function') return { stato: 'assente' };
+    let eseguitaSenzaDenaro = null;
 
-    for (const args of formeArgomento(mondo)) {
+    for (const { args, sistemi } of tentativi(mondo)) {
         // Rifa' il mondo da capo e RILEGGE gameState: se l'azione precedente ha
         // rifondato la partita, `gs` qui e' il nuovo oggetto, non quello morto.
-        const gs = mondo.preparaStato();
+        const gs = mondo.preparaStato({ sistemi });
         if (!gs) return { stato: 'non verificata' };
         gs.cash = 1_000_000;
         gs.driverCoins = 100_000;
         gs.vtkBalance = 10_000;
         scritture.length = 0;
+        const impronta = improntaDelMondo(gs, scritture);
 
         try {
             const r = fn.apply(sandbox.window, args);
@@ -315,8 +419,38 @@ async function provaAzione(mondo, nome) {
                 scritture: [...scritture],
             };
         }
+        /* Il denaro non si e' mosso, ma qualcosa e' successo lo stesso: l'azione
+           NON e' «non attivabile», e chiamarla cosi' e' stato per settimane il
+           difetto di questo banco. `acceptVipGrigori` mette una corsa in coda e il
+           denaro arriva quando la corsa finisce; `joinConsorzio` parla col server e
+           basta. Erano nell'elenco delle bloccate insieme a quelle che uscivano
+           davvero alla prima riga, e le due cose hanno rimedi opposti: le prime
+           vanno provate altrove, le seconde hanno bisogno di uno stato che manca.
+           Confonderle vuol dire cercare per settimane uno stato che non serviva. */
+        if (!impronta || impronta !== improntaDelMondo(dopo, scritture)) {
+            eseguitaSenzaDenaro = { args, sistemi, scritture: [...scritture] };
+        }
+    }
+    if (eseguitaSenzaDenaro) {
+        return { stato: 'eseguita senza denaro', scritture: eseguitaSenzaDenaro.scritture };
     }
     return { stato: 'non verificata' };
+}
+
+/* Un'impronta leggera del mondo: serve solo a rispondere «e' successo qualcosa?».
+   Una copia intera di gameState direbbe la stessa cosa in modo piu' preciso e
+   costerebbe migliaia di serializzazioni di un oggetto grosso — il banco gira
+   forme x 2 mondi x 254 azioni. Questi cinque numeri cambiano per qualunque
+   effetto che conti: una corsa creata, una email risolta, un veicolo o un
+   autista in piu' o in meno, una chiamata al server. */
+function improntaDelMondo(gs, scritture) {
+    return [
+        (gs.pendingRides || []).length,
+        (gs.emails || []).filter(e => e.status === 'unread').length,
+        (gs.fleet || []).length,
+        (gs.drivers || []).length,
+        scritture.length,
+    ].join('|');
 }
 
 /* ── 3-bis. Quali azioni riguardano davvero il denaro ───────────────────── */
@@ -530,6 +664,12 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
         const nonVerificate = esiti
             .filter(e => e.stato === 'non verificata' && conSoldi.has(e.nome));
         const assenti = esiti.filter(e => e.stato === 'assente');
+        /* Le azioni che il banco ESEGUE davvero ma che, in quel momento, non
+           spostano denaro: `acceptVipGrigori` mette una corsa in coda e il denaro
+           arriva quando la corsa finisce. Non sono bloccate e non sono un difetto:
+           sono azioni il cui effetto sul denaro va cercato altrove. Tenerle
+           nell'elenco delle bloccate mandava a cercare uno stato che non mancava. */
+        const eseguite = esiti.filter(e => e.stato === 'eseguita senza denaro' && conSoldi.has(e.nome));
 
         const nonAttivabiliConMotivo = nonVerificate
             .map(e => `     - ${e.nome}: richiede stato specifico o argomenti complessi non riprodotti`);
@@ -542,6 +682,7 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
             `\n   verificate e corrette: ${conta('ok')}` +
             `\n   rotte note (in attesa di conversione): ${conta('ROTTA')}` +
             `\n   azioni che toccano denaro: ${conSoldi.size} (le altre ${azioni.length - conSoldi.size} sono navigazione/UI)` +
+            `\n   eseguite ma senza muovere denaro: ${eseguite.length}` +
             `\n   non attivabili dal banco: ${nonVerificate.length}` +
             `\n   nome non risolto a una funzione: ${assenti.length}` +
             // I nomi delle verificate, non solo il conteggio: e' da qui che si
@@ -551,6 +692,8 @@ describe('guardrail — ogni azione del giocatore sincronizza col server', () =>
             `\n\n   --- Azioni NON riuscite a eseguire (${nonVerificate.length + assenti.length}) ---` +
             `\n   Non attivabili che toccano denaro (${nonVerificate.length}):\n` +
             nonAttivabiliConMotivo.join('\n') +
+            `\n\n   Eseguite senza muovere denaro (${eseguite.length}) — il loro effetto sul denaro va cercato altrove:\n     ` +
+            eseguite.map(e => e.nome).join(' ') +
             `\n\n   Funzioni assenti/non caricate (${assenti.length}):\n` +
             assentiConMotivo.join('\n') + '\n'
         );

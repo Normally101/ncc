@@ -4,7 +4,7 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 30/08/2026, 22:26:22
+Aggiornato: 30/08/2026, 22:40:31
 
 | | |
 |---|---|
@@ -12,8 +12,9 @@ Aggiornato: 30/08/2026, 22:26:22
 | Chiuse (provate davvero, con un test che le difende) | **1** |
 | Aperte | **253** |
 | Difetti trovati e ancora da correggere | **0** |
-| Eseguite dal banco automatico (`ok`) | 53 |
-| Il banco non riesce ad attivarle | 76 |
+| Eseguite dal banco automatico (`ok`) | 59 |
+| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 29 |
+| Il banco non riesce ad attivarle | 41 |
 | Fuori dal banco (file non caricato lì) | 30 |
 
 **Legenda CHIUSA** — ⬜ da fare · ✅ chiusa · 🐛 difetto trovato, correzione aperta · ⏭️ non applicabile (con motivo nelle note)
@@ -21,12 +22,12 @@ Aggiornato: 30/08/2026, 22:26:22
 | Azione | Sistema | File | Banco | Chiusa | Note |
 |---|---|---|---|---|---|
 | `_alChat` | alliances | alliances.js | — | ⬜ |  |
-| `_alCreate` | alliances | alliances.js | stato | ⬜ |  |
-| `_alDisband` | alliances | alliances.js | stato | ⬜ |  |
-| `_alDonate` | alliances | alliances.js | stato | ⬜ |  |
-| `_alJoin` | alliances | alliances.js | stato | ⬜ |  |
+| `_alCreate` | alliances | alliances.js | ok | ⬜ |  |
+| `_alDisband` | alliances | alliances.js | eseguita | ⬜ |  |
+| `_alDonate` | alliances | alliances.js | ok | ⬜ |  |
+| `_alJoin` | alliances | alliances.js | eseguita | ⬜ |  |
 | `_alKick` | alliances | alliances.js | — | ⬜ |  |
-| `_alLeave` | alliances | alliances.js | stato | ⬜ |  |
+| `_alLeave` | alliances | alliances.js | eseguita | ⬜ |  |
 | `_alPerk` | alliances | alliances.js | — | ⬜ |  |
 | `_alSetRole` | alliances | alliances.js | — | ⬜ |  |
 | `auctionsConfirmBid` | auctions | auctions.js | — | ⬜ |  |
@@ -37,7 +38,7 @@ Aggiornato: 30/08/2026, 22:26:22
 | `b2bCheckLimit` | b2b | b2b.js | — | ⬜ |  |
 | `b2bConfirmAccept` | b2b | b2b.js | — | ⬜ |  |
 | `b2bOpenAcceptModal` | b2b | b2b.js | — | ⬜ |  |
-| `b2bTerminateContract` | b2b | b2b.js | stato | ⬜ |  |
+| `b2bTerminateContract` | b2b | b2b.js | eseguita | ⬜ |  |
 | `shadowExecuteOp` | black_ops | black_ops.js | stato | ⬜ |  |
 | `shadowUpgradeDefense` | black_ops | black_ops.js | ok | ⬜ |  |
 | `closeHub` | boot | boot.js | assente | ⬜ |  |
@@ -101,10 +102,10 @@ Aggiornato: 30/08/2026, 22:26:22
 | `setInboxTab` | emails | ui-emails.js | assente | ⬜ |  |
 | `_applyMarketingCampaign` | engine | engine.js | stato | ⬜ |  |
 | `_stopMarketingCampaign` | engine | engine.js | — | ⬜ |  |
-| `acceptDiamondContract` | engine | engine.js | stato | ⬜ |  |
+| `acceptDiamondContract` | engine | engine.js | ok | ⬜ |  |
 | `acceptShadowMission` | engine | engine.js | stato | ⬜ |  |
 | `assignCarToDriver` | engine | engine.js | — | ⬜ |  |
-| `buyInvestment` | engine | engine.js | stato | ⬜ |  |
+| `buyInvestment` | engine | engine.js | ok | ⬜ |  |
 | `buyRegion` | engine | engine.js | stato | ⬜ |  |
 | `confirmLease` | engine | engine.js | — | ⬜ |  |
 | `contestFine` | engine | engine.js | — | ⬜ |  |
@@ -130,7 +131,7 @@ Aggiornato: 30/08/2026, 22:26:22
 | `passLobbyLaw` | finance | engine-finance.js | ok | ⬜ |  |
 | `repayLoan` | finance | engine-finance.js | stato | ⬜ |  |
 | `takeLoan` | finance | engine-finance.js | ok | ⬜ |  |
-| `acceptGreyMarket` | fleet | engine-fleet.js | stato | ⬜ |  |
+| `acceptGreyMarket` | fleet | engine-fleet.js | eseguita | ⬜ |  |
 | `bidOnAuction` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `bulkRepairFleet` | fleet | ui-fleet.js | — | ⬜ |  |
 | `buyCARUpgrade` | fleet | engine-fleet.js | stato | ⬜ |  |
@@ -180,18 +181,18 @@ Aggiornato: 30/08/2026, 22:26:22
 | `doAcquireProvince` | ops | ui-ops.js | stato | ⬜ |  |
 | `buyCompanyShares` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `buyP2PCar` | p2p-market | p2p-market.js | stato | ⬜ |  |
-| `cancelP2PListing` | p2p-market | p2p-market.js | stato | ✅ | 30/08: l'annuncio scaduto spariva e con lui l'auto. Ora resta ritirabile. |
-| `joinHolding` | p2p-market | p2p-market.js | stato | ⬜ |  |
-| `leaveHolding` | p2p-market | p2p-market.js | stato | ⬜ |  |
-| `listCompanyIPO` | p2p-market | p2p-market.js | stato | ⬜ |  |
-| `sellCompanyShares` | p2p-market | p2p-market.js | stato | ⬜ |  |
-| `hireCrumiri` | p2p-render | p2p-render.js | stato | ⬜ |  |
-| `joinConsorzio` | p2p-render | p2p-render.js | stato | ⬜ |  |
-| `leaveConsorzio` | p2p-render | p2p-render.js | stato | ⬜ |  |
-| `payDonCarmine` | p2p-render | p2p-render.js | stato | ⬜ |  |
+| `cancelP2PListing` | p2p-market | p2p-market.js | eseguita | ✅ | 30/08: l'annuncio scaduto spariva e con lui l'auto. Ora resta ritirabile. |
+| `joinHolding` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
+| `leaveHolding` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
+| `listCompanyIPO` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
+| `sellCompanyShares` | p2p-market | p2p-market.js | eseguita | ⬜ |  |
+| `hireCrumiri` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
+| `joinConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
+| `leaveConsorzio` | p2p-render | p2p-render.js | eseguita | ⬜ |  |
+| `payDonCarmine` | p2p-render | p2p-render.js | ok | ⬜ |  |
 | `claimQuestReward` | quests | quests.js | stato | ⬜ |  |
 | `renderTabRanking` | ranking | ui-ranking.js | assente | ⬜ |  |
-| `doBuyRealEstate` | realestate | ui-realestate.js | stato | ⬜ |  |
+| `doBuyRealEstate` | realestate | ui-realestate.js | eseguita | ⬜ |  |
 | `assignAllRides` | rides | engine-rides.js | — | ⬜ |  |
 | `_confirmNewGame` | saveSystem | saveSystem.js | — | ⬜ |  |
 | `buyHRAutomation` | serverState | serverState.js | ok | ⬜ |  |
@@ -232,42 +233,42 @@ Aggiornato: 30/08/2026, 22:26:22
 | `skipAllAcademyDC` | store | engine-store.js | ok | ⬜ |  |
 | `skipAllConstructionsDC` | store | engine-store.js | ok | ⬜ |  |
 | `wakeAllDriversDC` | store | engine-store.js | ok | ⬜ |  |
-| `tourismCancelBid` | tourism | tourism.js | stato | ⬜ |  |
-| `tourismSubmitBid` | tourism | tourism.js | stato | ⬜ |  |
-| `tourismTerminate` | tourism | tourism.js | stato | ⬜ |  |
+| `tourismCancelBid` | tourism | tourism.js | eseguita | ⬜ |  |
+| `tourismSubmitBid` | tourism | tourism.js | ok | ⬜ |  |
+| `tourismTerminate` | tourism | tourism.js | eseguita | ⬜ |  |
 | `tutorialNext` | tutorial | tutorial.js | assente | ⬜ |  |
 | `tutorialSkip` | tutorial | tutorial.js | assente | ⬜ |  |
 | `_vanityColor` | vanity | vanity.js | stato | ⬜ |  |
 | `_vanityEmblem` | vanity | vanity.js | stato | ⬜ |  |
 | `_vanityTitle` | vanity | vanity.js | stato | ⬜ |  |
-| `acceptVipEmiro` | vip-clients | vip-clients.js | stato | ⬜ |  |
-| `acceptVipErede` | vip-clients | vip-clients.js | stato | ⬜ |  |
-| `acceptVipGarante` | vip-clients | vip-clients.js | stato | ⬜ |  |
+| `acceptVipEmiro` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
+| `acceptVipErede` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
+| `acceptVipGarante` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `acceptVipGolden` | vip-clients | vip-clients.js | — | ⬜ |  |
-| `acceptVipGrigori` | vip-clients | vip-clients.js | stato | ⬜ |  |
-| `acceptVipOnorevole` | vip-clients | vip-clients.js | stato | ⬜ |  |
-| `acceptVipPlatinum` | vip-clients | vip-clients.js | stato | ⬜ |  |
-| `acceptVipStrata` | vip-clients | vip-clients.js | stato | ⬜ |  |
+| `acceptVipGrigori` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
+| `acceptVipOnorevole` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
+| `acceptVipPlatinum` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
+| `acceptVipStrata` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `acceptVipTechBro` | vip-clients | vip-clients.js | — | ⬜ |  |
 | `acceptVipWedding` | vip-clients | vip-clients.js | — | ⬜ |  |
 | `vipGaranteEventIntimidisci` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipGaranteEventPaga` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipGrigoriEventAccept` | vip-clients | vip-clients.js | ok | ⬜ |  |
-| `vipGrigoriEventDecline` | vip-clients | vip-clients.js | stato | ⬜ |  |
+| `vipGrigoriEventDecline` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `vipOnorevoleEventCopera` | vip-clients | vip-clients.js | ok | ⬜ |  |
-| `vipOnorevoleEventResisti` | vip-clients | vip-clients.js | stato | ⬜ |  |
-| `vipPlatinumEventAllow` | vip-clients | vip-clients.js | stato | ⬜ |  |
+| `vipOnorevoleEventResisti` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
+| `vipPlatinumEventAllow` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `vipPlatinumEventBlock` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `vipWeddingEventGestisci` | vip-clients | vip-clients.js | ok | ⬜ |  |
-| `vipWeddingEventIgnora` | vip-clients | vip-clients.js | stato | ⬜ |  |
+| `vipWeddingEventIgnora` | vip-clients | vip-clients.js | eseguita | ⬜ |  |
 | `vipWeddingPaymentCollect` | vip-clients | vip-clients.js | ok | ⬜ |  |
 | `_closeVittorioModal` | vittorio | vittorio.js | — | ⬜ |  |
 | `flipVittorio` | vittorio | vittorio.js | — | ⬜ |  |
 | `repayVittorio` | vittorio | vittorio.js | stato | ⬜ |  |
 | `openVTKModal` | vtk-market | vtk-market.js | stato | ⬜ |  |
 | `vtkBuyShopItem` | vtk-market | vtk-market.js | stato | ⬜ |  |
-| `vtkCancelOrder` | vtk-market | vtk-market.js | stato | ⬜ |  |
-| `vtkFillOrder` | vtk-market | vtk-market.js | stato | ⬜ |  |
+| `vtkCancelOrder` | vtk-market | vtk-market.js | eseguita | ⬜ |  |
+| `vtkFillOrder` | vtk-market | vtk-market.js | eseguita | ⬜ |  |
 | `_wrAcquire` | war_room | war_room.js | assente | ⬜ |  |
 | `_wrClose` | war_room | war_room.js | assente | ⬜ |  |
 | `_ceCapitalismAck` | zero-to-hero | zero-to-hero.js | — | ⬜ |  |

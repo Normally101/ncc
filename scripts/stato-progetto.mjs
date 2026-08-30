@@ -64,6 +64,13 @@ function copertura() {
             verificate: num('verificate e corrette'),
             rotte: num('rotte note \\(in attesa di conversione\\)'),
             cieche: num('non attivabili dal banco'),
+            /* Eseguite davvero, ma senza spostare denaro in quell'istante
+               (`acceptVipGrigori` mette una corsa in coda: il denaro arriva quando
+               la corsa finisce). Prima finivano fra le «al buio» insieme a quelle
+               che uscivano alla prima riga, e le due cose chiedono rimedi opposti:
+               queste vanno provate dove l'effetto arriva, quelle hanno bisogno di
+               uno stato che manca. */
+            eseguite: num('eseguite ma senza muovere denaro'),
         };
     } catch {
         return null; // il guardrail non gira: meglio nessun dato che un dato inventato
@@ -227,6 +234,7 @@ if (process.argv.includes('--json')) {
     if (cop) {
         console.log(`Azioni toccate:    ${stato.azioni.toccate}/${cop.totali}  (${pct(stato.azioni.toccate, cop.totali)})  — nominate da almeno un test`);
         console.log(`Azioni verificate: ${cop.verificate}/${cop.totali}  (${pct(cop.verificate, cop.totali)})  — che il guardrail sa eseguire da solo`);
+        console.log(`Azioni eseguite:   ${cop.eseguite}  — partono ma il denaro si muove altrove`);
         console.log(`Azioni al buio:    ${cop.cieche}  — il guardrail non riesce ad attivarle`);
         console.log(`Azioni rotte note: ${cop.rotte}`);
     }

@@ -7,6 +7,8 @@
 
      BANCO   — automatica. La ricava dal guardrail `azioni-sincronizzano`:
                `ok` = il banco la esegue e vede la scrittura verso il server,
+               `eseguita` = il banco la fa partire, ma in quell'istante il denaro
+               non si muove (l'effetto arriva dopo: una corsa messa in coda),
                `stato` = il banco non riesce ad attivarla,
                `assente` = la funzione non è caricata in QUEL banco (esiste,
                ma il suo file non sta in CORE_FILES).
@@ -62,6 +64,16 @@ function statoDalGuardrail() {
     if (bloccoOk) bloccoOk[1].trim().split(/\s+/).forEach(n => stato.set(n, 'ok'));
     for (const m of out.matchAll(/^\s+- ([A-Za-z0-9_$]+): richiede stato specifico/gm)) stato.set(m[1], 'stato');
     for (const m of out.matchAll(/^\s+- ([A-Za-z0-9_$]+): funzione non trovata/gm)) stato.set(m[1], 'assente');
+    /* `eseguita` = il banco la fa partire davvero, ma in quell'istante il denaro
+       non si muove: `acceptVipGrigori` mette una corsa in coda e il denaro arriva
+       quando la corsa finisce. Prima finivano fra le `stato` insieme a quelle che
+       uscivano alla prima riga, e le due cose chiedono lavori opposti — queste
+       vanno provate dove l'effetto arriva, quelle hanno bisogno di uno stato che
+       il regista non sa ancora costruire. */
+    const bloccoEseguite = out.match(/Eseguite senza muovere denaro \(\d+\)[^\n]*\n\s+([^\n]*)/);
+    if (bloccoEseguite) bloccoEseguite[1].trim().split(/\s+/).filter(Boolean).forEach(n => {
+        if (!stato.has(n)) stato.set(n, 'eseguita');
+    });
     return stato;
 }
 
@@ -114,6 +126,7 @@ Aggiornato: ${new Date().toLocaleString('it-IT', { timeZone: 'Europe/Rome' })}
 | Aperte | **${righe.length - chiuse}** |
 | Difetti trovati e ancora da correggere | **${rotte}** |
 | Eseguite dal banco automatico (\`ok\`) | ${conta(r => r.banco === 'ok')} |
+| Il banco la esegue ma il denaro si muove altrove (\`eseguita\`) | ${conta(r => r.banco === 'eseguita')} |
 | Il banco non riesce ad attivarle | ${conta(r => r.banco === 'stato')} |
 | Fuori dal banco (file non caricato lì) | ${conta(r => r.banco === 'assente')} |
 
