@@ -12,7 +12,8 @@
     "test": "node --test",
     "stato": "node scripts/stato-progetto.mjs",
     "preflight": "node scripts/preflight.mjs",
-    "preflight:prod": "node scripts/preflight.mjs --produzione"
+    "preflight:prod": "node scripts/preflight.mjs --produzione",
+    "registro": "node scripts/registro-chiusura.mjs"
   },
   "repository": {
     "type": "git",

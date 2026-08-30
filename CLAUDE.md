@@ -8,6 +8,10 @@ Browser MMO gestionale "poor to rich" (NCC di lusso). Vanilla HTML/CSS/JS, no fr
 > - **Design del gioco** (visione, sistemi, economia, idee, brainstorming) → vault Obsidian `~/Documents/chauffeur-empire-brain/` (MOC: `00 Mappa/Chauffeur Empire.md`; entry: `Decisioni Aperte` · `Idee e Backlog` · `Changelog`)
 
 ## Protocollo sessione
+0. **DAL 31/08 AL 14/09 SI SEGUE `PIANO-CHIUSURA.md`** (Vlad è al Festival di Venezia e non
+   può seguire il lavoro). Ordine di lettura: `HANDOFF.md` → `PIANO-CHIUSURA.md` →
+   `docs/CHIUSURA-REGISTRO.md` (il libro mastro delle 254 azioni) → `npm run stato`.
+   Le domande che non posso decidere io vanno in `DOMANDE-PER-VLAD.md`, non nel codice.
 1. Leggi `HANDOFF.md` (stato + cosa manca). Mai chiedere "dove eravamo": derivalo.
 2. `git log --oneline -5` se serve contesto sui commit.
 3. **A fine sessione:** aggiorna `HANDOFF.md` e, se hai toccato un sistema, la nota corrispondente nel **vault** (regola esplicita di Vlad). Per dettaglio architetturale nuovo → `docs/ARCHITECTURE.md`, non qui.

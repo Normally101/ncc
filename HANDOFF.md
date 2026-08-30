@@ -3,6 +3,21 @@
 > Aggiornato: 30 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
+# 🎯 31/08 – 14/09 — SI SEGUE `PIANO-CHIUSURA.md`
+
+Vlad parte per il Festival di Venezia e non può seguire il lavoro. L'obiettivo delle
+due settimane è **chiudere il gioco**: tutte e 254 le azioni provate davvero, con un
+test che le difende, senza rompere quello che è già stato sistemato.
+
+- Il piano completo, con le sei fasi e le regole: **`PIANO-CHIUSURA.md`**
+- Il libro mastro delle azioni: **`docs/CHIUSURA-REGISTRO.md`** (`npm run registro`)
+- Le domande che non decido io: **`DOMANDE-PER-VLAD.md`**
+- I numeri veri, in qualunque momento: **`npm run stato`**
+
+Punto di partenza (30/08): 254 azioni, **0 chiuse**, 2360 test verdi, 0 bottoni morti,
+115 RPC tutte esistenti sul server, 0 firme disallineate, RLS su tutte le tabelle.
+Il lavoro non è rifare: è **provare**.
+
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 
 Vlad ha cambiato priorità e l'ha detto chiaro: «adesso non mi interessa più di
