@@ -4,13 +4,13 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 30/08/2026, 21:20:43
+Aggiornato: 30/08/2026, 22:26:22
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **0** |
-| Aperte | **254** |
+| Chiuse (provate davvero, con un test che le difende) | **1** |
+| Aperte | **253** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 53 |
 | Il banco non riesce ad attivarle | 76 |
