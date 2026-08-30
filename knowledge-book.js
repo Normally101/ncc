@@ -606,6 +606,30 @@ di status, visibili agli altri giocatori. Non fanno guadagnare — dicono chi se
 <p>La <strong>classifica globale</strong> ordina i giocatori per patrimonio liquido
 e si aggiorna a ogni azione. È lì che si vede se la strategia funziona.</p>`,
         },
+        {
+            id: 'network', titolo: 'Parlare con gli altri giocatori',
+            corpo: () => `
+<p>La scheda <strong>Network</strong> raccoglie tutti i modi di comunicare:</p>
+
+<ul>
+  <li><strong>Chat globale</strong> — la piazza. Quello che scrivi lo leggono tutti
+      i giocatori collegati, in tempo reale.</li>
+  <li><strong>Chat del consorzio</strong> — solo i tuoi soci. È la stessa chat che
+      trovi nella scheda Consorzi: cambia la porta, non la stanza.</li>
+  <li><strong>Messaggi privati</strong> — una conversazione a due. Puoi scrivere a
+      <strong>chiunque</strong>: l'amicizia non serve. Il pallino rosso accanto a
+      «Network» conta i messaggi che non hai ancora letto.</li>
+  <li><strong>Amici</strong> — una richiesta che l'altro accetta o rifiuta. Se vi
+      siete scritti a vicenda, la seconda richiesta vale come accettazione.</li>
+</ul>
+
+<p>Un giocatore si trova per nome azienda, dal campo di ricerca del Network oppure
+direttamente dalla classifica, dove ogni riga ha ✉️ per scrivere e ＋ per chiedere
+l'amicizia.</p>
+
+${_kbNota(`La chat ha un freno: sei messaggi ogni dieci secondi. Non è una punizione,
+serve a impedire che qualcuno riempia la piazza e la renda illeggibile per tutti.`)}`,
+        },
     ],
 },
 
@@ -973,6 +997,7 @@ var KB_AIUTO_PER_SCHEDA = {
     ranking:    'reputazione',
     prestigio:  'reputazione',
     consorzi:   'reputazione',
+    social:     'reputazione',
     legal:      'rischi',
     politics:   'rischi',
     shadow:     'rischi',

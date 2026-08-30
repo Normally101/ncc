@@ -221,6 +221,7 @@ window.switchTab = function(tab) {
         case 'corse': title.innerText = "Dispatch Center"; _safeRender(renderTabCorse); break;
         case 'ranking': title.innerText = "Global Ranking"; _safeRender(renderTabRanking); break;
         case 'consorzi': title.innerText = "Consorzi"; _safeRender(window.renderTabConsorzi); break;
+        case 'social': title.innerText = "💬 Network"; _safeRender(window.renderTabSocial); break;
         case 'prestigio': title.innerText = "Vetrina Prestigio"; _safeRender(window.renderTabPrestigio); break;
         case 'staff': title.innerText = "Risorse Umane"; _safeRender(renderTabStaff); break;
         case 'fleet': title.innerText = "Gestione Flotta"; _safeRender(renderTabFleet); break;

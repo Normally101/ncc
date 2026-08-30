@@ -111,6 +111,13 @@ function ceTPledge(tid) { window._tSetPledge(tid, this.value); }
 /* ── alliances: invio chat con Enter (keydown, usa ev) ───────── */
 function ceAlChatEnter(ev) { if (ev && ev.key === 'Enter' && typeof window._alChat === 'function') window._alChat(); }
 
+/* ── social: Enter nei quattro campi di testo del Network ─────
+   (chat globale, chat consorzio, messaggio privato, ricerca giocatori) */
+function ceChatGlobaleEnter(ev) { if (ev && ev.key === 'Enter' && typeof window._chatGlobaleInvia === 'function') window._chatGlobaleInvia(); }
+function ceChatConsorzioEnter(ev) { if (ev && ev.key === 'Enter' && typeof window._chatConsorzioInvia === 'function') window._chatConsorzioInvia(); }
+function ceDmEnter(ev) { if (ev && ev.key === 'Enter' && typeof window._dmInvia === 'function') window._dmInvia(); }
+function ceCercaGiocatoriEnter(ev) { if (ev && ev.key === 'Enter' && typeof window._cercaGiocatori === 'function') window._cercaGiocatori(); }
+
 /* ── modali: no-op che "assorbe" il click sul contenuto interno ──
    (rimpiazza event.stopPropagation(): con la delegation, closest() si ferma
    su questo elemento e non risale al backdrop, quindi il modale non si chiude) */

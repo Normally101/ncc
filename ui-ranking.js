@@ -171,6 +171,7 @@ async function renderTabRanking() {
                     <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Rep</th>
                     <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Flotta</th>
                     <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Status</th>
+                    <th style="text-align:center;padding:6px 8px;font-size:9px;color:#9ca3af;font-weight:600;text-transform:uppercase;letter-spacing:.08em">Contatta</th>
                 </tr>
             </thead>
             <tbody>`;
@@ -198,6 +199,13 @@ async function renderTabRanking() {
                     ${online
                         ? `<span style="font-size:9px;color:#1aa06a;border:1px solid #bfe6cd;background:#eafbf1;border-radius:3px;padding:2px 6px">ONLINE</span>`
                         : `<span style="font-size:9px;color:#9ca3af">—</span>`}
+                </td>
+                <td style="text-align:center;padding:8px;white-space:nowrap">
+                    ${isMe ? `<span style="font-size:9px;color:#9ca3af">—</span>` : `
+                    <button ${ceAct('_dmApri', [r.user_id])} title="Scrivi un messaggio privato"
+                        style="background:transparent;border:1px solid var(--em-line);color:var(--em-blue);border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer">✉️</button>
+                    <button ${ceAct('_amicoRichiedi', [r.user_id])} title="Chiedi l'amicizia"
+                        style="background:transparent;border:1px solid var(--em-line);color:var(--em-gold);border-radius:6px;padding:2px 7px;font-size:11px;cursor:pointer">＋</button>`}
                 </td>
             </tr>`;
         });
