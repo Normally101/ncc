@@ -1,7 +1,80 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 29 agosto 2026
+> Aggiornato: 30 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
+
+# ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
+
+Vlad ha cambiato priorità e l'ha detto chiaro: «adesso non mi interessa più di
+tanto avere un guadagno, piuttosto mi piacerebbe avere delle versioni di
+persone che giocano e sono contenti di giocare». Da lì sono usciti due lavori,
+fatti e verificati dal vivo nel browser.
+
+## 1. NETWORK — chat globale, messaggi privati, amicizie (`0df25ba`)
+
+Nuova scheda **💬 Network** (`social.js`, menu Community + sidebar Info) con
+quattro viste: Globale, Consorzio, Messaggi, Amici.
+
+**Server: `70_chat_globale_messaggi_amici.sql`, GIÀ APPLICATO al DB live.**
+Tre tabelle nuove — `global_chat`, `direct_messages`, `friendships` — tutte con
+lo stesso principio del resto del gioco: si **leggono** con RLS, si **scrivono
+solo via RPC `security definer`**. Nessuna policy di INSERT, quindi non esiste
+un percorso che salti autenticazione, rate-limit e limiti di lunghezza. Le tre
+tabelle sono nella publication Realtime.
+
+Due cose da ricordare, perché sono decisioni, non dettagli:
+- **Il nome di chi parla lo legge il server da `leaderboard`.** Il client non lo
+  manda proprio. `rpc_post_alliance_chat` (vecchia) si fida del `p_company_name`
+  che arriva dal browser: in un consorzio di gente che si conosce passa, in una
+  piazza pubblica vuol dire potersi firmare col nome di un altro.
+- **Richiesta di amicizia incrociata = accettazione.** Se no restano due
+  richieste pendenti e nessuno dei due capisce chi deve accettare.
+
+Lato client: la posta si ascolta **dal caricamento**, non dall'apertura della
+scheda — un messaggio deve accendere il pallino (`#social-dot`) mentre guardi la
+flotta. Dalla classifica ogni riga ha ✉️ e ＋.
+**La chat di consorzio esisteva già** (`alliances.js` + `alliance_chat`): il
+Network la mostra riusando la STESSA RPC, non una copia.
+
+## 2. EVENTI CEO — da 6 a 63 (`fc6159c`)
+
+«Ci sono sempre le stesse scelte e gli stessi eventi.» Non era sfortuna, era la
+selezione: sei eventi, uno per mese, `find(e => e.month === gameState.month)`.
+
+Ora il catalogo ha **63 eventi / 146 scelte** e la selezione ha tre livelli:
+`month` (con `month: null` = tutto l'anno, 31 eventi), `requires` (corse,
+reputazione, flotta, autisti, regione, staff — decide CHI vede cosa), e
+`gameState.eventiCEOVisti`, un anello di 25 che scarta i già visti.
+⚠️ La memoria si aggiorna **solo quando l'invito parte davvero**: aggiornarla
+dentro la scelta bruciava un evento a ogni giro in cui la moneta mandava
+un'offerta B2B, e dopo 25 giri ricominciavano le ripetizioni.
+
+**Nuovo vocabolario degli effetti** (`negotiateEmail`, engine-daily.js):
+`gain` incassa, `rides`/`tier` generano corse (tetto 8), `prob`/`ko` rendono la
+scelta una scommessa — il costo si paga comunque, l'esito no.
+🐛 **Difetto vecchio chiuso qui**: l'incasso si scriveva come costo negativo
+(`cost: -5000`, «Servizio Pagato (+€5.000)») e `Math.max(0, cost)` lo azzerava.
+Il bottone prometteva cinquemila euro e non arrivava niente.
+
+**Ogni evento porta la propria lettera** (`da` + `testo` in data.js): è la
+chiusura del punto 1 rimasto aperto ieri. I dodici modelli generici restano come
+rete per chi non ha una lettera propria. L'email salvata non si porta più dietro
+il testo del modello (era `{{segnaposti}}` dentro ogni salvataggio).
+
+## Cosa Vlad ha deciso di NON fare (non riproporlo)
+- **Leasing**: «l'ho testato un po' meglio e per me va bene così. Rimane com'è.»
+- **Corsie taxi/camion**: da progettare bene **dopo il rilascio** — «è una vera
+  extension del gioco».
+- **Dispatcher junior/senior**: non è un problema, è staff che si assume.
+- **Elicottero/jet non vendibili**: fa parte di un update futuro.
+
+## Resta aperto
+- `69_forbice_prezzo_mercato_p2p.sql` — **non applicato**, serve l'ok di Vlad
+  (paletti assoluti €100–€30M lato server; la forbice relativa è già nel client).
+- **Nove commit locali non spinti.** `main` fa auto-deploy su Vercel: il push è
+  la pubblicazione.
+- Acquisto Driver Coins vero end-to-end (solo Vlad può farlo) e la Restricted
+  API Key al posto di `STRIPE_SECRET_KEY` — vedi la sezione Stripe qui sotto.
 
 # ✅ 30/08 — LE CINQUE SEGNALAZIONI DI VLAD: TUTTE CHIUSE. Suite **2305 verdi**.
 
