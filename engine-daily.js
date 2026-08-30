@@ -1062,32 +1062,109 @@ function _eventoConPrezzoDelGiorno(evento) {
         const titolo = String(scelta.text).replace(/\s*\([^()]*\)\s*$/, '');
         return { ...scelta, cost: costo, text: `${titolo} (€${costo.toLocaleString('it-IT')})` };
     });
-    return { ...evento, choices };
+    /* Si copia solo cio' che serve a valle — la scheda Inbox legge `desc` e
+       `choices`, negotiateEmail legge `choices`. La lettera (`da`, `testo`) e i
+       requisiti restano fuori: l'email finisce nel salvataggio, e portarsi
+       dietro il testo del modello con i suoi {{segnaposti}} vuol dire salvare
+       per sempre una cosa che e' gia' stata scritta in `body`. */
+    return { id: evento.id, name: evento.name, desc: evento.desc, choices };
+}
+
+/* Chi vede questo evento. Un giocatore con due auto non deve ricevere la
+   richiesta dell'ambasciata: non e' che la rifiuterebbe, e' che non ha senso
+   che gliela facciano. Tutti i campi sono opzionali; senza `requires` l'evento
+   e' per chiunque. */
+function _requisitiEventoOk(ev) {
+    const r = ev && ev.requires;
+    if (!r) return true;
+    const gs = gameState || {};
+    const corse = (gs.questStats && gs.questStats.totalRides) || 0;
+    if (r.rides   != null && corse < r.rides) return false;
+    if (r.rep     != null && (gs.reputation || 0) < r.rep) return false;
+    if (r.fleet   != null && (gs.fleet || []).length < r.fleet) return false;
+    if (r.drivers != null && (gs.drivers || []).filter(d => d.id !== 'ceo').length < r.drivers) return false;
+    if (r.region  && !(gs.unlockedRegions || []).includes(r.region)) return false;
+    if (r.staff   && !(gs.staff || []).some(s => s.id === r.staff)) return false;
+    return true;
+}
+
+/* Prima: `CEO_EVENTS.find(e => e.month === gameState.month)`. Un evento solo per
+   mese, sempre lo stesso per trenta giorni — la ripetizione che Vlad ha
+   segnalato il 30/08 non era sfortuna, era la selezione.
+   Ora il mese e' un filtro (gli eventi con `month: null` valgono tutto l'anno),
+   i requisiti sono un secondo filtro, e gli ultimi 25 gia' visti si scartano
+   finche' esistono alternative fresche. */
+var MEMORIA_EVENTI_CEO = 25;
+
+function _scegliEventoCEO() {
+    if (typeof CEO_EVENTS === 'undefined' || !CEO_EVENTS.length) return null;
+    const candidati = CEO_EVENTS.filter(e =>
+        (e.month == null || e.month === gameState.month) && _requisitiEventoOk(e));
+    if (!candidati.length) return null;
+
+    const visti = Array.isArray(gameState.eventiCEOVisti) ? gameState.eventiCEOVisti : [];
+    const freschi = candidati.filter(e => !visti.includes(e.id));
+    const urna = freschi.length ? freschi : candidati;
+    return urna[Math.floor(Math.random() * urna.length)];
+}
+
+/* La memoria si aggiorna solo quando l'evento viene DAVVERO spedito. Se si
+   aggiornasse dentro la scelta, ogni giro in cui la moneta manda un'offerta
+   B2B brucerebbe un evento senza mostrarlo: dopo venticinque giri la scorta di
+   eventi freschi sarebbe finita e ricomincerebbero le ripetizioni — cioe'
+   esattamente il difetto che stiamo togliendo. */
+function _ricordaEventoCEO(id) {
+    const visti = Array.isArray(gameState.eventiCEOVisti) ? gameState.eventiCEOVisti : [];
+    gameState.eventiCEOVisti = visti.filter(x => x !== id).concat([id]).slice(-MEMORIA_EVENTI_CEO);
+}
+
+/* La lettera dell'evento, quando l'evento ne ha una sua. Il ripiego sui modelli
+   generici resta per gli eventi che non l'hanno: e' anche il motivo per cui
+   l'oggetto viene comunque riscritto col nome dell'evento a valle. */
+function _lettera(email, ev, vars) {
+    if (!ev || !ev.da || !ev.testo || typeof window._sostituisciSegnaposti !== 'function') return false;
+    // Citta' e data si fissano una volta: nel testo devono coincidere.
+    const v = Object.assign({}, vars, {
+        city: (vars && vars.city) || (typeof _cittaPerEmail === 'function' ? _cittaPerEmail() : 'Roma'),
+        day:  (vars && vars.day != null) ? vars.day
+              : (typeof _dataPerEmail === 'function' ? _dataPerEmail(4 + Math.floor(Math.random() * 10)) : ''),
+    });
+    const sub = s => window._sostituisciSegnaposti(s, v);
+    email.senderName = sub(ev.da.nome);
+    email.senderRole = sub(ev.da.ruolo);
+    email.senderIcon = ev.da.icona;
+    email.body       = sub(ev.testo);
+    email.signature  = sub(ev.da.nome);
+    return true;
 }
 
 function generateEmailEvent() {
-    const currentEvent = CEO_EVENTS.find(e => e.month === gameState.month);
+    const currentEvent = _scegliEventoCEO();
     const gameHour = gameState.day * 24 + gameState.hour;
     const expiresAt = gameHour + 12; // expires in 12 game hours
 
     if (currentEvent && Math.random() > 0.5) {
         const eventoDiOggi = _eventoConPrezzoDelGiorno(currentEvent);
         const _eventEmail = { id: gameState.nextId++, sender: "Networking Board", subject: `[INVITO] ${currentEvent.name}`, type: 'ceo_event', status: 'unread', eventData: eventoDiOggi, expiresAt };
-        /* Il modello prende la citta' e la data da qui: prima riceveva solo
-           `day: gameState.day`, cioe' il contatore dei giorni, e nel testo
-           finiva «Si terra' 302 il Gala». `amount` e' la quota piu' bassa
-           dell'evento, che e' quella di cui parlano i template. */
+        /* `amount` e' la quota piu' bassa dell'evento, che e' quella di cui
+           parlano i testi. Citta' e data non arrivano mai dal contatore dei
+           giorni: `gameState.day` vale 302 e nel testo diventava «Si terra' 302
+           il Gala». */
         const quote = eventoDiOggi.choices.map(c => c.cost).filter(c => c > 0);
-        _applyEmailTemplate(_eventEmail, 'ceo_event', {
+        const vars = {
             eventName: currentEvent.name,
             amount: quote.length ? Math.min.apply(null, quote) : null,
-        });
+        };
+        if (!_lettera(_eventEmail, currentEvent, vars)) {
+            _applyEmailTemplate(_eventEmail, 'ceo_event', vars);
+        }
         // Restore eventData in case template overwrote it (it won't, but belt-and-suspenders)
         _eventEmail.eventData = eventoDiOggi;
-        /* L'oggetto torna quello dell'EVENTO: il template ne aveva uno suo
-           («Cena di Gala Rotary»), e il giocatore non riusciva a capire a cosa
-           lo stessero invitando mentre i bottoni sotto parlavano d'altro. */
+        /* L'oggetto e' sempre quello dell'EVENTO: il template generico ne aveva
+           uno suo («Cena di Gala Rotary»), e il giocatore non capiva a cosa lo
+           stessero invitando mentre i bottoni sotto parlavano d'altro. */
         _eventEmail.subject = `[INVITO] ${currentEvent.name}`;
+        _ricordaEventoCEO(currentEvent.id);
         gameState.emails.push(_eventEmail);
     } else {
         gameState.emails.push({ id: gameState.nextId++, sender: "Concierge Lusso", subject: "Appalto B2B: Delega 3 Giorni", offer: Math.floor(Math.random() * 8000) + 3500, type: 'b2b', status: 'unread', expiresAt });
@@ -1138,10 +1215,32 @@ function negotiateEmail(emailId, action, choiceIdx = null) {
         if (cost > 0) {
             if (!window.CE_money.spend(cost, 'ceo_event_choice')) return;
         }
-        if (choice.repBonus) {
-            window.CE_money.addReputation(choice.repBonus);
+        /* Una scelta con `prob` puo' andare male: in quel caso l'esito e' `ko`,
+           che sostituisce guadagno, reputazione e corse. Il costo invece e'
+           gia' stato pagato — e' quello che rende la scommessa una scommessa.
+           Senza `prob` la scelta riesce sempre, come ha sempre fatto. */
+        const scommessa = typeof choice.prob === 'number' && choice.prob > 0 && choice.prob < 1;
+        const riuscito = !scommessa || Math.random() < choice.prob;
+        const esito = riuscito ? choice : (choice.ko || {});
+
+        /* `gain` esiste perche' prima l'incasso si scriveva come costo negativo
+           (`cost: -5000`, «Servizio Pagato (+€5.000)») e `Math.max(0, cost)` lo
+           azzerava: il bottone prometteva cinquemila euro e non ne arrivava
+           nessuno. */
+        if (esito.gain > 0) window.CE_money.earn(esito.gain, 'ceo_event_gain');
+        if (esito.repBonus) window.CE_money.addReputation(esito.repBonus);
+
+        // Corse generate dall'evento: il tetto e' una difesa contro un dato
+        // sbagliato in catalogo, non una regola di gioco.
+        const quante = Math.max(0, Math.min(8, Math.floor(esito.rides || 0)));
+        if (quante > 0 && typeof generatePOIRide === 'function') {
+            for (let i = 0; i < quante; i++) generatePOIRide(esito.tier || 'business');
         }
-        logToMap(`Evento: Hai scelto "${choice.text}".`);
+
+        logToMap(esito.msg ? `Evento: ${esito.msg}` : `Evento: Hai scelto "${choice.text}".`);
+        if (esito.msg && typeof showNotification === 'function') {
+            showNotification(esito.msg, riuscito ? 'success' : 'error');
+        }
     } else if (email.type === 'b2b') {
         let successChance = 100 - (((action / email.offer) - 1) * 100) + (gameState.reputation * 15);
         if (Math.random() * 100 <= successChance) {

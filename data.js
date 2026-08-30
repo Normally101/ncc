@@ -319,49 +319,730 @@ const RIVALS = [
 ];
 
 // ─── EVENTI CEO ──────────────────────────────────────────────────
+/* Vlad, 30/08: «ci sono sempre le stesse scelte e gli stessi eventi, con bene o
+   male modi e richieste simili. Non crea diversità nel gioco.» Aveva ragione in
+   modo misurabile: gli eventi erano SEI, uno per mese, pescati con
+   `find(e => e.month === gameState.month)`. Per trenta giorni arrivava sempre
+   quello, con le stesse due scelte.
+
+   Adesso sono cinquantadue e la scelta non e' piu' una sola:
+     · `month` fissa i tempi (Sanremo a febbraio, il Palio ad agosto);
+       `month: null` vuol dire "puo' capitare in qualunque momento".
+     · `requires` decide CHI lo vede: un giocatore con due auto non riceve la
+       richiesta dell'ambasciata, e un veterano non perde tempo con la sagra.
+     · `gameState.eventiCEOVisti` ricorda gli ultimi 25, cosi' non ne ritorna
+       uno finche' ci sono alternative fresche.
+
+   FORMA DI UNA SCELTA (tutti i campi tranne `text` sono opzionali):
+     text      etichetta del bottone. Se contiene una cifra fra parentesi,
+               engine-daily la riscrive col prezzo del giorno (±30%).
+     cost      quanto si paga subito. Se mancano i fondi, la scelta non parte.
+     gain      quanto si incassa. (Prima esisteva `cost: -5000` per dire
+               "guadagni 5.000": non incassava niente, il gioco prometteva e
+               non pagava. Ora l'incasso ha un campo suo.)
+     repBonus  reputazione, in piu' o in meno.
+     rides     corse generate subito, di categoria `tier`.
+     prob      probabilita' di riuscita (0-1). Senza, la scelta riesce sempre.
+     ko        cosa succede se va male: stessi campi, sostituiscono l'esito.
+     msg       la riga di cronaca. Se manca, si scrive l'etichetta scelta.
+
+   `da` e `testo` sono la lettera. Prima le lettere erano dodici modelli generici
+   pescati a caso sopra un evento qualunque: l'invito parlava di una «Cena di
+   Gala Rotary» mentre i bottoni vendevano il G20. Ora ogni evento porta la
+   propria. I modelli generici restano come rete di sicurezza per gli eventi
+   che non ne hanno una. */
 const CEO_EVENTS = [
-    { id:'davos',      month:1,  name:'World Economic Forum - Davos',
-      desc:'Un meeting globale. Come ti avvicini alle opportunità di networking?',
+
+    /* ══ GENNAIO ══════════════════════════════════════════════════════════ */
+    { id:'davos', month:1, name:'World Economic Forum — Davos',
+      desc:'Una settimana di potere concentrato in una valle svizzera. Come ti presenti?',
+      da:{ nome:'Delegazione Italiana WEF', ruolo:'Segreteria Accrediti', icona:'🏔' },
+      testo:'Egregio {{ceoName}},\n\nla delegazione italiana al World Economic Forum sta componendo la lista degli operatori accreditati per i transfer interni. Le giornate sono cinque, i clienti sono quelli che decidono l\'economia europea.\n\nUn accredito completo apre porte che restano aperte tutto l\'anno.',
       choices:[
-          { text:'Networking Aggressivo (€8.000)', cost:8000, repBonus:1.5 },
-          { text:'Presenza Base (€2.000)',          cost:2000, repBonus:0.4 }
-      ]
-    },
-    { id:'milanfw',    month:2,  name:'Milano Fashion Week',
-      desc:'La moda di lusso chiama. Vuoi sponsorizzare l\'evento o guadagnare dai servizi?',
+          { text:'Networking aggressivo (€8.000)', cost:8000, repBonus:1.5, msg:'Hai stretto mani per cinque giorni. Qualcuna conta davvero.' },
+          { text:'Presenza base (€2.000)', cost:2000, repBonus:0.4 },
+          { text:'Resta a casa: il lavoro è qui', cost:0, repBonus:0, msg:'Hai lasciato Davos agli altri.' },
+      ] },
+
+    { id:'befana_pediatrico', month:1, name:'Befana al reparto pediatrico',
+      desc:'L\'ospedale chiede auto per portare i regali. Non c\'è compenso, c\'è la città che guarda.',
+      da:{ nome:'Fondazione Ospedale dei Bambini', ruolo:'Ufficio Raccolta Fondi', icona:'🎁' },
+      testo:'Gentile {{ceoName}},\n\nil {{day}} organizziamo la consegna dei doni ai bambini ricoverati a {{city}}. Ci mancano i mezzi per accompagnare i volontari.\n\nNon possiamo offrirle denaro. Possiamo offrirle di essere ringraziata davanti a tutta la città.',
       choices:[
-          { text:'Sponsor Ufficiale (€15.000)', cost:15000, repBonus:2.0 },
-          { text:'Servizio Pagato (+€5.000)',    cost:-5000, repBonus:-0.2 }
-      ]
-    },
-    { id:'formula1',   month:5,  name:'Gran Premio di Monaco',
+          { text:'Metti a disposizione la flotta (€2.000 di carburante)', cost:2000, repBonus:1.6, msg:'La foto delle tue auto davanti all\'ospedale ha fatto il giro dei giornali locali.' },
+          { text:'Manda una sola auto (€500)', cost:500, repBonus:0.4 },
+          { text:'Declina cortesemente', cost:0, repBonus:-0.2, msg:'Hai declinato. Qualcuno se l\'è segnato.' },
+      ] },
+
+    { id:'saldi_shopping', month:1, name:'Settimana dei saldi — clienti da Montenapoleone',
+      desc:'Le boutique del centro cercano un servizio navetta per la clientela straniera.',
+      da:{ nome:'Consorzio Vie del Lusso', ruolo:'Direzione Commerciale', icona:'🛍' },
+      testo:'Spettabile {{companyName}},\n\ni saldi portano in città clienti che spendono in un pomeriggio quanto una famiglia in un anno. Vogliono essere presi in hotel e riaccompagnati con le borse.\n\nCerchiamo un partner per due settimane.',
+      requires:{ rides:5 },
+      choices:[
+          { text:'Servizio navetta dedicato (€3.000)', cost:3000, gain:0, repBonus:0.7, rides:5, tier:'business' },
+          { text:'Solo su chiamata, tariffa piena', cost:0, repBonus:0.2, rides:2, tier:'business' },
+      ] },
+
+    /* ══ FEBBRAIO ═════════════════════════════════════════════════════════ */
+    { id:'milanfw', month:2, name:'Milano Fashion Week',
+      desc:'La moda di lusso chiama. Sponsorizzi l\'evento o vendi il servizio?',
+      da:{ nome:'Camera della Moda', ruolo:'Ufficio Partnership', icona:'👗' },
+      testo:'Gentile {{ceoName}},\n\nla Fashion Week muove in sei giorni più persone di un aeroporto. Modelle, buyer, redazioni: tutti si spostano, tutti hanno fretta, nessuno vuole aspettare.\n\nAbbiamo due formule: partner ufficiale, oppure fornitore a chiamata.',
+      choices:[
+          { text:'Sponsor ufficiale (€15.000)', cost:15000, repBonus:2.0, rides:4, tier:'vip', msg:'Il tuo logo era sul badge di ogni accreditato.' },
+          { text:'Fornitore a chiamata (incassi €5.000)', cost:0, gain:5000, repBonus:-0.2, rides:3, tier:'business', msg:'Hai lavorato tanto e incassato subito. Nessuno però sa chi sei.' },
+      ] },
+
+    { id:'sanremo', month:2, name:'Festival di Sanremo',
+      desc:'Cinque giorni in cui artisti, discografici e giornalisti si muovono solo in auto.',
+      da:{ nome:'Coordinamento Trasporti Ariston', ruolo:'Logistica Festival', icona:'🎤' },
+      testo:'Gentile {{ceoName}},\n\ndal {{day}} Sanremo diventa il posto più congestionato d\'Italia. Servono operatori capaci di garantire puntualità assoluta fra hotel, teatro e sale stampa.\n\nGli orari non si discutono. I clienti nemmeno.',
+      requires:{ rides:8 },
+      choices:[
+          { text:'Navetta ufficiale del Festival (€9.000)', cost:9000, repBonus:1.4, rides:5, tier:'vip' },
+          { text:'Solo trasferte serali (€3.000)', cost:3000, repBonus:0.5, rides:2, tier:'business' },
+          { text:'Troppa confusione, lascia perdere', cost:0, repBonus:0 },
+      ] },
+
+    { id:'carnevale_venezia', month:2, name:'Carnevale di Venezia',
+      desc:'Ospiti in maschera, palazzi privati, acqua alta. Un servizio complicato e molto visibile.',
+      da:{ nome:'Ballo del Doge', ruolo:'Segreteria Ospiti', icona:'🎭' },
+      testo:'Egregio {{ceoName}},\n\nil ballo si tiene il {{day}} in un palazzo sul Canal Grande. I nostri ospiti arrivano in aeroporto e devono raggiungere il molo senza mai toccare la folla.\n\nÈ un servizio di terraferma, ma con la discrezione che si usa in laguna.',
+      requires:{ rides:12, rep:2.0 },
+      choices:[
+          { text:'Servizio completo con attesa notturna (€11.000)', cost:11000, repBonus:1.7, rides:3, tier:'ultra' },
+          { text:'Solo transfer aeroportuali (€4.000)', cost:4000, repBonus:0.6, rides:3, tier:'business' },
+      ] },
+
+    /* ══ MARZO ════════════════════════════════════════════════════════════ */
+    { id:'congresso_medico', month:3, name:'Congresso europeo di cardiologia',
+      desc:'Duemila medici in città per tre giorni. Puntualità sopra ogni altra cosa.',
+      da:{ nome:'Segreteria Congressuale ESC', ruolo:'Logistica Delegati', icona:'🩺' },
+      testo:'Spettabile {{companyName}},\n\ndal {{day}} {{city}} ospita duemila cardiologi da tutta Europa. Ogni ritardo su una sessione plenaria diventa un reclamo scritto.\n\nCerchiamo un fornitore che capisca la differenza fra "quasi in orario" e "in orario".',
+      requires:{ rides:10, fleet:3 },
+      choices:[
+          { text:'Contratto navetta tre giorni (€7.500)', cost:7500, gain:14000, repBonus:0.9, rides:4, tier:'business', msg:'Tre giorni di corse continue. Il conto finale ti ha sorpreso in positivo.' },
+          { text:'Solo transfer VIP relatori (€2.500)', cost:2500, gain:5000, repBonus:0.5, rides:2, tier:'vip' },
+      ] },
+
+    { id:'festa_donna_evento', month:3, name:'Premio Imprenditoria Femminile',
+      desc:'Una serata di premiazioni. Ti chiedono di offrire i transfer alle premiate.',
+      da:{ nome:'Associazione Donne Impresa', ruolo:'Comitato Organizzatore', icona:'🌹' },
+      testo:'Gentile {{ceoName}},\n\nil {{day}} premiamo le venti imprenditrici che hanno fatto crescere il territorio. Alla serata partecipano stampa nazionale e istituzioni.\n\nLe chiediamo di accompagnare le premiate. È visibilità, non beneficenza.',
+      choices:[
+          { text:'Offri i transfer a tutte (€4.000)', cost:4000, repBonus:1.2, rides:2, tier:'vip' },
+          { text:'Sconto del 50%, il resto lo pagano loro (€1.500)', cost:1500, gain:2500, repBonus:0.4 },
+          { text:'Non partecipare', cost:0, repBonus:0 },
+      ] },
+
+    /* ══ APRILE ═══════════════════════════════════════════════════════════ */
+    { id:'salone_mobile', month:4, name:'Salone del Mobile',
+      desc:'La settimana in cui Milano non ha più un\'auto libera.',
+      da:{ nome:'Salone del Mobile', ruolo:'Ufficio Accrediti Fornitori', icona:'🛋' },
+      testo:'Egregio {{ceoName}},\n\nseicentomila visitatori in sei giorni. Gli espositori arrivano con i clienti e i clienti non prendono la metropolitana.\n\nChi si accredita adesso lavora tutta la settimana. Chi si accredita dopo guarda.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Accredito fornitore ufficiale (€6.000)', cost:6000, gain:16000, repBonus:1.1, rides:6, tier:'business' },
+          { text:'Lavora fuori accredito, tariffe libere', cost:0, gain:6000, repBonus:-0.3, rides:3, tier:'standard', msg:'Hai lavorato senza accredito. Redditizio, ma due volte ti hanno mandato via dal piazzale.' },
+      ] },
+
+    { id:'vinitaly', month:4, name:'Vinitaly — Verona',
+      desc:'Buyer internazionali fra le cantine. Bevono, quindi non guidano.',
+      da:{ nome:'Consorzio Cantine Storiche', ruolo:'Direzione Ospitalità', icona:'🍷' },
+      testo:'Gentile {{ceoName}},\n\nportiamo buyer da dodici paesi a visitare le cantine della Valpolicella. Le degustazioni sono serie: nessuno di loro può mettersi al volante.\n\nCerchiamo autisti che sappiano aspettare tre ore senza far pesare l\'attesa.',
+      requires:{ rides:8 },
+      choices:[
+          { text:'Tour completo con attese (€5.000)', cost:5000, gain:11000, repBonus:0.8, rides:3, tier:'business' },
+          { text:'Solo navetta fiera-hotel (€1.500)', cost:1500, gain:3000, repBonus:0.3, rides:2, tier:'standard' },
+      ] },
+
+    { id:'pasqua_pellegrini', month:4, name:'Settimana Santa — pellegrinaggi',
+      desc:'Gruppi di pellegrini, tanti bagagli, orari da rispettare al minuto.',
+      da:{ nome:'Opera Romana Pellegrinaggi', ruolo:'Coordinamento Trasporti', icona:'⛪️' },
+      testo:'Gentile {{ceoName}},\n\nper la Settimana Santa attendiamo gruppi da Spagna, Polonia e Filippine. Serve un servizio ordinato: molte persone, molti bagagli, nessuna improvvisazione.\n\nLe tariffe sono contenute, il volume è alto.',
+      choices:[
+          { text:'Contratto gruppi (€3.500)', cost:3500, gain:9000, repBonus:0.6, rides:6, tier:'group' },
+          { text:'Rifiuta: margini troppo bassi', cost:0, repBonus:0 },
+      ] },
+
+    /* ══ MAGGIO ═══════════════════════════════════════════════════════════ */
+    { id:'formula1', month:5, name:'Gran Premio di Monaco',
       desc:'Il paddock VIP ha bisogno di transfer esclusivi. I prezzi sono liberi.',
+      da:{ nome:'Monaco Paddock Club', ruolo:'Guest Services', icona:'🏎' },
+      testo:'Egregio {{ceoName}},\n\nil Principato chiude al traffico e apre ai pochi accreditati. I nostri ospiti del Paddock Club si spostano fra hotel, porto e circuito in una finestra di due ore.\n\nChi sbaglia un orario qui non lavora l\'anno dopo.',
+      requires:{ rides:12, rep:2.0 },
       choices:[
-          { text:'Flotta Completa (€12.000)',   cost:12000, repBonus:1.8 },
-          { text:'Servizio Parziale (€4.000)',  cost:4000,  repBonus:0.7 }
-      ]
-    },
-    { id:'venice',     month:8,  name:'Festival del Cinema di Venezia',
-      desc:'Stars internazionali cercano discrezione e lusso assoluto.',
+          { text:'Flotta completa accreditata (€12.000)', cost:12000, gain:26000, repBonus:1.8, rides:4, tier:'ultra' },
+          { text:'Servizio parziale (€4.000)', cost:4000, gain:8000, repBonus:0.7, rides:2, tier:'vip' },
+      ] },
+
+    { id:'champions_finale', month:5, name:'Finale di Champions League',
+      desc:'Ottantamila tifosi, duemila ospiti in tribuna d\'onore. Due mondi diversi.',
+      da:{ nome:'Hospitality UEFA', ruolo:'Transport Manager', icona:'🏆' },
+      testo:'Dear {{ceoName}},\n\nper la finale del {{day}} gestiamo il trasporto degli ospiti corporate: sponsor, federazioni, delegazioni. Percorsi concordati con la questura, nessuna deviazione.\n\nIl compenso è buono. Le regole sono rigide.',
+      requires:{ rides:15, fleet:4 },
       choices:[
-          { text:'Partner Ufficiale (€20.000)', cost:20000, repBonus:2.5 },
-          { text:'Presenza Ridotta (€6.000)',   cost:6000,  repBonus:0.9 }
-      ]
-    },
-    { id:'g20',        month:10, name:'G20 Summit Roma',
+          { text:'Contratto hospitality (€10.000)', cost:10000, gain:24000, repBonus:1.3, rides:5, tier:'vip' },
+          { text:'Servizio tifosi premium, tariffa doppia', cost:0, gain:9000, repBonus:-0.2, rides:6, tier:'standard', msg:'Hai lavorato con i tifosi. Redditizio e caotico: due auto sono tornate da lavare a fondo.' },
+      ] },
+
+    { id:'giro_italia', month:5, name:'Giro d\'Italia — carovana',
+      desc:'La corsa si sposta ogni giorno. Chi la segue ha bisogno di auto che si spostino con lei.',
+      da:{ nome:'Organizzazione Corsa Rosa', ruolo:'Ufficio Carovana', icona:'🚴' },
+      testo:'Gentile {{ceoName}},\n\nla carovana cambia città ogni sera. Cerchiamo operatori per il trasporto di sponsor e giornalisti su tre tappe consecutive.\n\nSi dorme poco e si guida molto. Chi regge, torna l\'anno prossimo.',
+      requires:{ rides:10, drivers:2 },
+      choices:[
+          { text:'Segui tre tappe (€6.000)', cost:6000, gain:15000, repBonus:1.0, rides:4, tier:'business', msg:'Tre giorni sulle strade del Giro. Gli autisti sono distrutti e contenti.' },
+          { text:'Solo la tappa vicino a casa (€1.500)', cost:1500, gain:3500, repBonus:0.3, rides:2, tier:'standard' },
+      ] },
+
+    /* ══ GIUGNO ═══════════════════════════════════════════════════════════ */
+    { id:'mille_miglia', month:6, name:'1000 Miglia — assistenza equipaggi',
+      desc:'Auto d\'epoca da un milione di euro e proprietari che le seguono in auto moderna.',
+      da:{ nome:'1000 Miglia Srl', ruolo:'Assistenza Equipaggi', icona:'🏁' },
+      testo:'Egregio {{ceoName}},\n\ngli equipaggi corrono con vetture storiche; famiglie e meccanici li seguono su strada. Serve un servizio che stia dietro alla corsa senza mai entrarci.\n\nÈ un lavoro di pazienza, non di velocità.',
+      requires:{ rides:12 },
+      choices:[
+          { text:'Assistenza completa (€7.000)', cost:7000, gain:15000, repBonus:1.2, rides:3, tier:'vip' },
+          { text:'Solo la partenza di Brescia (€2.000)', cost:2000, gain:4000, repBonus:0.4 },
+      ] },
+
+    { id:'matrimoni_giugno', month:6, name:'Stagione dei matrimoni',
+      desc:'Giugno è il mese. Le agenzie cercano flotte, non singole auto.',
+      da:{ nome:'Wedding Planner Associati', ruolo:'Ufficio Fornitori', icona:'💍' },
+      testo:'Gentile {{ceoName}},\n\ngestiamo quaranta matrimoni fra giugno e luglio, molti con ospiti stranieri. Ogni matrimonio significa sposi, testimoni, nonni e otto navette per gli invitati.\n\nCerchiamo un fornitore unico per tutta la stagione.',
+      requires:{ fleet:3 },
+      choices:[
+          { text:'Fornitore unico di stagione (€5.000 di anticipo)', cost:5000, gain:18000, repBonus:1.1, rides:6, tier:'business', msg:'Quaranta matrimoni. Nessuna sposa è arrivata in ritardo.' },
+          { text:'Accetta solo i cinque più ricchi (€1.500)', cost:1500, gain:6000, repBonus:0.5, rides:3, tier:'vip' },
+          { text:'Rifiuta: troppa esposizione', cost:0, repBonus:0 },
+      ] },
+
+    { id:'mugello_motogp', month:6, name:'MotoGP al Mugello',
+      desc:'Team, piloti e ospiti dello sponsor. Il traffico intorno al circuito è leggendario.',
+      da:{ nome:'Paddock Hospitality Mugello', ruolo:'Coordinamento Ospiti', icona:'🏍' },
+      testo:'Gentile {{ceoName}},\n\nil circuito è in mezzo alle colline e la viabilità è una sola. Chi conosce le strade secondarie porta gli ospiti in venti minuti; gli altri in due ore.\n\nCi dica se conosce le strade secondarie.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Servizio ospiti sponsor (€5.500)', cost:5500, gain:12000, repBonus:0.9, rides:4, tier:'vip' },
+          { text:'Navette dal parcheggio (€1.500)', cost:1500, gain:4000, repBonus:0.3, rides:4, tier:'group' },
+      ] },
+
+    { id:'festa_repubblica', month:6, name:'2 Giugno — delegazioni istituzionali',
+      desc:'Auto scure, bandierine, protocollo. Nessuna improvvisazione ammessa.',
+      da:{ nome:'Prefettura di {{city}}', ruolo:'Ufficio Cerimoniale', icona:'🇮🇹' },
+      testo:'Spettabile {{companyName}},\n\nper le celebrazioni del 2 Giugno la Prefettura integra il parco auto istituzionale con operatori privati selezionati.\n\nRichiediamo vetture scure, autisti in giacca e assoluta puntualità. Il protocollo prevede controlli preventivi.',
+      requires:{ rides:15, rep:2.5, fleet:3 },
+      choices:[
+          { text:'Accetta l\'incarico (€3.000 di adeguamenti)', cost:3000, gain:12000, repBonus:1.5, rides:3, tier:'vip', msg:'Le tue auto erano nel corteo. Il Prefetto ha ringraziato per iscritto.' },
+          { text:'Declina: il protocollo è troppo rigido', cost:0, repBonus:-0.1 },
+      ] },
+
+    /* ══ LUGLIO ═══════════════════════════════════════════════════════════ */
+    { id:'yacht_portocervo', month:7, name:'Stagione degli yacht — Porto Cervo',
+      desc:'Armatori che atterrano a Olbia e vogliono essere al molo in venti minuti.',
+      da:{ nome:'Marina di Porto Cervo', ruolo:'Concierge Armatori', icona:'⛵️' },
+      testo:'Gentile {{ceoName}},\n\ni nostri armatori arrivano con voli privati e non tollerano attese. Il tragitto aeroporto-molo va coperto con auto impeccabili e autisti che non facciano domande.\n\nLa stagione dura otto settimane e paga bene.',
+      requires:{ rides:15, rep:2.5 },
+      choices:[
+          { text:'Presidio stagionale (€14.000)', cost:14000, gain:34000, repBonus:1.6, rides:4, tier:'ultra' },
+          { text:'Solo weekend di agosto (€5.000)', cost:5000, gain:11000, repBonus:0.6, rides:2, tier:'vip' },
+      ] },
+
+    { id:'festival_jazz', month:7, name:'Festival jazz internazionale',
+      desc:'Musicisti con strumenti ingombranti e nessuna voglia di parlare prima del concerto.',
+      da:{ nome:'Direzione Artistica Festival', ruolo:'Ospitalità Artisti', icona:'🎷' },
+      testo:'Gentile {{ceoName}},\n\nquindici formazioni da otto paesi. Alcuni strumenti valgono più dell\'auto che li trasporta e viaggiano in abitacolo, non in bagagliaio.\n\nServe un autista che capisca perché un contrabbassista è nervoso.',
+      choices:[
+          { text:'Servizio artisti dedicato (€3.500)', cost:3500, gain:7000, repBonus:0.8, rides:3, tier:'business' },
+          { text:'Solo transfer aeroporto (€1.000)', cost:1000, gain:2200, repBonus:0.2 },
+      ] },
+
+    /* ══ AGOSTO ═══════════════════════════════════════════════════════════ */
+    { id:'venice', month:8, name:'Festival del Cinema di Venezia',
+      desc:'Star internazionali cercano discrezione e lusso assoluto.',
+      da:{ nome:'Mostra del Cinema', ruolo:'Ufficio Ospiti Internazionali', icona:'🎬' },
+      testo:'Gentile {{ceoName}},\n\ndal {{day}} il Lido ospita la Mostra. I nostri ospiti arrivano a {{city}} e proseguono via terra fino all\'imbarco: è il tratto in cui i fotografi aspettano.\n\nCerchiamo partner che sappiano cosa significa un finestrino oscurato.',
+      requires:{ rides:12, rep:2.0 },
+      choices:[
+          { text:'Partner ufficiale (€20.000)', cost:20000, gain:38000, repBonus:2.5, rides:4, tier:'ultra' },
+          { text:'Presenza ridotta (€6.000)', cost:6000, gain:11000, repBonus:0.9, rides:2, tier:'vip' },
+      ] },
+
+    { id:'palio_siena', month:8, name:'Palio di Siena',
+      desc:'La città si chiude. Chi arriva in ritardo resta fuori dalle mura.',
+      da:{ nome:'Comitato Ospitalità Contrade', ruolo:'Accoglienza Ospiti', icona:'🐎' },
+      testo:'Gentile {{ceoName}},\n\nil giorno del Palio Siena diventa impenetrabile. I nostri ospiti devono essere ai palazzi entro le sedici, dopo non passa più nessuno.\n\nÈ una corsa contro un orario, non contro il traffico.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Servizio con partenza all\'alba (€4.500)', cost:4500, gain:10000, repBonus:1.0, rides:3, tier:'vip' },
+          { text:'Rifiuta: rischio di restare bloccati', cost:0, repBonus:0 },
+      ] },
+
+    { id:'ferragosto_costiera', month:8, name:'Ferragosto in Costiera',
+      desc:'Strade strette, clienti facoltosi, code di tre ore. Il servizio si paga caro per un motivo.',
+      da:{ nome:'Hotel Le Sirenuse', ruolo:'Chief Concierge', icona:'🌊' },
+      testo:'Gentile {{ceoName}},\n\nferragosto in Costiera è la prova più dura per un autista: strade da un metro e mezzo, clienti che pagano mille euro a notte e non vogliono sentir parlare di traffico.\n\nCerchiamo chi ha già guidato qui. Gli altri non reggono una settimana.',
+      requires:{ rides:12, rep:2.0 },
+      choices:[
+          { text:'Presidio Ferragosto (€8.000)', cost:8000, gain:19000, repBonus:1.3, rides:4, tier:'vip', prob:0.75,
+            ko:{ gain:9000, repBonus:-0.6, msg:'Due clienti sono rimasti in coda tre ore sotto il sole. Il concierge ha scritto una lettera che non ti è piaciuta.' },
+            msg:'Settimana durissima, nessun ritardo. Il concierge ti ha messo in cima alla lista.' },
+          { text:'Solo transfer notturni, meno traffico (€3.000)', cost:3000, gain:6500, repBonus:0.5, rides:2, tier:'business' },
+      ] },
+
+    /* ══ SETTEMBRE ════════════════════════════════════════════════════════ */
+    { id:'rientro_aziendale', month:9, name:'Rientro — gare per le convenzioni aziendali',
+      desc:'A settembre le aziende rifanno i contratti di mobilità. Si vince adesso o fra un anno.',
+      da:{ nome:'Procurement — Gruppo Industriale', ruolo:'Ufficio Acquisti', icona:'🏢' },
+      testo:'Spettabile {{companyName}},\n\napriamo la gara per il servizio di mobilità dei dirigenti per i prossimi dodici mesi. Valutiamo affidabilità, copertura territoriale e prezzo.\n\nLa documentazione va presentata entro il {{day}}.',
+      requires:{ rides:12, fleet:3 },
+      choices:[
+          { text:'Partecipa con offerta aggressiva (€4.000 di pratica)', cost:4000, repBonus:0.8, rides:5, tier:'business', prob:0.6,
+            ko:{ repBonus:-0.2, msg:'Gara persa per seicento euro. Ti hanno detto che eri secondo.' },
+            msg:'Gara vinta. Dodici mesi di corse garantite.' },
+          { text:'Partecipa con offerta prudente (€4.000)', cost:4000, repBonus:0.4, rides:2, tier:'business', prob:0.3,
+            ko:{ repBonus:0, msg:'Offerta troppo alta: la gara è andata a un concorrente.' },
+            msg:'Vinta anche a prezzo pieno. Raro e ottimo.' },
+          { text:'Non partecipare', cost:0, repBonus:0 },
+      ] },
+
+    { id:'salone_nautico', month:9, name:'Salone Nautico',
+      desc:'Compratori di barche. Gente che decide in un pomeriggio e paga senza discutere.',
+      da:{ nome:'Salone Nautico Internazionale', ruolo:'Servizi agli Espositori', icona:'🛥' },
+      testo:'Gentile {{ceoName}},\n\ngli espositori portano clienti che valutano acquisti da sette cifre. Il tragitto dall\'hotel alla darsena è parte della trattativa: se l\'auto è modesta, la barca sembra modesta.\n\nCerchiamo vetture all\'altezza.',
+      requires:{ rides:10, rep:1.8 },
+      choices:[
+          { text:'Flotta di rappresentanza (€6.500)', cost:6500, gain:14000, repBonus:1.0, rides:3, tier:'vip' },
+          { text:'Servizio standard (€2.000)', cost:2000, gain:4000, repBonus:0.2, rides:2, tier:'business' },
+      ] },
+
+    /* ══ OTTOBRE ══════════════════════════════════════════════════════════ */
+    { id:'g20', month:10, name:'G20 Summit',
       desc:'I leader mondiali hanno bisogno di trasporti blindati e discreti.',
+      da:{ nome:'Comitato Organizzatore G20', ruolo:'Ufficio Logistica Delegazioni', icona:'🌐' },
+      testo:'Spettabile {{companyName}},\n\nper il Summit del {{day}} integriamo il parco auto delle delegazioni con operatori privati sottoposti a verifica di sicurezza.\n\nL\'appalto è impegnativo: controlli sugli autisti, percorsi imposti, nessuna libertà operativa. Il compenso riflette la difficoltà.',
+      requires:{ rides:18, rep:3.0, fleet:4 },
       choices:[
-          { text:'Appalto Governativo (€30.000)', cost:30000, repBonus:3.0 },
-          { text:'Rifiuta (Rischio rep)',          cost:0,     repBonus:-0.3 }
-      ]
-    },
-    { id:'capodanno',  month:12, name:'Gala di Capodanno — Hotel Eden Roma',
-      desc:'Serata esclusiva: ogni corsa vale il doppio. Vuoi essere presente?',
+          { text:'Appalto governativo (€30.000)', cost:30000, gain:62000, repBonus:3.0, rides:4, tier:'ultra', msg:'Le tue auto hanno portato delegazioni straniere. Un biglietto da visita che vale anni.' },
+          { text:'Rifiuta: troppi vincoli', cost:0, repBonus:-0.3 },
+      ] },
+
+    { id:'nobel_cena', month:10, name:'Cena di gala — premio scientifico internazionale',
+      desc:'Scienziati, rettori e finanziatori. Un pubblico che nota i dettagli.',
+      da:{ nome:'Fondazione per la Ricerca', ruolo:'Segreteria Generale', icona:'🔬' },
+      testo:'Gentile {{ceoName}},\n\nla cena riunisce i finanziatori della ricerca italiana e alcuni ospiti internazionali. Il livello è alto e il budget è controllato: non possiamo pagare tariffe da evento mondano.\n\nQuello che possiamo darle è la platea giusta.',
+      requires:{ rep:2.0 },
       choices:[
-          { text:'Flotta All-In (€8.000)',      cost:8000, repBonus:1.2 },
-          { text:'Solo i Driver Top (€3.000)',  cost:3000, repBonus:0.6 }
-      ]
-    }
+          { text:'Servizio a tariffa agevolata (€2.500)', cost:2500, gain:3500, repBonus:1.1, rides:2, tier:'vip' },
+          { text:'Tariffa piena o niente', cost:0, gain:0, repBonus:-0.3, msg:'Hai chiesto tariffa piena. Hanno chiamato un altro.' },
+      ] },
+
+    { id:'halloween_locali', month:10, name:'Notte di Halloween — circuito dei locali',
+      desc:'Una notte di corse brevi e clienti allegri. Redditizia e rischiosa per gli interni.',
+      da:{ nome:'Associazione Locali Notturni', ruolo:'Coordinamento Eventi', icona:'🎃' },
+      testo:'Gentile {{ceoName}},\n\nla notte del 31 i nostri locali chiudono alle cinque e i clienti devono tornare a casa. Molti hanno bevuto, tutti hanno fretta, nessuno bada al prezzo.\n\nÈ una notte da incasso record. Con qualche rischio per le tappezzerie.',
+      choices:[
+          { text:'Copri tutta la notte (€1.500 di straordinari)', cost:1500, gain:7000, repBonus:0.2, rides:6, tier:'standard', prob:0.7,
+            ko:{ gain:6000, repBonus:-0.5, msg:'Incasso ottimo, ma un cliente ha rovinato i sedili posteriori e ha lasciato una recensione furiosa.' },
+            msg:'Notte piena, nessun danno. Incasso da ricordare.' },
+          { text:'Solo corse prenotate (€500)', cost:500, gain:2200, repBonus:0.3, rides:2, tier:'business' },
+      ] },
+
+    /* ══ NOVEMBRE ═════════════════════════════════════════════════════════ */
+    { id:'ognissanti_corteo', month:11, name:'Corteo funebre di un industriale',
+      desc:'Una famiglia storica chiede discrezione totale. Nessuna fotografia, nessun commento.',
+      da:{ nome:'Studio Notarile Bellandi', ruolo:'Per conto della famiglia', icona:'🕯' },
+      testo:'Gentile {{ceoName}},\n\nla famiglia ci ha incaricati di organizzare gli spostamenti per le esequie del {{day}}. Saranno presenti stampa e istituzioni.\n\nCi serve un operatore che capisca che in questo lavoro il silenzio è parte del servizio.',
+      requires:{ rep:2.0, fleet:3 },
+      choices:[
+          { text:'Servizio completo con vetture scure (€5.000)', cost:5000, gain:12000, repBonus:1.4, rides:3, tier:'vip', msg:'Servizio impeccabile e silenzioso. La famiglia ti chiamerà ancora.' },
+          { text:'Metti a disposizione due auto (€1.500)', cost:1500, gain:3500, repBonus:0.5 },
+      ] },
+
+    { id:'black_friday', month:11, name:'Black Friday — consegne di lusso',
+      desc:'Le boutique cercano corrieri eleganti per consegne a domicilio in giornata.',
+      da:{ nome:'Consorzio Boutique del Centro', ruolo:'Logistica Clienti', icona:'📦' },
+      testo:'Spettabile {{companyName}},\n\ni nostri clienti comprano online e vogliono il pacco a casa entro sera, consegnato da qualcuno presentabile. Non è il lavoro di un corriere qualunque.\n\nOtto giorni di consegne, tariffa a corsa.',
+      requires:{ rides:8 },
+      choices:[
+          { text:'Accetta le consegne (€2.000)', cost:2000, gain:8500, repBonus:0.3, rides:6, tier:'standard', msg:'Otto giorni di consegne. Poco glamour, ottimo incasso.' },
+          { text:'Rifiuta: non siamo corrieri', cost:0, repBonus:0.1, msg:'Hai rifiutato. La tua flotta resta un servizio persone, e si vede.' },
+      ] },
+
+    /* ══ DICEMBRE ═════════════════════════════════════════════════════════ */
+    { id:'natale_corporate', month:12, name:'Cene aziendali di Natale',
+      desc:'Trenta aziende, trenta cene, tutte nelle stesse due settimane.',
+      da:{ nome:'Catering Milano Eventi', ruolo:'Direzione Operativa', icona:'🎄' },
+      testo:'Gentile {{ceoName}},\n\nabbiamo trenta cene aziendali fra il 5 e il 22 dicembre. Ogni cena finisce con quaranta persone che devono tornare a casa nello stesso momento.\n\nCerchiamo un partner unico per il ritorno. È un lavoro di organizzazione, più che di guida.',
+      requires:{ fleet:3, drivers:2 },
+      choices:[
+          { text:'Partner unico per tutte le cene (€6.000)', cost:6000, gain:17000, repBonus:1.0, rides:7, tier:'group' },
+          { text:'Solo le dieci più grandi (€2.000)', cost:2000, gain:6000, repBonus:0.4, rides:3, tier:'group' },
+      ] },
+
+    { id:'capodanno', month:12, name:'Gala di Capodanno — Hotel Eden',
+      desc:'Serata esclusiva: ogni corsa vale il doppio. Vuoi esserci?',
+      da:{ nome:'Hotel Eden', ruolo:'Direzione Eventi', icona:'🥂' },
+      testo:'Gentile {{ceoName}},\n\nil nostro gala di Capodanno ospita duecento persone che non guardano il conto. Servono auto dalle 19 alle 6 del mattino, con autisti sobri e pazienti.\n\nSappiamo che è la notte più difficile dell\'anno. Per questo paghiamo il doppio.',
+      choices:[
+          { text:'Flotta all-in (€8.000)', cost:8000, gain:21000, repBonus:1.2, rides:5, tier:'vip' },
+          { text:'Solo i driver migliori (€3.000)', cost:3000, gain:8000, repBonus:0.6, rides:2, tier:'vip' },
+          { text:'Chiudi per Capodanno', cost:0, repBonus:-0.1, msg:'Hai chiuso per Capodanno. Gli autisti ti ringraziano, il conto no.' },
+      ] },
+
+    /* ══ TUTTO L'ANNO — clienti ══════════════════════════════════════════ */
+    { id:'sceicco_matrimonio', month:null, name:'Matrimonio di una famiglia del Golfo',
+      desc:'Tre giorni, sessanta invitati, richieste che cambiano ogni ora.',
+      da:{ nome:'Al Rashid Family Office', ruolo:'Protocol Manager', icona:'💎' },
+      testo:'Dear {{ceoName}},\n\nla famiglia celebra il matrimonio a {{city}} dal {{day}}. Sessanta ospiti, arrivi scaglionati su tre giorni, programma che verrà modificato più volte.\n\nRichiediamo esclusiva totale: nessun altro cliente per tutta la durata.',
+      requires:{ rides:15, rep:2.5, fleet:4 },
+      choices:[
+          { text:'Esclusiva totale tre giorni (€18.000)', cost:18000, gain:46000, repBonus:1.9, rides:5, tier:'ultra', msg:'Tre giorni al servizio di una sola famiglia. Il bonifico è arrivato prima del previsto.' },
+          { text:'Servizio non esclusivo (€6.000)', cost:6000, gain:13000, repBonus:0.4, rides:3, tier:'vip', msg:'Hai tenuto anche gli altri clienti. Il protocol manager l\'ha notato e non gli è piaciuto.' },
+      ] },
+
+    { id:'rapper_tour', month:null, name:'Tour di un rapper — sei date',
+      desc:'Molti soldi, molto rumore, e un entourage che tratta le auto come camerini.',
+      da:{ nome:'Management Artisti Urban', ruolo:'Tour Manager', icona:'🎧' },
+      testo:'Yo {{ceoName}},\n\nsei date in dodici giorni, l\'artista si sposta solo in auto e non prende aerei. L\'entourage è di otto persone e gli orari li decide lui.\n\nPaghiamo bene e in anticipo. Il resto lo scoprirà.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Accetta tutto il tour (€4.000 di anticipo)', cost:4000, gain:19000, repBonus:0.3, rides:5, tier:'vip', prob:0.6,
+            ko:{ gain:17000, repBonus:-0.9, msg:'Soldi tanti, ma un\'auto è tornata con i sedili bruciati e un video finito online.' },
+            msg:'Tour finito senza incidenti. Il tour manager ti ha già chiesto per la prossima tournée.' },
+          { text:'Solo le due date vicine (€1.000)', cost:1000, gain:5000, repBonus:0.1, rides:2, tier:'business' },
+          { text:'Non fa per noi', cost:0, repBonus:0 },
+      ] },
+
+    { id:'influencer_baratto', month:null, name:'Influencer: auto gratis in cambio di visibilità',
+      desc:'Tre milioni di follower e nessuna intenzione di pagare.',
+      da:{ nome:'Agenzia Talent Digitale', ruolo:'Brand Partnership', icona:'📱' },
+      testo:'Ciao {{ceoName}},\n\nla nostra creator ha 3,2 milioni di follower e sta girando una serie a {{city}}. Le proponiamo una collaborazione: lei usa le vostre auto per una settimana, voi comparite nei contenuti.\n\nNon è previsto compenso monetario. È previsto pubblico.',
+      choices:[
+          { text:'Accetta il baratto (€1.500 di costi vivi)', cost:1500, repBonus:1.3, prob:0.65,
+            ko:{ repBonus:-0.4, msg:'Una settimana di auto gratis e nel video il logo non si vedeva. Lezione imparata.' },
+            msg:'Il video ha fatto due milioni di visualizzazioni e le tue auto erano ovunque.' },
+          { text:'Contropropone: metà tariffa e contratto scritto (€800)', cost:800, gain:1600, repBonus:0.5, msg:'Hanno accettato la contro-proposta. Meno visibilità, zero rischio.' },
+          { text:'Rifiuta: si paga come tutti', cost:0, repBonus:0 },
+      ] },
+
+    { id:'squadra_trasferta', month:null, name:'Trasferta di una squadra di Serie A',
+      desc:'Ventidue giocatori, staff, e un pullman che si è rotto.',
+      da:{ nome:'Team Manager', ruolo:'Società Calcistica', icona:'⚽️' },
+      testo:'Gentile {{ceoName}},\n\nabbiamo un\'emergenza: il pullman della prima squadra è fermo e domani alle 14 dobbiamo essere allo stadio. Ci servono sei vetture per trentadue persone.\n\nSe risolve questa, parliamo di un contratto annuale.',
+      requires:{ fleet:4, drivers:2 },
+      choices:[
+          { text:'Risolvi l\'emergenza (€2.500 di straordinari)', cost:2500, gain:9000, repBonus:1.2, rides:4, tier:'group', msg:'Squadra allo stadio con venti minuti d\'anticipo. Il team manager ha il tuo numero.' },
+          { text:'Manda quello che hai libero (€800)', cost:800, gain:3000, repBonus:0.2, rides:2, tier:'group' },
+      ] },
+
+    { id:'troupe_hollywood', month:null, name:'Troupe cinematografica americana',
+      desc:'Sei settimane di riprese. Orari impossibili, budget generoso.',
+      da:{ nome:'Production Services Italy', ruolo:'Transportation Coordinator', icona:'🎥' },
+      testo:'Dear {{ceoName}},\n\nsix weeks of shooting in and around {{city}}. Serve un servizio dalle 4:30 del mattino fino a fine giornata, cast e troupe separati.\n\nIl budget c\'è. Quello che non c\'è è la tolleranza per i ritardi.',
+      requires:{ rides:15, fleet:4, drivers:3 },
+      choices:[
+          { text:'Contratto sei settimane (€16.000)', cost:16000, gain:44000, repBonus:1.7, rides:6, tier:'business', msg:'Sei settimane di sveglie alle quattro. Il bonifico finale ha ripagato tutto.' },
+          { text:'Solo il trasporto del cast (€5.000)', cost:5000, gain:13000, repBonus:0.8, rides:3, tier:'vip' },
+      ] },
+
+    { id:'crociera_scalo', month:null, name:'Nave da crociera in scalo — 400 passeggeri',
+      desc:'Otto ore di escursioni per chi scende. Un lavoro di volume puro.',
+      da:{ nome:'Shore Excursions Manager', ruolo:'Compagnia di Navigazione', icona:'🛳' },
+      testo:'Gentile {{ceoName}},\n\nlo scalo dura otto ore e quattrocento passeggeri vogliono vedere la città. Organizziamo escursioni in piccoli gruppi: servono molte auto contemporaneamente.\n\nTariffa per gruppo, pagamento a fine scalo.',
+      requires:{ fleet:3 },
+      choices:[
+          { text:'Copri venti gruppi (€3.000)', cost:3000, gain:11000, repBonus:0.6, rides:8, tier:'group' },
+          { text:'Copri solo i gruppi premium (€1.000)', cost:1000, gain:4500, repBonus:0.4, rides:3, tier:'business' },
+      ] },
+
+    { id:'ambasciata_contratto', month:null, name:'Ambasciata: contratto annuale',
+      desc:'Verifiche sugli autisti, riservatezza contrattuale, pagamenti puntuali.',
+      da:{ nome:'Ambasciata — Ufficio Amministrativo', ruolo:'Responsabile Servizi', icona:'🛂' },
+      testo:'Spettabile {{companyName}},\n\nl\'Ambasciata seleziona un fornitore per il trasporto del personale diplomatico. Il contratto è annuale e rinnovabile.\n\nGli autisti saranno sottoposti a verifica dei precedenti. Le comunicazioni sono riservate per contratto.',
+      requires:{ rides:20, rep:3.0, fleet:4 },
+      choices:[
+          { text:'Candidati al contratto (€5.000 di pratiche)', cost:5000, gain:0, repBonus:2.0, rides:4, tier:'vip', prob:0.55,
+            ko:{ repBonus:0, msg:'Verifiche superate, contratto andato a un fornitore già accreditato. Le pratiche restano pagate.' },
+            msg:'Contratto vinto. Un anno di corse istituzionali garantite.' },
+          { text:'Lascia perdere le verifiche', cost:0, repBonus:0 },
+      ] },
+
+    { id:'ospedale_organi', month:null, name:'Trasporto urgente per il centro trapianti',
+      desc:'Non paga quasi nulla. Serve alle tre di notte e serve subito.',
+      da:{ nome:'Centro Trapianti Regionale', ruolo:'Coordinamento Urgenze', icona:'🚨' },
+      testo:'Gentile {{ceoName}},\n\ncerchiamo operatori disponibili a intervenire in urgenza per il trasporto di équipe chirurgiche, anche di notte. Il rimborso è quello previsto dalla convenzione sanitaria: basso.\n\nQuello che le chiediamo non è un affare. È una disponibilità.',
+      requires:{ drivers:2 },
+      choices:[
+          { text:'Entra in convenzione (€1.000)', cost:1000, gain:2000, repBonus:1.5, rides:2, tier:'standard', msg:'Due chiamate notturne in una settimana. La stampa locale ne ha parlato.' },
+          { text:'Solo diurno (€500)', cost:500, gain:1200, repBonus:0.5 },
+          { text:'Non abbiamo la struttura', cost:0, repBonus:0 },
+      ] },
+
+    { id:'soprano_capricci', month:null, name:'Soprano in tournée — richieste particolari',
+      desc:'Temperatura dell\'abitacolo a 21 gradi esatti, nessun profumo, nessuna conversazione.',
+      da:{ nome:'Agenzia Lirica Internazionale', ruolo:'Assistente Personale', icona:'🎭' },
+      testo:'Gentile {{ceoName}},\n\nla Signora canta al Teatro il {{day}}. Le sue richieste per il trasporto sono precise: 21 gradi in abitacolo, nessuna fragranza, silenzio assoluto, acqua a temperatura ambiente.\n\nNon sono capricci: è la sua voce.',
+      choices:[
+          { text:'Rispetta ogni richiesta (€2.000)', cost:2000, gain:5500, repBonus:1.0, rides:2, tier:'ultra', msg:'Silenzio perfetto per tutto il tragitto. L\'agenzia ti ha inserito nella lista dei fornitori europei.' },
+          { text:'Servizio normale, sono esagerazioni (€500)', cost:500, gain:2000, repBonus:-0.6, msg:'L\'autista ha messo la radio. La Signora non ha gradito, e l\'agenzia ha scritto.' },
+      ] },
+
+    { id:'startup_roadshow', month:null, name:'Roadshow di una startup verso l\'IPO',
+      desc:'Dodici investitori in tre giorni. Pagano in ritardo ma parlano bene di te.',
+      da:{ nome:'CFO — Scale-up Tecnologica', ruolo:'Direzione Finanziaria', icona:'📈' },
+      testo:'Gentile {{ceoName}},\n\nstiamo preparando la quotazione e nei prossimi tre giorni incontriamo dodici fondi a {{city}} e dintorni. Non possiamo permetterci di arrivare tardi da nessuno.\n\nPaghiamo a trenta giorni. Se la quotazione va bene, diventiamo un cliente fisso.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Accetta il pagamento differito (€2.500)', cost:2500, repBonus:0.7, rides:3, tier:'business', prob:0.7,
+            ko:{ repBonus:-0.1, msg:'La quotazione è slittata e il pagamento pure. Recuperato solo in parte.' },
+            gain:11000, msg:'IPO riuscita. Hanno pagato in anticipo e ti hanno citato nel comunicato.' },
+          { text:'Pagamento anticipato o niente', cost:0, gain:4000, repBonus:0, rides:2, tier:'business', msg:'Hanno pagato prima, ma hanno preso un altro fornitore per il resto del roadshow.' },
+      ] },
+
+    { id:'asta_arte', month:null, name:'Casa d\'aste: serata di vendita',
+      desc:'Clienti che comprano quadri e non vogliono essere visti mentre li portano via.',
+      da:{ nome:'Casa d\'Aste Internazionale', ruolo:'Client Services', icona:'🖼' },
+      testo:'Gentile {{ceoName}},\n\nla vendita serale del {{day}} porterà in sala collezionisti da tutta Europa. Alcuni preferiscono non essere fotografati all\'ingresso.\n\nCi serve un servizio che sappia usare l\'accesso di servizio.',
+      requires:{ rep:2.0 },
+      choices:[
+          { text:'Servizio riservato con accesso privato (€3.500)', cost:3500, gain:8000, repBonus:1.1, rides:2, tier:'ultra' },
+          { text:'Servizio standard all\'ingresso principale (€1.200)', cost:1200, gain:2800, repBonus:0.2 },
+      ] },
+
+    { id:'delegazione_cinese', month:null, name:'Delegazione commerciale cinese',
+      desc:'Quindici persone, sei aziende da visitare, un interprete che decide tutto.',
+      da:{ nome:'Camera di Commercio Italo-Cinese', ruolo:'Ufficio Missioni', icona:'🀄️' },
+      testo:'Spettabile {{companyName}},\n\naccompagniamo una delegazione di imprenditori in visita a sei stabilimenti nel raggio di duecento chilometri da {{city}}.\n\nGli orari sono compressi e il programma cambia spesso. Serve flessibilità, non rigidità contrattuale.',
+      requires:{ rides:10, fleet:3 },
+      choices:[
+          { text:'Accetta con flessibilità totale (€4.000)', cost:4000, gain:12000, repBonus:1.0, rides:4, tier:'business' },
+          { text:'Accetta con programma bloccato (€2.000)', cost:2000, gain:5000, repBonus:0.2, rides:2, tier:'business', msg:'Programma rispettato alla lettera. La delegazione avrebbe voluto due fermate in più.' },
+      ] },
+
+    { id:'pilota_guida_sportiva', month:null, name:'Un pilota vuole provare la tua auto migliore',
+      desc:'Chiede di guidarla lui. Sul suo canale ci sono ottocentomila iscritti.',
+      da:{ nome:'Ex Pilota — Creator Automotive', ruolo:'In prima persona', icona:'🏁' },
+      testo:'Ciao {{ceoName}},\n\nsto girando una serie sulle auto da chauffeur viste dal sedile sbagliato: quello del guidatore. Vorrei la vostra vettura di punta per una giornata.\n\nNon offro soldi. Offro una puntata intera, e il mio pubblico compra quello che vede.',
+      requires:{ fleet:3, rep:1.5 },
+      choices:[
+          { text:'Digli di sì (€1.000 di assicurazione extra)', cost:1000, repBonus:1.2, prob:0.8,
+            ko:{ repBonus:-0.7, msg:'Ha strisciato il paraurti in retromarcia e il video è uscito lo stesso, con la strisciata in primo piano.' },
+            msg:'Puntata uscita, ottocentomila visualizzazioni, la tua auto in copertina.' },
+          { text:'Solo come passeggero, guida il nostro autista', cost:0, repBonus:0.4, msg:'Ha accettato di malavoglia. La puntata è uscita corta.' },
+          { text:'No: le nostre auto le guidiamo noi', cost:0, repBonus:0 },
+      ] },
+
+    /* ══ TUTTO L'ANNO — decisioni scomode ════════════════════════════════ */
+    { id:'trasporto_senza_domande', month:null, name:'Un incarico senza domande',
+      desc:'Paga il triplo. Non dice cosa c\'è nel bagagliaio.',
+      da:{ nome:'Contatto riservato', ruolo:'—', icona:'🕶' },
+      testo:'Buonasera,\n\nmi hanno dato il suo nome. Mi serve un\'auto per una consegna notturna, andata e ritorno, duecento chilometri. Pago in contanti il triplo della tariffa.\n\nNon le chiedo domande e le chiedo di non farne.',
+      requires:{ rides:8 },
+      choices:[
+          { text:'Accetta i contanti', cost:0, gain:9000, repBonus:-0.4, prob:0.7,
+            ko:{ gain:9000, repBonus:-2.0, msg:'Controllo dei carabinieri sulla via del ritorno. L\'autista ha passato la notte in caserma e il tuo nome è finito su un verbale.' },
+            msg:'Consegna fatta, contanti in tasca, nessuna domanda. Resta un peso che non compare in bilancio.' },
+          { text:'Rifiuta e chiudi la conversazione', cost:0, repBonus:0.2, msg:'Hai rifiutato. Dormirai meglio.' },
+      ] },
+
+    { id:'consulenza_appalto', month:null, name:'Un funzionario propone una "consulenza"',
+      desc:'Dice che l\'appalto comunale può essere tuo. C\'è solo una parcella da pagare prima.',
+      da:{ nome:'Studio di Consulenza', ruolo:'Rapporti Istituzionali', icona:'📑' },
+      testo:'Gentile {{ceoName}},\n\nseguiamo diversi operatori nei rapporti con l\'amministrazione di {{city}}. La gara per il servizio comunale uscirà a breve e conosciamo bene i criteri di valutazione.\n\nLa nostra parcella è di €12.000, da corrispondere prima della pubblicazione del bando.',
+      requires:{ rides:15 },
+      choices:[
+          { text:'Paga la consulenza (€12.000)', cost:12000, repBonus:0.5, prob:0.5,
+            ko:{ repBonus:-2.5, msg:'Il bando è uscito con criteri diversi e la Guardia di Finanza ha acquisito i pagamenti dello studio. Il tuo nome è nell\'elenco.' },
+            gain:30000, msg:'Appalto vinto. Non chiederti quanto ha contato l\'offerta.' },
+          { text:'Segnala la proposta alla stazione appaltante', cost:0, repBonus:1.5, msg:'Hai segnalato. La gara è stata rinviata e il tuo nome circola come quello di chi non sta al gioco. In due sensi.' },
+          { text:'Ignora la mail', cost:0, repBonus:0 },
+      ] },
+
+    { id:'recensioni_false', month:null, name:'Agenzia che vende recensioni positive',
+      desc:'Duecento recensioni a cinque stelle in un mese. Nessuna scritta da un cliente vero.',
+      da:{ nome:'Reputation Boost', ruolo:'Sales Department', icona:'⭐️' },
+      testo:'Gentile {{ceoName}},\n\nabbiamo analizzato il profilo di {{companyName}}: le mancano recensioni recenti e questo la penalizza nelle ricerche.\n\nIl nostro pacchetto garantisce 200 recensioni verificate in trenta giorni. Nessun cliente noterà la differenza.',
+      choices:[
+          { text:'Compra il pacchetto (€3.000)', cost:3000, repBonus:1.0, prob:0.6,
+            ko:{ repBonus:-2.0, msg:'La piattaforma ha individuato le recensioni finte e ha declassato il profilo. Il danno è pubblico.' },
+            msg:'Il punteggio è salito. Nessuno ha chiesto da dove venissero quelle recensioni.' },
+          { text:'Rifiuta e chiedi ai clienti veri (€500 di campagna)', cost:500, repBonus:0.4, msg:'Hai chiesto ai clienti veri. Ne hanno scritte trenta, e valgono.' },
+      ] },
+
+    { id:'giornalista_indiscrezione', month:null, name:'Un giornalista chiede chi c\'era in auto',
+      desc:'Offre soldi per sapere dove hai portato un politico la settimana scorsa.',
+      da:{ nome:'Redazione — Cronaca', ruolo:'Giornalista', icona:'📰' },
+      testo:'Gentile {{ceoName}},\n\nsto lavorando a un pezzo che riguarda una persona che, mi risulta, ha usato il suo servizio giovedì scorso. Mi interessa solo l\'indirizzo dove è stato accompagnato.\n\nLa fonte resterebbe anonima e il compenso è di €6.000.',
+      requires:{ rides:12, rep:1.5 },
+      choices:[
+          { text:'Vendi l\'informazione (€6.000)', cost:0, gain:6000, repBonus:-1.8, msg:'Hai incassato. Nel giro di due settimane tre clienti abituali hanno smesso di chiamare, senza spiegazioni.' },
+          { text:'Rifiuta: la riservatezza è il servizio', cost:0, repBonus:0.8, msg:'Hai rifiutato. La voce che sei uno che tace vale più di seimila euro.' },
+      ] },
+
+    /* ══ TUTTO L'ANNO — crescita e struttura ═════════════════════════════ */
+    { id:'accademia_autisti', month:null, name:'Accademia autisti — formare i giovani',
+      desc:'Un istituto propone tirocini. Costa tempo adesso, autisti dopo.',
+      da:{ nome:'Istituto Professionale Trasporti', ruolo:'Ufficio Stage', icona:'🎓' },
+      testo:'Spettabile {{companyName}},\n\nproponiamo un percorso di tirocinio per sei studenti al quinto anno. Le aziende ospitanti ricevono un contributo regionale parziale.\n\nSono ragazzi da formare, non autisti pronti. Chi li forma però se li tiene.',
+      requires:{ drivers:2 },
+      choices:[
+          { text:'Ospita i tirocinanti (€2.500)', cost:2500, repBonus:1.1, msg:'Sei ragazzi in azienda per tre mesi. Due li assumeresti domani.' },
+          { text:'Solo due tirocinanti (€800)', cost:800, repBonus:0.4 },
+          { text:'Non abbiamo tempo per formarli', cost:0, repBonus:0 },
+      ] },
+
+    { id:'bando_elettrico', month:null, name:'Bando regionale per flotte elettriche',
+      desc:'Contributo a fondo perduto, ma la pratica costa e la commissione è severa.',
+      da:{ nome:'Regione — Assessorato Mobilità', ruolo:'Ufficio Bandi', icona:'🔌' },
+      testo:'Spettabile {{companyName}},\n\nè aperto il bando per la conversione elettrica delle flotte NCC. Il contributo copre fino al 40% dell\'investimento.\n\nLa domanda richiede documentazione tecnica e un piano di conversione triennale. Le domande incomplete vengono escluse.',
+      requires:{ rides:12, fleet:3 },
+      choices:[
+          { text:'Presenta la domanda con un consulente (€3.000)', cost:3000, repBonus:0.6, prob:0.65,
+            ko:{ repBonus:0, msg:'Domanda esclusa per un allegato mancante. Tremila euro di consulenza e nessun contributo.' },
+            gain:20000, msg:'Contributo concesso. Il bonifico regionale è arrivato in quattro mesi.' },
+          { text:'Prepara la domanda da solo (€500)', cost:500, prob:0.25, repBonus:0.3,
+            ko:{ repBonus:0, msg:'Domanda respinta. Lo sapevi che era difficile.' },
+            gain:20000, msg:'Contributo concesso senza consulenti. Un piccolo capolavoro burocratico.' },
+          { text:'Lascia perdere i bandi', cost:0, repBonus:0 },
+      ] },
+
+    { id:'hotel_partnership', month:null, name:'Un hotel cinque stelle cerca un partner fisso',
+      desc:'Esclusiva sul concierge in cambio di tariffe bloccate per un anno.',
+      da:{ nome:'Grand Hotel', ruolo:'Direzione Generale', icona:'🏨' },
+      testo:'Gentile {{ceoName}},\n\nvogliamo un solo fornitore per i transfer dei nostri ospiti. In cambio dell\'esclusiva chiediamo tariffe bloccate per dodici mesi e disponibilità 24 ore.\n\nSono duecento camere. Faccia i conti.',
+      requires:{ rides:12, rep:2.0, fleet:3 },
+      choices:[
+          { text:'Accetta l\'esclusiva (€3.000 di adeguamenti)', cost:3000, gain:9000, repBonus:1.3, rides:6, tier:'business', msg:'Esclusiva firmata. Il concierge chiama te e basta.' },
+          { text:'Nessuna esclusiva, tariffe libere', cost:0, gain:3000, repBonus:0.1, rides:2, tier:'business', msg:'Niente esclusiva. Ti chiamano quando gli altri sono occupati.' },
+      ] },
+
+    { id:'documentario_settore', month:null, name:'Documentario sul lavoro degli autisti',
+      desc:'Vogliono filmare dentro l\'azienda per due settimane. Onesto ma scomodo.',
+      da:{ nome:'Casa di Produzione Indipendente', ruolo:'Regista', icona:'🎞' },
+      testo:'Gentile {{ceoName}},\n\nstiamo girando un documentario sul lavoro invisibile degli autisti NCC. Vorremmo seguire la sua azienda per due settimane, senza copione e senza approvazione preventiva del montaggio.\n\nÈ un racconto onesto. Non possiamo garantirle che sia lusinghiero.',
+      requires:{ rides:15, drivers:2 },
+      choices:[
+          { text:'Apri le porte senza condizioni', cost:0, repBonus:1.4, prob:0.7,
+            ko:{ repBonus:-1.0, msg:'Il montaggio ha insistito su una discussione con un autista stanco. Il pezzo ha fatto rumore, e non quello giusto.' },
+            msg:'Il documentario ti ha ritratto come un\'azienda seria. Passaggio in prima serata.' },
+          { text:'Accetta solo con approvazione del montaggio', cost:0, repBonus:0.3, msg:'Hanno accettato le condizioni. Il risultato è un pezzo tiepido.' },
+          { text:'Rifiuta', cost:0, repBonus:0 },
+      ] },
+
+    { id:'sponsor_squadra_locale', month:null, name:'Sponsorizzare la squadra della città',
+      desc:'Il tuo nome sulle maglie di una squadra che forse retrocede.',
+      da:{ nome:'A.S.D. Cittadina', ruolo:'Direttore Sportivo', icona:'🥅' },
+      testo:'Gentile {{ceoName}},\n\ncerchiamo uno sponsor di maglia per la stagione. Siamo in serie minore ma la città ci segue, e il nome sulla maglia lo vedono tutti al bar.\n\nÈ pubblicità di quartiere, non nazionale. Costa poco e dura nove mesi.',
+      choices:[
+          { text:'Sponsor di maglia (€4.000)', cost:4000, repBonus:0.9, prob:0.75,
+            ko:{ repBonus:0.1, msg:'La squadra è retrocessa a marzo. Il tuo nome era sulle maglie in ogni foto della disfatta.' },
+            msg:'Promozione a fine stagione. Il tuo nome sulle maglie in prima pagina.' },
+          { text:'Sponsor minore, cartellone a bordocampo (€1.000)', cost:1000, repBonus:0.3 },
+          { text:'No grazie', cost:0, repBonus:0 },
+      ] },
+
+    { id:'premio_settore', month:null, name:'Candidatura al premio "Operatore dell\'Anno"',
+      desc:'La candidatura costa. La giuria guarda i numeri e le recensioni.',
+      da:{ nome:'Associazione Nazionale NCC', ruolo:'Segreteria Premi', icona:'🏅' },
+      testo:'Gentile {{ceoName}},\n\nsono aperte le candidature al premio Operatore dell\'Anno. La valutazione considera crescita, qualità del servizio e reputazione presso i clienti.\n\nLa quota di partecipazione è di €2.500 e non è rimborsabile.',
+      requires:{ rides:15, rep:2.5 },
+      choices:[
+          { text:'Candidati (€2.500)', cost:2500, repBonus:1.8, prob:0.5,
+            ko:{ repBonus:-0.1, msg:'Nemmeno fra i finalisti. Duemilacinquecento euro e una serata a guardare gli altri.' },
+            msg:'Premio vinto. La targa è in ufficio e la notizia sui giornali di settore.' },
+          { text:'Aspetta l\'anno prossimo', cost:0, repBonus:0 },
+      ] },
+
+    { id:'aeroporto_slot', month:null, name:'Slot preferenziale agli arrivi',
+      desc:'Una postazione all\'uscita del terminal. Costa un canone e la danno a pochi.',
+      da:{ nome:'Società di Gestione Aeroportuale', ruolo:'Ufficio Concessioni', icona:'✈️' },
+      testo:'Spettabile {{companyName}},\n\nsono disponibili due postazioni di attesa nell\'area riservata agli arrivi internazionali. Il canone è trimestrale e la concessione è a scadenza.\n\nChi ha la postazione intercetta il passeggero prima di chiunque altro.',
+      requires:{ rides:12, fleet:3 },
+      choices:[
+          { text:'Prendi la concessione (€7.000)', cost:7000, gain:16000, repBonus:0.7, rides:6, tier:'business', msg:'Postazione operativa. Le corse dall\'aeroporto sono raddoppiate.' },
+          { text:'Continua ad aspettare nel parcheggio', cost:0, repBonus:0, rides:1, tier:'standard' },
+      ] },
+
+    /* ══ TUTTO L'ANNO — emergenze e imprevisti ═══════════════════════════ */
+    { id:'sciopero_taxi', month:null, name:'Sciopero dei taxi — 24 ore',
+      desc:'Domanda impazzita e riflettori puntati su chi alza i prezzi.',
+      da:{ nome:'Centrale Operativa', ruolo:'Segnalazione interna', icona:'🚕' },
+      testo:'Direttore,\n\ndomani i taxi si fermano per ventiquattro ore. Le richieste stanno già arrivando e non riusciremo a coprirle tutte.\n\nLe chiedo come ci comportiamo sulle tariffe. I giornali guardano.',
+      requires:{ rides:8 },
+      choices:[
+          { text:'Tariffe normali, lavora al massimo (€1.000 di straordinari)', cost:1000, gain:7000, repBonus:1.2, rides:6, tier:'standard', msg:'Hai tenuto le tariffe. Il giornale locale ti ha citato come esempio.' },
+          { text:'Tariffe triplicate finché dura', cost:0, gain:15000, repBonus:-1.5, msg:'Incasso enorme e una foto del tuo tariffario su tutti i social. Ci vorranno mesi.' },
+      ] },
+
+    { id:'alluvione_emergenza', month:null, name:'Alluvione: la Protezione Civile chiede mezzi',
+      desc:'Nessun compenso. Molta acqua, molta gente da spostare.',
+      da:{ nome:'Protezione Civile', ruolo:'Coordinamento Emergenza', icona:'🌊' },
+      testo:'Spettabile {{companyName}},\n\nl\'esondazione ha isolato tre quartieri di {{city}}. Chiediamo agli operatori privati la disponibilità di mezzi per il trasporto di persone fragili verso i centri di accoglienza.\n\nNon è previsto compenso. È previsto un elenco pubblico di chi ha risposto.',
+      requires:{ fleet:2 },
+      choices:[
+          { text:'Metti a disposizione tutto (€2.000 di danni e carburante)', cost:2000, repBonus:2.0, msg:'Tre giorni di trasporti nell\'acqua. Il sindaco ti ha ringraziato in consiglio comunale.' },
+          { text:'Manda due auto (€700)', cost:700, repBonus:0.7 },
+          { text:'Non possiamo permettercelo', cost:0, repBonus:-0.4, msg:'L\'elenco di chi ha risposto è stato pubblicato. Tu non c\'eri.' },
+      ] },
+
+    { id:'nevicata_eccezionale', month:null, name:'Nevicata eccezionale — città bloccata',
+      desc:'Nessuno si muove. Chi ha le gomme giuste lavora il doppio.',
+      da:{ nome:'Centrale Operativa', ruolo:'Turno notturno', icona:'❄️' },
+      testo:'Direttore,\n\ncinquanta centimetri in otto ore, la città è ferma. Gli alberghi ci stanno chiamando per i clienti bloccati e le catene le abbiamo solo su tre auto.\n\nMi dica se compriamo il resto stanotte o se restiamo fermi.',
+      choices:[
+          { text:'Compra catene e gomme per tutti (€2.500)', cost:2500, gain:8000, repBonus:0.9, rides:5, tier:'standard', msg:'Le uniche auto in strada erano le tue.' },
+          { text:'Lavora solo con le tre auto attrezzate', cost:0, gain:2500, repBonus:0.2, rides:2, tier:'standard' },
+          { text:'Ferma tutto: troppo rischio', cost:0, repBonus:-0.2 },
+      ] },
+
+    { id:'cliente_furioso', month:null, name:'Un cliente importante chiede il rimborso',
+      desc:'Dice che l\'autista è stato scortese. L\'autista giura di no.',
+      da:{ nome:'Cliente Corporate', ruolo:'Ufficio Acquisti', icona:'⚠️' },
+      testo:'Spettabile {{companyName}},\n\nil nostro amministratore delegato riferisce di un comportamento inadeguato da parte del vostro autista durante il transfer di ieri. Chiediamo il rimborso integrale e una lettera di scuse.\n\nDalla vostra risposta dipende il rinnovo della convenzione.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Rimborsa e scusati per iscritto (€2.500)', cost:2500, repBonus:0.8, msg:'Convenzione rinnovata. L\'autista non l\'ha presa bene.' },
+          { text:'Difendi l\'autista, offri uno sconto (€800)', cost:800, repBonus:0.2, prob:0.5,
+            ko:{ repBonus:-0.9, msg:'Convenzione non rinnovata. L\'autista però sa che gli hai creduto.' },
+            msg:'Hanno accettato lo sconto e la tua spiegazione. Rispetto guadagnato da entrambe le parti.' },
+          { text:'Rifiuta il rimborso', cost:0, repBonus:-0.7, msg:'Convenzione persa e una recensione al vetriolo.' },
+      ] },
+
+    { id:'concorrente_offre_flotta', month:null, name:'Un concorrente in difficoltà svende la flotta',
+      desc:'Tre auto sotto prezzo. Con i chilometri di chi le ha spremute.',
+      da:{ nome:'NCC in liquidazione', ruolo:'Curatore', icona:'🔨' },
+      testo:'Gentile {{ceoName}},\n\nl\'azienda ha cessato l\'attività e liquidiamo il parco vetture. Tre berline in buono stato, prezzo trattabile per acquisto in blocco.\n\nLe vetture si vendono viste e piaciute. Non forniamo garanzia.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Comprale a scatola chiusa (€9.000)', cost:9000, repBonus:0.2, prob:0.55,
+            ko:{ repBonus:-0.3, msg:'Due delle tre avevano il cambio da rifare. Affare pessimo.' },
+            gain:16000, msg:'Tre auto sane pagate metà del valore. Rivendute bene.' },
+          { text:'Falle controllare prima (€1.200 di perizia)', cost:1200, gain:5000, repBonus:0.3, msg:'La perizia ha bocciato due auto su tre. Hai comprato solo quella buona, e ci hai guadagnato.' },
+          { text:'Non comprare niente', cost:0, repBonus:0 },
+      ] },
+
+    { id:'consorzio_invito', month:null, name:'Invito a entrare in un consorzio di operatori',
+      desc:'Quota d\'ingresso, in cambio di corse smistate fra i soci.',
+      da:{ nome:'Consorzio Operatori Riuniti', ruolo:'Presidenza', icona:'🤝' },
+      testo:'Gentile {{ceoName}},\n\nil nostro consorzio riunisce dodici operatori del territorio: le richieste che un socio non può coprire passano agli altri.\n\nLa quota d\'ingresso è di €5.000 una tantum. Chi entra smette di perdere clienti per indisponibilità.',
+      requires:{ rides:10 },
+      choices:[
+          { text:'Entra nel consorzio (€5.000)', cost:5000, gain:6000, repBonus:0.8, rides:5, tier:'business', msg:'Le prime corse smistate sono arrivate in tre giorni.' },
+          { text:'Resta indipendente', cost:0, repBonus:0.1, msg:'Hai scelto di restare da solo. Ha un costo che non si vede subito.' },
+      ] },
+
+    { id:'assicurazione_rinnovo', month:null, name:'Il broker propone una polizza migliore',
+      desc:'Costa di più adesso, copre molto di più quando serve.',
+      da:{ nome:'Broker Assicurativo', ruolo:'Consulente Flotte', icona:'📋' },
+      testo:'Gentile {{ceoName}},\n\nla polizza attuale della flotta ha massimali bassi per il vostro tipo di clientela. Un sinistro con un passeggero VIP a bordo vi esporrebbe oltre la copertura.\n\nLa proposta di adeguamento costa €4.500 l\'anno in più. Serva o no, si scopre dopo.',
+      requires:{ fleet:3 },
+      choices:[
+          { text:'Adegua la polizza (€4.500)', cost:4500, repBonus:0.5, msg:'Polizza adeguata. È il tipo di spesa che si nota solo quando manca.' },
+          { text:'Tieni la polizza attuale', cost:0, repBonus:0, msg:'Hai risparmiato. Speriamo di non doverlo scoprire.' },
+      ] },
 ];
 
 // Moltiplicatori tariffa per categoria (base = Sedan/Standard)

@@ -115,18 +115,18 @@ function _dataPerEmail(giorniAvanti) {
     }
 }
 
-function _applyEmailTemplate(emailObj, type, vars) {
-    if (typeof EMAIL_TEMPLATES === 'undefined') return;
-    const pool = EMAIL_TEMPLATES[type];
-    if (!pool || !pool.length) return;
-    const tpl = pool[Math.floor(Math.random() * pool.length)];
-    const body = tpl.bodies[Math.floor(Math.random() * tpl.bodies.length)];
+/* La sostituzione dei segnaposti, staccata da _applyEmailTemplate perche' ora
+   la usano due strade: i modelli generici di EMAIL_TEMPLATES e le lettere che
+   ogni evento CEO porta con se' (data.js). Una funzione sola vuol dire che
+   aggiungere un segnaposto lo rende disponibile a entrambe. */
+function _sostituisciSegnaposti(str, vars) {
+    vars = vars || {};
     /* I ripieghi non sono mai la stringa vuota ne' un numero grezzo: un
        segnaposto non sostituito si vede subito nel testo («di», «€», «302») e
        nessun chiamante passava city o day. */
     const citta = vars.city || _cittaPerEmail();
     const data  = vars.day != null ? vars.day : _dataPerEmail(4 + Math.floor(Math.random() * 10));
-    const sub = (str) => str
+    return String(str == null ? '' : str)
         .replace(/\{\{driverName\}\}/g, vars.driverName || '')
         .replace(/\{\{rivalName\}\}/g, vars.rivalName || '')
         .replace(/\{\{eventName\}\}/g, vars.eventName || '')
@@ -135,6 +135,23 @@ function _applyEmailTemplate(emailObj, type, vars) {
         .replace(/\{\{day\}\}/g, data)
         .replace(/\{\{companyName\}\}/g, vars.companyName || gameState.companyName || 'Italy Executive')
         .replace(/\{\{ceoName\}\}/g, vars.ceoName || gameState.ceoName || 'CEO');
+}
+window._sostituisciSegnaposti = _sostituisciSegnaposti;
+
+function _applyEmailTemplate(emailObj, type, vars) {
+    if (typeof EMAIL_TEMPLATES === 'undefined') return;
+    const pool = EMAIL_TEMPLATES[type];
+    if (!pool || !pool.length) return;
+    const tpl = pool[Math.floor(Math.random() * pool.length)];
+    const body = tpl.bodies[Math.floor(Math.random() * tpl.bodies.length)];
+    /* Citta' e data si fissano QUI e non dentro la sostituzione: se ogni
+       chiamata le ripescasse a caso, l'oggetto direbbe una data e il corpo
+       un'altra. */
+    const vars2 = Object.assign({}, vars, {
+        city: vars.city || _cittaPerEmail(),
+        day:  vars.day != null ? vars.day : _dataPerEmail(4 + Math.floor(Math.random() * 10)),
+    });
+    const sub = (str) => _sostituisciSegnaposti(str, vars2);
     emailObj.senderName  = sub(tpl.senderName);
     emailObj.senderRole  = sub(tpl.senderRole);
     emailObj.senderIcon  = tpl.senderIcon;
