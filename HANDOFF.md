@@ -349,6 +349,67 @@ sta per uscire" descritto in Daily e Retention.md resta un problema di design
 aperto, distinto da questo fix — qui si è chiuso solo il buco di sicurezza e
 la doppia tabella, non ripensato il loop di retention.
 
+# ✅ 31/08 (sera) — La passata nel browser, fatta davvero. 33 azioni ✅, 34/254 chiuse.
+
+Il Chrome bloccato del pomeriggio si era liberato da solo. Fatto quello che
+mancava da inizio Fase 3: le 33 azioni di consorzi/VIP/holding, provate col
+bottone vero, non dalla console — esattamente come chiede "Come si chiude una
+riga" in `docs/CHIUSURA-REGISTRO.md`.
+
+**Come**: due account reali (`test+ce-b1@…`, `test+ce-b2@…`, creati via Auth
+Admin API con `email_confirm:true`, stesso motivo del 15/08 — il redirectTo
+hardcoded rompe la conferma email normale), `chrome-devtools` con
+`isolatedContext` separati, Chauffeur Empire in produzione. Lo stato di
+partenza (flotta, autisti, cash, reputazione) fast-forwardato via console con
+le stesse forme che usa `test-support/regista.js` offline — MAI l'azione
+sotto test: quella, sempre dal bottone vero (`document.querySelector('[data-ce-act="…"]').click()`),
+verificata leggendo `gameState` dopo il click e incrociando il network log
+(RPC → `200`) o una query SQL diretta quando serviva vedere lo stato server.
+
+**Scoperta di percorso, non un difetto**: alcune azioni (`listCompanyIPO`,
+`buyCompanyShares`) rifiutavano con errori del server («reputazione
+insufficiente», «fondi insufficienti») anche dopo aver impostato
+`gameState.reputation`/`gameState.cash` in locale — perché quei campi sul
+client sono solo lo specchio, e il server valida SEMPRE la sua copia in
+`companies`. Impostare lo stato lato client non basta se serve un vero
+precondizione server-side: lì si è aggiornato `companies` via SQL diretto
+sull'account di prova, non un bypass del controllo — il controllo ha
+retto, si è solo dato all'account finto lo stato che gli mancava.
+
+**Le 33 azioni**, tutte verificate:
+- **Holding (10/10)**: `incorporateHolding`, `acquireSubsidiary`,
+  `divestSubsidiary`, `buyCempShares`, `sellCempShares` (holding "solitaria",
+  engine-holding.js) + `listCompanyIPO`, `buyCompanyShares`,
+  `sellCompanyShares`, `joinHolding`, `leaveHolding` (holding P2P reale,
+  p2p-market.js — **un sistema completamente separato**, stesso nome,
+  narrato nel client come "Sindacato").
+- **VIP (10/10)**: tutti e dieci gli `acceptVip*` — email generata col vero
+  generatore (`_maybeVipX`) dopo aver messo in flotta l'auto/autista che
+  quel cliente pretende (stessa forma di `conClienteVIP` in regista.js),
+  poi accettata dal bottone vero nella tab Email.
+- **Consorzi (13/13)**: le nove `_al*` (alliances.js, tab "Consorzi" —
+  create/join/leave/kick/setRole/donate/perk/chat/disband) + le quattro
+  `ceCreateConsorzio`/`joinConsorzio`/`leaveConsorzio`/
+  `ceConsorzioContribute` (ce-actions.js/p2p-render.js, tab Investimenti,
+  narrato come "Gilde Cooperative") — **anche qui due sistemi paralleli
+  scollegati**, `alliance_members` e `consorzio_members`, mai fusi. Non un
+  difetto da correggere ora, ma una duplicazione da segnare per quando si
+  disegnerà di nuovo la fase social.
+
+`docs/CHIUSURA-REGISTRO.md`: le 33 righe passate da ⬜ a ✅ (`npm run
+registro` rigenerato, colonna manuale preservata). **34/254 chiuse.**
+Suite 2466/2466 verdi (nessun file di gioco toccato in questa sessione, solo
+verifica). I due account di prova cancellati a fine sessione — cascata SQL
+manuale su tutte le tabelle con FK verso `auth.users` prima del DELETE
+(`game_saves`, `companies`, `alliances`/`consorzi`/`holdings` di cui erano
+leader, ecc.): l'endpoint Admin non cancella in cascata da solo. Verificato
+`0` righe `test+ce-%` rimaste.
+
+**Prossima sessione:** Fase 3, sistema 4 — **showroom**, poi infrastrutture,
+lifestyle, agenzia ombra, nemesi, turismo, come nell'ordine del piano. Restano
+14 azioni al buio; fra queste le due di HQ sono ferme giustamente
+(`HQ_ENABLED = false`), segnate ⏭️.
+
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 
 Vlad ha cambiato priorità e l'ha detto chiaro: «adesso non mi interessa più di
