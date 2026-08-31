@@ -4,17 +4,17 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 10:14:15
+Aggiornato: 31/08/2026, 10:15:46
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **53** |
-| Aperte | **201** |
+| Chiuse (provate davvero, con un test che le difende) | **54** |
+| Aperte | **200** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 79 |
-| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
-| Il banco non riesce ad attivarle | 11 |
+| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 38 |
+| Il banco non riesce ad attivarle | 12 |
 | Fuori dal banco (file non caricato lì) | 30 |
 
 **Legenda CHIUSA** — ⬜ da fare · ✅ chiusa · 🐛 difetto trovato, correzione aperta · ⏭️ non applicabile (con motivo nelle note)
@@ -177,7 +177,7 @@ Aggiornato: 31/08/2026, 10:14:15
 | `_foundFromRegion` | map-utils | ui-map-utils.js | assente | ⬜ |  |
 | `_startFoundingList` | map-utils | ui-map-utils.js | assente | ⬜ |  |
 | `_startFoundingMode` | map-utils | ui-map-utils.js | assente | ⬜ |  |
-| `_nemesisBribeVip` | nemesis | nemesis.js | stato | ⬜ |  |
+| `_nemesisBribeVip` | nemesis | nemesis.js | stato | ✅ | 31/08: 5 prove in test/sistemi/nemesi.test.js. Unica azione del sistema. Denaro locale (CE_money.spend): tangente = floor(5000 + rabbia/100 * 45000), rabbia -40, e se scende sotto soglia la nemesi viene rimossa. Coperti conferma annullata e fondi insufficienti (nessun effetto). Provato al contrario: spend senza guardia -> rosso. Sistema offline, nessuna RPC. |
 | `doAcquireProvince` | ops | ui-ops.js | eseguita | ⬜ |  |
 | `buyCompanyShares` | p2p-market | p2p-market.js | eseguita | ✅ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). **31/08 (sera): passata nel browser fatta davvero** — due account reali (`test+ce-b1@…`, `test+ce-b2@…`), bottone cliccato dal vero DOM (`data-ce-act`), server verificato via network log (RPC 200) e/o query SQL diretta dov'era il caso più rapido per lo stato di partenza (cash/reputazione dell'account di prova, mai per l'azione stessa). |
 | `buyP2PCar` | p2p-market | p2p-market.js | stato | ⬜ |  |
@@ -234,8 +234,8 @@ Aggiornato: 31/08/2026, 10:14:15
 | `skipAllConstructionsDC` | store | engine-store.js | ok | ⬜ |  |
 | `wakeAllDriversDC` | store | engine-store.js | ok | ⬜ |  |
 | `tourismCancelBid` | tourism | tourism.js | eseguita | ⬜ |  |
-| `tourismSubmitBid` | tourism | tourism.js | ok | ⬜ |  |
-| `tourismTerminate` | tourism | tourism.js | eseguita | ⬜ |  |
+| `tourismSubmitBid` | tourism | tourism.js | stato | ⬜ |  |
+| `tourismTerminate` | tourism | tourism.js | ok | ⬜ |  |
 | `tutorialNext` | tutorial | tutorial.js | assente | ⬜ |  |
 | `tutorialSkip` | tutorial | tutorial.js | assente | ⬜ |  |
 | `_vanityColor` | vanity | vanity.js | ok | ⬜ |  |
