@@ -418,7 +418,7 @@ lifestyle, agenzia ombra, nemesi, turismo, come nell'ordine del piano. Restano
 14 azioni al buio; fra queste le due di HQ sono ferme giustamente
 (`HQ_ENABLED = false`), segnate ⏭️.
 
-# ✅ 31/08 — Fase 3 in corsa: sistemi 5-11 chiusi. **93/254**. Suite 2564.
+# ✅ 31/08 — Fase 3 in corsa: sistemi 5-17 chiusi. **172/254**. Suite 2665.
 
 Vlad: «procedi senza sosta fino a tutte le 254». Un sistema per commit, ognuno con
 test dedicato + provato al contrario. Fatti in fila:
@@ -432,6 +432,17 @@ test dedicato + provato al contrario. Fatti in fila:
 | 9 | turismo | 3 | `test/sistemi/turismo.test.js` | server-auth dietro login; submit/cancel/terminate bid |
 | 10 | contratti/B2B | 6 | `test/sistemi/contratti-b2b.test.js` | **due sistemi**: B2B (b2b.js, RPC) + Contratti (contracts.js, locale) |
 | 11 | ce-actions | 30 | `test/sistemi/ce-actions.test.js` | adattatori event-delegation: DOM → funzione vera, verifica l'inoltro |
+| 12 | store/Executive Club | 18 | `test/sistemi/store.test.js` | booster in DC (`spendDC`) + `_dcAcquistaPacchetto` (Stripe, non tocca il saldo locale) |
+| 13 | drivers | 7 | `test/sistemi/drivers.test.js` | riposo/pausa/bonus/sciopero/assunzione/licenziamento, denaro locale |
+| 14 | fleet | 19 | `test/sistemi/fleet.test.js` | riparazioni, deposito, upgrade, hub, mercato, asta |
+| 15 | engine | 20 | `test/sistemi/engine.test.js` | campagne, multe, missioni email, regioni, investimenti, leasing (`render:true`), NG+ |
+| 16 | vip-eventi | 11 | `test/sistemi/vip-eventi.test.js` | scelte di follow-up VIP; difesa idempotenza (doppio click non paga/incassa 2×) |
+| 17 | vtk-market | 4 | `test/sistemi/vtk-market.test.js` | mercato VTK + shop con degrado sicuro se la RPC non esiste |
+
+⚠️ **`open*Modal` è stub no-op nell'env di default** (regex `open\w*Modal` in
+game-env.js): per testare il comportamento reale di un apri-modale serve
+`freshEnv({ render: true })`. Usato per leasing/hotel (sistema 15) e openVTKModal
+(sistema 17).
 
 ⚠️ **Regola scoperta**: `syncedCash` nei test raccoglie anche il sync dell'iniezione
 del regista (`R.conSoldi` → `CE_money.earn` → `syncCash`). Dove si contano le
