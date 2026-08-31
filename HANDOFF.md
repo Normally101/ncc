@@ -418,6 +418,36 @@ lifestyle, agenzia ombra, nemesi, turismo, come nell'ordine del piano. Restano
 14 azioni al buio; fra queste le due di HQ sono ferme giustamente
 (`HQ_ENABLED = false`), segnate ⏭️.
 
+# ✅ 31/08 — Fase 3 in corsa: sistemi 5-11 chiusi. **93/254**. Suite 2564.
+
+Vlad: «procedi senza sosta fino a tutte le 254». Un sistema per commit, ognuno con
+test dedicato + provato al contrario. Fatti in fila:
+
+| # | sistema | azioni | file test | note |
+|---|---|---|---|---|
+| 5 | infrastrutture | 2 | `test/sistemi/infrastrutture.test.js` | server-auth; il test chiave: `rpc_buy_fuel_depot` fallisce → i 300k non si scalano |
+| 6 | finance/lifestyle | 6 | `test/sistemi/finance.test.js` | tutto denaro locale `CE_money`; prestiti, immobile di lusso, lobbying, venture |
+| 7 | agenzia ombra | 2 | `test/sistemi/agenzia-ombra.test.js` | server-auth; «op eseguita ma fallita → si paga» vs «error → non si paga» |
+| 8 | nemesi | 1 | `test/sistemi/nemesi.test.js` | `_nemesisBribeVip`, locale |
+| 9 | turismo | 3 | `test/sistemi/turismo.test.js` | server-auth dietro login; submit/cancel/terminate bid |
+| 10 | contratti/B2B | 6 | `test/sistemi/contratti-b2b.test.js` | **due sistemi**: B2B (b2b.js, RPC) + Contratti (contracts.js, locale) |
+| 11 | ce-actions | 30 | `test/sistemi/ce-actions.test.js` | adattatori event-delegation: DOM → funzione vera, verifica l'inoltro |
+
+⚠️ **Regola scoperta**: `syncedCash` nei test raccoglie anche il sync dell'iniezione
+del regista (`R.conSoldi` → `CE_money.earn` → `syncCash`). Dove si contano le
+chiamate al server, azzerarlo (`syncedCash.length = 0`) subito prima dell'azione.
+
+⚠️ **Passata browser RPC-live**: per i sistemi server-authoritative (infra,
+agenzia ombra, turismo, B2B) non è stata rifatta — serve un account autenticato e
+in `~/.config/ce-supabase.env` c'è solo il token Management API, non la chiave
+Auth service. Coperti da unit test (incluso «il server rifiuta → il giocatore non
+paga») + argomenti RPC verificati contro `docs/SCHEMA-RPC.json` + guardrail
+`contratto-client-server`. Se Vlad vuole la passata completa: chiave Auth service
+nell'env, o la fa lui.
+
+`_cercaGiocatori` e `openAcademyModal` (elencati sotto `ce-actions` nel registro)
+vivono in social.js e ui-map-utils.js: si chiudono coi loro sistemi.
+
 # ✅ 31/08 — Fase 3, sistema 4: showroom. 9 azioni ✅, **43/254 chiuse**. Suite 2481.
 
 `test/sistemi/showroom.test.js` — 15 prove sulle nove azioni del salone. Due
