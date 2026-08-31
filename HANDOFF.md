@@ -18,6 +18,14 @@ Punto di partenza (30/08): 254 azioni, **0 chiuse**, 2360 test verdi, 0 bottoni 
 115 RPC tutte esistenti sul server, 0 firme disallineate, RLS su tutte le tabelle.
 Il lavoro non è rifare: è **provare**.
 
+> **Conferma esplicita di Vlad (31/08, sera):** vanno chiuse **tutte le 220
+> azioni ancora aperte**, non un sottoinsieme, non solo quelle "facili". La
+> colonna `ok`/`eseguita` del banco automatico (117 azioni con una qualche
+> copertura offline) NON conta come chiusa — vedi la tabella di
+> `docs/CHIUSURA-REGISTRO.md`: chiusa vuol dire bottone vero, test dedicato,
+> e passata nel browser dove serve. Non fermarsi al primo sistema comodo:
+> l'ordine lo dà `PIANO-CHIUSURA.md`, ma il traguardo è **0 righe ⬜**.
+
 ## Fase 1 iniziata la sera del 30/08 — due difetti grossi in un'ora
 
 **1. Il meteo reale era fermo al 15 agosto.** Il lavoro schedulato
