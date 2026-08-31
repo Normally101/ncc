@@ -4,13 +4,13 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 11:26:01
+Aggiornato: 31/08/2026, 11:29:29
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **204** |
-| Aperte | **50** |
+| Chiuse (provate davvero, con un test che le difende) | **208** |
+| Aperte | **46** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 80 |
 | Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
@@ -83,7 +83,7 @@ Aggiornato: 31/08/2026, 11:26:01
 | `openCmdPalette` | cmd-palette | cmd-palette.js | assente | ⬜ |  |
 | `CE_cancelBid` | contracts | contracts.js | ok | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
 | `CE_terminateContract` | contracts | contracts.js | — | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
-| `cryptoOpenTradeModal` | crypto | crypto.js | — | ⬜ |  |
+| `cryptoOpenTradeModal` | crypto | crypto.js | — | ✅ | Fase 3 sistemi 25-28. test/sistemi/{crypto,ops,realestate,savesystem}.test.js — cryptoOpenTradeModal (render:true, no doppioni), doAcquireProvince (validazione offerta/fondi + RPC server-authoritative), doBuyRealEstate (evento+ridisegno solo su success), _confirmNewGame (nome da input, slot azzerato, overlay chiuso, avvio). Provato al contrario in due giri: ogni test difende una riga. |
 | `negotiateEmail` | daily | engine-daily.js | ok | ⬜ |  |
 | `claimDailyOrder` | daily-orders | daily-orders.js | stato | ⬜ |  |
 | `openMapOverlay` | dispatcher | dispatcher.js | assente | ⬜ |  |
@@ -178,7 +178,7 @@ Aggiornato: 31/08/2026, 11:26:01
 | `_startFoundingList` | map-utils | ui-map-utils.js | assente | ⬜ |  |
 | `_startFoundingMode` | map-utils | ui-map-utils.js | assente | ⬜ |  |
 | `_nemesisBribeVip` | nemesis | nemesis.js | stato | ✅ | 31/08: 5 prove in test/sistemi/nemesi.test.js. Unica azione del sistema. Denaro locale (CE_money.spend): tangente = floor(5000 + rabbia/100 * 45000), rabbia -40, e se scende sotto soglia la nemesi viene rimossa. Coperti conferma annullata e fondi insufficienti (nessun effetto). Provato al contrario: spend senza guardia -> rosso. Sistema offline, nessuna RPC. |
-| `doAcquireProvince` | ops | ui-ops.js | ok | ⬜ |  |
+| `doAcquireProvince` | ops | ui-ops.js | ok | ✅ | Fase 3 sistemi 25-28. test/sistemi/{crypto,ops,realestate,savesystem}.test.js — cryptoOpenTradeModal (render:true, no doppioni), doAcquireProvince (validazione offerta/fondi + RPC server-authoritative), doBuyRealEstate (evento+ridisegno solo su success), _confirmNewGame (nome da input, slot azzerato, overlay chiuso, avvio). Provato al contrario in due giri: ogni test difende una riga. |
 | `buyCompanyShares` | p2p-market | p2p-market.js | eseguita | ✅ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). **31/08 (sera): passata nel browser fatta davvero** — due account reali (`test+ce-b1@…`, `test+ce-b2@…`), bottone cliccato dal vero DOM (`data-ce-act`), server verificato via network log (RPC 200) e/o query SQL diretta dov'era il caso più rapido per lo stato di partenza (cash/reputazione dell'account di prova, mai per l'azione stessa). |
 | `buyP2PCar` | p2p-market | p2p-market.js | stato | ⬜ |  |
 | `cancelP2PListing` | p2p-market | p2p-market.js | eseguita | ✅ | 30/08: l'annuncio scaduto spariva e con lui l'auto. Ora resta ritirabile. |
@@ -192,9 +192,9 @@ Aggiornato: 31/08/2026, 11:26:01
 | `payDonCarmine` | p2p-render | p2p-render.js | ok | ⬜ |  |
 | `claimQuestReward` | quests | quests.js | ok | ✅ | test/sistemi/career.test.js — startMissionRun (bivio vs run), _applyBivioChoice (effetto sul bivio giusto + chiusura), closeCareerModal, claimQuestReward (premio da CE_money.earn, unlock, guardia doppio-claim). Provato al contrario: 6 righe rotte → rossi mirati. |
 | `renderTabRanking` | ranking | ui-ranking.js | assente | ⬜ |  |
-| `doBuyRealEstate` | realestate | ui-realestate.js | eseguita | ⬜ |  |
+| `doBuyRealEstate` | realestate | ui-realestate.js | eseguita | ✅ | Fase 3 sistemi 25-28. test/sistemi/{crypto,ops,realestate,savesystem}.test.js — cryptoOpenTradeModal (render:true, no doppioni), doAcquireProvince (validazione offerta/fondi + RPC server-authoritative), doBuyRealEstate (evento+ridisegno solo su success), _confirmNewGame (nome da input, slot azzerato, overlay chiuso, avvio). Provato al contrario in due giri: ogni test difende una riga. |
 | `assignAllRides` | rides | engine-rides.js | — | ⬜ |  |
-| `_confirmNewGame` | saveSystem | saveSystem.js | — | ⬜ |  |
+| `_confirmNewGame` | saveSystem | saveSystem.js | — | ✅ | Fase 3 sistemi 25-28. test/sistemi/{crypto,ops,realestate,savesystem}.test.js — cryptoOpenTradeModal (render:true, no doppioni), doAcquireProvince (validazione offerta/fondi + RPC server-authoritative), doBuyRealEstate (evento+ridisegno solo su success), _confirmNewGame (nome da input, slot azzerato, overlay chiuso, avvio). Provato al contrario in due giri: ogni test difende una riga. |
 | `buyHRAutomation` | serverState | serverState.js | ok | ⬜ |  |
 | `_srmBackToGallery` | showroom | showroom.js | — | ✅ | 31/08: 15 prove in test/sistemi/showroom.test.js (stato locale, denaro via CE_money e ServerState.buyVehicle, prezzo mostrato = prezzo addebitato; provato al contrario: spesa su `v.price` invece di `total` -> rosso, `isLease` tolto -> rosso). **Passata nel browser (produzione, click veri):** le 7 azioni di sola interfaccia -- filtri motore/marchio, apri config, cambia sezione, toggle optional, torna, chiudi -- verificate senza errori console. `_srmPurchase`/`_srmRent`: bottone Acquista correttamente disabilitato a cassa 0 in modalita ospite; la parte RPC live contro un account autenticato non rifatta (l'ospite blocca la nav showroom; in ~/.config/ce-supabase.env c'e solo il token Management API, non la chiave Auth service per creare un account usa-e-getta pulito) -- coperta da unit test (ramo CE_money e ramo ServerState) + i due file browser-sync preesistenti. |
 | `_srmClose` | showroom | showroom.js | — | ✅ | 31/08: 15 prove in test/sistemi/showroom.test.js (stato locale, denaro via CE_money e ServerState.buyVehicle, prezzo mostrato = prezzo addebitato; provato al contrario: spesa su `v.price` invece di `total` -> rosso, `isLease` tolto -> rosso). **Passata nel browser (produzione, click veri):** le 7 azioni di sola interfaccia -- filtri motore/marchio, apri config, cambia sezione, toggle optional, torna, chiudi -- verificate senza errori console. `_srmPurchase`/`_srmRent`: bottone Acquista correttamente disabilitato a cassa 0 in modalita ospite; la parte RPC live contro un account autenticato non rifatta (l'ospite blocca la nav showroom; in ~/.config/ce-supabase.env c'e solo il token Management API, non la chiave Auth service per creare un account usa-e-getta pulito) -- coperta da unit test (ramo CE_money e ramo ServerState) + i due file browser-sync preesistenti. |
