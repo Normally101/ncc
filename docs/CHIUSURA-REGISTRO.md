@@ -4,13 +4,13 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 11:23:27
+Aggiornato: 31/08/2026, 11:26:01
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **201** |
-| Aperte | **53** |
+| Chiuse (provate davvero, con un test che le difende) | **204** |
+| Aperte | **50** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 80 |
 | Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
@@ -156,9 +156,9 @@ Aggiornato: 31/08/2026, 11:23:27
 | `incorporateHolding` | holding | engine-holding.js | ok | ✅ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). **31/08 (sera): passata nel browser fatta davvero** — due account reali (`test+ce-b1@…`, `test+ce-b2@…`), bottone cliccato dal vero DOM (`data-ce-act`), server verificato via network log (RPC 200) e/o query SQL diretta dov'era il caso più rapido per lo stato di partenza (cash/reputazione dell'account di prova, mai per l'azione stessa). |
 | `sellCempShares` | holding | engine-holding.js | ok | ✅ | 31/08: 16 prove in test/sistemi/holding.test.js (listino, elenco per ID, doppio acquisto, il denaro si muove solo col si del server). **31/08 (sera): passata nel browser fatta davvero** — due account reali (`test+ce-b1@…`, `test+ce-b2@…`), bottone cliccato dal vero DOM (`data-ce-act`), server verificato via network log (RPC 200) e/o query SQL diretta dov'era il caso più rapido per lo stato di partenza (cash/reputazione dell'account di prova, mai per l'azione stessa). |
 | `_opaRequestBuyback` | hostile_takeover | hostile_takeover.js | ok | ⬜ |  |
-| `_hqBuildFromList` | hq | hq.js | — | ⬜ |  |
-| `hqSwitchCity` | hq | hq.js | eseguita | ⬜ |  |
-| `hqUpgradeRoom` | hq | hq.js | stato | ⬜ |  |
+| `_hqBuildFromList` | hq | hq.js | — | ✅ | test/sistemi/hq.test.js — hqSwitchCity, _hqBuildFromList (nuovo slot + costo scalato), hqUpgradeRoom (upgrade a pagamento, cassa insufficiente, guardia HQ_ENABLED spento = niente costruzione gratis). Interruttore acceso nei test per esercitare la logica. Provato al contrario: 3 righe rotte → rossi mirati. |
+| `hqSwitchCity` | hq | hq.js | eseguita | ✅ | test/sistemi/hq.test.js — hqSwitchCity, _hqBuildFromList (nuovo slot + costo scalato), hqUpgradeRoom (upgrade a pagamento, cassa insufficiente, guardia HQ_ENABLED spento = niente costruzione gratis). Interruttore acceso nei test per esercitare la logica. Provato al contrario: 3 righe rotte → rossi mirati. |
+| `hqUpgradeRoom` | hq | hq.js | stato | ✅ | test/sistemi/hq.test.js — hqSwitchCity, _hqBuildFromList (nuovo slot + costo scalato), hqUpgradeRoom (upgrade a pagamento, cassa insufficiente, guardia HQ_ENABLED spento = niente costruzione gratis). Interruttore acceso nei test per esercitare la logica. Provato al contrario: 3 righe rotte → rossi mirati. |
 | `hqOpenBuildModalSlot` | hq-visual | hq-visual.js | assente | ⬜ |  |
 | `hqShowInfoPanel` | hq-visual | hq-visual.js | assente | ⬜ |  |
 | `hubNavigate` | hub | ui-hub.js | assente | ⬜ |  |
