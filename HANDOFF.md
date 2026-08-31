@@ -418,6 +418,60 @@ lifestyle, agenzia ombra, nemesi, turismo, come nell'ordine del piano. Restano
 14 azioni al buio; fra queste le due di HQ sono ferme giustamente
 (`HQ_ENABLED = false`), segnate ⏭️.
 
+# ✅ 31/08 — Fase 3, sistema 4: showroom. 9 azioni ✅, **43/254 chiuse**. Suite 2481.
+
+`test/sistemi/showroom.test.js` — 15 prove sulle nove azioni del salone. Due
+soltanto muovono denaro: `_srmPurchase` (offline da `CE_money.spend` + `syncCash`,
+online da `ServerState.buyVehicle`; il veicolo entra in flotta **solo** se il
+pagamento è passato) e `_srmRent` (il canone si paga subito e per intero, nessun
+giro dal server perché l'auto torna al concessionario alla scadenza). Le altre
+sette sono sola interfaccia e **non devono** toccare la cassa — c'è un test che
+lo pretende.
+
+Il difetto storico difeso qui: il prezzo in topbar includeva gli optional ma la
+spesa addebitava il solo listino. Il test non si fida di `_srmTotalPrice()` come
+oracolo — disegna il configuratore vero, legge `#srm-cfg-price` come lo vede il
+giocatore, e pretende che `CE_money.spend`/`buyVehicle` ricevano **quella** cifra.
+Provato al contrario due volte: spostare la spesa da `total` a `v.price` arrossa
+«paga ESATTAMENTE il totale mostrato»; togliere `isLease:true` dal noleggio
+arrossa la guardia che tiene le auto a noleggio fuori dal mercato P2P.
+
+⚠️ **`syncedCash` raccoglie anche il sync dell'iniezione del regista.** `R.conSoldi`
+passa da `CE_money.earn`, che chiama `syncCash`: nei test che contano le chiamate
+al server va azzerato (`syncedCash.length = 0`) subito prima dell'azione. Gli altri
+test showroom (`test/garage/showroom-sync.test.js`) lo evitano scrivendo
+`gs.cash = …` diretto.
+
+**Passata nel browser (produzione, `chrome-devtools`, click veri).** Il Chrome
+bloccato non c'è più. In modalità **ospite** (nessun login, `gameState` esiste ma
+cash 0, si è ne «Il fondo del barile») la nav del showroom è **gated** — `switchTab
+('showroom')` non apre niente, è voluto: non hai ancora un'azienda. Chiamato
+`renderTabShowroom()` a mano l'overlay si costruisce senza errori, e da lì le
+**sette azioni di sola interfaccia** sono state esercitate a clic veri sui bottoni
+resi: filtro motore (`Elettrico` → 10 card, tutte ⚡EV), filtro marchio (`Stellar`
+→ 8 card), apri config (prezzo base € 120.000), cambia sezione (Esterni → 4
+optional, Riepilogo → bottone Acquista + 5 durate noleggio), toggle optional
+(Vernice Madreperla +€ 4.000, il prezzo anima 120.000→123.893→ e ritorno),
+torna alla galleria (18 card), chiudi (overlay rimosso). **Zero errori console.**
+
+**`_srmPurchase`/`_srmRent` — la gamba RPC live NON rifatta questa sessione.** Il
+bottone Acquista risulta correttamente `disabled` a cassa 0 in ospite. Per premerlo
+davvero serve un account autenticato oltre il gate di fondazione: in
+`~/.config/ce-supabase.env` c'è **solo** il token Management API (SQL via
+`/database/query`), non la chiave Auth service che la passata del 31/08 sera aveva
+usato per creare `test+ce-b1/b2` con l'Admin API. Creare un utente `auth.users`
+via SQL grezzo + la cascata di pulizia su tutte le FK, su produzione, con Vlad via,
+non vale il rischio per questo passo. Acquisto e noleggio restano coperti dai
+**unit test** (ramo `CE_money` **e** ramo `ServerState.buyVehicle`) e dai due file
+browser-sync preesistenti. Se Vlad vuole la passata RPC completa: serve la chiave
+Auth service nell'env, oppure la fa lui al ritorno. Annotato riga per riga nel
+registro.
+
+**Prossima sessione:** Fase 3, sistema 5 — **infrastrutture** (`infrastructure.js`:
+`_infraBuyDepot`, `_infraSetMarkup`; più `buyFuelForDepot`/`buyTiresForDepot`/
+`upgradeFuelDepot` in engine-fleet.js se il piano li raggruppa qui), poi lifestyle,
+agenzia ombra, nemesi, turismo. Restano 12 azioni al buio.
+
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 
 Vlad ha cambiato priorità e l'ha detto chiaro: «adesso non mi interessa più di
