@@ -4,17 +4,17 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 10:15:46
+Aggiornato: 31/08/2026, 10:18:22
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **54** |
-| Aperte | **200** |
+| Chiuse (provate davvero, con un test che le difende) | **57** |
+| Aperte | **197** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 79 |
-| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 38 |
-| Il banco non riesce ad attivarle | 12 |
+| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
+| Il banco non riesce ad attivarle | 11 |
 | Fuori dal banco (file non caricato lì) | 30 |
 
 **Legenda CHIUSA** — ⬜ da fare · ✅ chiusa · 🐛 difetto trovato, correzione aperta · ⏭️ non applicabile (con motivo nelle note)
@@ -233,9 +233,9 @@ Aggiornato: 31/08/2026, 10:15:46
 | `skipAllAcademyDC` | store | engine-store.js | ok | ⬜ |  |
 | `skipAllConstructionsDC` | store | engine-store.js | ok | ⬜ |  |
 | `wakeAllDriversDC` | store | engine-store.js | ok | ⬜ |  |
-| `tourismCancelBid` | tourism | tourism.js | eseguita | ⬜ |  |
-| `tourismSubmitBid` | tourism | tourism.js | stato | ⬜ |  |
-| `tourismTerminate` | tourism | tourism.js | ok | ⬜ |  |
+| `tourismCancelBid` | tourism | tourism.js | eseguita | ✅ | 31/08: 10 prove in test/sistemi/turismo.test.js. Tre azioni server-authoritative dietro login: tourismSubmitBid (rpc_submit_tourism_bid {v_tender_id,v_qualifying_vehicles,v_pledge_cash}, pledge da _pledgeAmts, nessuna cassa lato client), tourismCancelBid (rpc_cancel_tourism_bid {v_tender_id}), tourismTerminate (rpc_terminate_tourism_contract {v_tender_id}, conferma; penale reputazione applicata dal client solo se ServerState non pronto). Argomenti contro docs/SCHEMA-RPC.json. Provato al contrario: v_qualifying_vehicles rinominato -> rosso; addReputation della penale rimosso -> rosso. Passata browser RPC-live non fatta (serve account autenticato) come per gli altri sistemi server-authoritative. |
+| `tourismSubmitBid` | tourism | tourism.js | ok | ✅ | 31/08: 10 prove in test/sistemi/turismo.test.js. Tre azioni server-authoritative dietro login: tourismSubmitBid (rpc_submit_tourism_bid {v_tender_id,v_qualifying_vehicles,v_pledge_cash}, pledge da _pledgeAmts, nessuna cassa lato client), tourismCancelBid (rpc_cancel_tourism_bid {v_tender_id}), tourismTerminate (rpc_terminate_tourism_contract {v_tender_id}, conferma; penale reputazione applicata dal client solo se ServerState non pronto). Argomenti contro docs/SCHEMA-RPC.json. Provato al contrario: v_qualifying_vehicles rinominato -> rosso; addReputation della penale rimosso -> rosso. Passata browser RPC-live non fatta (serve account autenticato) come per gli altri sistemi server-authoritative. |
+| `tourismTerminate` | tourism | tourism.js | eseguita | ✅ | 31/08: 10 prove in test/sistemi/turismo.test.js. Tre azioni server-authoritative dietro login: tourismSubmitBid (rpc_submit_tourism_bid {v_tender_id,v_qualifying_vehicles,v_pledge_cash}, pledge da _pledgeAmts, nessuna cassa lato client), tourismCancelBid (rpc_cancel_tourism_bid {v_tender_id}), tourismTerminate (rpc_terminate_tourism_contract {v_tender_id}, conferma; penale reputazione applicata dal client solo se ServerState non pronto). Argomenti contro docs/SCHEMA-RPC.json. Provato al contrario: v_qualifying_vehicles rinominato -> rosso; addReputation della penale rimosso -> rosso. Passata browser RPC-live non fatta (serve account autenticato) come per gli altri sistemi server-authoritative. |
 | `tutorialNext` | tutorial | tutorial.js | assente | ⬜ |  |
 | `tutorialSkip` | tutorial | tutorial.js | assente | ⬜ |  |
 | `_vanityColor` | vanity | vanity.js | ok | ⬜ |  |
