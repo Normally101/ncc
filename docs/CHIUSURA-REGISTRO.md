@@ -4,13 +4,13 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 10:09:29
+Aggiornato: 31/08/2026, 10:12:20
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **45** |
-| Aperte | **209** |
+| Chiuse (provate davvero, con un test che le difende) | **51** |
+| Aperte | **203** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 79 |
 | Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
@@ -125,12 +125,12 @@ Aggiornato: 31/08/2026, 10:09:29
 | `ceSetActive` | events | events.js | — | ⬜ |  |
 | `ceSetRender` | events | events.js | — | ⬜ |  |
 | `ceThen` | events | events.js | — | ⬜ |  |
-| `acquireVentureStake` | finance | engine-finance.js | ok | ⬜ |  |
-| `buyLifestyleAsset` | finance | engine-finance.js | ok | ⬜ |  |
-| `divestVentureStake` | finance | engine-finance.js | ok | ⬜ |  |
-| `passLobbyLaw` | finance | engine-finance.js | ok | ⬜ |  |
-| `repayLoan` | finance | engine-finance.js | ok | ⬜ |  |
-| `takeLoan` | finance | engine-finance.js | ok | ⬜ |  |
+| `acquireVentureStake` | finance | engine-finance.js | ok | ✅ | 31/08: 12 prove in test/sistemi/finance.test.js. Sei azioni a denaro locale (CE_money.spend/earn, nessuna RPC): stato locale + delta cassa + rifiuto pulito quando manca la precondizione (fido, fondi, punti lobbying, reputazione). Provato al contrario: guardia "già posseduto" tolta -> rosso; filter dei prestiti spostato prima dello spend -> rosso. Sistema tutto offline: il server lo vede solo come sync della cassa (nessuna passata RPC necessaria). |
+| `buyLifestyleAsset` | finance | engine-finance.js | ok | ✅ | 31/08: 12 prove in test/sistemi/finance.test.js. Sei azioni a denaro locale (CE_money.spend/earn, nessuna RPC): stato locale + delta cassa + rifiuto pulito quando manca la precondizione (fido, fondi, punti lobbying, reputazione). Provato al contrario: guardia "già posseduto" tolta -> rosso; filter dei prestiti spostato prima dello spend -> rosso. Sistema tutto offline: il server lo vede solo come sync della cassa (nessuna passata RPC necessaria). |
+| `divestVentureStake` | finance | engine-finance.js | ok | ✅ | 31/08: 12 prove in test/sistemi/finance.test.js. Sei azioni a denaro locale (CE_money.spend/earn, nessuna RPC): stato locale + delta cassa + rifiuto pulito quando manca la precondizione (fido, fondi, punti lobbying, reputazione). Provato al contrario: guardia "già posseduto" tolta -> rosso; filter dei prestiti spostato prima dello spend -> rosso. Sistema tutto offline: il server lo vede solo come sync della cassa (nessuna passata RPC necessaria). |
+| `passLobbyLaw` | finance | engine-finance.js | ok | ✅ | 31/08: 12 prove in test/sistemi/finance.test.js. Sei azioni a denaro locale (CE_money.spend/earn, nessuna RPC): stato locale + delta cassa + rifiuto pulito quando manca la precondizione (fido, fondi, punti lobbying, reputazione). Provato al contrario: guardia "già posseduto" tolta -> rosso; filter dei prestiti spostato prima dello spend -> rosso. Sistema tutto offline: il server lo vede solo come sync della cassa (nessuna passata RPC necessaria). |
+| `repayLoan` | finance | engine-finance.js | ok | ✅ | 31/08: 12 prove in test/sistemi/finance.test.js. Sei azioni a denaro locale (CE_money.spend/earn, nessuna RPC): stato locale + delta cassa + rifiuto pulito quando manca la precondizione (fido, fondi, punti lobbying, reputazione). Provato al contrario: guardia "già posseduto" tolta -> rosso; filter dei prestiti spostato prima dello spend -> rosso. Sistema tutto offline: il server lo vede solo come sync della cassa (nessuna passata RPC necessaria). |
+| `takeLoan` | finance | engine-finance.js | ok | ✅ | 31/08: 12 prove in test/sistemi/finance.test.js. Sei azioni a denaro locale (CE_money.spend/earn, nessuna RPC): stato locale + delta cassa + rifiuto pulito quando manca la precondizione (fido, fondi, punti lobbying, reputazione). Provato al contrario: guardia "già posseduto" tolta -> rosso; filter dei prestiti spostato prima dello spend -> rosso. Sistema tutto offline: il server lo vede solo come sync della cassa (nessuna passata RPC necessaria). |
 | `acceptGreyMarket` | fleet | engine-fleet.js | eseguita | ⬜ |  |
 | `bidOnAuction` | fleet | engine-fleet.js | ok | ⬜ |  |
 | `bulkRepairFleet` | fleet | ui-fleet.js | — | ⬜ |  |
