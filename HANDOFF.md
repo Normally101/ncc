@@ -3,6 +3,44 @@
 > Aggiornato: 31 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
+# ✅ 31/08 — Fase 3 CHIUSA: **254/254 azioni**. Suite **2800 verde**.
+
+`npm run stato` → **254 su 254, 0 ⬜**. `npm run preflight` verde (l'unico
+avviso è il commit del registro rigenerato, incluso in questo giro).
+
+**Le ultime 61 azioni chiuse in questa sessione (sistemi 22-46 di Fase 3):**
+
+| # | sistema | file | azioni | test |
+|---|---------|------|--------|------|
+| 22 | staff | ui-staff.js | closeModals, fireStaff, hireOfficeStaff, openCarModal | `test/sistemi/staff.test.js` |
+| 23 | career + quests | ui-career.js, quests.js | _applyBivioChoice, closeCareerModal, startMissionRun, claimQuestReward | `career.test.js` |
+| 24 | hq | hq.js | _hqBuildFromList, hqSwitchCity, hqUpgradeRoom (interruttore acceso nei test) | `hq.test.js` |
+| 25-28 | crypto, ops, realestate, saveSystem | crypto.js, ui-ops.js, ui-realestate.js, saveSystem.js | cryptoOpenTradeModal, doAcquireProvince, doBuyRealEstate, _confirmNewGame | `crypto/ops/realestate/savesystem.test.js` |
+| 29-34 | daily, rides, p2p, OPA, manuale, auth/landing | engine-daily, daily-orders, engine-rides, p2p-*, hostile_takeover, knowledge-book, auth, ui-landing | negotiateEmail, claimDailyOrder, assignAllRides, buyP2PCar, hireCrumiri, payDonCarmine, _opaRequestBuyback, _kbApri, authLogout, _authLogin, _authSignup, closeLbIfBackdrop, openShowcase | `daily/rides/p2p/hostile-takeover/knowledge-book/auth-landing.test.js` |
+| 35 | navigation | dispatcher.js, ui-hub.js, ui-sidebar.js | switchTab, openMapOverlay, closeMapOverlay, closeHub, hubNavigate, _sidebarToggle, toggleSidebar | `navigation.test.js` |
+| 36 | map-utils | ui-map-utils.js | openAcademyModal, _academySelectDriver, _cancelFoundingMode, _foundFromRegion, _startFoundingList, _startFoundingMode | `map-utils.test.js` |
+| 37-46 | emails, cmd-palette, social, war_room, map-garage, map-svg, hq-visual, ranking, tutorial, serverState | 10 file UI fuori dai CORE_FILES | collectBrokerEmail, resolveEmail, setInboxTab, openCmdPalette, _amicoRichiedi, _dmApri, _dmChiudi, _socialVista, _cercaGiocatori, _wrAcquire, _wrClose, openGarage3D, closeGarage3D, _mapSbloccaRegione, hqOpenBuildModalSlot, hqShowInfoPanel, renderTabRanking, buyHRAutomation, tutorialNext, tutorialSkip | `emails/cmd-palette/social/war-room/map-garage/map-svg/hq-visual/ranking/tutorial/serverstate.test.js` |
+
+**Come sono stati caricati i file fuori dai CORE_FILES:** `createGameEnv([...CORE_FILES,
+'file.js'], { render:true })` + `initGame(true)`. Verificato che tutti caricano
+senza mandare in stallo il banco (`boot.js` resta l'unico non caricabile — le sue
+`closeHub`/`closeMapOverlay` sono comunque definite in ui-hub.js/dispatcher.js).
+`serverState.js` caricato davvero (sostituisce il mock) con un client Supabase
+finto, solo per `buyHRAutomation`.
+
+**Provato al contrario:** fatto per ogni sistema, spesso in più giri mirati.
+Ogni test è stato visto diventare rosso rompendo la riga che difende, tranne
+`_dmChiudi` (smoke test di sola non-esplosione, dichiarato tale nel file).
+
+**Resta da fare del PIANO-CHIUSURA (non richiesto in questo giro):**
+- **Fase 4** — pulizia/orfani del registro.
+- **Fase 5** — la partita di prova vera nel browser (30 giorni ×2 strategie,
+  curva del denaro) → `docs/PARTITA-DI-PROVA.md`. È lavoro di più sessioni e
+  tocca l'equilibrio economico, che decide Vlad.
+- **Fase 6** — `preflight:prod` dopo un deploy, rapporto finale per Vlad.
+
+---
+
 # 🎯 31/08 – 14/09 — SI SEGUE `PIANO-CHIUSURA.md`
 
 Vlad parte per il Festival di Venezia e non può seguire il lavoro. L'obiettivo delle
