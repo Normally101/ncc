@@ -34,23 +34,32 @@ describe('sistemi/rides', () => {
     const errori = () => avvisi.filter(a => a.t === 'error').map(a => a.m);
     const successi = () => avvisi.filter(a => a.t === 'success').map(a => a.m);
 
-    test('assignAllRides: una corsa in attesa + autista compatibile → assegnata, avviso di successo', () => {
-        w.generatePOIRide('standard');
-        assert.equal(gs().pendingRides.length, 1);
+    /* generatePOIRide è probabilistico: pesca origine e destinazione a caso fra i
+       POI sbloccati e restituisce null se coincidono (in una partita nuova le
+       regioni sono poche, quindi capita). Si insiste finché almeno una corsa
+       standard è in coda — in isolamento bastava un colpo, a suite piena no. */
+    function seminaCorse() {
+        for (let i = 0; i < 60 && gs().pendingRides.length === 0; i++) w.generatePOIRide('standard');
+        assert.ok(gs().pendingRides.length >= 1, 'non sono riuscito a generare una corsa in attesa');
+        return gs().pendingRides.length;
+    }
+
+    test('assignAllRides: corse in attesa + autista compatibile → assegnate, avviso di successo', () => {
+        seminaCorse();
 
         w.assignAllRides();
 
-        assert.equal(gs().pendingRides.length, 0, 'la corsa non è stata tolta dalla lista d\'attesa');
+        assert.equal(gs().pendingRides.length, 0, 'le corse non sono state tolte dalla lista d\'attesa');
         assert.ok(successi().some(m => /smistat/.test(m)), 'nessun avviso di corse smistate');
     });
 
-    test('assignAllRides: nessun autista compatibile → la corsa resta, avviso d\'errore', () => {
-        w.generatePOIRide('standard');
+    test('assignAllRides: nessun autista compatibile → le corse restano, avviso d\'errore', () => {
+        const n = seminaCorse();
         gs().drivers = [];
 
         w.assignAllRides();
 
-        assert.equal(gs().pendingRides.length, 1, 'ha "assegnato" una corsa senza autisti');
+        assert.equal(gs().pendingRides.length, n, 'ha "assegnato" corse senza autisti');
         assert.ok(errori().some(m => /[Nn]essun autista/.test(m)));
     });
 
