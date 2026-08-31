@@ -4,13 +4,13 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 11:00:26
+Aggiornato: 31/08/2026, 11:21:59
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **193** |
-| Aperte | **61** |
+| Chiuse (provate davvero, con un test che le difende) | **197** |
+| Aperte | **57** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 80 |
 | Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
@@ -211,10 +211,10 @@ Aggiornato: 31/08/2026, 11:00:26
 | `_dmApri` | social | social.js | assente | ⬜ |  |
 | `_dmChiudi` | social | social.js | assente | ⬜ |  |
 | `_socialVista` | social | social.js | assente | ⬜ |  |
-| `closeModals` | staff | ui-staff.js | — | ⬜ |  |
-| `fireStaff` | staff | ui-staff.js | — | ⬜ |  |
-| `hireOfficeStaff` | staff | ui-staff.js | — | ⬜ |  |
-| `openCarModal` | staff | ui-staff.js | — | ⬜ |  |
+| `closeModals` | staff | ui-staff.js | — | ✅ | test/sistemi/staff.test.js — assunzione (addebito server salary×2), tetto _getMaxStaff, licenziamento, closeModals, openCarModal (render:true). Provato al contrario: 5 righe rotte → 5 rossi mirati. |
+| `fireStaff` | staff | ui-staff.js | — | ✅ | test/sistemi/staff.test.js — assunzione (addebito server salary×2), tetto _getMaxStaff, licenziamento, closeModals, openCarModal (render:true). Provato al contrario: 5 righe rotte → 5 rossi mirati. |
+| `hireOfficeStaff` | staff | ui-staff.js | — | ✅ | test/sistemi/staff.test.js — assunzione (addebito server salary×2), tetto _getMaxStaff, licenziamento, closeModals, openCarModal (render:true). Provato al contrario: 5 righe rotte → 5 rossi mirati. |
+| `openCarModal` | staff | ui-staff.js | — | ✅ | test/sistemi/staff.test.js — assunzione (addebito server salary×2), tetto _getMaxStaff, licenziamento, closeModals, openCarModal (render:true). Provato al contrario: 5 righe rotte → 5 rossi mirati. |
 | `_dcAcquistaPacchetto` | store | ui-store.js | — | ✅ | 31/08: 24 prove in test/sistemi/store.test.js. Booster in DC (engine-store.js: activateExecutivePass, fuel/energy/wakeAll/healAll/skipAll*/ops/full BundleDC) e servizi esclusivi (_ec*, ui-store.js): tutti passano da CE_money.spendDC, che scala il saldo locale e riallinea sul server; se i DC non bastano spendDC ritorna false e niente viene toccato (test dedicato). _dcSpend con whitelist di itemId. _dcAcquistaPacchetto (denaro vero): non tocca il saldo in locale, apre solo la cassa; ogni ramo d'errore nega l'addebito (pacchetto ignoto / no sessione / cassa non ok). _ecSwitchTab sola interfaccia. Provato al contrario: guardia hasPrestigiousPlate rimossa -> rosso; whitelist _dcSpend allargata -> rosso. |
 | `_dcSpend` | store | ui-store.js | stato | ✅ | 31/08: 24 prove in test/sistemi/store.test.js. Booster in DC (engine-store.js: activateExecutivePass, fuel/energy/wakeAll/healAll/skipAll*/ops/full BundleDC) e servizi esclusivi (_ec*, ui-store.js): tutti passano da CE_money.spendDC, che scala il saldo locale e riallinea sul server; se i DC non bastano spendDC ritorna false e niente viene toccato (test dedicato). _dcSpend con whitelist di itemId. _dcAcquistaPacchetto (denaro vero): non tocca il saldo in locale, apre solo la cassa; ogni ramo d'errore nega l'addebito (pacchetto ignoto / no sessione / cassa non ok). _ecSwitchTab sola interfaccia. Provato al contrario: guardia hasPrestigiousPlate rimossa -> rosso; whitelist _dcSpend allargata -> rosso. |
 | `_ecCaffeSospeso` | store | ui-store.js | ok | ✅ | 31/08: 24 prove in test/sistemi/store.test.js. Booster in DC (engine-store.js: activateExecutivePass, fuel/energy/wakeAll/healAll/skipAll*/ops/full BundleDC) e servizi esclusivi (_ec*, ui-store.js): tutti passano da CE_money.spendDC, che scala il saldo locale e riallinea sul server; se i DC non bastano spendDC ritorna false e niente viene toccato (test dedicato). _dcSpend con whitelist di itemId. _dcAcquistaPacchetto (denaro vero): non tocca il saldo in locale, apre solo la cassa; ogni ramo d'errore nega l'addebito (pacchetto ignoto / no sessione / cassa non ok). _ecSwitchTab sola interfaccia. Provato al contrario: guardia hasPrestigiousPlate rimossa -> rosso; whitelist _dcSpend allargata -> rosso. |
