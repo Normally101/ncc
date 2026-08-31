@@ -4,13 +4,13 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 10:12:20
+Aggiornato: 31/08/2026, 10:14:15
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **51** |
-| Aperte | **203** |
+| Chiuse (provate davvero, con un test che le difende) | **53** |
+| Aperte | **201** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 79 |
 | Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
@@ -39,8 +39,8 @@ Aggiornato: 31/08/2026, 10:12:20
 | `b2bConfirmAccept` | b2b | b2b.js | — | ⬜ |  |
 | `b2bOpenAcceptModal` | b2b | b2b.js | — | ⬜ |  |
 | `b2bTerminateContract` | b2b | b2b.js | eseguita | ⬜ |  |
-| `shadowExecuteOp` | black_ops | black_ops.js | stato | ⬜ |  |
-| `shadowUpgradeDefense` | black_ops | black_ops.js | ok | ⬜ |  |
+| `shadowExecuteOp` | black_ops | black_ops.js | stato | ✅ | 31/08: 10 prove in test/sistemi/agenzia-ombra.test.js. Entrambe server-authoritative: shadowExecuteOp (conferma, fondi locali, rpc_execute_shadow_op {v_target_id,v_op_type,v_op_cost}) e shadowUpgradeDefense (rpc_upgrade_shadow_defense {v_cost}), addebito via CE_money.addebitatoDalServer dopo la risposta. Coperto anche il caso "op eseguita ma fallita -> si paga il tentativo" vs "error del server -> non si paga". Argomenti verificati contro docs/SCHEMA-RPC.json. Provato al contrario: addebito spostato prima del check error -> rosso; v_cost rinominato -> rosso. Passata browser RPC-live non fatta (serve account autenticato; env con solo token Management API) come per gli altri sistemi server-authoritative. |
+| `shadowUpgradeDefense` | black_ops | black_ops.js | ok | ✅ | 31/08: 10 prove in test/sistemi/agenzia-ombra.test.js. Entrambe server-authoritative: shadowExecuteOp (conferma, fondi locali, rpc_execute_shadow_op {v_target_id,v_op_type,v_op_cost}) e shadowUpgradeDefense (rpc_upgrade_shadow_defense {v_cost}), addebito via CE_money.addebitatoDalServer dopo la risposta. Coperto anche il caso "op eseguita ma fallita -> si paga il tentativo" vs "error del server -> non si paga". Argomenti verificati contro docs/SCHEMA-RPC.json. Provato al contrario: addebito spostato prima del check error -> rosso; v_cost rinominato -> rosso. Passata browser RPC-live non fatta (serve account autenticato; env con solo token Management API) come per gli altri sistemi server-authoritative. |
 | `closeHub` | boot | boot.js | assente | ⬜ |  |
 | `closeMapOverlay` | boot | boot.js | assente | ⬜ |  |
 | `_applyBivioChoice` | career | ui-career.js | — | ⬜ |  |
