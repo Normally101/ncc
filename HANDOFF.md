@@ -418,7 +418,7 @@ lifestyle, agenzia ombra, nemesi, turismo, come nell'ordine del piano. Restano
 14 azioni al buio; fra queste le due di HQ sono ferme giustamente
 (`HQ_ENABLED = false`), segnate ⏭️.
 
-# ✅ 31/08 — Fase 3 in corsa: sistemi 5-17 chiusi. **172/254**. Suite 2665.
+# ✅ 31/08 — Fase 3 in corsa: sistemi 5-21 chiusi. **193/254**. Suite 2696.
 
 Vlad: «procedi senza sosta fino a tutte le 254». Un sistema per commit, ognuno con
 test dedicato + provato al contrario. Fatti in fila:
@@ -439,10 +439,45 @@ test dedicato + provato al contrario. Fatti in fila:
 | 16 | vip-eventi | 11 | `test/sistemi/vip-eventi.test.js` | scelte di follow-up VIP; difesa idempotenza (doppio click non paga/incassa 2×) |
 | 17 | vtk-market | 4 | `test/sistemi/vtk-market.test.js` | mercato VTK + shop con degrado sicuro se la RPC non esiste |
 
+| 18 | auctions | 3 | `test/sistemi/auctions.test.js` | confirmBid/revealWon (RPC), openBidModal (`render:true`). `switchTab` → dispatcher.js non nei CORE_FILES: al test di navigazione |
+| 19 | events | 5 | `test/sistemi/events.test.js` | i 5 adattatori generici (`ceRemove`/`ceClick`/`ceThen`/`ceSetRender`/`ceSetActive`) |
+| 20 | vanity + vittorio + driver_skills | 9 | `test/sistemi/vanity-vittorio-skills.test.js` | cosmetici in DC, strozzino, albero abilità autista |
+| 21 | zero-to-hero | 4 | `test/sistemi/zero-to-hero.test.js` | corsa manuale, dormi in auto, rivelazione capitalismo, ragazzo di quartiere |
+
 ⚠️ **`open*Modal` è stub no-op nell'env di default** (regex `open\w*Modal` in
 game-env.js): per testare il comportamento reale di un apri-modale serve
-`freshEnv({ render: true })`. Usato per leasing/hotel (sistema 15) e openVTKModal
-(sistema 17).
+`freshEnv({ render: true })`. Usato per leasing/hotel (15), openVTKModal (17),
+auctionsOpenBidModal (18).
+
+⚠️ **`EMBLEMS`/`COLORS`/`TITLES` (vanity.js) vivono in una IIFE**: non leggibili
+da `R.catalogo`. Nel test i valori sono hardcoded dal sorgente (`⚜️` c:5, ecc.).
+
+## Dove siamo (31/08, ~11:00) — 193/254, 61 aperte. Suite 2696 verde.
+
+Restano **61 azioni aperte**, quasi tutte in file di sola interfaccia che **il
+banco NON carica** (`dispatcher.js`, `boot.js`, `ui-sidebar.js`, `tutorial.js`,
+`cmd-palette.js`, `ui-hub.js`, `map-garage.js`, `war_room.js`, `hq-visual.js`,
+`social.js`, `ui-emails.js`, `ui-ranking.js`, `map-svg.js`, `ui-map-utils.js`,
+`serverState.js`). Elenco vivo: `npm run stato` + `docs/CHIUSURA-REGISTRO.md`.
+
+**Come chiudere le ultime 61 (chi riprende):**
+- Sistemi in file già nei CORE_FILES → dedicato `test/sistemi/<nome>.test.js`,
+  stesso schema: 3 effetti, provato al contrario, `mark.py`, `npm test`, commit.
+  Aperti: `staff` (ui-staff.js), `career` (ui-career.js), `hq` (hq.js),
+  `crypto`, `daily` (negotiateEmail), `daily-orders`, `hostile_takeover`,
+  `ops` (doAcquireProvince), `p2p-market` (buyP2PCar), `p2p-render`
+  (hireCrumiri/payDonCarmine), `quests` (claimQuestReward), `realestate`
+  (doBuyRealEstate), `rides` (assignAllRides), `serverState` (buyHRAutomation).
+- Sistemi in file NON caricati → o si aggiungono al `render:true` env con
+  un `require` mirato del file (come si è fatto con `openLeasingModal`), o si
+  segna ⏭️ nel registro con motivo «navigazione pura, file fuori dai CORE_FILES,
+  verificata nella passata browser». Prima di ⏭️, provare a caricarli.
+- `test-support/mark.py` (in scratchpad) marca le righe: `python3 mark.py ok
+  <note.txt> <azione1> <azione2> …` — solo righe ⬜, preserva il resto.
+
+**Domanda di regia aperta (Vlad, 31/08):** valutare se il grosso di questo lavoro
+ripetitivo lo può fare Gemini 3.7 Flash (crediti abbondanti) con revisione finale
+Opus 5. Vedi `DOMANDE-PER-VLAD.md` se ci finisce una decisione.
 
 ⚠️ **Regola scoperta**: `syncedCash` nei test raccoglie anche il sync dell'iniezione
 del regista (`R.conSoldi` → `CE_money.earn` → `syncCash`). Dove si contano le
