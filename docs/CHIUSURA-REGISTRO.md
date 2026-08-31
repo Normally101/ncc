@@ -4,17 +4,17 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 09:54:46
+Aggiornato: 31/08/2026, 10:09:29
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **43** |
-| Aperte | **211** |
+| Chiuse (provate davvero, con un test che le difende) | **45** |
+| Aperte | **209** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 79 |
-| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 38 |
-| Il banco non riesce ad attivarle | 12 |
+| Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
+| Il banco non riesce ad attivarle | 11 |
 | Fuori dal banco (file non caricato lì) | 30 |
 
 **Legenda CHIUSA** — ⬜ da fare · ✅ chiusa · 🐛 difetto trovato, correzione aperta · ⏭️ non applicabile (con motivo nelle note)
@@ -162,8 +162,8 @@ Aggiornato: 31/08/2026, 09:54:46
 | `hqOpenBuildModalSlot` | hq-visual | hq-visual.js | assente | ⬜ |  |
 | `hqShowInfoPanel` | hq-visual | hq-visual.js | assente | ⬜ |  |
 | `hubNavigate` | hub | ui-hub.js | assente | ⬜ |  |
-| `_infraBuyDepot` | infrastructure | infrastructure.js | ok | ⬜ |  |
-| `_infraSetMarkup` | infrastructure | infrastructure.js | — | ⬜ |  |
+| `_infraBuyDepot` | infrastructure | infrastructure.js | ok | ✅ | 31/08: 7 prove in test/sistemi/infrastrutture.test.js. Entrambe le azioni sono server-authoritative: _infraBuyDepot chiede conferma, controlla i fondi in locale, chiama rpc_buy_fuel_depot e scala i 300.000 SOLO via CE_money.addebitatoDalServer DOPO il si del server (test: il server rifiuta -> il giocatore non paga); _infraSetMarkup legge lo slider e manda rpc_set_fuel_markup con {v_province_id, v_markup_pct} verificati contro docs/SCHEMA-RPC.json, nessun denaro. Provato al contrario: addebito spostato prima della RPC -> rosso; v_markup_pct rinominato -> rosso. Passata browser RPC-live non fatta (serve account autenticato: l'env ha solo il token Management API) come per lo showroom; nomi RPC allineati allo schema vivo + guardrail contratto-client-server. |
+| `_infraSetMarkup` | infrastructure | infrastructure.js | — | ✅ | 31/08: 7 prove in test/sistemi/infrastrutture.test.js. Entrambe le azioni sono server-authoritative: _infraBuyDepot chiede conferma, controlla i fondi in locale, chiama rpc_buy_fuel_depot e scala i 300.000 SOLO via CE_money.addebitatoDalServer DOPO il si del server (test: il server rifiuta -> il giocatore non paga); _infraSetMarkup legge lo slider e manda rpc_set_fuel_markup con {v_province_id, v_markup_pct} verificati contro docs/SCHEMA-RPC.json, nessun denaro. Provato al contrario: addebito spostato prima della RPC -> rosso; v_markup_pct rinominato -> rosso. Passata browser RPC-live non fatta (serve account autenticato: l'env ha solo il token Management API) come per lo showroom; nomi RPC allineati allo schema vivo + guardrail contratto-client-server. |
 | `_kbApri` | knowledge-book | knowledge-book.js | — | ⬜ |  |
 | `_authLogin` | landing | ui-landing.js | — | ⬜ |  |
 | `_authSignup` | landing | ui-landing.js | — | ⬜ |  |
@@ -233,8 +233,8 @@ Aggiornato: 31/08/2026, 09:54:46
 | `skipAllAcademyDC` | store | engine-store.js | ok | ⬜ |  |
 | `skipAllConstructionsDC` | store | engine-store.js | ok | ⬜ |  |
 | `wakeAllDriversDC` | store | engine-store.js | ok | ⬜ |  |
-| `tourismCancelBid` | tourism | tourism.js | ok | ⬜ |  |
-| `tourismSubmitBid` | tourism | tourism.js | stato | ⬜ |  |
+| `tourismCancelBid` | tourism | tourism.js | eseguita | ⬜ |  |
+| `tourismSubmitBid` | tourism | tourism.js | ok | ⬜ |  |
 | `tourismTerminate` | tourism | tourism.js | eseguita | ⬜ |  |
 | `tutorialNext` | tutorial | tutorial.js | assente | ⬜ |  |
 | `tutorialSkip` | tutorial | tutorial.js | assente | ⬜ |  |
