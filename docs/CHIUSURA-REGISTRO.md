@@ -4,13 +4,13 @@
 > conservata fra una generazione e l'altra: è l'unica memoria del lavoro fatto.
 > Il piano che governa questo registro è `PIANO-CHIUSURA.md`.
 
-Aggiornato: 31/08/2026, 10:18:22
+Aggiornato: 31/08/2026, 10:20:39
 
 | | |
 |---|---|
 | Azioni totali | **254** |
-| Chiuse (provate davvero, con un test che le difende) | **57** |
-| Aperte | **197** |
+| Chiuse (provate davvero, con un test che le difende) | **63** |
+| Aperte | **191** |
 | Difetti trovati e ancora da correggere | **0** |
 | Eseguite dal banco automatico (`ok`) | 79 |
 | Il banco la esegue ma il denaro si muove altrove (`eseguita`) | 39 |
@@ -35,10 +35,10 @@ Aggiornato: 31/08/2026, 10:18:22
 | `auctionsRevealWon` | auctions | auctions.js | — | ⬜ |  |
 | `switchTab` | auctions | auctions.js | — | ⬜ |  |
 | `authLogout` | auth | auth.js | — | ⬜ |  |
-| `b2bCheckLimit` | b2b | b2b.js | — | ⬜ |  |
-| `b2bConfirmAccept` | b2b | b2b.js | — | ⬜ |  |
-| `b2bOpenAcceptModal` | b2b | b2b.js | — | ⬜ |  |
-| `b2bTerminateContract` | b2b | b2b.js | eseguita | ⬜ |  |
+| `b2bCheckLimit` | b2b | b2b.js | — | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
+| `b2bConfirmAccept` | b2b | b2b.js | — | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
+| `b2bOpenAcceptModal` | b2b | b2b.js | — | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
+| `b2bTerminateContract` | b2b | b2b.js | eseguita | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
 | `shadowExecuteOp` | black_ops | black_ops.js | stato | ✅ | 31/08: 10 prove in test/sistemi/agenzia-ombra.test.js. Entrambe server-authoritative: shadowExecuteOp (conferma, fondi locali, rpc_execute_shadow_op {v_target_id,v_op_type,v_op_cost}) e shadowUpgradeDefense (rpc_upgrade_shadow_defense {v_cost}), addebito via CE_money.addebitatoDalServer dopo la risposta. Coperto anche il caso "op eseguita ma fallita -> si paga il tentativo" vs "error del server -> non si paga". Argomenti verificati contro docs/SCHEMA-RPC.json. Provato al contrario: addebito spostato prima del check error -> rosso; v_cost rinominato -> rosso. Passata browser RPC-live non fatta (serve account autenticato; env con solo token Management API) come per gli altri sistemi server-authoritative. |
 | `shadowUpgradeDefense` | black_ops | black_ops.js | ok | ✅ | 31/08: 10 prove in test/sistemi/agenzia-ombra.test.js. Entrambe server-authoritative: shadowExecuteOp (conferma, fondi locali, rpc_execute_shadow_op {v_target_id,v_op_type,v_op_cost}) e shadowUpgradeDefense (rpc_upgrade_shadow_defense {v_cost}), addebito via CE_money.addebitatoDalServer dopo la risposta. Coperto anche il caso "op eseguita ma fallita -> si paga il tentativo" vs "error del server -> non si paga". Argomenti verificati contro docs/SCHEMA-RPC.json. Provato al contrario: addebito spostato prima del check error -> rosso; v_cost rinominato -> rosso. Passata browser RPC-live non fatta (serve account autenticato; env con solo token Management API) come per gli altri sistemi server-authoritative. |
 | `closeHub` | boot | boot.js | assente | ⬜ |  |
@@ -81,8 +81,8 @@ Aggiornato: 31/08/2026, 10:18:22
 | `ceVtkSell` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `openAcademyModal` | ce-actions | ce-actions.js | — | ⬜ |  |
 | `openCmdPalette` | cmd-palette | cmd-palette.js | assente | ⬜ |  |
-| `CE_cancelBid` | contracts | contracts.js | ok | ⬜ |  |
-| `CE_terminateContract` | contracts | contracts.js | — | ⬜ |  |
+| `CE_cancelBid` | contracts | contracts.js | ok | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
+| `CE_terminateContract` | contracts | contracts.js | — | ✅ | 31/08: 10 prove in test/sistemi/contratti-b2b.test.js. Due sistemi distinti. B2B (b2b.js, server-authoritative): b2bOpenAcceptModal costruisce il modal di selezione veicoli (errore se flotta idonea insufficiente), b2bCheckLimit abilita la firma al numero richiesto e blocca le altre caselle, b2bConfirmAccept -> rpc_accept_b2b_contract {v_contract_id,v_vehicle_ids,v_driver_ids}, b2bTerminateContract -> rpc_terminate_b2b_contract {v_active_id} con penale/reputazione via CE_money DOPO il si del server (server rifiuta -> nessuna penale). Contratti (contracts.js, locale): CE_cancelBid rimborsa il pledge via CE_money.earn, CE_terminateContract marca 'terminated' solo dopo conferma. Argomenti B2B contro docs/SCHEMA-RPC.json. Provato al contrario: v_vehicle_ids rinominato -> rosso; rimborso pledge rimosso -> rosso. |
 | `cryptoOpenTradeModal` | crypto | crypto.js | — | ⬜ |  |
 | `negotiateEmail` | daily | engine-daily.js | ok | ⬜ |  |
 | `claimDailyOrder` | daily-orders | daily-orders.js | stato | ⬜ |  |
