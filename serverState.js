@@ -212,6 +212,12 @@ const ServerState = (() => {
         gameState.reputation            = Number.isFinite(_rep) ? _rep : gameState.reputation;
         gameState.companyName           = _company.company_name || gameState.companyName;
         gameState.hrAutomationExpiresAt = _company.hr_automation_expires_at || null;
+        // Premio giornaliero (76_premio_giornaliero_lato_server.sql): lo stato
+        // dello streak vive SOLO su companies.login_streak/last_daily_claim.
+        // _checkDailyReward (engine-daily.js) non li scrive più in locale —
+        // arrivano qui, come cash e driver_coins.
+        gameState.loginStreak    = (_company.login_streak != null) ? _company.login_streak : (gameState.loginStreak ?? 0);
+        gameState.lastDailyClaim = _company.last_daily_claim ? new Date(_company.last_daily_claim).getTime() : (gameState.lastDailyClaim ?? null);
     }
 
     function _bridgeFleetToGameState() {
@@ -468,6 +474,15 @@ const ServerState = (() => {
         return data?.price_eur ?? 1.85;
     }
 
+    // ── Daily login reward ───────────────────────────────────────────────────
+    // Nessun parametro dal client: la RPC ricava l'azienda da auth.uid() e
+    // decide da sola importo e streak (74_carburante_prezzo_unico.sql vicino,
+    // 76_premio_giornaliero_lato_server.sql per questa). Vedi engine-daily.js
+    // _checkDailyReward per l'uso.
+    async function claimDailyReward() {
+        return _rpc('rpc_claim_daily_reward', {});
+    }
+
     // ── Vehicle sell ──────────────────────────────────────────────────────────
     async function sellVehicle(vehicleId, price) {
         return _rpc('rpc_sell_vehicle', { v_vehicle_id: vehicleId, v_price: Math.round(price) });
@@ -628,6 +643,7 @@ const ServerState = (() => {
         getMyInfluence,
         buyRealEstate,
         getFuelPrice,
+        claimDailyReward,
         sellVehicle,
         refillCarTires,
         restCeo,

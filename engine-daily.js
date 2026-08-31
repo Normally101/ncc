@@ -197,8 +197,17 @@ function _tickEmails() {
 
 // ─── FUEL DEPOT SYSTEM ───────────────────────────────────────────
 function _tickFuelPrice() {
-    const change = (Math.random() - 0.48) * 0.06; // slight upward bias simulates real market
-    gameState.fuelPrice = Math.max(1.55, Math.min(2.60, +(gameState.fuelPrice + change).toFixed(2)));
+    // Prezzo unico per tutti (DOMANDE-PER-VLAD.md §6, 31/08): lo scrive il
+    // server ogni ora (rpc_update_fuel_price via cron 'prezzo-carburante',
+    // 74_carburante_prezzo_unico.sql) e arriva qui già pronto tramite
+    // ServerState (fetch all'avvio + Realtime su INSERT in fuel_market).
+    // Qui non lo si genera più in locale: sovrascriverlo vorrebbe dire tornare
+    // ad un prezzo diverso per ciascuno. Il sorteggio locale resta solo come
+    // fallback per chi gioca senza sincronizzazione server attiva.
+    if (!window.ServerState || !window.ServerState.isReady || !window.ServerState.isReady()) {
+        const change = (Math.random() - 0.48) * 0.06; // slight upward bias simulates real market
+        gameState.fuelPrice = Math.max(1.55, Math.min(2.60, +(gameState.fuelPrice + change).toFixed(2)));
+    }
 
     const hasLogMgr = gameState.staff.some(s => s.id === 'log_mgr');
     if (!hasLogMgr || !hasInvestment('inv_fuel_depot')) return;
@@ -1305,53 +1314,40 @@ function _tickDriverSatisfaction() {
 
 
 // ─── DAILY LOGIN REWARD ───────────────────────────────────────────
-function _checkDailyReward() {
+// Il premio è denaro (e Driver Coins): dal 31/08 lo decide SOLO il server
+// (rpc_claim_daily_reward, 76_premio_giornaliero_lato_server.sql —
+// DOMANDE-PER-VLAD.md §5, "tabella server"). Prima lo calcolava questo file
+// leggendo `lastDailyClaim` dal salvataggio locale: chi sapeva modificare il
+// salvataggio lo riscuoteva quante volte voleva. Niente fallback locale se il
+// server non è raggiungibile: è denaro, o passa da qui o non lo dà nessuno —
+// il giocatore lo riceverà al prossimo accesso quando il server risponde.
+async function _checkDailyReward() {
+    if (!window.ServerState || typeof window.ServerState.claimDailyReward !== 'function') return;
+
+    let result;
+    try {
+        result = await window.ServerState.claimDailyReward();
+    } catch (e) { return; }
+
+    if (!result || !result.success) return; // già riscattato oggi, non autenticato, ecc. — silenzioso
+
     const gs = gameState;
-    const now = Date.now();
-    const oneDayMs = 86400000;
-    const last = gs.lastDailyClaim || 0;
-    const elapsed = now - last;
+    const streak     = result.day;
+    const cashReward = result.cash || 0;
+    const dcReward   = result.driverCoins || 0;
+    const label      = streak === 7 ? 'Settimana!' : `Giorno ${streak}`;
 
-    // Already claimed today (< 20h cooldown to be generous with timezones)
-    if (elapsed < 20 * 3600 * 1000) return;
+    // Lo stato locale segue quello che il server ha già accreditato (Realtime
+    // su `companies` aggiorna cash/driver_coins per conto suo); qui si tiene
+    // solo il tracciamento del profitto annuale, che è puramente locale.
+    if (cashReward > 0) gs.annualProfitTracker = (gs.annualProfitTracker || 0) + cashReward;
 
-    // Broke streak if > 48h since last claim
-    if (elapsed > 48 * 3600 * 1000 && last > 0) gs.loginStreak = 0;
-
-    gs.loginStreak = (gs.loginStreak || 0) + 1;
-    gs.lastDailyClaim = now;
-
-    const streak = gs.loginStreak;
-
-    // Reward table
-    const DAILY_REWARDS = [
-        { days: 1,  cash: 500,   tc: 0, label: 'Giorno 1' },
-        { days: 2,  cash: 1000,  tc: 0, label: 'Giorno 2' },
-        { days: 3,  cash: 1500,  tc: 1, label: 'Giorno 3' },
-        { days: 5,  cash: 2500,  tc: 2, label: 'Giorno 5' },
-        { days: 7,  cash: 5000,  tc: 5, label: 'Settimana!' },
-        { days: 14, cash: 10000, tc: 10, label: '2 Settimane!' },
-        { days: 30, cash: 25000, tc: 25, label: 'Un Mese!' },
-    ];
-    // Find the best matching tier
-    const tier = [...DAILY_REWARDS].reverse().find(r => streak >= r.days) || DAILY_REWARDS[0];
-    // Bonus ogni 7 giorni oltre il 7
-    const extraMult = streak >= 7 ? 1 + Math.floor((streak - 7) / 7) * 0.1 : 1;
-    const cashReward = Math.round(tier.cash * extraMult);
-    const tcReward   = tier.tc;
-
-    window.CE_money.earn(cashReward, 'daily_login_reward');
-    gs.annualProfitTracker = (gs.annualProfitTracker || 0) + cashReward;
-    if (tcReward > 0) {
-        window.CE_money.earnDC(tcReward, 'tier_reward');
-    }
-
-    const rewardDesc = tcReward > 0
-        ? `+€${cashReward.toLocaleString('it-IT')} · +${tcReward} DriverCoin`
+    const rewardDesc = dcReward > 0
+        ? `+${dcReward} DriverCoin`
         : `+€${cashReward.toLocaleString('it-IT')}`;
 
     if (typeof showBigEvent === 'function') {
-        showBigEvent('🎁', `Login Streak: Giorno ${streak}`, `${tier.label}\n${rewardDesc}`);
+        showBigEvent('🎁', `Login Streak: Giorno ${streak}`, `${label}\n${rewardDesc}`);
     }
     if (typeof showNotification === 'function') {
         showNotification(`🎁 Login streak ${streak} — ${rewardDesc}`, 'success');

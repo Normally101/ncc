@@ -1,103 +1,91 @@
 'use strict';
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { freshEnv, createGameEnv, CORE_FILES } = require('../../test-support/game-env.js');
+const { freshEnv } = require('../../test-support/game-env.js');
 
+/* Dal 31/08 (DOMANDE-PER-VLAD.md §5) il premio non lo calcola più questo file
+   in locale: lo decide `rpc_claim_daily_reward` sul server, e il client
+   (_checkDailyReward, engine-daily.js) si limita a chiamarla e a mostrare il
+   risultato. Il mock di ServerState.claimDailyReward (test-support/game-env.js)
+   riproduce fedelmente la tabella vera del server: giorni 1-6 -> €500×giorno,
+   giorno 7 -> 10 Driver Coins/€0, poi la serie riparte da 1. */
 describe('economy/daily-reward — login streak (_checkDailyReward)', () => {
-    test('primo claim del giorno 1: +€500, streak=1, nessun Driver Coin (tier giorno 1 non li prevede)', () => {
+    test('primo claim: chiama il server, mostra +€500, nessun Driver Coin (giorno 1 non ne prevede)', async () => {
         const { sandbox } = freshEnv();
         sandbox.gameState.cash = 0;
-        sandbox.gameState.lastDailyClaim = 0; // mai reclamato
+        sandbox.gameState.driverCoins = 0;
+        sandbox.gameState.loginStreak = 0;
 
-        sandbox._checkDailyReward();
+        await sandbox._checkDailyReward();
 
+        // Il mock si comporta come il bridge reale: accredita lui stesso, qui si
+        // verifica solo che il risultato sia arrivato ed è quello atteso.
         assert.equal(sandbox.gameState.cash, 500);
         assert.equal(sandbox.gameState.loginStreak, 1);
-        assert.equal(sandbox.gameState.driverCoins, 50, 'tier giorno 1 non regala DC — resta la dote iniziale di 50');
+        assert.equal(sandbox.gameState.driverCoins, 0, 'giorno 1 non regala DC');
     });
 
-    test('un secondo claim nella stessa sessione (< 20h) NON duplica la ricompensa', () => {
+    test('senza ServerState.claimDailyReward (offline/non sincronizzato): nessun crash, nessun effetto', async () => {
+        const { sandbox } = freshEnv();
+        sandbox.gameState.cash = 1234;
+        sandbox.ServerState.claimDailyReward = undefined; // simula un client senza quella capacità
+
+        await assert.doesNotReject(() => sandbox._checkDailyReward());
+
+        assert.equal(sandbox.gameState.cash, 1234, 'nessun premio locale inventato: niente server, niente premio');
+    });
+
+    test('già riscattato oggi (already_claimed dal server): nessun effetto, nessuna notifica', async () => {
+        const { sandbox } = freshEnv();
+        sandbox.ServerState.claimDailyReward = async () => ({ success: false, reason: 'already_claimed', day: 4 });
+        const notifications = [];
+        sandbox.showNotification = (msg, type) => notifications.push({ msg, type });
+        sandbox.gameState.cash = 999;
+
+        await sandbox._checkDailyReward();
+
+        assert.equal(sandbox.gameState.cash, 999);
+        assert.equal(notifications.length, 0);
+    });
+
+    test('la RPC che lancia (es. rete assente): _checkDailyReward non propaga l\'errore', async () => {
+        const { sandbox } = freshEnv();
+        sandbox.ServerState.claimDailyReward = async () => { throw new Error('network down'); };
+
+        await assert.doesNotReject(() => sandbox._checkDailyReward());
+    });
+
+    test('claim al giorno 7: +10 Driver Coins, zero contanti, come da tabella approvata (DOMANDE-PER-VLAD.md §5)', async () => {
         const { sandbox } = freshEnv();
         sandbox.gameState.cash = 0;
-        sandbox.gameState.lastDailyClaim = 0;
+        sandbox.gameState.driverCoins = 0;
+        sandbox.gameState.loginStreak = 6; // il prossimo claim è il 7°
 
-        sandbox._checkDailyReward();
-        const cashAfterFirst = sandbox.gameState.cash;
-        const streakAfterFirst = sandbox.gameState.loginStreak;
-
-        sandbox._checkDailyReward(); // retrigger immediato (es. doppia chiamata da gameLoop)
-
-        assert.equal(sandbox.gameState.cash, cashAfterFirst, 'un secondo claim entro 20h non deve aggiungere altro cash');
-        assert.equal(sandbox.gameState.loginStreak, streakAfterFirst, 'lo streak non deve avanzare due volte nella stessa finestra');
-    });
-
-    test('claim al giorno 7 (streak) chiama ServerState.addDriverCoins col delta corretto (server-authoritative)', async () => {
-        // ServerState.addDriverCoins di default (game-env.js) simula il bridge sommando
-        // l'amount a gameState.driverCoins COSÌ COM'È al momento della chiamata — che qui
-        // riflette già il bump ottimistico locale fatto PRIMA dalla stessa _checkDailyReward
-        // (gs.driverCoins += tcReward, riga ~1138 di engine-daily.js). Nella realtà server e
-        // client partono da due contatori indipendenti (sincronizzati), quindi il mock di
-        // default doppierebbe qui il conteggio — override mirato per isolare cosa conta
-        // davvero: l'RPC viene chiamata con l'amount giusto, e il suo risultato (qualunque
-        // esso sia) è quello che sovrascrive lo stato finale, come da pattern server-authoritative.
-        const calls = [];
-        const { sandbox, stopAllIntervals } = createGameEnv(CORE_FILES, {
-            serverState: {
-                addDriverCoins: async (amount) => {
-                    calls.push(amount);
-                    return { ok: true, driver_coins: 55 }; // valore autoritativo simulato dal "server"
-                },
-            },
-        });
-        sandbox.initGame(true);
-        stopAllIntervals();
-        sandbox.gameState.cash = 0;
-        sandbox.gameState.loginStreak = 6;
-        sandbox.gameState.lastDailyClaim = 0;
-
-        sandbox._checkDailyReward();
-        await new Promise(r => setTimeout(r, 20));
+        await sandbox._checkDailyReward();
 
         assert.equal(sandbox.gameState.loginStreak, 7);
-        assert.equal(sandbox.gameState.cash, 5000, 'tier "Settimana!" — €5000');
-        assert.deepEqual(calls, [5], 'ServerState.addDriverCoins deve essere chiamata una sola volta col delta del tier (5)');
-        assert.equal(sandbox.gameState.driverCoins, 55, 'il valore finale è quello restituito dal server, non il bump ottimistico locale');
+        assert.equal(sandbox.gameState.cash, 0, 'giorno 7 non dà contanti');
+        assert.equal(sandbox.gameState.driverCoins, 10);
     });
 
-    test('bonus oltre la settimana: al giorno 14 il cash del tier è maggiorato del +10% (extraMult ogni 7 giorni)', () => {
+    test('claim oltre il giorno 7: lo streak riparte da 1 (nessun giorno 8/14/30)', async () => {
         const { sandbox } = freshEnv();
+        sandbox.gameState.loginStreak = 7;
         sandbox.gameState.cash = 0;
-        sandbox.gameState.loginStreak = 13;
-        sandbox.gameState.lastDailyClaim = Date.now() - 24 * 3600 * 1000; // ieri: oltre le 20h, entro le 48h → lo streak continua
 
-        sandbox._checkDailyReward();
+        await sandbox._checkDailyReward();
 
-        assert.equal(sandbox.gameState.loginStreak, 14);
-        // Tier "2 Settimane!" = €10000; extraMult = 1 + floor((14-7)/7)*0.1 = 1.1 → €11000.
-        // Audit mutazione 23/08: ponendo extraMult = 1 fisso nessun test diventava rosso.
-        assert.equal(sandbox.gameState.cash, 11000, 'manca il bonus del +10% per il secondo giro di 7 giorni');
+        assert.equal(sandbox.gameState.loginStreak, 1, 'la tabella approvata riparte da 1 dopo il 7, non prosegue');
+        assert.equal(sandbox.gameState.cash, 500);
     });
 
-    test('interruzione streak: più di 48h dall\'ultimo claim azzera lo streak prima di ricontare', () => {
+    test('annualProfitTracker segue il cash del premio (unico effetto puramente locale rimasto)', async () => {
         const { sandbox } = freshEnv();
-        sandbox.gameState.cash = 0;
-        sandbox.gameState.loginStreak = 10;
-        sandbox.gameState.lastDailyClaim = Date.now() - 72 * 3600 * 1000; // 3 giorni fa
+        sandbox.gameState.loginStreak = 2; // il prossimo è il 3°: €1500
+        sandbox.gameState.annualProfitTracker = 1000;
 
-        sandbox._checkDailyReward();
+        await sandbox._checkDailyReward();
 
-        assert.equal(sandbox.gameState.loginStreak, 1, 'streak interrotto: riparte da 1, non da 11');
-    });
-
-    test('REGRESSIONE (fix stabilizzazione 10 agosto): il cash della ricompensa sincronizza col server — prima restava locale finché non arrivava un\'altra azione a innescare un syncCash, con lo stesso rischio di rifiuto RPC già riprodotto dal vivo per i prestiti', async () => {
-        const calls = [];
-        const { sandbox } = freshEnv({ serverState: { syncCash: async (v) => { calls.push(v); return { success: true, cash: v }; } } });
-        sandbox.gameState.cash = 0;
-        sandbox.gameState.lastDailyClaim = 0;
-
-        sandbox._checkDailyReward();
-        await new Promise(r => setTimeout(r, 10));
-
-        assert.deepEqual(calls, [500], 'la ricompensa del giorno 1 (+€500) deve essere sincronizzata col server');
+        assert.equal(sandbox.gameState.annualProfitTracker, 1000 + 1500);
     });
 });

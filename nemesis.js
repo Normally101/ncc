@@ -25,7 +25,7 @@ window._nemesisAddVip = function(vipId, vipName, reason) {
     }
     const n = gameState.vipNemeses[vipId];
     const msg = n.level >= 2
-        ? `🦹 ${vipName} è FURIOSO con te! Finanzierà i tuoi rivali.`
+        ? `🦹 ${vipName} è FURIOSO con te! È in guerra aperta con la tua agenzia.`
         : `😠 ${vipName} è deluso. Potrebbe diventare il tuo nemico.`;
     if (typeof showNotification === 'function') showNotification(msg, 'error');
     if (typeof logToMap === 'function') logToMap(msg);
@@ -41,8 +41,8 @@ window._nemesisAddVip = function(vipId, vipName, reason) {
             status: 'unread',
             nemesisData: { vipId, vipName, level: n.level },
             body: n.level >= 2
-                ? `${vipName} non dimentica. A partire da oggi finanzierà attivamente le tue concorrenti per vederti fallire.`
-                : `${vipName} si aspettava di meglio. Se non provvederai a rimediare, inizierà a supportare le agenzie rivali.`
+                ? `${vipName} non dimentica. Da oggi è in guerra aperta con la tua agenzia: aspettati ostilità.`
+                : `${vipName} si aspettava di meglio. Se non provvederai a rimediare, la situazione peggiorerà.`
         });
     }
     if (typeof saveGame === 'function') saveGame();
@@ -50,57 +50,21 @@ window._nemesisAddVip = function(vipId, vipName, reason) {
 
 window._nemesisTick = function() {
     if (!gameState.vipNemeses) return;
-    const nowHour = (gameState.day || 1) * 24 + (gameState.hour || 0);
 
     Object.entries(gameState.vipNemeses).forEach(([vipId, nem]) => {
         if (nem.anger <= 0) { delete gameState.vipNemeses[vipId]; return; }
         nem.anger = Math.max(0, nem.anger - 0.08);
         nem.level = nem.anger >= 60 ? 2 : nem.anger >= 20 ? 1 : 0;
         if (nem.level === 0) { delete gameState.vipNemeses[vipId]; return; }
-        if (nem.level >= 2 && (nowHour - (nem.lastFunded || 0)) >= 48) {
-            _nemesisFundRival(vipId, nem);
-        }
+        // Fino al 31/08 qui scattava _nemesisFundRival: un VIP di livello 2
+        // regalava fino a €50.000/volta a un "rivale" scelto dalla classifica,
+        // senza che il server verificasse alcuna relazione reale fra i due
+        // account. Rimossa (DOMANDE-PER-VLAD.md §7): due giocatori d'accordo
+        // potevano scambiarsi cassa dal nulla facendo finta di essere nemici
+        // l'uno dell'altro. `nem.lastFunded` resta nello stato salvato per
+        // compatibilità coi salvataggi vecchi ma non guida più nulla.
     });
 };
-
-async function _nemesisFundRival(vipId, nem) {
-    if (!window.supabaseClient) return;
-
-    let rival = null;
-    try {
-        const { data } = await window.supabaseClient
-            .from('leaderboard')
-            .select('user_id, company_name')
-            .neq('user_id', window.currentUser?.id)
-            .order('reputation', { ascending: false })
-            .limit(10);
-        if (data && data.length) {
-            rival = data[Math.floor(Math.random() * Math.min(data.length, 5))];
-        }
-    } catch(e) { return; }
-
-    if (!rival) return;
-
-    const amount = Math.floor((20000 + Math.random() * 30000) * (nem.anger / 100));
-
-    try {
-        const { error } = await window.supabaseClient.rpc('rpc_nemesis_fund_rival', {
-            v_rival_user_id: rival.user_id,
-            v_amount:        amount,
-            v_vip_name:      nem.name
-        });
-        // Supabase NON lancia sugli errori RPC: li mette in `error` della risposta.
-        // Se il server rifiuta (es. rpc revocata) nessun effetto locale deve
-        // partire, nemmeno il reset del cooldown di 48h.
-        if (error) return;
-        nem.lastFunded = (gameState.day || 1) * 24 + (gameState.hour || 0);
-
-        const msg = `🦹 ${nem.name} ha finanziato ${rival.company_name} con €${amount.toLocaleString('it-IT')} per danneggiarti!`;
-        if (typeof showNotification === 'function') showNotification(msg, 'error');
-        if (typeof logToMap === 'function') logToMap(msg);
-        if (typeof saveGame === 'function') saveGame();
-    } catch(e) {}
-}
 
 window._nemesisBribeVip = function(vipId) {
     const nem = (gameState.vipNemeses || {})[vipId];
@@ -165,7 +129,7 @@ window.renderTabNemesis = function() {
         <div class="em-card" style="padding:14px;margin-top:16px;border-color:rgba(47,116,192,.3)">
             <div style="font-size:11px;color:var(--em-blue);line-height:1.6">
                 <strong>Come farsi perdonare:</strong> Paga una corruzione (riduci la rabbia) oppure usa
-                l'<strong>Agenzia Ombra</strong> → Sabotaggio per danneggiare i rivali che hanno ricevuto fondi.
+                l'<strong>Agenzia Ombra</strong> → Sabotaggio per indebolire i rivali.
             </div>
         </div>
     </div></div>`;
@@ -186,7 +150,7 @@ function _renderNemesisCard(vipId, nem) {
                     <span style="font-size:18px">${isWar ? '🔥' : '😠'}</span>
                     <span style="font-size:13px;font-weight:700">${nem.name}</span>
                 </div>
-                <div style="font-size:10px;color:var(--em-muted)">${isWar ? '⚠️ GUERRA APERTA — finanzia i tuoi rivali' : '😤 Deluso — potrebbe agire presto'}</div>
+                <div style="font-size:10px;color:var(--em-muted)">${isWar ? '⚠️ GUERRA APERTA — massima ostilità' : '😤 Deluso — potrebbe agire presto'}</div>
             </div>
             <span class="em-pill ${isWar ? 'em-pill--red' : 'em-pill--gold'}">Livello ${nem.level}</span>
         </div>

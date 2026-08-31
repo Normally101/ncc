@@ -25,68 +25,6 @@ Dopo il cambio, revocare quella piena. Si fa dal pannello Stripe.
 Misurerò la curva del denaro su trenta giorni di gioco. Se risulta troppo facile o
 troppo bloccata, **la correzione non la decido io**: porto i numeri e una proposta.
 
-### 4. Gli eventi globali non sono mai esistiti, e riaccenderli è una scelta tua
-La tabella `global_events` è **vuota**: da quando il gioco è online non è mai
-accaduto un solo mega-evento (Fashion Week, GP di Monza, Natale…). L'impianto
-funziona — il client li mostra e i moltiplicatori arrivano davvero al motore —
-ma il seed di `21_global_events.sql` non è mai stato applicato.
-
-**Non l'ho applicato io, e la ragione è che scriverebbe un calendario sbagliato.**
-Quelle otto date sono scritte come «fra 1 giorno», «fra 30 giorni», contate dal
-momento in cui si lancia il file: applicandolo oggi, «Natale & Capodanno»
-cadrebbe il 29 settembre e «Ferragosto» il 2 settembre. E dopo il novantesimo
-giorno finirebbero tutti, per sempre, perché niente ne genera di nuovi.
-
-Le tre strade, in ordine di lavoro: (a) date vere fissate al calendario, e ogni
-anno si ripetono; (b) un generatore che pesca da un catalogo, come fa
-`_process_tourism_tenders` per i bandi; (c) si lascia spento e si toglie il
-banner. **Ipotesi mia se non rispondi: resta spento** — un evento che promette
-+40% di mance e cade a settembre è peggio di nessun evento.
-
-### 5. Il premio di accesso giornaliero: due tabelle diverse, e quella vera è nel browser
-Il premio del login lo calcola **il browser** (`engine-daily.js`), che si fida di
-`lastDailyClaim` salvato nel salvataggio locale: chi sa modificare il salvataggio
-lo riscuote quante volte vuole. Sul server esiste già `rpc_claim_daily_reward`,
-scritta bene (controlla l'identità, il giorno, la serie) e **non la chiama
-nessuno**.
-
-Il problema per te non è tecnico, è che **le due tabelle dei premi non coincidono**:
-
-| | client (attivo) | server (mai usato) |
-|---|---|---|
-| Giorno 1 | €500 | €500 |
-| Giorno 3 | €1.500 + 1 DC | €1.500 |
-| Giorno 7 | €5.000 + 5 DC | 10 DC, zero contanti |
-| Giorno 30 | €25.000 + 25 DC | la serie riparta da 1 dopo il 7 |
-
-Spostare il premio sul server (che è la strada giusta per il denaro) significa
-**cambiare i premi**, e quello è game design. Dimmi quale delle due tabelle è
-quella buona e la faccio valere lato server; oppure dimmene una terza.
-
-### 6. Il prezzo del gasolio: uno per tutti o uno per ciascuno?
-Ogni giocatore oggi ha il **suo** prezzo del carburante, sorteggiato dal suo
-browser (`engine-daily.js`). Sul server c'è una tabella `fuel_market` con dentro
-una sola riga, ferma al 15 agosto, che non legge nessuno.
-
-Un prezzo unico per tutti darebbe una cosa che ora manca: un fatto del mondo di
-cui i giocatori possono parlare («il gasolio è a 2,80, non conviene uscire»), e
-renderebbe sensato il levy dei depositi carburante fra giocatori. Costa poco:
-una sveglia esiste già scritta. **Ipotesi mia se non rispondi: resta com'è**,
-perché toccare il costo del carburante tocca l'equilibrio di ogni corsa.
-
-### 7. La nemesi che finanzia i rivali è una stampante di denaro, ed è spenta
-`rpc_nemesis_fund_rival` regala fino a €50.000 a un altro giocatore, cinque volte
-l'ora, e l'unico controllo è «non a te stesso». Due account d'accordo si passano
-€250.000 l'ora dal nulla. È **revocata** sul server (giustamente), ma `nemesis.js`
-continua a chiamarla: la meccanica «il VIP arrabbiato finanzia un tuo rivale» non
-è mai accaduta a nessuno.
-
-Per riaccenderla il server deve decidere lui **chi** e **quanto**, senza che il
-browser possa dirglielo — cioè va riscritta. Vale la pena? È una delle poche cose
-che fanno sentire la presenza degli altri giocatori, ma è lavoro vero, e in questi
-giorni sto chiudendo, non aggiungendo. **Ipotesi mia: la lascio spenta e la
-segnalo qui.**
-
 ---
 
 ## Risposte già date (non richiedere)
@@ -97,3 +35,25 @@ segnalo qui.**
 - **Elicottero e jet non vendibili**: fanno parte di un update futuro.
 - **Toccare il database**: sì, finché non ci sono giocatori veri.
 - **Pubblicare**: sì, se ho controllato e non creo bug nuovi.
+- **Eventi globali (31/08)**: "date fisse ricorrenti". Fatto:
+  `77_eventi_globali_calendario_fisso.sql` — calendario vero (mese/giorno reali,
+  si ripete ogni anno), generatore `rpc_seed_upcoming_global_events()` schedulato
+  ogni notte, stessi effetti del seed originale. Verificato in produzione: GP di
+  Monza già in tavola come "upcoming" (parte stanotte), Ferragosto e le altre
+  sette date correttamente proiettate sull'anno giusto.
+- **Premio di accesso giornaliero (31/08)**: "tabella server" (giorni 1-6:
+  €500×giorno, giorno 7: 10 Driver Coins/€0, poi riparte da 1). Fatto:
+  `76_premio_giornaliero_lato_server.sql` — `rpc_claim_daily_reward()` riscritta
+  da zero sullo schema vero (la vecchia scriveva su `profiles`, tabella orfana
+  scollegata dal gioco), passa dalla porta unica del denaro (`rpc_earn`,
+  `rpc_add_driver_coins`). Il client (`engine-daily.js`) non calcola più nulla in
+  locale: chiede al server e mostra il risultato.
+- **Prezzo del gasolio (31/08)**: "prezzo unico". Fatto:
+  `74_carburante_prezzo_unico.sql` — sveglia oraria su `rpc_update_fuel_price()`
+  (esisteva già, mai schedulata). Il client (`_tickFuelPrice`) non sorteggia più
+  un prezzo locale quando è sincronizzato col server.
+- **Nemesi che finanzia i rivali (31/08)**: "cancellala proprio". Fatto:
+  `75_nemesi_rivali_rimossa.sql` — `rpc_nemesis_fund_rival` eliminata dal
+  server (non solo revocata). `nemesis.js`: tolta la chiamata e la promessa
+  narrativa che non manteneva più ("finanzierà i tuoi rivali"). Resta tutto il
+  resto del sistema Nemesi (rabbia, corruzione, Agenzia Ombra).

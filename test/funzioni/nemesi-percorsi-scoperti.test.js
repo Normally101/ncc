@@ -7,8 +7,9 @@
      - guardie offline: azioni chiamate quando window.supabaseClient manca;
      - bootstrap di gameState.vipNemeses alla prima _nemesisAddVip;
      - _nemesisTick senza lo stato vipNemeses;
-     - _nemesisFundRival nei suoi percorsi di fallimento (leaderboard vuota,
-       RPC in errore): nessun effetto locale deve essere applicato.
+     - _nemesisTick a livello 2 con cooldown scaduto NON deve più toccare
+       supabaseClient (il finanziamento dei rivali è stato rimosso il 31/08,
+       DOMANDE-PER-VLAD.md §7).
    Nessuna di queste azioni muove denaro: qui si verifica l'effetto principale
    sullo stato (le azioni con movimenti di cassa sono coperte da
    test/events/nemesis-sync.test.js, test/events/black-ops-sync.test.js,
@@ -83,68 +84,28 @@ describe('nemesi & agenzia ombra — percorsi mai esercitati', () => {
     });
 
     // ────────────────────────────────────────────────────────────────────────
-    // _nemesisFundRival — percorsi di fallimento raggiunti tramite _nemesisTick
+    // Finanziamento rivali rimosso — a livello 2 col cooldown scaduto non deve
+    // succedere più nulla, nemmeno un tentativo di rete
     // ────────────────────────────────────────────────────────────────────────
-    describe('_nemesisFundRival — percorsi di fallimento (via _nemesisTick)', () => {
-        function nemesePronta() {
-            // nowHour = 77, lastFunded = 10 -> 67h di distanza: sopra il cooldown di 48h
+    describe('_nemesisTick a livello 2 (ex _nemesisFundRival, rimossa il 31/08)', () => {
+        test('nowHour ben oltre le 48h da lastFunded: nessun supabaseClient toccato, nessuna eccezione se manca del tutto', async () => {
+            // nowHour = 77, lastFunded = 10 -> 67h di distanza: prima era sopra
+            // il cooldown di 48h e faceva scattare il finanziamento.
             gs.day = 3;
             gs.hour = 5;
             gs.vipNemeses = {
                 boss: { name: 'Grigori V.', level: 2, anger: 80, lastFunded: 10, reason: 'fallita' },
             };
-        }
-
-        test('RPC in errore (es. rpc_nemesis_fund_rival revocata): NESSUN effetto locale', async () => {
-            nemesePronta();
-            sandbox.supabaseClient = {
-                from: () => ({
-                    select: () => ({
-                        neq: () => ({ order: () => ({ limit: async () => ({ data: [{ user_id: 'r_1', company_name: 'Apex Chauffeur' }], error: null }) }) }),
-                    }),
-                }),
-                rpc: async (name) => {
-                    if (name === 'rpc_nemesis_fund_rival') {
-                        // Supabase NON lancia: restituisce l'errore nell'oggetto risposta
-                        return { data: null, error: { message: 'RPC revocata dal server' } };
-                    }
-                    return { data: {}, error: null };
-                },
-            };
-            sandbox.window.supabaseClient = sandbox.supabaseClient;
+            // sandbox.supabaseClient NON impostato apposta: se _nemesisTick
+            // provasse ancora a chiamarlo, esploderebbe qui.
             gs.cash = 250000;
 
-            sandbox._nemesisTick();
+            assert.doesNotThrow(() => sandbox._nemesisTick());
             await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.cash, 250000, 'il finanziamento non muove cassa locale');
-            assert.equal(gs.vipNemeses.boss.lastFunded, 10,
-                'lastFunded NON deve aggiornarsi se il server ha rifiutato: altrimenti il cooldown riparte senza che nulla sia successo');
-            assert.ok(!env.notifications.some(n => n.msg.includes('ha finanziato')),
-                'nessuna notifica di finanziamento andato a buon fine');
-        });
-
-        test('leaderboard vuota: nessuna RPC di finanziamento e lastFunded invariato', async () => {
-            nemesePronta();
-            sandbox.supabaseClient = {
-                from: () => ({
-                    select: () => ({
-                        neq: () => ({ order: () => ({ limit: async () => ({ data: [], error: null }) }) }),
-                    }),
-                }),
-                rpc: async (name, params) => {
-                    if (name === 'rpc_nemesis_fund_rival') {
-                        throw new Error('non deve essere chiamata senza rivali');
-                    }
-                    return { data: {}, error: null };
-                },
-            };
-            sandbox.window.supabaseClient = sandbox.supabaseClient;
-
-            sandbox._nemesisTick();
-            await new Promise(r => setImmediate(r));
-
-            assert.equal(gs.vipNemeses.boss.lastFunded, 10, 'senza rivali il cooldown non si deve azzerare');
+            assert.equal(gs.cash, 250000, 'nessun movimento di cassa');
+            assert.equal(gs.vipNemeses.boss.lastFunded, 10, 'lastFunded non lo aggiorna più nessuno');
+            assert.equal(gs.vipNemeses.boss.level, 2, 'il livello resta comunque coerente (guerra aperta, solo narrativa)');
         });
     });
 });

@@ -1,6 +1,6 @@
 # Chauffeur Empire — Handoff sessione corrente
 
-> Aggiornato: 30 agosto 2026
+> Aggiornato: 31 agosto 2026
 > Leggilo sempre all'inizio di una nuova sessione PRIMA di qualsiasi lavoro.
 
 # 🎯 31/08 – 14/09 — SI SEGUE `PIANO-CHIUSURA.md`
@@ -285,6 +285,69 @@ azioni al buio; fra queste le due di HQ sono ferme **giustamente**
 Prima di tutto, però: **rifare la passata nel browser** dei tre sistemi già
 provati (consorzi, VIP, holding). È l'unico pezzo del protocollo di Fase 3 che
 manca, e le 33 righe annotate nel registro restano aperte finché non è fatto.
+
+# 📋 31/08 — Vlad ha risposto a DOMANDE-PER-VLAD.md §4-§7, tutte e quattro chiuse
+
+Sessione fuori sequenza rispetto a Fase 3 (Vlad ha chiesto di sentire le
+domande aperte prima di procedere) — non tocca showroom/infrastrutture/ecc.,
+resta valido tutto quanto sopra. §1 (acquisto DC vero) e §2 (chiave Stripe)
+restano aperte: servono lui fisicamente, "salta per ora". §3 resta per dopo la
+Fase 5. Le quattro decidibili subito sono state implementate e verificate in
+produzione lo stesso giorno:
+
+- **§4 Eventi globali → "date fisse ricorrenti".** `77_eventi_globali_
+  calendario_fisso.sql`: nuova tabella `global_events_calendar` (mese/giorno
+  reali, si ripete ogni anno) + `rpc_seed_upcoming_global_events()` schedulata
+  ogni notte, che tiene sempre in tavola l'occorrenza corrente/prossima di
+  ciascun template. Verificato dal vivo: GP di Monza già `upcoming` in
+  `rpc_get_active_global_events()` subito dopo l'applicazione. Dettaglio →
+  vault, nota Eventi Globali.
+
+- **§5 Premio giornaliero → "tabella server"** (giorni 1-6: €500×giorno,
+  giorno 7: 10 DC/€0, poi riparte da 1 — non la tabella che il client mostrava,
+  che arrivava fino al giorno 30). `76_premio_giornaliero_lato_server.sql`:
+  `rpc_claim_daily_reward()` riscritta da zero sullo schema vero
+  (`companies.login_streak`/`last_daily_claim` — la vecchia versione scriveva
+  su `profiles`, tabella orfana scollegata dal gioco, mai chiamata da nessun
+  file .js). Passa dalla porta unica del denaro (`rpc_earn`,
+  `rpc_add_driver_coins`). Il client (`_checkDailyReward`, engine-daily.js) non
+  calcola più nulla in locale: chiede al server, mostra il risultato, aggiorna
+  solo `annualProfitTracker` (puramente locale). `_bridgeToGameState`
+  (serverState.js) ora rispecchia anche `login_streak`/`last_daily_claim` come
+  fa già per cash/driver_coins — la card streak di `ui-home.js` li legge da lì,
+  non li scrive più nessuno lato client. Bonus: questa riscrittura elimina per
+  costruzione la classe di bug descritta più sotto in questo stesso file (il
+  raddoppio del primo premio per colpa dell'eco Realtime su `syncCash`) — non
+  c'è più un `gs.cash += X` locale con cui quell'eco possa entrare in conflitto.
+
+- **§6 Prezzo del gasolio → "prezzo unico".** `74_carburante_prezzo_unico.sql`:
+  sveglia oraria su `rpc_update_fuel_price()` (esisteva già dal file 09,
+  scriveva bene, non era mai stata schedulata). `_tickFuelPrice`
+  (engine-daily.js) non sorteggia più un prezzo locale quando
+  `ServerState.isReady()` — il client legge già `fuel_market` dal 29/08
+  (`serverState.js`, init + Realtime), ma veniva subito sovrascritto dal
+  sorteggio locale ad ogni ora di gioco: due prezzi in competizione.
+
+- **§7 Nemesi che finanzia i rivali → "cancellala proprio".** Non riscritta:
+  **eliminata**. `75_nemesi_rivali_rimossa.sql` droppa
+  `rpc_nemesis_fund_rival` dal server (era già revocata dal 30/08,
+  `53_revoke_nemesis_fund_rival_no_server_tracking.sql`, ma restava lì).
+  `nemesis.js`: tolta la chiamata in `_nemesisTick` e la promessa narrativa che
+  non manteneva più ("finanzierà i tuoi rivali" → "è in guerra aperta").
+  Resta tutto il resto del sistema Nemesi (rabbia, corruzione, Agenzia Ombra).
+
+**Verifica:** suite completa 2466/2466 verdi (i test di `_checkDailyReward` e
+`_nemesisFundRival` sono stati riscritti, non solo aggiustati — testavano
+comportamento locale che non esiste più), `npm run preflight` verde,
+cache-bust aggiornato su `engine-daily.js` (v25), `nemesis.js` (v19),
+`serverState.js` (v13), `ui-home.js` (v20). Vault aggiornato: Eventi Globali,
+Nemesis, Carburante e Infrastrutture, Daily e Retention (tutte in
+`~/Documents/chauffeur-empire-brain/`).
+
+**Non toccato**, deliberatamente: il "gancio da piantare quando il giocatore
+sta per uscire" descritto in Daily e Retention.md resta un problema di design
+aperto, distinto da questo fix — qui si è chiuso solo il buco di sicurezza e
+la doppia tabella, non ripensato il loop di retention.
 
 # ✅ 30/08 (notte) — IL GIOCO È DIVENTATO MULTIPLAYER. Suite **2352 verdi**.
 

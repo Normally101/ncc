@@ -204,6 +204,28 @@ function makeServerState(sandboxRef, overrides = {}) {
         },
         findServerVehicle: () => null,
         findServerDriver: () => null,
+        getFuelPrice: async () => (gs().fuelPrice ?? 1.85),
+        /* Stesso schema di rpc_claim_daily_reward (76_premio_giornaliero_lato_server.sql):
+           giorni 1-6 -> €500×giorno, giorno 7 -> 10 Driver Coins/€0, poi riparte da 1.
+           Il vero server ricava lo streak da companies.login_streak; qui lo si segue
+           su gs().loginStreak, che è la stessa colonna rispecchiata da
+           _bridgeToGameState. _checkDailyReward (engine-daily.js) NON scrive più
+           cash/driverCoins/loginStreak in locale: lo fa questo mock, come farebbe il
+           bridge reale dopo l'RPC. Un test che vuole "already_claimed" o uno streak
+           specifico fa override di questo metodo. */
+        claimDailyReward: async () => {
+            const nextStreak = (gs().loginStreak || 0) >= 7 ? 1 : (gs().loginStreak || 0) + 1;
+            const cash = nextStreak === 7 ? 0  : 500 * nextStreak;
+            const dc   = nextStreak === 7 ? 10 : 0;
+            gs().loginStreak    = nextStreak;
+            gs().lastDailyClaim = Date.now();
+            if (cash > 0) gs().cash        = (gs().cash        || 0) + cash;
+            if (dc   > 0) gs().driverCoins = (gs().driverCoins || 0) + dc;
+            return {
+                success: true, day: nextStreak, cash, driverCoins: dc,
+                balanceCash: gs().cash, balanceDriverCoins: gs().driverCoins,
+            };
+        },
     };
     return Object.assign(base, overrides);
 }

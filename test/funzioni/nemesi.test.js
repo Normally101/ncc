@@ -4,7 +4,7 @@
 
    Verifica del funzionamento della feature "nemesi" (attualmente disattivata in config.js).
    Collauda:
-   - Creazione ed evoluzione nemesi VIP (_nemesisAddVip, _nemesisTick, _nemesisFundRival)
+   - Creazione ed evoluzione nemesi VIP (_nemesisAddVip, _nemesisTick)
    - Negoziazione e pacificazione VIP (_nemesisBribeVip)
    - Rendering interfaccia nemici VIP (renderTabNemesis)
    - Agenzia Ombra: inizializzazione, refresh target e log (shadowInit, shadowRefresh)
@@ -223,39 +223,20 @@ describe('funzione nemesi — Nemici VIP e Agenzia Ombra', () => {
             assert.equal(gs.vipNemeses.vip1, undefined, 'nemico con rabbia < 20 deve essere rimosso');
         });
 
-        test('_nemesisTick scatena _nemesisFundRival se level >= 2 e sono passate >= 48h dall ultimo finanziamento', async () => {
+        test('_nemesisTick non finanzia più i rivali, nemmeno a livello 2 con cooldown scaduto (DOMANDE-PER-VLAD.md §7, rimossa il 31/08)', async () => {
             gs.day = 3;
-            gs.hour = 5; // nowHour = 3 * 24 + 5 = 77
+            gs.hour = 5; // nowHour = 3 * 24 + 5 = 77, ben oltre le 48h da lastFunded
             gs.vipNemeses = {
                 nem_boss: { name: 'Grigori V.', level: 2, anger: 80, lastFunded: 10, reason: 'fallita' },
             };
 
             sandbox._nemesisTick();
-            // setImmediate per attendere la Promise asincrona di _nemesisFundRival
             await new Promise(r => setImmediate(r));
 
-            // Verifica che abbia chiamato Supabase per trovare i rivali e la RPC
-            assert.ok(supabaseSelectCalls.includes('leaderboard'));
-            assert.ok(supabaseRpcCalls.some(c => c.name === 'rpc_nemesis_fund_rival'));
-
-            const rpcCall = supabaseRpcCalls.find(c => c.name === 'rpc_nemesis_fund_rival');
-            assert.equal(rpcCall.params.v_vip_name, 'Grigori V.');
-            assert.ok(rpcCall.params.v_amount > 0);
-            assert.equal(gs.vipNemeses.nem_boss.lastFunded, 77, 'lastFunded deve essere aggiornato a nowHour');
-        });
-
-        test('_nemesisTick non finanzia i rivali se sono passate meno di 48h dall ultimo finanziamento', async () => {
-            gs.day = 2;
-            gs.hour = 0; // nowHour = 48
-            gs.vipNemeses = {
-                nem_boss: { name: 'Grigori V.', level: 2, anger: 80, lastFunded: 20, reason: 'fallita' }, // 48 - 20 = 28h < 48h
-            };
-
-            sandbox._nemesisTick();
-            await new Promise(r => setImmediate(r));
-
-            assert.equal(supabaseRpcCalls.length, 0, 'non deve finanziare rivali prima del cooldown');
-            assert.equal(gs.vipNemeses.nem_boss.lastFunded, 20);
+            assert.equal(supabaseRpcCalls.length, 0, 'nessuna RPC deve partire: il finanziamento dei rivali non esiste più');
+            assert.ok(!supabaseSelectCalls.includes('leaderboard'), 'non deve nemmeno cercare un rivale');
+            assert.equal(gs.vipNemeses.nem_boss.lastFunded, 10, 'lastFunded resta quello vecchio, non lo aggiorna più nessuno');
+            assert.equal(gs.vipNemeses.nem_boss.level, 2, 'il livello 2 (guerra aperta) resta comunque valido come stato narrativo');
         });
     });
 

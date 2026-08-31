@@ -125,21 +125,40 @@ describe('engine-daily — sincronizzazione cassa e DC col server (CE_money)', (
     });
 
     describe('_checkDailyReward', () => {
-        test('riscatto ricompensa giornaliera con cash e DC passa da CE_money', async () => {
-            const { sandbox, gs, syncedCash, addedDC } = setupDailyEnv();
+        // Dal 31/08 (DOMANDE-PER-VLAD.md §5) il premio giornaliero non passa più
+        // da CE_money.earn/earnDC: lo decide e lo accredita SOLO il server
+        // (rpc_claim_daily_reward), e il client si limita a chiedere e a
+        // rispecchiare il risultato — cash/driverCoins arrivano poi via Realtime
+        // su `companies`, non da una scrittura locale qui.
+        test('riscatto ricompensa: chiama ServerState.claimDailyReward, non tocca cash/DC in locale, aggiorna solo il tracker annuale', async () => {
+            const { sandbox, gs } = setupDailyEnv();
+            const calls = [];
+            sandbox.ServerState.claimDailyReward = async () => {
+                calls.push(true);
+                return { success: true, day: 3, cash: 1500, driverCoins: 1, balanceCash: 2500, balanceDriverCoins: 1 };
+            };
             gs.cash = 1000;
             gs.driverCoins = 0;
-            gs.lastDailyClaim = 0;
-            gs.loginStreak = 2; // Next will be 3 -> tier 3: cash 1500, tc 1
+            gs.annualProfitTracker = 0;
 
             sandbox._checkDailyReward();
             await new Promise(r => setImmediate(r));
 
-            assert.equal(gs.cash, 2500);
-            assert.equal(gs.driverCoins, 1);
-            assert.deepEqual(syncedCash, [2500]);
-            assert.equal(addedDC.length, 1);
-            assert.equal(addedDC[0].n, 1);
+            assert.equal(calls.length, 1, 'deve chiamare ServerState.claimDailyReward una sola volta');
+            assert.equal(gs.cash, 1000, 'il cash locale non cambia qui: arriva via Realtime dal server');
+            assert.equal(gs.driverCoins, 0, 'idem per i Driver Coins');
+            assert.equal(gs.annualProfitTracker, 1500, 'il tracker annuale (puramente locale) segue comunque il cash accreditato');
+        });
+
+        test('already_claimed: nessuna notifica, nessun effetto', async () => {
+            const { sandbox } = setupDailyEnv();
+            sandbox.ServerState.claimDailyReward = async () => ({ success: false, reason: 'already_claimed', day: 3 });
+            const notifications = [];
+            sandbox.showNotification = (msg, type) => notifications.push({ msg, type });
+
+            await sandbox._checkDailyReward();
+
+            assert.equal(notifications.length, 0, 'già riscattato oggi: silenzioso, come prima');
         });
     });
 

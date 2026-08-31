@@ -33,32 +33,16 @@ function _homeStreakCard(gs) {
     const canClaim = !gs.lastDailyClaim || elapsed >= cooldownMs;
     const hoursLeft = canClaim ? 0 : Math.ceil((cooldownMs - elapsed) / 3600000);
 
-    const TIERS = [
-        { days:1,  cash:500,   tc:0  },
-        { days:2,  cash:1000,  tc:0  },
-        { days:3,  cash:1500,  tc:1  },
-        { days:5,  cash:2500,  tc:2  },
-        { days:7,  cash:5000,  tc:5  },
-        { days:14, cash:10000, tc:10 },
-        { days:30, cash:25000, tc:25 },
-    ];
-    // L'importo vero lo calcola engine-daily.js:1128-1129: tier.cash * extraMult,
-    // con extraMult = 1 + floor((giorno-7)/7)*0.1. Qui veniva annunciato il valore
-    // BASE del tier: dal 14° giorno in poi il giocatore leggeva meno di quanto
-    // incassava davvero (giorno 14: €10.000 annunciati contro €11.000 accreditati).
-    const _extraMult = d => (d >= 7 ? 1 + Math.floor((d - 7) / 7) * 0.1 : 1);
-    const _rewardAt  = (t, d) => Math.round(t.cash * _extraMult(d));
-
-    const nextTier = TIERS.find(r => r.days > streak);
-    const lastTier = TIERS[TIERS.length - 1];
-    const _fmt = (t, d) => `€${_rewardAt(t, d).toLocaleString('it-IT')}${t.tc ? ` +${t.tc}DC` : ''}`;
-    // Oltre il 30° giorno non ci sono più tier nuovi: resta il 30 con il moltiplicatore
-    // che cresce del 10% ogni settimana, quindi si mostra il prossimo accesso.
-    const nextInfo = nextTier
-        ? `ancora ${nextTier.days - streak}g → ${_fmt(nextTier, nextTier.days)}`
-        : `prossimo accesso → ${_fmt(lastTier, streak + 1)}`;
-
+    // Tabella vera: la decide il server (rpc_claim_daily_reward,
+    // 76_premio_giornaliero_lato_server.sql — DOMANDE-PER-VLAD.md §5).
+    // Giorni 1-6: €500 × giorno. Giorno 7: 10 Driver Coins, zero contanti.
+    // Poi la serie riparte da 1. Prima questo file mostrava una progressione
+    // fino al giorno 30 che il server non ha mai pagato.
     const cycleDay = streak > 0 ? ((streak - 1) % 7) + 1 : 0;
+    const nextDay  = cycleDay >= 7 ? 1 : cycleDay + 1;
+    const _fmt = d => d >= 7 ? '10DC' : `€${(500 * d).toLocaleString('it-IT')}`;
+    const nextInfo = `prossimo accesso → ${_fmt(nextDay)}`;
+
     const dots = Array.from({ length: 7 }, (_, i) => {
         const on = i < cycleDay;
         return `<span style="width:9px;height:9px;border-radius:50%;background:${on?'#c79a2a':'var(--em-line)'};border:1.5px solid ${on?'#c79a2a':'var(--em-muted)'}"></span>`;
