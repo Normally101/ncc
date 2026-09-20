@@ -1,0 +1,43 @@
+# Copia fedele del .vercelignore del repository. Se queste esclusioni saltano,
+# le migration SQL e la documentazione di sicurezza diventano scaricabili da
+# chauffeurempire.com.
+
+# Migration SQL — espongono l'architettura di sicurezza (RLS, anti-cheat, rate-limit)
+*.sql
+
+# Documentazione interna (architettura, handoff, decisioni)
+*.md
+
+# Script interni
+*.py
+*.sh
+scripts
+
+# Edge Functions server-side (codice backend, mai pubblico)
+supabase
+
+# Cartelle interne / tooling
+docs
+.github
+.agents
+.claude
+skills
+_mockups
+
+# Suite di test
+test
+test-support
+
+# Save di gioco (struttura dati interna)
+slot_*.json
+
+# Roba di build e di ambiente
+.git
+.gitignore
+.vercelignore
+.vercel
+node_modules
+.env
+.env.*
+Dockerfile
+.dockerignore
